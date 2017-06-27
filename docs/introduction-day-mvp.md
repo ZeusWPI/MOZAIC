@@ -35,6 +35,10 @@ Depending on time restrictions and priorities we could choose to let them play a
     - Challenge bot
 - Ruleset
     - Simple 2 player game
+    - Proposition: [Planet Wars](http://planetwars.aichallenge.org/) with an added rule:
+        - Each player can only have one fleet in transit at any given moment.
+          This rule greatly reduces the complexity of the game, yet does not alter its core principles
+          (please speak up if you think it does!).
 - Arbiter
     - Coordinate local play
     - Communicate with bot driver
