@@ -20,8 +20,8 @@ Games should be able to be swapped out on the fly in this infrastructure.
 ## Multiple rule sets
 Multiple rule sets should be available at the same time, allowing players to pick whichever game they prefer.
 
-## Multiple players
-It should be a possibility to write rule sets for multiple players, and as such, our infrastructure should support it.
+## Many players
+It should be possible to write games for an arbitrary number of players.
 
 ## Ranked environment
 We could rate and rank players when they play games adding a global competition aspect.
