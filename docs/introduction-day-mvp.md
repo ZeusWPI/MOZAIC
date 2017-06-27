@@ -42,6 +42,6 @@ Depending on time restrictions and priorities we could choose to let them play a
 ### Optional features
 - Decent debugging support
 - Visualizer playback
-- Gameplay pauzing
+- Gameplay pausing
 
 
