@@ -23,8 +23,8 @@ When matches are played, we gain some information related to rating and ranking 
 The ELO systems calculates new scores for each participant based on their previous score, whether they won or lost, and who they played against.
 This imposed ranking allows us to identify the best bots and add a competitional aspect.
 
-## Ficheur
-While the game server is running games, it generates a lot of information it doesn't want to keep track off itself, but might be relevant for other components. The ficheur's role is to keep track of this data and bundle it so it can be used later.
+## Filer
+While the game server is running games, it generates a lot of information it doesn't want to keep track off itself, but might be relevant for other components. The filer's role is to keep track of this data and bundle it so it can be used later.
 Obvious candidates to include in this data are various metadata such as game winners, game duration, etc.
 
 ## Game server
