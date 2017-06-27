@@ -6,7 +6,7 @@ Note that this list might not ever be complete and applies no ordering or priori
 Allowing players to compete on the local network, eliminating the need for internet connectivity or an intermediary server.
 
 ## Networked play
-Players should be able to compete versus others registered on our network.
+Players should be able to compete versus others connected to our network.
 
 ### Player challenging
 Players should be able to challenge others on the network in friendly spirit. A player can choose to build a lobby in which he could invite friends and start a match independent of our own matchmaking.
