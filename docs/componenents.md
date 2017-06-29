@@ -13,7 +13,7 @@ Auth being short for authentication and authorization is a component we need to 
 ## Bot driver
 
 ## Client GUI
-The client GUI only goal is to improve the user experience. By hiding implementation details behind a more user friendly interface it allows users to focus on writing and playing with their bots. It provides a gateway to use the platform's various features in a graphical nature.
+The client GUI's only goal is to improve the user experience. By hiding implementation details behind a more user friendly interface it allows users to focus on writing and playing with their bots. It provides a gateway to use the platform's various features in a graphical nature.
 
 ## Data store
 The data store stores data.
@@ -38,7 +38,7 @@ The ELO ratings are an important aspect of fair and relevant matchmaking.
 
 ## Rule set
 A rule set is a component that takes a game state and a set of moves and produces the new game state.
-It is purely functional in it's required features (but could be implemented otherwise) and can be viewed as the rules for the game(mode).
+It is purely functional in its required features (but could be implemented otherwise) and can be viewed as the rules for the game(mode).
 
 ## Webserver
 The webserver provides some of the functionality that integrates nicely with the web. It will function as a portal to some of the information about the competition itself in a human readable format. Examples include the rules and the current standings.
