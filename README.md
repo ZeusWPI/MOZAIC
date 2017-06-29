@@ -1,8 +1,8 @@
 # MOZAIC
 MOZAIC is the Massive Online Zeus Artificial Intelligence Competition platform.  
-It's goal is to provide a platform and framework to host your very own AI competition, and as such it tries to allow a modular approach in building a customized experience for your players. Lay out your rules, lay out your visuals, be ready to launch. 
+Its goal is to provide a platform and framework to host your very own AI competition, and as such it tries to allow a modular approach in building a customized experience for your players. Lay out your rules, lay out your visuals, be ready to launch. 
 
-In it's early developing stages, MOZAIC will be build for the purpose of supporting BottleBats (Zeus' own AI competition), and therefore will focus on the required functionality. As the software matures, it will be abstracted more. 
+In its early developing stages, MOZAIC will be built for the purpose of supporting BottleBats (Zeus' own AI competition), and therefore will focus on the required functionality. As the software matures, it will be abstracted more. 
 
 Initial core focus points:
  - Flexibility in game mode and visualising
