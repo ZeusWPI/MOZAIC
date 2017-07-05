@@ -1,24 +1,24 @@
 #[derive(Serialize, Deserialize)]
-struct Expedition {
-    ship_count: u64,
-    origin: String,
-    destination: String,
-    owner: String,
-    turns_remaining: i64,
+pub struct Expedition {
+    pub ship_count: u64,
+    pub origin: String,
+    pub destination: String,
+    pub owner: String,
+    pub turns_remaining: i64,
 }
 
 #[derive(Serialize, Deserialize)]
-struct Planet {
-    ship_count: u64,
-    x: f64,
-    y: f64,
-    owner: String,
-    name: String,
+pub struct Planet {
+    pub ship_count: u64,
+    pub x: f64,
+    pub y: f64,
+    pub owner: String,
+    pub name: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct State {
-    players: Vec<String>,
-    planets: Vec<Planet>,
-    expeditions: Vec<Expedition>,
+pub struct State {
+    pub players: Vec<String>,
+    pub planets: Vec<Planet>,
+    pub expeditions: Vec<Expedition>,
 }
