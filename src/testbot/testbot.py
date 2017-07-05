@@ -5,6 +5,7 @@ def main():
 
     game_state = json.load(sys.stdin)
     if len(game_state["expeditions"]) != 0:
+        do_empty_move()
         return
     own_planets = [planet["planet"] for planet in game_state["planets"]
                     if planet["planet"]["owner"] == player]
@@ -12,7 +13,7 @@ def main():
                     if planet["planet"]["owner"] != player]
     (closest_own_planet, closest_other_planet) = find_closest_planet(own_planets, other_planets)
     if closest_own_planet is None or closest_other_planet is  None:
-        print(json.dumps({"move":{}}))
+        do_empty_move()
         return
     data = {}
     data["move"] = {}
@@ -39,6 +40,9 @@ def find_closest_planet(own_planets, other_planets):
 def calculate_distance_between_planets(first_planet, second_planet):
     return math.sqrt((second_planet["x"] - first_planet["x"])**2
             + (second_planet["y"] - first_planet["y"])**2)
+
+def do_empty_move():
+    print(json.dumps({"move":{}}))
 
 if __name__ == "__main__":
     main()
