@@ -1,3 +1,6 @@
+use std::collections::HashMap;
+use std::rc::{Rc, Weak};
+
 use protocol::*;
 
 pub struct InitialStateBuilder {
@@ -21,5 +24,26 @@ impl InitialStateBuilder {
 }
 
 struct PlanetWars {
-    state: State,
+    players: HashMap<String, Rc<Player>>,
+    planets: HashMap<String, Rc<Planet>>,
+    expeditions: Vec<Expedition>,
+}
+
+struct Planet {
+    name: String,
+    owner: Weak<Player>,
+    ship_count: u64,
+    x: f64,
+    y: f64,
+}
+
+struct Expedition {
+    target: Weak<Planet>,
+    owner: Weak<Player>,
+    ship_count: u64,
+    turns_remaining: u64,
+}
+
+struct Player {
+    name: String,
 }
