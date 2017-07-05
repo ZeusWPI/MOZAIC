@@ -12,7 +12,7 @@ pub struct Planet {
     pub ship_count: u64,
     pub x: f64,
     pub y: f64,
-    pub owner: String,
+    pub owner: Option<String>,
     pub name: String,
 }
 
