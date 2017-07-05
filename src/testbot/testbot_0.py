@@ -19,9 +19,8 @@ def main():
     data["move"] = {}
     data["move"]["origin"] = closest_own_planet["name"]
     data["move"]["destination"] = closest_other_planet["name"]
-    data["move"]["ship_count"] = closest_own_planet["ship_count"] - closest_other_planet["ship_count"]
+    data["move"]["ship_count"] = get_number_of_ships_to_send(closest_own_planet, closest_other_planet)
     print(json.dumps(data))
-
 
 def find_closest_planet(own_planets, other_planets):
     closest_distance = float("inf")
@@ -40,6 +39,11 @@ def find_closest_planet(own_planets, other_planets):
 def calculate_distance_between_planets(first_planet, second_planet):
     return math.sqrt((second_planet["x"] - first_planet["x"])**2
             + (second_planet["y"] - first_planet["y"])**2)
+
+def get_number_of_ships_to_send(own_planet, other_planet):
+    number_of_ships = own_planet["ship_count"] - other_planet["ship_count"]
+    number_of_ships += int((own_planet["ship_count"] - number_of_ships)/2)
+    return number_of_ships
 
 def do_empty_move():
     print(json.dumps({"move":{}}))
