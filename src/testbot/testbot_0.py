@@ -1,7 +1,7 @@
 import json, sys, math
 
 # This bot will always attack the closest planet it can attack.
-# It will not attack if already has an expedition going.
+# It will not attack if it already has an expedition going.
 def main():
     player = sys.argv[1]
 
@@ -9,20 +9,17 @@ def main():
     if len([exp for exp in game_state["expeditions"] if exp["owner"] == player]) != 0:
         do_empty_move()
         return
+
     own_planets = [planet["planet"] for planet in game_state["planets"]
                     if planet["planet"]["owner"] == player]
     other_planets = [planet["planet"] for planet in game_state["planets"]
                     if planet["planet"]["owner"] != player]
+
     (closest_own_planet, closest_other_planet) = find_closest_planet(own_planets, other_planets)
     if closest_own_planet is None or closest_other_planet is  None:
         do_empty_move()
         return
-    data = {}
-    data["move"] = {}
-    data["move"]["origin"] = closest_own_planet["name"]
-    data["move"]["destination"] = closest_other_planet["name"]
-    data["move"]["ship_count"] = get_number_of_ships_to_send(closest_own_planet, closest_other_planet)
-    print(json.dumps(data))
+    do_move(closest_own_planet, closest_other_planet)
 
 def find_closest_planet(own_planets, other_planets):
     closest_distance = float("inf")
@@ -46,6 +43,14 @@ def get_number_of_ships_to_send(own_planet, other_planet):
     number_of_ships = own_planet["ship_count"] - other_planet["ship_count"]
     number_of_ships += int((own_planet["ship_count"] - number_of_ships)/2) + 1
     return number_of_ships
+
+def do_move(own_planet, other_planet):
+    data = {}
+    data["move"] = {}
+    data["move"]["origin"] = own_planet["name"]
+    data["move"]["destination"] = other_planet["name"]
+    data["move"]["ship_count"] = get_number_of_ships_to_send(own_planet, other_planet)
+    print(json.dumps(data))
 
 def do_empty_move():
     print(json.dumps({"move":{}}))
