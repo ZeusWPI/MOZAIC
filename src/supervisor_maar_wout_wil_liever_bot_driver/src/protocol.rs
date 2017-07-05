@@ -1,3 +1,4 @@
+#[derive(Serialize, Deserialize)]
 struct Expedition {
     ship_count: u64,
     origin: String,
@@ -6,6 +7,7 @@ struct Expedition {
     turns_remaining: i64,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Planet {
     ship_count: u64,
     x: f64,
@@ -14,9 +16,6 @@ struct Planet {
     name: String,
 }
 
-struct Player {
-
-}
-
-type Players = Player[];
+type Players = String[];
 type Planets = Planet[];
+type Expeditions = expeditions[];
