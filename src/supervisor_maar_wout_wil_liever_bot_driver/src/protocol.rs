@@ -17,3 +17,6 @@ struct Planet {
 struct Player {
 
 }
+
+type Players = Player[];
+type Planets = Planet[];
