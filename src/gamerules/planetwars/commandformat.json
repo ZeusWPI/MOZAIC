@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/schema#",
+  "title": "PlanetWars",
+  "description": "This is the format describing the command for the PlanetWars game, used in the development off MOZAIC",
+  "properties": {
+    "move":{
+      "type": "object",
+      "description": "Describes what you want to do in the current turn",
+      "properties": {
+        "origin": {"type": "string"},
+        "destination": {"type": "string"},
+        "ship_count": {"type": "number"}
+      },
+      "required": ["origin", "destination", "ship_count"],
+      "additionalProperties" : false
+    }
+  },
+  "additionalProperties": false
+}
