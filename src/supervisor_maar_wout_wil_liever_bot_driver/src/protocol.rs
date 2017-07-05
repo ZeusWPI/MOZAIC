@@ -16,5 +16,9 @@ struct Planet {
     name: String,
 }
 
-type Players = Player[];
-type Planets = Planet[];
+#[derive(Serialize, Deserialize)]
+struct State {
+    players: Vec<String>,
+    planets: Vec<Planet>,
+    expeditions: Vec<Expedition>,
+}
