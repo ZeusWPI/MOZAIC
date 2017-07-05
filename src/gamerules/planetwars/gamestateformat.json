@@ -1,41 +1,57 @@
 {
+    "$schema": "http://json-schema.org/schema#",
     "title": "PlanetWars",
+    "description": "This is the format describing the game state for the PlanetWars game, used in the development off MOZAIC",
     "properties": {
         "players":{
             "type": "array",
+            "description": "List of all players in the game",
             "uniqueItems": true,
-            "items": {
-                "type": "object",
-                "properties": {  
-                  "name": { "type": "string" }
-                }
-            }
+            "items": { "type": "string" },
+            "minItems": 2
         },
         "planets":{
             "type": "array",
+            "description": "List of all planets in the game",
             "items": {
                 "type": "object",
                 "description": "planet",
                 "properties": {
-                    "x": { "type": "number" },
-                    "y": { "type": "number" },
-                    "ship_count": { "type": "number" },
-                    "owner": { "type": "string" }
-                }
+                    "x": { "type": "integer" },
+                    "y": { "type": "integer" },
+                    "ship_count": { 
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "owner": { "type": "string" },
+                    "name": { "type": "string" }
+                },
+                "additionalProperties": false
             }
         },
-        "ships":{
+        "expeditions":{
             "type": "array",
+            "description": "List of all expeditions in this game. These are the ships on the way to another planet",
             "items": {
                 "type": "object",
                 "description": "a command",
                 "properties": {
-                    "ship_count": { "type": "number" },
+                    "ship_count": { 
+                        "type": "integer",
+                        "minimum": 0
+                    },
                     "origin": { "type": "string" },
                     "destination": { "type": "string" },
-                    "turns_remaining": { "type": "number" }
-                }
+                    "owner": { "type": "string" },
+                    "turns_remaining": { 
+                        "type": "integer",
+                        "minimum": 0
+                    }
+                },
+                "additionalProperties": false
            }
         }
-    }
+    },
+    "required": ["players", "planets", "expeditions"],
+    "additionalProperties": false
 }
