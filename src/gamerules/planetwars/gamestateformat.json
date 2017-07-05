@@ -1,0 +1,41 @@
+{
+    "title": "PlanetWars",
+    "properties": {
+        "players":{
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+                "type": "object",
+                "properties": {  
+                  "name": { "type": "string" }
+                }
+            }
+        },
+        "planets":{
+            "type": "array",
+            "items": {
+                "type": "object",
+                "description": "planet",
+                "properties": {
+                    "x": { "type": "number" },
+                    "y": { "type": "number" },
+                    "ship_count": { "type": "number" },
+                    "owner": { "type": "string" }
+                }
+            }
+        },
+        "ships":{
+            "type": "array",
+            "items": {
+                "type": "object",
+                "description": "a command",
+                "properties": {
+                    "ship_count": { "type": "number" },
+                    "origin": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "turns_remaining": { "type": "number" }
+                }
+           }
+        }
+    }
+}
