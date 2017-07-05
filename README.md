@@ -1,4 +1,5 @@
-# MOZAIC
+<p align="center"><img src="/resources/Design%205.PNG" alt="MOZAIC"/></p>
+
 MOZAIC is the Massive Online Zeus Artificial Intelligence Competition platform.  
 Its goal is to provide a platform and framework to host your very own AI competition, and as such it tries to allow a modular approach in building a customized experience for your players. Lay out your rules, lay out your visuals, be ready to launch. 
 
