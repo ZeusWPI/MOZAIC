@@ -4,3 +4,6 @@ version = "0.0.0"
 authors = ["Zeus WPI", "en superieure derde partijen"]
 
 [dependencies]
+serde = "1.0.8"
+serde_derive = "1.0.8"
+serde_json = "1.0"
