@@ -42,7 +42,7 @@ def calculate_distance_between_planets(first_planet, second_planet):
 
 def get_number_of_ships_to_send(own_planet, other_planet):
     number_of_ships = own_planet["ship_count"] - other_planet["ship_count"]
-    number_of_ships += int((own_planet["ship_count"] - number_of_ships)/2)
+    number_of_ships += int((own_planet["ship_count"] - number_of_ships)/2) + 1
     return number_of_ships
 
 def do_empty_move():
