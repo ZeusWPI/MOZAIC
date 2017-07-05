@@ -22,3 +22,16 @@ pub struct State {
     pub planets: Vec<Planet>,
     pub expeditions: Vec<Expedition>,
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Command {
+    #[serde(rename="move")]
+    pub value: Option<Move>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Move {
+    pub origin: String,
+    pub destination: String,
+    pub ship_count: u64,
+}
