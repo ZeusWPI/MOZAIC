@@ -22,3 +22,12 @@ struct State {
     planets: Vec<Planet>,
     expeditions: Vec<Expedition>,
 }
+
+
+pub type Command = Option<Move>
+
+pub struct Move {
+    pub origin: String,
+    pub destination: String,
+    pub ship_count: u64,
+}
