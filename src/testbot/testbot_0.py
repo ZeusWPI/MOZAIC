@@ -1,10 +1,12 @@
 import json, sys, math
 
+# This bot will always attack the closest planet it can attack.
+# It will not attack if already has an expedition going.
 def main():
     player = sys.argv[1]
 
     game_state = json.load(sys.stdin)
-    if len(game_state["expeditions"]) != 0:
+    if len([exp for exp in game_state["expeditions"] if exp["owner"] == player]) != 0:
         do_empty_move()
         return
     own_planets = [planet["planet"] for planet in game_state["planets"]
