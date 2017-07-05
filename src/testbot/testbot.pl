@@ -10,8 +10,8 @@ my $gamestate_ref = \%gamestate;
   undef $/;
   my $content = <>;
   $gamestate_ref = decode_json $content;
-
 }
 
-print Dumper($gamestate_ref);
-#$$gamestate_ref{"foo"} = "bara";
+#print Dumper($gamestate_ref);
+
+print Dumper($$gamestate_ref{"properties"});
