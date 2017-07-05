@@ -11,13 +11,15 @@ def main():
     other_planets = [planet["planet"] for planet in game_state["planets"]
                     if planet["planet"]["owner"] != player]
     (closest_own_planet, closest_other_planet) = find_closest_planet(own_planets, other_planets)
-    if closest_own_planet["ship_count"] > closest_other_planet["ship_count"]:
-        data = {}
-        data["move"] = {}
-        data["move"]["origin"] = closest_own_planet["name"]
-        data["move"]["destination"] = closest_other_planet["name"]
-        data["move"]["ship_count"] = closest_own_planet["ship_count"] - closest_other_planet["ship_count"]
-        print(json.dumps(data))
+    if closest_own_planet is None or closest_other_planet is  None:
+        print(json.dumps({"move":{}}))
+        return
+    data = {}
+    data["move"] = {}
+    data["move"]["origin"] = closest_own_planet["name"]
+    data["move"]["destination"] = closest_other_planet["name"]
+    data["move"]["ship_count"] = closest_own_planet["ship_count"] - closest_other_planet["ship_count"]
+    print(json.dumps(data))
 
 
 def find_closest_planet(own_planets, other_planets):
@@ -27,7 +29,8 @@ def find_closest_planet(own_planets, other_planets):
     for own_planet in own_planets:
         for other_planet in other_planets:
             distance = calculate_distance_between_planets(own_planet, other_planet)
-            if distance < closest_distance:
+            if distance < closest_distance \
+            and own_planet["ship_count"] > other_planet["ship_count"]:
                 closest_distance = distance
                 closest_own_planet = own_planet
                 closest_other_planet = other_planet
