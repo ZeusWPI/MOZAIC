@@ -16,7 +16,5 @@ struct Planet {
     name: String,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Player {
-    name: String,
-}
+type Players = Player[];
+type Planets = Planet[];
