@@ -17,16 +17,24 @@ fn run<G: Game>() {
     let mut game = G::init(vec!["Ilion".to_owned()]);
     let mut gamestate = game.start();
     loop {
-        match &mut gamestate {
-            ref Running => {
-                // gamestate = game.step("Stapstap".to_owned());
-                println!("Running")
+        println!("\nNew step:\n==============");
+        match gamestate {
+            GameStatus::Running(pi) => {
+                println!("Running with new player input: {:?}", pi);
+                let po = fetch_player_output(&pi);
+                println!("Received new player output: {:?}", po);
+                gamestate = game.step(po);
             },
-            ref Done => {
-                println!("Done")
+            GameStatus::Done(outcome) => {
+                println!("Done with: {:?}", outcome);
+                break;
             } 
         }
     }
+}
+
+fn fetch_player_output(input: &PlayerInput) -> PlayerOutput {
+    "een beweging".to_owned()
 }
 
 struct Stub;

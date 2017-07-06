@@ -19,6 +19,7 @@ pub type Player = String;
  * The winner(s) in case of a succesful game,
  * or the error's and causes in case something went wrong.
  */
+#[derive(Debug)]
 pub enum Outcome {
     Score,
     Error,
@@ -29,6 +30,7 @@ pub enum Outcome {
  * It is the next state (if the game is still running) of the game,
  * and should be communicated to the players or cleaned up.
  */
+#[derive(Debug)]
 pub enum GameStatus {
     Done(Outcome),
     Running(PlayerInput)
