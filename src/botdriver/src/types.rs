@@ -1,7 +1,7 @@
 pub trait Game {
     fn init(names: Vec<String>) -> Self;
     fn start(&mut self) -> GameStatus;
-    fn step(&mut self, player_output: PlayerOutput) -> GameStatus;
+    fn step(&mut self, player_output: &PlayerOutput) -> GameStatus;
 }
 
 /* 
@@ -10,9 +10,15 @@ pub trait Game {
 pub type Player = String;
 
 /*
- * The commands received from the player.
+ * The commands received from the players.
  */
- pub type PlayerOutput = String;
+pub type PlayerOutput = Vec<(Player, PlayerCommand)>;
+
+
+/*
+ * The commands received from a player.
+ */
+pub type PlayerCommand = String; 
 
 /*
  * Possible outcome of a game.
@@ -21,9 +27,19 @@ pub type Player = String;
  */
 #[derive(Debug)]
 pub enum Outcome {
-    Score,
+    Score(Scoring),
     Error,
 }
+
+/*
+ * A list of scores the players received on game end.
+ */
+pub type Scoring = Vec<(Player, Score)>;
+
+/*
+ * A score a player receives for finishing a game.
+ */
+pub type Score = i32;
 
 /*
  * The output from the game rules.
