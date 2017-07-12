@@ -1,13 +1,30 @@
 pub trait Game {
-    fn init(names: Vec<String>) -> Self;
+    fn init(names: Vec<Player>) -> Self;
     fn start(&mut self) -> GameStatus;
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus;
 }
+
+/*
+ * 
+ */
+pub struct GameConfig {
+    pub start_commands: Vec<(Player, StartCommand)>
+}
+
+/*
+ * A shell command executing the bot in question.
+ */
+pub type StartCommand = String;
 
 /* 
  * The identification for a player.
  */
 pub type Player = String;
+
+/*
+ * The list off all players.
+ */
+pub type PlayerList = Vec<Player>;
 
 /*
  * The commands received from the players.

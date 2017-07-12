@@ -1,0 +1,4 @@
+{
+    "bert": "python3 testbot.py",
+    "timp": "python3 testbot.py"
+}

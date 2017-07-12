@@ -1,9 +1,39 @@
 mod types;
 
 use types::*;
+use std::error::Error;
+use std::env;
+use std::io;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::PathBuf;
 
 fn main() {
-    run::<Stub>();
+    let game_config = match parse_config() {
+        Ok(config) => config,
+        Err(e) => {
+            println!("{}", e);
+            std::process::exit(1)
+        }
+    };
+    //run::<Stub>();
+}
+
+fn parse_config() -> Result<GameConfig, Box<Error>> {
+    let args: Vec<_> = env::args().collect();
+    if (args.len() < 2) || (args.len() > 2) {
+        let msg = format!("Expected 1 argument. {} given.", args.len() - 1).to_owned();
+        return Err(From::from(msg))
+    }
+    
+    let mut path = PathBuf::from(&args[1]);
+    let mut file = File::open(path)?;
+
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+    
+    println!("test {}", contents);
+    Ok(GameConfig { start_commands: vec![] })
 }
 
 fn run<G: Game>() {
@@ -55,7 +85,7 @@ fn fetch_player_output(player: &Player, info: &GameInfo) -> PlayerCommand {
 struct Stub;
 
 impl Game for Stub {
-    fn init(names: Vec<String>) -> Self {
+    fn init(names: Vec<Player>) -> Self {
         Stub
     }
 
