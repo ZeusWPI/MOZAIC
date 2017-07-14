@@ -1,5 +1,11 @@
 mod types;
 
+extern crate serde;
+
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+
 use types::*;
 use std::error::Error;
 use std::env;
@@ -22,18 +28,23 @@ fn main() {
 fn parse_config() -> Result<GameConfig, Box<Error>> {
     let args: Vec<_> = env::args().collect();
     if (args.len() < 2) || (args.len() > 2) {
-        let msg = format!("Expected 1 argument. {} given.", args.len() - 1).to_owned();
+        let msg = format!("Expected 1 argument (config file). {} given.", args.len() - 1).to_owned();
         return Err(From::from(msg))
     }
     
+    println!("Opening config {}", &args[1]);
     let mut path = PathBuf::from(&args[1]);
     let mut file = File::open(path)?;
 
+    println!("Reading contents");
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
     
-    println!("test {}", contents);
-    Ok(GameConfig { start_commands: vec![] })
+    println!("Parsing config");
+    let gc: GameConfig = serde_json::from_str(&contents)?;
+
+    println!("Config parsed succesfully");
+    Ok(gc)
 }
 
 fn run<G: Game>() {

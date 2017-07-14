@@ -1,4 +1,12 @@
 {
-    "bert": "python3 testbot.py",
-    "timp": "python3 testbot.py"
+    "players": [
+        {
+            "name": "bert",
+            "start_command": "python3 testbot.py"
+        },
+        {
+            "name": "timp",
+            "start_command": "python3 testbot.py"
+        }
+    ]
 }

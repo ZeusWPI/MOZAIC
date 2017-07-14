@@ -5,10 +5,20 @@ pub trait Game {
 }
 
 /*
- * 
+ * A configuration for a single game, containing metadata about for example:
+ *  - players
+ *  - maximum step count
+ *  - ...
  */
+ #[derive(Serialize, Deserialize)]
 pub struct GameConfig {
-    pub start_commands: Vec<(Player, StartCommand)>
+    pub players: Vec<PlayerConfig>
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PlayerConfig {
+    pub name: Player,
+    pub start_command: StartCommand
 }
 
 /*
