@@ -1,28 +1,94 @@
-pub struct HigherLower;
-
 use types::*;
+use serde_json;
+use rand;
+use rand::Rng;
+
+const MAX: u32 = 500;
+
+pub struct HigherLower {
+    players: Vec<Player>,
+    eliminated: Vec<(Player, Score)>,
+    max: u32,
+    last: u32,
+    score: i32 // i instead of u to match with Score
+}
+
+#[derive(Serialize, Deserialize)]
+struct State {
+    max: u32,
+    current: u32
+}
+
+#[derive(Serialize, Deserialize)]
+struct Command {
+    answer: String
+}
 
 impl Game for HigherLower {
     fn init(names: Vec<Player>) -> Self {
-        HigherLower
+        HigherLower { 
+            players: names,
+            eliminated: vec![],
+            max: MAX,
+            last: 0, // Is always overridden at start
+            score: 0
+        }
     }
 
     fn start(&mut self) -> GameStatus {
-        GameStatus::Running(vec![
-            ("Ilion".to_owned(), "start".to_owned()),
-            ("Anna".to_owned(), "betere start".to_owned())
-        ])
+        let mut stati: PlayerInput = vec![];
+        let value = rand::thread_rng().gen_range(0, self.max);
+        for player in &self.players {
+            let state = serde_json::to_string( &State { 
+                max: self.max,
+                current: value
+            }).expect("Serializing game state failed");
+            stati.push((player.clone(), state))
+        }
+        self.last = value;
+        GameStatus::Running(stati)
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
-        let mut pi = vec![];
+        let mut pi: PlayerInput = vec![];
+        let value = rand::thread_rng().gen_range(0, MAX);
+        let n_state = serde_json::to_string( &State {
+            max: self.max,
+            current: value
+        }).expect("Serializing game state failed");
+
+        let correct = match value {
+            value if value > self.last => "HIGHER",
+            value if value < self.last => "LOWER",
+            _ => "LOWER" // Fix same number
+        };
+        println!("{}", correct);
         for &(ref player, ref command) in player_output {
-            match (player.as_ref(), command.as_ref()) {
-                ("Ilion", "eerste zet") => pi.push(("Ilion".to_owned(), "slecht nieuws".to_owned())),
-                ("Anna", "betere eerste zet") => pi.push(("Anna".to_owned(), "goed nieuws".to_owned())),
-                _ => return GameStatus::Done(Outcome::Score(vec![("Anna".to_owned(), 45), ("Ilion".to_owned(), 0)]))
+            let c: Command = match serde_json::from_str(command) {
+                Ok(command) => command,
+                // TODO More expressive error
+                Err(err) => {
+                    let msg = format!("Invalid formatted command.\n{}", err);
+                    return GameStatus::Done(Outcome::Error(msg.to_owned()));
+                } 
+            };
+            let answer = c.answer;
+
+            match answer {
+                ref ans if ans == correct => pi.push((player.clone(), n_state.clone())),
+                _ => {
+                    self.eliminated.push((player.clone(), self.score));
+                    self.players.retain(|p| p != player); // Remove faulty player
+                } 
             }
         }
-        GameStatus::Running(pi)
+        
+        if self.players.is_empty() {
+            GameStatus::Done(Outcome::Score(self.eliminated.clone()))
+        } else {
+            self.score += 1;
+            self.last = value;
+            GameStatus::Running(pi)
+        }
     }
 }

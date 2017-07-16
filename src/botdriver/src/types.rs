@@ -32,11 +32,6 @@ pub type StartCommand = String;
 pub type Player = String;
 
 /*
- * The list off all players.
- */
-pub type PlayerList = Vec<Player>;
-
-/*
  * The commands received from the players.
  */
 pub type PlayerOutput = Vec<(Player, PlayerCommand)>;
@@ -52,10 +47,11 @@ pub type PlayerCommand = String;
  * The winner(s) in case of a succesful game,
  * or the error's and causes in case something went wrong.
  */
+ // TODO Improve error type
 #[derive(Debug)]
 pub enum Outcome {
     Score(Scoring),
-    Error,
+    Error(String),
 }
 
 /*

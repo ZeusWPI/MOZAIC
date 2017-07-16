@@ -6,11 +6,11 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate rand;
 
 use types::*;
 use std::error::Error;
 use std::env;
-use std::io;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -18,14 +18,14 @@ use std::path::PathBuf;
 use higher_lower::HigherLower;
 
 fn main() {
-    let game_config = match parse_config() {
+    let game_config: GameConfig = match parse_config() {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
             std::process::exit(1)
         }
     };
-    run::<HigherLower>();
+    run::<HigherLower>(&game_config);
 }
 
 fn parse_config() -> Result<GameConfig, Box<Error>> {
@@ -36,7 +36,7 @@ fn parse_config() -> Result<GameConfig, Box<Error>> {
     }
     
     println!("Opening config {}", &args[1]);
-    let mut path = PathBuf::from(&args[1]);
+    let path = PathBuf::from(&args[1]);
     let mut file = File::open(path)?;
 
     println!("Reading contents");
@@ -50,15 +50,19 @@ fn parse_config() -> Result<GameConfig, Box<Error>> {
     Ok(gc)
 }
 
-fn run<G: Game>() {
-    /* generate initial game
+/* generate initial game
      * While (not finnished) do 
         for each player
             send gamestate to player
             receive new commands
             generate new gamestate
      */
-    let mut game = G::init(vec!["Ilion".to_owned()]);
+fn run<G: Game>(config: &GameConfig) {
+    let player_list = config.players.iter().map(
+        |ref pc| pc.name.clone()
+    ).collect();
+
+    let mut game = G::init(player_list);
     let mut gamestate = game.start();
     loop {
         println!("\nNew step:\n==============");
@@ -87,11 +91,5 @@ fn fetch_player_outputs(input: &PlayerInput) -> PlayerOutput {
 }
 
 fn fetch_player_output(player: &Player, info: &GameInfo) -> PlayerCommand {
-    return match (player.as_ref(), info.as_ref()) {
-        ("Ilion", "start") => "eerste zet".to_owned(),
-        ("Anna", "betere start") => "betere eerste zet".to_owned(),
-        ("Ilion", "slecht nieuws") => "paniek".to_owned(),
-        ("Anna", "goed nieuws") => "de doodssteek".to_owned(),
-        _ => "een beweging".to_owned()
-    }
+    return r#"{"answer":"HIGHER"}"#.to_owned()
 }
