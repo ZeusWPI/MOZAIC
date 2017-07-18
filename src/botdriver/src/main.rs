@@ -15,6 +15,7 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 use std::collections::HashMap;
+use std::process::Command;
 
 use higher_lower::HigherLower;
 
@@ -54,7 +55,7 @@ fn parse_config() -> Result<GameConfig, Box<Error>> {
         gc.players.insert(pc.name.clone(), pc);
     }
     println!("Config parsed succesfully");
-    
+
     Ok(gc)
 }
 
@@ -99,5 +100,23 @@ fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput) -> PlayerOutpu
 }
 
 fn fetch_player_output(player: &Player, info: &GameInfo) -> PlayerCommand {
-    return r#"{"answer":"HIGHER"}"#.to_owned()
+    
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+                .args(&["/C", r#"echo '{"answer":"HIGHER"}'"#])
+                .output()
+                .expect("Failed to execute process.
+                         This is on Windows, which we didn't really test to much.
+                         Please report this instance to us.")
+    } else {
+        Command::new("sh")
+                .arg("-c")
+                .arg(r#"echo '{"answer":"HIGHER"}' "#)
+                .output()
+                .expect("failed to execute process")
+    };
+
+    let output = output.stdout;
+    let answer = String::from_utf8(output).expect("Faulty UTF8 found");
+    return answer.trim().to_owned();
 }
