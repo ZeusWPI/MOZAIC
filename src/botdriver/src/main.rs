@@ -7,6 +7,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate rand;
+extern crate mio;
 
 use types::*;
 use std::error::Error;
@@ -73,12 +74,13 @@ fn parse_config() -> Result<GameConfig, Box<Error>> {
 fn run<G: Game>(config: &GameConfig) {
     let mut game = G::init(config.players.keys().cloned().collect());
     let mut gamestate = game.start();
+    let mut handles = create_bot_handles(config);
     loop {
         println!("\nNew step:\n==============");
         match gamestate {
             GameStatus::Running(pi) => {
                 println!("Running with new player input:\n{:?}\n", pi);
-                let po = fetch_player_outputs(&config, &pi);
+                let po = fetch_player_outputs(&config, &pi, &handles);
                 println!("Received new player output:\n{:?}\n", po);
                 gamestate = game.step(&po);
             },
@@ -90,33 +92,19 @@ fn run<G: Game>(config: &GameConfig) {
     }
 }
 
+fn create_bot_handles(config: &GameConfig) -> BotHandles {
+    return BotHandles::new();
+}
+
 // TODO: This could be prettier i guess
-fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput) -> PlayerOutput {
+fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput, handles: &BotHandles) -> PlayerOutput {
     let mut po = PlayerOutput::new();
     for (player, info) in input.iter() {
-        po.insert(player.clone(), fetch_player_output(player, info));
+        po.insert(player.clone(), fetch_player_output(player, info, handles));
     }
     po
 }
 
-fn fetch_player_output(player: &Player, info: &GameInfo) -> PlayerCommand {
-    
-    let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-                .args(&["/C", r#"echo '{"answer":"HIGHER"}'"#])
-                .output()
-                .expect("Failed to execute process.
-                         This is on Windows, which we didn't really test to much.
-                         Please report this instance to us.")
-    } else {
-        Command::new("sh")
-                .arg("-c")
-                .arg(r#"echo '{"answer":"HIGHER"}' "#)
-                .output()
-                .expect("failed to execute process")
-    };
-
-    let output = output.stdout;
-    let answer = String::from_utf8(output).expect("Faulty UTF8 found");
-    return answer.trim().to_owned();
+fn fetch_player_output(player: &Player, info: &GameInfo, handles: &BotHandles) -> PlayerCommand {
+    return r#"{"answer":"HIGHER"}"#.to_owned();
 }

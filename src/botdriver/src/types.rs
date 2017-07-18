@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::process::Output;
 
 pub trait Game {
     fn init(names: Vec<Player>) -> Self;
@@ -31,6 +32,11 @@ pub struct PlayerConfig {
     pub name: Player,
     pub start_command: StartCommand
 }
+
+/*
+ * A series of handles to running processes we need to keep tabs of.
+ */
+pub type BotHandles = HashMap<Player, Output>;
 
 /*
  * A shell command executing the bot in question.
