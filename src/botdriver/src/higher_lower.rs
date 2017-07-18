@@ -7,7 +7,7 @@ const MAX: u32 = 500;
 
 pub struct HigherLower {
     players: Vec<Player>,
-    eliminated: Vec<(Player, Score)>,
+    eliminated: Scoring,
     max: u32,
     last: u32,
     score: i32 // i instead of u to match with Score
@@ -28,7 +28,7 @@ impl Game for HigherLower {
     fn init(names: Vec<Player>) -> Self {
         HigherLower { 
             players: names,
-            eliminated: vec![],
+            eliminated: Scoring::new(),
             max: MAX,
             last: 0, // Is always overridden at start
             score: 0
@@ -36,21 +36,21 @@ impl Game for HigherLower {
     }
 
     fn start(&mut self) -> GameStatus {
-        let mut stati: PlayerInput = vec![];
+        let mut stati: PlayerInput = PlayerInput::new();
         let value = rand::thread_rng().gen_range(0, self.max);
         for player in &self.players {
             let state = serde_json::to_string( &State { 
                 max: self.max,
                 current: value
             }).expect("Serializing game state failed");
-            stati.push((player.clone(), state))
+            stati.insert(player.clone(), state);
         }
         self.last = value;
         GameStatus::Running(stati)
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
-        let mut pi: PlayerInput = vec![];
+        let mut pi: PlayerInput = PlayerInput::new();
         let value = rand::thread_rng().gen_range(0, MAX);
         let n_state = serde_json::to_string( &State {
             max: self.max,
@@ -63,7 +63,7 @@ impl Game for HigherLower {
             _ => "LOWER" // Fix same number
         };
         println!("{}", correct);
-        for &(ref player, ref command) in player_output {
+        for (player, command) in player_output.iter() {
             let c: Command = match serde_json::from_str(command) {
                 Ok(command) => command,
                 // TODO More expressive error
@@ -75,9 +75,11 @@ impl Game for HigherLower {
             let answer = c.answer;
 
             match answer {
-                ref ans if ans == correct => pi.push((player.clone(), n_state.clone())),
+                ref ans if ans == correct => {
+                    pi.insert(player.clone(), n_state.clone());
+                },
                 _ => {
-                    self.eliminated.push((player.clone(), self.score));
+                    self.eliminated.insert(player.clone(), self.score);
                     self.players.retain(|p| p != player); // Remove faulty player
                 } 
             }

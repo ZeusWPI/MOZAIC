@@ -14,6 +14,7 @@ use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
+use std::collections::HashMap;
 
 use higher_lower::HigherLower;
 
@@ -44,32 +45,39 @@ fn parse_config() -> Result<GameConfig, Box<Error>> {
     file.read_to_string(&mut contents)?;
     
     println!("Parsing config");
-    let gc: GameConfig = serde_json::from_str(&contents)?;
-
+    let gcf: GameConfigFormat = serde_json::from_str(&contents)?;
+    let mut gc: GameConfig = GameConfig { players: HashMap::new() };
+    
+    // Move into easier to use struct
+    // TODO, make oneliner
+    for pc in gcf.players { 
+        gc.players.insert(pc.name.clone(), pc);
+    }
     println!("Config parsed succesfully");
+    
     Ok(gc)
 }
 
-/* generate initial game
-     * While (not finnished) do 
-        for each player
-            send gamestate to player
-            receive new commands
-            generate new gamestate
-     */
+/* The algorithm for running a game goes as follows:
+ *
+ * ```
+ * generate initial game
+ * While (not finnished) do 
+ *   for each player
+ *     send gamestate to player
+ *     receive new commands
+ *   generate new gamestate
+ * ```
+ */
 fn run<G: Game>(config: &GameConfig) {
-    let player_list = config.players.iter().map(
-        |ref pc| pc.name.clone()
-    ).collect();
-
-    let mut game = G::init(player_list);
+    let mut game = G::init(config.players.keys().cloned().collect());
     let mut gamestate = game.start();
     loop {
         println!("\nNew step:\n==============");
         match gamestate {
             GameStatus::Running(pi) => {
                 println!("Running with new player input:\n{:?}\n", pi);
-                let po = fetch_player_outputs(&pi);
+                let po = fetch_player_outputs(&config, &pi);
                 println!("Received new player output:\n{:?}\n", po);
                 gamestate = game.step(&po);
             },
@@ -82,10 +90,10 @@ fn run<G: Game>(config: &GameConfig) {
 }
 
 // TODO: This could be prettier i guess
-fn fetch_player_outputs(input: &PlayerInput) -> PlayerOutput {
-    let mut po = vec![];
-    for &(ref player, ref info) in input {
-        po.push((player.clone(), fetch_player_output(player, info)))
+fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput) -> PlayerOutput {
+    let mut po = PlayerOutput::new();
+    for (player, info) in input.iter() {
+        po.insert(player.clone(), fetch_player_output(player, info));
     }
     po
 }

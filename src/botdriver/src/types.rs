@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 pub trait Game {
     fn init(names: Vec<Player>) -> Self;
     fn start(&mut self) -> GameStatus;
@@ -5,17 +7,26 @@ pub trait Game {
 }
 
 /*
- * A configuration for a single game, containing metadata about for example:
+ * A player written configuration for a single game, 
+ * containing metadata about for example:
  *  - players
  *  - maximum step count
  *  - ...
  */
- #[derive(Serialize, Deserialize)]
-pub struct GameConfig {
+ #[derive(Serialize, Deserialize, Debug)]
+pub struct GameConfigFormat {
     pub players: Vec<PlayerConfig>
 }
 
-#[derive(Serialize, Deserialize)]
+/*
+ * An easier to (programmatically) use configuration format
+ */
+ #[derive(Debug)]
+pub struct GameConfig {
+    pub players: HashMap<Player, PlayerConfig>
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
     pub name: Player,
     pub start_command: StartCommand
@@ -34,7 +45,7 @@ pub type Player = String;
 /*
  * The commands received from the players.
  */
-pub type PlayerOutput = Vec<(Player, PlayerCommand)>;
+pub type PlayerOutput = HashMap<Player, PlayerCommand>;
 
 
 /*
@@ -57,7 +68,7 @@ pub enum Outcome {
 /*
  * A list of scores the players received on game end.
  */
-pub type Scoring = Vec<(Player, Score)>;
+pub type Scoring = HashMap<Player, Score>;
 
 /*
  * A score a player receives for finishing a game.
@@ -87,7 +98,7 @@ pub enum GameStatus {
 /*
  * The information about the game we give each player.
  */
-pub type PlayerInput = Vec<(Player, GameInfo)>;
+pub type PlayerInput = HashMap<Player, GameInfo>;
 
 /*
  * The (new) info a player receives,
