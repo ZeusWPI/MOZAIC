@@ -1,0 +1,7 @@
+{
+"move":{
+"origin": "A",
+"destination": "B",
+"ship_count": 3
+  }
+}
