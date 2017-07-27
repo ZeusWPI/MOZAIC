@@ -1,7 +1,7 @@
 {
 "players": ["ki","ko","ka","ku"],
 "planets": [
-{"x":0,"y":0,"ship_count":0,"owner":"ki","name":"A"},
+{"x":0,"y":0,"ship_count":5,"owner":"ki","name":"A"},
 {"x":0,"y":1,"ship_count":0,"owner":"","name":"B"},
 {"x":0,"y":2,"ship_count":2,"owner":"","name":"C"},
 {"x":0,"y":3,"ship_count":1,"owner":"","name":"D"},
@@ -26,5 +26,16 @@
 {"x":4,"y":2,"ship_count":5,"owner":"","name":"W"},
 {"x":4,"y":3,"ship_count":3,"owner":"","name":"X"},
 {"x":4,"y":4,"ship_count":4,"owner":"ko","name":"Y"}
+],
+"expeditions": [
+{"ship_count":1 ,"origin":"A","destination":"B","owner":"ki","turns_remaining":1 },
+{"ship_count":1 ,"origin":"A","destination":"C","owner":"ki","turns_remaining":1 },
+{"ship_count":1 ,"origin":"E","destination":"F","owner":"ka","turns_remaining":1 },
+{"ship_count":1 ,"origin":"E","destination":"G","owner":"ka","turns_remaining":1 },
+{"ship_count":1 ,"origin":"U","destination":"R","owner":"ku","turns_remaining":1 },
+{"ship_count":1 ,"origin":"U","destination":"S","owner":"ku","turns_remaining":1 },
+{"ship_count":1 ,"origin":"Y","destination":"V","owner":"ko","turns_remaining":1 },
+{"ship_count":1 ,"origin":"Y","destination":"W","owner":"ko","turns_remaining":1 },
+{"ship_count":1 ,"origin":"Y","destination":"X","owner":"ko","turns_remaining":1 }
 ]
 }
