@@ -22,6 +22,7 @@ my $y_bound = shift @ARGV;
 use constant PLAYER_NAME_LENGTH => 8;
 use constant PLANET_NAME_LENGTH => 10;
 
+# This is the datastructure that will be gradually filled and finally outputted as JSON
 my %world = (
 "players" => [],
 "planets" => [],
@@ -33,6 +34,8 @@ say "::: Generating unique players :::";
 my %players = ();
 my $i = chr(int(rand 26)+ord('A'));
 my $playername = "";
+# the outer while loop is to avoid the extremely rare case in which two players are generated
+# with the same name, which would break the game
 while(scalar keys %players != $playercount){
   for my $j (1..$playercount){
     for my $k (1..PLAYER_NAME_LENGTH){
@@ -44,10 +47,12 @@ while(scalar keys %players != $playercount){
   }
 }
 
+# interpret $world{"players"} as array and store the player names there
 @{$world{"players"}} = keys %players;
 
 #print Dumper(\%world);
 
+# description of a planet
 my $planet = {
   "x"=>0,
   "y"=>0,
@@ -58,6 +63,8 @@ my $planet = {
 
 say "::: Generating unique planets :::";
 
+# planets receive unique names
+# planets receive unique coordinates within the specified borders
 my @planets = ();
 $i = chr(int(rand 26)+ord('A'));
 my $planetname = "";
@@ -91,6 +98,9 @@ while (scalar @planets != $planetcount){
   }
 }
 
+# each player gets on planet to start with
+# that planet also receives a number of ships (arg)
+# all other planets have 0 ships at the start
 $i = 0;
 for my $k (@planets[0..$playercount-1]){
   ${$k}{"owner"}=(keys %players)[$i];
@@ -107,6 +117,7 @@ my $encoded = encode_json(\%world);
 #say $encoded;
 say "::: Encoded to JSON :::";
 
+# the encoded world is written to a new file with a unique name
 my $result = `mktemp -p .`;
 chomp($result);
 
