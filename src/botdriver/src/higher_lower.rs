@@ -3,7 +3,7 @@ extern crate serde_json;
 use rand;
 use rand::Rng;
 
-use types::{Game, GameStatus, Player, PlayerInput, PlayerOutput, Outcome, Scoring};
+use game_types::{Game, GameStatus, Player, PlayerInput, PlayerOutput, Outcome, Scoring};
 
 // Highest possible number that can be chosen.
 const MAX: u32 = 500;

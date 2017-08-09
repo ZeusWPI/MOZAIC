@@ -1,4 +1,5 @@
-mod types;
+mod game_types;
+mod driver_types;
 mod higher_lower;
 
 #[macro_use]
@@ -7,7 +8,6 @@ extern crate serde_json;
 extern crate serde;
 extern crate rand;
 
-use types::*;
 use std::error::Error;
 use std::env;
 use std::fs::File;
@@ -16,6 +16,9 @@ use std::io::{Write, Read, BufReader, BufRead};
 use std::path::PathBuf;
 use std::collections::HashMap;
 
+
+use game_types::{Game, GameInfo, GameStatus, Player, PlayerInput, PlayerOutput, PlayerCommand};
+use driver_types::{BotHandles, BotHandle, GameConfig, GameConfigFormat};
 use higher_lower::HigherLower;
 
 fn main() {
