@@ -1,13 +1,11 @@
 mod types;
 mod higher_lower;
 
-extern crate serde;
-
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+extern crate serde;
 extern crate rand;
-extern crate mio;
 
 use types::*;
 use std::error::Error;
