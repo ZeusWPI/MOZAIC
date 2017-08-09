@@ -11,7 +11,7 @@ extern crate rand;
 use std::error::Error;
 use std::env;
 use std::fs::File;
-use std::process::{Command, Stdio, Child};
+use std::process::{Command, Stdio};
 use std::io::{Write, Read, BufReader, BufRead};
 use std::path::PathBuf;
 use std::collections::HashMap;
@@ -81,12 +81,15 @@ fn run<G: Game>(config: &GameConfig) {
         match gamestate {
             GameStatus::Running(pi) => {
                 println!("Running with new player input:\n{:?}\n", pi);
-                let po = fetch_player_outputs(&config, &pi, &mut handles);
+                let po = fetch_player_outputs(&pi, &mut handles);
                 println!("Received new player output:\n{:?}\n", po);
                 gamestate = game.step(&po);
             },
             GameStatus::Done(outcome) => {
-                handles.values_mut().map(|bot| bot.kill());
+                // Kill bot-processes
+                for bot in handles.values_mut() {
+                    bot.kill();
+                }
                 println!("Done with: {:?}", outcome);
                 break;
             } 
@@ -105,7 +108,7 @@ fn create_bot_handles(config: &GameConfig) -> BotHandles {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .expect("[MOZAIC] Failed to execute process");
+            .expect("[DRIVER] Failed to execute process");
 
         children.insert(player.clone(), bot);
     }
@@ -114,7 +117,7 @@ fn create_bot_handles(config: &GameConfig) -> BotHandles {
 }
 
 // TODO: This could be prettier i guess
-fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput, bots: &mut BotHandles) -> PlayerOutput {
+fn fetch_player_outputs(input: &PlayerInput, bots: &mut BotHandles) -> PlayerOutput {
     let mut po = PlayerOutput::new();
     for (player, info) in input.iter() {
         let mut bot = bots.get_mut(player).unwrap();
