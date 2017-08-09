@@ -102,7 +102,7 @@ fn create_bot_handles(config: &GameConfig) -> BotHandles {
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .expect("MOZAIC: Failed to execute process");
+            .expect("[MOZAIC] Failed to execute process");
 
         children.insert(player.clone(), bot);
     }
