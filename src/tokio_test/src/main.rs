@@ -4,13 +4,12 @@ use std::io::{Write, Read, BufReader, BufRead};
 
 
 fn main(){
-    let cmds = vec![("python3", "mocks/echo.py"), ("python3", "mocks/echo.py"), ("python3", "mocks/echo.py")];
+    let cmds = vec![("python3 mocks/echo.py", 0), ("python3 mocks/echo.py", 0), ("python3 mocks/echo.py", 0)];
     
-    let mut children: Vec<Child> = cmds.iter().enumerate().map(|(i, &(cmd, args))| {
-        let args = args.split(" ");
-        let bot = Command::new(cmd)
-            .args(args)
-            .arg(i.to_string())
+    let mut children: Vec<Child> = cmds.iter().enumerate().map(|(i, &(cmd, _))| {
+        let bot = Command::new("bash")
+            .arg("-c")
+            .arg(format!("{} {}", cmd, i))
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()

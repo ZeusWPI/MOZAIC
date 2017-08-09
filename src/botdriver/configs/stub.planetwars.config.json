@@ -2,11 +2,11 @@
     "players": [
         {
             "name": "bert",
-            "start_command": "python3 testbot.py"
+            "start_command": "python3 mock_bots/higher.py"
         },
         {
             "name": "timp",
-            "start_command": "python3 testbot.py"
+            "start_command": "python3 mock_bots/deter.py"
         }
     ]
 }

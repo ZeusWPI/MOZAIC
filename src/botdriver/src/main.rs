@@ -11,10 +11,10 @@ use types::*;
 use std::error::Error;
 use std::env;
 use std::fs::File;
-use std::io::prelude::*;
+use std::process::{Command, Stdio, Child};
+use std::io::{Write, Read, BufReader, BufRead};
 use std::path::PathBuf;
 use std::collections::HashMap;
-use std::process::Command;
 
 use higher_lower::HigherLower;
 
@@ -78,11 +78,12 @@ fn run<G: Game>(config: &GameConfig) {
         match gamestate {
             GameStatus::Running(pi) => {
                 println!("Running with new player input:\n{:?}\n", pi);
-                let po = fetch_player_outputs(&config, &pi, &handles);
+                let po = fetch_player_outputs(&config, &pi, &mut handles);
                 println!("Received new player output:\n{:?}\n", po);
                 gamestate = game.step(&po);
             },
             GameStatus::Done(outcome) => {
+                handles.values_mut().map(|bot| bot.kill());
                 println!("Done with: {:?}", outcome);
                 break;
             } 
@@ -91,18 +92,42 @@ fn run<G: Game>(config: &GameConfig) {
 }
 
 fn create_bot_handles(config: &GameConfig) -> BotHandles {
-    return BotHandles::new();
+    let mut children = BotHandles::new();
+
+    for (player, pconfig) in config.players.iter() {
+        let ref cmd = pconfig.start_command;
+        let bot = Command::new("bash")
+            .arg("-c")
+            .arg(format!("{} {}", cmd, player))
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("MOZAIC: Failed to execute process");
+
+        children.insert(player.clone(), bot);
+    }
+
+    children
 }
 
 // TODO: This could be prettier i guess
-fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput, handles: &BotHandles) -> PlayerOutput {
+fn fetch_player_outputs(config: &GameConfig, input: &PlayerInput, bots: &mut BotHandles) -> PlayerOutput {
     let mut po = PlayerOutput::new();
     for (player, info) in input.iter() {
-        po.insert(player.clone(), fetch_player_output(player, info, handles));
+        let mut bot = bots.get_mut(player).unwrap();
+        po.insert(player.clone(), fetch_player_output(player, info, bot));
     }
     po
 }
 
-fn fetch_player_output(player: &Player, info: &GameInfo, handles: &BotHandles) -> PlayerCommand {
-    return r#"{"answer":"HIGHER"}"#.to_owned();
+fn fetch_player_output(player: &Player, info: &GameInfo, bot: &mut BotHandle) -> PlayerCommand {
+    let bot_in = bot.stdin.as_mut().unwrap();
+    let mut bot_out = BufReader::new(bot.stdout.as_mut().unwrap());
+
+    bot_in.write_fmt(format_args!("{}\n", info));
+    bot_in.flush();
+    let mut response = String::new();
+    bot_out.read_line(&mut response).unwrap();
+
+    response
 }
