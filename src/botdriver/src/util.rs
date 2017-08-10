@@ -10,6 +10,8 @@ use std::process::{Command, Stdio};
 
 use driver_types::{GameConfig, GameConfigFormat, BotHandles};
 
+// Parse a config passed to the program as an command-line argument.
+// Return the parsed config.
 pub fn parse_config() -> Result<GameConfig, Box<Error>> {
     let args: Vec<_> = env::args().collect();
     if (args.len() < 2) || (args.len() > 2) {
@@ -43,6 +45,8 @@ pub fn parse_config() -> Result<GameConfig, Box<Error>> {
     Ok(gc)
 }
 
+// Start the process for all bots, thus creating to handles to the processes.
+// Don't pass any input yet.
 pub fn create_bot_handles(config: &GameConfig) -> BotHandles {
     println!("Launching bots");
     let mut children = BotHandles::new();

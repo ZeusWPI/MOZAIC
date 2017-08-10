@@ -33,6 +33,7 @@ pub type GameInfo = String;
 
 /*
  * The commands received from the players.
+ * TODO: Rename to PlayerMoves/Commands/Responses
  */
 pub type PlayerOutput = HashMap<Player, PlayerCommand>;
 
