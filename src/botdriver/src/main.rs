@@ -12,7 +12,7 @@ extern crate rand;
 use std::error::Error;
 use std::io::{Write, BufReader, BufRead};
 
-use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand};
+use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
 use driver_types::{BotHandles, BotHandle, GameConfig};
 use higher_lower::HigherLower;
 
@@ -31,47 +31,53 @@ fn main() {
  *
  * ```
  * generate initial game
- * while (not finnished) do 
- *   for each player
- *     send gamestate to player
- *     receive new commands
- *   generate new gamestate
+ * while (gamestate is not finnished) do
+ *   gamestate = game.step()
+ * 
+ * finnish()
  * ```
  */
 fn run<G: Game>(config: &GameConfig) {
-    let mut game = G::init(config.players.keys().cloned().collect());
-    let mut gamestate = game.start();
+    let players = config.players.keys().cloned().collect();
+    let mut game = G::init(players);
+    let mut gamestatus = game.start();
     let mut handles = util::create_bot_handles(config); 
     loop {
         println!("\nNew step:\n==============");
-        match gamestate {
-            GameStatus::Running(pi) => {
-                println!("Running with new player input:\n{:?}\n", pi);
-                let po = fetch_player_outputs(&pi, &mut handles);
-                match po {
-                    Ok(po) => {
-                        println!("Received new player output:\n{:?}\n", po);
-                        gamestate = game.step(&po);
-                    },
-                    Err(e) => {
-                        println!("{}", e);
-                        std::process::exit(1)
-                    }
-                }
-            },
+        gamestatus = match gamestatus {
+            GameStatus::Running(pi) => step(&mut handles, &pi, &mut game),
             GameStatus::Done(outcome) => {
-                // Kill bot-processes
-                for (player, bot) in handles.iter_mut() {
-                    bot.kill().expect(&format!("Unable to kill {}", player));
-                }
-                println!("Done with: {:?}", outcome);
-                break;
-            } 
+                finnish(&mut handles, outcome);
+                break
+            }
         }
     }
 }
 
-// TODO: This could be prettier i guess
+fn step<G: Game>(mut bots: &mut BotHandles, player_input: &PlayerInput, game: &mut G) -> GameStatus {
+    println!("Running with new player input:\n{:?}\n", player_input);
+    let po = fetch_player_outputs(&player_input, &mut bots);
+    match po {
+        Ok(po) => {
+            println!("Received new player output:\n{:?}\n", po);
+            return game.step(&po);
+        },
+        Err(e) => {
+            println!("{}", e);
+            std::process::exit(1)
+        }
+    }
+}
+
+fn finnish(bots: &mut BotHandles, outcome: Outcome) {
+    // Kill bot-processes
+    for (player, bot) in bots.iter_mut() {
+        bot.kill().expect(&format!("Unable to kill {}", player));
+    }
+    println!("Done with: {:?}", outcome);
+}
+
+
 fn fetch_player_outputs(input: &PlayerInput, bots: &mut BotHandles) -> Result<PlayerOutput, Box<Error>> {
     let mut pos = PlayerOutput::new();
     for (player, info) in input.iter() {
