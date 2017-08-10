@@ -11,7 +11,7 @@ extern crate rand;
 
 use std::io::{Write, BufReader, BufRead};
 
-use game_types::{Game, GameInfo, GameStatus, Player, PlayerInput, PlayerOutput, PlayerCommand};
+use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand};
 use driver_types::{BotHandles, BotHandle, GameConfig};
 use higher_lower::HigherLower;
 
@@ -67,12 +67,12 @@ fn fetch_player_outputs(input: &PlayerInput, bots: &mut BotHandles) -> PlayerOut
     let mut po = PlayerOutput::new();
     for (player, info) in input.iter() {
         let mut bot = bots.get_mut(player).unwrap();
-        po.insert(player.clone(), fetch_player_output(player, info, bot));
+        po.insert(player.clone(), fetch_player_output(info, bot));
     }
     po
 }
 
-fn fetch_player_output(player: &Player, info: &GameInfo, bot: &mut BotHandle) -> PlayerCommand {
+fn fetch_player_output(info: &GameInfo, bot: &mut BotHandle) -> PlayerCommand {
     let bot_in = bot.stdin.as_mut().unwrap();
     let mut bot_out = BufReader::new(bot.stdout.as_mut().unwrap());
 
