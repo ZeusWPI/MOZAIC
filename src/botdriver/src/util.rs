@@ -30,12 +30,16 @@ pub fn parse_config() -> Result<GameConfig, Box<Error>> {
     let mut gc: GameConfig = GameConfig { players: HashMap::new() };
     
     // Move into easier to use struct
-    // TODO: make oneliner
-    for pc in gcf.players { 
-        gc.players.insert(pc.name.clone(), pc);
+    // Check for uniqueness of names
+    for pconfig in gcf.players {
+        if gc.players.contains_key(&pconfig.name) {
+            let msg = format!("Duplicate name found: {}", pconfig.name);
+            return Err(From::from(msg));
+        }
+        gc.players.insert(pconfig.name.clone(), pconfig);
     }
+    
     println!("Config parsed succesfully");
-
     Ok(gc)
 }
 
