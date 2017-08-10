@@ -1,5 +1,6 @@
 use serde_json;
 
+use std;
 use std::error::Error;
 use std::path::PathBuf;
 use std::collections::HashMap;
@@ -44,20 +45,45 @@ pub fn parse_config() -> Result<GameConfig, Box<Error>> {
 }
 
 pub fn create_bot_handles(config: &GameConfig) -> BotHandles {
+    println!("Launching bots");
     let mut children = BotHandles::new();
 
     for (player, pconfig) in config.players.iter() {
-        let ref cmd = pconfig.start_command;
-        let bot = Command::new("bash")
-            .arg("-c")
-            .arg(format!("{} {}", cmd, player))
+        //let ref cmd = pconfig.start_command;
+        let mut full_cmd :Vec<&str> = pconfig.start_command.split(" ").collect();
+        let args :Vec<&str> = full_cmd.drain(1..).collect();
+        let cmd = full_cmd[0];
+        let bot = Command::new(cmd)
+            .args(args)
+            .arg(player)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .expect("[DRIVER] Failed to execute process");
+            .expect(&format!("[DRIVER] Failed to execute process\n{}", cmd));
 
         children.insert(player.clone(), bot);
     }
 
     children
 }
+
+/*
+pub fn check_bot_handles(children: &mut BotHandles){
+    // Weak check to see whether bots were succesfully started.
+    for (player, mut child) in children {
+        let exit = child.try_wait();
+        match exit {
+            Ok(Some(status)) => {
+                println!("Process for {} unsuccesfully launched or already terminated. Reason:\n{}", player, status);
+                std::process::exit(1);
+            },
+            Err(e) => {
+                println!("Error checking bot status for {}.\nReason: {}", player, e);
+                std::process::exit(1);
+            }
+            Ok(None) => {
+                println!("Process for {} succesfully launched.", player);
+            }
+        }
+    }
+}*/
