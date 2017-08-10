@@ -1,7 +1,8 @@
 mod game_types;
 mod driver_types;
-mod higher_lower;
 mod util;
+mod planet_wars;
+//mod higher_lower;
 
 #[macro_use]
 extern crate serde_derive;
@@ -14,7 +15,7 @@ use std::io::{Write, BufReader, BufRead};
 
 use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
 use driver_types::{BotHandles, BotHandle, GameConfig};
-use higher_lower::HigherLower;
+use planet_wars::PlanetWars;
 
 // Load the config and start the game.
 fn main() {
@@ -25,7 +26,7 @@ fn main() {
             std::process::exit(1)
         }
     };
-    run::<HigherLower>(&game_config);
+    run::<PlanetWars>(&game_config);
 }
 
 /* 
