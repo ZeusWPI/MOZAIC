@@ -1,6 +1,5 @@
 use serde_json;
 
-use std;
 use std::error::Error;
 use std::path::PathBuf;
 use std::collections::HashMap;

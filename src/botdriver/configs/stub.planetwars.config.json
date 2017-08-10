@@ -8,7 +8,7 @@
         {
             "name": "timp",
             "start_command": "python3",
-            "args": ["mock_bots/det.py"]
+            "args": ["mock_bots/deter.py"]
         }
     ]
 }
