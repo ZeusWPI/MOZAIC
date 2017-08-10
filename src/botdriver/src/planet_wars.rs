@@ -68,13 +68,14 @@ impl Game for PlanetWars {
         };
 
         for player in &self.players {
-            let inp = serde_json::to_string_pretty(&state).expect("[PLANET_WARS] Serializing game state failed.");
+            let inp = serde_json::to_string(&state).expect("[PLANET_WARS] Serializing game state failed.");
             pi.insert(player.clone(), inp);
         }
         GameStatus::Running(pi)
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
+        // TODO
         GameStatus::Done(Outcome::Score(Scoring::new()))
     }
 }

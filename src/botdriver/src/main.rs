@@ -12,6 +12,7 @@ extern crate rand;
 
 use std::error::Error;
 use std::io::{Write, BufReader, BufRead};
+use std::collections::HashMap;
 
 use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
 use driver_types::{BotHandles, BotHandle, GameConfig};
@@ -63,11 +64,11 @@ fn run<G: Game>(config: &GameConfig) {
 // Let's the game calculate next state.
 // Return next state for next step (if game is not over yet).
 fn step<G: Game>(mut bots: &mut BotHandles, player_input: &PlayerInput, game: &mut G) -> GameStatus {
-    println!("Running with new player input:\n{:?}\n", player_input);
+    println!("Input:\n{}", pp(player_input));
     let po = fetch_player_outputs(&player_input, &mut bots);
     match po {
         Ok(po) => {
-            println!("Received new player output:\n{:?}\n", po);
+            println!("Output:\n{}", pp(&po));
             return game.step(&po);
         },
         Err(e) => {
@@ -123,4 +124,14 @@ fn fetch_player_output(info: &GameInfo, bot: &mut BotHandle) -> Result<PlayerCom
     bot_out.read_line(&mut response).expect("Invalid UTF-8 found");
 
     Ok(response)
+}
+
+// Pretty print thing
+fn pp(hm: &HashMap<String, String>) -> String {
+    let mut pp = String::new();
+    for (key, value) in hm {
+        pp.push_str(&format!("# Value for {}:\n", key));
+        pp.push_str(&format!("{}\n", value));
+    }
+    pp
 }

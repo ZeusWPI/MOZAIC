@@ -1,5 +1,11 @@
-import sys
+import sys, json
 
-for line in iter(sys.stdin.readline, ''):
-    print('{}')
-    sys.stdout.flush()
+def get_input():
+    for line in sys.stdin:
+        yield json.loads(line)
+
+while True:
+    j = get_input()
+    for d in j:
+        print(d)
+        sys.stdout.flush()
