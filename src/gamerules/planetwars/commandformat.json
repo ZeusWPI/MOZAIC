@@ -9,7 +9,10 @@
       "properties": {
         "origin": {"type": "string"},
         "destination": {"type": "string"},
-        "ship_count": {"type": "number"}
+        "ship_count": {
+          "type":"integer",
+          "minimum": 0
+        }
       },
       "required": ["origin", "destination", "ship_count"],
       "additionalProperties" : false
