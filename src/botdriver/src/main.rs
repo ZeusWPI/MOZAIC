@@ -84,7 +84,7 @@ fn finnish(bots: &mut BotHandles, outcome: Outcome) {
     for (player, bot) in bots.iter_mut() {
         bot.kill().expect(&format!("Unable to kill {}", player));
     }
-    println!("Done with: {:?}", outcome);
+    println!("Done with: {:#?}", outcome);
 }
 
 // Fetch the responses from all players.
