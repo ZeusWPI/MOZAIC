@@ -40,7 +40,7 @@ fn main() {
 fn run<G: Game>(config: &GameConfig) {
     let mut game = G::init(config.players.keys().cloned().collect());
     let mut gamestate = game.start();
-    let mut handles = util::create_bot_handles(config);
+    let mut handles = util::create_bot_handles(config); 
     loop {
         println!("\nNew step:\n==============");
         match gamestate {

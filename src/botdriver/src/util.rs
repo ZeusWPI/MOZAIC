@@ -49,24 +49,23 @@ pub fn create_bot_handles(config: &GameConfig) -> BotHandles {
     let mut children = BotHandles::new();
 
     for (player, pconfig) in config.players.iter() {
-        //let ref cmd = pconfig.start_command;
-        let mut full_cmd :Vec<&str> = pconfig.start_command.split(" ").collect();
-        let args :Vec<&str> = full_cmd.drain(1..).collect();
-        let cmd = full_cmd[0];
+        let ref cmd = pconfig.start_command;
+        let ref args = pconfig.args;
         let bot = Command::new(cmd)
             .args(args)
             .arg(player)
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
-            .expect(&format!("[DRIVER] Failed to execute process\n{}", cmd));
+            .expect(&format!("\n[DRIVER] Failed to execute process: {} {:?}\n", cmd, args));
 
         children.insert(player.clone(), bot);
     }
-
+    
     children
 }
 
+// This doesn't do much
 /*
 pub fn check_bot_handles(children: &mut BotHandles){
     // Weak check to see whether bots were succesfully started.

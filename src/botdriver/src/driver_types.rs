@@ -28,7 +28,8 @@ pub struct GameConfig {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
     pub name: Player,
-    pub start_command: StartCommand
+    pub start_command: StartCommand,
+    pub args: Args
 }
 
 /*
@@ -39,9 +40,15 @@ pub type BotHandles = HashMap<Player, BotHandle>;
 pub type BotHandle = Child;
 
 /*
- * A shell command executing the bot in question.
+ * A command executing the bot in question.
+ * Ex: python
  */
 pub type StartCommand = String;
+
+/*
+ * An array of arguments needing to be passed to the StartCommand/
+ */
+pub type Args = Vec<String>;
 
  // TODO: Implement things with warnings (non-blocking faulty moves)
  // TODO: Implement things with logging
