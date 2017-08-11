@@ -39,6 +39,7 @@ struct Expedition {
     turns_remaining: u32
 }
 
+#[derive(Serialize, Deserialize)]
 struct Command {
     origin: Name,
     destination: Name,
@@ -75,9 +76,58 @@ impl Game for PlanetWars {
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
-        // TODO
+        for (player, command) in player_output {
+
+            // Parse command
+            let c: Command = match serde_json::from_str(command) {
+                Ok(command) => command,
+                // TODO: More expressive error
+                Err(err) => {
+                    let msg = format!("Invalid formatted command.\n{}", err);
+                    return GameStatus::Done(Outcome::Error(msg.to_owned()));
+                } 
+            };
+
+            // Check whether origin is a valid planet
+            let or = match self.planets.get(&c.origin) {
+                Some(planet) => planet,
+                None => return faulty_command("Origin is not a valid planet")
+            };
+
+            // Check whether dest is a valid planet
+            let dest = match self.planets.get(&c.destination) {
+                Some(planet) => planet,
+                None => return faulty_command("Destination is not a valid planet")
+            };
+
+            if or.owner != *player {
+                return faulty_command("You don't own this planet")
+            }
+
+            if or.ship_count < c.ship_count {
+                return faulty_command("You don't control enough ships to send this amount")
+            }
+            
+            let exp = Expedition {
+                ship_count: c.ship_count,
+                origin: c.origin.clone(),
+                destination: c.destination.clone(),
+                owner: player.clone(),
+                turns_remaining: distance(&c.origin, &c.destination)
+            };
+           
+        }
         GameStatus::Done(Outcome::Score(Scoring::new()))
     }
+}
+
+fn faulty_command(err: &str) -> GameStatus {
+    GameStatus::Done(Outcome::Error(err.to_string()))
+}
+
+fn distance(origin: &String, destination: &String) -> u32 {
+    // TODO: Fix
+    return 5;
 }
 
 // TODO: Fix possible planets on same location
@@ -85,45 +135,30 @@ fn gen_planets(players: Vec<Player>) -> HashMap<Name, Planet> {
     let mut planets = HashMap::new();
 
     for player in &players {
-        let planet = gen_player_planet(player);
+        let planet_name = format!("{}_Base", player);
+        let planet = gen_planet(planet_name, player.clone());
         planets.insert(planet.name.clone(), planet);
     }
 
     let player_amount = players.len() as u32;
     let planet_amount = player_amount * PLANET_FACTOR;
     for x in 0..(planet_amount - player_amount) {
-        let planet = gen_empty_planet();
+        let planet_name = format!("Planet_{}", x);
+        let planet = gen_planet(planet_name, "".to_string());
         planets.insert(planet.name.clone(), planet);
     }
     
     planets
 }
 
-fn gen_player_planet(player: &Player) -> Planet {
+fn gen_planet(planet_name: Name, owner: Player) -> Planet {
     let x = rand::thread_rng().gen_range(0, WIDTH);
     let y = rand::thread_rng().gen_range(0, HEIGHT);
-    let pname = format!("{}_Base", player);
-
     Planet {
         x: x,
         y: y,
         ship_count: START_SHIPS,
-        owner: player.to_string(),
-        name: pname
-    }
-}
-
-// TODO: Remove duplication
-fn gen_empty_planet() -> Planet {
-    let x = rand::thread_rng().gen_range(0, WIDTH);
-    let y = rand::thread_rng().gen_range(0, HEIGHT);
-    let pname = format!("Planet_{}", x);
-
-    Planet {
-        x: x,
-        y: y,
-        ship_count: 0,
-        owner: "".to_string(),
-        name: pname
+        owner: owner,
+        name: planet_name.to_string()
     }
 }

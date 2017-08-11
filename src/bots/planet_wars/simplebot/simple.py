@@ -6,6 +6,7 @@ def get_input():
 
 while True:
     j = get_input()
-    for d in j:
-        print('{}')
+    for state in j:
+        name = sys.argv[1]
+        print('{{"origin":"{}_Base", "destination": "Planet_1", "ship_count": 1}}'.format(name))
         sys.stdout.flush()
