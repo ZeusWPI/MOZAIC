@@ -5,6 +5,10 @@ const svg = d3.select("svg"),
   height = +svg.attr("height");
 const planet_types = ["water", "red", "moon", "mars", "earth"];
 
+
+//TODO use for viewport
+const scale = 10;
+
 // Help functions
 
 function randomBetween(min, max) {
@@ -16,7 +20,7 @@ function euclideanDistance(e1, e2) {
 }
 
 function relativeCoords(expedition) {
-  var total_distance = Math.ceil(euclideanDistance(expedition.origin, expedition.destination));
+  var total_distance = Math.ceil(euclideanDistance(expedition.origin, expedition.destination)) / scale;
   var mod = expedition.turns_remaining / total_distance;
 
   var new_x = expedition.origin.x - expedition.destination.x;
@@ -73,6 +77,11 @@ function prepareData(data) {
     return map;
   }, {});
 
+  data.planets.map(e => {
+    e.x *= scale;
+    e.y *= scale;
+  });
+
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
     o.size = randomBetween(20, 60);
@@ -102,15 +111,15 @@ function generateLegend(data) {
 function renderOrbit(fleets, fleet, target) {
   time = Date.now();
   svg.append('circle')
-    .attr('transform', 'translate(' + target.x * 20 + ',' + target.y * 20 + ')')
+    .attr('transform', 'translate(' + target.x + ',' + target.y + ')')
     .attr('r', fleet.distance)
     .style('fill', "none")
     .style('stroke', fleet.color);
 
   let wrapper = svg.append('g')
-    .attr('transform', 'translate(' + target.x * 20 + ',' + target.y * 20 + ')');
+    .attr('transform', 'translate(' + target.x + ',' + target.y + ')');
   wrapper.append('circle')
-    .attr('transform', 'translate(' + target.x * 20 + ',' + target.y * 20 + ')')
+    .attr('transform', 'translate(' + target.x + ',' + target.y + ')')
     .attr('class', 'fleet')
     .attr('r', fleet.size)
     .attr('cx', fleet.distance)
@@ -138,21 +147,21 @@ function generateMap(data) {
   planets.append('circle')
     .attr("r", d => d.size)
     .attr('class', 'planet')
-    .attr('cx', d => d.x * 20)
-    .attr('cy', d => d.y * 20)
+    .attr('cx', d => d.x)
+    .attr('cy', d => d.y)
     .attr('fill', d => "url(#" + d.type + ")");
 
   planets.append('text')
-    .attr('x', d => d.x * 20)
-    .attr('y', d => d.y * 20 + d.size + 20)
+    .attr('x', d => d.x)
+    .attr('y', d => d.y + d.size + 20)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => d.name);
 
   planets.append('text')
-    .attr('x', d => d.x * 20)
-    .attr('y', d => d.y * 20 + d.size + 60)
+    .attr('x', d => d.x)
+    .attr('y', d => d.y + d.size + 60)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
@@ -163,7 +172,7 @@ function generateMap(data) {
   let expeditions = svg.selectAll('.expedition')
     .data(data.expeditions)
     .enter().append('g')
-    .attr('transform', d => 'translate(' + relativeCoords(d).x * 20 + ',' + relativeCoords(d).y * 20 + ')');
+    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
   expeditions.append('circle')
     .attr('transform', (d, i) => {
       return 'rotate(' + (Math.atan2(d.destination.y - d.origin.y, d.destination.x - d.origin.x) * (180 / Math.PI) + 90) + ')';
