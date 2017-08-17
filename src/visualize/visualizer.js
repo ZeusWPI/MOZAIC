@@ -7,7 +7,7 @@ const planet_types = ["water", "red", "moon", "mars", "earth"];
 
 
 //TODO use for viewport
-const scale = 10;
+const scale = 20;
 
 // Help functions
 
@@ -97,7 +97,8 @@ function prepareData(data) {
 
 function generateLegend(data) {
   // Info
-  //TODO FIX
+  //TODO do away with the whole legend thing and make planet and fleet owners clear in another way
+  // instead create a current state board containing player owned planets and fleet strengths for the more hectic games
   d3.select("body")
     .selectAll("p")
     .data(data.players)
@@ -106,6 +107,7 @@ function generateLegend(data) {
     .style('color', (d, i) => color(i));
 
 }
+
 // Rendering
 
 function renderOrbit(fleets, fleet, target) {
@@ -124,7 +126,8 @@ function renderOrbit(fleets, fleet, target) {
     .attr('r', fleet.size)
     .attr('cx', fleet.distance)
     .attr('cy', 0)
-    .attr('fill', d => "url(#ship)");
+    .attr('fill', d => "url(#ship)")
+    .append('title').text(d => fleet.owner);
 
   function renderFrame() {
     let delta = Date.now() - time;
@@ -149,7 +152,8 @@ function generateMap(data) {
     .attr('class', 'planet')
     .attr('cx', d => d.x)
     .attr('cy', d => d.y)
-    .attr('fill', d => "url(#" + d.type + ")");
+    .attr('fill', d => "url(#" + d.type + ")")
+    .append('title').text(d => d.owner);
 
   planets.append('text')
     .attr('x', d => d.x)
@@ -157,7 +161,8 @@ function generateMap(data) {
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
-    .text(d => d.name);
+    .text(d => d.name)
+    .append('title').text(d => d.owner);;
 
   planets.append('text')
     .attr('x', d => d.x)
@@ -165,7 +170,8 @@ function generateMap(data) {
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
-    .text(d => "\u2694 " + d.ship_count);
+    .text(d => "\u2694 " + d.ship_count)
+    .append('title').text(d => d.owner);
 
   // Expeditions
 
@@ -180,14 +186,16 @@ function generateMap(data) {
     .attr('r', 20)
     .style('stroke', d => data.color_map[d.owner])
     .style('stroke-width', 2)
-    .attr('fill', d => "url(#ship)");
+    .attr('fill', d => "url(#ship)")
+    .append('title').text(d => d.owner);
 
   expeditions.append('text')
     .attr('y', 40)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
-    .text(d => "\u2694 " + d.ship_count);
+    .text(d => "\u2694 " + d.ship_count)
+    .append('title').text(d => d.owner);
 
   svg.selectAll('.planet').each(d => {
     fleet = {
