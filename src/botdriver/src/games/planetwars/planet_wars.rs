@@ -3,13 +3,14 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell, RefMut};
 
-use protocol::*;
+use games::planetwars::protocol::*;
 
-struct PlanetWars {
+pub struct PlanetWars {
     players: HashMap<String, Rc<RefCell<Player>>>,
     planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
+
 
 impl PlanetWars {
     fn step_expeditions(&mut self) {
