@@ -3,12 +3,12 @@
         {
             "name": "bert",
             "start_command": "python3",
-            "args": ["../bots/planet_wars/simplebot/simple.py"]
+            "args": ["../games/planetwars/bots/simplebot/simple.py"]
         },
         {
             "name": "timp",
             "start_command": "python3",
-            "args": ["../bots/planet_wars/simplebot/simple.py"]
+            "args": ["../games/planetwars/bots/simplebot/simple.py"]
         }
     ]
 }
