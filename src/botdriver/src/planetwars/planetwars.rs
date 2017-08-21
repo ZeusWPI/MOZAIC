@@ -22,7 +22,6 @@ impl PlanetWars {
             } else {
                 i += 1;
             }
-
         }
     }
 }
