@@ -1,0 +1,14 @@
+{
+    "players": [
+        {
+            "name": "bert",
+            "start_command": "python3",
+            "args": ["mock_bots/higher.py"]
+        },
+        {
+            "name": "timp",
+            "start_command": "python3",
+            "args": ["mock_bots/deter.py"]
+        }
+    ]
+}

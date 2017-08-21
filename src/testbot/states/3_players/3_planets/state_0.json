@@ -1,0 +1,37 @@
+{
+    "players":[
+        "player_0",
+        "player_1",
+        "player_2"
+    ],
+    "planets":[
+        {
+            "planet":{
+                "x":0,
+                "y":0,
+                "ship_count":10,
+                "owner":"player_0",
+                "name":"planet_0"
+            }
+        },
+        {
+            "planet":{
+                "x":5,
+                "y":5,
+                "ship_count":10,
+                "owner":"player_1",
+                "name":"planet_1"
+            }
+        },
+        {
+            "planet":{
+                "x":10,
+                "y":10,
+                "ship_count":10,
+                "owner":"player_2",
+                "name":"planet_2"
+            }
+        }
+    ],
+    "expeditions":[]
+}
