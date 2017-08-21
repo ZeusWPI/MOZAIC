@@ -1,7 +1,8 @@
 mod game_types;
 mod driver_types;
-mod higher_lower;
 mod util;
+mod planet_wars;
+//mod higher_lower;
 
 #[macro_use]
 extern crate serde_derive;
@@ -11,10 +12,11 @@ extern crate rand;
 
 use std::error::Error;
 use std::io::{Write, BufReader, BufRead};
+use std::collections::HashMap;
 
 use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
 use driver_types::{BotHandles, BotHandle, GameConfig};
-use higher_lower::HigherLower;
+use planet_wars::PlanetWars;
 
 // Load the config and start the game.
 fn main() {
@@ -25,7 +27,7 @@ fn main() {
             std::process::exit(1)
         }
     };
-    run::<HigherLower>(&game_config);
+    run::<PlanetWars>(&game_config);
 }
 
 /* 
@@ -62,11 +64,11 @@ fn run<G: Game>(config: &GameConfig) {
 // Let's the game calculate next state.
 // Return next state for next step (if game is not over yet).
 fn step<G: Game>(mut bots: &mut BotHandles, player_input: &PlayerInput, game: &mut G) -> GameStatus {
-    println!("Running with new player input:\n{:?}\n", player_input);
+    println!("Input:\n{}", pp(player_input));
     let po = fetch_player_outputs(&player_input, &mut bots);
     match po {
         Ok(po) => {
-            println!("Received new player output:\n{:?}\n", po);
+            println!("Output:\n{}", pp(&po));
             return game.step(&po);
         },
         Err(e) => {
@@ -83,7 +85,7 @@ fn finnish(bots: &mut BotHandles, outcome: Outcome) {
     for (player, bot) in bots.iter_mut() {
         bot.kill().expect(&format!("Unable to kill {}", player));
     }
-    println!("Done with: {:?}", outcome);
+    println!("Done with: {:#?}", outcome);
 }
 
 // Fetch the responses from all players.
@@ -122,4 +124,14 @@ fn fetch_player_output(info: &GameInfo, bot: &mut BotHandle) -> Result<PlayerCom
     bot_out.read_line(&mut response).expect("Invalid UTF-8 found");
 
     Ok(response)
+}
+
+// Pretty print thing
+fn pp(hm: &HashMap<String, String>) -> String {
+    let mut pp = String::new();
+    for (key, value) in hm {
+        pp.push_str(&format!("# Value for {}:\n", key));
+        pp.push_str(&format!("{}\n", value));
+    }
+    pp
 }
