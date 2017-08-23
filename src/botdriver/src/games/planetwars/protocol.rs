@@ -1,8 +1,8 @@
 #[derive(Serialize, Deserialize)]
 pub struct Expedition {
     pub ship_count: u64,
-    pub origin: String,
-    pub destination: String,
+    pub origin: PlanetName,
+    pub destination: PlanetName,
     pub owner: String,
     pub turns_remaining: i64,
 }
@@ -13,12 +13,12 @@ pub struct Planet {
     pub x: f64,
     pub y: f64,
     pub owner: Option<String>,
-    pub name: String,
+    pub name: PlanetName,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
-    pub players: Vec<String>,
+    pub players: Vec<PlanetName>,
     pub planets: Vec<Planet>,
     pub expeditions: Vec<Expedition>,
 }
@@ -31,7 +31,9 @@ pub struct Command {
 
 #[derive(Serialize, Deserialize)]
 pub struct Move {
-    pub origin: String,
-    pub destination: String,
+    pub origin: PlanetName,
+    pub destination: PlanetName,
     pub ship_count: u64,
 }
+
+pub type PlanetName = String;

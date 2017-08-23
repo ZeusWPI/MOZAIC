@@ -16,8 +16,8 @@ use std::collections::HashMap;
 use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
 use driver_types::{BotHandles, BotHandle, GameConfig};
 
-//use games::PlanetWars as Rules;
-use games::ShitPlanets as Rules;
+use games::PlanetWars as Rules;
+//use games::ShitPlanets as Rules;
 //use games::HigherLower as Rules;
 
 // Load the config and start the game.

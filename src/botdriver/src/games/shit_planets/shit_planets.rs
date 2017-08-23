@@ -1,4 +1,9 @@
+// TODO Remove this code, or remove this
+#![allow(dead_code)]
+#![warn(unused_variables)]
+
 extern crate serde_json;
+
 
 use rand;
 use rand::Rng;

@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell, RefMut};
 
@@ -7,16 +6,27 @@ use game_types::*;
 use game_types::Player as PlayerName;
 
 use games::planetwars::protocol::*;
+use games::planetwars::planet_gen::gen_planets;
 
 pub struct PlanetWars {
-    players: HashMap<String, Rc<RefCell<Player>>>,
-    planets: HashMap<String, Rc<RefCell<Planet>>>,
+    players: HashMap<PlayerName, Rc<RefCell<Player>>>,
+    planets: HashMap<PlanetName, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
 
 impl Game for PlanetWars {
     fn init(names: Vec<PlayerName>) -> Self {
-        unimplemented!()
+        let players = HashMap::new();
+        for name in names {
+            player.insert(name, Rc::new(RefCell::new(Player {
+                name: name
+            })))
+        }
+         PlanetWars {
+            players: players,
+            planets: gen_planets(names),
+            expeditions: Vec::new()
+        }
     }
 
     fn start(&mut self) -> GameStatus {
@@ -57,8 +67,8 @@ struct Fleet {
     ship_count: u64,
 }
 
-struct Planet {
-    name: String,
+pub struct Planet {
+    name: PlanetName,
     fleets: Vec<Fleet>,
     x: f64,
     y: f64,
