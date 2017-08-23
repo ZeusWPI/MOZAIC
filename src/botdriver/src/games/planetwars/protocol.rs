@@ -18,7 +18,7 @@ pub struct Planet {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
-    pub players: Vec<PlanetName>,
+    pub players: Vec<String>,
     pub planets: Vec<Planet>,
     pub expeditions: Vec<Expedition>,
 }
