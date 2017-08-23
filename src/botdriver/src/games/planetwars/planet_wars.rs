@@ -5,7 +5,6 @@ use std::rc::{Rc, Weak};
 use std::cell::{RefCell, RefMut};
 
 use game_types::*;
-use game_types::Outcome::Error as GameError;
 use game_types::Player as PlayerName;
 use games::planetwars::protocol::*;
 use games::planetwars::planet_gen::gen_planets;
@@ -70,7 +69,7 @@ impl Game for PlanetWars {
                 Err(outcome) => return GameStatus::Done(outcome)
             };
 
-            let exp = Expedition::from_move(moof);
+            let exp = self.exp_from_move(player.clone(), moof);
             // Add expedition to planet
         }
 
@@ -79,11 +78,6 @@ impl Game for PlanetWars {
         // TODO: Check for game, end, return playeroutput
         GameStatus::Done(Outcome::Score(Scoring::new()))
     }
-}
-
-fn distance(origin: &String, destination: &String) -> u64 {
-    // TODO: Fix
-    return 5;
 }
 
 impl PlanetWars {
@@ -110,13 +104,7 @@ impl PlanetWars {
         }*/
         Ok(m)
     }
-}
 
-fn faulty_command(err: &str) -> Outcome {
-    Outcome::Error(err.to_string())
-}
-
-impl PlanetWars {
     fn to_state(&mut self) -> State {
         let players = Vec::new();
         let planets = Vec::new();
@@ -129,10 +117,22 @@ impl PlanetWars {
         }
 
     }
-}
 
+    fn exp_from_move(&mut self, player_name: PlayerName, m: Move) -> Expedition {
+        let owner = self.players.get(&player_name).unwrap(); // Add error message
+        let fleet = Fleet {
+            owner: Rc::downgrade(owner), 
+            ship_count: m.ship_count
+        };
 
-impl PlanetWars {
+        let target = self.planets.get(&m.destination).unwrap(); // Add error message
+        Expedition {
+            target: Rc::downgrade(target), 
+            fleet: fleet,
+            turns_remaining: 5
+        }
+    }
+
     fn step_expeditions(&mut self) {
         let mut i = 0;
         let exps = &mut self.expeditions;
@@ -174,16 +174,12 @@ impl Planet {
             y: y
         }
     }
-}
 
-impl Planet {
     fn orbit(&mut self, fleet: Fleet) {
         // TODO: deduplication
         self.fleets.push(fleet);
     }
-}
 
-impl Planet {
     fn resolve_combat(&mut self) {
         // destroy some ships
         self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
@@ -208,20 +204,6 @@ struct Expedition {
 }
 
 impl Expedition {
-    fn from_move(m: Move) -> Expedition {
-        /*
-        let exp = Expedition {
-            ship_count: c.ship_count,
-            origin: c.origin.clone(),
-            destination: c.destination.clone(),
-            owner: player.clone(),
-            turns_remaining: distance(&c.origin, &c.destination)
-        };*/
-        unimplemented!();
-    }
-}
-
-impl Expedition {
     fn into_orbit(self) {
         let target_ref = self.target.upgrade().unwrap();
         target_ref.borrow_mut().orbit(self.fleet);
@@ -236,4 +218,8 @@ impl PartialEq for Player {
     fn eq(&self, other: &Player) -> bool {
         self.name == other.name
     }
+}
+
+fn faulty_command(err: &str) -> Outcome {
+    Outcome::Error(err.to_string())
 }
