@@ -146,29 +146,29 @@ function renderOrbit(fleets, fleet, target) {
 
 function update(data) {
   // Planets
+  var planets = svg.selectAll('.planet').data(data.planets);
+  var new_planets = planets.enter().append('g').attr('class', 'planet');
 
-  let planets = svg.selectAll('.planet')
-    .data(data.planets)
-    .enter();
 
-  planets.append('circle')
+  new_planets.append('circle')
     .attr("r", d => d.size)
-    .attr('class', 'planet')
     .attr('cx', d => d.x)
     .attr('cy', d => d.y)
     .attr('fill', d => "url(#" + d.type + ")")
-    .append('title').text(d => d.owner);
+    .append('title')
+    .text(d => d.owner);
 
-  planets.append('text')
+  new_planets.append('text')
     .attr('x', d => d.x)
     .attr('y', d => d.y + d.size + 20)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => d.name)
-    .append('title').text(d => d.owner);;
+    .append('title')
+    .text(d => d.owner);
 
-  planets.append('text')
+  new_planets.append('text')
     .attr('x', d => d.x)
     .attr('y', d => d.y + d.size + 60)
     .attr("font-family", "sans-serif")
@@ -177,8 +177,10 @@ function update(data) {
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
 
+  planets.selectAll('text').attr('fill', d => data.color_map[d.owner])
+
   //Fleets
-  planets.each(d => {
+  new_planets.each(d => {
     fleet = {
       size: 20,
       distance: d.size + 40,
@@ -195,12 +197,16 @@ function update(data) {
   // Expeditions
 
   // New expeditions
+
   var expeditions = svg.selectAll('.expedition')
-    .data(data.expeditions)
-    .enter().append('g').attr('class', 'expedition')
+    .data(data.expeditions, d => {
+      return d.id;
+    });
+
+  var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition')
     .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
 
-  expeditions.append('circle')
+  new_expeditions.append('circle')
     .attr('transform', (d, i) => {
       return 'rotate(' + (Math.atan2(d.destination.y - d.origin.y, d.destination.x - d.origin.x) * (180 / Math.PI) + 90) + ')';
     })
@@ -210,7 +216,7 @@ function update(data) {
     .attr('fill', d => "url(#ship)")
     .append('title').text(d => d.owner);
 
-  expeditions.append('text')
+  new_expeditions.append('text')
     .attr('y', 40)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
@@ -223,8 +229,6 @@ function update(data) {
     .duration(750)
     .ease(d3.easeLinear);
 
-  var expeditions = svg.selectAll('.expedition')
-    .data(data.expeditions);
   expeditions.transition(t)
     .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
 
@@ -265,7 +269,6 @@ function nextTurn() {
     data.planet_map = parsed.turns[turn - 1].planet_map;
     data.color_map = parsed.turns[turn - 1].color_map;
 
-    console.log(data);
     prepareData(data);
     update(data);
     return true;
