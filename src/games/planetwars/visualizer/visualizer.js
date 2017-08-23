@@ -9,6 +9,9 @@ const planet_types = ["water", "red", "moon", "mars", "earth"];
 //TODO use for viewport
 const scale = 20;
 
+// TODO bind this to a control
+var speed = 750;
+
 // Help functions
 
 function randomBetween(min, max) {
@@ -68,9 +71,8 @@ function setupPatterns(svg) {
     .attr("xlink:href", "rocket.png");
 }
 
-function prepareData(data) {
+function init(data) {
   data.fleets = [];
-
   const color = d3.scaleOrdinal(d3.schemeCategory10);
   data.color_map = data.players.reduce((map, o, i) => {
     map[o] = color(i);
@@ -89,7 +91,14 @@ function prepareData(data) {
     return map;
   }, {});
 
-  data.expeditions.map((e) => {
+  data.expeditions.map(e => {
+    e.origin = data.planet_map[e.origin];
+    e.destination = data.planet_map[e.destination];
+  });
+}
+
+function prepareData(data, old_expeditions) {
+  data.expeditions.map(e => {
     e.origin = data.planet_map[e.origin];
     e.destination = data.planet_map[e.destination];
   });
@@ -140,7 +149,7 @@ function renderOrbit(fleets, fleet, target) {
   d3.timer(renderFrame);
 }
 
-function generateMap(data) {
+function update(data) {
   // Planets
 
   let planets = svg.selectAll('.planet')
@@ -173,12 +182,29 @@ function generateMap(data) {
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
 
+  //Fleets
+  planets.each(d => {
+    fleet = {
+      size: 20,
+      distance: d.size + 40,
+      angle: randomBetween(1, 360),
+      speed: randomBetween(100, 1000),
+      ship_count: d.ship_count,
+      owner: d.owner,
+      color: data.color_map[d.owner]
+    };
+    data.fleets.push(fleet);
+    renderOrbit(data.fleets, fleet, d);
+  });
+
   // Expeditions
 
-  let expeditions = svg.selectAll('.expedition')
+  // New expeditions
+  var expeditions = svg.selectAll('.expedition')
     .data(data.expeditions)
-    .enter().append('g')
+    .enter().append('g').attr('class', 'expedition')
     .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
+
   expeditions.append('circle')
     .attr('transform', (d, i) => {
       return 'rotate(' + (Math.atan2(d.destination.y - d.origin.y, d.destination.x - d.origin.x) * (180 / Math.PI) + 90) + ')';
@@ -197,29 +223,55 @@ function generateMap(data) {
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
 
-  svg.selectAll('.planet').each(d => {
-    fleet = {
-      size: 20,
-      distance: d.size + 40,
-      angle: randomBetween(1, 360),
-      speed: randomBetween(100, 1000),
-      ship_count: d.ship_count,
-      owner: d.owner,
-      color: data.color_map[d.owner]
-    };
-    data.fleets.push(fleet);
-    renderOrbit(data.fleets, fleet, d);
-  });
+  // Expedition updates
+  var t = d3.transition()
+    .duration(750)
+    .ease(d3.easeLinear);
+
+  var expeditions = svg.selectAll('.expedition')
+    .data(data.expeditions);
+  expeditions.transition(t)
+    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
+
+  // Old expeditions to remove
+  expeditions.exit().transition(t)
+    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')').remove();
 }
+
+var parsed;
 
 function parseJson(e) {
   var reader = new FileReader();
   reader.onload = event => {
-    var parsed = JSON.parse(event.target.result);
+    parsed = JSON.parse(event.target.result);
     setupPatterns(svg);
     var data = parsed.turns[0];
-    prepareData(data);
-    generateMap(data);
+    document.getElementById("next").addEventListener("click", nextTurn);
+    init(data);
+    update(data);
+    var t = d3.interval(e => {
+      if (!nextTurn()) t.stop();
+    }, 750);
   }
   reader.readAsText(e.files[0]);
+}
+
+var turn = 0;
+
+function nextTurn() {
+  turn++;
+  if (turn >= parsed.turns.length) {
+    console.log("end of log");
+    return false;
+  } else {
+    var data = parsed.turns[turn];
+    // TODO do this data passing better
+    data.planet_map = parsed.turns[turn - 1].planet_map;
+    data.color_map = parsed.turns[turn - 1].color_map;
+
+    console.log(data);
+    prepareData(data, parsed.turns[turn - 1].expeditions);
+    update(data);
+    return true;
+  }
 }
