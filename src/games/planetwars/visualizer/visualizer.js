@@ -90,14 +90,9 @@ function init(data) {
     map[o.name] = o;
     return map;
   }, {});
-
-  data.expeditions.map(e => {
-    e.origin = data.planet_map[e.origin];
-    e.destination = data.planet_map[e.destination];
-  });
 }
 
-function prepareData(data, old_expeditions) {
+function prepareData(data) {
   data.expeditions.map(e => {
     e.origin = data.planet_map[e.origin];
     e.destination = data.planet_map[e.destination];
@@ -248,6 +243,7 @@ function parseJson(e) {
     var data = parsed.turns[0];
     document.getElementById("next").addEventListener("click", nextTurn);
     init(data);
+    prepareData(data);
     update(data);
     var t = d3.interval(e => {
       if (!nextTurn()) t.stop();
@@ -270,7 +266,7 @@ function nextTurn() {
     data.color_map = parsed.turns[turn - 1].color_map;
 
     console.log(data);
-    prepareData(data, parsed.turns[turn - 1].expeditions);
+    prepareData(data);
     update(data);
     return true;
   }
