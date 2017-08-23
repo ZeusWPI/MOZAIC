@@ -3,12 +3,31 @@ use std::collections::HashMap;
 use std::rc::{Rc, Weak};
 use std::cell::{RefCell, RefMut};
 
+use game_types::*;
+use game_types::Player as PlayerName;
+
 use games::planetwars::protocol::*;
 
 pub struct PlanetWars {
     players: HashMap<String, Rc<RefCell<Player>>>,
     planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
+}
+
+impl Game for PlanetWars {
+    fn init(names: Vec<PlayerName>) -> Self {
+        unimplemented!()
+    }
+
+    fn start(&mut self) -> GameStatus {
+        unimplemented!()
+    }
+
+    fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
+        self.step_expeditions();
+        self.resolve_combats();
+        unimplemented!()
+    }
 }
 
 
@@ -23,6 +42,12 @@ impl PlanetWars {
             } else {
                 i += 1;
             }
+        }
+    }
+
+    fn resolve_combats(&mut self) {
+        for planet in self.planets.values() {
+            planet.borrow_mut().resolve_combat();
         }
     }
 }
