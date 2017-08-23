@@ -9,10 +9,10 @@ use games::planetwars::planet_wars::Planet;
 use game_types::Player as PlayerName;
 use games::planetwars::protocol::PlanetName;
 
-const WIDTH: u32 = 40;
-const HEIGHT: u32 = 25;
-const START_SHIPS: u32 = 15;
-const PLANET_FACTOR: u32 = 2;
+const WIDTH: u64 = 40;
+const HEIGHT: u64 = 25;
+const START_SHIPS: u64 = 15;
+const PLANET_FACTOR: u64 = 2;
 
 // TODO: Fix possible planets on same location
 pub fn gen_planets(players: Vec<PlayerName>) -> HashMap<PlanetName, Rc<RefCell<Planet>>> {
@@ -24,7 +24,7 @@ pub fn gen_planets(players: Vec<PlayerName>) -> HashMap<PlanetName, Rc<RefCell<P
         planets.insert(planet_name, planet);
     }
 
-    let player_amount = players.len() as u32;
+    let player_amount = players.len() as u64;
     let planet_amount = player_amount * PLANET_FACTOR;
     for x in 0..(planet_amount - player_amount) {
         let planet_name = format!("Planet_{}", x);

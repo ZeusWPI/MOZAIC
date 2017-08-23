@@ -5,6 +5,7 @@ use std::rc::{Rc, Weak};
 use std::cell::{RefCell, RefMut};
 
 use game_types::*;
+use game_types::Outcome::Error as GameError;
 use game_types::Player as PlayerName;
 use games::planetwars::protocol::*;
 use games::planetwars::planet_gen::gen_planets;
@@ -47,10 +48,72 @@ impl Game for PlanetWars {
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
+        for (player, command) in player_output {
+
+            // Parse command
+            let c: Command = match serde_json::from_str(command) {
+                Ok(command) => command,
+                // TODO: More expressive error
+                Err(err) => {
+                    let msg = format!("Invalid formatted command.\n{}", err);
+                    return GameStatus::Done(Outcome::Error(msg.to_owned()));
+                } 
+            };
+
+            let moof = match c.value {
+                Some(moof) => moof,
+                None => continue // No move by player, skip
+            };
+
+            let moof = match self.validate_move(moof) {
+                Ok(moof) => moof,
+                Err(outcome) => return GameStatus::Done(outcome)
+            };
+
+            let exp = Expedition::from_move(moof);
+            // Add expedition to planet
+        }
+
         self.step_expeditions();
         self.resolve_combats();
-        unimplemented!()
+        // TODO: Check for game, end, return playeroutput
+        GameStatus::Done(Outcome::Score(Scoring::new()))
     }
+}
+
+fn distance(origin: &String, destination: &String) -> u64 {
+    // TODO: Fix
+    return 5;
+}
+
+impl PlanetWars {
+    fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
+        // Check whether origin is a valid planet
+        /*
+        let or = match self.planets.get(&c.origin) {
+            Some(planet) => planet,
+            None => return faulty_command("Origin is not a valid planet")
+        };
+
+        // Check whether dest is a valid planet
+        let dest = match self.planets.get(&c.destination) {
+            Some(planet) => planet,
+            None => return faulty_command("Destination is not a valid planet")
+        };
+
+        if or.owner != *player {
+            return faulty_command("You don't own this planet")
+        }
+
+        if or.ship_count < c.ship_count {
+            return faulty_command("You don't control enough ships to send this amount")
+        }*/
+        Ok(m)
+    }
+}
+
+fn faulty_command(err: &str) -> Outcome {
+    Outcome::Error(err.to_string())
 }
 
 impl PlanetWars {
@@ -98,12 +161,12 @@ pub struct Fleet {
 pub struct Planet {
     name: PlanetName,
     fleets: Vec<Fleet>,
-    x: u32,
-    y: u32,
+    x: u64,
+    y: u64,
 }
 
 impl Planet {
-    pub fn new(name: PlanetName, fleets: Vec<Fleet>, x: u32, y: u32) -> Planet {
+    pub fn new(name: PlanetName, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
         Planet {
             name: name,
             fleets: fleets,
@@ -145,8 +208,16 @@ struct Expedition {
 }
 
 impl Expedition {
-    fn from_move(move: Move) -> Expedition {
-        unimplemented();
+    fn from_move(m: Move) -> Expedition {
+        /*
+        let exp = Expedition {
+            ship_count: c.ship_count,
+            origin: c.origin.clone(),
+            destination: c.destination.clone(),
+            owner: player.clone(),
+            turns_remaining: distance(&c.origin, &c.destination)
+        };*/
+        unimplemented!();
     }
 }
 
