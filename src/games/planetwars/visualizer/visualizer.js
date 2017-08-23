@@ -177,7 +177,9 @@ function update(data) {
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
 
-  planets.selectAll('text').attr('fill', d => data.color_map[d.owner])
+  // Updata planets
+  planets.selectAll('text').attr('fill', d => data.color_map[d.owner]);
+  planets.selectAll('title').text(d => d.owner);
 
   //Fleets
   new_planets.each(d => {
