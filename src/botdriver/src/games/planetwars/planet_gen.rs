@@ -11,10 +11,18 @@ use games::planetwars::protocol::PlanetName;
 
 const WIDTH: u64 = 40;
 const HEIGHT: u64 = 25;
-const START_SHIPS: u64 = 15;
 const PLANET_FACTOR: u64 = 2;
 
-pub fn gen_planets(players: Vec<PlayerName>) -> HashMap<PlanetName, Rc<RefCell<Planet>>> {
+// A Map contains all the generated planets accompanied by some metadata.
+// All it's fields are public because this is a simple datastore.
+pub struct Map {
+    pub height: u64,
+    pub width: u64,
+    pub planet_amount: u64,
+    pub planets: HashMap<PlanetName, Rc<RefCell<Planet>>>
+}
+
+pub fn gen_map(players: Vec<PlayerName>) -> Map {
     let mut planets = HashMap::new();
     let player_amount = players.len() as u64;
     let planet_amount = player_amount * PLANET_FACTOR;
@@ -31,7 +39,13 @@ pub fn gen_planets(players: Vec<PlayerName>) -> HashMap<PlanetName, Rc<RefCell<P
         let planet = Rc::new(RefCell::new(planet));
         planets.insert(planet_name, planet);
     }
-    planets
+
+    Map {
+        height: HEIGHT,
+        width: WIDTH,
+        planet_amount: planet_amount,
+        planets: planets
+    }
 }
 
 // We do this so we can prevent planets being generated on the same location

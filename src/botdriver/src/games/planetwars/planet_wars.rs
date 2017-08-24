@@ -7,7 +7,9 @@ use std::cell::{RefCell, RefMut};
 use game_types::*;
 use game_types::Player as PlayerName;
 use games::planetwars::protocol::*;
-use games::planetwars::planet_gen::gen_planets;
+use games::planetwars::planet_gen::{gen_map};
+
+const START_SHIPS: u64 = 15;
 
 pub struct PlanetWars {
     players: HashMap<PlayerName, Rc<RefCell<Player>>>,
@@ -26,15 +28,17 @@ impl Game for PlanetWars {
                 Rc::new(RefCell::new( Player {name: name.clone()}))
             );
         }
-        
+
         PlanetWars {
             players: players,
-            planets: gen_planets(names),
+            planets: gen_map(names).planets,
             expeditions: Vec::new()
         }
     }
 
     fn start(&mut self) -> GameStatus {
+        self.place_players();
+
         let mut pi = PlayerInput::new();
         let state = self.to_state();
 
@@ -151,6 +155,18 @@ impl PlanetWars {
             planet.borrow_mut().resolve_combat();
         }
     }
+
+    fn place_players(&mut self) {
+        let mut values = self.planets.values_mut().take(self.players.len());
+        for (player_name, player) in &self.players {
+            let mut value : &mut Rc<RefCell<Planet>> = values.next().expect("Not enough planets generated for players.");
+            let mut value = Rc::get_mut(value).unwrap().borrow_mut();
+            value.fleets.push( Fleet {
+                owner: Rc::downgrade(&player),
+                ship_count: START_SHIPS
+            });
+        }
+    }
 }
 
 pub struct Fleet {
@@ -176,7 +192,7 @@ impl Planet {
     }
 
     fn orbit(&mut self, fleet: Fleet) {
-        // TODO: deduplication
+        // TODO: deduplication (merge fleets from same player)
         self.fleets.push(fleet);
     }
 
