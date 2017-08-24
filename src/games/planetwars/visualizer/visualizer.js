@@ -40,6 +40,12 @@ function relativeCoords(expedition) {
   };
 }
 
+function attachToAllChildren(selection) {
+  return selection.data((d, i) => {
+    return Array(selection._groups[i].length).fill(d);
+  });
+}
+
 function setupPatterns(svg) {
   // Define patterns
   planet_types.forEach(p => {
@@ -112,43 +118,10 @@ function generateLegend(data) {
 
 }
 
-// Rendering
-
-function renderOrbit(fleets, fleet, target) {
-  time = Date.now();
-  svg.append('circle')
-    .attr('transform', 'translate(' + target.x + ',' + target.y + ')')
-    .attr('r', fleet.distance)
-    .style('fill', "none")
-    .style('stroke', fleet.color);
-
-  let wrapper = svg.append('g')
-    .attr('transform', 'translate(' + target.x + ',' + target.y + ')');
-  wrapper.append('circle')
-    .attr('transform', 'translate(' + target.x + ',' + target.y + ')')
-    .attr('class', 'fleet')
-    .attr('r', fleet.size)
-    .attr('cx', fleet.distance)
-    .attr('cy', 0)
-    .attr('fill', d => "url(#ship)")
-    .append('title').text(d => fleet.owner);
-
-  function renderFrame() {
-    let delta = Date.now() - time;
-
-    svg.selectAll('.fleet')
-      .attr('transform', (d, i) => {
-        return 'rotate(' + (fleets[i].angle - delta * (fleets[i].speed / 10000)) % 360 + ')';
-      });
-  }
-  d3.timer(renderFrame);
-}
-
 function update(data) {
   // Planets
-  var planets = svg.selectAll('.planet').data(data.planets);
+  var planets = svg.selectAll('.planet').data(data.planets, d => d.name);
   var new_planets = planets.enter().append('g').attr('class', 'planet');
-
 
   new_planets.append('circle')
     .attr("r", d => d.size)
@@ -177,24 +150,44 @@ function update(data) {
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
 
-  // Updata planets
-  planets.selectAll('text').attr('fill', d => data.color_map[d.owner]);
-  planets.selectAll('title').text(d => d.owner);
+  // Fleets for planets
 
-  //Fleets
-  new_planets.each(d => {
-    fleet = {
-      size: 20,
-      distance: d.size + 40,
-      angle: randomBetween(1, 360),
-      speed: randomBetween(100, 1000),
-      ship_count: d.ship_count,
-      owner: d.owner,
-      color: data.color_map[d.owner]
-    };
-    data.fleets.push(fleet);
-    renderOrbit(data.fleets, fleet, d);
-  });
+  var fleet_wrapper = new_planets.append('g')
+    .data(data.planets.map(d => {
+      return {
+        size: 20,
+        distance: d.size + 40,
+        angle: randomBetween(1, 360),
+        speed: randomBetween(100, 1000),
+        planet: d
+      };
+    }));
+
+  fleet_wrapper.append('circle')
+    .attr('class', 'orbit')
+    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
+    .attr('r', d => d.distance)
+    .style('fill', "none")
+    .style('stroke', d => data.color_map[d.planet.owner]);
+
+  var wrapper = fleet_wrapper.append('g')
+    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')');
+
+  wrapper.append('circle')
+    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
+    .attr('class', 'fleet')
+    .attr('r', d => d.size)
+    .attr('cx', d => d.distance)
+    .attr('cy', 0)
+    .attr('fill', d => "url(#ship)")
+    .append('title').text(d => d.planet.owner);
+
+  // Update planets
+  attachToAllChildren(planets.selectAll('text')).attr('fill', d => data.color_map[d.owner]);
+  attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+
+  // Update orbits
+  planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
 
   // Expeditions
 
@@ -251,6 +244,17 @@ function parseJson(e) {
     init(data);
     prepareData(data);
     update(data);
+
+    // Fleet animation timer
+    d3.timer(elapsed => {
+      svg.selectAll('.fleet')
+        //.data(fleets)
+        .attr('transform', (d, i) => {
+          return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
+        });
+    });
+
+    // Start turn timer
     var t = d3.interval(e => {
       if (!nextTurn()) t.stop();
     }, 750);
