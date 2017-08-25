@@ -262,9 +262,9 @@ function toggleTimer() {
 
 function startTimer() {
   var callback = e => {
-    if (!nextTurn()) stopTimer();
+    if (e % speed < 20 && !nextTurn()) stopTimer();
   };
-  turn_timer = d3.interval(callback, speed);
+  turn_timer = d3.timer(callback);
 }
 
 function stopTimer() {
