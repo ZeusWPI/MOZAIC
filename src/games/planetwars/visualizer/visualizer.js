@@ -9,42 +9,18 @@ const planet_types = ["water", "red", "moon", "mars", "earth"];
 //TODO use for viewport
 const scale = 20;
 
+var base_speed = 1000;
 // TODO bind this to a control
-var speed = 750;
+// current speed
+var speed = 1000;
 
-// Help functions
+var turn_timer;
 
-function randomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
-}
+//current turn
+var turn = 0;
 
-function euclideanDistance(e1, e2) {
-  return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
-}
-
-function relativeCoords(expedition) {
-  var total_distance = Math.ceil(euclideanDistance(expedition.origin, expedition.destination)) / scale;
-  var mod = expedition.turns_remaining / total_distance;
-
-  var new_x = expedition.origin.x - expedition.destination.x;
-  new_x *= mod;
-  new_x += expedition.destination.x;
-
-  var new_y = expedition.origin.y - expedition.destination.y;
-  new_y *= mod;
-  new_y += expedition.destination.y;
-
-  return {
-    'x': new_x,
-    'y': new_y
-  };
-}
-
-function attachToAllChildren(selection) {
-  return selection.data((d, i) => {
-    return Array(selection._groups[i].length).fill(d);
-  });
-}
+// Parsed input json
+var parsed;
 
 function setupPatterns(svg) {
   // Define patterns
@@ -220,7 +196,7 @@ function update(data) {
 
   // Expedition updates
   var t = d3.transition()
-    .duration(750)
+    .duration(speed)
     .ease(d3.easeLinear);
 
   expeditions.transition(t)
@@ -231,15 +207,13 @@ function update(data) {
     .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')').remove();
 }
 
-var parsed;
-
 function parseJson(e) {
   var reader = new FileReader();
   reader.onload = event => {
     parsed = JSON.parse(event.target.result);
     setupPatterns(svg);
     var data = parsed.turns[0];
-    document.getElementById("next").addEventListener("click", nextTurn);
+    //document.getElementById("next").addEventListener("click", nextTurn);
     init(data);
     prepareData(data);
     update(data);
@@ -254,14 +228,10 @@ function parseJson(e) {
     });
 
     // Start turn timer
-    var t = d3.interval(e => {
-      if (!nextTurn()) t.stop();
-    }, 750);
+    //startTimer();
   }
   reader.readAsText(e.files[0]);
 }
-
-var turn = 0;
 
 function nextTurn() {
   turn++;
@@ -278,4 +248,59 @@ function nextTurn() {
     update(data);
     return true;
   }
+}
+
+//Timer functions
+
+function toggleTimer() {
+  if (!turn_timer || turn_timer._time === Infinity) {
+    startTimer();
+  } else {
+    stopTimer();
+  }
+}
+
+function startTimer() {
+  var callback = e => {
+    if (!nextTurn()) stopTimer();
+  };
+  turn_timer = d3.interval(callback, speed);
+}
+
+function stopTimer() {
+  turn_timer.stop();
+}
+
+// Help functions
+
+function randomBetween(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function euclideanDistance(e1, e2) {
+  return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
+}
+
+function relativeCoords(expedition) {
+  var total_distance = Math.ceil(euclideanDistance(expedition.origin, expedition.destination)) / scale;
+  var mod = expedition.turns_remaining / total_distance;
+
+  var new_x = expedition.origin.x - expedition.destination.x;
+  new_x *= mod;
+  new_x += expedition.destination.x;
+
+  var new_y = expedition.origin.y - expedition.destination.y;
+  new_y *= mod;
+  new_y += expedition.destination.y;
+
+  return {
+    'x': new_x,
+    'y': new_y
+  };
+}
+
+function attachToAllChildren(selection) {
+  return selection.data((d, i) => {
+    return Array(selection._groups[i].length).fill(d);
+  });
 }
