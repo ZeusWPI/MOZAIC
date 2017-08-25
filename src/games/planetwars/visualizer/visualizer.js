@@ -171,7 +171,7 @@ function update(data) {
   planets.select('circle')
     .transition(speed / 2)
     .attr("r", d => {
-      return d.changed_owner ? data.planet_map[d.name].size * 1.5 : data.planet_map[d.name].size;
+      return d.changed_owner ? data.planet_map[d.name].size * 1.3 : data.planet_map[d.name].size;
     })
     .transition(speed / 2)
     .attr("r", d => data.planet_map[d.name].size);
