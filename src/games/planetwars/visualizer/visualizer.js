@@ -60,7 +60,7 @@ function setupPatterns(svg) {
       .attr("width", 100)
       .attr("height", 100)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", p + ".png");
+      .attr("xlink:href", "res/" + p + ".png");
   });
 
   svg.select("defs")
@@ -74,11 +74,10 @@ function setupPatterns(svg) {
     .attr("width", 100)
     .attr("height", 100)
     .attr("preserveAspectRation", "none")
-    .attr("xlink:href", "rocket.png");
+    .attr("xlink:href", "res/rocket.png");
 }
 
 function init(data) {
-  data.fleets = [];
   const color = d3.scaleOrdinal(d3.schemeCategory10);
   data.color_map = data.players.reduce((map, o, i) => {
     map[o] = color(i);
