@@ -78,6 +78,12 @@ function prepareData(data) {
     e.origin = data.planet_map[e.origin];
     e.destination = data.planet_map[e.destination];
   });
+
+  data.planets.map(e => {
+    if (e.owner != data.planet_map[e.name].owner) {
+      e.changed_owner = true;
+    }
+  });
 }
 
 function generateLegend(data) {
@@ -161,6 +167,15 @@ function update(data) {
   attachToAllChildren(planets.selectAll('text')).attr('fill', d => data.color_map[d.owner]);
   attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
 
+  //Takeover transition
+  planets.select('circle')
+    .transition(speed / 2)
+    .attr("r", d => {
+      return d.changed_owner ? data.planet_map[d.name].size * 1.5 : data.planet_map[d.name].size;
+    })
+    .transition(speed / 2)
+    .attr("r", d => data.planet_map[d.name].size);
+
   // Update orbits
   planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
 
@@ -226,9 +241,6 @@ function parseJson(e) {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
     });
-
-    // Start turn timer
-    //startTimer();
   }
   reader.readAsText(e.files[0]);
 }
@@ -262,6 +274,8 @@ function toggleTimer() {
 
 function startTimer() {
   var callback = e => {
+    // 20 might seem like a magic number
+    // D3 docs say it will at least take 15 ms to draw frame
     if (e % speed < 20 && !nextTurn()) stopTimer();
   };
   turn_timer = d3.timer(callback);
