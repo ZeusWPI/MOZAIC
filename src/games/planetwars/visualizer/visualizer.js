@@ -82,6 +82,8 @@ function prepareData(data) {
   data.planets.map(e => {
     if (e.owner != data.planet_map[e.name].owner) {
       e.changed_owner = true;
+      data.planet_map[e.name].owner = e.owner;
+
     }
   });
 }
