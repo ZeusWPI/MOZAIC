@@ -1,0 +1,21 @@
+.controlbar {
+  width: 100%;
+}
+
+.control {
+  font-family: "Segoe UI Symbol";
+}
+
+.speedcontrols {
+  float: right;
+  width: 10%;
+}
+
+.speedcontrols p {
+  font-size: 12px;
+}
+
+
+#turn_slider{
+  width: 85%;
+}

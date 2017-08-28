@@ -297,8 +297,10 @@ function transition(expedition) {
 function toggleTimer() {
   if (!turn_timer || turn_timer._time === Infinity) {
     startTimer();
+    return true;
   } else {
     stopTimer();
+    return false;
   }
 }
 
@@ -351,6 +353,5 @@ function attachToAllChildren(d3selector) {
 
 function setTurn(newTurn) {
   turn = newTurn;
-  console.log(turn);
   d3.select('#turn_slider').property('value', turn);
 }
