@@ -1,8 +1,8 @@
 let mod = 1.5;
 
-function attachEvents() {
+function attachEvents(maxturn, togglePlaybackCallback, changeTurnCallback) {
   d3.select('#toggleplay').on("click", e => {
-    toggleTimer();
+    togglePlaybackCallback();
   }).style("font-family", "Segoe UI Symbol");
 
   d3.select('#speeddown').on("click", e => {
@@ -18,7 +18,12 @@ function attachEvents() {
       speed = base_speed * mod;
     }
   }).style("font-family", "Segoe UI Symbol");
-
+  d3.select('#turn_slider')
+    .attr('min', 0)
+    .attr('max', maxturn)
+    .attr('step', 1)
+    .attr('value', 0)
+    .on('change', e => {
+      changeTurnCallback(d3.select('#turn_slider').node().value);
+    });
 }
-
-attachEvents();

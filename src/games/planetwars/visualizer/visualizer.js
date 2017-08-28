@@ -75,8 +75,8 @@ function init(data) {
 
 function prepareData(data) {
   data.expeditions.map(e => {
-    e.origin = data.planet_map[e.origin];
-    e.destination = data.planet_map[e.destination];
+    e.origin_object = data.planet_map[e.origin];
+    e.destination_object = data.planet_map[e.destination];
   });
 
   data.planets.map(e => {
@@ -101,20 +101,17 @@ function generateLegend(data) {
 
 }
 
-function update(data) {
-  // Planets
-  var planets = svg.selectAll('.planet').data(data.planets, d => d.name);
-  var new_planets = planets.enter().append('g').attr('class', 'planet');
-
-  new_planets.append('circle')
-    .attr("r", d => d.size)
+function addPlanets(d3selector, data) {
+  d3selector.append('circle')
+    .attr('class', 'planet')
+    .attr('r', d => d.size)
     .attr('cx', d => d.x)
     .attr('cy', d => d.y)
-    .attr('fill', d => "url(#" + d.type + ")")
+    .attr('fill', d => 'url(#' + d.type + ')')
     .append('title')
     .text(d => d.owner);
 
-  new_planets.append('text')
+  d3selector.append('text')
     .attr('x', d => d.x)
     .attr('y', d => d.y + d.size + 20)
     .attr("font-family", "sans-serif")
@@ -124,7 +121,7 @@ function update(data) {
     .append('title')
     .text(d => d.owner);
 
-  new_planets.append('text')
+  d3selector.append('text')
     .attr('x', d => d.x)
     .attr('y', d => d.y + d.size + 60)
     .attr("font-family", "sans-serif")
@@ -132,28 +129,17 @@ function update(data) {
     .attr('fill', d => data.color_map[d.owner])
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
+}
 
-  // Fleets for planets
-
-  var fleet_wrapper = new_planets.append('g')
-    .data(data.planets.map(d => {
-      return {
-        size: 20,
-        distance: d.size + 40,
-        angle: randomBetween(1, 360),
-        speed: randomBetween(100, 1000),
-        planet: d
-      };
-    }));
-
-  fleet_wrapper.append('circle')
+function addFleets(d3selector, data) {
+  d3selector.append('circle')
     .attr('class', 'orbit')
     .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
     .attr('r', d => d.distance)
     .style('fill', "none")
     .style('stroke', d => data.color_map[d.planet.owner]);
 
-  var wrapper = fleet_wrapper.append('g')
+  var wrapper = d3selector.append('g')
     .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')');
 
   wrapper.append('circle')
@@ -165,37 +151,14 @@ function update(data) {
     .attr('fill', d => "url(#ship)")
     .append('title').text(d => d.planet.owner);
 
-  // Update planets
-  attachToAllChildren(planets.selectAll('text')).attr('fill', d => data.color_map[d.owner]);
-  attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+}
 
-  //Takeover transition
-  planets.select('circle')
-    .transition(speed / 2)
-    .attr("r", d => {
-      return d.changed_owner ? data.planet_map[d.name].size * 1.3 : data.planet_map[d.name].size;
-    })
-    .transition(speed / 2)
-    .attr("r", d => data.planet_map[d.name].size);
+function addExpeditions(d3selector, data) {
+  d3selector.attr('transform', d => transition(d));
 
-  // Update orbits
-  planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
-
-  // Expeditions
-
-  // New expeditions
-
-  var expeditions = svg.selectAll('.expedition')
-    .data(data.expeditions, d => {
-      return d.id;
-    });
-
-  var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition')
-    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
-
-  new_expeditions.append('circle')
+  d3selector.append('circle')
     .attr('transform', (d, i) => {
-      return 'rotate(' + (Math.atan2(d.destination.y - d.origin.y, d.destination.x - d.origin.x) * (180 / Math.PI) + 90) + ')';
+      return 'rotate(' + (Math.atan2(d.destination_object.y - d.origin_object.y, d.destination_object.x - d.origin_object.x) * (180 / Math.PI) + 90) + ')';
     })
     .attr('r', 20)
     .style('stroke', d => data.color_map[d.owner])
@@ -203,25 +166,77 @@ function update(data) {
     .attr('fill', d => "url(#ship)")
     .append('title').text(d => d.owner);
 
-  new_expeditions.append('text')
+  d3selector.append('text')
     .attr('y', 40)
     .attr("font-family", "sans-serif")
     .attr("font-size", "20px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
+}
 
-  // Expedition updates
+function update(data) {
+  // Planets
+  var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
+  var expeditions = svg.selectAll('.expedition')
+    .data(data.expeditions, d => {
+      return d.id;
+    });
+
+  // Fleets for planets
+
+  var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
+  var fleet_wrapper = new_planets.append('g')
+    .data(data.planets.map(d => {
+      return {
+        size: 20,
+        distance: d.size + 40,
+        angle: randomBetween(1, 360),
+        speed: randomBetween(100, 1000),
+        planet: d
+      };
+    }));
+  var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
+
+  addPlanets(new_planets, data);
+  addFleets(fleet_wrapper, data);
+  addExpeditions(new_expeditions, data);
+}
+
+function updateAnimations(data) {
+  var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
+  var expeditions = svg.selectAll('.expedition');
+  var expeditions = svg.selectAll('.expedition')
+    .data(data.expeditions, d => {
+      return d.id;
+    });
+
+  //PLANETS
+  // Text color
+  attachToAllChildren(planets.selectAll('text')).attr('fill', d => data.color_map[d.owner]);
+  attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+
+  //Takeover transition
+  planets.select('.planet')
+    .filter(d => d.changed_owner)
+    .transition(speed / 2)
+    .attr("r", d => data.planet_map[d.name].size * 1.3)
+    .transition(speed / 2)
+    .attr("r", d => data.planet_map[d.name].size);
+
+  // Update orbits
+  planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
+
+  // EXPEDITIONS
   var t = d3.transition()
     .duration(speed)
     .ease(d3.easeLinear);
 
   expeditions.transition(t)
-    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')');
+    .attr('transform', d => transition(d));
 
   // Old expeditions to remove
-  expeditions.exit().transition(t)
-    .attr('transform', d => 'translate(' + relativeCoords(d).x + ',' + relativeCoords(d).y + ')').remove();
+  expeditions.exit().remove();
 }
 
 function parseJson(e) {
@@ -230,10 +245,13 @@ function parseJson(e) {
     parsed = JSON.parse(event.target.result);
     setupPatterns(svg);
     var data = parsed.turns[0];
-    //document.getElementById("next").addEventListener("click", nextTurn);
     init(data);
     prepareData(data);
     update(data);
+
+
+    //TODO do this better
+    attachEvents(parsed.turns.length - 1, toggleTimer, showTurn);
 
     // Fleet animation timer
     d3.timer(elapsed => {
@@ -245,23 +263,33 @@ function parseJson(e) {
     });
   }
   reader.readAsText(e.files[0]);
+
 }
 
 function nextTurn() {
   turn++;
-  if (turn >= parsed.turns.length) {
+  return showTurn(turn);
+}
+
+function showTurn(newTurn) {
+  if (newTurn >= parsed.turns.length) {
     console.log("end of log");
     return false;
   } else {
-    var data = parsed.turns[turn];
-    // TODO do this data passing better
-    data.planet_map = parsed.turns[turn - 1].planet_map;
-    data.color_map = parsed.turns[turn - 1].color_map;
-
+    setTurn(newTurn);
+    var data = parsed.turns[newTurn];
+    data.planet_map = parsed.turns[0].planet_map;
+    data.color_map = parsed.turns[0].color_map;
     prepareData(data);
     update(data);
+    updateAnimations(data);
     return true;
   }
+}
+
+function transition(expedition) {
+  var point = relativeCoords(expedition);
+  return 'translate(' + point.x + ',' + point.y + ')';
 }
 
 //Timer functions
@@ -298,16 +326,16 @@ function euclideanDistance(e1, e2) {
 }
 
 function relativeCoords(expedition) {
-  var total_distance = Math.ceil(euclideanDistance(expedition.origin, expedition.destination)) / scale;
+  var total_distance = Math.ceil(euclideanDistance(expedition.origin_object, expedition.destination_object)) / scale;
   var mod = expedition.turns_remaining / total_distance;
 
-  var new_x = expedition.origin.x - expedition.destination.x;
+  var new_x = expedition.origin_object.x - expedition.destination_object.x;
   new_x *= mod;
-  new_x += expedition.destination.x;
+  new_x += expedition.destination_object.x;
 
-  var new_y = expedition.origin.y - expedition.destination.y;
+  var new_y = expedition.origin_object.y - expedition.destination_object.y;
   new_y *= mod;
-  new_y += expedition.destination.y;
+  new_y += expedition.destination_object.y;
 
   return {
     'x': new_x,
@@ -315,8 +343,14 @@ function relativeCoords(expedition) {
   };
 }
 
-function attachToAllChildren(selection) {
-  return selection.data((d, i) => {
-    return Array(selection._groups[i].length).fill(d);
+function attachToAllChildren(d3selector) {
+  return d3selector.data((d, i) => {
+    return Array(d3selector._groups[i].length).fill(d);
   });
+}
+
+function setTurn(newTurn) {
+  turn = newTurn;
+  console.log(turn);
+  d3.select('#turn_slider').property('value', turn);
 }
