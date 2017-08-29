@@ -45,31 +45,36 @@ function setupPattern(name, width, height, id) {
 }
 
 function init(data) {
+
+  // Planet map
+  data.planet_map = data.planets.reduce((map, o) => {
+    o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
+    o.size = randomBetween(1, max_planet_size);
+    map[o.name] = o;
+    return map;
+  }, {});
+
   // Setup view
   var min_x = Infinity;
   var min_y = Infinity;
   var max_x = 0;
   var max_y = 0;
+  var padding = 1;
 
   data.planets.forEach(e => {
     if (e.x > max_x) {
-      max_x = e.x;
+      max_x = e.x + (e.size + 2 + padding);
     }
     if (e.x < min_x) {
-      min_x = e.x;
+      min_x = e.x - (e.size + 2 + padding);
     }
     if (e.y > max_y) {
-      max_y = e.y;
+      max_y = e.y + (e.size + 2 + padding);
     }
     if (e.y < min_y) {
-      min_y = e.y;
+      min_y = e.y - (e.size + 2 + padding);
     }
   });
-
-  max_x += max_planet_size * 4;
-  max_y += max_planet_size * 4;
-  min_x -= max_planet_size * 2;
-  min_y -= max_planet_size * 2;
 
   svg.attr('width', '100%')
     .attr('height', window.innerHeight)
@@ -79,14 +84,6 @@ function init(data) {
   const color = d3.scaleOrdinal(d3.schemeCategory10);
   data.color_map = data.players.reduce((map, o, i) => {
     map[o] = color(i);
-    return map;
-  }, {});
-
-  // Planet map
-  data.planet_map = data.planets.reduce((map, o) => {
-    o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-    o.size = randomBetween(1, max_planet_size);
-    map[o.name] = o;
     return map;
   }, {});
 }
