@@ -563,69 +563,6 @@
           "origin": "Venus",
           "destination": "Mercurius",
           "owner": "Tim",
-          "turns_remaining": 4
-        },
-        {
-          "id": 1,
-          "ship_count": 10,
-          "origin": "Mars",
-          "destination": "Mercurius",
-          "owner": "Lorin",
-          "turns_remaining": 8
-        },
-        {
-          "id": 3,
-          "ship_count": 10,
-          "origin": "Pluto",
-          "destination": "Mars",
-          "owner": "Iepoev",
-          "turns_remaining": 8
-        }
-      ]
-    },
-    {
-      "players": [
-        "Lorin",
-        "Tim",
-        "Iepoev"
-      ],
-      "planets": [
-        {
-          "x": 10,
-          "y": 10,
-          "ship_count": 30,
-          "owner": "Lorin",
-          "name": "Mercurius"
-        },
-        {
-          "x": 10,
-          "y": 40,
-          "ship_count": 20,
-          "owner": "Lorin",
-          "name": "Venus"
-        },
-        {
-          "x": 30,
-          "y": 25,
-          "ship_count": 20,
-          "owner": "Lorin",
-          "name": "Mars"
-        },
-        {
-          "x": 40,
-          "y": 12,
-          "ship_count": 20,
-          "owner": "Iepoev",
-          "name": "Pluto"
-        }
-      ],
-      "expeditions": [
-        {
-          "id": 0,
-          "ship_count": 10,
-          "origin": "Venus",
-          "destination": "Mercurius",
-          "owner": "Tim",
           "turns_remaining": 3
         },
         {

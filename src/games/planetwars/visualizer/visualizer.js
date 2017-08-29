@@ -6,11 +6,12 @@ const planet_types = ["water", "red", "moon", "mars", "earth"];
 
 const max_planet_size = 3;
 
+// Globals
 var base_speed = 1000;
-// TODO bind this to a control
 // current speed
-var speed = 1000;
+var speed = base_speed;
 
+// D3 timer that controls turns
 var turn_timer;
 
 //current turn
@@ -21,42 +22,30 @@ var parsed;
 
 function setupPatterns(svg) {
   // Define patterns
+  svg.append("defs");
   planet_types.forEach(p => {
-    svg.append("defs")
-      .append("pattern")
-      .attr("id", p)
-      .attr("viewBox", "0 0 100 100")
-      .attr("preserveAspectRation", "none")
-      .attr("width", 1)
-      .attr("height", 1)
-      .append("image")
-      .attr("width", 100)
-      .attr("height", 100)
-      .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "res/" + p + ".png");
+    setupPattern(p, 100, 100, p);
   });
+  setupPattern("rocket", 100, 100, "ship");
+}
 
+function setupPattern(name, width, height, id) {
   svg.select("defs")
     .append("pattern")
-    .attr("id", "ship")
-    .attr("viewBox", "0 0 100 100")
+    .attr("id", id)
+    .attr("viewBox", "0 0 " + width + " " + height)
     .attr("preserveAspectRation", "none")
     .attr("width", 1)
     .attr("height", 1)
     .append("image")
-    .attr("width", 100)
-    .attr("height", 100)
+    .attr("width", width)
+    .attr("height", height)
     .attr("preserveAspectRation", "none")
-    .attr("xlink:href", "res/rocket.png");
+    .attr("xlink:href", "res/" + name + ".png");
 }
 
 function init(data) {
-  const color = d3.scaleOrdinal(d3.schemeCategory10);
-  data.color_map = data.players.reduce((map, o, i) => {
-    map[o] = color(i);
-    return map;
-  }, {});
-
+  // Setup view
   var min_x = Infinity;
   var min_y = Infinity;
   var max_x = 0;
@@ -86,6 +75,14 @@ function init(data) {
     .attr('height', window.innerHeight)
     .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
+  // Color map
+  const color = d3.scaleOrdinal(d3.schemeCategory10);
+  data.color_map = data.players.reduce((map, o, i) => {
+    map[o] = color(i);
+    return map;
+  }, {});
+
+  // Planet map
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
     o.size = randomBetween(1, max_planet_size);
@@ -155,17 +152,17 @@ function addPlanets(d3selector, data) {
 function addFleets(d3selector, data) {
   d3selector.append('circle')
     .attr('class', 'orbit')
-    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
+    .attr('transform', d => translation(d.planet))
     .attr('r', d => d.distance)
     .style('fill', "none")
     .style('stroke', d => data.color_map[d.planet.owner])
     .style('stroke-width', 0.05);
 
   var wrapper = d3selector.append('g')
-    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')');
+    .attr('transform', d => translation(d.planet));
 
   wrapper.append('circle')
-    .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
+    .attr('transform', d => translation(d.planet))
     .attr('class', 'fleet')
     .attr('r', d => d.size)
     .attr('cx', d => d.distance)
@@ -176,7 +173,10 @@ function addFleets(d3selector, data) {
 }
 
 function addExpeditions(d3selector, data) {
-  d3selector.attr('transform', d => transition(d));
+  d3selector.attr('transform', d => {
+    var point = relativeCoords(d);
+    return translation(point);
+  });
 
   d3selector.append('circle')
     .attr('transform', (d, i) => {
@@ -249,12 +249,13 @@ function updateAnimations(data) {
   planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
 
   // EXPEDITIONS
-  var t = d3.transition()
+  expeditions.transition()
     .duration(speed)
-    .ease(d3.easeLinear);
-
-  expeditions.transition(t)
-    .attr('transform', d => transition(d));
+    .ease(d3.easeLinear)
+    .attr('transform', d => {
+      var point = relativeCoords(d);
+      return translation(point)
+    });
 
   // Old expeditions to remove
   expeditions.exit().remove();
@@ -269,7 +270,6 @@ function parseJson(e) {
     init(data);
     prepareData(data);
     update(data);
-
 
     //TODO do this better
     attachEvents(parsed.turns.length - 1, toggleTimer, showTurn);
@@ -308,8 +308,7 @@ function showTurn(newTurn) {
   }
 }
 
-function transition(expedition) {
-  var point = relativeCoords(expedition);
+function translation(point) {
   return 'translate(' + point.x + ',' + point.y + ')';
 }
 
