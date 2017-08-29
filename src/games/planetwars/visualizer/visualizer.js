@@ -1,13 +1,14 @@
 // Constants
 
-const svg = d3.select("svg"),
-  width = +svg.attr("width"),
-  height = +svg.attr("height");
+const svg = d3.select("svg");
+
 const planet_types = ["water", "red", "moon", "mars", "earth"];
 
 
 //TODO use for viewport
-const scale = 20;
+const scale = 1;
+
+const max_planet_size = 3;
 
 var base_speed = 1000;
 // TODO bind this to a control
@@ -60,6 +61,35 @@ function init(data) {
     return map;
   }, {});
 
+  var min_x = Infinity;
+  var min_y = Infinity;
+  var max_x = 0;
+  var max_y = 0;
+
+  data.planets.map(e => {
+    if (e.x > max_x) {
+      max_x = e.x;
+    }
+    if (e.x < min_x) {
+      min_x = e.x;
+    }
+    if (e.y > max_y) {
+      max_y = e.y;
+    }
+    if (e.y < min_y) {
+      min_y = e.y;
+    }
+  });
+
+  max_x += max_planet_size * 4;
+  max_y += max_planet_size * 4;
+  min_x -= max_planet_size * 2;
+  min_y -= max_planet_size * 2;
+
+  svg.attr('width', '100%')
+    .attr('height', window.innerHeight)
+    .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+
   data.planets.map(e => {
     e.x *= scale;
     e.y *= scale;
@@ -67,7 +97,7 @@ function init(data) {
 
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-    o.size = randomBetween(20, 60);
+    o.size = randomBetween(1, max_planet_size);
     map[o.name] = o;
     return map;
   }, {});
@@ -113,9 +143,9 @@ function addPlanets(d3selector, data) {
 
   d3selector.append('text')
     .attr('x', d => d.x)
-    .attr('y', d => d.y + d.size + 20)
+    .attr('y', d => d.y + d.size + 1)
     .attr("font-family", "sans-serif")
-    .attr("font-size", "20px")
+    .attr("font-size", "1px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => d.name)
     .append('title')
@@ -123,9 +153,9 @@ function addPlanets(d3selector, data) {
 
   d3selector.append('text')
     .attr('x', d => d.x)
-    .attr('y', d => d.y + d.size + 60)
+    .attr('y', d => d.y + d.size + 3)
     .attr("font-family", "sans-serif")
-    .attr("font-size", "20px")
+    .attr("font-size", "1px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
@@ -137,7 +167,8 @@ function addFleets(d3selector, data) {
     .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')')
     .attr('r', d => d.distance)
     .style('fill', "none")
-    .style('stroke', d => data.color_map[d.planet.owner]);
+    .style('stroke', d => data.color_map[d.planet.owner])
+    .style('stroke-width', 0.05);
 
   var wrapper = d3selector.append('g')
     .attr('transform', d => 'translate(' + d.planet.x + ',' + d.planet.y + ')');
@@ -160,16 +191,16 @@ function addExpeditions(d3selector, data) {
     .attr('transform', (d, i) => {
       return 'rotate(' + (Math.atan2(d.destination_object.y - d.origin_object.y, d.destination_object.x - d.origin_object.x) * (180 / Math.PI) + 90) + ')';
     })
-    .attr('r', 20)
+    .attr('r', 1)
     .style('stroke', d => data.color_map[d.owner])
-    .style('stroke-width', 2)
+    .style('stroke-width', 0.05)
     .attr('fill', d => "url(#ship)")
     .append('title').text(d => d.owner);
 
   d3selector.append('text')
-    .attr('y', 40)
+    .attr('y', 2)
     .attr("font-family", "sans-serif")
-    .attr("font-size", "20px")
+    .attr("font-size", "1px")
     .attr('fill', d => data.color_map[d.owner])
     .text(d => "\u2694 " + d.ship_count)
     .append('title').text(d => d.owner);
@@ -189,10 +220,10 @@ function update(data) {
   var fleet_wrapper = new_planets.append('g')
     .data(data.planets.map(d => {
       return {
-        size: 20,
-        distance: d.size + 40,
-        angle: randomBetween(1, 360),
-        speed: randomBetween(100, 1000),
+        size: 1,
+        distance: d.size + 2,
+        angle: randomIntBetween(1, 360),
+        speed: randomIntBetween(100, 1000),
         planet: d
       };
     }));
@@ -319,8 +350,12 @@ function stopTimer() {
 
 // Help functions
 
+function randomIntBetween(min, max) {
+  return Math.floor(randomBetween(min, max));
+}
+
 function randomBetween(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+  return Math.random() * (max - min + 1) + min;
 }
 
 function euclideanDistance(e1, e2) {

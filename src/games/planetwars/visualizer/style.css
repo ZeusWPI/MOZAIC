@@ -1,5 +1,11 @@
+body {
+  margin: 0;
+}
 .controlbar {
   width: 100%;
+  position: absolute;
+  bottom: 0px;
+  margin-left: 10px;
 }
 
 .control {
@@ -18,4 +24,8 @@
 
 #turn_slider{
   width: 85%;
+}
+
+.view {
+  position: relative;
 }
