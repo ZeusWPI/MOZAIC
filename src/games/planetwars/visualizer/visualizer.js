@@ -4,10 +4,6 @@ const svg = d3.select("svg");
 
 const planet_types = ["water", "red", "moon", "mars", "earth"];
 
-
-//TODO use for viewport
-const scale = 1;
-
 const max_planet_size = 3;
 
 var base_speed = 1000;
@@ -66,7 +62,7 @@ function init(data) {
   var max_x = 0;
   var max_y = 0;
 
-  data.planets.map(e => {
+  data.planets.forEach(e => {
     if (e.x > max_x) {
       max_x = e.x;
     }
@@ -89,11 +85,6 @@ function init(data) {
   svg.attr('width', '100%')
     .attr('height', window.innerHeight)
     .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
-
-  data.planets.map(e => {
-    e.x *= scale;
-    e.y *= scale;
-  });
 
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
@@ -207,15 +198,13 @@ function addExpeditions(d3selector, data) {
 }
 
 function update(data) {
-  // Planets
   var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
   var expeditions = svg.selectAll('.expedition')
     .data(data.expeditions, d => {
       return d.id;
     });
 
-  // Fleets for planets
-
+  // New objects
   var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
   var fleet_wrapper = new_planets.append('g')
     .data(data.planets.map(d => {
@@ -229,6 +218,7 @@ function update(data) {
     }));
   var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
+  // Add the new objects
   addPlanets(new_planets, data);
   addFleets(fleet_wrapper, data);
   addExpeditions(new_expeditions, data);
@@ -363,7 +353,7 @@ function euclideanDistance(e1, e2) {
 }
 
 function relativeCoords(expedition) {
-  var total_distance = Math.ceil(euclideanDistance(expedition.origin_object, expedition.destination_object)) / scale;
+  var total_distance = Math.ceil(euclideanDistance(expedition.origin_object, expedition.destination_object));
   var mod = expedition.turns_remaining / total_distance;
 
   var new_x = expedition.origin_object.x - expedition.destination_object.x;
