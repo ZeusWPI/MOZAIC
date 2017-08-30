@@ -1,4 +1,5 @@
-let mod = 1;
+let mod = 3;
+var speeds = [0.25, 0.33, 0.5, 1, 2, 3, 4];
 
 function attachEvents(maxturn, togglePlaybackCallback, changeTurnCallback) {
   d3.select('#toggleplay').on("click", e => {
@@ -11,18 +12,18 @@ function attachEvents(maxturn, togglePlaybackCallback, changeTurnCallback) {
   });
 
   d3.select('#speeddown').on("click", e => {
-    if (mod < 4) {
-      mod += 0.25;
-      speed = base_speed * mod;
-      updateSpeed(1 / mod);
+    if (mod > 0) {
+      mod--;
+      speed = base_speed / speeds[mod];
+      updateSpeed(speeds[mod]);
     }
   })
 
   d3.select('#speedup').on("click", e => {
-    if (mod > 0.25) {
-      mod -= 0.25;
-      speed = base_speed * mod;
-      updateSpeed(1 / mod);
+    if (mod < speeds.length - 1) {
+      mod++;
+      speed = base_speed / speeds[mod];
+      updateSpeed(speeds[mod]);
     }
   })
 
@@ -33,7 +34,7 @@ function attachEvents(maxturn, togglePlaybackCallback, changeTurnCallback) {
     .on('change', e => {
       changeTurnCallback(d3.select('#turn_slider').node().value);
     });
-  updateSpeed(1 / mod);
+  updateSpeed(speeds[mod]);
 }
 
 function updateSpeed(val) {

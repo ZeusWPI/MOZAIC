@@ -5,6 +5,7 @@ const svg = d3.select("svg");
 const planet_types = ["water", "red", "moon", "mars", "earth"];
 
 const max_planet_size = 3;
+const orbit_size = 2;
 
 // Globals
 var base_speed = 1000;
@@ -50,6 +51,7 @@ function init(data) {
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
     o.size = randomBetween(1, max_planet_size);
+    //o.size = 2;
     map[o.name] = o;
     return map;
   }, {});
@@ -171,7 +173,7 @@ function addFleets(d3selector, data) {
 
 function addExpeditions(d3selector, data) {
   d3selector.attr('transform', d => {
-    var point = relativeCoords(d);
+    var point = homannPosition(d);
     return translation(point);
   });
 
@@ -207,7 +209,7 @@ function update(data) {
     .data(data.planets.map(d => {
       return {
         size: 1,
-        distance: d.size + 2,
+        distance: d.size + orbit_size,
         angle: randomIntBetween(1, 360),
         speed: randomIntBetween(100, 1000),
         planet: d
@@ -250,7 +252,7 @@ function updateAnimations(data) {
     .duration(speed)
     .ease(d3.easeLinear)
     .attr('transform', d => {
-      var point = relativeCoords(d);
+      var point = homannPosition(d);
       return translation(point)
     });
 
@@ -364,6 +366,43 @@ function relativeCoords(expedition) {
     'x': new_x,
     'y': new_y
   };
+}
+
+function homannPosition(expedition) {
+  var total_distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
+  var mod = expedition.turns_remaining / Math.ceil(total_distance);
+
+  var r1 = (expedition.origin_object.size) / 2 + 3;
+  var r2 = (expedition.destination_object.size) / 2 + 3;
+  var a = (total_distance + r1 + r2) / 2;
+  var c = total_distance / 2;
+  var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+  var dx = expedition.origin_object.x - expedition.destination_object.x;
+  var dy = expedition.origin_object.y - expedition.destination_object.y;
+  var w = Math.atan2(dy, dx);
+
+  // TODO for some reason we sometimes end up short on the center point offset
+  var size_diff = expedition.destination_object.size - expedition.origin_object.size;
+
+  var center_x = dx / 2 + expedition.destination_object.x - size_diff;
+  var center_y = dy / 2 + expedition.destination_object.y;
+  var angle = mod * (Math.PI * 2) - Math.PI;
+
+  var longest = a;
+  var shortest = b;
+  if (b > a) {
+    longest = b;
+    shortest = a;
+  }
+  longest *= Math.cos(angle);
+  shortest *= Math.sin(angle);
+
+  return {
+    'x': center_x + longest * Math.cos(w) - shortest * Math.sin(w),
+    'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
+  };
+
 }
 
 function attachToAllChildren(d3selector) {
