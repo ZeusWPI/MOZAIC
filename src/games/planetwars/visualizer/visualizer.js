@@ -252,9 +252,19 @@ function updateAnimations(data) {
     .duration(speed)
     .ease(d3.easeLinear)
     .attr('transform', d => {
+
       var point = homannPosition(d);
       return translation(point)
     });
+  /*.select('circle')
+  .attr('transform', (d, i) => {
+    var total_distance = euclideanDistance(d.origin_object, d.destination_object);
+    var mod = d.turns_remaining / Math.ceil(total_distance);
+    var angle = mod * (Math.PI * 2);
+    console.log(angle);
+
+    return 'rotate(' + (angle * (180 / Math.PI) - 135) % 360 + ')';
+  });*/
 
   // Old expeditions to remove
   expeditions.exit().remove();
@@ -371,23 +381,21 @@ function relativeCoords(expedition) {
 function homannPosition(expedition) {
   var total_distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
   var mod = expedition.turns_remaining / Math.ceil(total_distance);
+  var angle = mod * (Math.PI * 2) - Math.PI;
 
   var r1 = (expedition.origin_object.size) / 2 + 3;
   var r2 = (expedition.destination_object.size) / 2 + 3;
+
   var a = (total_distance + r1 + r2) / 2;
-  var c = total_distance / 2;
+  var c = a - r1 / 2 - r2 / 2;
   var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
 
   var dx = expedition.origin_object.x - expedition.destination_object.x;
   var dy = expedition.origin_object.y - expedition.destination_object.y;
   var w = Math.atan2(dy, dx);
 
-  // TODO for some reason we sometimes end up short on the center point offset
-  var size_diff = expedition.destination_object.size - expedition.origin_object.size;
-
-  var center_x = dx / 2 + expedition.destination_object.x - size_diff;
-  var center_y = dy / 2 + expedition.destination_object.y;
-  var angle = mod * (Math.PI * 2) - Math.PI;
+  var center_x = c * Math.cos(w) + expedition.destination_object.x;
+  var center_y = c * Math.sin(w) + expedition.destination_object.y;
 
   var longest = a;
   var shortest = b;
