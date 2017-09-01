@@ -254,17 +254,16 @@ function updateAnimations(data) {
     .attr('transform', d => {
 
       var point = homannPosition(d);
-      return translation(point)
-    });
-  /*.select('circle')
-  .attr('transform', (d, i) => {
-    var total_distance = euclideanDistance(d.origin_object, d.destination_object);
-    var mod = d.turns_remaining / Math.ceil(total_distance);
-    var angle = mod * (Math.PI * 2);
-    console.log(angle);
-
-    return 'rotate(' + (angle * (180 / Math.PI) - 135) % 360 + ')';
-  });*/
+      return translation(point);
+    })
+    .attrTween('transform', d => {
+      var turn_diff = turn - data.lastTurn;
+      var inter = d3.interpolateNumber(homannAngle(d, d.turns_remaining + turn_diff), homannAngle(d, d.turns_remaining));
+      return t => {
+        var point = homannPosition(d, inter(t));
+        return translation(point);
+      };
+    }).on('interrupt', e => console.log("inter"));
 
   // Old expeditions to remove
   expeditions.exit().remove();
@@ -297,8 +296,7 @@ function parseJson(e) {
 }
 
 function nextTurn() {
-  turn++;
-  return showTurn(turn);
+  return showTurn(parseInt(turn) + 1);
 }
 
 function showTurn(newTurn) {
@@ -306,8 +304,10 @@ function showTurn(newTurn) {
     console.log("end of log");
     return false;
   } else {
+    var lastTurn = turn;
     setTurn(newTurn);
     var data = parsed.turns[newTurn];
+    data.lastTurn = lastTurn;
     data.planet_map = parsed.turns[0].planet_map;
     data.color_map = parsed.turns[0].color_map;
     prepareData(data);
@@ -378,10 +378,14 @@ function relativeCoords(expedition) {
   };
 }
 
-function homannPosition(expedition) {
+function homannPosition(expedition, angle) {
+
+
   var total_distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
-  var mod = expedition.turns_remaining / Math.ceil(total_distance);
-  var angle = mod * (Math.PI * 2) - Math.PI;
+  /*var mod = (expedition.turns_remaining - t) / total_distance;
+  var angle = mod * (Math.PI * 2) - Math.PI;*/
+  if (!angle) angle = homannAngle(expedition, expedition.turns_remaining, total_distance);
+
 
   var r1 = (expedition.origin_object.size) / 2 + 3;
   var r2 = (expedition.destination_object.size) / 2 + 3;
@@ -411,6 +415,12 @@ function homannPosition(expedition) {
     'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
   };
 
+}
+
+function homannAngle(expedition, turn, distance) {
+  if (!distance) distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
+  var mod = turn / distance;
+  return mod * (Math.PI * 2) - Math.PI;
 }
 
 function attachToAllChildren(d3selector) {
