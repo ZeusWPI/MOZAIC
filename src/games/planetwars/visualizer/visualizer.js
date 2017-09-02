@@ -247,9 +247,11 @@ function updateAnimations(data) {
   // Update orbits
   planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
 
+
+  // TODO sometimes animation and turn timers get desynched and the animation is interupted
   // EXPEDITIONS
   expeditions.transition()
-    .duration(speed)
+    .duration(speed - 20)
     .ease(d3.easeLinear)
     .attr('transform', d => {
 
@@ -378,6 +380,10 @@ function relativeCoords(expedition) {
   };
 }
 
+//TODO wouldn't it be like way easier to just rotate around a group around a centerpoint
+// the rotation would be circular, but just move the center around for eliptical orbit
+// that will remove the need for tweens and for rotating the ship along the elipse tangent
+// cause this is just a stupid amount of calculating per frame for no reason
 function homannPosition(expedition, angle) {
 
 
