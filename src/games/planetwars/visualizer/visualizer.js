@@ -178,8 +178,14 @@ function addExpeditions(d3selector, data) {
   });
 
   d3selector.append('circle')
-    .attr('transform', (d, i) => {
-      return 'rotate(' + (Math.atan2(d.destination_object.y - d.origin_object.y, d.destination_object.x - d.origin_object.x) * (180 / Math.PI) + 90) + ')';
+    .attr('transform', d => {
+      var dx = d.origin_object.x - d.destination_object.x;
+      var dy = d.origin_object.y - d.destination_object.y;
+      var w = Math.atan2(dy, dx);
+
+      var angle = homannAngle(d, d.turns_remaining);
+
+      return 'rotate(' + toDegrees(angle + w) + ')';
     })
     .attr('r', 1)
     .style('stroke', d => data.color_map[d.owner])
@@ -225,7 +231,6 @@ function update(data) {
 
 function updateAnimations(data) {
   var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
-  var expeditions = svg.selectAll('.expedition');
   var expeditions = svg.selectAll('.expedition')
     .data(data.expeditions, d => {
       return d.id;
@@ -251,10 +256,9 @@ function updateAnimations(data) {
   // TODO sometimes animation and turn timers get desynched and the animation is interupted
   // EXPEDITIONS
   expeditions.transition()
-    .duration(speed - 20)
+    .duration(speed)
     .ease(d3.easeLinear)
     .attr('transform', d => {
-
       var point = homannPosition(d);
       return translation(point);
     })
@@ -266,6 +270,30 @@ function updateAnimations(data) {
         return translation(point);
       };
     }).on('interrupt', e => console.log("inter"));
+
+  expeditions.select('circle').transition()
+    .duration(speed)
+    .ease(d3.easeLinear)
+    .attr('transform', d => {
+
+      var total_distance = euclideanDistance(d.origin_object, d.destination_object);
+
+      var r1 = (d.origin_object.size) / 2 + 3;
+      var r2 = (d.destination_object.size) / 2 + 3;
+
+      var a = (total_distance + r1 + r2) / 2;
+      var c = a - r1 / 2 - r2 / 2;
+      var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+      var dx = d.origin_object.x - d.destination_object.x;
+      var dy = d.origin_object.y - d.destination_object.y;
+      var scaler = a / b;
+      var w = Math.atan2(dy / scaler, dx);
+
+      var angle = homannAngle(d, d.turns_remaining);
+
+      return 'rotate(' + toDegrees(angle + w) + ')';
+    })
 
   // Old expeditions to remove
   expeditions.exit().remove();
@@ -385,13 +413,8 @@ function relativeCoords(expedition) {
 // that will remove the need for tweens and for rotating the ship along the elipse tangent
 // cause this is just a stupid amount of calculating per frame for no reason
 function homannPosition(expedition, angle) {
-
-
   var total_distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
-  /*var mod = (expedition.turns_remaining - t) / total_distance;
-  var angle = mod * (Math.PI * 2) - Math.PI;*/
   if (!angle) angle = homannAngle(expedition, expedition.turns_remaining, total_distance);
-
 
   var r1 = (expedition.origin_object.size) / 2 + 3;
   var r2 = (expedition.destination_object.size) / 2 + 3;
@@ -420,7 +443,14 @@ function homannPosition(expedition, angle) {
     'x': center_x + longest * Math.cos(w) - shortest * Math.sin(w),
     'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
   };
+}
 
+function toRadians(angle) {
+  return angle * (Math.PI / 180);
+}
+
+function toDegrees(angle) {
+  return angle * (180 / Math.PI);
 }
 
 function homannAngle(expedition, turn, distance) {
