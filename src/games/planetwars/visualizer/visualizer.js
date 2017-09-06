@@ -288,11 +288,30 @@ function updateAnimations(data) {
       var dx = d.origin_object.x - d.destination_object.x;
       var dy = d.origin_object.y - d.destination_object.y;
       var scaler = a / b;
-      var w = Math.atan2(dy / scaler, dx);
 
+      // elipse rotation angle
+      var w = Math.atan2(dy / scaler, dx);
+      // angle form center
       var angle = homannAngle(d, d.turns_remaining);
 
-      return 'rotate(' + toDegrees(angle + w) + ')';
+
+      // unrotated elipse point
+      var dx = a * Math.cos(angle);
+      var dy = b * Math.sin(angle);
+
+
+      // unrotated slope
+      //var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+      var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+
+      var sx = t1 * Math.cos(w) - Math.sin(w);
+      var sy = Math.cos(w) + t1 * Math.sin(w);
+
+      var degrees = toDegrees(Math.atan2(sy, sx));
+      console.log(degrees);
+      return 'rotate(' + (degrees + 180) + ')';
+      //return 'rotate(' + toDegrees(angle + w) + ')';
     })
 
   // Old expeditions to remove
@@ -315,7 +334,6 @@ function parseJson(e) {
     // Fleet animation timer
     d3.timer(elapsed => {
       svg.selectAll('.fleet')
-        //.data(fleets)
         .attr('transform', (d, i) => {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
@@ -432,10 +450,7 @@ function homannPosition(expedition, angle) {
 
   var longest = a;
   var shortest = b;
-  if (b > a) {
-    longest = b;
-    shortest = a;
-  }
+
   longest *= Math.cos(angle);
   shortest *= Math.sin(angle);
 
