@@ -254,6 +254,7 @@ function updateAnimations(data) {
 
 
   // TODO sometimes animation and turn timers get desynched and the animation is interupted
+  // also replace this with a for each so we can reuse calculations
   // EXPEDITIONS
   expeditions.transition()
     .duration(speed)
@@ -301,9 +302,7 @@ function updateAnimations(data) {
 
 
       // unrotated slope
-      //var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
       var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
 
       var sx = t1 * Math.cos(w) - Math.sin(w);
       var sy = Math.cos(w) + t1 * Math.sin(w);
@@ -311,7 +310,6 @@ function updateAnimations(data) {
       var degrees = toDegrees(Math.atan2(sy, sx));
       console.log(degrees);
       return 'rotate(' + (degrees + 180) + ')';
-      //return 'rotate(' + toDegrees(angle + w) + ')';
     })
 
   // Old expeditions to remove
@@ -426,10 +424,6 @@ function relativeCoords(expedition) {
   };
 }
 
-//TODO wouldn't it be like way easier to just rotate around a group around a centerpoint
-// the rotation would be circular, but just move the center around for eliptical orbit
-// that will remove the need for tweens and for rotating the ship along the elipse tangent
-// cause this is just a stupid amount of calculating per frame for no reason
 function homannPosition(expedition, angle) {
   var total_distance = euclideanDistance(expedition.origin_object, expedition.destination_object);
   if (!angle) angle = homannAngle(expedition, expedition.turns_remaining, total_distance);
