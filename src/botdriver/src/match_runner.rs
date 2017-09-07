@@ -37,16 +37,13 @@ impl<G> MatchRunner<G> where G: Game {
                     let responses = self.players.handle_prompts(&prompts);
                     let status = self.game_state.step(&responses);
                     self.status = status.control_status;
-                    self.log(status.log_entry);
+                    self.logger.log(status.log_entry);
                 }
             }
         }
     }
 
     fn log(&mut self, log_entry: Option<String>) {
-        if let Some(data) = log_entry {
-            self.logger.log(data);
-        }
     }
 }
 
@@ -54,6 +51,9 @@ impl<G> MatchRunner<G> where G: Game {
 struct MatchLogger;
 
 impl MatchLogger {
-    fn log(&mut self, data: String) {
+    fn log(&mut self, log_entry: Option<String>) {
+        if let Some(data) = log_entry {
+            //self.write(data);
+        }
     }
 }
