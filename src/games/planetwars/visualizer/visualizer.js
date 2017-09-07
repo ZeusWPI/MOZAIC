@@ -179,13 +179,37 @@ function addExpeditions(d3selector, data) {
 
   d3selector.append('circle')
     .attr('transform', d => {
+      var total_distance = euclideanDistance(d.origin_object, d.destination_object);
+
+      var r1 = (d.origin_object.size) / 2 + 3;
+      var r2 = (d.destination_object.size) / 2 + 3;
+
+      var a = (total_distance + r1 + r2) / 2;
+      var c = a - r1 / 2 - r2 / 2;
+      var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
       var dx = d.origin_object.x - d.destination_object.x;
       var dy = d.origin_object.y - d.destination_object.y;
-      var w = Math.atan2(dy, dx);
+      var scaler = a / b;
 
+      // elipse rotation angle
+      var w = Math.atan2(dy / scaler, dx);
+      // angle form center
       var angle = homannAngle(d, d.turns_remaining);
 
-      return 'rotate(' + toDegrees(angle + w) + ')';
+
+      // unrotated elipse point
+      var dx = a * Math.cos(angle);
+      var dy = b * Math.sin(angle);
+
+      // unrotated slope
+      var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+      var sx = t1 * Math.cos(w) - Math.sin(w);
+      var sy = Math.cos(w) + t1 * Math.sin(w);
+
+      var degrees = toDegrees(Math.atan2(sy, sx));
+      return 'rotate(' + (degrees + 180) % 360 + ')';
     })
     .attr('r', 1)
     .style('stroke', d => data.color_map[d.owner])
@@ -252,7 +276,6 @@ function updateAnimations(data) {
   // Update orbits
   planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
 
-
   // TODO sometimes animation and turn timers get desynched and the animation is interupted
   // also replace this with a for each so we can reuse calculations
   // EXPEDITIONS
@@ -276,7 +299,6 @@ function updateAnimations(data) {
     .duration(speed)
     .ease(d3.easeLinear)
     .attr('transform', d => {
-
       var total_distance = euclideanDistance(d.origin_object, d.destination_object);
 
       var r1 = (d.origin_object.size) / 2 + 3;
@@ -300,7 +322,6 @@ function updateAnimations(data) {
       var dx = a * Math.cos(angle);
       var dy = b * Math.sin(angle);
 
-
       // unrotated slope
       var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
 
@@ -308,8 +329,7 @@ function updateAnimations(data) {
       var sy = Math.cos(w) + t1 * Math.sin(w);
 
       var degrees = toDegrees(Math.atan2(sy, sx));
-      console.log(degrees);
-      return 'rotate(' + (degrees + 180) + ')';
+      return 'rotate(' + (degrees + 180) % 360 + ')';
     })
 
   // Old expeditions to remove
