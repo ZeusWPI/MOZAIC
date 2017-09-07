@@ -2,18 +2,18 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use std::cell::{RefCell, RefMut};
+use std::cell::{RefCell, RefMut, Ref};
 
 use game_types::*;
 use game_types::Player as PlayerName;
-use games::planetwars::protocol::*;
+use games::planetwars::protocol;
 use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
 pub struct PlanetWars {
     players: HashMap<PlayerName, Rc<RefCell<Player>>>,
-    planets: HashMap<PlanetName, Rc<RefCell<Planet>>>,
+    planets: HashMap<protocol::PlanetName, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
 
@@ -61,13 +61,13 @@ impl Game for PlanetWars {
         for (player, command) in player_output {
 
             // Parse command
-            let c: Command = match serde_json::from_str(command) {
+            let c: protocol::Command = match serde_json::from_str(command) {
                 Ok(command) => command,
                 // TODO: More expressive error
                 Err(err) => {
                     let msg = format!("Invalid formatted command.\n{}", err);
                     return GameStatus::Done(Outcome::Error(msg.to_owned()));
-                } 
+                }
             };
 
             let moof = match c.value {
@@ -92,7 +92,7 @@ impl Game for PlanetWars {
 }
 
 impl PlanetWars {
-    fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
+    fn validate_move(&mut self, m: protocol::Move) -> Result<protocol::Move, Outcome>{
         // Check whether origin is a valid planet
         /*
         let or = match self.planets.get(&c.origin) {
@@ -116,12 +116,54 @@ impl PlanetWars {
         Ok(m)
     }
 
-    fn to_state(&mut self) -> State {
-        let players = Vec::new();
-        let planets = Vec::new();
-        let expeditions = Vec::new();
-        // TODO
-        State {
+    fn to_state(&mut self) -> protocol::State {
+        let mut players = Vec::new();
+        let mut planets = Vec::new();
+        let mut expeditions = Vec::new();
+
+        //Fill players vector
+        for name in self.players.keys() {
+            players.push(name.clone());
+        }
+
+        //Fill planets vector
+        for mut planet in self.planets.values_mut() {
+            let planet_value = Rc::get_mut(&mut planet).unwrap().borrow();
+            let (planet_owner_name, planet_ship_count) = {
+                if planet_value.fleets.capacity() > 0 {
+                    let fleet = &planet_value.fleets[0];
+                    let ship_count = fleet.ship_count;
+                    let owner_ref = fleet.owner.upgrade().unwrap();
+                    let owner_name = Some(owner_ref.borrow().name.clone());
+                    (owner_name, ship_count)
+                } else {
+                    (None, 0)
+                }
+            };
+
+            let planet_clone = protocol::Planet {
+                ship_count: planet_ship_count,
+                x: planet_value.x as f64,
+                y: planet_value.y as f64,
+                owner: planet_owner_name,
+                name: planet_value.name.clone(),
+            };
+            planets.push(planet_clone);
+        }
+
+        //Fill expeditions vector
+        for mut expedition in self.expeditions.iter() {
+            let expedition_fleet = &expedition.fleet;
+            let expedition_owner_ref = expedition_fleet.owner.upgrade().unwrap();
+
+            let expedition_owner_name = Some(expedition_owner_ref.borrow().name.clone());
+            let expedition_ship_count = expedition_fleet.ship_count;
+            let expedition_turns_remaining = expedition.turns_remaining;
+
+
+        }
+
+        protocol::State {
             players: players,
             planets: planets,
             expeditions: expeditions
@@ -129,16 +171,16 @@ impl PlanetWars {
 
     }
 
-    fn exp_from_move(&mut self, player_name: PlayerName, m: Move) -> Expedition {
+    fn exp_from_move(&mut self, player_name: PlayerName, m: protocol::Move) -> Expedition {
         let owner = self.players.get(&player_name).unwrap(); // Add error message
         let fleet = Fleet {
-            owner: Rc::downgrade(owner), 
+            owner: Rc::downgrade(owner),
             ship_count: m.ship_count
         };
 
         let target = self.planets.get(&m.destination).unwrap(); // Add error message
         Expedition {
-            target: Rc::downgrade(target), 
+            target: Rc::downgrade(target),
             fleet: fleet,
             turns_remaining: 5
         }
@@ -182,14 +224,14 @@ pub struct Fleet {
 }
 
 pub struct Planet {
-    name: PlanetName,
+    name: protocol::PlanetName,
     fleets: Vec<Fleet>,
     x: u64,
     y: u64,
 }
 
 impl Planet {
-    pub fn new(name: PlanetName, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
+    pub fn new(name: protocol::PlanetName, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
         Planet {
             name: name,
             fleets: fleets,
@@ -221,6 +263,7 @@ impl Planet {
 }
 
 struct Expedition {
+    //origin: Weak<RefCell<Planet>>,
     target: Weak<RefCell<Planet>>,
     fleet: Fleet,
     turns_remaining: u64,
