@@ -51,6 +51,13 @@ impl Game for PlanetWars {
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
+        // Player output deserialisering
+        // Commando valideren
+        // Verwerk commando's
+        // Check game gedaan
+        // Serialiseren (nieuwe playerinput, ofte gameover)
+        // Teruggeven
+
         for (player, command) in player_output {
 
             // Parse command
