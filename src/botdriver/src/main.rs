@@ -38,6 +38,7 @@ fn main() {
             std::process::exit(1)
         }
     };
+    //MatchRunner::resolve(config, player_configs);
 }
 
 // Parse a config passed to the program as an command-line argument.
