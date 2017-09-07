@@ -4,9 +4,9 @@ pub trait Game {
     type Config;
 
     // returns game state and initial status
-    fn init(config: Config, player_ids: Vec<u64>) -> (Self, GameOutput);
+    fn init(config: Config, player_ids: Vec<u64>) -> (Self, GameStatus);
     // process player input and execute a game turn
-    fn step(&mut self, responses: &Vec<Response>) -> GameOutput;
+    fn step(&mut self, responses: &Vec<Response>) -> GameStatus;
 }
 
 #[derive(Debug)]
