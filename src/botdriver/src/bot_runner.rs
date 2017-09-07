@@ -15,15 +15,13 @@ pub struct PlayerConfig {
     pub args: Vec<Sring>,
 }
 
-pub type BotHandles = HashMap<u64, process::Child>;
-
 // A collection of running bots (i.e. process handles)
-pub struct Bots {
-    // Maps bot ids to their process handles
+pub struct Players {
+    // Maps player ids to their process handles
     handles: HashMap<u64, process::Child>,
 }
 
-impl Bots {
+impl Players {
     pub fn start(configs: &Vec<PlayerConfig>) -> Self {
         unimplemented!()
     }

@@ -10,16 +10,16 @@ pub trait Game {
 }
 
 #[derive(Debug)]
-pub struct GameOutput {
-    pub status: GameStatus,
+pub struct GameStatus {
+    pub control_status: ControlStatus,
     pub log_entry: Option<String>,
 }
 
 // reason why the game returned control
 #[derive(Debug)]
-pub enum GameStatus {
+pub enum ControlStatus {
     Finished(Outcome),
-    Suspended(Vec<Prompt>)
+    Prompting(Vec<Prompt>)
 }
 
 #[derive(Debug)]
