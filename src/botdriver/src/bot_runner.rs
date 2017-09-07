@@ -10,17 +10,17 @@ pub struct MatchConfig {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
-    pub id: usize,
+    pub id: u64,
     pub command: String,
     pub args: Vec<Sring>,
 }
 
-pub type BotHandles = HashMap<usize, process::Child>;
+pub type BotHandles = HashMap<u64, process::Child>;
 
 // A collection of running bots (i.e. process handles)
 pub struct Bots {
     // Maps bot ids to their process handles
-    handles: HashMap<usize, process::Child>
+    handles: HashMap<u64, process::Child>,
 }
 
 impl Bots {

@@ -32,7 +32,7 @@ fn main() {
     run::<Rules>(&game_config);
 }
 
-/* 
+/*
  * Run a game with a specified config.
  * The algorithm for running a game goes as follows:
  *
@@ -40,7 +40,7 @@ fn main() {
  * generate initial game
  * while (gamestate is not finnished) do
  *   gamestate = game.step()
- * 
+ *
  * finnish()
  * ```
  */
@@ -48,7 +48,7 @@ fn run<G: Game>(config: &GameConfig) {
     let players = config.players.keys().cloned().collect();
     let mut game = G::init(players);
     let mut gamestatus = game.start();
-    let mut handles = util::create_bot_handles(config); 
+    let mut handles = util::create_bot_handles(config);
     loop {
         println!("\nNew step:\n==============");
         gamestatus = match gamestatus {
@@ -97,6 +97,7 @@ fn finnish(bots: &mut BotHandles, outcome: Outcome) {
 fn fetch_player_outputs(input: &PlayerInput, bots: &mut BotHandles) -> Result<PlayerOutput, Box<Error>> {
     let mut pos = PlayerOutput::new();
     for (player, info) in input.iter() {
+        println!("reading {}", player);
         let mut bot = bots.get_mut(player)
                           .expect(&format!("Response required for {} but no process found", player));
         let po = match fetch_player_output(info, bot) {
