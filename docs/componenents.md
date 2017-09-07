@@ -39,8 +39,9 @@ While the game server is running games, it generates a lot of information it doe
 Obvious candidates to include in this data are various metadata such as game winners, game duration, etc.
 
 ## Game server
+the gameserver is in charge of connecting the clients.
 ### Referee
-The referee is the component in charge of actually connecting to clients and running games.
+The referee is the component in charge of actually running games.
 It distributes the known game state between players, and receives the incoming responses containing their respective moves made.
 The relevant info is passed to the rule set and the cycle continues.
 
