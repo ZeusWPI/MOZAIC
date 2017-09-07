@@ -134,23 +134,12 @@ impl PlanetWars {
         //Fill planets vector
         for mut planet in self.planets.values_mut() {
             let planet_value = Rc::get_mut(&mut planet).unwrap().borrow();
-            let (planet_owner_name, planet_ship_count) = {
-                if planet_value.fleets.capacity() > 0 {
-                    let fleet = &planet_value.fleets[0];
-                    let ship_count = fleet.ship_count;
-                    let owner_ref = fleet.owner.upgrade().unwrap();
-                    let owner_name = Some(owner_ref.borrow().name.clone());
-                    (owner_name, ship_count)
-                } else {
-                    (None, 0)
-                }
-            };
 
             let planet_clone = protocol::Planet {
-                ship_count: planet_ship_count,
+                ship_count: planet_value.ship_count(),
                 x: planet_value.x as f64,
                 y: planet_value.y as f64,
-                owner: planet_owner_name,
+                owner: planet_value.owner(),
                 name: planet_value.name.clone(),
             };
             planets.push(planet_clone);
@@ -159,13 +148,15 @@ impl PlanetWars {
         //Fill expeditions vector
         for mut expedition in self.expeditions.iter() {
             let expedition_fleet = &expedition.fleet;
-            let expedition_owner_ref = expedition_fleet.owner.upgrade().unwrap();
 
-            let expedition_owner_name = Some(expedition_owner_ref.borrow().name.clone());
-            let expedition_ship_count = expedition_fleet.ship_count;
-            let expedition_turns_remaining = expedition.turns_remaining;
-
-
+            let expedition_clone = protocol::Expedition {
+                ship_count: expedition_fleet.ship_count,
+                origin: expedition.origin(),
+                destination: expedition.target(),
+                owner: expedition_fleet.owner().unwrap(),
+                turns_remaining: expedition.turns_remaining,
+            };
+            expeditions.push(expedition_clone);
         }
 
         protocol::State {
@@ -183,8 +174,10 @@ impl PlanetWars {
             ship_count: m.ship_count
         };
 
+        let origin = self.planets.get(&m.origin).unwrap();
         let target = self.planets.get(&m.destination).unwrap(); // Add error message
         Expedition {
+            origin: Rc::downgrade(origin),
             target: Rc::downgrade(target),
             fleet: fleet,
             turns_remaining: 5
@@ -228,6 +221,14 @@ pub struct Fleet {
     ship_count: u64,
 }
 
+impl Fleet {
+    pub fn owner(&self) -> Option<PlayerName> {
+        let player_ref = self.owner.upgrade().unwrap();
+        let player_name = player_ref.borrow().name.clone();
+        Some(player_name)
+    }
+}
+
 pub struct Planet {
     name: protocol::PlanetName,
     fleets: Vec<Fleet>,
@@ -245,18 +246,17 @@ impl Planet {
         }
     }
 
-    pub fn owner(&mut self) -> Option<PlayerName> {
+    pub fn owner(&self) -> Option<PlayerName> {
         if self.fleets.capacity() > 0 {
             let ref fleet = self.fleets[0];
-            let owner_ref = fleet.owner.upgrade().unwrap();
-            let owner_name = Some(owner_ref.borrow().name.clone());
+            let owner_name = fleet.owner();
             owner_name
         } else {
             None
         }
     }
 
-    pub fn ship_count(&mut self) -> u64 {
+    pub fn ship_count(&self) -> u64 {
         if self.fleets.capacity() > 0 {
             let ref fleet = self.fleets[0];
             fleet.ship_count
@@ -288,13 +288,25 @@ impl Planet {
 }
 
 struct Expedition {
-    //origin: Weak<RefCell<Planet>>,
+    origin: Weak<RefCell<Planet>>,
     target: Weak<RefCell<Planet>>,
     fleet: Fleet,
     turns_remaining: u64,
 }
 
 impl Expedition {
+    pub fn origin(&self) -> protocol::PlanetName {
+        let origin_ref = self.origin.upgrade().unwrap();
+        let origin_name = origin_ref.borrow().name.clone();
+        origin_name
+    }
+
+    pub fn target(&self) -> protocol::PlanetName {
+        let target_ref = self.target.upgrade().unwrap();
+        let target_name = target_ref.borrow().name.clone();
+        target_name
+    }
+
     fn into_orbit(self) {
         let target_ref = self.target.upgrade().unwrap();
         target_ref.borrow_mut().orbit(self.fleet);
