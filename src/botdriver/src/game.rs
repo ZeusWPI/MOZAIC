@@ -4,7 +4,8 @@ pub trait Game {
     type Config;
 
     // returns game state and initial status
-    fn init(config: Config, player_ids: Vec<u64>) -> (Self, GameStatus);
+    fn init(config: Self::Config, player_ids: Vec<u64>) -> (Self, GameStatus)
+        where Self: Sized;
     // process player input and execute a game turn
     fn step(&mut self, responses: &Vec<Response>) -> GameStatus;
 }
@@ -31,8 +32,9 @@ pub struct Prompt {
 #[derive(Debug)]
 pub struct Response {
     pub player_id: u64,
-    pub data: String,
+    pub data: Option<String>,
 }
+
 // TODO Improve error type. error-chain maybe?
 #[derive(Debug)]
 pub enum Outcome {
@@ -40,6 +42,7 @@ pub enum Outcome {
     Error(String),
 }
 
+#[derive(Debug)]
 pub struct PlayerScore {
     pub player_id: u64,
     pub score: f64,
