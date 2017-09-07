@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
-// TODO: remove start.
 pub trait Game {
-    fn init(player_ids: Vec<usize>) -> Self;
-    fn start(&mut self) -> GameStatus;
-    fn step(&mut self, player_output: &Vec<Response>) -> GameStatus;
+    // returns game state and initial status
+    fn init(player_ids: Vec<usize>) -> (Self, GameStatus);
+    // process player input and execute a game turn
+    fn step(&mut self, responses: &Vec<Response>) -> GameStatus;
 }
 
 #[derive(Debug)]
