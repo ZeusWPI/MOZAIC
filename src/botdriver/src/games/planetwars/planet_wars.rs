@@ -93,12 +93,23 @@ impl Game for PlanetWars {
 
 impl PlanetWars {
     fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
+
         // Check whether origin is a valid planet
-        /*
-        let or = match self.planets.get(&c.origin) {
+        let origin = match self.planets.get(&m.origin) {
             Some(planet) => planet,
-            None => return faulty_command("Origin is not a valid planet")
+            None => return Err(faulty_command("Origin is not a valid planet"))
         };
+
+        // Check whether destination is a valid planet
+        let destination = match self.planets.get(&m.destination){
+            Some(planet) => planet,
+            None => return Err(faulty_command("Destination is not a valid planet"))
+        };
+
+        if  origin.owner() != *player {
+            return faulty_command("You don't own this planet")
+        }
+        /*
 
         // Check whether dest is a valid planet
         let dest = match self.planets.get(&c.destination) {
@@ -106,9 +117,6 @@ impl PlanetWars {
             None => return faulty_command("Destination is not a valid planet")
         };
 
-        if or.owner != *player {
-            return faulty_command("You don't own this planet")
-        }
 
         if or.ship_count < c.ship_count {
             return faulty_command("You don't control enough ships to send this amount")
@@ -196,6 +204,12 @@ impl Planet {
             x: x,
             y: y
         }
+    }
+
+    pub fn owner(&mut self) -> Option<Weak<RefCell<PlayerName>>> {
+        self.fleets.get(0)
+                   .map(|fleet| fleet.owner)
+                   .map(|player| player.name)
     }
 
     fn orbit(&mut self, fleet: Fleet) {
