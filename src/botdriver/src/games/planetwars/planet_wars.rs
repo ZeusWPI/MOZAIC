@@ -214,6 +214,15 @@ impl Planet {
         }
     }
 
+    pub fn ship_count(&mut self) -> u64 {
+        if self.fleets.capacity() > 0 {
+            let ref fleet = self.fleets[0];
+            fleet.ship_count
+        } else {
+            0
+        }
+    }
+
     fn orbit(&mut self, fleet: Fleet) {
         // TODO: deduplication (merge fleets from same player)
         self.fleets.push(fleet);
