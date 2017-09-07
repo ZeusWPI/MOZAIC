@@ -92,13 +92,21 @@ impl Game for PlanetWars {
 }
 
 impl PlanetWars {
-    fn validate_move(&mut self, m: protocol::Move) -> Result<protocol::Move, Outcome>{
+
+    fn validate_move(&mut self, m: protocol::Move) -> Result<protocol::Move, Outcome> {
         // Check whether origin is a valid planet
-        /*
-        let or = match self.planets.get(&c.origin) {
+        let origin = match self.planets.get(&m.origin) {
             Some(planet) => planet,
-            None => return faulty_command("Origin is not a valid planet")
+            None => return Err(faulty_command("Origin is not a valid planet"))
         };
+
+        // Check whether destination is a valid planet
+        let destination = match self.planets.get(&m.destination){
+            Some(planet) => planet,
+            None => return Err(faulty_command("Destination is not a valid planet"))
+        };
+
+        /*
 
         // Check whether dest is a valid planet
         let dest = match self.planets.get(&c.destination) {
@@ -106,9 +114,6 @@ impl PlanetWars {
             None => return faulty_command("Destination is not a valid planet")
         };
 
-        if or.owner != *player {
-            return faulty_command("You don't own this planet")
-        }
 
         if or.ship_count < c.ship_count {
             return faulty_command("You don't control enough ships to send this amount")
@@ -237,6 +242,26 @@ impl Planet {
             fleets: fleets,
             x: x,
             y: y
+        }
+    }
+
+    pub fn owner(&mut self) -> Option<PlayerName> {
+        if self.fleets.capacity() > 0 {
+            let ref fleet = self.fleets[0];
+            let owner_ref = fleet.owner.upgrade().unwrap();
+            let owner_name = Some(owner_ref.borrow().name.clone());
+            owner_name
+        } else {
+            None
+        }
+    }
+
+    pub fn ship_count(&mut self) -> u64 {
+        if self.fleets.capacity() > 0 {
+            let ref fleet = self.fleets[0];
+            fleet.ship_count
+        } else {
+            0
         }
     }
 
