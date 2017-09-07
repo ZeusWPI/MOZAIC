@@ -106,9 +106,6 @@ impl PlanetWars {
             None => return Err(faulty_command("Destination is not a valid planet"))
         };
 
-        if  origin.owner() != *player {
-            return faulty_command("You don't own this planet")
-        }
         /*
 
         // Check whether dest is a valid planet
@@ -206,10 +203,15 @@ impl Planet {
         }
     }
 
-    pub fn owner(&mut self) -> Option<Weak<RefCell<PlayerName>>> {
-        self.fleets.get(0)
-                   .map(|fleet| fleet.owner)
-                   .map(|player| player.name)
+    pub fn owner(&mut self) -> Option<PlayerName> {
+        if self.fleets.capacity() > 0 {
+            let ref fleet = self.fleets[0];
+            let owner_ref = fleet.owner.upgrade().unwrap();
+            let owner_name = Some(owner_ref.borrow().name.clone());
+            owner_name
+        } else {
+            None
+        }
     }
 
     fn orbit(&mut self, fleet: Fleet) {
