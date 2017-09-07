@@ -1,3 +1,8 @@
+@font-face {
+    font-family: NotoSansFont;
+    src: url("res/NotoSansSymbols-Regular.ttf");
+}
+
 body {
   margin: 0;
 }
@@ -9,7 +14,7 @@ body {
 }
 
 .control {
-  font-family: "Segoe UI Symbol";
+  font-family: "NotoSansFont";
 }
 
 .speedcontrols {

@@ -34,6 +34,13 @@
           "ship_count": 20,
           "owner": "Iepoev",
           "name": "Pluto"
+        },
+        {
+          "x": 60,
+          "y": 30,
+          "ship_count": 20,
+          "owner": null,
+          "name": "Earth"
         }
       ],
       "expeditions": [

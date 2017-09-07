@@ -51,7 +51,6 @@ function init(data) {
   data.planet_map = data.planets.reduce((map, o) => {
     o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
     o.size = randomBetween(1, max_planet_size);
-    //o.size = 2;
     map[o.name] = o;
     return map;
   }, {});
@@ -88,6 +87,7 @@ function init(data) {
     map[o] = color(i);
     return map;
   }, {});
+  data.color_map[null] = "#000";
 }
 
 function prepareData(data) {
@@ -100,7 +100,8 @@ function prepareData(data) {
     if (e.owner != data.planet_map[e.name].owner) {
       e.changed_owner = true;
       data.planet_map[e.name].owner = e.owner;
-
+    } else {
+      e.changed_owner = false;
     }
   });
 }
@@ -154,7 +155,9 @@ function addFleets(d3selector, data) {
     .attr('transform', d => translation(d.planet))
     .attr('r', d => d.distance)
     .style('fill', "none")
-    .style('stroke', d => data.color_map[d.planet.owner])
+    .style('stroke', d => {
+      return data.color_map[d.planet.owner];
+    })
     .style('stroke-width', 0.05);
 
   var wrapper = d3selector.append('g')
@@ -316,7 +319,6 @@ function updateAnimations(data) {
       var w = Math.atan2(dy / scaler, dx);
       // angle form center
       var angle = homannAngle(d, d.turns_remaining);
-
 
       // unrotated elipse point
       var dx = a * Math.cos(angle);
