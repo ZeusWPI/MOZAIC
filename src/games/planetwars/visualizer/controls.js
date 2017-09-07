@@ -38,7 +38,6 @@ class Controls {
         visualizer.showTurn(d3.select('#turn_slider').node().value);
       });
     this.updateSpeed(this.speeds[this.mod]);
-
   }
 
   updateSpeed(val) {
@@ -48,4 +47,4 @@ class Controls {
 
 
 var controls = new Controls();
-var visualizer = new Visualizer(controls);
+var visualizer = new Visualizer();

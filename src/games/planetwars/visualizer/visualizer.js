@@ -12,10 +12,9 @@ const base_speed = 1000;
 
 class Visualizer {
 
-  constructor(controls) {
+  constructor() {
     this.speed = base_speed;
     this.turn = 0;
-    this.controls = controls;
   }
 
   setupPatterns(svg) {
@@ -345,7 +344,7 @@ class Visualizer {
       this.prepareData(data);
       this.update(data);
 
-      this.controls.attachEvents(this);
+      controls.attachEvents(this);
 
       // Fleet animation timer
       d3.timer(elapsed => {
