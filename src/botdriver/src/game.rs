@@ -1,10 +1,9 @@
+use match_runner::PlayerConfig;
 use std::collections::HashMap;
 
 pub trait Game : Sized {
-    type Config;
-
     // returns game state and initial status
-    fn init(config: Self::Config, player_ids: Vec<u64>) -> (Self, GameStatus)
+    fn init(players: &PlayerMap<PlayerConfig>) -> (Self, GameStatus)
         where Self: Sized;
     // process player input and execute a game turn
     fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus;
@@ -20,6 +19,7 @@ pub enum GameStatus {
 }
 
 // TODO: might be better to put this elsewhere
+pub type PlayerId = u64;
 // Maps a player to something.
 // TODO: non-cryptographic hash function maybe
-pub type PlayerMap<T> = HashMap<u64, T>;
+pub type PlayerMap<T> = HashMap<PlayerId, T>;

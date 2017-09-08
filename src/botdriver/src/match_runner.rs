@@ -1,50 +1,58 @@
+use std::marker::PhantomData;
 use game::*;
 use bot_runner::*;
+use std::collections::HashMap;
 
-// TODO: logs
-pub struct MatchRunner<G> {
-    game_state: G,
-    status: ControlStatus,
-    players: Players,
-    logger: MatchLogger,
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MatchConfig {
+    pub players: PlayerMap<PlayerConfig>,
 }
 
-impl<G> MatchRunner<G> where G: Game {
-    // TODO: pass log or something
-    pub fn run(config: G::Config, players: &Vec<PlayerConfig>) -> Outcome {
-        let mut runner = Self::init(config, players);
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PlayerConfig {
+    pub name: String,
+    pub command: String,
+    pub args: Vec<String>,
+}
+
+struct MatchRunner<'a, G> {
+    config: &'a MatchConfig,
+    players: PlayerMap<PlayerHandle<'a>>,
+    //temporary
+    phantom_game: PhantomData<G>,
+    // TODO: logger
+}
+
+impl<'a, G> MatchRunner<'a, G> where G: Game {
+    fn run(&mut self) -> PlayerMap<f64> {
+        let (mut game_state, mut status) = G::init(&self.config.players);
         loop {
-            match runner.status {
-                ControlStatus::Finished(outcome) => return outcome,
-                ControlStatus::Prompting(prompts) => {
-                    let responses = runner.players.handle_prompts(&prompts);
-                    let status = runner.game_state.step(&responses);
-                    runner.status = status.control_status;
-                    runner.logger.log(status.log_entry);
+            match status {
+                GameStatus::Finished(scoring) => return scoring,
+                GameStatus::Prompting(prompts) => {
+                    self.send_prompts(&prompts);
+                    let responses = self.receive_responses(&prompts);
+                    status = game_state.step(&responses);
                 }
             }
         }
     }
 
-    fn init(config: G::Config, players: &Vec<PlayerConfig>) -> Self {
-        let player_ids = players.iter().map(|conf| conf.id).collect();
-        let (game_state, game_status) = G::init(config, player_ids);
-        MatchRunner {
-            players: Players::start(players),
-            game_state,
-            status: game_status.control_status,
-            logger: MatchLogger,
+    fn send_prompts(&mut self, prompts: &PlayerMap<String>) {
+        for (player_id, prompt) in prompts {
+            let handle = self.players.get_mut(player_id).unwrap();
+            handle.send_msg(prompt).unwrap();
         }
     }
-}
 
-// TODO
-struct MatchLogger;
-
-impl MatchLogger {
-    fn log(&mut self, log_entry: Option<String>) {
-        if let Some(data) = log_entry {
-            //self.write(data);
+    fn receive_responses(&mut self, prompts: &PlayerMap<String>) -> PlayerMap<String> {
+        let mut responses = HashMap::with_capacity(prompts.len());
+        for player_id in prompts.keys() {
+            let handle = self.players.get_mut(player_id).unwrap();
+            if let Ok(response) = handle.recv_msg() {
+                responses.insert(*player_id, response);
+            }
         }
+        return responses;
     }
 }
