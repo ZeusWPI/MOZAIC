@@ -48,6 +48,7 @@ pub struct HigherLowerConfig {
 }
 
 /// The gamestate for a higher-lower game.
+#[derive(Debug)]
 pub struct HigherLower {
     players: Vec<PlayerId>,       // Players still in the game.
     eliminated: PlayerMap<u64>,   // The scoring for the eliminated players.
@@ -79,11 +80,16 @@ impl Game for HigherLower {
         let answers = HigherLower::parse_answers(responses);
         let correct_answer = self.gen_next_number();
 
-        for i in 0..self.players.len() {
-            let player_id = self.players[i];
-            match answers.get(&player_id) {
-                Some(ans) if ans == &correct_answer => {},
-                _ => self.eliminate_player(player_id),
+        let mut i = 0;
+        while i < self.players.len() {
+            match answers.get(&self.players[i]) {
+                Some(ans) if ans == &correct_answer => {
+                    i += 1;
+                },
+                _ => {
+                    let removed = self.players.swap_remove(i);
+                    self.eliminated.insert(removed, self.trial_num);
+                }
             }
         }
         self.trial_num += 1;
@@ -93,7 +99,7 @@ impl Game for HigherLower {
 
 impl HigherLower {
     fn game_status(&self) -> GameStatus<Self> {
-        if self.players.len() > 0 {
+        if self.players.is_empty() {
             GameStatus::Finished(self.eliminated.clone())
         } else {
             GameStatus::Prompting(self.prompts())
@@ -116,15 +122,11 @@ impl HigherLower {
         return Answer::get(prev, self.number);
     }
 
-    fn eliminate_player(&mut self, player_id: PlayerId) {
-        self.players.retain(|p| p != &player_id);
-        self.eliminated.insert(player_id, self.trial_num);
-    }
-
     fn parse_answers(responses: &PlayerMap<String>) -> PlayerMap<Answer> {
-        responses.iter().filter_map(|(&player_id, response)| {
+        responses.iter().filter_map(|(&player_id, response_text)| {
             // ignore incorrectly formatted arguments
-            serde_json::from_str(response).ok().map(|answer| (player_id, answer))
+            let response: Option<Response> = serde_json::from_str(response_text).ok();
+            return response.map(|resp| (player_id, resp.answer));
         }).collect()
     }
 }
