@@ -14,8 +14,8 @@ pub trait Game : Sized {
 // TODO: better name
 pub struct MatchConfig<'a, G: Game> {
     // map player ids to advertised names
-    players: PlayerMap<&'a str>,
-    config: G::Config,
+    pub players: PlayerMap<&'a str>,
+    pub game_config: G::Config,
 }
 
 // reason why the game returned control
