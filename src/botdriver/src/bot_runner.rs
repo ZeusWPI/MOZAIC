@@ -32,7 +32,7 @@ impl BotRunner {
         }
     }
 
-    fn player_handles<'p>(&'p mut self) -> PlayerMap<PlayerHandle<'p>> {
+    pub fn player_handles<'p>(&'p mut self) -> PlayerMap<PlayerHandle<'p>> {
         self.processes.iter_mut().map(|(&player_id, process)| {
             (player_id, PlayerHandle::new(process))
         }).collect()

@@ -3,11 +3,6 @@ use game::*;
 use bot_runner::*;
 use std::collections::HashMap;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct MatchDescription {
-    pub players: PlayerMap<PlayerConfig>,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
     pub name: String,
@@ -15,16 +10,14 @@ pub struct PlayerConfig {
     pub args: Vec<String>,
 }
 
-struct MatchRunner<'a, G: Game> {
-    config: MatchConfig<'a, G>,
-    players: PlayerMap<PlayerHandle<'a>>,
-    //temporary
-    phantom_game: PhantomData<G>,
+pub struct MatchRunner<'a, G: Game> {
+    pub config: MatchConfig<'a, G>,
+    pub players: PlayerMap<PlayerHandle<'a>>,
     // TODO: logger
 }
 
 impl<'a, G> MatchRunner<'a, G> where G: Game {
-    fn run(&mut self) -> G::Outcome {
+    pub fn run(&mut self) -> G::Outcome {
         let (mut game_state, mut status) = G::init(&self.config);
         loop {
             match status {

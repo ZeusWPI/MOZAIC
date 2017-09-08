@@ -44,7 +44,7 @@ impl Answer {
 
 
 pub struct HigherLowerConfig {
-    max: u64,                     // highest number that can be rolled
+    pub max: u64,                     // highest number that can be rolled
 }
 
 /// The gamestate for a higher-lower game.

@@ -20,7 +20,7 @@ use game::*;
 use bot_runner::*;
 use match_runner::*;
 
-//use games::HigherLower as Rules;
+use games::{HigherLower, HigherLowerConfig};
 
 // Load the config and start the game.
 fn main() {
@@ -31,14 +31,37 @@ fn main() {
         std::process::exit(1)
     }
 
-    let game_config: MatchDescription = match parse_config(Path::new(&args[1])) {
+    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
             std::process::exit(1)
         }
     };
-    //MatchRunner::<Rules>::run((), &game_config.players);
+
+    let players = match_description.players.into_iter().enumerate().map(|(num, player)| {
+        // TODO: maybe use usize here. id's are for internal use anyways.
+        (num as u64, player)
+    }).collect();
+    let mut bots = BotRunner::run(&players);
+    let mut runner = MatchRunner::<HigherLower> {
+        config: MatchConfig {
+            players: players.iter().map(|(&player_id, player_config)| {
+                (player_id, player_config.name.as_str())
+            }).collect(),
+            game_config: HigherLowerConfig {
+                max: 500,
+            },
+        },
+        players: bots.player_handles(),
+    };
+    let outcome = runner.run();
+    println!("Outcome: {:?}", outcome);
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MatchDescription {
+    pub players: Vec<PlayerConfig>,
 }
 
 // Parse a config passed to the program as an command-line argument.
