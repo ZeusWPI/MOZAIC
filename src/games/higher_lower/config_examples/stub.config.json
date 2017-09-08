@@ -1,12 +1,12 @@
 {
     "players": [
         {
-            "id": 0,
+            "name": "Bert",
             "command": "python3",
             "args": ["../games/higher_lower/bots/deterbot/deter.py"]
         },
         {
-            "id": 1,
+            "name": "Toby",
             "command": "python3",
             "args": ["../games/higher_lower/bots/higherbot/higher.py"]
         }
