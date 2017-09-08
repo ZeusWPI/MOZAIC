@@ -28,7 +28,7 @@ impl<G> MatchRunner<G> where G: Game {
 
     fn init(config: G::Config, players: &Vec<PlayerConfig>) -> Self {
         let player_ids = players.iter().map(|conf| conf.id).collect();
-        let (game_state, game_status) = G::init(config, &player_ids);
+        let (game_state, game_status) = G::init(config, player_ids);
         MatchRunner {
             players: Players::start(players),
             game_state,

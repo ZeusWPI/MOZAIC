@@ -20,7 +20,7 @@ use game::*;
 use bot_runner::*;
 use match_runner::*;
 
-//use games::PlanetWars as Rules;
+use games::HigherLower as Rules;
 
 // Load the config and start the game.
 fn main() {
@@ -38,7 +38,7 @@ fn main() {
             std::process::exit(1)
         }
     };
-    //MatchRunner::run(config, player_configs);
+    MatchRunner::<Rules>::run((), &game_config.players);
 }
 
 // Parse a config passed to the program as an command-line argument.
