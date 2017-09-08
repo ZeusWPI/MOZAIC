@@ -25,7 +25,7 @@ use games::HigherLower as Rules;
 // Load the config and start the game.
 fn main() {
     let args: Vec<_> = env::args().collect();
-    if args.len() != 1 {
+    if args.len() != 2 {
         let msg = format!("Expected 1 argument (config file). {} given.", args.len() - 1).to_owned();
         println!("{}", msg);
         std::process::exit(1)
