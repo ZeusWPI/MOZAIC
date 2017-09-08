@@ -18,7 +18,6 @@ pub trait GameState<G: Game> : Sized {
 pub enum GameStatus<G> where G: Game {
     // map players to the prompt they should reply to
     Prompting(PlayerMap<String>),
-    // map players to their score
     Finished(G::Outcome),
 }
 
