@@ -4,13 +4,21 @@ use std::collections::HashMap;
 pub trait Game : Sized {
     type State: GameState<Self>;
     type Outcome;
+    type Config;
 }
 
 pub trait GameState<G: Game> : Sized {
     // returns game state and initial status
-    fn init(players: &PlayerMap<PlayerConfig>) -> (Self, GameStatus<G>);
+    fn init<'a>(config: &'a MatchConfig<'a, G>) -> (Self, GameStatus<G>);
     // process player input and execute a game turn
     fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<G>;
+}
+
+// TODO: better name
+pub struct MatchConfig<'a, G: Game> {
+    // map player ids to advertised names
+    players: PlayerMap<&'a str>,
+    config: G::Config,
 }
 
 // reason why the game returned control

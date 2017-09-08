@@ -31,7 +31,7 @@ fn main() {
         std::process::exit(1)
     }
 
-    let game_config: MatchConfig = match parse_config(Path::new(&args[1])) {
+    let game_config: MatchDescription = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
@@ -43,7 +43,7 @@ fn main() {
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config(path: &Path) -> Result<MatchConfig, Box<Error>> {
+pub fn parse_config(path: &Path) -> Result<MatchDescription, Box<Error>> {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
 
@@ -52,7 +52,7 @@ pub fn parse_config(path: &Path) -> Result<MatchConfig, Box<Error>> {
     file.read_to_string(&mut contents)?;
 
     println!("Parsing config");
-    let config: MatchConfig = serde_json::from_str(&contents)?;
+    let config: MatchDescription = serde_json::from_str(&contents)?;
 
     println!("Config parsed succesfully");
     Ok(config)

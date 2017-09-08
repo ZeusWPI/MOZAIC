@@ -4,7 +4,7 @@ use bot_runner::*;
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MatchConfig {
+pub struct MatchDescription {
     pub players: PlayerMap<PlayerConfig>,
 }
 
@@ -15,8 +15,8 @@ pub struct PlayerConfig {
     pub args: Vec<String>,
 }
 
-struct MatchRunner<'a, G> {
-    config: &'a MatchConfig,
+struct MatchRunner<'a, G: Game> {
+    config: MatchConfig<'a, G>,
     players: PlayerMap<PlayerHandle<'a>>,
     //temporary
     phantom_game: PhantomData<G>,
@@ -25,7 +25,7 @@ struct MatchRunner<'a, G> {
 
 impl<'a, G> MatchRunner<'a, G> where G: Game {
     fn run(&mut self) -> G::Outcome {
-        let (mut game_state, mut status) = G::State::init(&self.config.players);
+        let (mut game_state, mut status) = G::State::init(&self.config);
         loop {
             match status {
                 GameStatus::Finished(outcome) => return outcome,
