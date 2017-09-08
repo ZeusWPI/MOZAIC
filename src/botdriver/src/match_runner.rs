@@ -10,13 +10,13 @@ pub struct PlayerConfig {
     pub args: Vec<String>,
 }
 
-pub struct MatchRunner<'a, G: Game> {
-    pub config: MatchConfig<'a, G>,
-    pub players: PlayerMap<PlayerHandle<'a>>,
+pub struct MatchRunner<'g, G: Game<'g>> {
+    pub config: MatchConfig<'g, G>,
+    pub players: PlayerMap<'g, PlayerHandle<'g>>,
     // TODO: logger
 }
 
-impl<'a, G> MatchRunner<'a, G> where G: Game {
+impl<'g, G> MatchRunner<'g, G> where G: Game<'g> + 'g {
     pub fn run(&mut self) -> G::Outcome {
         let (mut game_state, mut status) = G::init(&self.config);
         loop {
@@ -31,14 +31,14 @@ impl<'a, G> MatchRunner<'a, G> where G: Game {
         }
     }
 
-    fn send_prompts(&mut self, prompts: &PlayerMap<String>) {
+    fn send_prompts(&mut self, prompts: &PlayerMap<'g, String>) {
         for (player_id, prompt) in prompts {
             let handle = self.players.get_mut(player_id).unwrap();
             handle.send_msg(prompt).unwrap();
         }
     }
 
-    fn receive_responses(&mut self, prompts: &PlayerMap<String>) -> PlayerMap<String> {
+    fn receive_responses(&mut self, prompts: &PlayerMap<'g, String>) -> PlayerMap<'g, String> {
         let mut responses = HashMap::with_capacity(prompts.len());
         for player_id in prompts.keys() {
             let handle = self.players.get_mut(player_id).unwrap();

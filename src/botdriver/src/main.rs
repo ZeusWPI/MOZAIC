@@ -39,22 +39,23 @@ fn main() {
         }
     };
 
-    let players = match_description.players.into_iter().enumerate().map(|(num, player)| {
-        // TODO: maybe use usize here. id's are for internal use anyways.
-        (num as u64, player)
-    }).collect();
-    let mut bots = BotRunner::run(&players);
+    let player_names = match_description.players
+        .iter()
+        .map(|player| player.name.as_str())
+        .collect();
+
+    let mut bots = BotRunner::run(&match_description.players);
+
     let mut runner = MatchRunner::<HigherLower> {
         config: MatchConfig {
-            players: players.iter().map(|(&player_id, player_config)| {
-                (player_id, player_config.name.as_str())
-            }).collect(),
+            players: &player_names,
             game_config: HigherLowerConfig {
                 max: 500,
             },
         },
         players: bots.player_handles(),
     };
+
     let outcome = runner.run();
     println!("Outcome: {:?}", outcome);
 }

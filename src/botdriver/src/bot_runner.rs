@@ -7,18 +7,18 @@ use std::io;
 use game::*;
 use match_runner::*;
 // A collection of running bots (i.e. process handles)
-pub struct BotRunner {
+pub struct BotRunner<'g> {
     // Maps player ids to their process handles
-    processes: PlayerMap<process::Child>,
+    processes: PlayerMap<'g, process::Child>,
 }
 
-impl BotRunner {
-    pub fn run(configs: &PlayerMap<PlayerConfig>) -> Self {
+impl<'g> BotRunner<'g> {
+    pub fn run(players: &'g Vec<PlayerConfig>) -> Self {
         BotRunner {
-            processes: configs.iter().map(|(&player_id, config)| {
+            processes: players.iter().map(|config| {
                 let process = process::Command::new(&config.command)
                     .args(&config.args)
-                    .arg(format!("{}", player_id))
+                    .arg(format!("{}", config.name.as_str()))
                     .stdin(Stdio::piped())
                     .stdout(Stdio::piped())
                     .spawn()
@@ -27,7 +27,7 @@ impl BotRunner {
                         config.command,
                         config.args
                     ));
-                return (player_id, process);
+                return (config.name.as_str(), process);
             }).collect()
         }
     }
