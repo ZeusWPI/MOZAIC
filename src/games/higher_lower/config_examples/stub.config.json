@@ -1,13 +1,13 @@
 {
     "players": [
         {
-            "name": "bert",
-            "start_command": "python3",
+            "id": 0,
+            "command": "python3",
             "args": ["../games/higher_lower/bots/deterbot/deter.py"]
         },
         {
-            "name": "timp",
-            "start_command": "python3",
+            "id": 1,
+            "command": "python3",
             "args": ["../games/higher_lower/bots/higherbot/higher.py"]
         }
     ]
