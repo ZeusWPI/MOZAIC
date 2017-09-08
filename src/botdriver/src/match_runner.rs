@@ -24,11 +24,11 @@ struct MatchRunner<'a, G> {
 }
 
 impl<'a, G> MatchRunner<'a, G> where G: Game {
-    fn run(&mut self) -> PlayerMap<f64> {
-        let (mut game_state, mut status) = G::init(&self.config.players);
+    fn run(&mut self) -> G::Outcome {
+        let (mut game_state, mut status) = G::State::init(&self.config.players);
         loop {
             match status {
-                GameStatus::Finished(scoring) => return scoring,
+                GameStatus::Finished(outcome) => return outcome,
                 GameStatus::Prompting(prompts) => {
                     self.send_prompts(&prompts);
                     let responses = self.receive_responses(&prompts);
