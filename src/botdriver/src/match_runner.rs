@@ -25,7 +25,7 @@ struct MatchRunner<'a, G: Game> {
 
 impl<'a, G> MatchRunner<'a, G> where G: Game {
     fn run(&mut self) -> G::Outcome {
-        let (mut game_state, mut status) = G::State::init(&self.config);
+        let (mut game_state, mut status) = G::init(&self.config);
         loop {
             match status {
                 GameStatus::Finished(outcome) => return outcome,

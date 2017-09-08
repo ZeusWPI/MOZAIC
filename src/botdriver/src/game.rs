@@ -2,16 +2,13 @@ use match_runner::PlayerConfig;
 use std::collections::HashMap;
 
 pub trait Game : Sized {
-    type State: GameState<Self>;
     type Outcome;
     type Config;
-}
 
-pub trait GameState<G: Game> : Sized {
     // returns game state and initial status
-    fn init<'a>(config: &'a MatchConfig<'a, G>) -> (Self, GameStatus<G>);
+    fn init<'a>(config: &'a MatchConfig<'a, Self>) -> (Self, GameStatus<Self>);
     // process player input and execute a game turn
-    fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<G>;
+    fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<Self>;
 }
 
 // TODO: better name
