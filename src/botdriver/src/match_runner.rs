@@ -11,9 +11,19 @@ pub struct MatchRunner<G> {
 
 impl<G> MatchRunner<G> where G: Game {
     // TODO: pass log or something
-    pub fn resolve(config: G::Config, players: &Vec<PlayerConfig>) -> Outcome {
-        let runner = Self::init(config, players);
-        return runner.run();
+    pub fn run(config: G::Config, players: &Vec<PlayerConfig>) -> Outcome {
+        let mut runner = Self::init(config, players);
+        loop {
+            match runner.status {
+                ControlStatus::Finished(outcome) => return outcome,
+                ControlStatus::Prompting(prompts) => {
+                    let responses = runner.players.handle_prompts(&prompts);
+                    let status = runner.game_state.step(&responses);
+                    runner.status = status.control_status;
+                    runner.logger.log(status.log_entry);
+                }
+            }
+        }
     }
 
     fn init(config: G::Config, players: &Vec<PlayerConfig>) -> Self {
@@ -25,25 +35,6 @@ impl<G> MatchRunner<G> where G: Game {
             status: game_status.control_status,
             logger: MatchLogger,
         }
-    }
-
-    fn run(mut self) -> Outcome {
-        loop {
-            match self.status {
-                ControlStatus::Finished(outcome) => {
-                    return outcome;
-                },
-                ControlStatus::Prompting(prompts) => {
-                    let responses = self.players.handle_prompts(&prompts);
-                    let status = self.game_state.step(&responses);
-                    self.status = status.control_status;
-                    self.logger.log(status.log_entry);
-                }
-            }
-        }
-    }
-
-    fn log(&mut self, log_entry: Option<String>) {
     }
 }
 
