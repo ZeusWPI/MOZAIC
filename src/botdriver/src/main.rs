@@ -2,6 +2,7 @@ mod game;
 mod bot_runner;
 mod games;
 mod match_runner;
+mod logger;
 
 #[macro_use]
 extern crate serde_derive;
@@ -19,6 +20,7 @@ use std::fs::File;
 use game::*;
 use bot_runner::*;
 use match_runner::*;
+use logger::Logger;
 
 use games::{HigherLower, HigherLowerConfig};
 
@@ -45,18 +47,20 @@ fn main() {
         .collect();
 
     let mut bots = BotRunner::run(&match_description.players);
-
-    let mut runner = MatchRunner::<HigherLower> {
-        config: MatchConfig {
-            players: &player_names,
-            game_config: HigherLowerConfig {
-                max: 500,
-            },
+    let mut logger = Logger::new();
+    let config = MatchConfig {
+        players: &player_names,
+        game_config: HigherLowerConfig {
+            max: 500,
         },
+        logger: &mut logger,
+    };
+
+    let mut runner = MatchRunner {
         players: bots.player_handles(),
     };
 
-    let outcome = runner.run();
+    let outcome = runner.run::<HigherLower>(config);
     println!("Outcome: {:?}", outcome);
 }
 

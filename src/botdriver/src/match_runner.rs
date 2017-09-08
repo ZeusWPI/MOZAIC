@@ -10,15 +10,15 @@ pub struct PlayerConfig {
     pub args: Vec<String>,
 }
 
-pub struct MatchRunner<'g, G: Game<'g>> {
-    pub config: MatchConfig<'g, G>,
+pub struct MatchRunner<'g> {
     pub players: PlayerMap<'g, PlayerHandle<'g>>,
-    // TODO: logger
 }
 
-impl<'g, G> MatchRunner<'g, G> where G: Game<'g> + 'g {
-    pub fn run(&mut self) -> G::Outcome {
-        let (mut game_state, mut status) = G::init(&self.config);
+impl<'g> MatchRunner<'g> {
+    pub fn run<G>(&mut self, config: MatchConfig<'g, G>) -> G::Outcome
+        where G: Game<'g>
+    {
+        let (mut game_state, mut status) = G::init(config);
         loop {
             match status {
                 GameStatus::Finished(outcome) => return outcome,

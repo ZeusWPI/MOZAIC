@@ -4,6 +4,7 @@ use rand;
 use rand::Rng;
 
 use game::*;
+use logger::*;
 use std::collections::HashMap;
 
 /// Protocol
@@ -42,19 +43,27 @@ impl Answer {
 }
 
 
+/// Log
+#[derive(Serialize)]
+struct Turn<'g> {
+    trial_num: u64,
+    number: u64,
+    answers: &'g PlayerMap<'g, Answer>,
+}
+
 
 pub struct HigherLowerConfig {
     pub max: u64,                     // highest number that can be rolled
 }
 
 /// The gamestate for a higher-lower game.
-#[derive(Debug)]
 pub struct HigherLower<'g> {
     players: Vec<PlayerId<'g>>,     // Players still in the game.
     eliminated: PlayerMap<'g, u64>, // The scoring for the eliminated players.
     number: u64,                    // Current number
     trial_num: u64,                 // Current iteration (= score).
-    max: u64                        // highest number that can be rolled
+    max: u64,                       // highest number that can be rolled
+    logger: &'g mut Logger,
 }
 
 // Players can keep playing until they guess wrong.
@@ -64,13 +73,14 @@ impl<'g> Game<'g> for HigherLower<'g> {
     type Config = HigherLowerConfig;
     type Outcome = PlayerMap<'g, u64>;
 
-    fn init(match_conf: &MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>) {
+    fn init(match_conf: MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>) {
         let state = HigherLower {
             eliminated: HashMap::new(),
             players: match_conf.players.clone(),
             number: match_conf.game_config.max / 2,
             trial_num: 0,
-            max: match_conf.game_config.max
+            max: match_conf.game_config.max,
+            logger: match_conf.logger,
         };
         let status = state.game_status();
         return (state, status);
@@ -79,6 +89,8 @@ impl<'g> Game<'g> for HigherLower<'g> {
     fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self> {
         let answers = HigherLower::parse_answers(responses);
         let correct_answer = self.gen_next_number();
+
+        self.log_turn(&answers);
 
         let mut i = 0;
         while i < self.players.len() {
@@ -114,6 +126,14 @@ impl<'g> HigherLower<'g> {
             }).expect("[HIGHER_LOWER] Serializing game state failed.");
             return (player_id, data);
         }).collect()
+    }
+
+    fn log_turn(&mut self, answers: &PlayerMap<'g, Answer>) {
+        self.logger.log_json(&Turn {
+            answers: answers,
+            trial_num: self.trial_num,
+            number: self.number,
+        }).unwrap();
     }
 
     fn gen_next_number(&mut self) -> Answer {

@@ -1,12 +1,13 @@
 use match_runner::PlayerConfig;
 use std::collections::HashMap;
+use logger::*;
 
 pub trait Game<'g> : Sized {
     type Outcome;
     type Config;
 
     // returns game state and initial status
-    fn init(config: &MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>);
+    fn init(config: MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>);
     // process player input and execute a game turn
     fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self>;
 }
@@ -16,6 +17,7 @@ pub struct MatchConfig<'g, G: Game<'g>> {
     // map player ids to advertised names
     pub players: &'g Vec<PlayerId<'g>>,
     pub game_config: G::Config,
+    pub logger: &'g mut Logger,
 }
 
 // reason why the game returned control
