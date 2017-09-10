@@ -47,7 +47,8 @@ impl Answer {
 #[derive(Serialize)]
 struct Turn<'g> {
     trial_num: u64,
-    number: u64,
+    current: u64,
+    next: u64,
     answers: &'g PlayerMap<'g, Answer>,
 }
 
@@ -60,7 +61,8 @@ pub struct HigherLowerConfig {
 pub struct HigherLower<'g> {
     players: Vec<PlayerId<'g>>,     // Players still in the game.
     eliminated: PlayerMap<'g, u64>, // The scoring for the eliminated players.
-    number: u64,                    // Current number
+    current: u64,                   // The current number
+    next: u64,                      // The next number
     trial_num: u64,                 // Current iteration (= score).
     max: u64,                       // highest number that can be rolled
     logger: &'g mut Logger,
@@ -77,7 +79,8 @@ impl<'g> Game<'g> for HigherLower<'g> {
         let state = HigherLower {
             eliminated: HashMap::new(),
             players: match_conf.players.clone(),
-            number: match_conf.game_config.max / 2,
+            current: 0,
+            next: match_conf.game_config.max / 2,
             trial_num: 0,
             max: match_conf.game_config.max,
             logger: match_conf.logger,
@@ -89,8 +92,8 @@ impl<'g> Game<'g> for HigherLower<'g> {
     fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self> {
         let answers = HigherLower::parse_answers(responses);
         let correct_answer = self.gen_next_number();
-
         self.log_turn(&answers);
+
 
         let mut i = 0;
         while i < self.players.len() {
@@ -122,7 +125,7 @@ impl<'g> HigherLower<'g> {
         self.players.iter().map(|&player_id| {
             let data = serde_json::to_string( &State {
                 max: self.max,
-                current: self.number,
+                current: self.current,
             }).expect("[HIGHER_LOWER] Serializing game state failed.");
             return (player_id, data);
         }).collect()
@@ -132,14 +135,15 @@ impl<'g> HigherLower<'g> {
         self.logger.log_json(&Turn {
             answers: answers,
             trial_num: self.trial_num,
-            number: self.number,
+            current: self.current,
+            next: self.next,
         }).unwrap();
     }
 
     fn gen_next_number(&mut self) -> Answer {
-        let prev = self.number;
-        self.number = rand::thread_rng().gen_range(0, self.max);
-        return Answer::get(prev, self.number);
+        self.current = self.next;
+        self.next = rand::thread_rng().gen_range(0, self.max);
+        return Answer::get(self.current, self.next);
     }
 
     fn parse_answers(responses: &PlayerMap<'g, String>) -> PlayerMap<'g, Answer> {
