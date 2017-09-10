@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
+use std::collections::HashMap;
+
 use game::*;
 use bot_runner::*;
-use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {

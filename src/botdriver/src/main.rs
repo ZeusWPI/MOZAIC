@@ -11,8 +11,7 @@ extern crate serde;
 extern crate rand;
 
 use std::error::Error;
-use std::io::{Write, Read};
-use std::collections::HashMap;
+use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;

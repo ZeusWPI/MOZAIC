@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use std::process;
 use std::process::{Child, ChildStdin, ChildStdout, Stdio};
 use std::io::{Result, LineWriter, BufReader, Write, BufRead};
-use std::io;
 
 use game::*;
 use match_runner::*;
+
 // A collection of running bots (i.e. process handles)
 pub struct BotRunner<'g> {
     // Maps player ids to their process handles

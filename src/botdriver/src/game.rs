@@ -1,4 +1,3 @@
-use match_runner::PlayerConfig;
 use std::collections::HashMap;
 use logger::*;
 
