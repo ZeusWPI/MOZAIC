@@ -39,7 +39,7 @@ impl<'g> BotRunner<'g> {
 
     pub fn kill(mut self) {
         for handle in self.processes.values_mut() {
-            handle.kill();
+            handle.kill().expect("Couldn't kill bot");
         }
     }
 }
