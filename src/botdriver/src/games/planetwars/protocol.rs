@@ -4,7 +4,7 @@ pub struct Expedition {
     pub origin: PlanetName,
     pub destination: PlanetName,
     pub owner: String,
-    pub turns_remaining: i64,
+    pub turns_remaining: u64,
 }
 
 #[derive(Serialize, Deserialize)]
