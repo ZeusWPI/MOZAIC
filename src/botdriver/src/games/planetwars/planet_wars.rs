@@ -10,24 +10,25 @@ use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
-pub struct PlanetWars<'g> {
-    players: PlayerMap<'g, Rc<RefCell<Player>>>,
+pub struct PlanetWars {
+    players: HashMap<PlayerId, Rc<RefCell<Player>>>,
     planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
 
-impl<'g> Game<'g> for PlanetWars<'g> {
-    type Outcome = PlayerMap<'g, u64>;
+impl Game for PlanetWars {
+    type Outcome = PlayerMap<u64>;
     type Config = ();
-
-    fn init(config: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>) {
-
+    
+    fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
         // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
         let mut players = HashMap::new();
-        for name in config.players.iter() {
-            players.insert(
-                name.clone(),
-                Rc::new(RefCell::new( Player { name: name.to_string() }))
+        for (&id, info) in params.players.iter() {
+            players.insert(id, Rc::new(RefCell::new(
+                Player {
+                    id: id,
+                    name: info.name.clone(),
+                }))
             );
         }
         let mut state = PlanetWars {
@@ -49,7 +50,7 @@ impl<'g> Game<'g> for PlanetWars<'g> {
         unimplemented!()
     }
 
-    fn step(&mut self, player_output: &PlayerMap<'g, String>) -> GameStatus<'g, Self> {
+    fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
         for (player, command) in player_output {
 
             // Parse command
@@ -82,7 +83,7 @@ impl<'g> Game<'g> for PlanetWars<'g> {
     }
 }
 
-impl<'g> PlanetWars<'g> {
+impl PlanetWars {
 //    fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
         // Check whether origin is a valid planet
         /*
@@ -107,11 +108,11 @@ impl<'g> PlanetWars<'g> {
   //      Ok(m)
     //}
 
-    fn generate_prompts(&self) -> PlayerMap<'g, String> {
+    fn generate_prompts(&self) -> PlayerMap<String> {
         let mut prompts = HashMap::new();
         let state = self.to_state();
 
-        for (&name, player) in &self.players {
+        for (&id, player) in &self.players {
             if player.borrow().is_alive() {
                 let serialized = serde_json::to_string(&state)
                     .expect("[PLANET_WARS] Serializing game state failed.");
@@ -240,6 +241,7 @@ impl Expedition {
 }
 
 struct Player {
+    id: usize,
     name: String,
 
 }

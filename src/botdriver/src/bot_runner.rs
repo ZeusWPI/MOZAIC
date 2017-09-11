@@ -6,15 +6,15 @@ use game::*;
 use match_runner::*;
 
 // A collection of running bots (i.e. process handles)
-pub struct BotRunner<'g> {
+pub struct BotRunner {
     // Maps player ids to their process handles
-    processes: PlayerMap<'g, process::Child>,
+    processes: PlayerMap<process::Child>,
 }
 
-impl<'g> BotRunner<'g> {
-    pub fn run(players: &'g Vec<PlayerConfig>) -> Self {
+impl BotRunner {
+    pub fn run(players: &PlayerMap<PlayerConfig>) -> Self {
         BotRunner {
-            processes: players.iter().map(|config| {
+            processes: players.iter().map(|(&id, config)| {
                 let process = process::Command::new(&config.command)
                     .args(&config.args)
                     .arg(format!("{}", config.name.as_str()))
@@ -26,7 +26,7 @@ impl<'g> BotRunner<'g> {
                         config.command,
                         config.args
                     ));
-                return (config.name.as_str(), process);
+                return (id, process);
             }).collect()
         }
     }
