@@ -1,8 +1,8 @@
-mod game_types;
-mod driver_types;
-mod util;
-mod planet_wars;
-//mod higher_lower;
+mod game;
+mod bot_runner;
+mod games;
+mod match_runner;
+mod logger;
 
 #[macro_use]
 extern crate serde_derive;
@@ -11,127 +11,81 @@ extern crate serde;
 extern crate rand;
 
 use std::error::Error;
-use std::io::{Write, BufReader, BufRead};
-use std::collections::HashMap;
+use std::io::{Read};
+use std::env;
+use std::path::Path;
+use std::fs::File;
 
-use game_types::{Game, GameInfo, GameStatus, PlayerInput, PlayerOutput, PlayerCommand, Outcome};
-use driver_types::{BotHandles, BotHandle, GameConfig};
-use planet_wars::PlanetWars;
+use game::*;
+use bot_runner::*;
+use match_runner::*;
+use logger::Logger;
+
+use games::{HigherLower, HigherLowerConfig};
 
 // Load the config and start the game.
 fn main() {
-    let game_config: GameConfig = match util::parse_config() {
+    let args: Vec<_> = env::args().collect();
+    if args.len() != 2 {
+        let msg = format!("Expected 1 argument (config file). {} given.", args.len() - 1).to_owned();
+        println!("{}", msg);
+        std::process::exit(1)
+    }
+
+    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
             std::process::exit(1)
         }
     };
-    run::<PlanetWars>(&game_config);
-}
 
-/* 
- * Run a game with a specified config.
- * The algorithm for running a game goes as follows:
- *
- * ```
- * generate initial game
- * while (gamestate is not finnished) do
- *   gamestate = game.step()
- * 
- * finnish()
- * ```
- */
-fn run<G: Game>(config: &GameConfig) {
-    let players = config.players.keys().cloned().collect();
-    let mut game = G::init(players);
-    let mut gamestatus = game.start();
-    let mut handles = util::create_bot_handles(config); 
-    loop {
-        println!("\nNew step:\n==============");
-        gamestatus = match gamestatus {
-            GameStatus::Running(pi) => step(&mut handles, &pi, &mut game),
-            GameStatus::Done(outcome) => {
-                finnish(&mut handles, outcome);
-                break
-            }
-        }
-    }
-}
+    let player_names = match_description.players
+        .iter()
+        .map(|player| player.name.as_str())
+        .collect();
 
-// Let the game play a step.
-// Fetches all player responses to current state.
-// Let's the game calculate next state.
-// Return next state for next step (if game is not over yet).
-fn step<G: Game>(mut bots: &mut BotHandles, player_input: &PlayerInput, game: &mut G) -> GameStatus {
-    println!("Input:\n{}", pp(player_input));
-    let po = fetch_player_outputs(&player_input, &mut bots);
-    match po {
-        Ok(po) => {
-            println!("Output:\n{}", pp(&po));
-            return game.step(&po);
-        },
-        Err(e) => {
-            println!("{}", e);
-            std::process::exit(1)
-        }
-    }
-}
+    let mut bots = BotRunner::run(&match_description.players);
 
-// Finnish up a game.
-// Clean up any remaining botprocesses.
-fn finnish(bots: &mut BotHandles, outcome: Outcome) {
-    // Kill bot-processes
-    for (player, bot) in bots.iter_mut() {
-        bot.kill().expect(&format!("Unable to kill {}", player));
-    }
-    println!("Done with: {:#?}", outcome);
-}
-
-// Fetch the responses from all players.
-//
-// TODO: Handle failure of fetching player response by propagating an empty response
-//       This allows the gamerules to handle the problem.
-fn fetch_player_outputs(input: &PlayerInput, bots: &mut BotHandles) -> Result<PlayerOutput, Box<Error>> {
-    let mut pos = PlayerOutput::new();
-    for (player, info) in input.iter() {
-        let mut bot = bots.get_mut(player)
-                          .expect(&format!("Response required for {} but no process found", player));
-        let po = match fetch_player_output(info, bot) {
-            Ok(po) => po,
-            Err(e) => return Err(e)
+    {
+        let mut logger = Logger::new();
+        let config = MatchConfig {
+            players: &player_names,
+            game_config: HigherLowerConfig {
+                max: 500,
+            },
+            logger: &mut logger,
         };
-        pos.insert(player.clone(), po);
+        
+        
+        let mut runner = MatchRunner {
+            players: bots.player_handles(),
+        };
+        let outcome = runner.run::<HigherLower>(config);
+        println!("Outcome: {:?}", outcome);
     }
-    Ok(pos)
+
+    bots.kill();
 }
 
-// Fetch the response for a particular player.
-// Do this by passing his information, and (blockingly) wait for a response.
-fn fetch_player_output(info: &GameInfo, bot: &mut BotHandle) -> Result<PlayerCommand, Box<Error>> {
-    let msg_in = format!("Stdin not found for {:?}", bot);
-    let msg_out = format!("Stdout not found for {:?}", bot);
-
-    let bot_in = bot.stdin.as_mut().expect(&msg_in);
-    let bot_out = bot.stdout.as_mut().expect(&msg_out);
-    let mut bot_out = BufReader::new(bot_out);
-
-    bot_in.write_fmt(format_args!("{}\n", info))?;
-    bot_in.flush()?;
-    
-    // TODO: Set overflow limit
-    let mut response = String::new();
-    bot_out.read_line(&mut response).expect("Invalid UTF-8 found");
-
-    Ok(response)
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MatchDescription {
+    pub players: Vec<PlayerConfig>,
 }
 
-// Pretty print thing
-fn pp(hm: &HashMap<String, String>) -> String {
-    let mut pp = String::new();
-    for (key, value) in hm {
-        pp.push_str(&format!("# Value for {}:\n", key));
-        pp.push_str(&format!("{}\n", value));
-    }
-    pp
+// Parse a config passed to the program as an command-line argument.
+// Return the parsed config.
+pub fn parse_config(path: &Path) -> Result<MatchDescription, Box<Error>> {
+    println!("Opening config {}", path.to_str().unwrap());
+    let mut file = File::open(path)?;
+
+    println!("Reading contents");
+    let mut contents = String::new();
+    file.read_to_string(&mut contents)?;
+
+    println!("Parsing config");
+    let config: MatchDescription = serde_json::from_str(&contents)?;
+
+    println!("Config parsed succesfully");
+    Ok(config)
 }

@@ -1,0 +1,14 @@
+{
+    "players": [
+        {
+            "name": "Bert",
+            "command": "python3",
+            "args": ["../games/higher_lower/bots/deterbot/deter.py"]
+        },
+        {
+            "name": "Toby",
+            "command": "python3",
+            "args": ["../games/higher_lower/bots/higherbot/higher.py"]
+        }
+    ]
+}
