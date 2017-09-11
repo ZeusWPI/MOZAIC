@@ -49,7 +49,7 @@ struct Turn<'g> {
     trial_num: u64,
     current: u64,
     next: u64,
-    answers: &'g PlayerMap<'g, Answer>,
+    answers: &'g PlayerMap<Answer>,
 }
 
 
@@ -58,38 +58,38 @@ pub struct HigherLowerConfig {
 }
 
 /// The gamestate for a higher-lower game.
-pub struct HigherLower<'g> {
-    players: Vec<PlayerId<'g>>,     // Players still in the game.
-    eliminated: PlayerMap<'g, u64>, // The scoring for the eliminated players.
+pub struct HigherLower {
+    players: Vec<PlayerId>,         // Players still in the game.
+    eliminated: PlayerMap<u64>,     // The scoring for the eliminated players.
     current: u64,                   // The current number
     next: u64,                      // The next number
     trial_num: u64,                 // Current iteration (= score).
     max: u64,                       // highest number that can be rolled
-    logger: &'g mut Logger,
+    logger: Logger,
 }
 
 // Players can keep playing until they guess wrong.
 // When they guess wrong, their score equals the trial number.
 // The game goes on until all players are eliminated.
-impl<'g> Game<'g> for HigherLower<'g> {
+impl Game for HigherLower {
     type Config = HigherLowerConfig;
-    type Outcome = PlayerMap<'g, u64>;
+    type Outcome = PlayerMap<u64>;
 
-    fn init(match_conf: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>) {
+    fn init(match_params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
         let state = HigherLower {
             eliminated: HashMap::new(),
-            players: match_conf.players.clone(),
+            players: match_params.players.keys().cloned().collect(),
             current: 0,
-            next: match_conf.game_config.max / 2,
+            next: match_params.game_config.max / 2,
             trial_num: 0,
-            max: match_conf.game_config.max,
-            logger: match_conf.logger,
+            max: match_params.game_config.max,
+            logger: match_params.logger,
         };
         let status = state.game_status();
         return (state, status);
     }
 
-    fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self> {
+    fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<Self> {
         let answers = HigherLower::parse_answers(responses);
         let correct_answer = self.gen_next_number();
         self.log_turn(&answers);
@@ -112,8 +112,8 @@ impl<'g> Game<'g> for HigherLower<'g> {
     }
 }
 
-impl<'g> HigherLower<'g> {
-    fn game_status(&self) -> GameStatus<'g, Self> {
+impl HigherLower {
+    fn game_status(&self) -> GameStatus<Self> {
         if self.players.is_empty() {
             GameStatus::Finished(self.eliminated.clone())
         } else {
@@ -121,7 +121,7 @@ impl<'g> HigherLower<'g> {
         }
     }
 
-    fn prompts(&self) -> PlayerMap<'g, String> {
+    fn prompts(&self) -> PlayerMap<String> {
         self.players.iter().map(|&player_id| {
             let data = serde_json::to_string( &State {
                 max: self.max,
@@ -131,7 +131,7 @@ impl<'g> HigherLower<'g> {
         }).collect()
     }
 
-    fn log_turn(&mut self, answers: &PlayerMap<'g, Answer>) {
+    fn log_turn(&mut self, answers: &PlayerMap<Answer>) {
         self.logger.log_json(&Turn {
             answers: answers,
             trial_num: self.trial_num,
@@ -146,7 +146,7 @@ impl<'g> HigherLower<'g> {
         return Answer::get(self.current, self.next);
     }
 
-    fn parse_answers(responses: &PlayerMap<'g, String>) -> PlayerMap<'g, Answer> {
+    fn parse_answers(responses: &PlayerMap<String>) -> PlayerMap<Answer> {
         responses.iter().filter_map(|(&player_id, response_text)| {
             // ignore incorrectly formatted arguments
             let response: Option<Response> = serde_json::from_str(response_text).ok();

@@ -1,33 +1,37 @@
 use std::collections::HashMap;
 use logger::*;
 
-pub trait Game<'g> : Sized {
+pub trait Game : Sized {
     type Outcome;
     type Config;
 
     // returns game state and initial status
-    fn init(config: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>);
+    fn init(config: MatchParams<Self>) -> (Self, GameStatus<Self>);
     // process player input and execute a game turn
-    fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self>;
+    fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<Self>;
 }
 
-pub struct MatchParams<'g, G: Game<'g>> {
+pub struct MatchParams<G: Game> {
     // map player ids to advertised names
-    pub players: &'g Vec<PlayerId<'g>>,
+    pub players: PlayerMap<PlayerInfo>,
     pub game_config: G::Config,
-    pub logger: &'g mut Logger,
+    pub logger: Logger,
+}
+
+#[derive(Clone)]
+pub struct PlayerInfo {
+    pub name: String,
 }
 
 // reason why the game returned control
 #[derive(Debug)]
-pub enum GameStatus<'g, G> where G: Game<'g> {
+pub enum GameStatus<G> where G: Game {
     // map players to the prompt they should reply to
-    Prompting(PlayerMap<'g, String>),
+    Prompting(PlayerMap<String>),
     Finished(G::Outcome),
 }
 
-// TODO: might be better to put this elsewhere
-pub type PlayerId<'g> = &'g str;
+pub type PlayerId = usize;
 // Maps a player to something.
 // TODO: non-cryptographic hash function maybe
-pub type PlayerMap<'g, T> = HashMap<PlayerId<'g>, T>;
+pub type PlayerMap<T> = HashMap<PlayerId, T>;

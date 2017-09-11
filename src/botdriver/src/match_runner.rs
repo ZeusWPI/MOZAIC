@@ -11,12 +11,12 @@ pub struct PlayerConfig {
 }
 
 pub struct MatchRunner<'g> {
-    pub players: PlayerMap<'g, PlayerHandle<'g>>,
+    pub players: PlayerMap<PlayerHandle<'g>>,
 }
 
 impl<'g> MatchRunner<'g> {
-    pub fn run<G>(&mut self, config: MatchParams<'g, G>) -> G::Outcome
-        where G: Game<'g>
+    pub fn run<G>(&mut self, config: MatchParams<G>) -> G::Outcome
+        where G: Game
     {
         let (mut game_state, mut status) = G::init(config);
         loop {
@@ -31,14 +31,14 @@ impl<'g> MatchRunner<'g> {
         }
     }
 
-    fn send_prompts(&mut self, prompts: &PlayerMap<'g, String>) {
+    fn send_prompts(&mut self, prompts: &PlayerMap<String>) {
         for (player_id, prompt) in prompts {
             let handle = self.players.get_mut(player_id).unwrap();
             handle.send_msg(prompt).unwrap();
         }
     }
 
-    fn receive_responses(&mut self, prompts: &PlayerMap<'g, String>) -> PlayerMap<'g, String> {
+    fn receive_responses(&mut self, prompts: &PlayerMap<String>) -> PlayerMap<String> {
         let mut responses = HashMap::with_capacity(prompts.len());
         for player_id in prompts.keys() {
             let handle = self.players.get_mut(player_id).unwrap();

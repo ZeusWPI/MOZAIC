@@ -39,22 +39,26 @@ fn main() {
             std::process::exit(1)
         }
     };
-
-    let player_names = match_description.players
-        .iter()
-        .map(|player| player.name.as_str())
+    let players: PlayerMap<PlayerConfig> = match_description.players
+        .into_iter()
+        .enumerate()
         .collect();
 
-    let mut bots = BotRunner::run(&match_description.players);
+    let player_names = players.iter().map(|(&num, config)| {
+        let info = PlayerInfo { name: config.name.clone() };
+        (num, info)
+    }).collect();
+
+    let mut bots = BotRunner::run(&players);
 
     {
         let mut logger = Logger::new();
         let config = MatchParams {
-            players: &player_names,
+            players: player_names,
             game_config: HigherLowerConfig {
                 max: 500,
             },
-            logger: &mut logger,
+            logger: logger,
         };
         
         
