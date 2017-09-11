@@ -2,25 +2,24 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use std::cell::{RefCell, RefMut};
+use std::cell::{RefCell};
 
-use game_types::*;
-use game_types::Player as PlayerName;
+use game::*;
 use games::planetwars::protocol::*;
 use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
 pub struct PlanetWars {
-    players: HashMap<PlayerName, Rc<RefCell<Player>>>,
+    players: HashMap<PlayerId, Rc<RefCell<Player>>>,
     planets: HashMap<PlanetName, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
 
-impl Game for PlanetWars {
-    fn init(names: Vec<PlayerName>) -> Self {
+impl<'g> Game<'g> for PlanetWars {
+    fn init(names: Vec<PlayerId>) -> Self {
 
-        // Transform to HashMap<PlayerName, Rc<RefCell<Player>>>
+        // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
         let mut players = HashMap::new();
         for name in names.iter() {
             players.insert(
@@ -29,14 +28,6 @@ impl Game for PlanetWars {
             );
         }
 
-        PlanetWars {
-            players: players,
-            planets: gen_map(names).planets,
-            expeditions: Vec::new()
-        }
-    }
-
-    fn start(&mut self) -> GameStatus {
         self.place_players();
 
         let mut pi = PlayerInput::new();
@@ -47,7 +38,13 @@ impl Game for PlanetWars {
             pi.insert(name.clone(), inp);
         }
 
-        GameStatus::Running(pi)
+        GameStatus::Running(pi);
+
+        PlanetWars {
+            players: players,
+            planets: gen_map(names).planets,
+            expeditions: Vec::new()
+        }
     }
 
     fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
@@ -122,7 +119,7 @@ impl PlanetWars {
 
     }
 
-    fn exp_from_move(&mut self, player_name: PlayerName, m: Move) -> Expedition {
+    fn exp_from_move(&mut self, player_name: PlayerId, m: Move) -> Expedition {
         let owner = self.players.get(&player_name).unwrap(); // Add error message
         let fleet = Fleet {
             owner: Rc::downgrade(owner), 
@@ -227,7 +224,7 @@ impl Expedition {
 }
 
 struct Player {
-    name: PlayerName,
+    name: PlayerId,
 }
 
 impl PartialEq for Player {

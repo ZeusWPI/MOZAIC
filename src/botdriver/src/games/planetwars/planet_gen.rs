@@ -6,7 +6,7 @@ use std::rc::{Rc};
 use std::cell::{RefCell};
 
 use games::planetwars::planet_wars::Planet;
-use game_types::Player as PlayerName;
+use game::PlayerId as PlayerName;
 use games::planetwars::protocol::PlanetName;
 
 const WIDTH: u64 = 40;
