@@ -11,8 +11,7 @@ pub trait Game<'g> : Sized {
     fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self>;
 }
 
-// TODO: better name
-pub struct MatchConfig<'g, G: Game<'g>> {
+pub struct MatchParams<'g, G: Game<'g>> {
     // map player ids to advertised names
     pub players: &'g Vec<PlayerId<'g>>,
     pub game_config: G::Config,
