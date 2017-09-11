@@ -30,6 +30,16 @@ class Controls {
       }
     });
 
+    d3.select('#tostart').on("click", e => {
+      visualizer.showTurn(0);
+      visualizer.stopTimer();
+    });
+
+    d3.select('#toend').on("click", e => {
+      visualizer.showTurn(visualizer.maxTurns);
+      visualizer.stopTimer();
+    });
+
     d3.select('#turn_slider')
       .attr('min', 0)
       .attr('max', visualizer.maxTurns)
