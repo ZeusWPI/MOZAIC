@@ -74,7 +74,7 @@ class Visualizer {
     });
 
     svg.attr('width', '100%')
-      .attr('height', window.innerHeight)
+      .attr('height', '`window.innerHeight`')
       .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
     // Color map
