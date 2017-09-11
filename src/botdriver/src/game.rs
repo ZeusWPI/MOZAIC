@@ -6,7 +6,7 @@ pub trait Game<'g> : Sized {
     type Config;
 
     // returns game state and initial status
-    fn init(config: MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>);
+    fn init(config: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>);
     // process player input and execute a game turn
     fn step(&mut self, responses: &PlayerMap<'g, String>) -> GameStatus<'g, Self>;
 }

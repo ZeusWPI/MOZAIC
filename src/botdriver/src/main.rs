@@ -49,7 +49,7 @@ fn main() {
 
     {
         let mut logger = Logger::new();
-        let config = MatchConfig {
+        let config = MatchParams {
             players: &player_names,
             game_config: HigherLowerConfig {
                 max: 500,

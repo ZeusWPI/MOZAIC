@@ -75,7 +75,7 @@ impl<'g> Game<'g> for HigherLower<'g> {
     type Config = HigherLowerConfig;
     type Outcome = PlayerMap<'g, u64>;
 
-    fn init(match_conf: MatchConfig<'g, Self>) -> (Self, GameStatus<'g, Self>) {
+    fn init(match_conf: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>) {
         let state = HigherLower {
             eliminated: HashMap::new(),
             players: match_conf.players.clone(),

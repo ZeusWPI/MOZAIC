@@ -15,7 +15,7 @@ pub struct MatchRunner<'g> {
 }
 
 impl<'g> MatchRunner<'g> {
-    pub fn run<G>(&mut self, config: MatchConfig<'g, G>) -> G::Outcome
+    pub fn run<G>(&mut self, config: MatchParams<'g, G>) -> G::Outcome
         where G: Game<'g>
     {
         let (mut game_state, mut status) = G::init(config);
