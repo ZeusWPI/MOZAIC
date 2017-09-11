@@ -10,44 +10,46 @@ use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
-pub struct PlanetWars {
-    players: HashMap<PlayerId, Rc<RefCell<Player>>>,
-    planets: HashMap<PlanetName, Rc<RefCell<Planet>>>,
+pub struct PlanetWars<'g> {
+    players: PlayerMap<'g, Rc<RefCell<Player>>>,
+    planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
 
-impl<'g> Game<'g> for PlanetWars {
-    fn init(names: Vec<PlayerId>) -> Self {
+impl<'g> Game<'g> for PlanetWars<'g> {
+    type Outcome = PlayerMap<'g, u64>;
+    type Config = ();
+    
+    fn init(config: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>) {
 
         // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
         let mut players = HashMap::new();
-        for name in names.iter() {
+        for name in config.players.iter() {
             players.insert(
                 name.clone(),
-                Rc::new(RefCell::new( Player {name: name.clone()}))
+                Rc::new(RefCell::new( Player { name: name.to_string() }))
             );
         }
-
-        self.place_players();
-
-        let mut pi = PlayerInput::new();
-        let state = self.to_state();
-
-        for (name, player) in &self.players {
-            let inp = serde_json::to_string(&state).expect("[PLANET_WARS] Serializing game state failed.");
-            pi.insert(name.clone(), inp);
-        }
-
-        GameStatus::Running(pi);
-
-        PlanetWars {
+        let mut state = PlanetWars {
+            planets: gen_map(players.len()),
             players: players,
-            planets: gen_map(names).planets,
-            expeditions: Vec::new()
-        }
+            expeditions: Vec::new(),
+            
+        };
+
+        state.place_players();
+
+        // let state = self.to_state();
+
+        // for (name, player) in &self.players {
+        //     let inp = serde_json::to_string(&state)
+        //         .expect("[PLANET_WARS] Serializing game state failed.");
+        //     pi.insert(name.clone(), inp);
+        // }
+        unimplemented!()
     }
 
-    fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
+    fn step(&mut self, player_output: &PlayerMap<'g, String>) -> GameStatus<'g, Self> {
         for (player, command) in player_output {
 
             // Parse command
@@ -56,7 +58,7 @@ impl<'g> Game<'g> for PlanetWars {
                 // TODO: More expressive error
                 Err(err) => {
                     let msg = format!("Invalid formatted command.\n{}", err);
-                    return GameStatus::Done(Outcome::Error(msg.to_owned()));
+                    unimplemented!()
                 } 
             };
 
@@ -65,10 +67,10 @@ impl<'g> Game<'g> for PlanetWars {
                 None => continue // No move by player, skip
             };
 
-            let moof = match self.validate_move(moof) {
-                Ok(moof) => moof,
-                Err(outcome) => return GameStatus::Done(outcome)
-            };
+            // let moof = match self.validate_move(moof) {
+            //     Ok(moof) => moof,
+            //     Err(outcome) => return GameStatus::Done(outcome)
+            // }; 
 
             let exp = self.exp_from_move(player.clone(), moof);
             // Add expedition to planet
@@ -76,13 +78,12 @@ impl<'g> Game<'g> for PlanetWars {
 
         self.step_expeditions();
         self.resolve_combats();
-        // TODO: Check for game, end, return playeroutput
-        GameStatus::Done(Outcome::Score(Scoring::new()))
+        unimplemented!()
     }
 }
 
-impl PlanetWars {
-    fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
+impl<'g> PlanetWars<'g> {
+//    fn validate_move(&mut self, m: Move) -> Result<Move, Outcome>{
         // Check whether origin is a valid planet
         /*
         let or = match self.planets.get(&c.origin) {
@@ -103,7 +104,11 @@ impl PlanetWars {
         if or.ship_count < c.ship_count {
             return faulty_command("You don't control enough ships to send this amount")
         }*/
-        Ok(m)
+  //      Ok(m)
+    //}
+
+    fn generate_prompts(&self) -> PlayerMap<'g, String> {
+        unimplemented!()
     }
 
     fn to_state(&mut self) -> State {
@@ -126,7 +131,7 @@ impl PlanetWars {
             ship_count: m.ship_count
         };
 
-        let target = self.planets.get(&m.destination).unwrap(); // Add error message
+        let target = self.planets.get(m.destination.as_str()).unwrap(); // Add error message
         Expedition {
             target: Rc::downgrade(target), 
             fleet: fleet,
@@ -156,7 +161,8 @@ impl PlanetWars {
     fn place_players(&mut self) {
         let mut values = self.planets.values_mut().take(self.players.len());
         for (player_name, player) in &self.players {
-            let mut value : &mut Rc<RefCell<Planet>> = values.next().expect("Not enough planets generated for players.");
+            let mut value : &mut Rc<RefCell<Planet>> = values.next()
+                .expect("Not enough planets generated for players.");
             let mut value = Rc::get_mut(value).unwrap().borrow_mut();
             value.fleets.push( Fleet {
                 owner: Rc::downgrade(&player),
@@ -172,14 +178,14 @@ pub struct Fleet {
 }
 
 pub struct Planet {
-    name: PlanetName,
+    name: String,
     fleets: Vec<Fleet>,
     x: u64,
     y: u64,
 }
 
 impl Planet {
-    pub fn new(name: PlanetName, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
+    pub fn new(name: String, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
         Planet {
             name: name,
             fleets: fleets,
@@ -224,15 +230,12 @@ impl Expedition {
 }
 
 struct Player {
-    name: PlayerId,
+    name: String,
+
 }
 
 impl PartialEq for Player {
     fn eq(&self, other: &Player) -> bool {
         self.name == other.name
     }
-}
-
-fn faulty_command(err: &str) -> Outcome {
-    Outcome::Error(err.to_string())
 }

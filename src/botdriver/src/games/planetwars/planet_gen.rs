@@ -6,27 +6,15 @@ use std::rc::{Rc};
 use std::cell::{RefCell};
 
 use games::planetwars::planet_wars::Planet;
-use game::PlayerId as PlayerName;
-use games::planetwars::protocol::PlanetName;
 
 const WIDTH: u64 = 40;
 const HEIGHT: u64 = 25;
 const PLANET_FACTOR: u64 = 2;
 
-// A Map contains all the generated planets accompanied by some metadata.
-// All it's fields are public because this is a simple datastore.
-pub struct Map {
-    pub height: u64,
-    pub width: u64,
-    pub planet_amount: u64,
-    pub planets: HashMap<PlanetName, Rc<RefCell<Planet>>>
-}
-
-pub fn gen_map(players: Vec<PlayerName>) -> Map {
+pub fn gen_map(num_players: usize) -> HashMap<String,Rc<RefCell<Planet>>> {
     let mut planets = HashMap::new();
-    let player_amount = players.len() as u64;
-    let planet_amount = player_amount * PLANET_FACTOR;
-    let locations = gen_locations(planet_amount);
+    let num_planets = num_players as u64 * PLANET_FACTOR;
+    let locations = gen_locations(num_players as u64);
 
     for (x, y) in locations {
         let planet_name = format!("Planet_{}", x);
@@ -40,12 +28,7 @@ pub fn gen_map(players: Vec<PlayerName>) -> Map {
         planets.insert(planet_name, planet);
     }
 
-    Map {
-        height: HEIGHT,
-        width: WIDTH,
-        planet_amount: planet_amount,
-        planets: planets
-    }
+    return planets;
 }
 
 // We do this so we can prevent planets being generated on the same location
