@@ -20,7 +20,7 @@ pub struct PlanetWars {
 impl Game for PlanetWars {
     type Outcome = Vec<Rc<RefCell<Player>>>;
     type Config = ();
-    
+
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
         // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
         let mut players = HashMap::new();
@@ -125,7 +125,7 @@ impl PlanetWars {
             if player.borrow().is_alive() {
                 let serialized = serde_json::to_string(&state)
                     .expect("[PLANET_WARS] Serializing game state failed.");
-                prompts.insert(name, serialized);
+                prompts.insert(id, serialized);
             }
         }
         return prompts;
@@ -135,25 +135,29 @@ impl PlanetWars {
         return self.eliminated.len() < self.players.len() - 1;
     }
 
+    fn owner_name(&self, id: &Option<PlayerId>) -> Option<String> {
+        id.map( |i| self.players[&i].borrow().name.clone())
+    }
+
     fn to_state(&self) -> protocol::State {
-let mut players = Vec::new();
+        let mut players = Vec::new();
         let mut planets = Vec::new();
         let mut expeditions = Vec::new();
 
         //Fill players vector
-        for name in self.players.keys() {
-            players.push(name.clone());
+        for id in self.players.keys() {
+            players.push(id);
         }
 
         //Fill planets vector
-        for mut planet in self.planets.values_mut() {
-            let planet_value = Rc::get_mut(&mut planet).unwrap().borrow();
+        for planet in self.planets.values() {
+            let planet_value = planet.borrow();
 
             let planet_clone = protocol::Planet {
                 ship_count: planet_value.ship_count(),
                 x: planet_value.x as f64,
                 y: planet_value.y as f64,
-                owner: planet_value.owner(),
+                owner: self.owner_name(&planet_value.owner()),
                 name: planet_value.name.clone(),
             };
             planets.push(planet_clone);
@@ -167,16 +171,18 @@ let mut players = Vec::new();
                 ship_count: expedition_fleet.ship_count,
                 origin: expedition.origin(),
                 destination: expedition.target(),
-                owner: expedition_fleet.owner().unwrap(),
+                owner: self.owner_name(&expedition_fleet.owner()).unwrap(),
                 turns_remaining: expedition.turns_remaining,
             };
             expeditions.push(expedition_clone);
         }
 
         protocol::State {
-            players: players,
             planets: planets,
-            expeditions: expeditions
+            expeditions: expeditions,
+            players: self.players.values()
+                                 .map(|p| p.borrow().name.clone())
+                                 .collect(),
         }
 
     }
@@ -219,8 +225,8 @@ let mut players = Vec::new();
 
     fn place_players(&mut self) {
         let mut values = self.planets.values_mut().take(self.players.len());
-        for (player_name, player) in &self.players {
-            let mut value : &mut Rc<RefCell<Planet>> = values.next()
+        for (_, player) in &self.players {
+            let value : &mut Rc<RefCell<Planet>> = values.next()
                 .expect("Not enough planets generated for players.");
             let mut value = Rc::get_mut(value).unwrap().borrow_mut();
             value.fleets.push( Fleet {
@@ -239,9 +245,8 @@ pub struct Fleet {
 impl Fleet {
     pub fn owner(&self) -> Option<PlayerId> {
         let player_ref = self.owner.upgrade().unwrap();
-        let player_name = player_ref.borrow().name.clone();
-        //Some(player_name)
-        unimplemented!();
+        let id = player_ref.borrow().id.clone();
+        Some(id)
     }
 }
 
