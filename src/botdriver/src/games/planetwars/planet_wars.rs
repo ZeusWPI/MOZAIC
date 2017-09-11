@@ -19,7 +19,7 @@ pub struct PlanetWars<'g> {
 impl<'g> Game<'g> for PlanetWars<'g> {
     type Outcome = PlayerMap<'g, u64>;
     type Config = ();
-    
+
     fn init(config: MatchParams<'g, Self>) -> (Self, GameStatus<'g, Self>) {
 
         // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
@@ -34,7 +34,7 @@ impl<'g> Game<'g> for PlanetWars<'g> {
             planets: gen_map(players.len()),
             players: players,
             expeditions: Vec::new(),
-            
+
         };
 
         state.place_players();
@@ -108,10 +108,20 @@ impl<'g> PlanetWars<'g> {
     //}
 
     fn generate_prompts(&self) -> PlayerMap<'g, String> {
-        unimplemented!()
+        let mut prompts = HashMap::new();
+        let state = self.to_state();
+
+        for (&name, player) in &self.players {
+            if player.borrow().is_alive() {
+                let serialized = serde_json::to_string(&state)
+                    .expect("[PLANET_WARS] Serializing game state failed.");
+                prompts.insert(name, serialized);
+            }
+        }
+        return prompts;
     }
 
-    fn to_state(&mut self) -> State {
+    fn to_state(&self) -> State {
         let players = Vec::new();
         let planets = Vec::new();
         let expeditions = Vec::new();
@@ -232,6 +242,12 @@ impl Expedition {
 struct Player {
     name: String,
 
+}
+
+impl Player {
+    fn is_alive(&self) -> bool {
+        true
+    }
 }
 
 impl PartialEq for Player {
