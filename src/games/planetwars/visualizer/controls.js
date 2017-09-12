@@ -5,12 +5,29 @@ class Controls {
   }
 
   attachEvents(visualizer) {
+    d3.select('#play').on("click", e => {
+      var play_button = d3.select('#play');
+      var pause_button = d3.select('#pause');
+      visualizer.startTimer();
+      play_button.attr("hidden", true);
+      pause_button.attr("hidden", null);
+    });
+
+    d3.select('#pause').on("click", e => {
+      var pause_button = d3.select('#pause');
+      var play_button = d3.select('#play');
+      visualizer.stopTimer();
+      pause_button.attr("hidden", true);
+      play_button.attr("hidden", null);
+    });
+
+
     d3.select('#toggleplay').on("click", e => {
       var button = d3.select('#toggleplay');
       if (visualizer.toggleTimer()) {
-        button.text("\u23F8");
+        button.node().innerHTML('<img src="res/pause.svg">');
       } else {
-        button.text("\u25B6");
+        button.node().innerHTML('<img src="res/play.svg">');
       }
     });
 
@@ -33,11 +50,19 @@ class Controls {
     d3.select('#tostart').on("click", e => {
       visualizer.showTurn(0);
       visualizer.stopTimer();
+      var play_button = d3.select('#play');
+      var pause_button = d3.select('#pause');
+      play_button.attr("hidden", null);
+      pause_button.attr("hidden", true);
     });
 
     d3.select('#toend').on("click", e => {
       visualizer.showTurn(visualizer.maxTurns);
       visualizer.stopTimer();
+      var play_button = d3.select('#play');
+      var pause_button = d3.select('#pause');
+      play_button.attr("hidden", true);
+      pause_button.attr("hidden", null);
     });
 
     d3.select('#turn_slider')
