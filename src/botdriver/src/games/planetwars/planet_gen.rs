@@ -18,12 +18,12 @@ pub fn gen_map(num_players: usize) -> HashMap<String,Rc<RefCell<Planet>>> {
 
     for (x, y) in locations {
         let planet_name = format!("Planet_{}", x);
-        let planet = Planet::new(
-            planet_name.to_string(),
-            Vec::new(),
-            x,
-            y
-        );
+        let planet = Planet {
+            name: planet_name.to_string(),
+            fleets: Vec::new(),
+            x: x,
+            y: y
+        };
         let planet = Rc::new(RefCell::new(planet));
         planets.insert(planet_name, planet);
     }

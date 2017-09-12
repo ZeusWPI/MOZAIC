@@ -2,13 +2,99 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::cell::RefCell;
+use std::cell::{RefCell, Ref};
 
 use game::*;
 use games::planetwars::protocol;
 use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
+
+
+
+pub struct Fleet {
+    owner: Rc<RefCell<Player>>,
+    ship_count: u64,
+}
+
+pub struct Planet {
+    pub name: String,
+    pub fleets: Vec<Fleet>,
+    pub x: u64,
+    pub y: u64,
+}
+
+impl Planet {
+    fn owner<'a>(&'a self) -> Option<Ref<'a, Player>> {
+        self.fleets.first().map(|f| f.owner.borrow())
+    }
+    
+    fn ship_count(&self) -> u64 {
+        self.fleets.first().map_or(0, |f| f.ship_count)
+    }
+
+    fn orbit(&mut self, fleet: Fleet) {
+        // TODO: deduplication (merge fleets from same player)
+        self.fleets.push(fleet);
+    }
+
+    fn resolve_combat(&mut self) {
+        // destroy some ships
+        self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
+        while self.fleets.len() > 1 {
+            let fleet = self.fleets.pop().unwrap();
+            for other in self.fleets.iter_mut() {
+                other.ship_count -= fleet.ship_count;
+            }
+
+            // remove dead fleets
+            while self.fleets[self.fleets.len()-1].ship_count == 0 {
+                self.fleets.pop();
+            }
+        }
+    }
+
+    fn distance(&self, other: &Planet) -> u64 {
+        (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
+    }
+}
+
+struct Expedition {
+    origin: Rc<RefCell<Planet>>,
+    target: Rc<RefCell<Planet>>,
+    fleet: Fleet,
+    turns_remaining: u64,
+}
+
+impl Expedition {
+    fn into_orbit(self) {
+        self.target.borrow_mut().orbit(self.fleet);
+    }
+
+    fn repr(&self) -> protocol::Expedition {
+        protocol::Expedition {
+            ship_count: self.fleet.ship_count,
+            origin: self.origin.borrow().name.clone(),
+            destination: self.target.borrow().name.clone(),
+            owner: self.fleet.owner.borrow().name.clone(),
+            turns_remaining: self.turns_remaining,
+        }
+    }
+
+
+}
+
+struct Player {
+    id: usize,
+    name: String,
+}
+
+impl PartialEq for Player {
+    fn eq(&self, other: &Player) -> bool {
+        self.name == other.name
+    }
+}
+
 
 pub struct PlanetWars {
     players: HashMap<PlayerId, Rc<RefCell<Player>>>,
@@ -77,7 +163,6 @@ impl Game for PlanetWars {
         // Play one step of the game, given the new expeditions
         self.step_expeditions();
         self.resolve_combats();
-        self.filter_eliminated();
 
         if self.is_finished() {
             //TODO Actually make the outcome
@@ -95,7 +180,7 @@ impl PlanetWars {
     fn validate_move(&mut self, player: PlayerId, m: protocol::Move) -> Option<protocol::Move> {
         // Check whether origin is a valid planet
         let origin = match self.planets.get(&m.origin) {
-            Some(planet) => planet,
+            Some(planet) => planet.borrow(),
             None => return None
         };
 
@@ -106,12 +191,12 @@ impl PlanetWars {
         };
 
         // Check whether the sender is the owner of origin
-        if origin.borrow_mut().owner() != Some(player) {
+        if origin.owner().map(|p| p.id) != Some(player) {
             return None
         }
 
         // Check whether the owner has enough ships to send
-        if origin.borrow_mut().ship_count() < m.ship_count {
+        if origin.ship_count() < m.ship_count {
             return None
         }
 
@@ -130,10 +215,6 @@ impl PlanetWars {
             }
         }
         return prompts;
-    }
-
-    fn filter_eliminated(&self){
-        
     }
 
     fn is_finished(&self) -> bool {
@@ -167,7 +248,7 @@ impl PlanetWars {
                 ship_count: planet_value.ship_count(),
                 x: planet_value.x as f64,
                 y: planet_value.y as f64,
-                owner: planet_value.owner().map(|o| self.owner_name(o)),
+                owner: planet_value.owner().map(|p| p.name.clone()),
                 name: planet_value.name.clone(),
             };
             planets.push(planet_clone);
@@ -233,108 +314,5 @@ impl PlanetWars {
                 ship_count: START_SHIPS
             });
         }
-    }
-}
-
-pub struct Fleet {
-    owner: Rc<RefCell<Player>>,
-    ship_count: u64,
-}
-
-pub struct Planet {
-    name: String,
-    fleets: Vec<Fleet>,
-    x: u64,
-    y: u64,
-}
-
-impl Planet {
-    pub fn new(name: protocol::PlanetName, fleets: Vec<Fleet>, x: u64, y: u64) -> Planet {
-        Planet {
-            name: name,
-            fleets: fleets,
-            x: x,
-            y: y
-        }
-    }
-
-    pub fn owner(&self) -> Option<PlayerId> {
-        if self.fleets.capacity() > 0 {
-            let ref fleet = self.fleets[0];
-            let owner_name = fleet.owner.borrow().id;
-            Some(owner_name)
-        } else {
-            None
-        }
-    }
-
-    pub fn ship_count(&self) -> u64 {
-        if self.fleets.capacity() > 0 {
-            let ref fleet = self.fleets[0];
-            fleet.ship_count
-        } else {
-            0
-        }
-    }
-
-    fn orbit(&mut self, fleet: Fleet) {
-        // TODO: deduplication (merge fleets from same player)
-        self.fleets.push(fleet);
-    }
-
-    fn resolve_combat(&mut self) {
-        // destroy some ships
-        self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
-        while self.fleets.len() > 1 {
-            let fleet = self.fleets.pop().unwrap();
-            for other in self.fleets.iter_mut() {
-                other.ship_count -= fleet.ship_count;
-            }
-
-            // remove dead fleets
-            while self.fleets[self.fleets.len()-1].ship_count == 0 {
-                self.fleets.pop();
-            }
-        }
-    }
-
-    fn distance(&self, other: &Planet) -> u64 {
-        (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
-    }
-}
-
-struct Expedition {
-    origin: Rc<RefCell<Planet>>,
-    target: Rc<RefCell<Planet>>,
-    fleet: Fleet,
-    turns_remaining: u64,
-}
-
-impl Expedition {
-    fn into_orbit(self) {
-        self.target.borrow_mut().orbit(self.fleet);
-    }
-
-    fn repr(&self) -> protocol::Expedition {
-        protocol::Expedition {
-            ship_count: self.fleet.ship_count,
-            origin: self.origin.borrow().name.clone(),
-            destination: self.target.borrow().name.clone(),
-            owner: self.fleet.owner.borrow().name.clone(),
-            turns_remaining: self.turns_remaining,
-        }
-    }
-
-
-}
-
-struct Player {
-    id: usize,
-    name: String,
-}
-
-impl PartialEq for Player {
-    fn eq(&self, other: &Player) -> bool {
-        self.name == other.name
     }
 }
