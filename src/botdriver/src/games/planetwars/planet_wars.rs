@@ -17,6 +17,14 @@ pub struct Fleet {
     ship_count: u64,
 }
 
+impl Fleet {
+    /// This function is the only place where ships actually get destroyed.
+    fn destroy_ships(&mut self, count: u64) {
+        self.ship_count -= count;
+        self.owner.borrow_mut().ship_count -= count;
+    }
+}
+
 pub struct Planet {
     pub name: String,
     pub fleets: Vec<Fleet>,
@@ -44,7 +52,7 @@ impl Planet {
         while self.fleets.len() > 1 {
             let fleet = self.fleets.pop().unwrap();
             for other in self.fleets.iter_mut() {
-                other.ship_count -= fleet.ship_count;
+                other.destroy_ships(fleet.ship_count);
             }
 
             // remove dead fleets
@@ -87,6 +95,7 @@ impl Expedition {
 struct Player {
     id: usize,
     name: String,
+    ship_count: u64,
 }
 
 impl PartialEq for Player {
@@ -115,6 +124,7 @@ impl Game for PlanetWars {
                 Player {
                     id: id,
                     name: info.name.clone(),
+                    ship_count: START_SHIPS,
                 }))
             );
         }
