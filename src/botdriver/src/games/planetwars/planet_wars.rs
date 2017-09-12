@@ -2,7 +2,7 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 use std::rc::{Rc, Weak};
-use std::cell::{RefCell};
+use std::cell::{RefCell, Ref};
 
 use game::*;
 use games::planetwars::protocol;
@@ -142,7 +142,6 @@ impl PlanetWars {
     fn to_state(&self) -> protocol::State {
         let mut players = Vec::new();
         let mut planets = Vec::new();
-        let mut expeditions = Vec::new();
 
         //Fill players vector
         for id in self.players.keys() {
@@ -164,18 +163,7 @@ impl PlanetWars {
         }
 
         //Fill expeditions vector
-        for expedition in self.expeditions.iter() {
-            let expedition_fleet = &expedition.fleet;
-
-            let expedition_clone = protocol::Expedition {
-                ship_count: expedition_fleet.ship_count,
-                origin: expedition.origin(),
-                destination: expedition.target(),
-                owner: self.owner_name(&expedition_fleet.owner()).unwrap(),
-                turns_remaining: expedition.turns_remaining,
-            };
-            expeditions.push(expedition_clone);
-        }
+        let expeditions = self.expeditions.iter().map(|e| e.repr()).collect();
 
         protocol::State {
             planets: planets,
@@ -190,15 +178,15 @@ impl PlanetWars {
     fn exp_from_move(&mut self, player_name: PlayerId, m: protocol::Move) -> Expedition {
         let owner = self.players.get(&player_name).unwrap(); // Add error message
         let fleet = Fleet {
-            owner: Rc::downgrade(owner),
+            owner: owner.clone(),
             ship_count: m.ship_count
         };
 
         let origin = self.planets.get(&m.origin).unwrap();
         let target = self.planets.get(&m.destination).unwrap(); // Add error message
         Expedition {
-            origin: Rc::downgrade(origin),
-            target: Rc::downgrade(target),
+            origin: origin.clone(),
+            target: target.clone(),
             fleet: fleet,
             turns_remaining: origin.borrow().distance(&target.borrow())
         }
@@ -230,7 +218,7 @@ impl PlanetWars {
                 .expect("Not enough planets generated for players.");
             let mut value = Rc::get_mut(value).unwrap().borrow_mut();
             value.fleets.push( Fleet {
-                owner: Rc::downgrade(&player),
+                owner: player.clone(),
                 ship_count: START_SHIPS
             });
         }
@@ -238,16 +226,8 @@ impl PlanetWars {
 }
 
 pub struct Fleet {
-    owner: Weak<RefCell<Player>>,
+    owner: Rc<RefCell<Player>>,
     ship_count: u64,
-}
-
-impl Fleet {
-    pub fn owner(&self) -> Option<PlayerId> {
-        let player_ref = self.owner.upgrade().unwrap();
-        let id = player_ref.borrow().id.clone();
-        Some(id)
-    }
 }
 
 pub struct Planet {
@@ -270,8 +250,8 @@ impl Planet {
     pub fn owner(&self) -> Option<PlayerId> {
         if self.fleets.capacity() > 0 {
             let ref fleet = self.fleets[0];
-            let owner_name = fleet.owner();
-            owner_name
+            let owner_name = fleet.owner.borrow().id;
+            Some(owner_name)
         } else {
             None
         }
@@ -313,29 +293,28 @@ impl Planet {
 }
 
 struct Expedition {
-    origin: Weak<RefCell<Planet>>,
-    target: Weak<RefCell<Planet>>,
+    origin: Rc<RefCell<Planet>>,
+    target: Rc<RefCell<Planet>>,
     fleet: Fleet,
     turns_remaining: u64,
 }
 
 impl Expedition {
-    pub fn origin(&self) -> protocol::PlanetName {
-        let origin_ref = self.origin.upgrade().unwrap();
-        let origin_name = origin_ref.borrow().name.clone();
-        origin_name
-    }
-
-    pub fn target(&self) -> protocol::PlanetName {
-        let target_ref = self.target.upgrade().unwrap();
-        let target_name = target_ref.borrow().name.clone();
-        target_name
-    }
-
     fn into_orbit(self) {
-        let target_ref = self.target.upgrade().unwrap();
-        target_ref.borrow_mut().orbit(self.fleet);
+        self.target.borrow_mut().orbit(self.fleet);
     }
+
+    fn repr(&self) -> protocol::Expedition {
+        protocol::Expedition {
+            ship_count: self.fleet.ship_count,
+            origin: self.origin.borrow().name.clone(),
+            destination: self.target.borrow().name.clone(),
+            owner: self.fleet.owner.borrow().name.clone(),
+            turns_remaining: self.turns_remaining,
+        }
+    }
+
+
 }
 
 struct Player {
