@@ -77,6 +77,7 @@ impl Game for PlanetWars {
         // Play one step of the game, given the new expeditions
         self.step_expeditions();
         self.resolve_combats();
+        self.filter_eliminated();
 
         if self.is_finished() {
             //TODO Actually make the outcome
@@ -121,8 +122,8 @@ impl PlanetWars {
         let mut prompts = HashMap::new();
         let state = self.to_state();
 
-        for (&id, player) in &self.players {
-            if player.borrow().is_alive() {
+        for (&id, _) in &self.players {
+            if self.is_alive(id) {
                 let serialized = serde_json::to_string(&state)
                     .expect("[PLANET_WARS] Serializing game state failed.");
                 prompts.insert(id, serialized);
@@ -131,12 +132,22 @@ impl PlanetWars {
         return prompts;
     }
 
+    fn filter_eliminated(&self){
+        
+    }
+
     fn is_finished(&self) -> bool {
         return self.eliminated.len() < self.players.len() - 1;
     }
 
-    fn owner_name(&self, id: &Option<PlayerId>) -> Option<String> {
-        id.map( |i| self.players[&i].borrow().name.clone())
+    fn is_alive(&self, id: PlayerId) -> bool {
+        self.expeditions.iter().any(|e| {
+            e.fleet.owner() == id
+        })
+    }
+
+    fn owner_name(&self, id: PlayerId) -> String {
+        self.players[&id].borrow().name.clone()
     }
 
     fn to_state(&self) -> protocol::State {
@@ -157,7 +168,7 @@ impl PlanetWars {
                 ship_count: planet_value.ship_count(),
                 x: planet_value.x as f64,
                 y: planet_value.y as f64,
-                owner: self.owner_name(&planet_value.owner()),
+                owner: planet_value.owner().map(|o| self.owner_name(o)),
                 name: planet_value.name.clone(),
             };
             planets.push(planet_clone);
@@ -171,7 +182,7 @@ impl PlanetWars {
                 ship_count: expedition_fleet.ship_count,
                 origin: expedition.origin(),
                 destination: expedition.target(),
-                owner: self.owner_name(&expedition_fleet.owner()).unwrap(),
+                owner: self.owner_name(expedition_fleet.owner()),
                 turns_remaining: expedition.turns_remaining,
             };
             expeditions.push(expedition_clone);
@@ -243,10 +254,9 @@ pub struct Fleet {
 }
 
 impl Fleet {
-    pub fn owner(&self) -> Option<PlayerId> {
+    pub fn owner(&self) -> PlayerId {
         let player_ref = self.owner.upgrade().unwrap();
-        let id = player_ref.borrow().id.clone();
-        Some(id)
+        return player_ref.borrow().id
     }
 }
 
@@ -270,8 +280,7 @@ impl Planet {
     pub fn owner(&self) -> Option<PlayerId> {
         if self.fleets.capacity() > 0 {
             let ref fleet = self.fleets[0];
-            let owner_name = fleet.owner();
-            owner_name
+            Some(fleet.owner())
         } else {
             None
         }
@@ -341,13 +350,6 @@ impl Expedition {
 struct Player {
     id: usize,
     name: String,
-
-}
-
-impl Player {
-    fn is_alive(&self) -> bool {
-        true
-    }
 }
 
 impl PartialEq for Player {
