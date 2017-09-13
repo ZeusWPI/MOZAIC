@@ -1,5 +1,6 @@
 #[derive(Serialize, Deserialize)]
 pub struct Expedition {
+    pub id: u64,
     pub ship_count: u64,
     pub origin: PlanetName,
     pub destination: PlanetName,

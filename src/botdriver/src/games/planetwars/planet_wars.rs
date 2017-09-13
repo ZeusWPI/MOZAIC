@@ -11,6 +11,9 @@ pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
     expeditions: Vec<Expedition>,
+    // How many exeditions were already dispatched.
+    // This is needed for assigning expedition identifiers.
+    expedition_num: u64,
 }
 
 struct Player {
@@ -32,6 +35,7 @@ pub struct Planet {
 }
 
 pub struct Expedition {
+    id: u64,
     origin: String,
     target: String,
     fleet: Fleet,
@@ -57,7 +61,7 @@ impl Game for PlanetWars {
             planets: gen_map(players.len()),
             players: players,
             expeditions: Vec::new(),
-
+            expedition_num: 0,
         };
 
         state.place_players();
@@ -164,11 +168,13 @@ impl PlanetWars {
         };
 
         let expedition = Expedition {
+            id: self.expedition_num,
             origin: origin.name.clone(),
             target: m.destination.clone(),
             fleet: fleet,
             turns_remaining: dist,
         };
+        self.expedition_num += 1;
         self.expeditions.push(expedition);
     }
 
@@ -280,12 +286,13 @@ impl Planet {
 impl Expedition {
     fn repr(&self, pw: &PlanetWars) -> protocol::Expedition {
         protocol::Expedition {
-            ship_count: self.fleet.ship_count,
+            id: self.id,
             origin: self.origin.clone(),
             destination: self.target.clone(),
             // We can unwrap here, because the protocol currently does not allow
             // for expeditions without an owner.
             owner: pw.players[&self.fleet.owner.unwrap()].name.clone(),
+            ship_count: self.fleet.ship_count,
             turns_remaining: self.turns_remaining,
         }
     }
