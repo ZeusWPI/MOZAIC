@@ -7,8 +7,6 @@ use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
-
-
 pub struct Fleet {
     owner: PlayerId,
     ship_count: u64,
@@ -43,10 +41,16 @@ impl Planet {
     }
 
     fn resolve_combat(&mut self) {
-        // destroy some ships
+        // The player owning the largest fleet present will win the combat.
+        // Here, we resolve how many ships he will have left.
+        // note: in the current implementation, we could resolve by doing
+        // winner.ship_count -= second_largest.ship_count, but this does not
+        // allow for simple customizations (such as changing combat balance).
+        
         self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
         while self.fleets.len() > 1 {
             let fleet = self.fleets.pop().unwrap();
+            // destroy some ships
             for other in self.fleets.iter_mut() {
                 other.ship_count -= fleet.ship_count;
             }
@@ -97,13 +101,7 @@ impl Expedition {
 struct Player {
     id: usize,
     name: String,
-    ship_count: u64,
-}
-
-impl Player {
-    fn is_alive(&self) -> bool {
-        self.ship_count > 0
-    }
+    alive: bool,
 }
 
  impl PartialEq for Player {
@@ -128,7 +126,7 @@ impl PlanetWars {
             
 
         for player in self.players.values() {
-            if player.is_alive() {
+            if player.alive {
                 prompts.insert(player.id, prompt.clone());
             }
         }
@@ -136,7 +134,7 @@ impl PlanetWars {
     }
 
     fn is_finished(&self) -> bool {
-        self.players.values().filter(|p| p.is_alive()).count() <= 1
+        self.players.values().filter(|p| p.alive).count() <= 1
     }
 
     fn repr(&self) -> protocol::State {
@@ -147,6 +145,7 @@ impl PlanetWars {
     }
 
     fn exec_move(&mut self, player_id: PlayerId, m: &protocol::Move) {
+        // TODO: this code sucks.
         // TODO: actually handle errors
         // MOZAIC should support soft errors first, of course.
         // Alternatively, a game implementation could be made responsible for
@@ -197,16 +196,26 @@ impl PlanetWars {
                 let planet = self.planets.get_mut(&exp.target).unwrap();
                 planet.orbit(exp.fleet);
             } else {
+                // owner has an expedition in progress; this is a sign of life.
+                let owner = exps[i].fleet.owner;
+                self.players.get_mut(&owner).unwrap().alive = true;
+                // proceed to next expedition
                 i += 1;
             }
         }
     }
 
-    fn resolve_combats(&mut self) {
+    fn step_planets(&mut self) {
         for planet in self.planets.values_mut() {
             planet.resolve_combat();
+            if let Some(owner) = planet.owner() {
+                planet.fleets[0].ship_count += 1;
+                // owner owns a planet; this is a sign of life.
+                self.players.get_mut(&owner).unwrap().alive = true;
+            }
         }
     }
+
 
     fn place_players(&mut self) {
         let mut planets = self.planets.values_mut().take(self.players.len());
@@ -233,7 +242,7 @@ impl Game for PlanetWars {
             players.insert(id, Player {
                 id: id,
                 name: info.name.clone(),
-                ship_count: START_SHIPS,
+                alive: true,
             });
         }
         let mut state = PlanetWars {
@@ -269,8 +278,14 @@ impl Game for PlanetWars {
         }
          
         // Play one step of the game, given the new expeditions
+        // Initially mark all players dead, re-marking them as alive once we
+        // find a sign of life.
+        for player in self.players.values_mut() {
+            player.alive = false;
+        }
+
         self.step_expeditions();
-        self.resolve_combats();
+        self.step_planets();
 
         if self.is_finished() {
             //TODO Actually make the outcome
