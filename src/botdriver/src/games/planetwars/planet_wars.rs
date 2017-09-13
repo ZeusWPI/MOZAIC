@@ -44,7 +44,8 @@ pub struct Expedition {
 
 
 impl Game for PlanetWars {
-    type Outcome = HashMap<String, u64>;
+    // Name of the game winner.
+    type Outcome = String;
     type Config = ();
 
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
@@ -100,8 +101,8 @@ impl Game for PlanetWars {
         self.step_planets();
 
         if self.is_finished() {
-            //TODO Actually make the outcome
-            GameStatus::Finished(HashMap::new())
+            let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
+            GameStatus::Finished(winner.name.clone())
         } else {
             GameStatus::Prompting(self.generate_prompts())
         }
