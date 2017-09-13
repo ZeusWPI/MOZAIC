@@ -65,6 +65,16 @@ impl Planet {
     fn distance(&self, other: &Planet) -> u64 {
         (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
     }
+
+    fn repr(&self) -> protocol::Planet {
+        protocol::Planet {
+            name: self.name.clone(),
+            ship_count: self.ship_count(),
+            x: self.x as f64,
+            y: self.y as f64,
+            owner: self.owner().map(|p| p.name.clone()),
+        }
+    }
 }
 
 struct Expedition {
@@ -98,7 +108,13 @@ struct Player {
     ship_count: u64,
 }
 
-impl PartialEq for Player {
+impl Player {
+    fn is_alive(&self) -> bool {
+        self.ship_count > 0
+    }
+}
+
+ impl PartialEq for Player {
     fn eq(&self, other: &Player) -> bool {
         self.name == other.name
     }
@@ -111,6 +127,113 @@ pub struct PlanetWars {
     planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
+
+
+impl PlanetWars {
+
+    fn validate_move(&mut self, player: PlayerId, m: protocol::Move) -> Option<protocol::Move> {
+        // Check whether origin is a valid planet
+        let origin = match self.planets.get(&m.origin) {
+            Some(planet) => planet.borrow(),
+            None => return None
+        };
+
+        // Check whether destination is a valid planet
+        let destination = match self.planets.get(&m.destination){
+            Some(planet) => planet,
+            None => return None
+        };
+
+        // Check whether the sender is the owner of origin
+        if origin.owner().map(|p| p.id) != Some(player) {
+            return None
+        }
+
+        // Check whether the owner has enough ships to send
+        if origin.ship_count() < m.ship_count {
+            return None
+        }
+
+        Some(m)
+    }
+
+    fn generate_prompts(&self) -> PlayerMap<String> {
+        let mut prompts = HashMap::new();
+        let state = self.repr();
+        let prompt = serde_json::to_string(&self.repr())
+            .expect("[PLANET_WARS] Serializing game state failed.");
+            
+
+        for player_ref in self.players.values() {
+            let player = player_ref.borrow();
+            if player.is_alive() {
+                prompts.insert(player.id, prompt.clone());
+            }
+        }
+        return prompts;
+    }
+
+    fn is_finished(&self) -> bool {
+        self.players.values().filter(|p| p.borrow().is_alive()).count() <= 1
+    }
+
+    fn repr(&self) -> protocol::State {
+        let planets = self.planets.values().map(|p| p.borrow().repr()).collect();
+        let expeditions = self.expeditions.iter().map(|e| e.repr()).collect();
+        let players = self.players.values().map(|p| p.borrow().name.clone()).collect();
+        return protocol::State { players, expeditions, planets };
+    }
+
+    fn exp_from_move(&mut self, player_name: PlayerId, m: protocol::Move) -> Expedition {
+        let owner = self.players.get(&player_name).unwrap(); // Add error message
+        let fleet = Fleet {
+            owner: owner.clone(),
+            ship_count: m.ship_count
+        };
+
+        let origin = self.planets.get(&m.origin).unwrap();
+        let target = self.planets.get(&m.destination).unwrap(); // Add error message
+        Expedition {
+            origin: origin.clone(),
+            target: target.clone(),
+            fleet: fleet,
+            turns_remaining: origin.borrow().distance(&target.borrow())
+        }
+    }
+
+    fn step_expeditions(&mut self) {
+        let mut i = 0;
+        let exps = &mut self.expeditions;
+        while i < exps.len() {
+            exps[i].turns_remaining -= 1;
+            if exps[i].turns_remaining == 0 {
+                exps.swap_remove(i).into_orbit();
+            } else {
+                i += 1;
+            }
+        }
+    }
+
+    fn resolve_combats(&mut self) {
+        for planet in self.planets.values() {
+            planet.borrow_mut().resolve_combat();
+        }
+    }
+
+    fn place_players(&mut self) {
+        let mut values = self.planets.values_mut().take(self.players.len());
+        for (_, player) in &self.players {
+            let value : &mut Rc<RefCell<Planet>> = values.next()
+                .expect("Not enough planets generated for players.");
+            let mut value = Rc::get_mut(value).unwrap().borrow_mut();
+            value.fleets.push( Fleet {
+                owner: player.clone(),
+                ship_count: START_SHIPS
+            });
+        }
+    }
+}
+
 
 impl Game for PlanetWars {
     type Outcome = Vec<Rc<RefCell<Player>>>;
@@ -181,148 +304,6 @@ impl Game for PlanetWars {
             GameStatus::Finished(Vec::new())
         } else {
             GameStatus::Prompting(self.generate_prompts())
-        }
-    }
-}
-
-impl PlanetWars {
-
-    fn validate_move(&mut self, player: PlayerId, m: protocol::Move) -> Option<protocol::Move> {
-        // Check whether origin is a valid planet
-        let origin = match self.planets.get(&m.origin) {
-            Some(planet) => planet.borrow(),
-            None => return None
-        };
-
-        // Check whether destination is a valid planet
-        let destination = match self.planets.get(&m.destination){
-            Some(planet) => planet,
-            None => return None
-        };
-
-        // Check whether the sender is the owner of origin
-        if origin.owner().map(|p| p.id) != Some(player) {
-            return None
-        }
-
-        // Check whether the owner has enough ships to send
-        if origin.ship_count() < m.ship_count {
-            return None
-        }
-
-        Some(m)
-    }
-
-    fn generate_prompts(&self) -> PlayerMap<String> {
-        let mut prompts = HashMap::new();
-        let state = self.to_state();
-
-        for (&id, _) in &self.players {
-            if self.is_alive(id) {
-                let serialized = serde_json::to_string(&state)
-                    .expect("[PLANET_WARS] Serializing game state failed.");
-                prompts.insert(id, serialized);
-            }
-        }
-        return prompts;
-    }
-
-    fn is_finished(&self) -> bool {
-        return self.eliminated.len() < self.players.len() - 1;
-    }
-
-    fn is_alive(&self, id: PlayerId) -> bool {
-        self.expeditions.iter().any(|e| {
-            e.fleet.owner.borrow().id == id
-        })
-    }
-
-    fn owner_name(&self, id: PlayerId) -> String {
-        self.players[&id].borrow().name.clone()
-    }
-
-    fn to_state(&self) -> protocol::State {
-        let mut players = Vec::new();
-        let mut planets = Vec::new();
-
-        //Fill players vector
-        for id in self.players.keys() {
-            players.push(id);
-        }
-
-        //Fill planets vector
-        for planet in self.planets.values() {
-            let planet_value = planet.borrow();
-
-            let planet_clone = protocol::Planet {
-                ship_count: planet_value.ship_count(),
-                x: planet_value.x as f64,
-                y: planet_value.y as f64,
-                owner: planet_value.owner().map(|p| p.name.clone()),
-                name: planet_value.name.clone(),
-            };
-            planets.push(planet_clone);
-        }
-
-        //Fill expeditions vector
-        let expeditions = self.expeditions.iter().map(|e| e.repr()).collect();
-
-        protocol::State {
-            planets: planets,
-            expeditions: expeditions,
-            players: self.players.values()
-                                 .map(|p| p.borrow().name.clone())
-                                 .collect(),
-        }
-
-    }
-
-    fn exp_from_move(&mut self, player_name: PlayerId, m: protocol::Move) -> Expedition {
-        let owner = self.players.get(&player_name).unwrap(); // Add error message
-        let fleet = Fleet {
-            owner: owner.clone(),
-            ship_count: m.ship_count
-        };
-
-        let origin = self.planets.get(&m.origin).unwrap();
-        let target = self.planets.get(&m.destination).unwrap(); // Add error message
-        Expedition {
-            origin: origin.clone(),
-            target: target.clone(),
-            fleet: fleet,
-            turns_remaining: origin.borrow().distance(&target.borrow())
-        }
-    }
-
-    fn step_expeditions(&mut self) {
-        let mut i = 0;
-        let exps = &mut self.expeditions;
-        while i < exps.len() {
-            exps[i].turns_remaining -= 1;
-            if exps[i].turns_remaining == 0 {
-                exps.swap_remove(i).into_orbit();
-            } else {
-                i += 1;
-            }
-        }
-    }
-
-    fn resolve_combats(&mut self) {
-        for planet in self.planets.values() {
-            planet.borrow_mut().resolve_combat();
-        }
-    }
-
-    fn place_players(&mut self) {
-        let mut values = self.planets.values_mut().take(self.players.len());
-        for (_, player) in &self.players {
-            let value : &mut Rc<RefCell<Planet>> = values.next()
-                .expect("Not enough planets generated for players.");
-            let mut value = Rc::get_mut(value).unwrap().borrow_mut();
-            value.fleets.push( Fleet {
-                owner: player.clone(),
-                ship_count: START_SHIPS
-            });
         }
     }
 }
