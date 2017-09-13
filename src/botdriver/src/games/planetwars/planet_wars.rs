@@ -11,7 +11,7 @@ pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
     expeditions: Vec<Expedition>,
-    // How many exeditions were already dispatched.
+    // How many expeditions were already dispatched.
     // This is needed for assigning expedition identifiers.
     expedition_num: u64,
 }
