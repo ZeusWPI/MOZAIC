@@ -52,13 +52,12 @@ fn main() {
     let mut bots = BotRunner::run(&players);
 
     {
-        let mut logger = Logger::new();
         let config = MatchParams {
             players: player_names,
             game_config: HigherLowerConfig {
                 max: 500,
             },
-            logger: logger,
+            logger: Logger::new(),
         };
         
         

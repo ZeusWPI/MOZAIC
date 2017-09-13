@@ -123,7 +123,6 @@ impl Player {
 
 pub struct PlanetWars {
     players: HashMap<PlayerId, Rc<RefCell<Player>>>,
-    eliminated: Vec<Rc<RefCell<Player>>>,
     planets: HashMap<String, Rc<RefCell<Planet>>>,
     expeditions: Vec<Expedition>,
 }
@@ -159,7 +158,6 @@ impl PlanetWars {
 
     fn generate_prompts(&self) -> PlayerMap<String> {
         let mut prompts = HashMap::new();
-        let state = self.repr();
         let prompt = serde_json::to_string(&self.repr())
             .expect("[PLANET_WARS] Serializing game state failed.");
             
@@ -254,7 +252,6 @@ impl Game for PlanetWars {
         let mut state = PlanetWars {
             planets: gen_map(players.len()),
             players: players,
-            eliminated: Vec::new(),
             expeditions: Vec::new(),
 
         };
