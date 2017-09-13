@@ -42,7 +42,14 @@ impl Planet {
     }
 
     fn orbit(&mut self, fleet: Fleet) {
-        // TODO: deduplication (merge fleets from same player)
+        // If owner already has a fleet present, merge
+        for other in self.fleets.iter_mut() {
+            if other.owner == fleet.owner {
+                other.ship_count += fleet.ship_count;
+                return;
+            }
+        }
+        // else, add fleet to fleets list
         self.fleets.push(fleet);
     }
 
