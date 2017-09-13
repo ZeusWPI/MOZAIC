@@ -189,6 +189,48 @@ impl PlanetWars {
         return protocol::State { players, expeditions, planets };
     }
 
+    fn exec_move(&mut self, player_id: PlayerId, m: protocol::Move) {
+        // TODO: actually handle errors
+        // MOZAIC should support soft errors first, of course.
+        // Alternatively, a game implementation could be made responsible for
+        // this. This would require more work, but also allow more flexibility.
+        
+        let player = self.players.get(&player_id).unwrap();
+        let origin_ref = match self.planets.get(&m.origin) {
+            Some(planet) => planet,
+            None => return,
+        };
+        let target = match self.planets.get(&m.destination) {
+            Some(planet) => planet,
+            None => return,
+        };
+
+        let mut origin = origin_ref.borrow_mut();
+                
+        if origin.owner().map(|p| p.id) != Some(player_id) {
+            return;
+        }
+        if origin.ship_count() < m.ship_count {
+            return;
+        }
+
+        // TODO: maybe wrap this in a helper function
+        origin.fleets[0].ship_count -= m.ship_count;
+        let fleet = Fleet {
+            owner: player.clone(),
+            ship_count: m.ship_count,
+        };
+
+        let expedition = Expedition {
+            origin: origin_ref.clone(),
+            target: target.clone(),
+            fleet: fleet,
+            // UGH
+            turns_remaining: unimplemented!(),
+        };
+        self.expeditions.push(expedition);
+    }
+
     fn exp_from_move(&mut self, player_name: PlayerId, m: protocol::Move) -> Expedition {
         let owner = self.players.get(&player_name).unwrap(); // Add error message
         let fleet = Fleet {
