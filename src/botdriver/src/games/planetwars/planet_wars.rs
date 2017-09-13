@@ -7,6 +7,18 @@ use games::planetwars::planet_gen::{gen_map};
 
 const START_SHIPS: u64 = 15;
 
+pub struct PlanetWars {
+    players: HashMap<PlayerId, Player>,
+    planets: HashMap<String, Planet>,
+    expeditions: Vec<Expedition>,
+}
+
+struct Player {
+    id: PlayerId,
+    name: String,
+    alive: bool,
+}
+
 pub struct Fleet {
     owner: PlayerId,
     ship_count: u64,
@@ -19,104 +31,78 @@ pub struct Planet {
     pub y: u64,
 }
 
-impl Planet {
-    fn owner(&self) -> Option<PlayerId> {
-        self.fleets.first().map(|f| f.owner)
-    }
-    
-    fn ship_count(&self) -> u64 {
-        self.fleets.first().map_or(0, |f| f.ship_count)
-    }
-
-    fn orbit(&mut self, fleet: Fleet) {
-        // If owner already has a fleet present, merge
-        for other in self.fleets.iter_mut() {
-            if other.owner == fleet.owner {
-                other.ship_count += fleet.ship_count;
-                return;
-            }
-        }
-        // else, add fleet to fleets list
-        self.fleets.push(fleet);
-    }
-
-    fn resolve_combat(&mut self) {
-        // The player owning the largest fleet present will win the combat.
-        // Here, we resolve how many ships he will have left.
-        // note: in the current implementation, we could resolve by doing
-        // winner.ship_count -= second_largest.ship_count, but this does not
-        // allow for simple customizations (such as changing combat balance).
-        
-        self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
-        while self.fleets.len() > 1 {
-            let fleet = self.fleets.pop().unwrap();
-            // destroy some ships
-            for other in self.fleets.iter_mut() {
-                other.ship_count -= fleet.ship_count;
-            }
-
-            // remove dead fleets
-            while self.fleets[self.fleets.len()-1].ship_count == 0 {
-                self.fleets.pop();
-            }
-        }
-    }
-
-    fn distance(&self, other: &Planet) -> u64 {
-        (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
-    }
-
-    fn repr(&self, pw: &PlanetWars) -> protocol::Planet {
-        protocol::Planet {
-            name: self.name.clone(),
-            ship_count: self.ship_count(),
-            x: self.x as f64,
-            y: self.y as f64,
-            owner: self.owner().map(|id| pw.players[&id].name.clone())
-        }
-    }
-}
-
-struct Expedition {
+pub struct Expedition {
     origin: String,
     target: String,
     fleet: Fleet,
     turns_remaining: u64,
 }
 
-impl Expedition {
-    fn repr(&self, pw: &PlanetWars) -> protocol::Expedition {
-        protocol::Expedition {
-            ship_count: self.fleet.ship_count,
-            origin: self.origin.clone(),
-            destination: self.target.clone(),
-            owner: pw.players[&self.fleet.owner].name.clone(),
-            turns_remaining: self.turns_remaining,
+
+impl Game for PlanetWars {
+    type Outcome = HashMap<String, u64>;
+    type Config = ();
+
+    fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
+        // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
+        let mut players = HashMap::new();
+        for (&id, info) in params.players.iter() {
+            players.insert(id, Player {
+                id: id,
+                name: info.name.clone(),
+                alive: true,
+            });
+        }
+        let mut state = PlanetWars {
+            planets: gen_map(players.len()),
+            players: players,
+            expeditions: Vec::new(),
+
+        };
+
+        state.place_players();
+
+        let prompts = state.generate_prompts();
+        return (state, GameStatus::Prompting(prompts));
+    }
+
+    fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
+        // TODO: separate this into a function
+        let mut commands : Vec<(PlayerId, protocol::Command)> = Vec::new();
+
+        // Serialize commands
+        for (player, command) in player_output {
+            let c: protocol::Command = match serde_json::from_str(command) {
+                Ok(command) => command,
+                Err(_) => protocol::Command { value: None }
+            };
+            commands.push((player.clone(), c))
+        }
+
+        for &(player_id, ref command) in commands.iter() {
+            if let &Some(ref mv) = &command.value {
+                self.exec_move(player_id, mv);
+            }
+        }
+         
+        // Play one step of the game, given the new expeditions
+        // Initially mark all players dead, re-marking them as alive once we
+        // find a sign of life.
+        for player in self.players.values_mut() {
+            player.alive = false;
+        }
+
+        self.step_expeditions();
+        self.step_planets();
+
+        if self.is_finished() {
+            //TODO Actually make the outcome
+            GameStatus::Finished(HashMap::new())
+        } else {
+            GameStatus::Prompting(self.generate_prompts())
         }
     }
-
-
 }
-
-struct Player {
-    id: usize,
-    name: String,
-    alive: bool,
-}
-
- impl PartialEq for Player {
-    fn eq(&self, other: &Player) -> bool {
-        self.name == other.name
-    }
-}
-
-
-pub struct PlanetWars {
-    players: HashMap<PlayerId, Player>,
-    planets: HashMap<String, Planet>,
-    expeditions: Vec<Expedition>,
-}
-
 
 impl PlanetWars {
     fn generate_prompts(&self) -> PlayerMap<String> {
@@ -231,67 +217,73 @@ impl PlanetWars {
 }
 
 
-impl Game for PlanetWars {
-    type Outcome = HashMap<String, u64>;
-    type Config = ();
-
-    fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
-        // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
-        let mut players = HashMap::new();
-        for (&id, info) in params.players.iter() {
-            players.insert(id, Player {
-                id: id,
-                name: info.name.clone(),
-                alive: true,
-            });
-        }
-        let mut state = PlanetWars {
-            planets: gen_map(players.len()),
-            players: players,
-            expeditions: Vec::new(),
-
-        };
-
-        state.place_players();
-
-        let prompts = state.generate_prompts();
-        return (state, GameStatus::Prompting(prompts));
+impl Planet {
+    fn owner(&self) -> Option<PlayerId> {
+        self.fleets.first().map(|f| f.owner)
+    }
+    
+    fn ship_count(&self) -> u64 {
+        self.fleets.first().map_or(0, |f| f.ship_count)
     }
 
-    fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
-        // TODO: separate this into a function
-        let mut commands : Vec<(PlayerId, protocol::Command)> = Vec::new();
-
-        // Serialize commands
-        for (player, command) in player_output {
-            let c: protocol::Command = match serde_json::from_str(command) {
-                Ok(command) => command,
-                Err(_) => protocol::Command { value: None }
-            };
-            commands.push((player.clone(), c))
-        }
-
-        for &(player_id, ref command) in commands.iter() {
-            if let &Some(ref mv) = &command.value {
-                self.exec_move(player_id, mv);
+    /// Make a fleet orbit this planet.
+    fn orbit(&mut self, fleet: Fleet) {
+        // If owner already has a fleet present, merge
+        for other in self.fleets.iter_mut() {
+            if other.owner == fleet.owner {
+                other.ship_count += fleet.ship_count;
+                return;
             }
         }
-         
-        // Play one step of the game, given the new expeditions
-        // Initially mark all players dead, re-marking them as alive once we
-        // find a sign of life.
-        for player in self.players.values_mut() {
-            player.alive = false;
+        // else, add fleet to fleets list
+        self.fleets.push(fleet);
+    }
+
+    fn resolve_combat(&mut self) {
+        // The player owning the largest fleet present will win the combat.
+        // Here, we resolve how many ships he will have left.
+        // note: in the current implementation, we could resolve by doing
+        // winner.ship_count -= second_largest.ship_count, but this does not
+        // allow for simple customizations (such as changing combat balance).
+        
+        self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
+        while self.fleets.len() > 1 {
+            let fleet = self.fleets.pop().unwrap();
+            // destroy some ships
+            for other in self.fleets.iter_mut() {
+                other.ship_count -= fleet.ship_count;
+            }
+
+            // remove dead fleets
+            while self.fleets[self.fleets.len()-1].ship_count == 0 {
+                self.fleets.pop();
+            }
         }
+    }
 
-        self.step_expeditions();
-        self.step_planets();
+    fn distance(&self, other: &Planet) -> u64 {
+        (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
+    }
 
-        if self.is_finished() {
-            //TODO Actually make the outcome
-            GameStatus::Finished(HashMap::new())
-        } else {
-            GameStatus::Prompting(self.generate_prompts())
+    fn repr(&self, pw: &PlanetWars) -> protocol::Planet {
+        protocol::Planet {
+            name: self.name.clone(),
+            ship_count: self.ship_count(),
+            x: self.x as f64,
+            y: self.y as f64,
+            owner: self.owner().map(|id| pw.players[&id].name.clone())
+        }
+    }
+}
+
+impl Expedition {
+    fn repr(&self, pw: &PlanetWars) -> protocol::Expedition {
+        protocol::Expedition {
+            ship_count: self.fleet.ship_count,
+            origin: self.origin.clone(),
+            destination: self.target.clone(),
+            owner: pw.players[&self.fleet.owner].name.clone(),
+            turns_remaining: self.turns_remaining,
         }
     }
 }
