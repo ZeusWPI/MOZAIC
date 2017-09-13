@@ -20,7 +20,7 @@ struct Player {
 }
 
 pub struct Fleet {
-    owner: PlayerId,
+    owner: Option<PlayerId>,
     ship_count: u64,
 }
 
@@ -159,7 +159,7 @@ impl PlanetWars {
         // TODO: maybe wrap this in a helper function
         origin.fleets[0].ship_count -= m.ship_count;
         let fleet = Fleet {
-            owner: player.id,
+            owner: Some(player.id),
             ship_count: m.ship_count,
         };
 
@@ -182,9 +182,10 @@ impl PlanetWars {
                 let planet = self.planets.get_mut(&exp.target).unwrap();
                 planet.orbit(exp.fleet);
             } else {
-                // owner has an expedition in progress; this is a sign of life.
-                let owner = exps[i].fleet.owner;
-                self.players.get_mut(&owner).unwrap().alive = true;
+                if let Some(owner) = exps[i].fleet.owner {
+                    // owner has an expedition in progress; this is a sign of life.
+                    self.players.get_mut(&owner).unwrap().alive = true;
+                }
                 // proceed to next expedition
                 i += 1;
             }
@@ -209,7 +210,7 @@ impl PlanetWars {
             let planet = planets.next()
                 .expect("Not enough planets");
             planet.fleets.push( Fleet {
-                owner: player.id,
+                owner: Some(player.id),
                 ship_count: START_SHIPS,
             });
         }
@@ -219,7 +220,7 @@ impl PlanetWars {
 
 impl Planet {
     fn owner(&self) -> Option<PlayerId> {
-        self.fleets.first().map(|f| f.owner)
+        self.fleets.first().and_then(|f| f.owner)
     }
     
     fn ship_count(&self) -> u64 {
@@ -282,7 +283,9 @@ impl Expedition {
             ship_count: self.fleet.ship_count,
             origin: self.origin.clone(),
             destination: self.target.clone(),
-            owner: pw.players[&self.fleet.owner].name.clone(),
+            // We can unwrap here, because the protocol currently does not allow
+            // for expeditions without an owner.
+            owner: pw.players[&self.fleet.owner.unwrap()].name.clone(),
             turns_remaining: self.turns_remaining,
         }
     }
