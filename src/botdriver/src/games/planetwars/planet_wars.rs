@@ -107,8 +107,9 @@ impl Game for PlanetWars {
         self.step_planets();
 
         // Log full state
+        // TODO: Handle stream error's
         let state = self.repr();
-        self.log.log_json(&state);
+        self.log.log_json(&state).ok();
 
         // Check for game end, generated next move, or the outcome.
         if self.is_finished() {
@@ -155,7 +156,6 @@ impl PlanetWars {
         // Alternatively, a game implementation could be made responsible for
         // this. This would require more work, but also allow more flexibility.
 
-        let player = self.players.get(&player_id).unwrap();
         if !self.planets.contains_key(&m.origin) ||
            !self.planets.contains_key(&m.destination) {
             return;
