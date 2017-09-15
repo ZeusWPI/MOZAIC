@@ -32,8 +32,8 @@ pub struct Fleet {
 pub struct Planet {
     pub name: String,
     pub fleets: Vec<Fleet>,
-    pub x: u64,
-    pub y: u64,
+    pub x: f64,
+    pub y: f64,
 }
 
 pub struct Expedition {
@@ -278,7 +278,9 @@ impl Planet {
     }
 
     fn distance(&self, other: &Planet) -> u64 {
-        (((self.x - other.x).pow(2) - (self.y - other.y).pow(2)) as f64).sqrt() as u64
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        return (dx.powi(2) + dy.powi(2)).sqrt().ceil() as u64;
     }
 
     fn repr(&self, pw: &PlanetWars) -> protocol::Planet {

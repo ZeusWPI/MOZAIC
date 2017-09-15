@@ -19,8 +19,8 @@ pub fn gen_map(num_players: usize) -> HashMap<String, Planet> {
         let planet = Planet {
             name: planet_name.to_string(),
             fleets: Vec::new(),
-            x: x,
-            y: y
+            x: x as f64,
+            y: y as f64
         };
         planets.insert(planet_name, planet);
     }
