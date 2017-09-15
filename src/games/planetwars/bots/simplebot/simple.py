@@ -1,12 +1,25 @@
 import sys, json
 
-def get_input():
-    for line in sys.stdin:
-        yield json.loads(line)
+def move(command):
+    record = { 'move': command }
+    print(json.dumps(record))
+    sys.stdout.flush()
+    
+name = sys.argv[1]
 
-while True:
-    j = get_input()
-    for state in j:
-        name = sys.argv[1]
-        print('{{"origin":"{}_Base", "destination": "Planet_1", "ship_count": 1}}'.format(name))
-        sys.stdout.flush()
+for line in sys.stdin:
+    state = json.loads(line)
+    # find planet with most ships
+    my_planets = [p for p in state['planets'] if p['owner'] == name]
+    other_planets = [p for p in state['planets'] if p['owner'] != name]
+    
+    if not my_planets or not other_planets:
+        move(None)
+    else:
+        planet = max(my_planets, key=lambda p: p['ship_count'])
+        dest = min(other_planets, key=lambda p: p['ship_count'])
+        move({
+            'origin': planet['name'],
+            'destination': dest['name'],
+            'ship_count': planet['ship_count'] - 1
+        })
