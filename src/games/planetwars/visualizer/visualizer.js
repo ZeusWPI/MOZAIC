@@ -85,9 +85,15 @@ class Visualizer {
   }
 
   prepareData(data) {
-    data.expeditions.map(e => {
-      e.origin_object = data.planet_map[e.origin];
-      e.destination_object = data.planet_map[e.destination];
+    data.expeditions = data.expeditions.map(e => {
+      return new Expedition(
+        e.id,
+        data.planet_map[e.origin],
+        data.planet_map[e.destination],
+        e.ship_count,
+        e.owner,
+        e.turns_remaining
+      )
     });
 
     data.planets.map(e => {
@@ -480,5 +486,16 @@ class Visualizer {
 
   get maxTurns() {
     return this.turns.length - 1;
+  }
+}
+
+class Expedition {
+  constructor(id, origin, destination, ship_count, owner, turns_remaining){
+    this.id = id;
+    this.origin_object = origin;
+    this.destination_object = destination;
+    this.ship_count = ship_count;
+    this.owner = owner;
+    this.turns_remaining = turns_remaining;
   }
 }
