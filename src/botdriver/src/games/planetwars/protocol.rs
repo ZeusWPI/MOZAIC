@@ -1,10 +1,11 @@
 #[derive(Serialize, Deserialize)]
 pub struct Expedition {
+    pub id: u64,
     pub ship_count: u64,
     pub origin: PlanetName,
     pub destination: PlanetName,
     pub owner: String,
-    pub turns_remaining: i64,
+    pub turns_remaining: u64,
 }
 
 #[derive(Serialize, Deserialize)]

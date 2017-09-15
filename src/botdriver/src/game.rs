@@ -32,6 +32,7 @@ pub enum GameStatus<G> where G: Game {
 }
 
 pub type PlayerId = usize;
+
 // Maps a player to something.
 // TODO: non-cryptographic hash function maybe
 pub type PlayerMap<T> = HashMap<PlayerId, T>;

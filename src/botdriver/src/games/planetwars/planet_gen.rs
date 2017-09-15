@@ -2,8 +2,6 @@ use rand;
 use rand::Rng;
 
 use std::collections::HashMap;
-use std::rc::{Rc};
-use std::cell::{RefCell};
 
 use games::planetwars::planet_wars::Planet;
 
@@ -11,20 +9,19 @@ const WIDTH: u64 = 40;
 const HEIGHT: u64 = 25;
 const PLANET_FACTOR: u64 = 2;
 
-pub fn gen_map(num_players: usize) -> HashMap<String,Rc<RefCell<Planet>>> {
+pub fn gen_map(num_players: usize) -> HashMap<String, Planet> {
     let mut planets = HashMap::new();
     let num_planets = num_players as u64 * PLANET_FACTOR;
-    let locations = gen_locations(num_players as u64);
+    let locations = gen_locations(num_planets as u64);
 
     for (x, y) in locations {
         let planet_name = format!("Planet_{}", x);
-        let planet = Planet::new(
-            planet_name.to_string(),
-            Vec::new(),
-            x,
-            y
-        );
-        let planet = Rc::new(RefCell::new(planet));
+        let planet = Planet {
+            name: planet_name.to_string(),
+            fleets: Vec::new(),
+            x: x,
+            y: y
+        };
         planets.insert(planet_name, planet);
     }
 
