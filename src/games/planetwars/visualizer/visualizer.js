@@ -1,5 +1,4 @@
 // Constants
-
 const svg = d3.select("svg");
 
 const planet_types = ["water", "red", "moon", "mars", "earth"];
@@ -335,9 +334,14 @@ class Visualizer {
   parseJson(e) {
     var reader = new FileReader();
     reader.onload = event => {
-      this.parsed = JSON.parse(event.target.result);
-      this.setupPatterns(svg);
-      var data = this.parsed.turns[0];
+
+      var text = event.target.result;
+      var turns = text.trim().split('\n');
+      this.turns = turns.map(turn => {
+        return JSON.parse(turn)
+      });
+     
+      var data = this.turns[0];
       this.init(data);
       this.prepareData(data);
       this.update(data);
@@ -352,6 +356,7 @@ class Visualizer {
           });
       });
     }
+
     reader.readAsText(e.files[0]);
 
   }
@@ -361,16 +366,16 @@ class Visualizer {
   }
 
   showTurn(newTurn) {
-    if (newTurn >= this.parsed.turns.length) {
+    if (newTurn >= this.turns.length) {
       console.log("end of log");
       return false;
     } else {
       var lastTurn = this.turn;
       this.setTurn(newTurn);
-      var data = this.parsed.turns[newTurn];
+      var data = this.turns[newTurn];
       data.lastTurn = lastTurn;
-      data.planet_map = this.parsed.turns[0].planet_map;
-      data.color_map = this.parsed.turns[0].color_map;
+      data.planet_map = this.turns[0].planet_map;
+      data.color_map = this.turns[0].color_map;
       this.prepareData(data);
       this.update(data);
       this.updateAnimations(data);
@@ -495,6 +500,6 @@ class Visualizer {
   }
 
   get maxTurns() {
-    return this.parsed.turns.length - 1;
+    return this.turns.length - 1;
   }
 }
