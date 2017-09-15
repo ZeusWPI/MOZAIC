@@ -14,8 +14,8 @@ pub fn gen_map(num_players: usize) -> HashMap<String, Planet> {
     let num_planets = num_players as u64 * PLANET_FACTOR;
     let locations = gen_locations(num_planets as u64);
 
-    for (x, y) in locations {
-        let planet_name = format!("Planet_{}", x);
+    for (i, &(x, y)) in locations.iter().enumerate() {
+        let planet_name = format!("Planet_{}", i);
         let planet = Planet {
             name: planet_name.to_string(),
             fleets: Vec::new(),
