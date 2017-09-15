@@ -55,7 +55,7 @@ fn main() {
         let config = MatchParams {
             players: player_names,
             game_config: (),
-            logger: Logger::new(),
+            logger: Logger::new("log.json"),
         };
         
         

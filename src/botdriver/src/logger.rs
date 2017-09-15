@@ -1,16 +1,16 @@
-use std::io;
-use std::io::{Result, Stdout, LineWriter, Write};
+use std::io::{Result, LineWriter, Write};
+use std::fs::File;
 use serde::Serialize;
 use serde_json;
 
 pub struct Logger {
-    handle: LineWriter<Stdout>,
+    handle: LineWriter<File>,
 }
 
 impl Logger {
-    pub fn new() -> Self {
+    pub fn new(name: &str) -> Self {
         Logger {
-            handle: LineWriter::new(io::stdout()),
+            handle: LineWriter::new(File::create(name).unwrap()),
         }
     }
 
