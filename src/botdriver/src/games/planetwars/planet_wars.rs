@@ -70,6 +70,7 @@ impl Game for PlanetWars {
 
         state.place_players();
 
+        state.log_state();
         let prompts = state.generate_prompts();
         return (state, GameStatus::Prompting(prompts));
     }
@@ -103,9 +104,7 @@ impl Game for PlanetWars {
         self.step_expeditions();
         self.step_planets();
 
-        // log
-        let state = self.repr();
-        self.log.log_json(&state);
+        self.log_state();
 
         if self.is_finished() {
             let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
@@ -130,6 +129,12 @@ impl PlanetWars {
             }
         }
         return prompts;
+    }
+
+    fn log_state(&mut self) {
+        let state = self.repr();
+        self.log.log_json(&state)
+            .expect("[PLANET_WARS] logging failed");
     }
 
     fn is_finished(&self) -> bool {
