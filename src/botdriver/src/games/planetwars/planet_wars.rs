@@ -271,7 +271,7 @@ impl Planet {
             }
 
             // remove dead fleets
-            while self.fleets[self.fleets.len()-1].ship_count == 0 {
+            while self.fleets.last().map(|f| f.ship_count) == Some(0) {
                 self.fleets.pop();
             }
         }
