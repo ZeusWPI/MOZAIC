@@ -13,7 +13,7 @@ pub struct PlanetWars {
     planets: HashMap<String, Planet>,
     expeditions: Vec<Expedition>,
     // How many expeditions were already dispatched.
-    // This is needed for assigning expedition identifiers.
+    // This is needed for assigning expedition id's.
     expedition_num: u64,
     log: Logger,
 }
@@ -51,7 +51,7 @@ impl Game for PlanetWars {
     type Config = ();
 
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
-        // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
+        // Transform to HashMap<PlayerId, Player>
         let mut players = HashMap::new();
         for (&id, info) in params.players.iter() {
             players.insert(id, Player {
@@ -60,6 +60,7 @@ impl Game for PlanetWars {
                 alive: true,
             });
         }
+
         let mut state = PlanetWars {
             planets: gen_map(players.len()),
             players: players,
@@ -72,7 +73,7 @@ impl Game for PlanetWars {
 
         state.log_state();
         let prompts = state.generate_prompts();
-        return (state, GameStatus::Prompting(prompts));
+        (state, GameStatus::Prompting(prompts))
     }
 
     fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
@@ -83,11 +84,13 @@ impl Game for PlanetWars {
         for (player, command) in player_output {
             let c: protocol::Command = match serde_json::from_str(command) {
                 Ok(command) => command,
-                Err(_) => protocol::Command { value: None }
+                // Ignore invalid commands
+                Err(_) => protocol::Command { value: None } 
             };
             commands.push((player.clone(), c))
         }
 
+        // Execute commands
         for &(player_id, ref command) in commands.iter() {
             if let &Some(ref mv) = &command.value {
                 self.exec_move(player_id, mv);
@@ -106,6 +109,7 @@ impl Game for PlanetWars {
 
         self.log_state();
 
+        // Check for game end, generated next move, or the outcome.
         if self.is_finished() {
             let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
             GameStatus::Finished(winner.name.clone())
@@ -122,13 +126,13 @@ impl PlanetWars {
 
         for player in self.players.values() {
             if player.alive {
-                let p = serde_json::to_string(&state)
+                let prompt = serde_json::to_string(&state)
                         .expect("[PLANET_WARS] Serializing game state failed.");
-                prompts.insert(player.id, p);
-                               
+                prompts.insert(player.id, prompt);
             }
         }
-        return prompts;
+
+        prompts
     }
 
     fn log_state(&mut self) {
@@ -145,7 +149,8 @@ impl PlanetWars {
         let planets = self.planets.values().map(|p| p.repr(self)).collect();
         let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();
         let players = self.players.values().map(|p| p.name.clone()).collect();
-        return protocol::State { players, expeditions, planets };
+        
+        protocol::State { players, expeditions, planets }
     }
 
     fn exec_move(&mut self, player_id: PlayerId, m: &protocol::Move) {
@@ -155,11 +160,8 @@ impl PlanetWars {
         // Alternatively, a game implementation could be made responsible for
         // this. This would require more work, but also allow more flexibility.
 
-        let player = self.players.get(&player_id).unwrap();
-        if !self.planets.contains_key(&m.origin) {
-            return;
-        }
-        if !self.planets.contains_key(&m.destination) {
+        if !self.planets.contains_key(&m.origin) ||
+           !self.planets.contains_key(&m.destination) {
             return;
         }
 
@@ -167,20 +169,12 @@ impl PlanetWars {
         let dist = self.planets[&m.origin].distance(&self.planets[&m.destination]);
         let origin = self.planets.get_mut(&m.origin).unwrap();
         
-        if origin.owner() != Some(player_id) {
-            return;
-        }
-        if origin.ship_count() < m.ship_count {
+        if origin.owner() != Some(player_id) ||
+           origin.ship_count() < m.ship_count {
             return;
         }
 
-        // TODO: maybe wrap this in a helper function
-        origin.fleets[0].ship_count -= m.ship_count;
-        let fleet = Fleet {
-            owner: Some(player.id),
-            ship_count: m.ship_count,
-        };
-
+        let fleet = origin.prepare_fleet(m.ship_count);
         let expedition = Expedition {
             id: self.expedition_num,
             origin: origin.name.clone(),
@@ -223,12 +217,10 @@ impl PlanetWars {
         }
     }
 
-
     fn place_players(&mut self) {
         let mut planets = self.planets.values_mut().take(self.players.len());
         for player in self.players.values() {
-            let planet = planets.next()
-                .expect("Not enough planets");
+            let planet = planets.next().expect("Not enough planets");
             planet.fleets.push( Fleet {
                 owner: Some(player.id),
                 ship_count: START_SHIPS,
@@ -236,7 +228,6 @@ impl PlanetWars {
         }
     }
 }
-
 
 impl Planet {
     fn owner(&self) -> Option<PlayerId> {
@@ -258,6 +249,14 @@ impl Planet {
         }
         // else, add fleet to fleets list
         self.fleets.push(fleet);
+    }
+
+    fn prepare_fleet(&mut self, size: u64) -> Fleet {
+        self.fleets[0].ship_count -= size;
+        Fleet {
+            owner: self.owner(),
+            ship_count: size,
+        }
     }
 
     fn resolve_combat(&mut self) {
@@ -282,6 +281,7 @@ impl Planet {
         }
     }
 
+    // Euclidian distance
     fn distance(&self, other: &Planet) -> u64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
