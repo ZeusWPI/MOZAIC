@@ -170,13 +170,7 @@ impl PlanetWars {
             return;
         }
 
-        // TODO: maybe wrap this in a helper function
-        origin.fleets[0].ship_count -= m.ship_count;
-        let fleet = Fleet {
-            owner: Some(player.id),
-            ship_count: m.ship_count,
-        };
-
+        let fleet = origin.prepare_fleet(m.ship_count);
         let expedition = Expedition {
             id: self.expedition_num,
             origin: origin.name.clone(),
@@ -251,6 +245,15 @@ impl Planet {
         }
         // else, add fleet to fleets list
         self.fleets.push(fleet);
+    }
+
+    fn prepare_fleet(&mut self, size: u64) -> Fleet {
+        self.feets[0].ship_count -= size;
+        let fleet = Fleet {
+            owner: self.owner().unwrap(),
+            ship_count: size,
+        };
+
     }
 
     fn resolve_combat(&mut self) {
