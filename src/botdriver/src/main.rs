@@ -21,7 +21,7 @@ use bot_runner::*;
 use match_runner::*;
 use logger::Logger;
 
-use games::{HigherLower, HigherLowerConfig};
+use games::PlanetWars;
 
 // Load the config and start the game.
 fn main() {
@@ -54,9 +54,7 @@ fn main() {
     {
         let config = MatchParams {
             players: player_names,
-            game_config: HigherLowerConfig {
-                max: 500,
-            },
+            game_config: (),
             logger: Logger::new(),
         };
         
@@ -64,7 +62,7 @@ fn main() {
         let mut runner = MatchRunner {
             players: bots.player_handles(),
         };
-        let outcome = runner.run::<HigherLower>(config);
+        let outcome = runner.run::<PlanetWars>(config);
         println!("Outcome: {:?}", outcome);
     }
 
