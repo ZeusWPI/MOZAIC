@@ -8,6 +8,7 @@ const orbit_size = 2;
 
 // Globals
 const base_speed = 1000;
+const space_math = new SpaceMath();
 
 class Visualizer {
 
@@ -45,7 +46,7 @@ class Visualizer {
     // Planet map
     data.planet_map = data.planets.reduce((map, o) => {
       o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      o.size = this.randomBetween(1, max_planet_size);
+      o.size = space_math.randomBetween(1, max_planet_size);
       map[o.name] = o;
       return map;
     }, {});
@@ -175,7 +176,7 @@ class Visualizer {
 
     d3selector.append('circle')
       .attr('transform', d => {
-        var total_distance = this.euclideanDistance(d.origin_object, d.destination_object);
+        var total_distance = space_math.euclideanDistance(d.origin_object, d.destination_object);
 
         var r1 = (d.origin_object.size) / 2 + 3;
         var r2 = (d.destination_object.size) / 2 + 3;
@@ -204,7 +205,7 @@ class Visualizer {
         var sx = t1 * Math.cos(w) - Math.sin(w);
         var sy = Math.cos(w) + t1 * Math.sin(w);
 
-        var degrees = this.toDegrees(Math.atan2(sy, sx));
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
       .attr('r', 1)
@@ -236,8 +237,8 @@ class Visualizer {
         return {
           size: 1,
           distance: d.size + orbit_size,
-          angle: this.randomIntBetween(1, 360),
-          speed: this.randomIntBetween(100, 1000),
+          angle: space_math.randomIntBetween(1, 360),
+          speed: space_math.randomIntBetween(100, 1000),
           planet: d
         };
       }));
@@ -295,7 +296,7 @@ class Visualizer {
       .duration(this.speed)
       .ease(d3.easeLinear)
       .attr('transform', d => {
-        var total_distance = this.euclideanDistance(d.origin_object, d.destination_object);
+        var total_distance = space_math.euclideanDistance(d.origin_object, d.destination_object);
 
         var r1 = (d.origin_object.size) / 2 + 3;
         var r2 = (d.destination_object.size) / 2 + 3;
@@ -323,7 +324,7 @@ class Visualizer {
         var sx = t1 * Math.cos(w) - Math.sin(w);
         var sy = Math.cos(w) + t1 * Math.sin(w);
 
-        var degrees = this.toDegrees(Math.atan2(sy, sx));
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
 
@@ -412,22 +413,8 @@ class Visualizer {
     this.turn_timer.stop();
   }
 
-  // Help functions
-
-  randomIntBetween(min, max) {
-    return Math.floor(this.randomBetween(min, max));
-  }
-
-  randomBetween(min, max) {
-    return Math.random() * (max - min + 1) + min;
-  }
-
-  euclideanDistance(e1, e2) {
-    return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
-  }
-
   relativeCoords(expedition) {
-    var total_distance = Math.ceil(this.euclideanDistance(expedition.origin_object, expedition.destination_object));
+    var total_distance = Math.ceil(space_math.euclideanDistance(expedition.origin_object, expedition.destination_object));
     var mod = expedition.turns_remaining / total_distance;
 
     var new_x = expedition.origin_object.x - expedition.destination_object.x;
@@ -445,7 +432,7 @@ class Visualizer {
   }
 
   homannPosition(expedition, angle) {
-    var total_distance = this.euclideanDistance(expedition.origin_object, expedition.destination_object);
+    var total_distance = space_math.euclideanDistance(expedition.origin_object, expedition.destination_object);
     if (!angle) angle = this.homannAngle(expedition, expedition.turns_remaining, total_distance);
 
     var r1 = (expedition.origin_object.size) / 2 + 3;
@@ -474,16 +461,8 @@ class Visualizer {
     };
   }
 
-  toRadians(angle) {
-    return angle * (Math.PI / 180);
-  }
-
-  toDegrees(angle) {
-    return angle * (180 / Math.PI);
-  }
-
   homannAngle(expedition, turn, distance) {
-    if (!distance) distance = this.euclideanDistance(expedition.origin_object, expedition.destination_object);
+    if (!distance) distance = space_math.euclideanDistance(expedition.origin_object, expedition.destination_object);
     var mod = turn / distance;
     return mod * (Math.PI * 2) - Math.PI;
   }
