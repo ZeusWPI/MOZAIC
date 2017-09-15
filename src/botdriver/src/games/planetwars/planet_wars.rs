@@ -248,12 +248,11 @@ impl Planet {
     }
 
     fn prepare_fleet(&mut self, size: u64) -> Fleet {
-        self.feets[0].ship_count -= size;
-        let fleet = Fleet {
-            owner: self.owner().unwrap(),
+        self.fleets[0].ship_count -= size;
+        Fleet {
+            owner: self.owner(),
             ship_count: size,
-        };
-
+        }
     }
 
     fn resolve_combat(&mut self) {
