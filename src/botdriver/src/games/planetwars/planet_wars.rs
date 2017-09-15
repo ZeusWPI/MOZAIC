@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use game::*;
 use games::planetwars::protocol;
 use games::planetwars::planet_gen::{gen_map};
+use logger::Logger;
 
 const START_SHIPS: u64 = 15;
 
@@ -14,6 +15,7 @@ pub struct PlanetWars {
     // How many expeditions were already dispatched.
     // This is needed for assigning expedition identifiers.
     expedition_num: u64,
+    log: Logger,
 }
 
 struct Player {
@@ -63,6 +65,7 @@ impl Game for PlanetWars {
             players: players,
             expeditions: Vec::new(),
             expedition_num: 0,
+            log: params.logger,
         };
 
         state.place_players();
@@ -100,6 +103,10 @@ impl Game for PlanetWars {
         self.step_expeditions();
         self.step_planets();
 
+        // log
+        let state = self.repr();
+        self.log.log_json(&state);
+
         if self.is_finished() {
             let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
             GameStatus::Finished(winner.name.clone())
@@ -112,13 +119,14 @@ impl Game for PlanetWars {
 impl PlanetWars {
     fn generate_prompts(&self) -> PlayerMap<String> {
         let mut prompts = HashMap::new();
-        let prompt = serde_json::to_string(&self.repr())
-            .expect("[PLANET_WARS] Serializing game state failed.");
-            
+        let state = self.repr();
 
         for player in self.players.values() {
             if player.alive {
-                prompts.insert(player.id, prompt.clone());
+                let p = serde_json::to_string(&state)
+                        .expect("[PLANET_WARS] Serializing game state failed.");
+                prompts.insert(player.id, p);
+                               
             }
         }
         return prompts;
