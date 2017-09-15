@@ -72,7 +72,9 @@ class Visualizer {
       }
     });
 
-    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+    svg.attr('width', '100%')
+      .attr('height', window.innerHeight)
+      .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
