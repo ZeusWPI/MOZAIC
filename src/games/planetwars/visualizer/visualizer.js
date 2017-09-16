@@ -396,6 +396,11 @@ class Visualizer {
     return this.showTurn(parseInt(this.turn) + 1);
   }
 
+  // TODO: Fix
+  previousTurn() {
+    return this.showTurn(this.turn - 1);
+  }
+
   showTurn(newTurn) {
     if (newTurn >= this.turns.length) {
       console.log("end of log");
