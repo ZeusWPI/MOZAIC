@@ -1,3 +1,7 @@
+// TODO: Throw all d3 visual and svg manipulation in a seperate class
+// TODO: Split Visualizer class into a wrapper(parsejson, setup) and a turncontrol
+
+
 // Constants
 const svg = d3.select("svg");
 
@@ -41,23 +45,7 @@ class Visualizer {
       .attr("xlink:href", "res/" + name + ".png");
   }
 
-  prepareData(data) {
-    data.expeditions.map(e => {
-        e.origin = data.planet_map[e.origin],
-        e.destination = data.planet_map[e.destination]
-    });
-
-    data.planets.map(e => {
-      if (e.owner != data.planet_map[e.name].owner) {
-        e.changed_owner = true;
-        data.planet_map[e.name].owner = e.owner;
-      } else {
-        e.changed_owner = false;
-      }
-    });
-  }
-
-  generateLegend(data) {
+  generateLegend() {
     // Info
     //TODO do away with the whole legend thing and make planet and fleet owners clear in another way
     // instead create a current state board containing player owned planets and fleet strengths for the more hectic games
@@ -68,225 +56,6 @@ class Visualizer {
       .text((d, i) => `I’m called ${d}!`)
       .style('color', (d, i) => color(i));
 
-  }
-
-  addPlanets(d3selector, data) {
-    d3selector.append('circle')
-      .attr('class', 'planet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y)
-      .attr('fill', d => 'url(#' + d.type + ')')
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 1)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', d => data.color_map[d.owner])
-      .text(d => d.name)
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', d => data.color_map[d.owner])
-      .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => d.owner);
-  }
-
-  addFleets(d3selector, data) {
-    d3selector.append('circle')
-      .attr('class', 'orbit')
-      .attr('transform', d => this.translation(d.planet))
-      .attr('r', d => d.distance)
-      .style('fill', "none")
-      .style('stroke', d => {
-        return data.color_map[d.planet.owner];
-      })
-      .style('stroke-width', 0.05);
-
-    var wrapper = d3selector.append('g')
-      .attr('transform', d => this.translation(d.planet));
-
-    wrapper.append('circle')
-      .attr('transform', d => this.translation(d.planet))
-      .attr('class', 'fleet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.distance)
-      .attr('cy', 0)
-      .attr('fill', d => "url(#ship)")
-      .append('title').text(d => d.planet.owner);
-
-  }
-
-  addExpeditions(d3selector, data) {
-    d3selector.attr('transform', exp => {
-      var point = exp.homannPosition();
-      return this.translation(point);
-    });
-
-    d3selector.append('circle')
-      .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
-      })
-      .attr('r', 1)
-      .style('stroke', exp => data.color_map[exp.owner])
-      .style('stroke-width', 0.05)
-      .attr('fill', exp => "url(#ship)")
-      .append('title').text(exp => exp.owner);
-
-    d3selector.append('text')
-      .attr('y', 2)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', exp => data.color_map[exp.owner])
-      .text(exp => "\u2694 " + exp.ship_count)
-      .append('title').text(exp => exp.owner);
-  }
-
-  update(data) {
-    var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition')
-      .data(data.expeditions, d => {
-        return d.id;
-      });
-
-    // New objects
-    var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
-    var fleet_wrapper = new_planets.append('g')
-      .data(data.planets.map(d => {
-        return {
-          size: 1,
-          distance: d.size + orbit_size,
-          angle: space_math.randomIntBetween(1, 360),
-          speed: space_math.randomIntBetween(100, 1000),
-          planet: d
-        };
-      }));
-    var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
-
-    // Add the new objects
-    this.addPlanets(new_planets, data);
-    this.addFleets(fleet_wrapper, data);
-    this.addExpeditions(new_expeditions, data);
-  }
-
-  updateAnimations(data) {
-    var planets = svg.selectAll('.planet_wrapper').data(data.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition')
-      .data(data.expeditions, d => {
-        return d.id;
-      });
-
-    //PLANETS
-    // Text color
-    this.attachToAllChildren(planets.selectAll('text')).attr('fill', d => data.color_map[d.owner]);
-    this.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
-
-    //Takeover transition
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(this.speed / 2)
-      .attr("r", d => data.planet_map[d.name].size * 1.3)
-      .transition(this.speed / 2)
-      .attr("r", d => data.planet_map[d.name].size);
-
-    // Update orbits
-    planets.select('.orbit').style('stroke', d => data.color_map[d.owner]);
-
-    // TODO sometimes animation and turn timers get desynched and the animation is interupted
-    // also replace this with a for each so we can reuse calculations
-    // EXPEDITIONS
-    expeditions.transition()
-      .duration(this.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => {
-        var point = exp.homannPosition();
-        return this.translation(point);
-      })
-      .attrTween('transform', exp => {
-        var turn_diff = this.turn - data.lastTurn;
-        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
-        return t => {
-          var point = exp.homannPosition(inter(t));
-          return this.translation(point);
-        };
-      }).on('interrupt', e => console.log("inter"));
-
-    expeditions.select('circle').transition()
-      .duration(this.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
-      })
-
-    // Old expeditions to remove
-    expeditions.exit().remove();
   }
 
   parseJson(e) {
@@ -301,8 +70,8 @@ class Visualizer {
      
       var turn = this.turns[0];
       turn.init();
-      this.prepareData(turn);
-      this.update(turn);
+      turn.prepareData();
+      turn.update(this);
 
       controls.attachEvents(this);
 
@@ -320,7 +89,7 @@ class Visualizer {
   }
 
   nextTurn() {
-    return this.showTurn(parseInt(this.turn) + 1);
+    return this.showTurn(this.turn + 1);
   }
 
   showTurn(newTurn) {
@@ -330,19 +99,15 @@ class Visualizer {
     } else {
       var lastTurn = this.turn;
       this.setTurn(newTurn);
-      var data = this.turns[newTurn];
-      data.lastTurn = lastTurn;
-      data.planet_map = this.turns[0].planet_map;
-      data.color_map = this.turns[0].color_map;
-      this.prepareData(data);
-      this.update(data);
-      this.updateAnimations(data);
+      var turn = this.turns[newTurn];
+      turn.lastTurn = lastTurn;
+      turn.planet_map = this.turns[0].planet_map;
+      turn.color_map = this.turns[0].color_map;
+      turn.prepareData();
+      turn.update();
+      turn.updateAnimations(this);
       return true;
     }
-  }
-
-  translation(point) {
-    return 'translate(' + point.x + ',' + point.y + ')';
   }
 
   //Timer functions
@@ -368,12 +133,6 @@ class Visualizer {
 
   stopTimer() {
     this.turn_timer.stop();
-  }
-
-  attachToAllChildren(d3selector) {
-    return d3selector.data((d, i) => {
-      return Array(d3selector._groups[i].length).fill(d);
-    });
   }
 
   setTurn(newTurn) {
@@ -446,6 +205,254 @@ class Turn {
     }, {});
     this.color_map[null] = "#000";
   }
+
+  prepareData() {
+    this.expeditions.map(exp => {
+        exp.origin = this.planet_map[exp.origin],
+        exp.destination = this.planet_map[exp.destination]
+    });
+
+    // Since planet_map is copied from previous turn, we change owner here
+    // TODO: Clean up this ugly logic. Turns should make their own map,
+    // and then set changed_owner according to transition from previous turn.
+    this.planets.map(planet => {
+      if (planet.owner != this.planet_map[planet.name].owner) {
+        planet.changed_owner = true;
+        this.planet_map[planet.name].owner = planet.owner;
+      } else {
+        planet.changed_owner = false;
+      }
+    });
+  }
+
+  update() {
+    var planets = svg.selectAll('.planet_wrapper').data(this.planets, d => d.name);
+    var expeditions = svg.selectAll('.expedition')
+      .data(this.expeditions, d => {
+        return d.id;
+      });
+
+    // New objects
+    var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
+    var fleet_wrapper = new_planets.append('g')
+      .data(this.planets.map(d => {
+        return {
+          size: 1,
+          distance: d.size + orbit_size,
+          angle: space_math.randomIntBetween(1, 360),
+          speed: space_math.randomIntBetween(100, 1000),
+          planet: d
+        };
+      }));
+    var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
+
+    // Add the new objects
+    this.addPlanets(new_planets);
+    this.addFleets(fleet_wrapper);
+    this.addExpeditions(new_expeditions);
+  }
+
+  addPlanets(d3selector) {
+    d3selector.append('circle')
+      .attr('class', 'planet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')')
+      .append('title')
+      .text(d => d.owner);
+
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 1)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', d => this.color_map[d.owner])
+      .text(d => d.name)
+      .append('title')
+      .text(d => d.owner);
+
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 3)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', d => this.color_map[d.owner])
+      .text(d => "\u2694 " + d.ship_count)
+      .append('title').text(d => d.owner);
+  }
+
+  addFleets(d3selector) {
+    d3selector.append('circle')
+      .attr('class', 'orbit')
+      .attr('transform', d => this.translation(d.planet))
+      .attr('r', d => d.distance)
+      .style('fill', "none")
+      .style('stroke', d => {
+        return this.color_map[d.planet.owner];
+      })
+      .style('stroke-width', 0.05);
+
+    var wrapper = d3selector.append('g')
+      .attr('transform', d => this.translation(d.planet));
+
+    wrapper.append('circle')
+      .attr('transform', d => this.translation(d.planet))
+      .attr('class', 'fleet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.distance)
+      .attr('cy', 0)
+      .attr('fill', d => "url(#ship)")
+      .append('title').text(d => d.planet.owner);
+
+  }
+
+  addExpeditions(d3selector) {
+    d3selector.attr('transform', exp => {
+      var point = exp.homannPosition();
+      return this.translation(point);
+    });
+
+    d3selector.append('circle')
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
+
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
+
+        var a = (total_distance + r1 + r2) / 2;
+        var c = a - r1 / 2 - r2 / 2;
+        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
+        var scaler = a / b;
+
+        // elipse rotation angle
+        var w = Math.atan2(dy / scaler, dx);
+        // angle form center
+        var angle = exp.homannAngle(exp.turns_remaining);
+
+
+        // unrotated elipse point
+        var dx = a * Math.cos(angle);
+        var dy = b * Math.sin(angle);
+
+        // unrotated slope
+        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+        var sx = t1 * Math.cos(w) - Math.sin(w);
+        var sy = Math.cos(w) + t1 * Math.sin(w);
+
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
+        return 'rotate(' + (degrees + 180) % 360 + ')';
+      })
+      .attr('r', 1)
+      .style('stroke', exp => this.color_map[exp.owner])
+      .style('stroke-width', 0.05)
+      .attr('fill', exp => "url(#ship)")
+      .append('title').text(exp => exp.owner);
+
+    d3selector.append('text')
+      .attr('y', 2)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', exp => this.color_map[exp.owner])
+      .text(exp => "\u2694 " + exp.ship_count)
+      .append('title').text(exp => exp.owner);
+  }
+
+  translation(point) {
+    return 'translate(' + point.x + ',' + point.y + ')';
+  }
+
+  updateAnimations(visualizer) {
+    var planets = svg.selectAll('.planet_wrapper').data(this.planets, d => d.name);
+    var expeditions = svg.selectAll('.expedition')
+      .data(this.expeditions, d => {
+        return d.id;
+      });
+
+    //PLANETS
+    // Text color
+    this.attachToAllChildren(planets.selectAll('text')).attr('fill', d => this.color_map[d.owner]);
+    this.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+
+    //Takeover transition
+    planets.select('.planet')
+      .filter(d => d.changed_owner)
+      .transition(visualizer.speed / 2)
+      .attr("r", d => this.planet_map[d.name].size * 1.3)
+      .transition(visualizer.speed / 2)
+      .attr("r", d => this.planet_map[d.name].size);
+
+    // Update orbits
+    planets.select('.orbit').style('stroke', d => this.color_map[d.owner]);
+
+    // TODO sometimes animation and turn timers get desynched and the animation is interupted
+    // also replace this with a for each so we can reuse calculations
+    // EXPEDITIONS
+    expeditions.transition()
+      .duration(visualizer.speed)
+      .ease(d3.easeLinear)
+      .attr('transform', exp => {
+        var point = exp.homannPosition();
+        return this.translation(point);
+      })
+      .attrTween('transform', exp => {
+        var turn_diff = visualizer.turn - this.lastTurn;
+        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
+        return t => {
+          var point = exp.homannPosition(inter(t));
+          return this.translation(point);
+        };
+      }).on('interrupt', e => console.log("inter"));
+
+    expeditions.select('circle').transition()
+      .duration(visualizer.speed)
+      .ease(d3.easeLinear)
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
+
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
+
+        var a = (total_distance + r1 + r2) / 2;
+        var c = a - r1 / 2 - r2 / 2;
+        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
+        var scaler = a / b;
+
+        // elipse rotation angle
+        var w = Math.atan2(dy / scaler, dx);
+        // angle form center
+        var angle = exp.homannAngle(exp.turns_remaining);
+
+        // unrotated elipse point
+        var dx = a * Math.cos(angle);
+        var dy = b * Math.sin(angle);
+
+        // unrotated slope
+        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+        var sx = t1 * Math.cos(w) - Math.sin(w);
+        var sy = Math.cos(w) + t1 * Math.sin(w);
+
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
+        return 'rotate(' + (degrees + 180) % 360 + ')';
+      })
+
+    // Old expeditions to remove
+    expeditions.exit().remove();
+  }
+
+  attachToAllChildren(d3selector) {
+    return d3selector.data((d, i) => {
+      return Array(d3selector._groups[i].length).fill(d);
+    });
+  }
 }
 
 class Planet {
@@ -460,7 +467,6 @@ class Planet {
 
 class Expedition {
   constructor(log_exp) {
-    console.log(log_exp);
     this.id = log_exp.id;
     this.origin = log_exp.origin;
     this.destination = log_exp.destination;
@@ -489,7 +495,6 @@ class Expedition {
   }
 
   homannPosition(angle) {
-    console.log(this);
     var total_distance = space_math.euclideanDistance(this.origin, this.destination);
     if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
 
