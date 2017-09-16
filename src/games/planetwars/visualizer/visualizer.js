@@ -43,11 +43,17 @@ class Visualizer {
   }
 
   init(data) {
+    // Clear data
+    var planets = svg.selectAll('.planet_wrapper').remove();
+    var expeditions = svg.selectAll('.expedition').remove();
+    // Calculate scale
+
 
     // Planet map
     data.planet_map = data.planets.reduce((map, o) => {
       o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      o.size = space_math.randomBetween(1, max_planet_size);
+      var closest = space_math.findClosest(o, data.planets) / 2 - orbit_size * 2;
+      o.size = space_math.clamp(closest, 0, max_planet_size);
       map[o.name] = o;
       return map;
     }, {});
@@ -78,20 +84,13 @@ class Visualizer {
       if (n_min_y < min_y) {
         min_y = n_min_y;
       }
-
-      // If the owner doesn't exist link it to the none owner
-      if (e.owner === "" || e.owner === null) e.owner = "None";
     });
 
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
-    var size_x = max_x - min_x;
-    var size_y = max_y - min_y;
-    var area = size_x * size_y;
-    console.log(area);
-    console.log(area / data.planets.length);
-    this.scale = (area / data.planets.length / 100) / max_planet_size;
+    //this.scale = max_x / 50;
+    //console.log(this.scale);
 
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
@@ -124,6 +123,9 @@ class Visualizer {
       } else {
         e.changed_owner = false;
       }
+      // If the owner doesn't exist link it to the none owner
+      if (e.owner === "" || e.owner === null) e.owner = "None";
+
     });
   }
 
@@ -152,9 +154,9 @@ class Visualizer {
 
     d3selector.append('text')
       .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 1)
+      .attr('y', d => d.y + d.size + 1 * this.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
+      .attr("font-size", 1 * this.scale + "px")
       .attr('fill', d => data.color_map[d.owner])
       .text(d => d.name)
       .append('title')
@@ -162,9 +164,9 @@ class Visualizer {
 
     d3selector.append('text')
       .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3)
+      .attr('y', d => d.y + d.size + 3 * this.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
+      .attr("font-size", 1 * this.scale + "px")
       .attr('fill', d => data.color_map[d.owner])
       .text(d => "\u2694 " + d.ship_count)
       .append('title').text(d => d.owner);
@@ -177,10 +179,9 @@ class Visualizer {
       .attr('r', d => d.distance)
       .style('fill', "none")
       .style('stroke', d => {
-        console.log(d.distance);
         return data.color_map[d.planet.owner];
       })
-      .style('stroke-width', 0.05);
+      .style('stroke-width', 0.05 * this.scale);
 
     var wrapper = d3selector.append('g')
       .attr('transform', d => this.translation(d.planet));
@@ -235,7 +236,7 @@ class Visualizer {
         var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
-      .attr('r', 1)
+      .attr('r', 1 * this.scale)
       .style('stroke', exp => data.color_map[exp.owner])
       .style('stroke-width', 0.05)
       .attr('fill', exp => "url(#ship)")
@@ -244,7 +245,7 @@ class Visualizer {
     d3selector.append('text')
       .attr('y', 2)
       .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
+      .attr("font-size", 1 * this.scale + "px")
       .attr('fill', exp => data.color_map[exp.owner])
       .text(exp => "\u2694 " + exp.ship_count)
       .append('title').text(exp => exp.owner);
@@ -262,7 +263,7 @@ class Visualizer {
     var fleet_wrapper = new_planets.append('g')
       .data(data.planets.map(d => {
         return {
-          size: 1,
+          size: 1 * this.scale,
           distance: d.size + orbit_size * this.scale,
           angle: space_math.randomIntBetween(1, 360),
           speed: space_math.randomIntBetween(100, 1000),
