@@ -1,6 +1,4 @@
-// TODO: Throw all d3 visual and svg manipulation in a seperate class
-// TODO: Split Visualizer class into a wrapper(parsejson, setup) and a turncontrol
-
+// TODO: Throw all d3 visual and svg manipulation in a separate class
 
 // Constants
 const svg = d3.select("svg");
@@ -160,7 +158,7 @@ class TurnController {
 class Turn {
   constructor(turn){
     this.players = turn.players;
-    
+
     this.planets = turn.planets.map(planet => {
         return new Planet(planet);
     });
@@ -220,8 +218,8 @@ class Turn {
 
   prepareData() {
     this.expeditions.map(exp => {
-        exp.origin = this.planet_map[exp.origin],
-        exp.destination = this.planet_map[exp.destination]
+      exp.origin = this.planet_map[exp.origin],
+      exp.destination = this.planet_map[exp.destination]
     });
 
     // Since planet_map is copied from previous turn, we change owner here
