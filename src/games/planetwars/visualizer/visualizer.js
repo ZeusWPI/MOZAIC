@@ -117,7 +117,7 @@ class TurnController {
       turn.color_map = this.turns[0].color_map;
       turn.prepareData();
       turn.update();
-      turn.updateAnimations(this);
+      Visuals.updateAnimations(this, turn);
       return true;
     }
   }
@@ -265,6 +265,97 @@ class Visuals {
       .append('title').text(exp => exp.owner);
   }
 
+  static updateAnimations(visualizer, turn) {
+    var planets = svg.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
+    var expeditions = svg.selectAll('.expedition')
+      .data(turn.expeditions, d => {
+        return d.id;
+      });
+
+    //PLANETS
+    // Text color
+    Visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn.color_map[d.owner]);
+    Visuals.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+
+    Visuals.registerTakeOverAnimation(planets, turn.planet_map);
+
+    // Update orbits
+    planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
+
+    // TODO sometimes animation and turn timers get desynched and the animation is interupted
+    // also replace this with a for each so we can reuse calculations
+    // EXPEDITIONS
+    expeditions.transition()
+      .duration(visualizer.speed)
+      .ease(d3.easeLinear)
+      .attr('transform', exp => {
+        var point = exp.homannPosition();
+        return Visuals.translation(point);
+      })
+      .attrTween('transform', exp => {
+        var turn_diff = visualizer.turn - turn.lastTurn;
+        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
+        return t => {
+          var point = exp.homannPosition(inter(t));
+          return Visuals.translation(point);
+        };
+      }).on('interrupt', e => console.log("inter"));
+
+    expeditions.select('circle').transition()
+      .duration(visualizer.speed)
+      .ease(d3.easeLinear)
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
+
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
+
+        var a = (total_distance + r1 + r2) / 2;
+        var c = a - r1 / 2 - r2 / 2;
+        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
+        var scaler = a / b;
+
+        // elipse rotation angle
+        var w = Math.atan2(dy / scaler, dx);
+        // angle form center
+        var angle = exp.homannAngle(exp.turns_remaining);
+
+        // unrotated elipse point
+        var dx = a * Math.cos(angle);
+        var dy = b * Math.sin(angle);
+
+        // unrotated slope
+        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+        var sx = t1 * Math.cos(w) - Math.sin(w);
+        var sy = Math.cos(w) + t1 * Math.sin(w);
+
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
+        return 'rotate(' + (degrees + 180) % 360 + ')';
+      })
+
+    // Old expeditions to remove
+    expeditions.exit().remove();
+  }
+
+  static registerTakeOverAnimation(planets, planet_map) {
+    planets.select('.planet')
+      .filter(d => d.changed_owner)
+      .transition(visualizer.speed / 2)
+      .attr("r", d => planet_map[d.name].size * 1.3)
+      .transition(visualizer.speed / 2)
+      .attr("r", d => planet_map[d.name].size);
+  }
+
+  static attachToAllChildren(d3selector) {
+    return d3selector.data((d, i) => {
+      return Array(d3selector._groups[i].length).fill(d);
+    });
+  }
+
   static translation(point) {
     return 'translate(' + point.x + ',' + point.y + ')';
   }
@@ -375,94 +466,6 @@ class Turn {
     Visuals.addPlanets(new_planets, this.color_map);
     Visuals.addFleets(fleet_wrapper, this.color_map);
     Visuals.addExpeditions(new_expeditions, this.color_map);
-  }
-
-  updateAnimations(visualizer) {
-    var planets = svg.selectAll('.planet_wrapper').data(this.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition')
-      .data(this.expeditions, d => {
-        return d.id;
-      });
-
-    //PLANETS
-    // Text color
-    this.attachToAllChildren(planets.selectAll('text')).attr('fill', d => this.color_map[d.owner]);
-    this.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
-
-    //Takeover transition
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(visualizer.speed / 2)
-      .attr("r", d => this.planet_map[d.name].size * 1.3)
-      .transition(visualizer.speed / 2)
-      .attr("r", d => this.planet_map[d.name].size);
-
-    // Update orbits
-    planets.select('.orbit').style('stroke', d => this.color_map[d.owner]);
-
-    // TODO sometimes animation and turn timers get desynched and the animation is interupted
-    // also replace this with a for each so we can reuse calculations
-    // EXPEDITIONS
-    expeditions.transition()
-      .duration(visualizer.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => {
-        var point = exp.homannPosition();
-        return Visuals.translation(point);
-      })
-      .attrTween('transform', exp => {
-        var turn_diff = visualizer.turn - this.lastTurn;
-        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
-        return t => {
-          var point = exp.homannPosition(inter(t));
-          return Visuals.translation(point);
-        };
-      }).on('interrupt', e => console.log("inter"));
-
-    expeditions.select('circle').transition()
-      .duration(visualizer.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
-      })
-
-    // Old expeditions to remove
-    expeditions.exit().remove();
-  }
-
-  attachToAllChildren(d3selector) {
-    return d3selector.data((d, i) => {
-      return Array(d3selector._groups[i].length).fill(d);
-    });
   }
 }
 
