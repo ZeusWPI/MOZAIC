@@ -41,61 +41,10 @@ class Visualizer {
       .attr("xlink:href", "res/" + name + ".png");
   }
 
-  init(data) {
-
-    // Planet map
-    data.planet_map = data.planets.reduce((map, o) => {
-      o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      o.size = space_math.randomBetween(1, max_planet_size);
-      map[o.name] = o;
-      return map;
-    }, {});
-
-    // Setup view
-    var min_x = Infinity;
-    var min_y = Infinity;
-    var max_x = 0;
-    var max_y = 0;
-    var padding = 1;
-
-    data.planets.forEach(e => {
-      if (e.x > max_x) {
-        max_x = e.x + (e.size + 2 + padding);
-      }
-      if (e.x < min_x) {
-        min_x = e.x - (e.size + 2 + padding);
-      }
-      if (e.y > max_y) {
-        max_y = e.y + (e.size + 2 + padding);
-      }
-      if (e.y < min_y) {
-        min_y = e.y - (e.size + 2 + padding);
-      }
-    });
-
-    svg.attr('width', '100%')
-      .attr('height', window.innerHeight)
-      .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
-
-    // Color map
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
-    data.color_map = data.players.reduce((map, o, i) => {
-      map[o] = color(i);
-      return map;
-    }, {});
-    data.color_map[null] = "#000";
-  }
-
   prepareData(data) {
-    data.expeditions = data.expeditions.map(e => {
-      return new Expedition(
-        e.id,
-        data.planet_map[e.origin],
-        data.planet_map[e.destination],
-        e.ship_count,
-        e.owner,
-        e.turns_remaining
-      )
+    data.expeditions.map(e => {
+        e.origin = data.planet_map[e.origin],
+        e.destination = data.planet_map[e.destination]
     });
 
     data.planets.map(e => {
@@ -347,13 +296,13 @@ class Visualizer {
       var text = event.target.result;
       var turns = text.trim().split('\n');
       this.turns = turns.map(turn => {
-        return JSON.parse(turn)
+        return new Turn(JSON.parse(turn));
       });
      
-      var data = this.turns[0];
-      this.init(data);
-      this.prepareData(data);
-      this.update(data);
+      var turn = this.turns[0];
+      turn.init();
+      this.prepareData(turn);
+      this.update(turn);
 
       controls.attachEvents(this);
 
@@ -437,14 +386,87 @@ class Visualizer {
   }
 }
 
+class Turn {
+  constructor(turn){
+    this.players = turn.players;
+    
+    this.planets = turn.planets.map(planet => {
+        return new Planet(planet);
+    });
+
+    this.expeditions = turn.expeditions.map(exp => {
+      return new Expedition(exp);
+    });
+
+    this.planet_map = {};
+  }
+
+  init() {
+    this.planets.map((planet) => {
+      planet.type = planet_types[Math.floor(Math.random() * planet_types.length)];
+      planet.size = space_math.randomBetween(1, max_planet_size);
+    });
+
+    this.planet_map = this.planets.reduce((map, planet) => {
+      map[planet.name] = planet;
+      return map;
+    }, {});
+
+    // Setup view
+    var min_x = Infinity;
+    var min_y = Infinity;
+    var max_x = 0;
+    var max_y = 0;
+    var padding = 1;
+
+    this.planets.forEach(e => {
+      if (e.x > max_x) {
+        max_x = e.x + (e.size + 2 + padding);
+      }
+      if (e.x < min_x) {
+        min_x = e.x - (e.size + 2 + padding);
+      }
+      if (e.y > max_y) {
+        max_y = e.y + (e.size + 2 + padding);
+      }
+      if (e.y < min_y) {
+        min_y = e.y - (e.size + 2 + padding);
+      }
+    });
+
+    svg.attr('width', '100%')
+      .attr('height', window.innerHeight)
+      .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+
+    // Color map
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+    this.color_map = this.players.reduce((map, o, i) => {
+      map[o] = color(i);
+      return map;
+    }, {});
+    this.color_map[null] = "#000";
+  }
+}
+
+class Planet {
+  constructor(log_planet){
+    this.name = log_planet.name;
+    this.x = log_planet.x;
+    this.y = log_planet.y;
+    this.ship_count = log_planet.ship_count;
+    this.owner = log_planet.owner;
+  }
+}
+
 class Expedition {
-  constructor(id, origin, destination, ship_count, owner, turns_remaining){
-    this.id = id;
-    this.origin = origin;
-    this.destination = destination;
-    this.ship_count = ship_count;
-    this.owner = owner;
-    this.turns_remaining = turns_remaining;
+  constructor(log_exp) {
+    console.log(log_exp);
+    this.id = log_exp.id;
+    this.origin = log_exp.origin;
+    this.destination = log_exp.destination;
+    this.ship_count = log_exp.ship_count;
+    this.owner = log_exp.owner;
+    this.turns_remaining = log_exp.turns_remaining;
   }
 
   // TODO: Obsolete?
@@ -467,6 +489,7 @@ class Expedition {
   }
 
   homannPosition(angle) {
+    console.log(this);
     var total_distance = space_math.euclideanDistance(this.origin, this.destination);
     if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
 
