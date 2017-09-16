@@ -8,6 +8,7 @@ const orbit_size = 2;
 
 // Globals
 const base_speed = 1000;
+const space_math = new SpaceMath();
 
 class Visualizer {
 
@@ -45,7 +46,7 @@ class Visualizer {
     // Planet map
     data.planet_map = data.planets.reduce((map, o) => {
       o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      o.size = this.randomBetween(1, max_planet_size);
+      o.size = space_math.randomBetween(1, max_planet_size);
       map[o.name] = o;
       return map;
     }, {});
@@ -86,9 +87,15 @@ class Visualizer {
   }
 
   prepareData(data) {
-    data.expeditions.map(e => {
-      e.origin_object = data.planet_map[e.origin];
-      e.destination_object = data.planet_map[e.destination];
+    data.expeditions = data.expeditions.map(e => {
+      return new Expedition(
+        e.id,
+        data.planet_map[e.origin],
+        data.planet_map[e.destination],
+        e.ship_count,
+        e.owner,
+        e.turns_remaining
+      )
     });
 
     data.planets.map(e => {
@@ -170,30 +177,30 @@ class Visualizer {
   }
 
   addExpeditions(d3selector, data) {
-    d3selector.attr('transform', d => {
-      var point = this.homannPosition(d);
+    d3selector.attr('transform', exp => {
+      var point = exp.homannPosition();
       return this.translation(point);
     });
 
     d3selector.append('circle')
-      .attr('transform', d => {
-        var total_distance = this.euclideanDistance(d.origin_object, d.destination_object);
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
 
-        var r1 = (d.origin_object.size) / 2 + 3;
-        var r2 = (d.destination_object.size) / 2 + 3;
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
 
         var a = (total_distance + r1 + r2) / 2;
         var c = a - r1 / 2 - r2 / 2;
         var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
 
-        var dx = d.origin_object.x - d.destination_object.x;
-        var dy = d.origin_object.y - d.destination_object.y;
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
         var scaler = a / b;
 
         // elipse rotation angle
         var w = Math.atan2(dy / scaler, dx);
         // angle form center
-        var angle = this.homannAngle(d, d.turns_remaining);
+        var angle = exp.homannAngle(exp.turns_remaining);
 
 
         // unrotated elipse point
@@ -206,22 +213,22 @@ class Visualizer {
         var sx = t1 * Math.cos(w) - Math.sin(w);
         var sy = Math.cos(w) + t1 * Math.sin(w);
 
-        var degrees = this.toDegrees(Math.atan2(sy, sx));
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
       .attr('r', 1)
-      .style('stroke', d => data.color_map[d.owner])
+      .style('stroke', exp => data.color_map[exp.owner])
       .style('stroke-width', 0.05)
-      .attr('fill', d => "url(#ship)")
-      .append('title').text(d => d.owner);
+      .attr('fill', exp => "url(#ship)")
+      .append('title').text(exp => exp.owner);
 
     d3selector.append('text')
       .attr('y', 2)
       .attr("font-family", "sans-serif")
       .attr("font-size", "1px")
-      .attr('fill', d => data.color_map[d.owner])
-      .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => d.owner);
+      .attr('fill', exp => data.color_map[exp.owner])
+      .text(exp => "\u2694 " + exp.ship_count)
+      .append('title').text(exp => exp.owner);
   }
 
   update(data) {
@@ -238,8 +245,8 @@ class Visualizer {
         return {
           size: 1,
           distance: d.size + orbit_size,
-          angle: this.randomIntBetween(1, 360),
-          speed: this.randomIntBetween(100, 1000),
+          angle: space_math.randomIntBetween(1, 360),
+          speed: space_math.randomIntBetween(100, 1000),
           planet: d
         };
       }));
@@ -280,15 +287,15 @@ class Visualizer {
     expeditions.transition()
       .duration(this.speed)
       .ease(d3.easeLinear)
-      .attr('transform', d => {
-        var point = this.homannPosition(d);
+      .attr('transform', exp => {
+        var point = exp.homannPosition();
         return this.translation(point);
       })
-      .attrTween('transform', d => {
+      .attrTween('transform', exp => {
         var turn_diff = this.turn - data.lastTurn;
-        var inter = d3.interpolateNumber(this.homannAngle(d, d.turns_remaining + turn_diff), this.homannAngle(d, d.turns_remaining));
+        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
         return t => {
-          var point = this.homannPosition(d, inter(t));
+          var point = exp.homannPosition(inter(t));
           return this.translation(point);
         };
       }).on('interrupt', e => console.log("inter"));
@@ -296,24 +303,24 @@ class Visualizer {
     expeditions.select('circle').transition()
       .duration(this.speed)
       .ease(d3.easeLinear)
-      .attr('transform', d => {
-        var total_distance = this.euclideanDistance(d.origin_object, d.destination_object);
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
 
-        var r1 = (d.origin_object.size) / 2 + 3;
-        var r2 = (d.destination_object.size) / 2 + 3;
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
 
         var a = (total_distance + r1 + r2) / 2;
         var c = a - r1 / 2 - r2 / 2;
         var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
 
-        var dx = d.origin_object.x - d.destination_object.x;
-        var dy = d.origin_object.y - d.destination_object.y;
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
         var scaler = a / b;
 
         // elipse rotation angle
         var w = Math.atan2(dy / scaler, dx);
         // angle form center
-        var angle = this.homannAngle(d, d.turns_remaining);
+        var angle = exp.homannAngle(exp.turns_remaining);
 
         // unrotated elipse point
         var dx = a * Math.cos(angle);
@@ -325,7 +332,7 @@ class Visualizer {
         var sx = t1 * Math.cos(w) - Math.sin(w);
         var sy = Math.cos(w) + t1 * Math.sin(w);
 
-        var degrees = this.toDegrees(Math.atan2(sy, sx));
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
 
@@ -414,82 +421,6 @@ class Visualizer {
     this.turn_timer.stop();
   }
 
-  // Help functions
-
-  randomIntBetween(min, max) {
-    return Math.floor(this.randomBetween(min, max));
-  }
-
-  randomBetween(min, max) {
-    return Math.random() * (max - min + 1) + min;
-  }
-
-  euclideanDistance(e1, e2) {
-    return Math.sqrt(Math.pow(e1.x - e2.x, 2) + Math.pow(e1.y - e2.y, 2));
-  }
-
-  relativeCoords(expedition) {
-    var total_distance = Math.ceil(this.euclideanDistance(expedition.origin_object, expedition.destination_object));
-    var mod = expedition.turns_remaining / total_distance;
-
-    var new_x = expedition.origin_object.x - expedition.destination_object.x;
-    new_x *= mod;
-    new_x += expedition.destination_object.x;
-
-    var new_y = expedition.origin_object.y - expedition.destination_object.y;
-    new_y *= mod;
-    new_y += expedition.destination_object.y;
-
-    return {
-      'x': new_x,
-      'y': new_y
-    };
-  }
-
-  homannPosition(expedition, angle) {
-    var total_distance = this.euclideanDistance(expedition.origin_object, expedition.destination_object);
-    if (!angle) angle = this.homannAngle(expedition, expedition.turns_remaining, total_distance);
-
-    var r1 = (expedition.origin_object.size) / 2 + 3;
-    var r2 = (expedition.destination_object.size) / 2 + 3;
-
-    var a = (total_distance + r1 + r2) / 2;
-    var c = a - r1 / 2 - r2 / 2;
-    var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-    var dx = expedition.origin_object.x - expedition.destination_object.x;
-    var dy = expedition.origin_object.y - expedition.destination_object.y;
-    var w = Math.atan2(dy, dx);
-
-    var center_x = c * Math.cos(w) + expedition.destination_object.x;
-    var center_y = c * Math.sin(w) + expedition.destination_object.y;
-
-    var longest = a;
-    var shortest = b;
-
-    longest *= Math.cos(angle);
-    shortest *= Math.sin(angle);
-
-    return {
-      'x': center_x + longest * Math.cos(w) - shortest * Math.sin(w),
-      'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
-    };
-  }
-
-  toRadians(angle) {
-    return angle * (Math.PI / 180);
-  }
-
-  toDegrees(angle) {
-    return angle * (180 / Math.PI);
-  }
-
-  homannAngle(expedition, turn, distance) {
-    if (!distance) distance = this.euclideanDistance(expedition.origin_object, expedition.destination_object);
-    var mod = turn / distance;
-    return mod * (Math.PI * 2) - Math.PI;
-  }
-
   attachToAllChildren(d3selector) {
     return d3selector.data((d, i) => {
       return Array(d3selector._groups[i].length).fill(d);
@@ -503,5 +434,71 @@ class Visualizer {
 
   get maxTurns() {
     return this.turns.length - 1;
+  }
+}
+
+class Expedition {
+  constructor(id, origin, destination, ship_count, owner, turns_remaining){
+    this.id = id;
+    this.origin = origin;
+    this.destination = destination;
+    this.ship_count = ship_count;
+    this.owner = owner;
+    this.turns_remaining = turns_remaining;
+  }
+
+  // TODO: Obsolete?
+  relativeCoords() {
+    var total_distance = Math.ceil(space_math.euclideanDistance(this.origin, this.destination));
+    var mod = this.turns_remaining / total_distance;
+
+    var new_x = this.origin.x - this.destination.x;
+    new_x *= mod;
+    new_x += this.destination.x;
+
+    var new_y = this.origin.y - this.destination.y;
+    new_y *= mod;
+    new_y += this.destination.y;
+
+    return {
+      'x': new_x,
+      'y': new_y
+    };
+  }
+
+  homannPosition(angle) {
+    var total_distance = space_math.euclideanDistance(this.origin, this.destination);
+    if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
+
+    var r1 = (this.origin.size) / 2 + 3;
+    var r2 = (this.destination.size) / 2 + 3;
+
+    var a = (total_distance + r1 + r2) / 2;
+    var c = a - r1 / 2 - r2 / 2;
+    var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+    var dx = this.origin.x - this.destination.x;
+    var dy = this.origin.y - this.destination.y;
+    var w = Math.atan2(dy, dx);
+
+    var center_x = c * Math.cos(w) + this.destination.x;
+    var center_y = c * Math.sin(w) + this.destination.y;
+
+    var longest = a;
+    var shortest = b;
+
+    longest *= Math.cos(angle);
+    shortest *= Math.sin(angle);
+
+    return {
+      'x': center_x + longest * Math.cos(w) - shortest * Math.sin(w),
+      'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
+    };
+  }
+
+  homannAngle(turn, distance) {
+    if (!distance) distance = space_math.euclideanDistance(this.origin, this.destination);
+    var mod = turn / distance;
+    return mod * (Math.PI * 2) - Math.PI;
   }
 }
