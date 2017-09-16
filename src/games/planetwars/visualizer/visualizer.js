@@ -16,9 +16,10 @@ class Visualizer {
 
   constructor(){
     this.turn_controller = new TurnController();
+    this.scale = 1;
   }
 
-  setupPatterns(svg) {
+  setupPatterns() {
     // Define patterns
     svg.append("defs");
     planet_types.forEach(p => {
@@ -193,7 +194,9 @@ class Visuals {
       .attr('r', d => d.distance)
       .style('fill', "none")
       .style('stroke', d => {
+
         return color_map[d.planet.owner];
+
       })
       .style('stroke-width', 0.05);
 
@@ -235,7 +238,6 @@ class Visuals {
         var w = Math.atan2(dy / scaler, dx);
         // angle form center
         var angle = exp.homannAngle(exp.turns_remaining);
-
 
         // unrotated elipse point
         var dx = a * Math.cos(angle);
@@ -339,6 +341,7 @@ class Visuals {
 
     // Old expeditions to remove
     expeditions.exit().remove();
+    planets.exit().remove();
   }
 
   static registerTakeOverAnimation(planets, planet_map) {

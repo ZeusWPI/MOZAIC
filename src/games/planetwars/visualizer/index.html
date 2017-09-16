@@ -10,7 +10,6 @@
       <div id="controlbar">
         <input type="range" id="turn_slider" value="0" class="control"/>
         <input id="file-select" type="file" onchange="visualizer.readLog(this)" class="control"/>
-        <p class="speed"></p>
 
         <div class="speedcontrols">
 
@@ -19,9 +18,14 @@
               <img src="res/rewind.svg"/>
             </button>
 
-          <!-- Speed down button-->
+          <!-- Speed down button -->
           <button type="button" name="button" id="speeddown" class="control control-button">
             <img src="res/speeddown.svg"/>
+          </button>
+
+          <!-- Previous turn button -->
+          <button type="button" name="button" id="previous" class="control control-button">
+            <img src="res/minus.svg"/>
           </button>
 
           <!-- Play -->
@@ -32,6 +36,11 @@
           <!-- Pause button -->
           <button type="button" name="button" id="pause" class="control control-button" hidden="true">
             <img src="res/pause.svg"/>
+          </button>
+          
+          <!-- Next turn button -->
+          <button type="button" name="button" id="next" class="control control-button">
+            <img src="res/plus.svg"/>
           </button>
 
           <!-- Speedup button -->
@@ -45,6 +54,7 @@
           </button>
 
         </div>
+        <p class="speed"></p>
       </div>
 
       <!-- The SVG where the game gets rendered" -->
