@@ -155,6 +155,121 @@ class TurnController {
   }
 }
 
+class Visuals {
+  static addPlanets(d3selector, color_map) {
+    d3selector.append('circle')
+      .attr('class', 'planet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')')
+      .append('title')
+      .text(d => d.owner);
+
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 1)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', d => color_map[d.owner])
+      .text(d => d.name)
+      .append('title')
+      .text(d => d.owner);
+
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 3)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', d => color_map[d.owner])
+      .text(d => "\u2694 " + d.ship_count)
+      .append('title').text(d => d.owner);
+  }
+
+  static addFleets(d3selector, color_map) {
+    d3selector.append('circle')
+      .attr('class', 'orbit')
+      .attr('transform', d => Visuals.translation(d.planet))
+      .attr('r', d => d.distance)
+      .style('fill', "none")
+      .style('stroke', d => {
+        return color_map[d.planet.owner];
+      })
+      .style('stroke-width', 0.05);
+
+    var wrapper = d3selector.append('g')
+      .attr('transform', d => Visuals.translation(d.planet));
+
+    wrapper.append('circle')
+      .attr('transform', d => Visuals.translation(d.planet))
+      .attr('class', 'fleet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.distance)
+      .attr('cy', 0)
+      .attr('fill', d => "url(#ship)")
+      .append('title').text(d => d.planet.owner);
+  }
+
+  static addExpeditions(d3selector, color_map) {
+    d3selector.attr('transform', exp => {
+      var point = exp.homannPosition();
+      return Visuals.translation(point);
+    });
+
+    d3selector.append('circle')
+      .attr('transform', exp => {
+        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
+
+        var r1 = (exp.origin.size) / 2 + 3;
+        var r2 = (exp.destination.size) / 2 + 3;
+
+        var a = (total_distance + r1 + r2) / 2;
+        var c = a - r1 / 2 - r2 / 2;
+        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+        var dx = exp.origin.x - exp.destination.x;
+        var dy = exp.origin.y - exp.destination.y;
+        var scaler = a / b;
+
+        // elipse rotation angle
+        var w = Math.atan2(dy / scaler, dx);
+        // angle form center
+        var angle = exp.homannAngle(exp.turns_remaining);
+
+
+        // unrotated elipse point
+        var dx = a * Math.cos(angle);
+        var dy = b * Math.sin(angle);
+
+        // unrotated slope
+        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+        var sx = t1 * Math.cos(w) - Math.sin(w);
+        var sy = Math.cos(w) + t1 * Math.sin(w);
+
+        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
+        return 'rotate(' + (degrees + 180) % 360 + ')';
+      })
+      .attr('r', 1)
+      .style('stroke', exp => color_map[exp.owner])
+      .style('stroke-width', 0.05)
+      .attr('fill', exp => "url(#ship)")
+      .append('title').text(exp => exp.owner);
+
+    d3selector.append('text')
+      .attr('y', 2)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", "1px")
+      .attr('fill', exp => color_map[exp.owner])
+      .text(exp => "\u2694 " + exp.ship_count)
+      .append('title').text(exp => exp.owner);
+  }
+
+  static translation(point) {
+    return 'translate(' + point.x + ',' + point.y + ')';
+  }
+}
+
 class Turn {
   constructor(turn){
     this.players = turn.players;
@@ -257,123 +372,9 @@ class Turn {
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
     // Add the new objects
-    this.addPlanets(new_planets);
-    this.addFleets(fleet_wrapper);
-    this.addExpeditions(new_expeditions);
-  }
-
-  addPlanets(d3selector) {
-    d3selector.append('circle')
-      .attr('class', 'planet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y)
-      .attr('fill', d => 'url(#' + d.type + ')')
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 1)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', d => this.color_map[d.owner])
-      .text(d => d.name)
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', d => this.color_map[d.owner])
-      .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => d.owner);
-  }
-
-  addFleets(d3selector) {
-    d3selector.append('circle')
-      .attr('class', 'orbit')
-      .attr('transform', d => this.translation(d.planet))
-      .attr('r', d => d.distance)
-      .style('fill', "none")
-      .style('stroke', d => {
-        return this.color_map[d.planet.owner];
-      })
-      .style('stroke-width', 0.05);
-
-    var wrapper = d3selector.append('g')
-      .attr('transform', d => this.translation(d.planet));
-
-    wrapper.append('circle')
-      .attr('transform', d => this.translation(d.planet))
-      .attr('class', 'fleet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.distance)
-      .attr('cy', 0)
-      .attr('fill', d => "url(#ship)")
-      .append('title').text(d => d.planet.owner);
-
-  }
-
-  addExpeditions(d3selector) {
-    d3selector.attr('transform', exp => {
-      var point = exp.homannPosition();
-      return this.translation(point);
-    });
-
-    d3selector.append('circle')
-      .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
-      })
-      .attr('r', 1)
-      .style('stroke', exp => this.color_map[exp.owner])
-      .style('stroke-width', 0.05)
-      .attr('fill', exp => "url(#ship)")
-      .append('title').text(exp => exp.owner);
-
-    d3selector.append('text')
-      .attr('y', 2)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", "1px")
-      .attr('fill', exp => this.color_map[exp.owner])
-      .text(exp => "\u2694 " + exp.ship_count)
-      .append('title').text(exp => exp.owner);
-  }
-
-  translation(point) {
-    return 'translate(' + point.x + ',' + point.y + ')';
+    Visuals.addPlanets(new_planets, this.color_map);
+    Visuals.addFleets(fleet_wrapper, this.color_map);
+    Visuals.addExpeditions(new_expeditions, this.color_map);
   }
 
   updateAnimations(visualizer) {
@@ -407,14 +408,14 @@ class Turn {
       .ease(d3.easeLinear)
       .attr('transform', exp => {
         var point = exp.homannPosition();
-        return this.translation(point);
+        return Visuals.translation(point);
       })
       .attrTween('transform', exp => {
         var turn_diff = visualizer.turn - this.lastTurn;
         var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
         return t => {
           var point = exp.homannPosition(inter(t));
-          return this.translation(point);
+          return Visuals.translation(point);
         };
       }).on('interrupt', e => console.log("inter"));
 
