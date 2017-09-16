@@ -74,7 +74,7 @@ class Controls {
       });
     this.updateSpeed(this.speeds[this.mod]);
 
- 
+
   }
 
   updateSpeed(val) {

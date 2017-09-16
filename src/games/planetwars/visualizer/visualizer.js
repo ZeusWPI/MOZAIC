@@ -15,6 +15,7 @@ class Visualizer {
   constructor() {
     this.speed = base_speed;
     this.turn = 0;
+    this.scale = 1;
   }
 
   setupPatterns() {
@@ -78,19 +79,21 @@ class Visualizer {
         min_y = n_min_y;
       }
 
-      console.log("Planet");
-      console.log(e);
-      console.log(e.y);
-      console.log(e.size);
-      console.log(max_y);
+      // If the owner doesn't exist link it to the none owner
+      if (e.owner === "" || e.owner === null) e.owner = "None";
     });
 
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
-    svg.attr('width', '100%')
-      .attr('height', window.innerHeight)
-      .attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+    var size_x = max_x - min_x;
+    var size_y = max_y - min_y;
+    var area = size_x * size_y;
+    console.log(area);
+    console.log(area / data.planets.length);
+    this.scale = (area / data.planets.length / 100) / max_planet_size;
+
+    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -98,7 +101,8 @@ class Visualizer {
       map[o] = color(i);
       return map;
     }, {});
-    data.color_map[null] = "#000";
+    //Adds none owner to color pool
+    data.color_map['None'] = "#000";
   }
 
   prepareData(data) {
@@ -173,6 +177,7 @@ class Visualizer {
       .attr('r', d => d.distance)
       .style('fill', "none")
       .style('stroke', d => {
+        console.log(d.distance);
         return data.color_map[d.planet.owner];
       })
       .style('stroke-width', 0.05);
@@ -217,7 +222,6 @@ class Visualizer {
         // angle form center
         var angle = exp.homannAngle(exp.turns_remaining);
 
-
         // unrotated elipse point
         var dx = a * Math.cos(angle);
         var dy = b * Math.sin(angle);
@@ -259,7 +263,7 @@ class Visualizer {
       .data(data.planets.map(d => {
         return {
           size: 1,
-          distance: d.size + orbit_size,
+          distance: d.size + orbit_size * this.scale,
           angle: space_math.randomIntBetween(1, 360),
           speed: space_math.randomIntBetween(100, 1000),
           planet: d
@@ -353,6 +357,7 @@ class Visualizer {
 
     // Old expeditions to remove
     expeditions.exit().remove();
+    planets.exit().remove();
   }
 
   parseJson(e) {
