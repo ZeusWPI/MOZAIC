@@ -16,9 +16,8 @@ const space_math = new SpaceMath();
 
 class Visualizer {
 
-  constructor() {
-    this.speed = base_speed;
-    this.turn = 0;
+  constructor(){
+    this.turn_controller = new TurnController();
   }
 
   setupPatterns(svg) {
@@ -58,34 +57,49 @@ class Visualizer {
 
   }
 
-  parseJson(e) {
+  readLog(e) {
     var reader = new FileReader();
+
     reader.onload = event => {
-
-      var text = event.target.result;
-      var turns = text.trim().split('\n');
-      this.turns = turns.map(turn => {
-        return new Turn(JSON.parse(turn));
-      });
-     
-      var turn = this.turns[0];
-      turn.init();
-      turn.prepareData();
-      turn.update(this);
-
-      controls.attachEvents(this);
-
-      // Fleet animation timer
-      d3.timer(elapsed => {
-        svg.selectAll('.fleet')
-          .attr('transform', (d, i) => {
-            return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
-          });
-      });
+      var turns = this.parseJSON(event.target.result);
+      this.turn_controller.init(turns);
+      controls.attachEvents(this.turn_controller);
+      this.animateFleets()
     }
 
     reader.readAsText(e.files[0]);
+  }
 
+  parseJSON(json){
+    var turns = json.trim().split('\n');
+    return turns.map(turn => {
+      return new Turn(JSON.parse(turn));
+    });
+  }
+
+  animateFleets(){
+    d3.timer(elapsed => {
+      svg.selectAll('.fleet')
+        .attr('transform', (d, i) => {
+          return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
+        });
+    });
+  }
+}
+
+class TurnController {
+  constructor(){
+    this.speed = base_speed;
+    this.turn = 0;
+    this.turns = [];
+  }
+
+  init(turns) {
+    this.turns = turns;
+    var first_turn = this.turns[0];
+    first_turn.init();
+    first_turn.prepareData();
+    first_turn.update(this);
   }
 
   nextTurn() {
@@ -109,8 +123,6 @@ class Visualizer {
       return true;
     }
   }
-
-  //Timer functions
 
   toggleTimer() {
     if (!this.turn_timer || this.turn_timer._time === Infinity) {
