@@ -17,7 +17,7 @@ class Visualizer {
     this.turn = 0;
   }
 
-  setupPatterns(svg) {
+  setupPatterns() {
     // Define patterns
     svg.append("defs");
     planet_types.forEach(p => {
@@ -59,19 +59,34 @@ class Visualizer {
     var padding = 1;
 
     data.planets.forEach(e => {
-      if (e.x > max_x) {
-        max_x = e.x + (e.size + 2 + padding);
+      var offset = (e.size + orbit_size + padding);
+      var n_max_x = e.x + offset;
+      var n_min_x = e.x - offset;
+      var n_max_y = e.y + offset;
+      var n_min_y = e.y - offset;
+
+      if (n_max_x > max_x) {
+        max_x = n_max_x;
       }
-      if (e.x < min_x) {
-        min_x = e.x - (e.size + 2 + padding);
+      if (n_min_x < min_x) {
+        min_x = n_min_x;
       }
-      if (e.y > max_y) {
-        max_y = e.y + (e.size + 2 + padding);
+      if (n_max_y > max_y) {
+        max_y = n_max_y;
       }
-      if (e.y < min_y) {
-        min_y = e.y - (e.size + 2 + padding);
+      if (n_min_y < min_y) {
+        min_y = n_min_y;
       }
+
+      console.log("Planet");
+      console.log(e);
+      console.log(e.y);
+      console.log(e.size);
+      console.log(max_y);
     });
+
+    max_x += Math.abs(min_x);
+    max_y += Math.abs(min_y);
 
     svg.attr('width', '100%')
       .attr('height', window.innerHeight)
@@ -349,8 +364,9 @@ class Visualizer {
       this.turns = turns.map(turn => {
         return JSON.parse(turn)
       });
-     
+
       var data = this.turns[0];
+      this.setupPatterns();
       this.init(data);
       this.prepareData(data);
       this.update(data);
@@ -438,7 +454,7 @@ class Visualizer {
 }
 
 class Expedition {
-  constructor(id, origin, destination, ship_count, owner, turns_remaining){
+  constructor(id, origin, destination, ship_count, owner, turns_remaining) {
     this.id = id;
     this.origin = origin;
     this.destination = destination;
