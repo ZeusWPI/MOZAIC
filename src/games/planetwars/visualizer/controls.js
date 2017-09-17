@@ -22,11 +22,11 @@ class Controls {
     });
 
     d3.select('#next').on("click", e => {
-      visualizer.nextTurn();
+      turn_controller.nextTurn();
     });
 
     d3.select('#previous').on("click", e => {
-      visualizer.previousTurn();
+      turn_controller.previousTurn();
     });
 
     d3.select('#toggleplay').on("click", e => {
