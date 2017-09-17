@@ -140,37 +140,12 @@ class Visuals {
   }
 
   registerTakeOverAnimation(planets, planet_map, speed) {
-
-    // Rotate
-    /*
     planets.select('.planet')
       .filter(d => d.changed_owner)
       .transition(speed / 2)
-      .attr("transform", d => Visuals.rotate(90, d.x, d.y))
+      .attr('transform', d => Visuals.resize(d, 1.3))
       .transition(speed / 2)
-      .attr("transform", d => Visuals.rotate(90, d.x, d.y));
-    */
-
-    // Scale using svg transformation
-    // TO
-    /*
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(speed / 2)
-      .attr('transform', Visuals.resize(1.3))
-      .transition(speed / 2)
-      .attr('transform', Visuals.resize(1))
-    */
-
-    // Scale by setting size manually
-    /*
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size * 1.3)
-      .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size);
-    */
+      .attr('transform', d => Visuals.resize(d, 1));
   }
 
   attachToAllChildren(d3selector) {
@@ -195,8 +170,10 @@ class Visuals {
     return 'translate(' + point.x + ',' + point.y + ')';
   }
 
-  static resize(amount) {
-    return 'scale(' + amount + ')';
+  static resize(planet, amount) {
+    var tx = -planet.x*(amount - 1);
+    var ty = -planet.y*(amount - 1);
+    return Visuals.translation({x:tx, y:ty}) + ' scale(' + amount + ')';
   }
 
   static rotate(amount, x, y) {
