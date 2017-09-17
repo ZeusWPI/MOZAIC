@@ -323,7 +323,7 @@ Visuals.Planets = class {
       .attr('fill', d => 'url(#' + d.type + ')');
       
     wrapper.append('title')
-      .text(d => visualOwnerName(d.owner));
+      .text(d => Visuals.visualOwnerName(d.owner));
   }
 
   static drawName(d3selector, color_map, scale) {
