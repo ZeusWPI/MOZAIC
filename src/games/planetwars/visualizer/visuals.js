@@ -86,10 +86,8 @@ class Visuals {
     expeditions.transition()
       .duration(turn_control.speed)
       .ease(d3.easeLinear)
-      .attr('transform', exp => {
-        var point = exp.homannPosition();
-        return Visuals.translation(point);
-      })
+      .attr('transform', exp => Visuals.Expeditions.getLocation(exp))
+      /*
       .attrTween('transform', exp => {
         var turn_diff = turn_control.turn - turn.lastTurn;
         var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
@@ -97,47 +95,52 @@ class Visuals {
           var point = exp.homannPosition(inter(t));
           return Visuals.translation(point);
         };
-      }).on('interrupt', e => console.log("inter"));
+      })*/
+      .on('interrupt', e => console.log("inter"));
 
     expeditions.select('circle').transition()
       .duration(turn_control.speed)
       .ease(d3.easeLinear)
       .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
+        
       })
 
     // Old expeditions to remove
     expeditions.exit().remove();
     planets.exit().remove();
+  }
+
+  expHomanRotation(exp){
+    var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
+    
+    var r1 = (exp.origin.size) / 2 + 3;
+    var r2 = (exp.destination.size) / 2 + 3;
+
+    var a = (total_distance + r1 + r2) / 2;
+    var c = a - r1 / 2 - r2 / 2;
+    var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
+
+    var dx = exp.origin.x - exp.destination.x;
+    var dy = exp.origin.y - exp.destination.y;
+    var scaler = a / b;
+
+    // elipse rotation angle
+    var w = Math.atan2(dy / scaler, dx);
+    // angle form center
+    var angle = exp.homannAngle(exp.turns_remaining);
+
+    // unrotated elipse point
+    var dx = a * Math.cos(angle);
+    var dy = b * Math.sin(angle);
+
+    // unrotated slope
+    var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+
+    var sx = t1 * Math.cos(w) - Math.sin(w);
+    var sy = Math.cos(w) + t1 * Math.sin(w);
+
+    var degrees = space_math.toDegrees(Math.atan2(sy, sx));
+    return 'rotate(' + (degrees + 180) % 360 + ')';
   }
 
   registerTakeOverAnimation(planets, planet_map, speed) {
@@ -194,47 +197,18 @@ Visuals.Expeditions = class {
     Visuals.Expeditions.drawShipCount(d3selector, color_map, scale);
   }
 
+  static getLocation(exp){
+    //var point = exp.homannPosition();
+    var point = exp.position();
+    return Visuals.translation(point)
+  }
+
   static placeExpedition(d3selector) {
-    d3selector.attr('transform', exp => {
-      var point = exp.homannPosition();
-      return Visuals.translation(point);
-    });
+    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
   }
 
   static drawExpedition(d3selector, color_map, scale) {
     d3selector.append('circle')
-      .attr('transform', exp => {
-        var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-
-        var r1 = (exp.origin.size) / 2 + 3;
-        var r2 = (exp.destination.size) / 2 + 3;
-
-        var a = (total_distance + r1 + r2) / 2;
-        var c = a - r1 / 2 - r2 / 2;
-        var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-        var dx = exp.origin.x - exp.destination.x;
-        var dy = exp.origin.y - exp.destination.y;
-        var scaler = a / b;
-
-        // elipse rotation angle
-        var w = Math.atan2(dy / scaler, dx);
-        // angle form center
-        var angle = exp.homannAngle(exp.turns_remaining);
-
-        // unrotated elipse point
-        var dx = a * Math.cos(angle);
-        var dy = b * Math.sin(angle);
-
-        // unrotated slope
-        var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
-
-        var sx = t1 * Math.cos(w) - Math.sin(w);
-        var sy = Math.cos(w) + t1 * Math.sin(w);
-
-        var degrees = space_math.toDegrees(Math.atan2(sy, sx));
-        return 'rotate(' + (degrees + 180) % 360 + ')';
-      })
       .attr('r', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05 * scale)

@@ -209,6 +209,11 @@ class Expedition {
     };
   }
 
+  position(){
+    return this.relativeCoords();
+    //console.log(this, exp)
+  }
+
   homannPosition(angle) {
     var total_distance = space_math.euclideanDistance(this.origin, this.destination);
     if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
