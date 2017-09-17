@@ -233,7 +233,7 @@ class Turn {
 
       // If the owner doesn't exist link it to the none owner
       // TODO: None might cause collisions
-      if (e.owner === "" || e.owner === null) e.owner = "None";
+      if (planet.owner === "" || planet.owner === null) planet.owner = "None";
 
     });
   }
