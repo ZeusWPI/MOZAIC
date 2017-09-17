@@ -153,12 +153,6 @@ class Turn {
     var planets = svg.selectAll('.planet_wrapper').remove();
     var expeditions = svg.selectAll('.expedition').remove();
 
-    // Set planet type and sizes randomly
-    this.planets.map((planet) => {
-      planet.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      planet.size = space_math.randomBetween(1, max_planet_size);
-    });
-
     // Generate planet_map
     this.planet_map = this.planets.reduce((map, o) => {
       o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
