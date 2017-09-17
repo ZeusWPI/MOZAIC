@@ -8,8 +8,6 @@ mod logger;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate serde;
-extern crate rand;
-
 use std::error::Error;
 use std::io::{Read};
 use std::env;

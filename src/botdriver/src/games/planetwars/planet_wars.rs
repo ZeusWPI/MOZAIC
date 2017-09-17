@@ -3,7 +3,6 @@ extern crate serde_json;
 use std::collections::HashMap;
 use game::*;
 use games::planetwars::protocol;
-use games::planetwars::planet_gen::{gen_map};
 use logger::Logger;
 
 use std::io;
