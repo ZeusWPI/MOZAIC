@@ -1,7 +1,7 @@
 class Controls {
   constructor() {
     this.mod = 3;
-    this.speeds = [0.25, 0.33, 0.5, 1, 2, 3, 4];
+    this.updateSpeed(Config.speed_mods[this.mod]);
   }
 
   readLog(e) {
@@ -52,16 +52,18 @@ class Controls {
     d3.select('#speeddown').on("click", e => {
       if (this.mod > 0) {
         this.mod--;
-        turn_controller.speed = Config.base_speed / this.speeds[this.mod];
-        this.updateSpeed(this.speeds[this.mod]);
+        var speed_mod = Config.speed_mods[this.mod];
+        turn_controller.speed = Config.base_speed / speed_mod;
+        this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
 
     d3.select('#speedup').on("click", e => {
-      if (this.mod < this.speeds.length - 1) {
+      if (this.mod < Config.speed_mods.length - 1) {
         this.mod++;
-        turn_controller.speed = Config.base_speed / this.speeds[this.mod];
-        this.updateSpeed(this.speeds[this.mod]);
+        var speed_mod = Config.speed_mods[this.mod];
+        turn_controller.speed = Config.base_speed / speed_mod;
+        this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
 
@@ -84,8 +86,6 @@ class Controls {
       .on('change', e => {
         turn_controller.showTurn(d3.select('#turn_slider').node().value);
       });
-    this.updateSpeed(this.speeds[this.mod]);
-
   }
 
   hidePauseButton(){

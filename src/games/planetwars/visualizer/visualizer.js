@@ -176,8 +176,7 @@ class Expedition {
     this.turns_remaining = log_exp.turns_remaining;
   }
 
-  // TODO: Obsolete?
-  relativeCoords() {
+  position(){
     var total_distance = Math.ceil(space_math.euclideanDistance(this.origin, this.destination));
     var mod = this.turns_remaining / total_distance;
 
@@ -193,11 +192,6 @@ class Expedition {
       'x': new_x,
       'y': new_y
     };
-  }
-
-  position(){
-    return this.relativeCoords();
-    //console.log(this, exp)
   }
 
   homannPosition(angle) {

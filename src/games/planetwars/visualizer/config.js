@@ -15,4 +15,8 @@ class Config {
   static get base_speed() {
     return 1000;
   }
+
+  static get speed_mods() {
+    return [0.25, 0.33, 0.5, 1, 2, 3, 4];
+  }
 }
