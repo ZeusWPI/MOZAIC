@@ -6,6 +6,7 @@ class Visuals {
     this.scale = 1;
   }
 
+  // This is a really stupid idea if we half assume planets will change
   clearVisuals() {
     svg.selectAll('.planet_wrapper').remove();
     svg.selectAll('.expedition').remove();
@@ -17,7 +18,7 @@ class Visuals {
     var min_y = Infinity;
     var max_x = 0;
     var max_y = 0;
-    var padding = 1;
+    var padding = 5;
 
     planets.forEach(e => {
       var offset = (e.size + Config.orbit_size + padding);
@@ -43,7 +44,7 @@ class Visuals {
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
-    //this.scale = max_x / 50;
+    this.scale = max_x / 50;
     //console.log(this.scale);
 
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
@@ -179,6 +180,11 @@ class Visuals {
   static rotate(amount, x, y) {
     return "rotate(" + amount + "," + x + "," + y +")";
   }
+  
+  static visualOwnerName(name) {
+    if (name === null) return 'None';
+    else return name;
+  }
 }
 
 Visuals.Expeditions = class {
@@ -231,7 +237,7 @@ Visuals.Expeditions = class {
       })
       .attr('r', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])
-      .style('stroke-width', 0.05)
+      .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
       .append('title').text(exp => exp.owner);
   }
@@ -280,7 +286,7 @@ Visuals.Fleets = class {
       .attr('cx', d => d.distance)
       .attr('cy', 0)
       .attr('fill', d => "url(#fleet)")
-      .append('title').text(d => d.planet.owner);
+      .append('title').text(d => Visuals.visualOwnerName(d.planet.owner));
   }
 
   static animateFleets() {
@@ -317,30 +323,30 @@ Visuals.Planets = class {
       .attr('fill', d => 'url(#' + d.type + ')');
       
     wrapper.append('title')
-      .text(d => d.owner);
+      .text(d => visualOwnerName(d.owner));
   }
 
   static drawName(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 1 * scale)
+      .attr('y', d => d.y + d.size + 2 * scale)
       .attr("font-family", "sans-serif")
       .attr("font-size", 1 * scale + "px")
       .attr('fill', d => color_map[d.owner])
       .text(d => d.name)
       .append('title')
-        .text(d => d.owner);
+      .text(d => Visuals.visualOwnerName(d.owner));
   }
 
   static drawShipCount(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3 * scale)
+      .attr('y', d => d.y + d.size + 3.5 * scale)
       .attr("font-family", "sans-serif")
       .attr("font-size", 1 * scale + "px")
       .attr('fill', d => color_map[d.owner])
       .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => d.owner);
+      .append('title').text(d => Visuals.visualOwnerName(d.owner));
   }
 }
 

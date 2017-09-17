@@ -2,11 +2,11 @@ const space_math = new SpaceMath();
 const visuals = new Visuals();
 
 class Visualizer {
-  
-  constructor(){
+
+  constructor() {
     this.turn_controller = new TurnController();
   }
-  
+
   generateLegend() {
     // Info
     //TODO do away with the whole legend thing and make planet and fleet owners clear in another way
@@ -33,7 +33,7 @@ class Visualizer {
     reader.readAsText(e.files[0]);
   }
 
-  parseJSON(json){
+  parseJSON(json) {
     var turns = json.trim().split('\n');
     return turns.map(turn => {
       return new Turn(JSON.parse(turn));
@@ -43,7 +43,7 @@ class Visualizer {
 }
 
 class TurnController {
-  constructor(){
+  constructor() {
     this.speed = Config.base_speed;
     this.turn = 0;
     this.turns = [];
@@ -114,11 +114,11 @@ class TurnController {
 }
 
 class Turn {
-  constructor(turn){
+  constructor(turn) {
     this.players = turn.players;
 
     this.planets = turn.planets.map(planet => {
-        return new Planet(planet);
+      return new Planet(planet);
     });
 
     this.expeditions = turn.expeditions.map(exp => {
@@ -146,14 +146,13 @@ class Turn {
       map[o] = color(i);
       return map;
     }, {});
-    this.color_map[null] = "#000";
-    this.color_map['None'] = "#d3d3d3";
+    this.color_map[null] = "#d3d3d3";
   }
 
   prepareData() {
     this.expeditions.map(exp => {
       exp.origin = this.planet_map[exp.origin],
-      exp.destination = this.planet_map[exp.destination]
+        exp.destination = this.planet_map[exp.destination]
     });
 
     // Since planet_map is copied from previous turn, we change owner here
@@ -166,18 +165,13 @@ class Turn {
       } else {
         planet.changed_owner = false;
       }
-
-      // If the owner doesn't exist link it to the none owner
-      // TODO: None might cause collisions
-      if (planet.owner === "" || planet.owner === null) planet.owner = "None";
-
     });
   }
 
 }
 
 class Planet {
-  constructor(log_planet){
+  constructor(log_planet) {
     this.name = log_planet.name;
     this.x = log_planet.x;
     this.y = log_planet.y;
