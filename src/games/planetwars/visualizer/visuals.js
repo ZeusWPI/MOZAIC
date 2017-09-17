@@ -285,19 +285,28 @@ Visuals.Fleets = class {
 
 Visuals.Planets = class {
   static addPlanetVisuals(d3selector, color_map, scale) {
-    Visuals.Planets.drawPlanet(d3selector);
+    Visuals.Planets.drawPlanet(d3selector, color_map);
     Visuals.Planets.drawName(d3selector, color_map, scale);
     Visuals.Planets.drawShipCount(d3selector, color_map, scale);
   }
 
-  static drawPlanet(d3selector) {
-    d3selector.append('circle')
-      .attr('class', 'planet')
+  static drawPlanet(d3selector, color_map) {
+    var wrapper = d3selector.append('g')
+      .attr('class', 'planet');
+
+    wrapper.append('circle')
       .attr('r', d => d.size)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
-      .attr('fill', d => 'url(#' + d.type + ')')
-      .append('title')
+      .attr('fill', d => color_map[d.owner]);
+
+    wrapper.append('circle')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')');
+      
+    wrapper.append('title')
       .text(d => d.owner);
   }
 
@@ -310,7 +319,7 @@ Visuals.Planets = class {
       .attr('fill', d => color_map[d.owner])
       .text(d => d.name)
       .append('title')
-      .text(d => d.owner);
+        .text(d => d.owner);
   }
 
   static drawShipCount(d3selector, color_map, scale) {
