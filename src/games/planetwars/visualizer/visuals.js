@@ -7,7 +7,7 @@ class Visuals {
   }
 
   // This is a really stupid idea if we half assume planets will change
-  clearVisuals() {
+  static clearVisuals() {
     svg.selectAll('.planet_wrapper').remove();
     svg.selectAll('.expedition').remove();
   }

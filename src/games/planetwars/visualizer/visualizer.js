@@ -51,11 +51,18 @@ class TurnController {
 
   init(turns) {
     this.turns = turns;
-    var first_turn = this.turns[0];
     Visuals.ResourceLoader.setupPatterns();
+    Visuals.clearVisuals();
+
+    var first_turn = this.turns[0];
     first_turn.init();
     first_turn.prepareData();
+
+    visuals.generatePlanetStyles(first_turn.planets);
+    visuals.generateViewBox(first_turn.planets);
     visuals.update(first_turn);
+
+    this.planet_map
   }
 
   nextTurn() {
@@ -129,16 +136,12 @@ class Turn {
   }
 
   init() {
-    visuals.clearVisuals();
-    visuals.generatePlanetStyles(this.planets);
 
     // Generate planet_map
     this.planet_map = this.planets.reduce((map, planet) => {
       map[planet.name] = planet;
       return map;
     }, {});
-
-    visuals.generateViewBox(this.planets);
 
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
