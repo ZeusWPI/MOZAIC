@@ -141,19 +141,12 @@ class Turn {
   }
 
   init() {
-    // Clear data
-    var planets = svg.selectAll('.planet_wrapper').remove();
-    var expeditions = svg.selectAll('.expedition').remove();
+    visuals.clearVisuals();
+    visuals.generatePlanetStyles(this.planets);
 
     // Generate planet_map
-    this.planet_map = this.planets.reduce((map, o) => {
-      var types = Config.planet_types;
-      o.type = types[Math.floor(Math.random() * types.length)];
-      var closest = space_math.findClosest(o, this.planets) / 2 - Config.orbit_size * 2;
-      console.log(closest);
-      o.size = space_math.clamp(closest, 0.5, Config.max_planet_size);
-      console.log(o.size);
-      map[o.name] = o;
+    this.planet_map = this.planets.reduce((map, planet) => {
+      map[planet.name] = planet;
       return map;
     }, {});
 

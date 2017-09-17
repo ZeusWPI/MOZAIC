@@ -4,6 +4,11 @@ class Visuals {
     this.resource_loader = new Visuals.ResourceLoader();
   }
 
+  clearVisuals(){
+    svg.selectAll('.planet_wrapper').remove();
+    svg.selectAll('.expedition').remove();
+  }
+
   update(turn) {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
@@ -15,9 +20,9 @@ class Visuals {
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
     // Add the new objects
-    this.addPlanets(new_planets, turn.color_map);
-    this.addFleets(fleet_wrappers, turn.color_map);
-    this.addExpeditions(new_expeditions, turn.color_map);
+    Visuals.Planets.addPlanetVisuals(new_planets, turn.color_map);
+    Visuals.Fleets.addFleetsVisuals(fleet_wrappers, turn.color_map);
+    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map);
   }
 
   updateAnimations(turn, turn_control) {
@@ -94,67 +99,43 @@ class Visuals {
     planets.exit().remove();
   }
 
-
-  addPlanets(d3selector, color_map) {
-    d3selector.append('circle')
-      .attr('class', 'planet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y)
-      .attr('fill', d => 'url(#' + d.type + ')')
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 1 * this.scale)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * this.scale + "px")
-      .attr('fill', d => color_map[d.owner])
-      .text(d => d.name)
-      .append('title')
-      .text(d => d.owner);
-
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3 * this.scale)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * this.scale + "px")
-      .attr('fill', d => color_map[d.owner])
-      .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => d.owner);
+  registerTakeOverAnimation(planets, planet_map, speed) {
+    planets.select('.planet')
+      .filter(d => d.changed_owner)
+      .transition(speed / 2)
+      .attr("r", d => planet_map[d.name].size * 1.3)
+      .transition(speed / 2)
+      .attr("r", d => planet_map[d.name].size);
   }
 
-  addFleets(d3selector, color_map) {
-    d3selector.append('circle')
-      .attr('class', 'orbit')
-      .attr('transform', d => visuals.translation(d.planet))
-      .attr('r', d => d.distance)
-      .style('fill', "none")
-      .style('stroke', d => {
-
-        return color_map[d.planet.owner];
-
-      })
-      .style('stroke-width', 0.05);
-
-    var wrapper = d3selector.append('g')
-      .attr('transform', d => visuals.translation(d.planet));
-
-    wrapper.append('circle')
-      .attr('transform', d => visuals.translation(d.planet))
-      .attr('class', 'fleet')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.distance)
-      .attr('cy', 0)
-      .attr('fill', d => "url(#ship)")
-      .append('title').text(d => d.planet.owner);
+  attachToAllChildren(d3selector) {
+    return d3selector.data((d, i) => {
+      return Array(d3selector._groups[i].length).fill(d);
+    });
   }
 
-  addExpeditions(d3selector, color_map) {
+  generatePlanetStyles(planets){
+    planets.map( planet => {
+      var types = Config.planet_types;
+      var type = types[Math.floor(Math.random() * types.length)];
+      var closest = space_math.findClosest(planet, planets) / 2 - Config.orbit_size * 2;
+      var size = space_math.clamp(closest, 0.5, Config.max_planet_size);
+
+      planet.type = type;
+      planet.size = size;
+    });
+  }
+
+  static translation(point) {
+    return 'translate(' + point.x + ',' + point.y + ')';
+  }
+}
+
+Visuals.Expeditions = class {
+  static addExpeditionVisuals(d3selector, color_map, scale) {
     d3selector.attr('transform', exp => {
       var point = exp.homannPosition();
-      return visuals.translation(point);
+      return Visuals.translation(point);
     });
 
     d3selector.append('circle')
@@ -190,7 +171,7 @@ class Visuals {
         var degrees = space_math.toDegrees(Math.atan2(sy, sx));
         return 'rotate(' + (degrees + 180) % 360 + ')';
       })
-      .attr('r', 1 * this.scale)
+      .attr('r', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05)
       .attr('fill', exp => "url(#ship)")
@@ -199,29 +180,70 @@ class Visuals {
     d3selector.append('text')
       .attr('y', 2)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * this.scale + "px")
+      .attr("font-size", 1 * scale + "px")
       .attr('fill', exp => color_map[exp.owner])
       .text(exp => "\u2694 " + exp.ship_count)
       .append('title').text(exp => exp.owner);
   }
+}
 
-  registerTakeOverAnimation(planets, planet_map, speed) {
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size * 1.3)
-      .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size);
+Visuals.Fleets = class {
+  static addFleetVisuals(d3selector, color_map) {
+    d3selector.append('circle')
+      .attr('class', 'orbit')
+      .attr('transform', d => Visuals.translation(d.planet))
+      .attr('r', d => d.distance)
+      .style('fill', "none")
+      .style('stroke', d => {
+
+        return color_map[d.planet.owner];
+
+      })
+      .style('stroke-width', 0.05);
+
+    var wrapper = d3selector.append('g')
+      .attr('transform', d => Visuals.translation(d.planet));
+
+    wrapper.append('circle')
+      .attr('transform', d => Visuals.translation(d.planet))
+      .attr('class', 'fleet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.distance)
+      .attr('cy', 0)
+      .attr('fill', d => "url(#ship)")
+      .append('title').text(d => d.planet.owner);
   }
+}
 
-  attachToAllChildren(d3selector) {
-    return d3selector.data((d, i) => {
-      return Array(d3selector._groups[i].length).fill(d);
-    });
-  }
+Visuals.Planets = class {
+  static addPlanetVisuals(d3selector, color_map, scale) {
+    d3selector.append('circle')
+      .attr('class', 'planet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')')
+      .append('title')
+      .text(d => d.owner);
 
-  translation(point) {
-    return 'translate(' + point.x + ',' + point.y + ')';
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 1 * scale)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 1 * this.scale + "px")
+      .attr('fill', d => color_map[d.owner])
+      .text(d => d.name)
+      .append('title')
+      .text(d => d.owner);
+
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 3 * scale)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 1 * this.scale + "px")
+      .attr('fill', d => color_map[d.owner])
+      .text(d => "\u2694 " + d.ship_count)
+      .append('title').text(d => d.owner);
   }
 }
 
