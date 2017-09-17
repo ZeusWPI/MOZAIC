@@ -2,14 +2,6 @@
 
 // Constants
 const svg = d3.select("svg");
-
-const planet_types = ["water", "red", "moon", "mars", "earth"];
-
-const max_planet_size = 2.5;
-const orbit_size = 1;
-
-// Globals
-const base_speed = 1000;
 const space_math = new SpaceMath();
 const visuals = new Visuals();
 
@@ -64,7 +56,7 @@ class Visualizer {
 
 class TurnController {
   constructor(){
-    this.speed = base_speed;
+    this.speed = Config.base_speed;
     this.turn = 0;
     this.turns = [];
   }
@@ -155,10 +147,11 @@ class Turn {
 
     // Generate planet_map
     this.planet_map = this.planets.reduce((map, o) => {
-      o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
-      var closest = space_math.findClosest(o, this.planets) / 2 - orbit_size * 2;
+      var types = Config.planet_types;
+      o.type = types[Math.floor(Math.random() * types.length)];
+      var closest = space_math.findClosest(o, this.planets) / 2 - Config.orbit_size * 2;
       console.log(closest);
-      o.size = space_math.clamp(closest, 0.5, max_planet_size);
+      o.size = space_math.clamp(closest, 0.5, Config.max_planet_size);
       console.log(o.size);
       map[o.name] = o;
       return map;
@@ -172,7 +165,7 @@ class Turn {
     var padding = 1;
 
     this.planets.forEach(e => {
-      var offset = (e.size + orbit_size + padding);
+      var offset = (e.size + Config.orbit_size + padding);
       var n_max_x = e.x + offset;
       var n_min_x = e.x - offset;
       var n_max_y = e.y + offset;

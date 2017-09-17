@@ -228,7 +228,7 @@ class Visuals {
 Visuals.Fleet = class {
   constructor(planet, scale) {
     this.size = 1 * scale;
-    this.distance = d.size + orbit_size * scale;
+    this.distance = planet.size + Config.orbit_size * scale;
     this.angle = space_math.randomIntBetween(1, 360);
     this.speed =  space_math.randomIntBetween(100, 1000);
     this.planet = planet;
@@ -267,7 +267,7 @@ Visuals.ResourceLoader = class {
   setupPatterns() {
     // Define patterns
     svg.append("defs");
-    planet_types.forEach(p => {
+    Config.planet_types.forEach(p => {
       this.setupPattern(p, this.planet_size, this.planet_size, p);
     });
     this.setupPattern("rocket", this.rocket_size, this.rocket_size, "ship");
