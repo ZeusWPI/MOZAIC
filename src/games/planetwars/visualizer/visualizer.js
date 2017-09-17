@@ -199,6 +199,9 @@ class Turn {
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
+    //this.scale = max_x / 50;
+    //console.log(this.scale);
+
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
 
     // Color map
@@ -248,7 +251,7 @@ class Turn {
       .data(this.planets.map(d => {
         return {
           size: 1 * visuals.scale,
-          distance: d.size + orbit_size,
+          distance: d.size + orbit_size * visuals.scale,
           angle: space_math.randomIntBetween(1, 360),
           speed: space_math.randomIntBetween(100, 1000),
           planet: d
