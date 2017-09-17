@@ -4,7 +4,7 @@ class Visuals {
     this.resource_loader = new Visuals.ResourceLoader();
   }
 
-  clearVisuals(){
+  clearVisuals() {
     svg.selectAll('.planet_wrapper').remove();
     svg.selectAll('.expedition').remove();
   }
@@ -20,9 +20,9 @@ class Visuals {
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
     // Add the new objects
-    Visuals.Planets.addPlanetVisuals(new_planets, turn.color_map);
-    Visuals.Fleets.addFleetsVisuals(fleet_wrappers, turn.color_map);
-    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map);
+    Visuals.Planets.addPlanetVisuals(new_planets, turn.color_map, this.scale);
+    Visuals.Fleets.addFleetVisuals(fleet_wrappers, turn.color_map);
+    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map, this.scale);
   }
 
   updateAnimations(turn, turn_control) {
@@ -47,14 +47,14 @@ class Visuals {
       .ease(d3.easeLinear)
       .attr('transform', exp => {
         var point = exp.homannPosition();
-        return visuals.translation(point);
+        return Visuals.translation(point);
       })
       .attrTween('transform', exp => {
         var turn_diff = turn_control.turn - turn.lastTurn;
         var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
         return t => {
           var point = exp.homannPosition(inter(t));
-          return visuals.translation(point);
+          return Visuals.translation(point);
         };
       }).on('interrupt', e => console.log("inter"));
 
@@ -114,8 +114,8 @@ class Visuals {
     });
   }
 
-  generatePlanetStyles(planets){
-    planets.map( planet => {
+  generatePlanetStyles(planets) {
+    planets.map(planet => {
       var types = Config.planet_types;
       var type = types[Math.floor(Math.random() * types.length)];
       var closest = space_math.findClosest(planet, planets) / 2 - Config.orbit_size * 2;
@@ -133,11 +133,19 @@ class Visuals {
 
 Visuals.Expeditions = class {
   static addExpeditionVisuals(d3selector, color_map, scale) {
+    Visuals.Expeditions.placeExpedition(d3selector);
+    Visuals.Expeditions.drawExpedition(d3selector, color_map, scale);
+    Visuals.Expeditions.drawShipCount(d3selector, color_map, scale);
+  }
+
+  static placeExpedition(d3selector) {
     d3selector.attr('transform', exp => {
       var point = exp.homannPosition();
       return Visuals.translation(point);
     });
+  }
 
+  static drawExpedition(d3selector, color_map, scale) {
     d3selector.append('circle')
       .attr('transform', exp => {
         var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
@@ -176,7 +184,9 @@ Visuals.Expeditions = class {
       .style('stroke-width', 0.05)
       .attr('fill', exp => "url(#ship)")
       .append('title').text(exp => exp.owner);
+  }
 
+  static drawShipCount(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('y', 2)
       .attr("font-family", "sans-serif")
@@ -189,6 +199,12 @@ Visuals.Expeditions = class {
 
 Visuals.Fleets = class {
   static addFleetVisuals(d3selector, color_map) {
+    Visuals.Fleets.drawOrbit(d3selector, color_map);
+    var wrapper = Visuals.Fleets.placeFleet(d3selector);
+    Visuals.Fleets.drawFleet(wrapper);
+  }
+
+  static drawOrbit(d3selector, color_map) {
     d3selector.append('circle')
       .attr('class', 'orbit')
       .attr('transform', d => Visuals.translation(d.planet))
@@ -200,10 +216,14 @@ Visuals.Fleets = class {
 
       })
       .style('stroke-width', 0.05);
+  }
 
-    var wrapper = d3selector.append('g')
+  static placeFleet(d3selector) {
+    return d3selector.append('g')
       .attr('transform', d => Visuals.translation(d.planet));
+  }
 
+  static drawFleet(wrapper, color_map) {
     wrapper.append('circle')
       .attr('transform', d => Visuals.translation(d.planet))
       .attr('class', 'fleet')
@@ -217,6 +237,12 @@ Visuals.Fleets = class {
 
 Visuals.Planets = class {
   static addPlanetVisuals(d3selector, color_map, scale) {
+    Visuals.Planets.drawPlanet(d3selector);
+    Visuals.Planets.drawName(d3selector, color_map, scale);
+    Visuals.Planets.drawShipCount(d3selector, color_map, scale);
+  }
+
+  static drawPlanet(d3selector) {
     d3selector.append('circle')
       .attr('class', 'planet')
       .attr('r', d => d.size)
@@ -225,22 +251,26 @@ Visuals.Planets = class {
       .attr('fill', d => 'url(#' + d.type + ')')
       .append('title')
       .text(d => d.owner);
+  }
 
+  static drawName(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('x', d => d.x)
       .attr('y', d => d.y + d.size + 1 * scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * this.scale + "px")
+      .attr("font-size", 1 * scale + "px")
       .attr('fill', d => color_map[d.owner])
       .text(d => d.name)
       .append('title')
       .text(d => d.owner);
+  }
 
+  static drawShipCount(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('x', d => d.x)
       .attr('y', d => d.y + d.size + 3 * scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * this.scale + "px")
+      .attr("font-size", 1 * scale + "px")
       .attr('fill', d => color_map[d.owner])
       .text(d => "\u2694 " + d.ship_count)
       .append('title').text(d => d.owner);
@@ -252,7 +282,7 @@ Visuals.Fleet = class {
     this.size = 1 * scale;
     this.distance = planet.size + Config.orbit_size * scale;
     this.angle = space_math.randomIntBetween(1, 360);
-    this.speed =  space_math.randomIntBetween(100, 1000);
+    this.speed = space_math.randomIntBetween(100, 1000);
     this.planet = planet;
   }
 }
@@ -270,7 +300,7 @@ Visuals.TurnWrapper = class {
     return svg.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
-  get planet_data(){
+  get planet_data() {
     return this.turn.planets;
   }
 
