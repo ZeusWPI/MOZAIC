@@ -75,7 +75,7 @@ class TurnController {
     visuals.setupPatterns();
     first_turn.init();
     first_turn.prepareData();
-    first_turn.update(this);
+    visuals.update(first_turn);
   }
 
   nextTurn() {
@@ -94,8 +94,8 @@ class TurnController {
       turn.planet_map = this.turns[0].planet_map;
       turn.color_map = this.turns[0].color_map;
       turn.prepareData();
-      turn.update();
-      visuals.updateAnimations(this, turn);
+      visuals.update(turn);
+      visuals.updateAnimations(turn, this);
       return true;
     }
   }
@@ -234,32 +234,6 @@ class Turn {
     });
   }
 
-  update() {
-    var planets = svg.selectAll('.planet_wrapper').data(this.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition')
-      .data(this.expeditions, d => {
-        return d.id;
-      });
-
-    // New objects
-    var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
-    var fleet_wrapper = new_planets.append('g')
-      .data(this.planets.map(d => {
-        return {
-          size: 1 * visuals.scale,
-          distance: d.size + orbit_size * visuals.scale,
-          angle: space_math.randomIntBetween(1, 360),
-          speed: space_math.randomIntBetween(100, 1000),
-          planet: d
-        };
-      }));
-    var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
-
-    // Add the new objects
-    visuals.addPlanets(new_planets, this.color_map);
-    visuals.addFleets(fleet_wrapper, this.color_map);
-    visuals.addExpeditions(new_expeditions, this.color_map);
-  }
 }
 
 class Planet {
