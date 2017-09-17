@@ -5,8 +5,8 @@ const svg = d3.select("svg");
 
 const planet_types = ["water", "red", "moon", "mars", "earth"];
 
-const max_planet_size = 3;
-const orbit_size = 2;
+const max_planet_size = 2.5;
+const orbit_size = 1;
 
 // Globals
 const base_speed = 1000;
@@ -157,7 +157,9 @@ class Turn {
     this.planet_map = this.planets.reduce((map, o) => {
       o.type = planet_types[Math.floor(Math.random() * planet_types.length)];
       var closest = space_math.findClosest(o, this.planets) / 2 - orbit_size * 2;
-      o.size = space_math.clamp(closest, 0, max_planet_size);
+      console.log(closest);
+      o.size = space_math.clamp(closest, 0.5, max_planet_size);
+      console.log(o.size);
       map[o.name] = o;
       return map;
     }, {});
