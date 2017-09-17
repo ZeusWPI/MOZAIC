@@ -144,9 +144,9 @@ class Visuals {
     planets.select('.planet')
       .filter(d => d.changed_owner)
       .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size * 1.3)
+      .attr('transform', d => Visuals.resize(d, 1.3))
       .transition(speed / 2)
-      .attr("r", d => planet_map[d.name].size);
+      .attr('transform', d => Visuals.resize(d, 1));
   }
 
   attachToAllChildren(d3selector) {
@@ -171,6 +171,16 @@ class Visuals {
     return 'translate(' + point.x + ',' + point.y + ')';
   }
 
+  static resize(planet, amount) {
+    var tx = -planet.x*(amount - 1);
+    var ty = -planet.y*(amount - 1);
+    return Visuals.translation({x:tx, y:ty}) + ' scale(' + amount + ')';
+  }
+
+  static rotate(amount, x, y) {
+    return "rotate(" + amount + "," + x + "," + y +")";
+  }
+  
   static visualOwnerName(name) {
     if (name === null) return 'None';
     else return name;
@@ -258,8 +268,8 @@ Visuals.Fleets = class {
       .style('fill', "none")
       .style('stroke', d => {
         return color_map[d.planet.owner];
-
       })
+      .style('stroke-opacity', 0.5)
       .style('stroke-width', 0.05);
   }
 
@@ -272,10 +282,10 @@ Visuals.Fleets = class {
     wrapper.append('circle')
       .attr('transform', d => Visuals.translation(d.planet))
       .attr('class', 'fleet')
-      .attr('r', d => d.size)
+      .attr('r', d => d.size * 0.7 )
       .attr('cx', d => d.distance)
       .attr('cy', 0)
-      .attr('fill', d => "url(#ship)")
+      .attr('fill', d => "url(#fleet)")
       .append('title').text(d => Visuals.visualOwnerName(d.planet.owner));
   }
 
@@ -291,19 +301,28 @@ Visuals.Fleets = class {
 
 Visuals.Planets = class {
   static addPlanetVisuals(d3selector, color_map, scale) {
-    Visuals.Planets.drawPlanet(d3selector);
+    Visuals.Planets.drawPlanet(d3selector, color_map);
     Visuals.Planets.drawName(d3selector, color_map, scale);
     Visuals.Planets.drawShipCount(d3selector, color_map, scale);
   }
 
-  static drawPlanet(d3selector) {
-    d3selector.append('circle')
-      .attr('class', 'planet')
+  static drawPlanet(d3selector, color_map) {
+    var wrapper = d3selector.append('g')
+      .attr('class', 'planet');
+
+    wrapper.append('circle')
       .attr('r', d => d.size)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
-      .attr('fill', d => 'url(#' + d.type + ')')
-      .append('title')
+      .attr('fill', d => color_map[d.owner]);
+
+    wrapper.append('circle')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')');
+      
+    wrapper.append('title')
       .text(d => Visuals.visualOwnerName(d.owner));
   }
 
@@ -365,25 +384,14 @@ Visuals.TurnWrapper = class {
 
 Visuals.ResourceLoader = class {
 
-  static get rocket_size() {
-    return 100;
-  }
-
-  static get planet_size() {
-    return 100;
-  }
-
   static setupPatterns() {
     // Define patterns
     svg.append("defs");
     Config.planet_types.forEach(p => {
-      this.setupPattern(
-        p,
-        Visuals.ResourceLoader.planet_size,
-        Visuals.ResourceLoader.planet_size,
-        p);
+      this.setupPattern(p + ".svg", 100, 100, p);
     });
-    this.setupPattern("rocket", this.rocket_size, this.rocket_size, "ship");
+    this.setupPattern("rocket.svg", 100, 100, "ship");
+    this.setupPattern("station.svg", 100, 100, "fleet");
   }
 
   static setupPattern(name, width, height, id) {
@@ -398,6 +406,6 @@ Visuals.ResourceLoader = class {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "res/" + name + ".png");
+      .attr("xlink:href", "res/" + name);
   }
 }

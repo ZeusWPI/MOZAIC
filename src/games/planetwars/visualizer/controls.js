@@ -41,7 +41,7 @@ class Controls {
     d3.select('#speeddown').on("click", e => {
       if (this.mod > 0) {
         this.mod--;
-        turn_controller.speed = base_speed / this.speeds[this.mod];
+        turn_controller.speed = Config.base_speed / this.speeds[this.mod];
         this.updateSpeed(this.speeds[this.mod]);
       }
     });
@@ -49,7 +49,7 @@ class Controls {
     d3.select('#speedup').on("click", e => {
       if (this.mod < this.speeds.length - 1) {
         this.mod++;
-        turn_controller.speed = base_speed / this.speeds[this.mod];
+        turn_controller.speed = Config.base_speed / this.speeds[this.mod];
         this.updateSpeed(this.speeds[this.mod]);
       }
     });

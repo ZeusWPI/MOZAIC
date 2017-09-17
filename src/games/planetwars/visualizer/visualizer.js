@@ -146,7 +146,7 @@ class Turn {
       map[o] = color(i);
       return map;
     }, {});
-    this.color_map[null] = "#000";
+    this.color_map[null] = "#d3d3d3";
   }
 
   prepareData() {
