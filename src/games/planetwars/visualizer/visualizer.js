@@ -72,7 +72,7 @@ class TurnController {
   init(turns) {
     this.turns = turns;
     var first_turn = this.turns[0];
-    visuals.setupPatterns();
+    visuals.resource_loader.setupPatterns();
     first_turn.init();
     first_turn.prepareData();
     visuals.update(first_turn);
