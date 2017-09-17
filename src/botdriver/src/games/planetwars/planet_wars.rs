@@ -3,8 +3,12 @@ extern crate serde_json;
 use std::collections::HashMap;
 use game::*;
 use games::planetwars::protocol;
-use games::planetwars::planet_gen::{gen_map};
 use logger::Logger;
+
+use std::io;
+use std::io::Read;
+use std::fs::File;
+
 
 const START_SHIPS: u64 = 15;
 
@@ -13,8 +17,10 @@ pub struct PlanetWars {
     planets: HashMap<String, Planet>,
     expeditions: Vec<Expedition>,
     // How many expeditions were already dispatched.
-    // This is needed for assigning expedition id's.
+    // This is needed for assigning expedition identifiers.
     expedition_num: u64,
+    turn_num: u64,
+    max_turns: u64,
     log: Logger,
 }
 
@@ -44,28 +50,42 @@ pub struct Expedition {
     turns_remaining: u64,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct PlanetWarsConf {
+    pub map_file: String,
+    pub player_map: HashMap<String, String>,
+    pub max_turns: u64,
+}
+
 
 impl Game for PlanetWars {
     // Name of the game winner.
-    type Outcome = String;
-    type Config = ();
+    type Outcome = Vec<String>;
+    type Config = PlanetWarsConf;
 
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
-        // Transform to HashMap<PlayerId, Player>
-        let mut players = HashMap::new();
-        for (&id, info) in params.players.iter() {
-            players.insert(id, Player {
-                id: id,
-                name: info.name.clone(),
-                alive: true,
-            });
-        }
+        let players : PlayerMap<Player> = params.players.iter()
+            .map(|(&id, info)| {
+                let player = Player {
+                    id: id,
+                    name: info.name.clone(),
+                    alive: true,
+                };
+                return (id, player);
+            }).collect();
 
+        let planets = params.game_config.load_map(&players).into_iter()
+            .map(|planet| {
+                (planet.name.clone(), planet)
+            }).collect();
+        
         let mut state = PlanetWars {
-            planets: gen_map(players.len()),
+            planets: planets,
             players: players,
             expeditions: Vec::new(),
             expedition_num: 0,
+            turn_num: 0,
+            max_turns: params.game_config.max_turns,
             log: params.logger,
         };
 
@@ -73,10 +93,12 @@ impl Game for PlanetWars {
 
         state.log_state();
         let prompts = state.generate_prompts();
-        (state, GameStatus::Prompting(prompts))
+        return (state, GameStatus::Prompting(prompts));
     }
 
     fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
+        self.turn_num += 1;
+        
         // TODO: separate this into a function
         let mut commands : Vec<(PlayerId, protocol::Command)> = Vec::new();
 
@@ -84,13 +106,11 @@ impl Game for PlanetWars {
         for (player, command) in player_output {
             let c: protocol::Command = match serde_json::from_str(command) {
                 Ok(command) => command,
-                // Ignore invalid commands
-                Err(_) => protocol::Command { value: None } 
+                Err(_) => protocol::Command { value: None }
             };
             commands.push((player.clone(), c))
         }
 
-        // Execute commands
         for &(player_id, ref command) in commands.iter() {
             if let &Some(ref mv) = &command.value {
                 self.exec_move(player_id, mv);
@@ -109,10 +129,15 @@ impl Game for PlanetWars {
 
         self.log_state();
 
-        // Check for game end, generated next move, or the outcome.
         if self.is_finished() {
-            let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
-            GameStatus::Finished(winner.name.clone())
+            let alive = self.players.values().filter_map(|p| {
+                if p.alive {
+                    Some(p.name.clone())
+                } else {
+                    None
+                }
+            }).collect();
+            GameStatus::Finished(alive)
         } else {
             GameStatus::Prompting(self.generate_prompts())
         }
@@ -126,13 +151,13 @@ impl PlanetWars {
 
         for player in self.players.values() {
             if player.alive {
-                let prompt = serde_json::to_string(&state)
+                let p = serde_json::to_string(&state)
                         .expect("[PLANET_WARS] Serializing game state failed.");
-                prompts.insert(player.id, prompt);
+                prompts.insert(player.id, p);
+                               
             }
         }
-
-        prompts
+        return prompts;
     }
 
     fn log_state(&mut self) {
@@ -142,15 +167,15 @@ impl PlanetWars {
     }
 
     fn is_finished(&self) -> bool {
-        self.players.values().filter(|p| p.alive).count() <= 1
+        let remaining = self.players.values().filter(|p| p.alive).count();
+        return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
     fn repr(&self) -> protocol::State {
         let planets = self.planets.values().map(|p| p.repr(self)).collect();
         let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();
         let players = self.players.values().map(|p| p.name.clone()).collect();
-        
-        protocol::State { players, expeditions, planets }
+        return protocol::State { players, expeditions, planets };
     }
 
     fn exec_move(&mut self, player_id: PlayerId, m: &protocol::Move) {
@@ -160,8 +185,11 @@ impl PlanetWars {
         // Alternatively, a game implementation could be made responsible for
         // this. This would require more work, but also allow more flexibility.
 
-        if !self.planets.contains_key(&m.origin) ||
-           !self.planets.contains_key(&m.destination) {
+        let player = self.players.get(&player_id).unwrap();
+        if !self.planets.contains_key(&m.origin) {
+            return;
+        }
+        if !self.planets.contains_key(&m.destination) {
             return;
         }
 
@@ -169,12 +197,20 @@ impl PlanetWars {
         let dist = self.planets[&m.origin].distance(&self.planets[&m.destination]);
         let origin = self.planets.get_mut(&m.origin).unwrap();
         
-        if origin.owner() != Some(player_id) ||
-           origin.ship_count() < m.ship_count {
+        if origin.owner() != Some(player_id) {
+            return;
+        }
+        if origin.ship_count() < m.ship_count {
             return;
         }
 
-        let fleet = origin.prepare_fleet(m.ship_count);
+        // TODO: maybe wrap this in a helper function
+        origin.fleets[0].ship_count -= m.ship_count;
+        let fleet = Fleet {
+            owner: Some(player.id),
+            ship_count: m.ship_count,
+        };
+
         let expedition = Expedition {
             id: self.expedition_num,
             origin: origin.name.clone(),
@@ -217,10 +253,12 @@ impl PlanetWars {
         }
     }
 
+
     fn place_players(&mut self) {
         let mut planets = self.planets.values_mut().take(self.players.len());
         for player in self.players.values() {
-            let planet = planets.next().expect("Not enough planets");
+            let planet = planets.next()
+                .expect("Not enough planets");
             planet.fleets.push( Fleet {
                 owner: Some(player.id),
                 ship_count: START_SHIPS,
@@ -228,6 +266,7 @@ impl PlanetWars {
         }
     }
 }
+
 
 impl Planet {
     fn owner(&self) -> Option<PlayerId> {
@@ -249,14 +288,6 @@ impl Planet {
         }
         // else, add fleet to fleets list
         self.fleets.push(fleet);
-    }
-
-    fn prepare_fleet(&mut self, size: u64) -> Fleet {
-        self.fleets[0].ship_count -= size;
-        Fleet {
-            owner: self.owner(),
-            ship_count: size,
-        }
     }
 
     fn resolve_combat(&mut self) {
@@ -281,7 +312,6 @@ impl Planet {
         }
     }
 
-    // Euclidian distance
     fn distance(&self, other: &Planet) -> u64 {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
@@ -311,5 +341,42 @@ impl Expedition {
             ship_count: self.fleet.ship_count,
             turns_remaining: self.turns_remaining,
         }
+    }
+}
+
+impl PlanetWarsConf {
+    fn load_map(&self, players: &PlayerMap<Player>) -> Vec<Planet> {
+        let map = self.read_map().expect("[PLANET_WARS] reading map failed");
+        
+        let player_translation: HashMap<&str, PlayerId> = players.iter()
+            .map(|(&id, player)| {
+                (self.player_map.get(&player.name).unwrap().as_str(), id)
+            }).collect();
+
+        return map.planets.into_iter().map(|planet| {
+            let mut fleets = Vec::new();
+            if planet.ship_count > 0 {
+                fleets.push(Fleet {
+                    owner: planet.owner.and_then(|ref owner| {
+                        player_translation.get(owner.as_str()).map(|&v| v)
+                    }),
+                    ship_count: planet.ship_count,
+                });
+            }
+            return Planet {
+                name: planet.name,
+                x: planet.x,
+                y: planet.y,
+                fleets: fleets,
+            };
+        }).collect();
+    }
+
+    fn read_map(&self) -> io::Result<protocol::Map> {
+        let mut file = File::open(&self.map_file)?;
+        let mut buf = String::new();
+        file.read_to_string(&mut buf)?;
+        let map = serde_json::from_str(&buf)?;
+        return Ok(map);
     }
 }
