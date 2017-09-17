@@ -74,12 +74,11 @@ class Visuals {
     // Text color
     visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn.color_map[d.owner]);
     visuals.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
-
     visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
 
-    // Update orbits
     planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
     planets.select('.owner_background').attr('fill', d => turn.color_map[d.owner]);
+    planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
 
     // TODO sometimes animation and turn timers get desynched and the animation is interupted
     // also replace this with a for each so we can reuse calculations
@@ -347,6 +346,7 @@ Visuals.Planets = class {
       .attr("font-family", "sans-serif")
       .attr("font-size", 1 * scale + "px")
       .attr('fill', d => color_map[d.owner])
+      .attr('class', 'ship_count')
       .text(d => "\u2694 " + d.ship_count)
       .append('title').text(d => Visuals.visualOwnerName(d.owner));
   }
