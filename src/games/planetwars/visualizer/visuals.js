@@ -1,36 +1,28 @@
 class Visuals {
-  constructor(){
+  constructor() {
     this.scale = 1;
     this.resource_loader = new Visuals.ResourceLoader();
   }
 
   update(turn) {
-    var planets = svg.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition').data(turn.expeditions, d => d.id);
+    var turn = new Visuals.TurnWrapper(turn);
+    var planets = turn.planets;
+    var expeditions = turn.expeditions;
 
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
-    var fleet_wrapper = new_planets.append('g')
-      .data(turn.planets.map(d => {
-        return {
-          size: 1 * visuals.scale,
-          distance: d.size + orbit_size * visuals.scale,
-          angle: space_math.randomIntBetween(1, 360),
-          speed: space_math.randomIntBetween(100, 1000),
-          planet: d
-        };
-      }));
+    var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
     // Add the new objects
-    visuals.addPlanets(new_planets, turn.color_map);
-    visuals.addFleets(fleet_wrapper, turn.color_map);
-    visuals.addExpeditions(new_expeditions, turn.color_map);
+    this.addPlanets(new_planets, turn.color_map);
+    this.addFleets(fleet_wrappers, turn.color_map);
+    this.addExpeditions(new_expeditions, turn.color_map);
   }
 
   updateAnimations(turn, turn_control) {
     var planets = svg.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition').data(turn.expeditions, d => d.id );
+    var expeditions = svg.selectAll('.expedition').data(turn.expeditions, d => d.id);
 
     //PLANETS
     // Text color
@@ -105,13 +97,13 @@ class Visuals {
 
   addPlanets(d3selector, color_map) {
     d3selector.append('circle')
-    .attr('class', 'planet')
-    .attr('r', d => d.size)
-    .attr('cx', d => d.x)
-    .attr('cy', d => d.y)
-    .attr('fill', d => 'url(#' + d.type + ')')
-    .append('title')
-    .text(d => d.owner);
+      .attr('class', 'planet')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('fill', d => 'url(#' + d.type + ')')
+      .append('title')
+      .text(d => d.owner);
 
     d3selector.append('text')
       .attr('x', d => d.x)
@@ -230,6 +222,38 @@ class Visuals {
 
   translation(point) {
     return 'translate(' + point.x + ',' + point.y + ')';
+  }
+}
+
+Visuals.Fleet = class {
+  constructor(planet, scale) {
+    this.size = 1 * scale;
+    this.distance = d.size + orbit_size * scale;
+    this.angle = space_math.randomIntBetween(1, 360);
+    this.speed =  space_math.randomIntBetween(100, 1000);
+    this.planet = planet;
+  }
+}
+
+Visuals.TurnWrapper = class {
+  constructor(turn) {
+    this.turn = turn;
+  }
+
+  get planets() {
+    return svg.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
+  }
+
+  get expeditions() {
+    return svg.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+  }
+
+  get planet_data(){
+    return this.turn.planets;
+  }
+
+  get color_map() {
+    return this.turn.color_map;
   }
 }
 
