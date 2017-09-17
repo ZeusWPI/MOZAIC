@@ -363,9 +363,9 @@ Visuals.ResourceLoader = class {
     // Define patterns
     svg.append("defs");
     Config.planet_types.forEach(p => {
-      this.setupPattern(p + ".png", 100, 100, p);
+      this.setupPattern(p + ".svg", 100, 100, p);
     });
-    this.setupPattern("rocket.png", 100, 100, "ship");
+    this.setupPattern("rocket.svg", 100, 100, "ship");
     this.setupPattern("station.svg", 100, 100, "fleet");
   }
 

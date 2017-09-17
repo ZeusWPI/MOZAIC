@@ -1,6 +1,7 @@
 class Config {
   static get planet_types() {
-    return ["water", "red", "moon", "mars", "earth"];
+    // return ["water", "red", "moon", "mars", "earth"];
+    return ["earth", "jupiter", "mars", "neptune", "sun", "uranus", "venus"];
   }
 
   static get max_planet_size() {
