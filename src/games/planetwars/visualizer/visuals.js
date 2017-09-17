@@ -251,10 +251,9 @@ Visuals.Fleets = class {
       .attr('r', d => d.distance)
       .style('fill', "none")
       .style('stroke', d => {
-
         return color_map[d.planet.owner];
-
       })
+      .style('stroke-opacity', 0.5)
       .style('stroke-width', 0.05);
   }
 
