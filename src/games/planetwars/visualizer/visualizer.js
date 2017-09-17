@@ -41,7 +41,7 @@ class TurnController {
 
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
-    visuals.update(first_turn);
+    visuals.addNewObjects(first_turn);
 
     this.planet_map
   }
@@ -62,8 +62,8 @@ class TurnController {
       turn.planet_map = this.turns[0].planet_map;
       turn.color_map = this.turns[0].color_map;
       turn.prepareData();
-      visuals.update(turn);
-      visuals.updateAnimations(turn, this);
+      visuals.addNewObjects(turn);
+      visuals.update(turn, this);
       return true;
     }
   }
@@ -176,7 +176,7 @@ class Expedition {
     this.turns_remaining = log_exp.turns_remaining;
   }
 
-  position(){
+  position() {
     var total_distance = Math.ceil(space_math.euclideanDistance(this.origin, this.destination));
     var mod = this.turns_remaining / total_distance;
 

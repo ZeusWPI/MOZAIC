@@ -45,12 +45,11 @@ class Visuals {
     max_y += Math.abs(min_y);
 
     this.scale = max_x / 50;
-    //console.log(this.scale);
 
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
-  update(turn) {
+  addNewObjects(turn) {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
@@ -66,7 +65,7 @@ class Visuals {
     Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map, this.scale);
   }
 
-  updateAnimations(turn, turn_control) {
+  update(turn, turn_control) {
     var planets = svg.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
     var expeditions = svg.selectAll('.expedition').data(turn.expeditions, d => d.id);
 
@@ -102,7 +101,7 @@ class Visuals {
       .duration(turn_control.speed)
       .ease(d3.easeLinear)
       .attr('transform', exp => {
-        
+
       })
 
     // Old expeditions to remove
@@ -110,9 +109,9 @@ class Visuals {
     planets.exit().remove();
   }
 
-  expHomanRotation(exp){
+  expHomanRotation(exp) {
     var total_distance = space_math.euclideanDistance(exp.origin, exp.destination);
-    
+
     var r1 = (exp.origin.size) / 2 + 3;
     var r2 = (exp.destination.size) / 2 + 3;
 
@@ -175,15 +174,18 @@ class Visuals {
   }
 
   static resize(planet, amount) {
-    var tx = -planet.x*(amount - 1);
-    var ty = -planet.y*(amount - 1);
-    return Visuals.translation({x:tx, y:ty}) + ' scale(' + amount + ')';
+    var tx = -planet.x * (amount - 1);
+    var ty = -planet.y * (amount - 1);
+    return Visuals.translation({
+      x: tx,
+      y: ty
+    }) + ' scale(' + amount + ')';
   }
 
   static rotate(amount, x, y) {
-    return "rotate(" + amount + "," + x + "," + y +")";
+    return "rotate(" + amount + "," + x + "," + y + ")";
   }
-  
+
   static visualOwnerName(name) {
     if (name === null) return 'None';
     else return name;
@@ -197,7 +199,7 @@ Visuals.Expeditions = class {
     Visuals.Expeditions.drawShipCount(d3selector, color_map, scale);
   }
 
-  static getLocation(exp){
+  static getLocation(exp) {
     //var point = exp.homannPosition();
     var point = exp.position();
     return Visuals.translation(point)
@@ -256,7 +258,7 @@ Visuals.Fleets = class {
     wrapper.append('circle')
       .attr('transform', d => Visuals.translation(d.planet))
       .attr('class', 'fleet')
-      .attr('r', d => d.size * 0.7 )
+      .attr('r', d => d.size * 0.7)
       .attr('cx', d => d.distance)
       .attr('cy', 0)
       .attr('fill', d => "url(#fleet)")
@@ -296,7 +298,7 @@ Visuals.Planets = class {
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
       .attr('fill', d => 'url(#' + d.type + ')');
-      
+
     wrapper.append('title')
       .text(d => Visuals.visualOwnerName(d.owner));
   }
