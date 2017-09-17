@@ -220,7 +220,7 @@ Visuals.Expeditions = class {
 
   static drawShipCount(d3selector, color_map, scale) {
     d3selector.append('text')
-      .attr('y', 2)
+      .attr('y', 2 * scale)
       .attr("font-family", "sans-serif")
       .attr("font-size", 1 * scale + "px")
       .attr('fill', exp => color_map[exp.owner])
