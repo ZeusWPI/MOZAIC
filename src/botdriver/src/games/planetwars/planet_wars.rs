@@ -61,18 +61,20 @@ impl Game for PlanetWars {
     type Config = PlanetWarsConf;
 
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
-        // Transform to HashMap<PlayerId, Rc<RefCell<Player>>>
-        let mut players = HashMap::new();
-        for (&id, info) in params.players.iter() {
-            players.insert(id, Player {
-                id: id,
-                name: info.name.clone(),
-                alive: true,
-            });
-        }
-        let planets = params.game_config.load_map(&players).into_iter().map(|planet| {
-            (planet.name.clone(), planet)
-        }).collect();
+        let players : PlayerMap<Player> = params.players.iter()
+            .map(|(&id, info)| {
+                let player = Player {
+                    id: id,
+                    name: info.name.clone(),
+                    alive: true,
+                };
+                return (id, player);
+            }).collect();
+        
+        let planets = params.game_config.load_map(&players).into_iter()
+            .map(|planet| {
+                (planet.name.clone(), planet)
+            }).collect();
         
         let mut state = PlanetWars {
             planets: planets,
