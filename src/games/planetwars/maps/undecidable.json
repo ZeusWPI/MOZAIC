@@ -9,14 +9,14 @@
             "x": -5,
             "y": 0,
             "owner": "player_1",
-            "ship_count": 0
+            "ship_count": 6
         },
         {
             "name": "unstopable force",
             "x": 5,
             "y": 0,
             "owner": "player_2",
-            "ship_count": 0
+            "ship_count": 6
         }
     ]
 }

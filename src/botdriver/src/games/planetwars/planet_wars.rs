@@ -9,9 +9,6 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 
-
-const START_SHIPS: u64 = 15;
-
 #[derive(Debug)]
 pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
@@ -93,8 +90,6 @@ impl Game for PlanetWars {
             max_turns: params.game_config.max_turns,
             log: params.logger,
         };
-
-        state.place_players();
 
         state.log_state();
         let prompts = state.generate_prompts();
@@ -254,19 +249,6 @@ impl PlanetWars {
                 // owner owns a planet; this is a sign of life.
                 self.players.get_mut(&owner).unwrap().alive = true;
             }
-        }
-    }
-
-
-    fn place_players(&mut self) {
-        let mut planets = self.planets.values_mut().take(self.players.len());
-        for player in self.players.values() {
-            let planet = planets.next()
-                .expect("Not enough planets");
-            planet.orbit( Fleet {
-                owner: Some(player.id),
-                ship_count: START_SHIPS,
-            });
         }
     }
 }

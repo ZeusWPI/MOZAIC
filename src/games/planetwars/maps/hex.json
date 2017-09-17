@@ -9,7 +9,7 @@
             "x": -6,
             "y": 0,
             "owner": "player_1",
-            "ship_count": 0
+            "ship_count": 6
         },
         {
             "name": "duteros",
@@ -28,7 +28,7 @@
             "x": 6,
             "y": 0,
             "owner": "player_2",
-            "ship_count": 0
+            "ship_count": 6
         },
         {
             "name": "pemptos",
