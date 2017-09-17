@@ -19,6 +19,8 @@ pub struct PlanetWars {
     // How many expeditions were already dispatched.
     // This is needed for assigning expedition identifiers.
     expedition_num: u64,
+    turn_num: u64,
+    max_turns: u64,
     log: Logger,
 }
 
@@ -57,7 +59,7 @@ pub struct PlanetWarsConf {
 
 impl Game for PlanetWars {
     // Name of the game winner.
-    type Outcome = String;
+    type Outcome = Vec<String>;
     type Config = PlanetWarsConf;
 
     fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
@@ -70,7 +72,7 @@ impl Game for PlanetWars {
                 };
                 return (id, player);
             }).collect();
-        
+
         let planets = params.game_config.load_map(&players).into_iter()
             .map(|planet| {
                 (planet.name.clone(), planet)
@@ -81,6 +83,8 @@ impl Game for PlanetWars {
             players: players,
             expeditions: Vec::new(),
             expedition_num: 0,
+            turn_num: 0,
+            max_turns: 5,
             log: params.logger,
         };
 
@@ -92,6 +96,8 @@ impl Game for PlanetWars {
     }
 
     fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
+        self.turn_num += 1;
+        
         // TODO: separate this into a function
         let mut commands : Vec<(PlayerId, protocol::Command)> = Vec::new();
 
@@ -123,8 +129,14 @@ impl Game for PlanetWars {
         self.log_state();
 
         if self.is_finished() {
-            let winner = self.players.values().filter(|p| p.alive).nth(0).unwrap();
-            GameStatus::Finished(winner.name.clone())
+            let alive = self.players.values().filter_map(|p| {
+                if p.alive {
+                    Some(p.name.clone())
+                } else {
+                    None
+                }
+            }).collect();
+            GameStatus::Finished(alive)
         } else {
             GameStatus::Prompting(self.generate_prompts())
         }
@@ -154,7 +166,8 @@ impl PlanetWars {
     }
 
     fn is_finished(&self) -> bool {
-        self.players.values().filter(|p| p.alive).count() <= 1
+        let remaining = self.players.values().filter(|p| p.alive).count();
+        return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
     fn repr(&self) -> protocol::State {
