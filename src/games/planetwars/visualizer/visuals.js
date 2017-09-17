@@ -79,6 +79,7 @@ class Visuals {
 
     // Update orbits
     planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
+    planets.select('.owner_background').attr('fill', d => turn.color_map[d.owner]);
 
     // TODO sometimes animation and turn timers get desynched and the animation is interupted
     // also replace this with a for each so we can reuse calculations
@@ -314,6 +315,7 @@ Visuals.Planets = class {
       .attr('r', d => d.size)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
+      .attr('class', 'owner_background')
       .attr('fill', d => color_map[d.owner]);
 
     wrapper.append('circle')
