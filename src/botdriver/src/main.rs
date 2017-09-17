@@ -21,7 +21,7 @@ use bot_runner::*;
 use match_runner::*;
 use logger::Logger;
 
-use games::PlanetWars;
+use games::planetwars;
 
 // Load the config and start the game.
 fn main() {
@@ -54,7 +54,7 @@ fn main() {
     {
         let config = MatchParams {
             players: player_names,
-            game_config: (),
+            game_config: match_description.game_config,
             logger: Logger::new("log.json"),
         };
         
@@ -62,16 +62,17 @@ fn main() {
         let mut runner = MatchRunner {
             players: bots.player_handles(),
         };
-        let outcome = runner.run::<PlanetWars>(config);
+        let outcome = runner.run::<planetwars::PlanetWars>(config);
         println!("Outcome: {:?}", outcome);
     }
 
     bots.kill();
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize)]
 pub struct MatchDescription {
     pub players: Vec<PlayerConfig>,
+    pub game_config: planetwars::Config,
 }
 
 // Parse a config passed to the program as an command-line argument.
