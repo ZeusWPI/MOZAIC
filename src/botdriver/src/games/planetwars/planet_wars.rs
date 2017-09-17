@@ -12,6 +12,7 @@ use std::fs::File;
 
 const START_SHIPS: u64 = 15;
 
+#[derive(Debug)]
 pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
@@ -24,17 +25,20 @@ pub struct PlanetWars {
     log: Logger,
 }
 
+#[derive(Debug)]
 struct Player {
     id: PlayerId,
     name: String,
     alive: bool,
 }
 
+#[derive(Debug)]
 pub struct Fleet {
     owner: Option<PlayerId>,
     ship_count: u64,
 }
 
+#[derive(Debug)]
 pub struct Planet {
     pub name: String,
     pub fleets: Vec<Fleet>,
@@ -42,6 +46,7 @@ pub struct Planet {
     pub y: f64,
 }
 
+#[derive(Debug)]
 pub struct Expedition {
     id: u64,
     origin: String,
@@ -50,7 +55,7 @@ pub struct Expedition {
     turns_remaining: u64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PlanetWarsConf {
     pub map_file: String,
     pub player_map: HashMap<String, String>,
@@ -123,7 +128,6 @@ impl Game for PlanetWars {
         for player in self.players.values_mut() {
             player.alive = false;
         }
-
         self.step_expeditions();
         self.step_planets();
 
@@ -259,7 +263,7 @@ impl PlanetWars {
         for player in self.players.values() {
             let planet = planets.next()
                 .expect("Not enough planets");
-            planet.fleets.push( Fleet {
+            planet.orbit( Fleet {
                 owner: Some(player.id),
                 ship_count: START_SHIPS,
             });

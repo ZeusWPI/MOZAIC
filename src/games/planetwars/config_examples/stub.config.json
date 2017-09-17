@@ -16,7 +16,7 @@
             "bert": "player_1",
             "timp": "player_2"
         },
-        "map_file": "../games/planetwars/maps/undecidable.json",
+        "map_file": "../games/planetwars/maps/hex.json",
         "max_turns": 500
     }
 }
