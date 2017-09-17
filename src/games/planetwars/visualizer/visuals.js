@@ -73,7 +73,7 @@ class Visuals {
     //PLANETS
     // Text color
     visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn.color_map[d.owner]);
-    visuals.attachToAllChildren(planets.selectAll('title')).text(d => d.owner);
+    visuals.attachToAllChildren(planets.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
     visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
 
     planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
@@ -213,7 +213,7 @@ Visuals.Expeditions = class {
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
-      .append('title').text(exp => exp.owner);
+      .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
   }
 
   static drawShipCount(d3selector, color_map, scale) {
@@ -223,7 +223,7 @@ Visuals.Expeditions = class {
       .attr("font-size", 1 * scale + "px")
       .attr('fill', exp => color_map[exp.owner])
       .text(exp => "\u2694 " + exp.ship_count)
-      .append('title').text(exp => exp.owner);
+      .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
   }
 }
 
