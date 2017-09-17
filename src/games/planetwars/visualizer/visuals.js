@@ -266,10 +266,10 @@ Visuals.Fleets = class {
     wrapper.append('circle')
       .attr('transform', d => Visuals.translation(d.planet))
       .attr('class', 'fleet')
-      .attr('r', d => d.size)
+      .attr('r', d => d.size * 0.7 )
       .attr('cx', d => d.distance)
       .attr('cy', 0)
-      .attr('fill', d => "url(#ship)")
+      .attr('fill', d => "url(#fleet)")
       .append('title').text(d => d.planet.owner);
   }
 
@@ -359,25 +359,14 @@ Visuals.TurnWrapper = class {
 
 Visuals.ResourceLoader = class {
 
-  static get rocket_size() {
-    return 100;
-  }
-
-  static get planet_size() {
-    return 100;
-  }
-
   static setupPatterns() {
     // Define patterns
     svg.append("defs");
     Config.planet_types.forEach(p => {
-      this.setupPattern(
-        p,
-        Visuals.ResourceLoader.planet_size,
-        Visuals.ResourceLoader.planet_size,
-      p);
+      this.setupPattern(p + ".png", 100, 100, p);
     });
-    this.setupPattern("rocket", this.rocket_size, this.rocket_size, "ship");
+    this.setupPattern("rocket.png", 100, 100, "ship");
+    this.setupPattern("station.svg", 100, 100, "fleet");
   }
 
   static setupPattern(name, width, height, id) {
@@ -392,6 +381,6 @@ Visuals.ResourceLoader = class {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "res/" + name + ".png");
+      .attr("xlink:href", "res/" + name);
   }
 }
