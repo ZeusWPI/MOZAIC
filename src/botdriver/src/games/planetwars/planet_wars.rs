@@ -54,6 +54,7 @@ pub struct Expedition {
 pub struct PlanetWarsConf {
     pub map_file: String,
     pub player_map: HashMap<String, String>,
+    pub max_turns: u64,
 }
 
 
@@ -84,7 +85,7 @@ impl Game for PlanetWars {
             expeditions: Vec::new(),
             expedition_num: 0,
             turn_num: 0,
-            max_turns: 5,
+            max_turns: params.game_config.max_turns,
             log: params.logger,
         };
 
