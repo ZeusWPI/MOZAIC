@@ -13,14 +13,19 @@ body {
 
 #game {
   margin: 0 auto;
-  height: 100vh;
+  width: 100%;
+  height: 95vh;
 }
 
 #controlbar {
-  height: 15vh;
+  height: 10vh;
   position: absolute;
   bottom: 0;
   width: 100%;
+}
+
+.speed {
+  float: right;
 }
 
 .speedcontrols {
@@ -37,7 +42,6 @@ body {
   height: auto;
 }
 
-
 .controlbar p {
   font-size: 12px;
   width: auto;
@@ -47,7 +51,6 @@ body {
 
 #file-select {
   float: left;
-  height: 50px;
 }
 
 #turn_slider{

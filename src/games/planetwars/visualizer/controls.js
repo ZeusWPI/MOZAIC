@@ -21,6 +21,13 @@ class Controls {
       play_button.attr("hidden", null);
     });
 
+    d3.select('#next').on("click", e => {
+      visualizer.nextTurn();
+    });
+
+    d3.select('#previous').on("click", e => {
+      visualizer.previousTurn();
+    });
 
     d3.select('#toggleplay').on("click", e => {
       var button = d3.select('#toggleplay');
@@ -74,7 +81,7 @@ class Controls {
       });
     this.updateSpeed(this.speeds[this.mod]);
 
- 
+
   }
 
   updateSpeed(val) {
