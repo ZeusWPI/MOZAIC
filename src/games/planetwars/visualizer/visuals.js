@@ -1,12 +1,52 @@
+// Constants
+const svg = d3.select("svg");
+
 class Visuals {
   constructor() {
     this.scale = 1;
-    this.resource_loader = new Visuals.ResourceLoader();
   }
 
   clearVisuals() {
     svg.selectAll('.planet_wrapper').remove();
     svg.selectAll('.expedition').remove();
+  }
+
+  generateViewBox(planets) {
+    // Setup view
+    var min_x = Infinity;
+    var min_y = Infinity;
+    var max_x = 0;
+    var max_y = 0;
+    var padding = 1;
+
+    planets.forEach(e => {
+      var offset = (e.size + Config.orbit_size + padding);
+      var n_max_x = e.x + offset;
+      var n_min_x = e.x - offset;
+      var n_max_y = e.y + offset;
+      var n_min_y = e.y - offset;
+
+      if (n_max_x > max_x) {
+        max_x = n_max_x;
+      }
+      if (n_min_x < min_x) {
+        min_x = n_min_x;
+      }
+      if (n_max_y > max_y) {
+        max_y = n_max_y;
+      }
+      if (n_min_y < min_y) {
+        min_y = n_min_y;
+      }
+    });
+
+    max_x += Math.abs(min_x);
+    max_y += Math.abs(min_y);
+
+    //this.scale = max_x / 50;
+    //console.log(this.scale);
+
+    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
   update(turn) {
@@ -233,6 +273,15 @@ Visuals.Fleets = class {
       .attr('fill', d => "url(#ship)")
       .append('title').text(d => d.planet.owner);
   }
+
+  static animateFleets() {
+    d3.timer(elapsed => {
+      svg.selectAll('.fleet')
+        .attr('transform', (d, i) => {
+          return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
+        });
+    });
+  }
 }
 
 Visuals.Planets = class {
@@ -311,21 +360,28 @@ Visuals.TurnWrapper = class {
 
 Visuals.ResourceLoader = class {
 
-  constructor() {
-    this.rocket_size = 100;
-    this.planet_size = 100;
+  static get rocket_size() {
+    return 100;
   }
 
-  setupPatterns() {
+  static get planet_size() {
+    return 100;
+  }
+
+  static setupPatterns() {
     // Define patterns
     svg.append("defs");
     Config.planet_types.forEach(p => {
-      this.setupPattern(p, this.planet_size, this.planet_size, p);
+      this.setupPattern(
+        p,
+        Visuals.ResourceLoader.planet_size,
+        Visuals.ResourceLoader.planet_size,
+      p);
     });
     this.setupPattern("rocket", this.rocket_size, this.rocket_size, "ship");
   }
 
-  setupPattern(name, width, height, id) {
+  static setupPattern(name, width, height, id) {
     svg.select("defs")
       .append("pattern")
       .attr("id", id)

@@ -1,7 +1,3 @@
-// TODO: Throw all d3 visual and svg manipulation in a separate class
-
-// Constants
-const svg = d3.select("svg");
 const space_math = new SpaceMath();
 const visuals = new Visuals();
 
@@ -31,7 +27,7 @@ class Visualizer {
       var turns = this.parseJSON(event.target.result);
       this.turn_controller.init(turns);
       controls.attachEvents(this.turn_controller);
-      this.animateFleets()
+      Visuals.Fleets.animateFleets()
     }
 
     reader.readAsText(e.files[0]);
@@ -44,14 +40,6 @@ class Visualizer {
     });
   }
 
-  animateFleets(){
-    d3.timer(elapsed => {
-      svg.selectAll('.fleet')
-        .attr('transform', (d, i) => {
-          return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
-        });
-    });
-  }
 }
 
 class TurnController {
@@ -64,7 +52,7 @@ class TurnController {
   init(turns) {
     this.turns = turns;
     var first_turn = this.turns[0];
-    visuals.resource_loader.setupPatterns();
+    Visuals.ResourceLoader.setupPatterns();
     first_turn.init();
     first_turn.prepareData();
     visuals.update(first_turn);
@@ -150,41 +138,7 @@ class Turn {
       return map;
     }, {});
 
-    // Setup view
-    var min_x = Infinity;
-    var min_y = Infinity;
-    var max_x = 0;
-    var max_y = 0;
-    var padding = 1;
-
-    this.planets.forEach(e => {
-      var offset = (e.size + Config.orbit_size + padding);
-      var n_max_x = e.x + offset;
-      var n_min_x = e.x - offset;
-      var n_max_y = e.y + offset;
-      var n_min_y = e.y - offset;
-
-      if (n_max_x > max_x) {
-        max_x = n_max_x;
-      }
-      if (n_min_x < min_x) {
-        min_x = n_min_x;
-      }
-      if (n_max_y > max_y) {
-        max_y = n_max_y;
-      }
-      if (n_min_y < min_y) {
-        min_y = n_min_y;
-      }
-    });
-
-    max_x += Math.abs(min_x);
-    max_y += Math.abs(min_y);
-
-    //this.scale = max_x / 50;
-    //console.log(this.scale);
-
-    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+    visuals.generateViewBox(this.planets);
 
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
