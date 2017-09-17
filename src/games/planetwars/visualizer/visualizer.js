@@ -3,34 +3,11 @@ const visuals = new Visuals();
 
 class Visualizer {
 
-  constructor() {
+  constructor(log) {
+    var turns = this.parseJSON(log);
     this.turn_controller = new TurnController();
-  }
-
-  generateLegend() {
-    // Info
-    //TODO do away with the whole legend thing and make planet and fleet owners clear in another way
-    // instead create a current state board containing player owned planets and fleet strengths for the more hectic games
-    d3.select("body")
-      .selectAll("p")
-      .data(data.players)
-      .enter().append("p")
-      .text((d, i) => `I’m called ${d}!`)
-      .style('color', (d, i) => color(i));
-
-  }
-
-  readLog(e) {
-    var reader = new FileReader();
-
-    reader.onload = event => {
-      var turns = this.parseJSON(event.target.result);
-      this.turn_controller.init(turns);
-      controls.attachEvents(this.turn_controller);
-      Visuals.Fleets.animateFleets()
-    }
-
-    reader.readAsText(e.files[0]);
+    this.turn_controller.init(turns);
+    Visuals.Fleets.animateFleets();
   }
 
   parseJSON(json) {
@@ -40,6 +17,10 @@ class Visualizer {
     });
   }
 
+  clear() {
+    Visuals.clearVisuals();
+    this.turn_controller.stopTimer();
+  }
 }
 
 class TurnController {
@@ -107,7 +88,9 @@ class TurnController {
   }
 
   stopTimer() {
-    this.turn_timer.stop();
+    if (this.turn_timer) {
+      this.turn_timer.stop();
+    }
   }
 
   setTurn(newTurn) {

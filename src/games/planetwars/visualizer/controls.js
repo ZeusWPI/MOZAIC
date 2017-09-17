@@ -4,21 +4,32 @@ class Controls {
     this.speeds = [0.25, 0.33, 0.5, 1, 2, 3, 4];
   }
 
+  readLog(e) {
+    if (this.visualizer) {
+      this.hidePauseButton();
+      this.visualizer.clear();
+    }
+    
+    var reader = new FileReader();
+    reader.onload = event => {
+      var log = event.target.result;
+      this.visualizer = new Visualizer(log);
+      this.attachEvents(this.visualizer.turn_controller);
+    }
+
+    reader.readAsText(e.files[0]);
+  }
+
   attachEvents(turn_controller) {
+    
     d3.select('#play').on("click", e => {
-      var play_button = d3.select('#play');
-      var pause_button = d3.select('#pause');
       turn_controller.startTimer();
-      play_button.attr("hidden", true);
-      pause_button.attr("hidden", null);
+      this.hidePlayButton();
     });
 
     d3.select('#pause').on("click", e => {
-      var pause_button = d3.select('#pause');
-      var play_button = d3.select('#play');
       turn_controller.stopTimer();
-      pause_button.attr("hidden", true);
-      play_button.attr("hidden", null);
+      this.hidePauseButton();
     });
 
     d3.select('#next').on("click", e => {
@@ -57,19 +68,13 @@ class Controls {
     d3.select('#tostart').on("click", e => {
       turn_controller.showTurn(0);
       turn_controller.stopTimer();
-      var play_button = d3.select('#play');
-      var pause_button = d3.select('#pause');
-      play_button.attr("hidden", null);
-      pause_button.attr("hidden", true);
+      this.hidePauseButton();
     });
 
     d3.select('#toend').on("click", e => {
       turn_controller.showTurn(turn_controller.maxTurns);
       turn_controller.stopTimer();
-      var play_button = d3.select('#play');
-      var pause_button = d3.select('#pause');
-      play_button.attr("hidden", true);
-      pause_button.attr("hidden", null);
+      this.hidePlayButton();
     });
 
     d3.select('#turn_slider')
@@ -81,7 +86,20 @@ class Controls {
       });
     this.updateSpeed(this.speeds[this.mod]);
 
+  }
 
+  hidePauseButton(){
+    var play_button = d3.select('#play');
+    var pause_button = d3.select('#pause');
+    play_button.attr("hidden", null);
+    pause_button.attr("hidden", true);
+  }
+
+  hidePlayButton(){
+    var play_button = d3.select('#play');
+    var pause_button = d3.select('#pause');
+    play_button.attr("hidden", true);
+    pause_button.attr("hidden", null);
   }
 
   updateSpeed(val) {
@@ -89,6 +107,4 @@ class Controls {
   }
 }
 
-
 var controls = new Controls();
-var visualizer = new Visualizer();
