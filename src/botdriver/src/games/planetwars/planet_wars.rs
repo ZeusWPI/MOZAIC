@@ -203,6 +203,9 @@ impl PlanetWars {
         if origin.ship_count() < m.ship_count {
             return;
         }
+        if m.ship_count == 0 {
+            return;
+        }
 
         // TODO: maybe wrap this in a helper function
         origin.fleets[0].ship_count -= m.ship_count;
