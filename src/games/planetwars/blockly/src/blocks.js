@@ -24,4 +24,23 @@ Blockly.Blocks['players'] = {
     this.setColour(MAGIC_OBJECT_COLOR);
     this.setOutput(true, 'List');
   }
-}
+};
+
+
+Blockly.Blocks['get_owner'] = {
+  init: function() {
+    this.appendValueInput('OBJ')
+      .setCheck(['Planet', 'Expedition'])
+      .appendField('owner of');
+    this.setOutput(true, 'Player');
+  }
+};
+
+Blockly.Blocks['get_ship_count'] = {
+  init: function() {
+    this.appendValueInput('OBJ')
+      .setCheck(['Planet', 'Expedition'])
+      .appendField('fleet size of');
+    this.setOutput(true, 'Number');
+  }
+};
