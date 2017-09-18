@@ -2,6 +2,18 @@ class Controls {
   constructor() {
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
+    d3.select('#unhide').attr("hidden", true);
+
+    d3.select('#hide').on("click", e => {
+      d3.select('#controlbar').attr("hidden", true);
+      d3.select('#hide').attr("hidden", true);
+      d3.select('#unhide').attr("hidden", null);
+    });
+    d3.select('#unhide').on("click", e => {
+      d3.select('#controlbar').attr("hidden", null);
+      d3.select('#hide').attr("hidden", null);
+      d3.select('#unhide').attr("hidden", true);
+    });
   }
 
   readLog(e) {
@@ -23,14 +35,10 @@ class Controls {
   attachEvents(turn_controller) {
 
     d3.select('#play').on("click", e => {
-      //turn_controller.startTimer();
-      //this.hidePlayButton();
       turn_controller.runningbinder.update(true);
     });
 
     d3.select('#pause').on("click", e => {
-      //turn_controller.stopTimer();
-      //this.hidePauseButton();
       turn_controller.runningbinder.update(false);
     });
 

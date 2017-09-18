@@ -7,6 +7,15 @@
   </head>
   <body>
     <div id="view">
+      <!-- Hide/unhide button -->
+      <button type="button" name="buton" id="hide" class="control control-button">
+          <img src="res/minus.svg"/>
+      </button>
+
+      <button type="button" name="buton" id="unhide" class="control control-button">
+          <img src="res/plus.svg"/>
+      </button>
+
       <div id="controlbar">
         <input type="range" id="turn_slider" value="0" class="control"/>
         <input id="file-select" type="file" onchange="controls.readLog(this)" class="control"/>
@@ -16,7 +25,7 @@
           <!-- Rewind button -->
           <button type="button" name="buton" id="tostart" class="control control-button">
               <img src="res/rewind.svg"/>
-            </button>
+          </button>
 
           <!-- Speed down button -->
           <button type="button" name="button" id="speeddown" class="control control-button">
