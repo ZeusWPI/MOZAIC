@@ -1,0 +1,14 @@
+{
+  "name": "mozaic-client",
+  "version": "1.0.0",
+  "description": "mozaic client",
+  "main": "app.js",
+  "scripts": {
+    "start": "webpack-dev-server --progress --colors --hot --config ./webpack.config.js"
+  },
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "dependencies": {
+    "node-blockly": "1.0.26"
+  }
+}
