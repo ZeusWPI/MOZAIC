@@ -42,8 +42,7 @@ class TurnController {
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
     visuals.addNewObjects(first_turn);
-
-    this.planet_map
+    visuals.update(first_turn, this);
   }
 
   nextTurn() {

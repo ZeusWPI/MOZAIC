@@ -63,11 +63,13 @@ class Visuals {
     Visuals.Planets.addPlanetVisuals(new_planets, turn.color_map, this.scale);
     Visuals.Fleets.addFleetVisuals(fleet_wrappers, turn.color_map);
     Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map, this.scale);
+    Visuals.Gimmicks.addGimmicks(turn.turn);
   }
 
   update(turn, turn_control) {
-    var planets = svg.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
-    var expeditions = svg.selectAll('.expedition').data(turn.expeditions, d => d.id);
+    var turn = new Visuals.TurnWrapper(turn);
+    var planets = turn.planets;
+    var expeditions = turn.expeditions;
 
     //PLANETS
     // Text color
@@ -76,7 +78,7 @@ class Visuals {
     visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
 
     planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
-    planets.select('.owner_background').attr('fill', d => turn.color_map[d.owner]);
+    planets.select('.planet_background').attr('fill', d => turn.color_map[d.owner]);
     planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
 
     // TODO sometimes animation and turn timers get desynched and the animation is interupted
@@ -96,13 +98,6 @@ class Visuals {
         };
       })*/
       .on('interrupt', e => console.log("inter"));
-
-    expeditions.select('circle').transition()
-      .duration(turn_control.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => {
-
-      })
 
     // Old expeditions to remove
     expeditions.exit().remove();
@@ -290,13 +285,14 @@ Visuals.Planets = class {
       .attr('r', d => d.size)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
-      .attr('class', 'owner_background')
+      .attr('class', 'planet_background')
       .attr('fill', d => color_map[d.owner]);
 
     wrapper.append('circle')
       .attr('r', d => d.size)
       .attr('cx', d => d.x)
       .attr('cy', d => d.y)
+      .attr('class', 'planet_model')
       .attr('fill', d => 'url(#' + d.type + ')');
 
     wrapper.append('title')
@@ -370,6 +366,7 @@ Visuals.ResourceLoader = class {
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");
     this.setupPattern("station.svg", 100, 100, "fleet");
+    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet")
   }
 
   static setupPattern(name, width, height, id) {
@@ -385,5 +382,23 @@ Visuals.ResourceLoader = class {
       .attr("height", height)
       .attr("preserveAspectRation", "none")
       .attr("xlink:href", "res/" + name);
+  }
+}
+
+Visuals.Gimmicks = class {
+  static addGimmicks(turn) {
+    Visuals.Gimmicks.addJigglyPlanets(turn);
+  }
+
+  static addJigglyPlanets(turn) {
+    var turn = new Visuals.TurnWrapper(turn);
+    var planets = turn.planets;
+
+    planets.select('.planet_model')
+      .filter(planet => {
+        return ["jigglypoef", "iepoef", "iepoev", "jigglypuff", "jigglypoev"]
+          .includes(planet.owner)
+      })
+      .attr('fill', 'url(#jigglyplanet)');
   }
 }
