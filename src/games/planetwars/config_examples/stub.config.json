@@ -17,6 +17,6 @@
             "timp": "player_2"
         },
         "map_file": "../games/planetwars/maps/hex.json",
-        "max_turns": 1000
+        "max_turns": 500
     }
 }

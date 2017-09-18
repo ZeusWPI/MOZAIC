@@ -9,7 +9,7 @@
     <div id="view">
       <div id="controlbar">
         <input type="range" id="turn_slider" value="0" class="control"/>
-        <input id="file-select" type="file" onchange="visualizer.parseJson(this)" class="control"/>
+        <input id="file-select" type="file" onchange="controls.readLog(this)" class="control"/>
 
         <div class="speedcontrols">
 
@@ -64,7 +64,9 @@
     </div>
 
     <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="./config.js" charset="utf-8"></script>
     <script src="./spacemath.js" charset="utf-8"></script>
+    <script src="./visuals.js" charset="utf-8"></script>
     <script src="./visualizer.js" charset="utf-8"></script>
     <script src="./controls.js" charset="utf-8"></script>
   </body>

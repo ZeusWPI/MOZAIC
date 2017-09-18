@@ -9,9 +9,7 @@ use std::io;
 use std::io::Read;
 use std::fs::File;
 
-
-const START_SHIPS: u64 = 15;
-
+#[derive(Debug)]
 pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
@@ -24,17 +22,20 @@ pub struct PlanetWars {
     log: Logger,
 }
 
+#[derive(Debug)]
 struct Player {
     id: PlayerId,
     name: String,
     alive: bool,
 }
 
+#[derive(Debug)]
 pub struct Fleet {
     owner: Option<PlayerId>,
     ship_count: u64,
 }
 
+#[derive(Debug)]
 pub struct Planet {
     pub name: String,
     pub fleets: Vec<Fleet>,
@@ -42,6 +43,7 @@ pub struct Planet {
     pub y: f64,
 }
 
+#[derive(Debug)]
 pub struct Expedition {
     id: u64,
     origin: String,
@@ -50,7 +52,7 @@ pub struct Expedition {
     turns_remaining: u64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct PlanetWarsConf {
     pub map_file: String,
     pub player_map: HashMap<String, String>,
@@ -89,8 +91,6 @@ impl Game for PlanetWars {
             log: params.logger,
         };
 
-        state.place_players();
-
         state.log_state();
         let prompts = state.generate_prompts();
         return (state, GameStatus::Prompting(prompts));
@@ -123,9 +123,9 @@ impl Game for PlanetWars {
         for player in self.players.values_mut() {
             player.alive = false;
         }
-
+        self.repopulate();
         self.step_expeditions();
-        self.step_planets();
+        self.resolve_combat();
 
         self.log_state();
 
@@ -203,6 +203,9 @@ impl PlanetWars {
         if origin.ship_count() < m.ship_count {
             return;
         }
+        if m.ship_count == 0 {
+            return;
+        }
 
         // TODO: maybe wrap this in a helper function
         origin.fleets[0].ship_count -= m.ship_count;
@@ -242,27 +245,21 @@ impl PlanetWars {
         }
     }
 
-    fn step_planets(&mut self) {
+    fn repopulate(&mut self) {
         for planet in self.planets.values_mut() {
-            planet.resolve_combat();
-            if let Some(owner) = planet.owner() {
+            if planet.owner().is_some() {
                 planet.fleets[0].ship_count += 1;
-                // owner owns a planet; this is a sign of life.
-                self.players.get_mut(&owner).unwrap().alive = true;
             }
         }
     }
 
-
-    fn place_players(&mut self) {
-        let mut planets = self.planets.values_mut().take(self.players.len());
-        for player in self.players.values() {
-            let planet = planets.next()
-                .expect("Not enough planets");
-            planet.fleets.push( Fleet {
-                owner: Some(player.id),
-                ship_count: START_SHIPS,
-            });
+    fn resolve_combat(&mut self) {
+        for planet in self.planets.values_mut() {
+            planet.resolve_combat();
+            if let Some(owner) = planet.owner() {
+                // owner owns a planet; this is a sign of life.
+                self.players.get_mut(&owner).unwrap().alive = true;
+            }
         }
     }
 }

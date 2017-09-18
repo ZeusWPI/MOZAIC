@@ -35,7 +35,6 @@ class SpaceMath {
     var closest = Infinity;
     points.map(p => {
       var dist = Math.abs(this.euclideanDistance(p, point));
-      console.log(dist);
       if (dist !== 0 && dist < closest) closest = dist;
     });
     return closest;

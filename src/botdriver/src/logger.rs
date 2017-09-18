@@ -3,6 +3,7 @@ use std::fs::File;
 use serde::Serialize;
 use serde_json;
 
+#[derive(Debug)]
 pub struct Logger {
     handle: LineWriter<File>,
 }
