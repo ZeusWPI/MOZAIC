@@ -13,6 +13,14 @@ Blockly.Blocks['planets'] = {
   }
 };
 
+Blockly.Blocks['expeditions'] = {
+  init: function() {
+    this.appendDummyInput().appendField('Expeditions');
+    this.setColour(275);
+    this.setOutput(true, 'List');
+  }
+};
+
 window.onload = function() {
   var workspace = Blockly.inject('blocklyDiv', {
     toolbox: document.getElementById('toolbox')
