@@ -123,8 +123,9 @@ impl Game for PlanetWars {
         for player in self.players.values_mut() {
             player.alive = false;
         }
+        self.repopulate();
         self.step_expeditions();
-        self.step_planets();
+        self.resolve_combat();
 
         self.log_state();
 
@@ -202,6 +203,9 @@ impl PlanetWars {
         if origin.ship_count() < m.ship_count {
             return;
         }
+        if m.ship_count == 0 {
+            return;
+        }
 
         // TODO: maybe wrap this in a helper function
         origin.fleets[0].ship_count -= m.ship_count;
@@ -241,11 +245,18 @@ impl PlanetWars {
         }
     }
 
-    fn step_planets(&mut self) {
+    fn repopulate(&mut self) {
+        for planet in self.planets.values_mut() {
+            if planet.owner().is_some() {
+                planet.fleets[0].ship_count += 1;
+            }
+        }
+    }
+
+    fn resolve_combat(&mut self) {
         for planet in self.planets.values_mut() {
             planet.resolve_combat();
             if let Some(owner) = planet.owner() {
-                planet.fleets[0].ship_count += 1;
                 // owner owns a planet; this is a sign of life.
                 self.players.get_mut(&owner).unwrap().alive = true;
             }
