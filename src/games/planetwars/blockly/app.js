@@ -1,8 +1,14 @@
 var Blockly = require("node-blockly/browser");
 
+// happier colours
+Blockly.HSV_SATURATION = 0.6;
+Blockly.HSV_VALUE = 0.8;
+
+
 Blockly.Blocks['planets'] = {
   init: function() {
     this.appendDummyInput().appendField('Planets');
+    this.setColour(275);
     this.setOutput(true, 'List');
   }
 };
