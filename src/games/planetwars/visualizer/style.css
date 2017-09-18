@@ -17,6 +17,13 @@ body {
   height: 95vh;
 }
 
+#score {
+  width: 20%;
+  height: 50vh;
+  position: absolute;
+  right: 0;
+}
+
 #hide {
   position: absolute;
   bottom: 6vh;

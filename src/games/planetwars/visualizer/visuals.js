@@ -1,5 +1,5 @@
 // Constants
-const svg = d3.select("svg");
+const svg = d3.select("#game");
 
 class Visuals {
   constructor() {
@@ -52,16 +52,19 @@ class Visuals {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
+    var scores = turn.scores;
 
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
     var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
+    var new_scores = scores.enter().append('g').attr('class', 'score');
 
     // Add the new objects
     Visuals.Planets.addPlanetVisuals(new_planets, color_map, this.scale);
     Visuals.Fleets.addFleetVisuals(fleet_wrappers, color_map);
     Visuals.Expeditions.addExpeditionVisuals(new_expeditions, color_map, this.scale);
+    Visuals.Scores.addScores(new_scores, color_map);
     Visuals.Gimmicks.addGimmicks(turn.turn);
   }
 
@@ -69,6 +72,7 @@ class Visuals {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
+    var scores = turn.scores;
 
     //PLANETS
     // Text color
@@ -80,6 +84,9 @@ class Visuals {
     planets.select('.owner_background').attr('fill', d => turn_control.color_map[d.owner]);
     planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
 
+    scores.select('.planet_count').text(d => d.planets);
+    scores.select('.expedition_count').text(d => d.expeditions);
+    scores.select('.strength').text(d => d.strength);
     // TODO sometimes animation and turn timers get desynched and the animation is interupted
     // also replace this with a for each so we can reuse calculations
     // EXPEDITIONS
@@ -359,10 +366,44 @@ Visuals.TurnWrapper = class {
   get color_map() {
     return this.turn.color_map;
   }
+
+  get scores() {
+    return d3.select('#score').selectAll('.score').data(this.turn.scores, d => d.player);
+  }
+}
+
+Visuals.Scores = class {
+  static addScores(d3selector, color_map) {
+    d3selector.attr("font-family", "sans-serif")
+      .attr("font-size", 12 + "px")
+      .attr('fill', d => color_map[d.player]);
+
+    d3selector.append('circle')
+      .attr('r', d => 5)
+      .attr('cx', d => 10)
+      .attr('cy', (d, i) => 20 + 20 * i)
+
+    d3selector.append('text').attr('class', 'player_name')
+      .attr('x', d => 30)
+      .attr('y', (d, i) => 25 + 20 * i)
+      .text(d => d.player);
+    d3selector.append('text').attr('class', 'planet_count')
+      .attr('x', d => 60)
+      .attr('y', (d, i) => 25 + 20 * i)
+      .text(d => d.planets);
+    d3selector.append('text').attr('class', 'expedition_count')
+      .attr('x', d => 80)
+      .attr('y', (d, i) => 25 + 20 * i)
+      .text(d => d.expeditions);
+    d3selector.append('text').attr('class', 'strength')
+      .attr('x', d => 100)
+      .attr('y', (d, i) => 25 + 20 * i)
+      .text(d => d.strength);
+
+  }
 }
 
 Visuals.ResourceLoader = class {
-
   static setupPatterns() {
     // Define patterns
     svg.append("defs");
