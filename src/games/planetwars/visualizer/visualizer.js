@@ -4,8 +4,8 @@ const visuals = new Visuals();
 class Visualizer {
 
   constructor(log) {
-    var turns = this.parseJSON(log);
     this.turn_controller = new TurnController();
+    var turns = this.parseJSON(log);
     this.turn_controller.init(turns);
     Visuals.Fleets.animateFleets();
   }
@@ -19,14 +19,25 @@ class Visualizer {
 
   clear() {
     Visuals.clearVisuals();
-    this.turn_controller.stopTimer();
+    this.turn_controller.runningbinder.update(false);
   }
 }
 
 class TurnController {
   constructor() {
     this.speed = Config.base_speed;
-    this.turn = 0;
+    this.turnbinder = new DataBinder(0);
+    this.turnbinder.registerCallback(v => {
+      this.running = this._showTurn(v);
+    });
+    this.runningbinder = new DataBinder(false);
+    this.runningbinder.registerCallback(v => {
+      if (v) {
+        this._startTimer();
+      } else {
+        this._stopTimer();
+      }
+    });
     this.turns = [];
   }
 
@@ -36,65 +47,70 @@ class TurnController {
     Visuals.clearVisuals();
 
     var first_turn = this.turns[0];
-    first_turn.init();
-    first_turn.prepareData();
+
+    // Generate planet_map
+    this.planet_map = first_turn.planets.reduce((map, planet) => {
+      map[planet.name] = planet;
+      return map;
+    }, {});
+
+    // Color map
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+    this.color_map = first_turn.players.reduce((map, o, i) => {
+      map[o] = color(i);
+      return map;
+    }, {});
+    this.color_map[null] = "#d3d3d3";
 
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
-    visuals.addNewObjects(first_turn);
-    visuals.update(first_turn, this);
+    this.turnbinder.update(0);
   }
 
   nextTurn() {
-    return this.showTurn(this.turn + 1);
+    this.turnbinder.update((this.turnbinder.value) + 1);
   }
 
-  showTurn(newTurn) {
+  previousTurn() {
+    this.turnbinder.update((this.turnbinder.value) - 1);
+  }
+
+  _showTurn(newTurn) {
     if (newTurn >= this.turns.length) {
       console.log("end of log");
+      this.runningbinder.update(false);
       return false;
     } else {
-      var lastTurn = this.turn;
-      this.setTurn(newTurn);
       var turn = this.turns[newTurn];
-      turn.lastTurn = lastTurn;
-      turn.planet_map = this.turns[0].planet_map;
-      turn.color_map = this.turns[0].color_map;
-      turn.prepareData();
-      visuals.addNewObjects(turn);
+      turn.prepareData(this.planet_map);
+      visuals.addNewObjects(turn, this.color_map);
       visuals.update(turn, this);
       return true;
     }
   }
 
-  toggleTimer() {
-    if (!this.turn_timer || this.turn_timer._time === Infinity) {
-      this.startTimer();
-      return true;
-    } else {
-      this.stopTimer();
-      return false;
-    }
-  }
-
-  startTimer() {
+  _startTimer() {
+    // Toggle makes sure the timer doesn't trigger twice on fast computers
+    var timeToggled = false;
     var callback = e => {
       // 20 might seem like a magic number
       // D3 docs say it will at least take 15 ms to draw frame
-      if (e % this.speed < 20 && !this.nextTurn()) this.stopTimer();
+      if (e % this.speed < 20) {
+        if (!timeToggled) {
+          timeToggled = true;
+          this.nextTurn();
+        }
+      } else {
+        timeToggled = false;
+      }
     };
     this.turn_timer = d3.timer(callback);
   }
 
-  stopTimer() {
+  _stopTimer() {
     if (this.turn_timer) {
       this.turn_timer.stop();
     }
-  }
-
-  setTurn(newTurn) {
-    this.turn = newTurn;
-    d3.select('#turn_slider').property('value', this.turn);
   }
 
   get maxTurns() {
@@ -105,54 +121,35 @@ class TurnController {
 class Turn {
   constructor(turn) {
     this.players = turn.players;
-
     this.planets = turn.planets.map(planet => {
       return new Planet(planet);
     });
-
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
-
-    this.planet_map = {};
+    this.prepared = false;
   }
 
-  init() {
-
-    // Generate planet_map
-    this.planet_map = this.planets.reduce((map, planet) => {
-      map[planet.name] = planet;
-      return map;
-    }, {});
-
-    // Color map
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
-    this.color_map = this.players.reduce((map, o, i) => {
-      map[o] = color(i);
-      return map;
-    }, {});
-    this.color_map[null] = "#d3d3d3";
-  }
-
-  prepareData() {
+  prepareData(planet_map) {
+    if (this.prepared) return;
     this.expeditions.map(exp => {
-      exp.origin = this.planet_map[exp.origin],
-        exp.destination = this.planet_map[exp.destination]
+      exp.origin = planet_map[exp.origin];
+      exp.destination = planet_map[exp.destination];
     });
 
     // Since planet_map is copied from previous turn, we change owner here
     // TODO: Clean up this ugly logic. Turns should make their own map,
     // and then set changed_owner according to transition from previous turn.
     this.planets.map(planet => {
-      if (planet.owner != this.planet_map[planet.name].owner) {
+      if (planet.owner != planet_map[planet.name].owner) {
         planet.changed_owner = true;
-        this.planet_map[planet.name].owner = planet.owner;
+        planet_map[planet.name].owner = planet.owner;
       } else {
         planet.changed_owner = false;
       }
     });
+    this.prepared = true;
   }
-
 }
 
 class Planet {
@@ -191,6 +188,10 @@ class Expedition {
       'x': new_x,
       'y': new_y
     };
+  }
+
+  angle() {
+    return (Math.atan2(this.destination.y - this.origin.y, this.destination.x - this.origin.x) * (180 / Math.PI) + 45) % 360;
   }
 
   homannPosition(angle) {

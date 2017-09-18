@@ -9,7 +9,7 @@ class Controls {
       this.hidePauseButton();
       this.visualizer.clear();
     }
-    
+
     var reader = new FileReader();
     reader.onload = event => {
       var log = event.target.result;
@@ -21,15 +21,17 @@ class Controls {
   }
 
   attachEvents(turn_controller) {
-    
+
     d3.select('#play').on("click", e => {
-      turn_controller.startTimer();
-      this.hidePlayButton();
+      //turn_controller.startTimer();
+      //this.hidePlayButton();
+      turn_controller.runningbinder.update(true);
     });
 
     d3.select('#pause').on("click", e => {
-      turn_controller.stopTimer();
-      this.hidePauseButton();
+      //turn_controller.stopTimer();
+      //this.hidePauseButton();
+      turn_controller.runningbinder.update(false);
     });
 
     d3.select('#next').on("click", e => {
@@ -38,15 +40,6 @@ class Controls {
 
     d3.select('#previous').on("click", e => {
       turn_controller.previousTurn();
-    });
-
-    d3.select('#toggleplay').on("click", e => {
-      var button = d3.select('#toggleplay');
-      if (turn_controller.toggleTimer()) {
-        button.node().innerHTML('<img src="res/pause.svg">');
-      } else {
-        button.node().innerHTML('<img src="res/play.svg">');
-      }
     });
 
     d3.select('#speeddown').on("click", e => {
@@ -68,34 +61,41 @@ class Controls {
     });
 
     d3.select('#tostart').on("click", e => {
-      turn_controller.showTurn(0);
-      turn_controller.stopTimer();
-      this.hidePauseButton();
+      turn_controller.turnbinder.update(0);
+      turn_controller.runningbinder.update(false);
     });
 
     d3.select('#toend').on("click", e => {
-      turn_controller.showTurn(turn_controller.maxTurns);
-      turn_controller.stopTimer();
-      this.hidePlayButton();
+      turn_controller.turnbinder.update(turn_controller.maxTurns);
+      turn_controller.runningbinder.update(false);
     });
 
     d3.select('#turn_slider')
       .attr('min', 0)
       .attr('max', turn_controller.maxTurns)
       .attr('step', 1)
-      .on('change', e => {
-        turn_controller.showTurn(d3.select('#turn_slider').node().value);
+      .on('change', () => {
+        turn_controller.turnbinder.update(parseInt(d3.select('#turn_slider').node().value));
       });
+
+    turn_controller.turnbinder.registerCallback(v => d3.select('#turn_slider').node().value = v);
+    turn_controller.runningbinder.registerCallback(v => {
+      if (v) {
+        this.hidePlayButton();
+      } else {
+        this.hidePauseButton();
+      }
+    });
   }
 
-  hidePauseButton(){
+  hidePauseButton() {
     var play_button = d3.select('#play');
     var pause_button = d3.select('#pause');
     play_button.attr("hidden", null);
     pause_button.attr("hidden", true);
   }
 
-  hidePlayButton(){
+  hidePlayButton() {
     var play_button = d3.select('#play');
     var pause_button = d3.select('#pause');
     play_button.attr("hidden", true);
