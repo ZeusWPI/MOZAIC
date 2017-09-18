@@ -6,7 +6,6 @@ class Visuals {
     this.scale = 1;
   }
 
-  // This is a really stupid idea if we half assume planets will change
   static clearVisuals() {
     svg.selectAll('.planet_wrapper').remove();
     svg.selectAll('.expedition').remove();
@@ -49,7 +48,7 @@ class Visuals {
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
-  addNewObjects(turn) {
+  addNewObjects(turn, color_map) {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
@@ -60,9 +59,9 @@ class Visuals {
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
 
     // Add the new objects
-    Visuals.Planets.addPlanetVisuals(new_planets, turn.color_map, this.scale);
-    Visuals.Fleets.addFleetVisuals(fleet_wrappers, turn.color_map);
-    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, turn.color_map, this.scale);
+    Visuals.Planets.addPlanetVisuals(new_planets, color_map, this.scale);
+    Visuals.Fleets.addFleetVisuals(fleet_wrappers, color_map);
+    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, color_map, this.scale);
   }
 
   update(turn, turn_control) {
@@ -71,12 +70,12 @@ class Visuals {
 
     //PLANETS
     // Text color
-    visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn.color_map[d.owner]);
+    visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
     visuals.attachToAllChildren(planets.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
     visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
 
-    planets.select('.orbit').style('stroke', d => turn.color_map[d.owner]);
-    planets.select('.owner_background').attr('fill', d => turn.color_map[d.owner]);
+    planets.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
+    planets.select('.owner_background').attr('fill', d => turn_control.color_map[d.owner]);
     planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
 
     // TODO sometimes animation and turn timers get desynched and the animation is interupted
@@ -194,7 +193,6 @@ class Visuals {
 
 Visuals.Expeditions = class {
   static addExpeditionVisuals(d3selector, color_map, scale) {
-    Visuals.Expeditions.placeExpedition(d3selector);
     Visuals.Expeditions.drawExpedition(d3selector, color_map, scale);
     Visuals.Expeditions.drawShipCount(d3selector, color_map, scale);
   }
@@ -205,11 +203,8 @@ Visuals.Expeditions = class {
     return Visuals.translation(point)
   }
 
-  static placeExpedition(d3selector) {
-    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
-  }
-
   static drawExpedition(d3selector, color_map, scale) {
+    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
     d3selector.append('circle')
       .attr('r', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])
