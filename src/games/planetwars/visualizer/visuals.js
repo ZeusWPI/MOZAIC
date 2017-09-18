@@ -96,11 +96,13 @@ class Visuals {
       })*/
       .on('interrupt', e => console.log("inter"));
 
-    expeditions.select('circle').transition()
-      .duration(turn_control.speed)
-      .ease(d3.easeLinear)
+    expeditions.select('circle')
+      // This is not used for straigt line stuff
+      //.transition()
+      //.duration(turn_control.speed)
+      //.ease(d3.easeLinear)
       .attr('transform', exp => {
-
+        return Visuals.rotate(exp.angle());
       })
 
     // Old expeditions to remove
@@ -172,6 +174,10 @@ class Visuals {
     return 'translate(' + point.x + ',' + point.y + ')';
   }
 
+  static rotate(angle) {
+    return 'rotate(' + angle + ')';
+  }
+
   static resize(planet, amount) {
     var tx = -planet.x * (amount - 1);
     var ty = -planet.y * (amount - 1);
@@ -179,10 +185,6 @@ class Visuals {
       x: tx,
       y: ty
     }) + ' scale(' + amount + ')';
-  }
-
-  static rotate(amount, x, y) {
-    return "rotate(" + amount + "," + x + "," + y + ")";
   }
 
   static visualOwnerName(name) {
@@ -204,7 +206,8 @@ Visuals.Expeditions = class {
   }
 
   static drawExpedition(d3selector, color_map, scale) {
-    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
+    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp))
+
     d3selector.append('circle')
       .attr('r', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])

@@ -187,6 +187,10 @@ class Expedition {
     };
   }
 
+  angle() {
+    return (Math.atan2(this.destination.y - this.origin.y, this.destination.x - this.origin.x) * (180 / Math.PI) + 45) % 360;
+  }
+
   homannPosition(angle) {
     var total_distance = space_math.euclideanDistance(this.origin, this.destination);
     if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
