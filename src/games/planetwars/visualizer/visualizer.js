@@ -19,14 +19,25 @@ class Visualizer {
 
   clear() {
     Visuals.clearVisuals();
-    this.turn_controller.stopTimer();
+    this.turn_controller.runningbinder.update(false);
   }
 }
 
 class TurnController {
   constructor() {
     this.speed = Config.base_speed;
-    this.turn = 0;
+    this.turnbinder = new DataBinder(0);
+    this.turnbinder.registerCallback(v => {
+      this.running = this._showTurn(v);
+    });
+    this.runningbinder = new DataBinder(false);
+    this.runningbinder.registerCallback(v => {
+      if (v) {
+        this._startTimer();
+      } else {
+        this._stopTimer();
+      }
+    });
     this.turns = [];
   }
 
@@ -53,26 +64,24 @@ class TurnController {
 
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
-    this.showTurn(0);
+    this.turnbinder.update(0);
   }
 
   nextTurn() {
-    return this.showTurn(this.turn + 1);
+    this.turnbinder.update(this.turnbinder.value + 1);
   }
 
   previousTurn() {
-    return this.showTurn(this.turn - 1);
+    this.turnbinder.update(this.turnbinder.value - 1);
   }
 
-  showTurn(newTurn) {
+  _showTurn(newTurn) {
     if (newTurn >= this.turns.length) {
       console.log("end of log");
+      this.runningbinder.update(false);
       return false;
     } else {
-      var lastTurn = this.turn;
-      this.setTurn(newTurn);
       var turn = this.turns[newTurn];
-      turn.lastTurn = lastTurn;
       turn.prepareData(this.planet_map);
       visuals.addNewObjects(turn, this.color_map);
       visuals.update(turn, this);
@@ -80,34 +89,28 @@ class TurnController {
     }
   }
 
-  toggleTimer() {
-    if (!this.turn_timer || this.turn_timer._time === Infinity) {
-      this.startTimer();
-      return true;
-    } else {
-      this.stopTimer();
-      return false;
-    }
-  }
-
-  startTimer() {
+  _startTimer() {
+    // Toggle makes sure the timer doesn't trigger twice on fast computers
+    var timeToggled = false;
     var callback = e => {
       // 20 might seem like a magic number
       // D3 docs say it will at least take 15 ms to draw frame
-      if (e % this.speed < 20 && !this.nextTurn()) this.stopTimer();
+      if (e % this.speed < 20) {
+        if (!timeToggled) {
+          timeToggled = true;
+          this.nextTurn();
+        }
+      } else {
+        timeToggled = false;
+      }
     };
     this.turn_timer = d3.timer(callback);
   }
 
-  stopTimer() {
+  _stopTimer() {
     if (this.turn_timer) {
       this.turn_timer.stop();
     }
-  }
-
-  setTurn(newTurn) {
-    this.turn = newTurn;
-    d3.select('#turn_slider').property('value', this.turn);
   }
 
   get maxTurns() {
