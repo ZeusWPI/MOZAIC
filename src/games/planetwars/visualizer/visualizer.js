@@ -68,11 +68,11 @@ class TurnController {
   }
 
   nextTurn() {
-    this.turnbinder.update(this.turnbinder.value + 1);
+    this.turnbinder.update((this.turnbinder.value) + 1);
   }
 
   previousTurn() {
-    this.turnbinder.update(this.turnbinder.value - 1);
+    this.turnbinder.update((this.turnbinder.value) - 1);
   }
 
   _showTurn(newTurn) {

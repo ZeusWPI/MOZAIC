@@ -75,7 +75,7 @@ class Controls {
       .attr('max', turn_controller.maxTurns)
       .attr('step', 1)
       .on('change', () => {
-        turn_controller.turnbinder.update(d3.select('#turn_slider').node().value);
+        turn_controller.turnbinder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
     turn_controller.turnbinder.registerCallback(v => d3.select('#turn_slider').node().value = v);
