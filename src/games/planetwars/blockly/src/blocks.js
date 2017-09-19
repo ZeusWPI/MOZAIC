@@ -61,6 +61,33 @@ const functions = {
       this.setOutput(true, 'Number');
     }
   },
+  'fn_origin': {
+    init: function() {
+      this.appendValueInput('EXPEDITION')
+        .appendField('origin of')
+        .setCheck('Expedition');
+      this.setColour(FN_COLOUR);
+      this.setOutput(true, 'Planet');
+    }
+  },
+  'fn_target': {
+    init: function() {
+      this.appendValueInput('EXPEDITION')
+        .appendField('destination of')
+        .setCheck('Expedition');
+      this.setColour(FN_COLOUR);
+      this.setOutput(true, 'Planet');
+    }
+  },
+  'fn_turns_remaining': {
+    init: function() {
+      this.appendValueInput('EXPEDITION')
+        .appendField('turns until arrival of')
+        .setCheck('Expedition');
+      this.setColour(FN_COLOUR);
+      this.setOutput(true, 'Number');
+    }
+  },
   'fn_distance': {
     init: function() {
       this.setInputsInline(true);
