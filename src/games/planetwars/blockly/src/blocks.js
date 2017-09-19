@@ -2,7 +2,7 @@ var Blockly = require("node-blockly/browser");
 
 const MAGIC_OBJECT_COLOR = 275;
 
-const blocks = {
+const constants = {
   'planets': {
     init: function() {
       this.appendDummyInput().appendField('Planets');
@@ -23,7 +23,10 @@ const blocks = {
       this.setColour(MAGIC_OBJECT_COLOR);
       this.setOutput(true, 'List');
     }
-  },
+  }
+};
+
+const attributes = {
   'attr_owner': {
     init: function() {
       this.appendValueInput('OBJ')
@@ -42,4 +45,8 @@ const blocks = {
   }
 };
 
-module.exports = blocks;
+
+module.exports = {
+  'constants': constants,
+  'attributes': attributes
+};

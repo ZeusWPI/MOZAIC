@@ -6,16 +6,22 @@ Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
 
 // Register all blocks
-Object.entries(blocks).forEach(([name, block]) => {
-  Blockly.Blocks[name] = block;
+Object.values(blocks).forEach(cat => {
+  Object.entries(cat).forEach(([block_name, block]) => {
+    Blockly.Blocks[block_name] = block;
+  });
 });
 
 // Bulid toolbox xml
-var toolbox = "<xml>";
-Object.keys(blocks).forEach(name => {
-  toolbox += "<block type=\"" + name + "\"></block>";
+var toolbox = '<xml>';
+Object.entries(blocks).forEach(([cat_name, cat]) => {
+  toolbox += '<category name="' + cat_name + '">';
+  Object.keys(cat).forEach(block_name => {
+    toolbox += '<block type="' + block_name + '"></block>';
+  });
+  toolbox += '</category>';
 });
-toolbox += "</xml>";
+toolbox += '</xml>';
 
 window.onload = function() {
   var workspace = Blockly.inject('blocklyDiv', { toolbox: toolbox });
