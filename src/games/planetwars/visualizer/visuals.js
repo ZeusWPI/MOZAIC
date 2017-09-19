@@ -61,8 +61,11 @@ class Visuals {
     svg.call(zoom);
   }
 
-  generateWinnerBox(winner) {
-    d3.select('#end_card').append('p').text("Game over:").append('p').text(winner + " wins!");
+  generateWinnerBox(winner, color) {
+    d3.select('#end_card').append('p').text("Game over:");
+    var wrapper = d3.select('#end_card');
+    wrapper.append('p').text(winner).attr('style', 'color: ' + color);
+    wrapper.append('p').text('wins!');
   }
 
   addNewObjects(turn, color_map) {

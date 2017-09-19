@@ -87,7 +87,7 @@ class TurnController {
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
     visuals.createZoom();
-    visuals.generateWinnerBox(winner);
+    visuals.generateWinnerBox(winner, this.color_map[winner]);
     this.turnbinder.update(0);
   }
 
