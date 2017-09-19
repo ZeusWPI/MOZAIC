@@ -81,7 +81,7 @@ class Visuals {
     visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
 
     planets.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
-    planets.select('.owner_background').attr('fill', d => turn_control.color_map[d.owner]);
+    planets.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
     planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
 
     scores.select('.planet_count').text(d => d.planets);
