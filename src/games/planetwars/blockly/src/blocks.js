@@ -60,6 +60,19 @@ const functions = {
       this.setColour(ATTRIBUTE_COLOR);
       this.setOutput(true, 'Number');
     }
+  },
+  'fn_distance': {
+    init: function() {
+      this.setInputsInline(true);
+      this.appendValueInput('PLANET1')
+        .appendField('distance between')
+        .setCheck('Planet');
+      this.appendValueInput('PLANET2')
+        .appendField('and')
+        .setCheck('Planet');
+      this.setColour(ATTRIBUTE_COLOR);
+      this.setOutput(true, 'Number');
+    }
   }
 };
 
