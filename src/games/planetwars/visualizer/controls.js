@@ -3,6 +3,8 @@ class Controls {
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
     d3.select('#unhide').attr("hidden", true);
+    d3.select('#unhide_score').attr("hidden", true);
+    d3.select('#hide_score').attr("hidden", true);
 
     d3.select('#hide').on("click", e => {
       d3.select('#controlbar').attr("hidden", true);
@@ -13,6 +15,17 @@ class Controls {
       d3.select('#controlbar').attr("hidden", null);
       d3.select('#hide').attr("hidden", null);
       d3.select('#unhide').attr("hidden", true);
+    });
+
+    d3.select('#hide_score').on("click", e => {
+      d3.select('#score').style('display', 'none');
+      d3.select('#hide_score').attr("hidden", true);
+      d3.select('#unhide_score').attr("hidden", null);
+    });
+    d3.select('#unhide_score').on("click", e => {
+      d3.select('#score').style('display', 'block');
+      d3.select('#hide_score').attr("hidden", null);
+      d3.select('#unhide_score').attr("hidden", true);
     });
   }
 
@@ -33,6 +46,7 @@ class Controls {
   }
 
   attachEvents(turn_controller) {
+    d3.select('#hide_score').attr("hidden", null);
 
     d3.select('#play').on("click", e => {
       turn_controller.runningbinder.update(true);

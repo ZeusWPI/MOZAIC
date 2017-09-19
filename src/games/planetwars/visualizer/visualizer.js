@@ -131,6 +131,39 @@ class Turn {
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
+
+    this.scores = [];
+    //TODO this calculation should perhaps be done in the backend
+    var strengths = [];
+    var total_strength = 0;
+    this.players.forEach(player => {
+      var planets = 0;
+      var strength = 0;
+      this.planets.forEach(planet => {
+        if (planet.owner === player) {
+          strength += planet.ship_count;
+          planets++;
+        }
+      });
+      var expeditions = 0;
+      this.expeditions.forEach(exp => {
+        if (exp.owner === player) {
+          strength += exp.ship_count;
+          expeditions++;
+        }
+      });
+      this.scores.push({
+        player: player,
+        planets: planets,
+        expeditions: expeditions
+      });
+      total_strength += strength;
+      strengths.push(strength);
+    });
+    this.scores.forEach(s => {
+      s.strengths = strengths;
+      s.total_strength = total_strength;
+    });
   }
 
   prepareData(planet_map) {

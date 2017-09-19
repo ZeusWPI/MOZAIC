@@ -19,6 +19,13 @@ body {
   box-sizing: border-box;
 }
 
+#score {
+  width: 20%;
+  height: 50vh;
+  position: absolute;
+  right: 1px;
+}
+
 #hide {
   position: absolute;
   bottom: 10vh;
@@ -28,6 +35,16 @@ body {
 #unhide {
   position: absolute;
   bottom: 0;
+  right: 0;
+}
+
+#hide_score {
+  position: absolute;
+  right: 20%;
+}
+
+#unhide_score {
+  position: absolute;
   right: 0;
 }
 
@@ -45,12 +62,13 @@ body {
 
 .speedcontrols {
   float: right;
-  width: 20%;
   min-width: 220px;
+  width: 20%;
 }
 
 .control-button {
-  width: 2.5%;
+  width: 2%;
+  min-width: 30px;
 }
 
 .speedcontrols > .control-button {
