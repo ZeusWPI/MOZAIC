@@ -2,6 +2,7 @@ var Blockly = require("node-blockly/browser");
 
 const CONSTANT_COLOR = 275;
 const ATTRIBUTE_COLOR = 180;
+const LIST_COLOR = 225;
 
 const constants = {
   'planets': {
@@ -62,7 +63,24 @@ const attributes = {
   }
 };
 
+const lists = {
+  'list_filter': {
+    init: function() {
+      this.appendValueInput('LIST')
+        .appendField('all')
+        .appendField(new Blockly.FieldVariable('item'), 'ELEM_NAME')
+        .appendField('in')
+        .setCheck('List');
+      this.appendValueInput('PREDICATE')
+        .appendField('where');
+      this.setColour(LIST_COLOR);
+      this.setOutput(true, 'Number');
+    }
+  }
+};
+
 module.exports = {
   'constants': constants,
-  'attributes': attributes
+  'attributes': attributes,
+  'lists': lists
 };
