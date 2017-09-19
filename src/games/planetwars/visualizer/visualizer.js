@@ -54,8 +54,18 @@ class TurnController {
       return map;
     }, {});
 
-    turns.forEach(turn => {
+    //TODO do this smarter
+    turns.forEach((turn, i) => {
       turn.prepareData(this.planet_map);
+      if (i > 0) {
+        turn.planets.forEach(p1 => {
+          turns[i - 1].planets.forEach(p2 => {
+            if (p1.name === p2.name && p1.owner !== p2.owner) {
+              p1.changed_owner = true;
+            }
+          });
+        });
+      }
     });
 
     // Color map
@@ -120,29 +130,14 @@ class Turn {
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
-    this.prepared = false;
   }
 
   prepareData(planet_map) {
-    console.log('called');
     if (this.prepared) return;
     this.expeditions.map(exp => {
       exp.origin = planet_map[exp.origin];
       exp.destination = planet_map[exp.destination];
     });
-
-    // Since planet_map is copied from previous turn, we change owner here
-    // TODO: Clean up this ugly logic. Turns should make their own map,
-    // and then set changed_owner according to transition from previous turn.
-    this.planets.map(planet => {
-      if (planet.owner != planet_map[planet.name].owner) {
-        planet.changed_owner = true;
-        planet_map[planet.name].owner = planet.owner;
-      } else {
-        planet.changed_owner = false;
-      }
-    });
-    this.prepared = true;
   }
 }
 
