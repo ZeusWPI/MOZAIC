@@ -55,12 +55,7 @@ class Visuals {
   createZoom() {
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
-      .extent([
-        [0, 0],
-        [100, 100]
-      ])
       .on('zoom', () => {
-        var transform = d3.event.transform;
         container.attr('transform', d3.event.transform);
       });
     svg.call(zoom);
