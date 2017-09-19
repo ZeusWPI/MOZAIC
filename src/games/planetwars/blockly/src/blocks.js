@@ -1,6 +1,7 @@
 var Blockly = require("node-blockly/browser");
 
-const MAGIC_OBJECT_COLOR = 275;
+const CONSTANT_COLOR = 275;
+const ATTRIBUTE_COLOR = 180;
 
 const constants = {
   'planets': {
@@ -32,6 +33,7 @@ const attributes = {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
         .appendField('owner of');
+      this.setColour(ATTRIBUTE_COLOR);
       this.setOutput(true, 'Player');
     }
   },
@@ -40,11 +42,11 @@ const attributes = {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
         .appendField('fleet size of');
+      this.setColour(ATTRIBUTE_COLOR);
       this.setOutput(true, 'Number');
     }
   }
 };
-
 
 module.exports = {
   'constants': constants,
