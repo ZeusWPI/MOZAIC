@@ -7,22 +7,36 @@ const constants = {
   'planets': {
     init: function() {
       this.appendDummyInput().appendField('Planets');
-      this.setColour(MAGIC_OBJECT_COLOR);
+      this.setColour(CONSTANT_COLOR);
       this.setOutput(true, 'List');
     }
   },
   'expeditions': {
     init: function() {
       this.appendDummyInput().appendField('Expeditions');
-      this.setColour(MAGIC_OBJECT_COLOR);
+      this.setColour(CONSTANT_COLOR);
       this.setOutput(true, 'List');
     }
   },
   'players': {
     init: function() {
       this.appendDummyInput().appendField('Players');
-      this.setColour(MAGIC_OBJECT_COLOR);
+      this.setColour(CONSTANT_COLOR);
       this.setOutput(true, 'List');
+    }
+  },
+  'player_me': {
+    init: function() {
+      this.appendDummyInput().appendField('Me');
+      this.setColour(CONSTANT_COLOR);
+      this.setOutput(true, 'Player');
+    }
+  },
+  'player_nobody': {
+    init: function() {
+      this.appendDummyInput().appendField('Nobody');
+      this.setColour(CONSTANT_COLOR);
+      this.setOutput(true, 'Player');
     }
   }
 };
