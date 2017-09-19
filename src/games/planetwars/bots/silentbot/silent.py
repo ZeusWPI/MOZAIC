@@ -7,5 +7,5 @@ def get_input():
 while True:
     j = get_input()
     for d in j:
-        print('{}')
+        print('{"moves":[]}')
         sys.stdout.flush()

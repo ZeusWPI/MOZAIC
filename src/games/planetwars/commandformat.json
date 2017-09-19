@@ -3,7 +3,7 @@
     "title": "PlanetWars",
     "description": "This is the format describing the command for the PlanetWars game, used in the development off MOZAIC",
     "properties": {
-        "move":{
+        "moves":{
             "type": "array",
             "description": "Describes what you want to do in the current turn",
             "items": {
