@@ -68,6 +68,14 @@ class TurnController {
       }
     });
 
+    var winner = null;
+    // Detect winner
+    turns[turns.length - 1].planets.forEach(p => {
+      if (p.owner != null) {
+        winner = p.owner;
+      }
+    });
+
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
     this.color_map = first_turn.players.reduce((map, o, i) => {
@@ -79,6 +87,7 @@ class TurnController {
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
     visuals.createZoom();
+    visuals.generateWinnerBox(winner);
     this.turnbinder.update(0);
   }
 

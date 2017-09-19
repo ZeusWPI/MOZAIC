@@ -55,6 +55,27 @@ body {
   width: 99.8%;
 }
 
+#end_card {
+  position: absolute;
+  top: 30vh;
+  height: 30vh;
+  width: 40%;
+  left: 30%;
+  text-align: center;
+  font-size: 50px;
+  font-family: 'Tahoma';
+  background-color: white;
+  border: 1px solid black;
+}
+
+#end_card p  {
+  margin: 0;
+}
+
+#end_card > p {
+  margin-top: 8vh;
+}
+
 .speed {
   float: right;
   margin-right: 2%;

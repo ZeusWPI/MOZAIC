@@ -5,6 +5,7 @@ class Controls {
     d3.select('#unhide').attr("hidden", true);
     d3.select('#unhide_score').attr("hidden", true);
     d3.select('#hide_score').attr("hidden", true);
+    d3.select('#end_card').attr("hidden", true);
 
     d3.select('#hide').on("click", e => {
       d3.select('#controlbar').attr("hidden", true);
@@ -100,7 +101,14 @@ class Controls {
         turn_controller.turnbinder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
-    turn_controller.turnbinder.registerCallback(v => d3.select('#turn_slider').node().value = v);
+    turn_controller.turnbinder.registerCallback(v => {
+      d3.select('#turn_slider').node().value = v
+      if (v >= turn_controller.maxTurns) {
+        d3.select('#end_card').attr('hidden', null)
+      } else {
+        d3.select('#end_card').attr('hidden', 'true')
+      }
+    });
     turn_controller.runningbinder.registerCallback(v => {
       if (v) {
         this.hidePlayButton();

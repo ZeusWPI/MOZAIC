@@ -61,6 +61,10 @@ class Visuals {
     svg.call(zoom);
   }
 
+  generateWinnerBox(winner) {
+    d3.select('#end_card').append('p').text("Game over:").append('p').text(winner + " wins!");
+  }
+
   addNewObjects(turn, color_map) {
     var turn = new Visuals.TurnWrapper(turn);
     var planets = turn.planets;
