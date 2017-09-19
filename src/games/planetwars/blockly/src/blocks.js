@@ -4,7 +4,7 @@ const CONSTANT_COLOR = 275;
 const ATTRIBUTE_COLOR = 180;
 const LIST_COLOR = 225;
 
-const constants = {
+const planetwars = {
   'planets': {
     init: function() {
       this.appendDummyInput().appendField('Planets');
@@ -42,8 +42,8 @@ const constants = {
   }
 };
 
-const attributes = {
-  'attr_owner': {
+const functions = {
+  'fn_owner': {
     init: function() {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
@@ -52,7 +52,7 @@ const attributes = {
       this.setOutput(true, 'Player');
     }
   },
-  'attr_ship_count': {
+  'fn_ship_count': {
     init: function() {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
@@ -98,7 +98,7 @@ const lists = {
 };
 
 module.exports = {
-  'constants': constants,
-  'attributes': attributes,
+  planetwars: planetwars,
+  functions: functions,
   'lists': lists
 };
