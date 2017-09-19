@@ -73,6 +73,23 @@ const functions = {
       this.setColour(FN_COLOUR);
       this.setOutput(true, 'Number');
     }
+  },
+  'fn_dispatch': {
+    init: function() {
+      this.setInputsInline(true);
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
+      this.appendValueInput('SHIP_COUNT')
+        .appendField('Dispatch')
+        .setCheck('Number');
+      this.appendValueInput('SOURCE_PLANET')
+        .appendField('ships from')
+        .setCheck('Planet');
+      this.appendValueInput('TARGET_PLANET')
+        .appendField('to')
+        .setCheck('Planet');
+      this.setColour(FN_COLOUR);
+    }
   }
 };
 
