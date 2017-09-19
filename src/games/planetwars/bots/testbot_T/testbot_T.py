@@ -45,15 +45,16 @@ def get_number_of_ships_to_send(own_planet, other_planet):
     return number_of_ships
 
 def do_move(own_planet, other_planet):
-    data = {}
-    data["move"] = {}
-    data["move"]["origin"] = own_planet["name"]
-    data["move"]["destination"] = other_planet["name"]
-    data["move"]["ship_count"] = get_number_of_ships_to_send(own_planet, other_planet)
+    move = {}
+    move["origin"] = own_planet["name"]
+    move["destination"] = other_planet["name"]
+    move["ship_count"] = get_number_of_ships_to_send(own_planet, other_planet)
+    command = {}
+    command["moves"] = [move]
     print(json.dumps(data))
 
 def do_empty_move():
-    print(json.dumps({"move":{}}))
+    print(json.dumps({"moves":{}}))
 
 if __name__ == "__main__":
     main()
