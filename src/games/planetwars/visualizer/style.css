@@ -17,8 +17,20 @@ body {
   height: 95vh;
 }
 
+#hide {
+  position: absolute;
+  bottom: 6vh;
+  right: 0;
+}
+
+#unhide {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
 #controlbar {
-  height: 10vh;
+  height: 6vh;
   position: absolute;
   bottom: 0;
   width: 100%;
@@ -26,18 +38,26 @@ body {
 
 .speed {
   float: right;
+  margin-right: 2%;
 }
 
 .speedcontrols {
   float: right;
+  width: 20%;
+  min-width: 220px;
+}
+
+.control-button {
+  width: 2.5%;
 }
 
 .speedcontrols > .control-button {
-  width: 50px;
-  height: 50px;
+  width: 13%;
+  min-width: 30px;
 }
 
-.speedcontrols > .control-button > .img {
+
+ .control-button > .img {
   width: 100%;
   height: auto;
 }
