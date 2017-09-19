@@ -131,6 +131,7 @@ class Turn {
 
     this.scores = [];
     //TODO this calculation should perhaps be done in the backend
+    var total_strength = 0;
     this.players.forEach(player => {
       var planets = 0;
       var strength = 0;
@@ -147,6 +148,7 @@ class Turn {
           expeditions++;
         }
       });
+      total_strength += strength;
       this.scores.push({
         player: player,
         planets: planets,
@@ -154,6 +156,7 @@ class Turn {
         strength: strength
       });
     });
+    this.scores.forEach(s => s.total_strength = total_strength);
   }
 
   prepareData(planet_map) {

@@ -378,10 +378,13 @@ Visuals.Scores = class {
       .attr("font-size", 12 + "px")
       .attr('fill', d => color_map[d.player]);
 
+    var start_y = 20;
+    var start_x = 10;
+
     d3selector.append('circle')
       .attr('r', d => 5)
-      .attr('cx', d => 10)
-      .attr('cy', (d, i) => 20 + 20 * i)
+      .attr('cx', d => start_x)
+      .attr('cy', (d, i) => start_y + 20 * i);
 
     d3selector.append('text').attr('class', 'player_name')
       .attr('x', d => 30)
@@ -395,11 +398,21 @@ Visuals.Scores = class {
       .attr('x', d => 80)
       .attr('y', (d, i) => 25 + 20 * i)
       .text(d => d.expeditions);
+    var end_y = 0;
     d3selector.append('text').attr('class', 'strength')
       .attr('x', d => 100)
-      .attr('y', (d, i) => 25 + 20 * i)
+      .attr('y', (d, i) => {
+        end_y = 25 + 20 * i;
+        return end_y;
+      })
       .text(d => d.strength);
-
+    end_y += 20;
+    var max_bar_size = 100;
+    d3selector.append('rect').attr('class', 'ratioblock')
+      .attr('x', (d, i) => start_x + 30 * i)
+      .attr('y', (d, i) => end_y + 20 * i)
+      .attr('width', d => max_bar_size * d.strength / d.total_strength)
+      .attr('height', 10);
   }
 }
 
