@@ -98,24 +98,8 @@ impl Game for PlanetWars {
 
     fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
         self.turn_num += 1;
-        
-        // TODO: separate this into a function
-        let mut commands : Vec<(PlayerId, protocol::Command)> = Vec::new();
 
-        // Serialize commands
-        for (player, command) in player_output {
-            let c: protocol::Command = match serde_json::from_str(command) {
-                Ok(command) => command,
-                Err(_) => protocol::Command { value: None }
-            };
-            commands.push((player.clone(), c))
-        }
-
-        for &(player_id, ref command) in commands.iter() {
-            if let &Some(ref mv) = &command.value {
-                self.exec_move(player_id, mv);
-            }
-        }
+        self.execute_commands(player_output);
          
         // Play one step of the game, given the new expeditions
         // Initially mark all players dead, re-marking them as alive once we
@@ -145,6 +129,17 @@ impl Game for PlanetWars {
 }
 
 impl PlanetWars {
+    fn execute_commands(&mut self, player_output: &PlayerMap<String>) {
+        for (&player_id, command) in player_output.iter() {
+            let r = serde_json::from_str::<protocol::Command>(command);
+            if let Ok(cmd) = r {
+                for mv in cmd.moves.iter() {
+                    self.exec_move(player_id, mv);
+                }
+            }
+        }
+    }
+    
     fn generate_prompts(&self) -> PlayerMap<String> {
         let mut prompts = HashMap::new();
         let state = self.repr();
