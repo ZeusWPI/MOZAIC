@@ -26,8 +26,7 @@ pub struct State {
 
 #[derive(Serialize, Deserialize)]
 pub struct Command {
-    #[serde(rename="move")]
-    pub value: Option<Move>,
+    pub moves: Vec<Move>,
 }
 
 #[derive(Serialize, Deserialize)]

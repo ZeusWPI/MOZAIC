@@ -54,6 +54,20 @@ class TurnController {
       return map;
     }, {});
 
+    //TODO do this smarter
+    turns.forEach((turn, i) => {
+      turn.prepareData(this.planet_map);
+      if (i > 0) {
+        turn.planets.forEach(p1 => {
+          turns[i - 1].planets.forEach(p2 => {
+            if (p1.name === p2.name && p1.owner !== p2.owner) {
+              p1.changed_owner = true;
+            }
+          });
+        });
+      }
+    });
+
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
     this.color_map = first_turn.players.reduce((map, o, i) => {
@@ -82,7 +96,6 @@ class TurnController {
       return false;
     } else {
       var turn = this.turns[newTurn];
-      turn.prepareData(this.planet_map);
       visuals.addNewObjects(turn, this.color_map);
       visuals.update(turn, this);
       return true;
@@ -90,21 +103,11 @@ class TurnController {
   }
 
   _startTimer() {
-    // Toggle makes sure the timer doesn't trigger twice on fast computers
-    var timeToggled = false;
-    var callback = e => {
-      // 20 might seem like a magic number
-      // D3 docs say it will at least take 15 ms to draw frame
-      if (e % this.speed < 20) {
-        if (!timeToggled) {
-          timeToggled = true;
-          this.nextTurn();
-        }
-      } else {
-        timeToggled = false;
-      }
+    var callback = elapsed => {
+      this.nextTurn();
     };
-    this.turn_timer = d3.timer(callback);
+    this.turn_timer = d3.interval(callback, this.speed);
+
   }
 
   _stopTimer() {
@@ -127,7 +130,6 @@ class Turn {
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
-    this.prepared = false;
 
     this.scores = [];
     //TODO this calculation should perhaps be done in the backend
@@ -165,19 +167,6 @@ class Turn {
       exp.origin = planet_map[exp.origin];
       exp.destination = planet_map[exp.destination];
     });
-
-    // Since planet_map is copied from previous turn, we change owner here
-    // TODO: Clean up this ugly logic. Turns should make their own map,
-    // and then set changed_owner according to transition from previous turn.
-    this.planets.map(planet => {
-      if (planet.owner != planet_map[planet.name].owner) {
-        planet.changed_owner = true;
-        planet_map[planet.name].owner = planet.owner;
-      } else {
-        planet.changed_owner = false;
-      }
-    });
-    this.prepared = true;
   }
 }
 

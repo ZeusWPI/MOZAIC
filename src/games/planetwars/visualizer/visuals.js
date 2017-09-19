@@ -75,48 +75,15 @@ class Visuals {
     var scores = turn.scores;
 
     //PLANETS
-    // Text color
-    visuals.attachToAllChildren(planets.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
-    visuals.attachToAllChildren(planets.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
-    visuals.registerTakeOverAnimation(planets, turn.planet_map, turn_control.speed);
-
-    planets.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
-    planets.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
-    planets.select('.ship_count').text(d => "\u2694 " + d.ship_count);
+    Visuals.Planets.update(planets, turn_control);
+    Visuals.Planets.removeOld(planets);
+    // EXPEDITIONS
+    Visuals.Expeditions.update(expeditions, turn_control, turn.planet_map);
+    Visuals.Expeditions.removeOld(expeditions);
 
     scores.select('.planet_count').text(d => d.planets);
     scores.select('.expedition_count').text(d => d.expeditions);
     scores.select('.strength').text(d => d.strength);
-    // TODO sometimes animation and turn timers get desynched and the animation is interupted
-    // also replace this with a for each so we can reuse calculations
-    // EXPEDITIONS
-    expeditions.transition()
-      .duration(turn_control.speed)
-      .ease(d3.easeLinear)
-      .attr('transform', exp => Visuals.Expeditions.getLocation(exp))
-      /*
-      .attrTween('transform', exp => {
-        var turn_diff = turn_control.turn - turn.lastTurn;
-        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
-        return t => {
-          var point = exp.homannPosition(inter(t));
-          return Visuals.translation(point);
-        };
-      })*/
-      .on('interrupt', e => console.log("inter"));
-
-    expeditions.select('circle')
-      // This is not used for straigt line stuff
-      //.transition()
-      //.duration(turn_control.speed)
-      //.ease(d3.easeLinear)
-      .attr('transform', exp => {
-        return Visuals.rotate(exp.angle());
-      })
-
-    // Old expeditions to remove
-    expeditions.exit().remove();
-    planets.exit().remove();
   }
 
   expHomanRotation(exp) {
@@ -222,6 +189,9 @@ Visuals.Expeditions = class {
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
+      .attr('transform', exp => {
+        return Visuals.rotate(exp.angle());
+      })
       .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
   }
 
@@ -233,6 +203,35 @@ Visuals.Expeditions = class {
       .attr('fill', exp => color_map[exp.owner])
       .text(exp => "\u2694 " + exp.ship_count)
       .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
+  }
+
+  static update(d3selector, turn_control) {
+    d3selector.transition()
+      .duration(turn_control.speed)
+      .ease(d3.easeLinear)
+      .attr('transform', exp => Visuals.Expeditions.getLocation(exp))
+      /*
+      .attrTween('transform', exp => {
+        var turn_diff = turn_control.turn - turn.lastTurn;
+        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
+        return t => {
+          var point = exp.homannPosition(inter(t));
+          return Visuals.translation(point);
+        };
+      })*/
+      .on('interrupt', e => console.log("inter"));
+    /*
+    d3selector.select('circle')
+      // This is not used for straigt line stuff
+      //.transition()
+      //.duration(turn_control.speed)
+      //.ease(d3.easeLinear)
+      .attr('transform', exp => {
+        return Visuals.rotate(exp.angle());
+      })*/
+  }
+  static removeOld(d3selector) {
+    d3selector.exit().remove();
   }
 }
 
@@ -278,7 +277,7 @@ Visuals.Fleets = class {
         .attr('transform', (d, i) => {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
-    });
+    })
   }
 }
 
@@ -311,6 +310,18 @@ Visuals.Planets = class {
       .text(d => Visuals.visualOwnerName(d.owner));
   }
 
+  static update(d3selector, turn_control, planet_map) {
+    // Text color
+    visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
+    visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
+    visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
+
+    // Update attribs
+    d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
+    d3selector.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
+    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count);
+  }
+
   static drawName(d3selector, color_map, scale) {
     d3selector.append('text')
       .attr('x', d => d.x)
@@ -333,6 +344,10 @@ Visuals.Planets = class {
       .attr('class', 'ship_count')
       .text(d => "\u2694 " + d.ship_count)
       .append('title').text(d => Visuals.visualOwnerName(d.owner));
+  }
+
+  static removeOld(d3selector) {
+    d3selector.exit().remove();
   }
 }
 
