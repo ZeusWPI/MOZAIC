@@ -90,21 +90,11 @@ class TurnController {
   }
 
   _startTimer() {
-    // Toggle makes sure the timer doesn't trigger twice on fast computers
-    var timeToggled = false;
-    var callback = e => {
-      // 20 might seem like a magic number
-      // D3 docs say it will at least take 15 ms to draw frame
-      if (e % this.speed < 20) {
-        if (!timeToggled) {
-          timeToggled = true;
-          this.nextTurn();
-        }
-      } else {
-        timeToggled = false;
-      }
+    var callback = elapsed => {
+      this.nextTurn();
     };
-    this.turn_timer = d3.timer(callback);
+    this.turn_timer = d3.interval(callback, this.speed);
+
   }
 
   _stopTimer() {
