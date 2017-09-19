@@ -1,42 +1,42 @@
 var Blockly = require("node-blockly/browser");
 
-const CONSTANT_COLOR = 275;
-const ATTRIBUTE_COLOR = 180;
-const LIST_COLOR = 225;
+const PW_COLOUR = 275;
+const FN_COLOUR = 180;
+const LIST_COLOUR = 225;
 
 const planetwars = {
   'planets': {
     init: function() {
       this.appendDummyInput().appendField('Planets');
-      this.setColour(CONSTANT_COLOR);
+      this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
     }
   },
   'expeditions': {
     init: function() {
       this.appendDummyInput().appendField('Expeditions');
-      this.setColour(CONSTANT_COLOR);
+      this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
     }
   },
   'players': {
     init: function() {
       this.appendDummyInput().appendField('Players');
-      this.setColour(CONSTANT_COLOR);
+      this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
     }
   },
   'player_me': {
     init: function() {
       this.appendDummyInput().appendField('Me');
-      this.setColour(CONSTANT_COLOR);
+      this.setColour(PW_COLOUR);
       this.setOutput(true, 'Player');
     }
   },
   'player_nobody': {
     init: function() {
       this.appendDummyInput().appendField('Nobody');
-      this.setColour(CONSTANT_COLOR);
+      this.setColour(PW_COLOUR);
       this.setOutput(true, 'Player');
     }
   }
@@ -48,7 +48,7 @@ const functions = {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
         .appendField('owner of');
-      this.setColour(ATTRIBUTE_COLOR);
+      this.setColour(FN_COLOUR);
       this.setOutput(true, 'Player');
     }
   },
@@ -57,7 +57,7 @@ const functions = {
       this.appendValueInput('OBJ')
         .setCheck(['Planet', 'Expedition'])
         .appendField('fleet size of');
-      this.setColour(ATTRIBUTE_COLOR);
+      this.setColour(FN_COLOUR);
       this.setOutput(true, 'Number');
     }
   },
@@ -70,7 +70,7 @@ const functions = {
       this.appendValueInput('PLANET2')
         .appendField('and')
         .setCheck('Planet');
-      this.setColour(ATTRIBUTE_COLOR);
+      this.setColour(FN_COLOUR);
       this.setOutput(true, 'Number');
     }
   }
@@ -87,7 +87,7 @@ const lists = {
       this.appendValueInput('PREDICATE')
         .appendField('where')
         .setCheck('Boolean');
-      this.setColour(LIST_COLOR);
+      this.setColour(LIST_COLOUR);
       this.setOutput(true, 'List');
     }
   },
@@ -104,7 +104,7 @@ const lists = {
         .appendField('that')
         .appendField(new Blockly.FieldDropdown(modes), 'MODE')
         .setCheck('Number');
-      this.setColour(LIST_COLOR);
+      this.setColour(LIST_COLOUR);
       this.setOutput(true);
     }
   }
