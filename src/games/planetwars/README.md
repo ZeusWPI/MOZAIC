@@ -27,7 +27,7 @@ Your bot is started with it's name as it's first parameter, that way you'll now 
 
 ## Gamestate
 
-The gamestate format is non differential, which implies you'll receive the complete game state every turn, with all information visible for everyone.
+The gamestate format is non differential, which implies you'll receive the complete (updated) gamestate every turn, with all information visible for everyone.
 
 Examples:
 
