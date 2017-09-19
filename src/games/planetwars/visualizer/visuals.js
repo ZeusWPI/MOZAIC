@@ -181,6 +181,9 @@ Visuals.Expeditions = class {
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
+      .attr('transform', exp => {
+        return Visuals.rotate(exp.angle());
+      })
       .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
   }
 
@@ -209,7 +212,7 @@ Visuals.Expeditions = class {
         };
       })*/
       .on('interrupt', e => console.log("inter"));
-
+    /*
     d3selector.select('circle')
       // This is not used for straigt line stuff
       //.transition()
@@ -217,7 +220,7 @@ Visuals.Expeditions = class {
       //.ease(d3.easeLinear)
       .attr('transform', exp => {
         return Visuals.rotate(exp.angle());
-      })
+      })*/
   }
   static removeOld(d3selector) {
     d3selector.exit().remove();

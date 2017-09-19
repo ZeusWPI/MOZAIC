@@ -54,6 +54,10 @@ class TurnController {
       return map;
     }, {});
 
+    turns.forEach(turn => {
+      turn.prepareData(this.planet_map);
+    });
+
     // Color map
     const color = d3.scaleOrdinal(d3.schemeCategory10);
     this.color_map = first_turn.players.reduce((map, o, i) => {
@@ -82,7 +86,6 @@ class TurnController {
       return false;
     } else {
       var turn = this.turns[newTurn];
-      turn.prepareData(this.planet_map);
       visuals.addNewObjects(turn, this.color_map);
       visuals.update(turn, this);
       return true;
@@ -121,6 +124,7 @@ class Turn {
   }
 
   prepareData(planet_map) {
+    console.log('called');
     if (this.prepared) return;
     this.expeditions.map(exp => {
       exp.origin = planet_map[exp.origin];
