@@ -9,18 +9,20 @@ body {
 
 #view {
   position: relative;
+  height: 100vh;
 }
 
 #game {
-  margin: 0 auto;
   width: 100%;
-  height: 95vh;
+  height: 99.7vh;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 #hide {
   position: absolute;
-  bottom: 6vh;
-  right: 0;
+  bottom: 10vh;
+  right: 1px;
 }
 
 #unhide {
@@ -32,8 +34,8 @@ body {
 #controlbar {
   height: 6vh;
   position: absolute;
-  bottom: 0;
-  width: 100%;
+  bottom: 4vh;
+  width: 99.8%;
 }
 
 .speed {

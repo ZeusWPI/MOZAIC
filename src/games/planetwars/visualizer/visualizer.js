@@ -78,6 +78,7 @@ class TurnController {
 
     visuals.generatePlanetStyles(first_turn.planets);
     visuals.generateViewBox(first_turn.planets);
+    visuals.createZoom();
     this.turnbinder.update(0);
   }
 

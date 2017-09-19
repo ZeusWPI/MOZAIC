@@ -1,5 +1,6 @@
 // Constants
 const svg = d3.select("svg");
+const container = svg.append('g');
 
 class Visuals {
   constructor() {
@@ -7,8 +8,8 @@ class Visuals {
   }
 
   static clearVisuals() {
-    svg.selectAll('.planet_wrapper').remove();
-    svg.selectAll('.expedition').remove();
+    container.selectAll('.planet_wrapper').remove();
+    container.selectAll('.expedition').remove();
   }
 
   generateViewBox(planets) {
@@ -43,9 +44,26 @@ class Visuals {
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
+    this.min = [min_x, min_y];
+    this.max = [max_x, max_y];
+
     this.scale = max_x / 50;
 
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+  }
+
+  createZoom() {
+    var zoom = d3.zoom()
+      .scaleExtent(Config.max_scales)
+      .extent([
+        [0, 0],
+        [100, 100]
+      ])
+      .on('zoom', () => {
+        var transform = d3.event.transform;
+        container.attr('transform', d3.event.transform);
+      });
+    svg.call(zoom);
   }
 
   addNewObjects(turn, color_map) {
@@ -360,11 +378,11 @@ Visuals.TurnWrapper = class {
   }
 
   get planets() {
-    return svg.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
+    return container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
   }
 
   get expeditions() {
-    return svg.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    return container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
