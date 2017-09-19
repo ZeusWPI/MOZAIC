@@ -81,9 +81,7 @@ class Visuals {
     Visuals.Expeditions.update(expeditions, turn_control, turn.planet_map);
     Visuals.Expeditions.removeOld(expeditions);
 
-    scores.select('.planet_count').text(d => d.planets);
-    scores.select('.expedition_count').text(d => d.expeditions);
-    scores.select('.strength').text(d => d.strength);
+    Visuals.Scores.update(scores);
   }
 
   expHomanRotation(exp) {
@@ -388,46 +386,72 @@ Visuals.TurnWrapper = class {
 }
 
 Visuals.Scores = class {
-  static addScores(d3selector, color_map) {
-    d3selector.attr("font-family", "sans-serif")
-      .attr("font-size", 12 + "px")
-      .attr('fill', d => color_map[d.player]);
-
+  static addScores(d3selector, color_map, scores) {
     var start_y = 20;
-    var start_x = 10;
+    var size = 30;
+    Visuals.Scores.max_bar_size = 100;
 
+    d3selector.attr("font-family", "sans-serif")
+      .attr("font-size", 14 + "px")
+      .attr('fill', d => color_map[d.player]);
     d3selector.append('circle')
       .attr('r', d => 5)
-      .attr('cx', d => start_x)
-      .attr('cy', (d, i) => start_y + 20 * i);
-
-    d3selector.append('text').attr('class', 'player_name')
-      .attr('x', d => 30)
-      .attr('y', (d, i) => 25 + 20 * i)
+      .attr('cx', d => "5%")
+      .attr('cy', (d, i) => start_y + size * i);
+    d3selector.append('text')
+      .attr('class', 'player_name')
+      .attr('x', d => "15%")
+      .attr('y', (d, i) => 25 + size * i)
       .text(d => d.player);
-    d3selector.append('text').attr('class', 'planet_count')
-      .attr('x', d => 60)
-      .attr('y', (d, i) => 25 + 20 * i)
+    d3selector.append('text')
+      .attr('class', 'planet_count')
+      .attr('x', d => "45%")
+      .attr('y', (d, i) => 25 + size * i)
       .text(d => d.planets);
-    d3selector.append('text').attr('class', 'expedition_count')
-      .attr('x', d => 80)
-      .attr('y', (d, i) => 25 + 20 * i)
-      .text(d => d.expeditions);
+    d3selector.append('circle')
+      .attr('r', d => "3%")
+      .attr('cx', d => "55%")
+      .attr('cy', (d, i) => 19 + size * i)
+      .attr('fill', 'url(#earth)')
+      .attr('stroke', d => color_map[d.player]);
     var end_y = 0;
     d3selector.append('text').attr('class', 'strength')
-      .attr('x', d => 100)
+      .attr('x', d => "80%")
       .attr('y', (d, i) => {
-        end_y = 25 + 20 * i;
+        end_y = 25 + size * i;
         return end_y;
       })
-      .text(d => d.strength);
+      .text((d, i) => d.strengths[i] + " \u2694");
     end_y += 20;
-    var max_bar_size = 100;
+
     d3selector.append('rect').attr('class', 'ratioblock')
-      .attr('x', (d, i) => start_x + 30 * i)
-      .attr('y', (d, i) => end_y + 20 * i)
-      .attr('width', d => max_bar_size * d.strength / d.total_strength)
-      .attr('height', 10);
+      .attr('x', (d, i) => {
+        var strength_before = 0;
+        if (i != 0) {
+          for (var j = 0; j < i; j++) {
+            strength_before += d.strengths[j];
+          }
+        }
+        return Visuals.Scores.max_bar_size * (strength_before / d.total_strength) + '%';
+      })
+      .attr('y', (d, i) => end_y + 20)
+      .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%')
+      .attr('height', 20);
+  }
+
+  static update(d3selector) {
+    d3selector.select('.planet_count').text(d => d.planets);
+    d3selector.select('.strength').text((d, i) => d.strengths[i] + " \u2694");
+    d3selector.select('.ratioblock').attr('x', (d, i) => {
+        var strength_before = 0;
+        if (i != 0) {
+          for (var j = 0; j < i; j++) {
+            strength_before += d.strengths[j];
+          }
+        }
+        return Visuals.Scores.max_bar_size * (strength_before / d.total_strength) + '%';
+      })
+      .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%');
   }
 }
 
