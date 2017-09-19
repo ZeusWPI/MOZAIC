@@ -9,12 +9,14 @@ body {
 
 #view {
   position: relative;
+  height: 100vh;
 }
 
 #game {
-  margin: 0 auto;
   width: 100%;
-  height: 96vh;
+  height: 99.7vh;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 #score {
@@ -26,7 +28,7 @@ body {
 
 #hide {
   position: absolute;
-  bottom: 6vh;
+  bottom: 10vh;
   right: 1px;
 }
 
@@ -49,8 +51,8 @@ body {
 #controlbar {
   height: 6vh;
   position: absolute;
-  bottom: 0;
-  width: 100%;
+  bottom: 4vh;
+  width: 99.8%;
 }
 
 .speed {

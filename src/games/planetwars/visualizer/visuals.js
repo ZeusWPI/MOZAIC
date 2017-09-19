@@ -1,5 +1,6 @@
 // Constants
 const svg = d3.select("#game");
+const container = svg.append('g');
 
 class Visuals {
   constructor() {
@@ -7,8 +8,8 @@ class Visuals {
   }
 
   static clearVisuals() {
-    svg.selectAll('.planet_wrapper').remove();
-    svg.selectAll('.expedition').remove();
+    container.selectAll('.planet_wrapper').remove();
+    container.selectAll('.expedition').remove();
   }
 
   generateViewBox(planets) {
@@ -43,9 +44,26 @@ class Visuals {
     max_x += Math.abs(min_x);
     max_y += Math.abs(min_y);
 
+    this.min = [min_x, min_y];
+    this.max = [max_x, max_y];
+
     this.scale = max_x / 50;
 
     svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+  }
+
+  createZoom() {
+    var zoom = d3.zoom()
+      .scaleExtent(Config.max_scales)
+      .extent([
+        [0, 0],
+        [100, 100]
+      ])
+      .on('zoom', () => {
+        var transform = d3.event.transform;
+        container.attr('transform', d3.event.transform);
+      });
+    svg.call(zoom);
   }
 
   addNewObjects(turn, color_map) {
@@ -317,7 +335,7 @@ Visuals.Planets = class {
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
     d3selector.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
-    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count);
+    d3selector.select('.ship_count').select('text').text(d => "\u2694 " + d.ship_count);
   }
 
   static drawName(d3selector, color_map, scale) {
@@ -341,7 +359,8 @@ Visuals.Planets = class {
       .attr('fill', d => color_map[d.owner])
       .attr('class', 'ship_count')
       .text(d => "\u2694 " + d.ship_count)
-      .append('title').text(d => Visuals.visualOwnerName(d.owner));
+      .append('title')
+      .text(d => Visuals.visualOwnerName(d.owner));
   }
 
   static removeOld(d3selector) {
@@ -365,11 +384,11 @@ Visuals.TurnWrapper = class {
   }
 
   get planets() {
-    return svg.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
+    return container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
   }
 
   get expeditions() {
-    return svg.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    return container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
