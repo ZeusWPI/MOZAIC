@@ -3,7 +3,6 @@ const blocks = require("./src/blocks");
 const js_gen = require("./src/js_gen");
 
 const PlanetWars = require("./src/planetwars");
-const Injector = require("./src/injector");
 
 const eval_code = require("./src/test");
 
