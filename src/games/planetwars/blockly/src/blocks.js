@@ -1,5 +1,5 @@
 module.exports = {
-  planetwars: require('./blocks/planetwars'),
+  entities: require('./blocks/entities'),
   functions: require('./blocks/functions'),
   'lists': require('./blocks/lists')
 };
