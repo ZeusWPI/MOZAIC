@@ -202,8 +202,9 @@ Visuals.Expeditions = class {
   static drawExpedition(d3selector, color_map, scale) {
     d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp))
 
-    d3selector.append('circle')
-      .attr('r', 1 * scale)
+    d3selector.append('rect')
+      .attr('width', 1 * scale)
+      .attr('height', 1 * scale)
       .style('stroke', exp => color_map[exp.owner])
       .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
