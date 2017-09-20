@@ -28,9 +28,24 @@ class PlanetWars {
     return this.state['expeditions'];
   }
 
+  distance(p1, p2) {
+  }
+
   dispatch(num_ships, origin, target) {
     // TODO
   }
+
+  // inject planetwars API into a javascript interpreter
+  init_interpreter(interpreter, scope) {
+    register_fn(interpreter, scope, 'getPlayers',function() {
+      
+    });
+  }
+}
+
+function register_fn(interpreter, scope, fun) {
+  var native_fun = interpreter.createNativeFunction(fun);
+  interpreter.setProperty(scope, name, fun);
 }
 
 module.exports = PlanetWars;

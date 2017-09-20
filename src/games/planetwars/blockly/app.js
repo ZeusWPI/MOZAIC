@@ -2,6 +2,9 @@ var Blockly = require("node-blockly/browser");
 const blocks = require("./src/blocks");
 const js_gen = require("./src/js_gen");
 
+const PlanetWars = require("./src/planetwars");
+const Injector = require("./src/injector");
+
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
