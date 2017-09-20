@@ -7,8 +7,8 @@ class CodeInjector {
   }
 
   inject_function(fun_name, fun) {
-    var native_fun = interpreter.createNativeFunction(fun);
-    interpreter.setProperty(scope, fun_name, native_fun);
+    var native_fun = this.interpreter.createNativeFunction(fun);
+    this.interpreter.setProperty(this.scope, fun_name, native_fun);
   }
 
   inject(obj) {
