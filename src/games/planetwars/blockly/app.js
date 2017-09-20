@@ -5,6 +5,8 @@ const js_gen = require("./src/js_gen");
 const PlanetWars = require("./src/planetwars");
 const Injector = require("./src/injector");
 
+const eval_code = require("./src/test");
+
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
@@ -75,5 +77,6 @@ window.onload = function() {
   workspace.addChangeListener(function() {
     var code = Blockly.JavaScript.workspaceToCode(workspace);
     document.getElementById('generatedCodeDiv').innerHTML = code;
+    eval_code(code);
   });
 };
