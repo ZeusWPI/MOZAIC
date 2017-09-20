@@ -1,5 +1,6 @@
 var Blockly = require("node-blockly/browser");
 const blocks = require("./src/blocks");
+const js_gen = require("./src/js_gen");
 
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
@@ -11,12 +12,18 @@ var toolbox = {};
 
 // Register all custom blocks
 Object.entries(blocks).forEach(([cat_name, cat_blocks]) => {
-  var list = [];
+  var toolbox_list = [];
   Object.entries(cat_blocks).forEach(([block_name, block]) => {
     Blockly.Blocks[block_name] = block;
-    list.push(block_name);
+    toolbox_list.push(block_name);
   });
-  toolbox[cat_name] = list;
+  toolbox[cat_name] = toolbox_list;
+});
+
+Object.entries(js_gen).forEach(([cat_name, cat_blocks]) => {
+  Object.entries(cat_blocks).forEach(([block_name, fn]) => {
+    Blockly.JavaScript[block_name] = fn;
+  });
 });
 
 // Add builtins to toolbox

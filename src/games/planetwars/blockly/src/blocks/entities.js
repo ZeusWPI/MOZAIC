@@ -24,7 +24,7 @@ module.exports = {
       this.setOutput(true, 'List');
     }
   },
-  'player': {
+  'player_name': {
     init: function() {
       this.appendDummyInput().appendField('Me');
       this.setColour(PW_COLOUR);
