@@ -15,6 +15,22 @@ module.exports = {
     return [code, JS.ORDER_MEMBER];
   },
   'list_minmax': function(block) {
-    // TODO
+    var list = JS.valueToCode(block, 'LIST');
+    var value_expr = JS.valueToCode(block, 'EXPR');
+
+    var elem_name = JS.variableDB_.getName(
+      block.getFieldValue('ELEM_NAME'),
+      Blockly.Variables.NAME_TYPE
+    );
+
+    var fn_str = '(' + elem_name + ') => ' + value_expr;
+
+    var code;
+    if (block.getFieldValue('MODE') == 'MINIMIZE') {
+      code = 'minimum_by(' + list + ', ' + fn_str + ')';
+    } else {
+      code = 'maximum_by(' + list + ', ' + fn_str + ')';
+    }
+    return [code, JS.ORDER_FUNCTION_CALL];
   }
 };
