@@ -1,19 +1,20 @@
-var Blockly = require('node-blockly'); 
+const Blockly = require('node-blockly');
+const JS = Blockly.JavaScript;
 
 module.exports = {
   'planets': function(block) {
-    return 'getPlanets()';
+    return ['getPlanets()', JS.ORDER_ATOMIC];
   },
   'expeditions': function(block) {
-    return 'getExpeditions()';
+    return ['getExpeditions()', JS.ORDER_ATOMIC];
   },
   'players': function(block) {
-    return 'getPlayers()';
+    return ['getPlayers()', JS.ORDER_ATOMIC];
   },
   'player_name': function(block) {
-    return 'getPlayer()';
+    return ['getPlayer()', JS.ORDER_ATOMIC];
   },
   'nobody': function(block) {
-    return 'null';
+    return ['null', JS.ORDER_ATOMIC];
   }
-}
+};
