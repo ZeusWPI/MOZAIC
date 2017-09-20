@@ -43,9 +43,4 @@ class PlanetWars {
   }
 }
 
-function register_fn(interpreter, scope, fun) {
-  var native_fun = interpreter.createNativeFunction(fun);
-  interpreter.setProperty(scope, name, fun);
-}
-
 module.exports = PlanetWars;
