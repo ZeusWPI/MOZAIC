@@ -337,7 +337,8 @@ Visuals.Planets = class {
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
     d3selector.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
-    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count);
+    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count).append('title')
+      .text(d => Visuals.visualOwnerName(d.owner));
   }
 
   static drawName(d3selector, color_map, scale) {
