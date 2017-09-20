@@ -50,10 +50,11 @@ fn main() {
     let mut bots = BotRunner::run(&players);
 
     {
+        let log_file = match_description.log_file.unwrap_or("log.json".to_owned());
         let config = MatchParams {
             players: player_names,
             game_config: match_description.game_config,
-            logger: Logger::new("log.json"),
+            logger: Logger::new(&log_file),
         };
         
         
@@ -71,6 +72,7 @@ fn main() {
 pub struct MatchDescription {
     pub players: Vec<PlayerConfig>,
     pub game_config: planetwars::Config,
+    pub log_file: Option<String>
 }
 
 // Parse a config passed to the program as an command-line argument.
