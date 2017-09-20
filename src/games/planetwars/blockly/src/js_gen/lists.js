@@ -1,4 +1,5 @@
 var Blockly = require('node-blockly/browser');
+const JS = Blockly.JavaScript;
 
 module.exports = {
   'list_filter': function(block) {
@@ -10,7 +11,8 @@ module.exports = {
     );
 
     var pred_str = '(' + elem_name + ') => ' + predicate;
-    return list + '.filter(' + pred_str + ')';
+    var code = list + '.filter(' + pred_str + ')';
+    return [code, JS.ORDER_MEMBER];
   },
   'list_minmax': function(block) {
     // TODO
