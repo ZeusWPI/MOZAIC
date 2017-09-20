@@ -1,6 +1,4 @@
-const Interpreter = require('js-interpreter');
 const PlanetWars = require ('./planetwars');
-const CodeInjector = require ('./injector');
 
 var state = {
   "players": [
