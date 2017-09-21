@@ -24,10 +24,10 @@ function run_bot(code) {
   });
 
   rl.on('line', function(line){
-    let state = JSON.parse(line);
-    let pw = new PlanetWars(player_name, state);
+    var state = JSON.parse(line);
+    var pw = new PlanetWars(player_name, state);
     eval_code(code, pw);
-    let command = { moves: pw.dispatches };
+    var command = { moves: pw.dispatches };
     console.log(JSON.stringify(command));
   });
 }
