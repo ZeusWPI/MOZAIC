@@ -3,7 +3,7 @@ const Blockly = require('node-blockly');
 const defs = require('./blocks/defs');
 const js_gen = require('./blocks/js_gen');
 
-function load_blocks(blockly) {
+function inject_blocks(blockly) {
   load_block_defs(blockly.Blocks);
   load_js_generators(blockly.JavaScript);
 }
@@ -29,5 +29,5 @@ function qualified_name(cat_name, block_name) {
 }
 
 module.exports = {
-  init: load_blocks
+  inject_blocks: inject_blocks
 };

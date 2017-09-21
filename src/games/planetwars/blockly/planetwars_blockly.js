@@ -1,13 +1,12 @@
 var Blockly = require("node-blockly/browser");
 const Blocks = require("./src/blocks");
-
 const PlanetWars = require("./src/planetwars");
+
 
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
-Blocks.init(Blockly);
-
+Blocks.inject(Blockly);
 
 var toolbox = {
   'entities': [
@@ -58,8 +57,7 @@ var toolbox = {
   ]
 };
 
-// Bulid toolbox xml
-
+// construct toolbox xml
 function toolbox_xml(toolbox) {
   var toolbox_str = '<xml>';
   Object.entries(toolbox).forEach(([cat_name, cat_entries]) => {
@@ -73,11 +71,25 @@ function toolbox_xml(toolbox) {
   return toolbox_str;
 }
 
-window.onload = function() {
-  console.log(Blockly.Blocks);
-  var workspace = Blockly.inject('blocklyDiv', { toolbox: toolbox_xml(toolbox) });
-  workspace.addChangeListener(function() {
-    var code = Blockly.JavaScript.workspaceToCode(workspace);
-    document.getElementById('generatedCode').innerHTML = code;
-  });
+function inject(div_id) {
+  var toolbox = toolbox_xml(toolbox);
+  var workspace = Blockly.inject(div_id, { toolbox: toolbox });
+}
+
+class PlanetWarsBlockly {
+  constructor(workspace) {
+    this.workspace = workspace;
+  }
+
+  getCode() {
+    return Blockly.JavaScript.workspaceToCode(this.workspace);
+  }
+
+  addChangeListener(fun) {
+    this.workspace.addChangeListener(fun);
+  }
+};
+
+module.exports = {
+  inject
 };

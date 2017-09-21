@@ -1,11 +1,8 @@
 {
-  "name": "mozaic-client",
+  "name": "planetwars-blockly",
   "version": "1.0.0",
   "description": "mozaic client",
-  "main": "app.js",
-  "scripts": {
-    "start": "webpack-dev-server --progress --colors --config ./webpack.config.js"
-  },
+  "main": "planetwars_blockly.js",
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {
