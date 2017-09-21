@@ -1,22 +1,26 @@
 {
-  "$schema": "http://json-schema.org/schema#",
-  "title": "PlanetWars",
-  "description": "This is the format describing the command for the PlanetWars game, used in the development off MOZAIC",
-  "properties": {
-    "move":{
-      "type": "object",
-      "description": "Describes what you want to do in the current turn",
-      "properties": {
-        "origin": {"type": "string"},
-        "destination": {"type": "string"},
-        "ship_count": {
-          "type":"integer",
-          "minimum": 0
+    "$schema": "http://json-schema.org/schema#",
+    "title": "PlanetWars",
+    "description": "This is the format describing the command for the PlanetWars game, used in the development off MOZAIC",
+    "properties": {
+        "moves":{
+            "type": "array",
+            "description": "Describes what you want to do in the current turn",
+            "items": {
+                "type": "object",
+                "description": "a command",
+                "properties": {
+                    "origin": { "type": "string" },
+                    "destination": { "type": "string" },
+                    "ship_count": {
+                      "type":"integer",
+                      "minimum": 0
+                    }
+              },
+              "required": ["origin", "destination", "ship_count"],
+              "additionalProperties" : false
+            }
         }
-      },
-      "required": ["origin", "destination", "ship_count"],
-      "additionalProperties" : false
-    }
-  },
-  "additionalProperties": false
+    },
+    "additionalProperties" : false
 }

@@ -1,7 +1,7 @@
 import sys, json
 
 def move(command):
-    record = { 'move': command }
+    record = { 'moves': [command] }
     print(json.dumps(record))
     sys.stdout.flush()
     

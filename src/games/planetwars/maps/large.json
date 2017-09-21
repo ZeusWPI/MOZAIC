@@ -9,28 +9,28 @@
         {
             "name": "OJCKCVKJGJ",
             "owner": "player_1",
-            "ship_count": "1",
+            "ship_count": 1,
             "x": 78,
             "y": 31
         },
         {
             "name": "OTJPKJXLQX",
             "owner": "player_2",
-            "ship_count": "1",
+            "ship_count": 1,
             "x": 30,
             "y": 74
         },
         {
             "name": "RSSGYXGAIS",
             "owner": "player_3",
-            "ship_count": "1",
+            "ship_count": 1,
             "x": 48,
             "y": 80
         },
         {
             "name": "LWMVSTXKRV",
             "owner": "player_4",
-            "ship_count": "1",
+            "ship_count": 1,
             "x": 19,
             "y": 96
         },
