@@ -3,18 +3,17 @@ const Config = require('./config');
 const Utils = require('./util');
 const space_math = Utils.SpaceMath;
 
-// Constants
-const svg = d3.select("#game");
-const container = svg.append('g');
-
 class Visuals {
-  constructor() {
+  constructor(selector) {
     this.scale = 1;
+    this.svg = d3.select(selector);
+    this.container = this.svg.append('g');
+    new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
 
-  static clearVisuals() {
-    container.selectAll('.planet_wrapper').remove();
-    container.selectAll('.expedition').remove();
+  clearVisuals() {
+    this.container.selectAll('.planet_wrapper').remove();
+    this.container.selectAll('.expedition').remove();
   }
 
   generateViewBox(planets) {
@@ -54,16 +53,16 @@ class Visuals {
 
     this.scale = max_x / 50;
 
-    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+    this.svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
   createZoom() {
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
       .on('zoom', () => {
-        container.attr('transform', d3.event.transform);
+        this.container.attr('transform', d3.event.transform);
       });
-    svg.call(zoom);
+    this.svg.call(zoom);
   }
 
   generateWinnerBox(winner, color) {
@@ -73,8 +72,8 @@ class Visuals {
     wrapper.append('p').text('wins!');
   }
 
-  addNewObjects(turn, color_map) {
-    var turn = new Visuals.TurnWrapper(turn);
+  addNewObjects(raw_turn, color_map) {
+    var turn = new Visuals.TurnWrapper(this, raw_turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
@@ -94,7 +93,7 @@ class Visuals {
   }
 
   update(turn, turn_control) {
-    var turn = new Visuals.TurnWrapper(turn);
+    var turn = new Visuals.TurnWrapper(this, turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
@@ -201,11 +200,11 @@ Visuals.Expeditions = class {
   static getLocation(exp) {
     //var point = exp.homannPosition();
     var point = exp.position();
-    return Visuals.translation(point)
+    return Visuals.translation(point);
   }
 
   static drawExpedition(d3selector, color_map, scale) {
-    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp))
+    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
 
     d3selector.append('rect')
       .attr('width', 1 * scale)
@@ -295,13 +294,13 @@ Visuals.Fleets = class {
       .append('title').text(d => Visuals.visualOwnerName(d.planet.owner));
   }
 
-  static animateFleets() {
+  animateFleets() {
     d3.timer(elapsed => {
-      svg.selectAll('.fleet')
+      this.svg.selectAll('.fleet')
         .attr('transform', (d, i) => {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
-    })
+    });
   }
 }
 
@@ -387,17 +386,23 @@ Visuals.Fleet = class {
   }
 };
 
+
+// TODO: please clean this up
 Visuals.TurnWrapper = class {
-  constructor(turn) {
+  constructor(visuals, turn) {
+    this.visuals = visuals;
     this.turn = turn;
   }
 
   get planets() {
-    return container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
+    return this.visuals.container
+      .selectAll('.planet_wrapper')
+      .data(this.turn.planets, d => d.name);
   }
 
   get expeditions() {
-    return container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    return this.visuals.
+      container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
@@ -411,7 +416,7 @@ Visuals.TurnWrapper = class {
   get scores() {
     return d3.select('#score').selectAll('.score').data(this.turn.scores, d => d.player);
   }
-}
+};
 
 Visuals.Scores = class {
   static addScores(d3selector, color_map, scores) {
@@ -484,9 +489,13 @@ Visuals.Scores = class {
 };
 
 Visuals.ResourceLoader = class {
-  static setupPatterns() {
+  constructor(svg) {
+    this.svg = svg;
+  }
+  
+  setupPatterns() {
     // Define patterns
-    svg.append("defs");
+    this.svg.append("defs");
     Config.planet_types.forEach(p => {
       this.setupPattern(p + ".svg", 100, 100, p);
     });
@@ -495,8 +504,8 @@ Visuals.ResourceLoader = class {
     this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
-  static setupPattern(name, width, height, id) {
-    svg.select("defs")
+  setupPattern(name, width, height, id) {
+    this.svg.select("defs")
       .append("pattern")
       .attr("id", id)
       .attr("viewBox", "0 0 " + width + " " + height)
@@ -511,9 +520,12 @@ Visuals.ResourceLoader = class {
   }
 }
 
+
+// TODO: fix
 Visuals.Gimmicks = class {
   static addGimmicks(turn) {
-    Visuals.Gimmicks.addJigglyPlanets(turn);
+    // No. Just no.
+    //Visuals.Gimmicks.addJigglyPlanets(turn);
   }
 
   static addJigglyPlanets(raw_turn) {

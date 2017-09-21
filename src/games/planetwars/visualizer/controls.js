@@ -3,7 +3,8 @@ const Config = require('./config');
 const Visualizer = require('./visualizer');
 
 class Controls {
-  constructor() {
+  constructor(visualizer) {
+    this.visualizer = visualizer;
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
     d3.select('#unhide').attr("hidden", true);
@@ -37,7 +38,6 @@ class Controls {
   }
 
   readLog(e) {
-    console.log(e);
     if (this.visualizer) {
       this.hidePauseButton();
       this.visualizer.clear();
@@ -46,8 +46,7 @@ class Controls {
     var reader = new FileReader();
     reader.onload = event => {
       var log = event.target.result;
-      console.log(log);
-      this.visualizer = new Visualizer(log);
+      this.visualizer.visualize(log);
       this.attachEvents(this.visualizer.turn_controller);
     };
 

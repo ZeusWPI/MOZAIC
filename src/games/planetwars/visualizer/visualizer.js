@@ -1,19 +1,19 @@
 const d3 = require('d3');
 
 const Visuals = require('./visuals');
+const Controls = require('./controls');
 const { SpaceMath, DataBinder } = require('./util');
 const Config = require('./config');
 
-const space_math = new SpaceMath();
+
 const visuals = new Visuals();
 
 class Visualizer {
 
-  constructor(log) {
+  constructor() {
+    this.controls = new Controls(this);
+    this.visuals = new Visuals('#game');
     this.turn_controller = new TurnController();
-    var turns = this.parseJSON(log);
-    this.turn_controller.init(turns);
-    Visuals.Fleets.animateFleets();
   }
 
   parseJSON(json) {
@@ -23,8 +23,16 @@ class Visualizer {
     });
   }
 
+  visualize(log) {
+    this.clear();
+    var turns = this.parseJSON(log);
+    this.turn_controller.init(turns);
+    // TODO
+    //this.visuals.Fleets.animateFleets();
+  }
+
   clear() {
-    Visuals.clearVisuals();
+    this.visuals.clearVisuals();
     this.turn_controller.runningbinder.update(false);
   }
 }
@@ -49,9 +57,6 @@ class TurnController {
 
   init(turns) {
     this.turns = turns;
-    Visuals.ResourceLoader.setupPatterns();
-    Visuals.clearVisuals();
-
     var first_turn = this.turns[0];
 
     // Generate planet_map
