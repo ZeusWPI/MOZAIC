@@ -29,5 +29,5 @@ function qualified_name(cat_name, block_name) {
 }
 
 module.exports = {
-  inject_blocks: inject_blocks
+  inject: inject_blocks
 };
