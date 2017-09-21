@@ -35,7 +35,7 @@ class PlanetWars {
 
   dispatch(num_ships, origin, target) {
     this.dispatches.push({
-      'num_ships': num_ships,
+      'ship_count': num_ships,
       'origin': origin['name'],
       'destination': target['name']
     });
