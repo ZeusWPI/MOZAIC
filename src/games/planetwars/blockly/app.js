@@ -76,6 +76,6 @@ window.onload = function() {
   workspace.addChangeListener(function() {
     var code = Blockly.JavaScript.workspaceToCode(workspace);
     document.getElementById('generatedCodeDiv').innerHTML = code;
-    eval_code(code);
+    console.log(eval_code(code));
   });
 };

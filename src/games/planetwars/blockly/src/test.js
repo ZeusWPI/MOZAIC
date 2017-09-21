@@ -1,4 +1,5 @@
 const PlanetWars = require ('./planetwars');
+const eval_code = require('./eval_code');
 
 var state = {
   "players": [
@@ -58,35 +59,10 @@ var pw = new PlanetWars(player_name);
 pw.setState(state);
 
 // fetches closures that act on a given PlanetWars instance
-function getPlayer() {
-  return pw.getPlayer();
+
+
+function test_code(code) {
+  return eval_code(code, pw, 'bert');
 }
 
-function getPlayers() {
-  return pw.getPlayers();
-}
-
-function getPlanets() {
-  return pw.getPlanets();
-}
-
-function getExpeditions() {
-  return pw.getExpeditions();
-}
-
-function getPlanet(name) {
-  return pw.getPlanet(name);
-}
-
-function dispatch(num_ships, origin, target) {
-  pw.dispatch(num_ships, orgin, target);
-}
-
-
-function eval_code(code) {
-  'use strict';
-  let res = eval(code);
-  console.log(res);
-}
-
-module.exports = eval_code;
+module.exports = test_code;
