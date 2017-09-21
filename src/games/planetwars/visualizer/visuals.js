@@ -6,7 +6,7 @@ const space_math = Utils.SpaceMath;
 class Visuals {
   constructor(selector) {
     this.scale = 1;
-    this.svg = d3.select(selector);
+    this.svg = d3.select('#game');
     this.container = this.svg.append('g');
     new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
@@ -77,7 +77,7 @@ class Visuals {
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
-
+    
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
     var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
@@ -302,7 +302,7 @@ Visuals.Fleets = class {
         });
     });
   }
-}
+};
 
 Visuals.Planets = class {
   static addPlanetVisuals(d3selector, color_map, scale) {
@@ -374,7 +374,7 @@ Visuals.Planets = class {
   static removeOld(d3selector) {
     d3selector.exit().remove();
   }
-}
+};
 
 Visuals.Fleet = class {
   constructor(planet, scale) {

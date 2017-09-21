@@ -5,15 +5,12 @@ const Controls = require('./controls');
 const { SpaceMath, DataBinder } = require('./util');
 const Config = require('./config');
 
-
-const visuals = new Visuals();
-
 class Visualizer {
 
   constructor() {
     this.controls = new Controls(this);
     this.visuals = new Visuals('#game');
-    this.turn_controller = new TurnController();
+    this.turn_controller = new TurnController(this);
   }
 
   parseJSON(json) {
@@ -38,7 +35,8 @@ class Visualizer {
 }
 
 class TurnController {
-  constructor() {
+  constructor(visualizer) {
+    this.visualizer = visualizer;
     this.speed = Config.base_speed;
     this.turnbinder = new DataBinder(0);
     this.turnbinder.registerCallback(v => {
@@ -95,10 +93,11 @@ class TurnController {
     }, {});
     this.color_map[null] = "#d3d3d3";
 
-    visuals.generatePlanetStyles(first_turn.planets);
-    visuals.generateViewBox(first_turn.planets);
-    visuals.createZoom();
-    visuals.generateWinnerBox(winner, this.color_map[winner]);
+    
+    this.visualizer.visuals.generatePlanetStyles(first_turn.planets);
+    this.visualizer.visuals.generateViewBox(first_turn.planets);
+    this.visualizer.visuals.createZoom();
+    this.visualizer.visuals.generateWinnerBox(winner, this.color_map[winner]);
     this.turnbinder.update(0);
   }
 
@@ -117,8 +116,8 @@ class TurnController {
       return false;
     } else {
       var turn = this.turns[newTurn];
-      visuals.addNewObjects(turn, this.color_map);
-      visuals.update(turn, this);
+      this.visualizer.visuals.addNewObjects(turn, this.color_map);
+      this.visualizer.visuals.update(turn, this);
       return true;
     }
   }
