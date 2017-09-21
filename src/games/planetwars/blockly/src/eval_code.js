@@ -1,10 +1,10 @@
 'use strict';
 
-function eval_code(code, pw, player_name) {
+function eval_code(code, pw) {
 
   // define closures
   function getPlayer() {
-    return player_name;
+    return pw.getPlayer();
   }
 
   function getPlayers() {

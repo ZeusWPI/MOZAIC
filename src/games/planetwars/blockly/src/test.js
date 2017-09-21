@@ -62,7 +62,7 @@ pw.setState(state);
 
 
 function test_code(code) {
-  return eval_code(code, pw, 'bert');
+  return eval_code(code, pw);
 }
 
 module.exports = test_code;
