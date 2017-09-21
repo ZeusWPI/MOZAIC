@@ -1,5 +1,5 @@
 const Blockly = require('planetwars-blockly');
-const Visualizer = require('planetwars-visualizer');
+const Controls = require('planetwars-visualizer/controls');
 
 class PlanetwarsClient {
   constructor(blockly, visualizer) {
@@ -10,4 +10,5 @@ class PlanetwarsClient {
 
 window.onload = function() {
   Blockly.inject('blockly');
+  new Controls();
 };

@@ -1,5 +1,8 @@
+const d3 = require('d3');
+
 const Visuals = require('./visuals');
 const { SpaceMath, DataBinder } = require('./util');
+const Config = require('./config');
 
 const space_math = new SpaceMath();
 const visuals = new Visuals();

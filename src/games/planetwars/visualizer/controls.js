@@ -1,3 +1,7 @@
+const d3 = require('d3');
+const Config = require('./config');
+const Visualizer = require('./visualizer');
+
 class Controls {
   constructor() {
     this.mod = 3;
@@ -28,9 +32,12 @@ class Controls {
       d3.select('#hide_score').attr("hidden", null);
       d3.select('#unhide_score').attr("hidden", true);
     });
+    document.getElementById('file-select')
+      .addEventListener('change', e => this.readLog(e), false);
   }
 
   readLog(e) {
+    console.log(e);
     if (this.visualizer) {
       this.hidePauseButton();
       this.visualizer.clear();
@@ -39,11 +46,12 @@ class Controls {
     var reader = new FileReader();
     reader.onload = event => {
       var log = event.target.result;
+      console.log(log);
       this.visualizer = new Visualizer(log);
       this.attachEvents(this.visualizer.turn_controller);
-    }
+    };
 
-    reader.readAsText(e.files[0]);
+    reader.readAsText(e.target.files[0]);
   }
 
   attachEvents(turn_controller) {
@@ -102,11 +110,11 @@ class Controls {
       });
 
     turn_controller.turnbinder.registerCallback(v => {
-      d3.select('#turn_slider').node().value = v
+      d3.select('#turn_slider').node().value = v;
       if (v >= turn_controller.maxTurns) {
-        d3.select('#end_card').attr('hidden', null)
+        d3.select('#end_card').attr('hidden', null);
       } else {
-        d3.select('#end_card').attr('hidden', 'true')
+        d3.select('#end_card').attr('hidden', 'true');
       }
     });
     turn_controller.runningbinder.registerCallback(v => {
@@ -137,4 +145,4 @@ class Controls {
   }
 }
 
-var controls = new Controls();
+module.exports = Controls;

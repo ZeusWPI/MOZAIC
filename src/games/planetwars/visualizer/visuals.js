@@ -1,4 +1,7 @@
 const d3 = require('d3');
+const Config = require('./config');
+const Utils = require('./util');
+const space_math = Utils.SpaceMath;
 
 // Constants
 const svg = d3.select("#game");
@@ -130,7 +133,7 @@ class Visuals {
     var dy = b * Math.sin(angle);
 
     // unrotated slope
-    var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+    var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2));
 
     var sx = t1 * Math.cos(w) - Math.sin(w);
     var sy = Math.cos(w) + t1 * Math.sin(w);
@@ -139,7 +142,7 @@ class Visuals {
     return 'rotate(' + (degrees + 180) % 360 + ')';
   }
 
-  registerTakeOverAnimation(planets, planet_map, speed) {
+  static registerTakeOverAnimation(planets, planet_map, speed) {
     planets.select('.planet')
       .filter(d => d.changed_owner)
       .transition(speed / 2)
@@ -148,7 +151,7 @@ class Visuals {
       .attr('transform', d => Visuals.resize(d, 1));
   }
 
-  attachToAllChildren(d3selector) {
+  static attachToAllChildren(d3selector) {
     return d3selector.data((d, i) => {
       return Array(d3selector._groups[i].length).fill(d);
     });
@@ -333,9 +336,9 @@ Visuals.Planets = class {
 
   static update(d3selector, turn_control, planet_map) {
     // Text color
-    visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
-    visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
-    visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
+    Visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
+    Visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
+    Visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
 
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
@@ -382,7 +385,7 @@ Visuals.Fleet = class {
     this.speed = space_math.randomIntBetween(100, 1000);
     this.planet = planet;
   }
-}
+};
 
 Visuals.TurnWrapper = class {
   constructor(turn) {
@@ -478,7 +481,7 @@ Visuals.Scores = class {
       })
       .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%');
   }
-}
+};
 
 Visuals.ResourceLoader = class {
   static setupPatterns() {
@@ -489,7 +492,7 @@ Visuals.ResourceLoader = class {
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");
     this.setupPattern("station.svg", 100, 100, "fleet");
-    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet")
+    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
   static setupPattern(name, width, height, id) {
@@ -513,17 +516,17 @@ Visuals.Gimmicks = class {
     Visuals.Gimmicks.addJigglyPlanets(turn);
   }
 
-  static addJigglyPlanets(turn) {
-    var turn = new Visuals.TurnWrapper(turn);
+  static addJigglyPlanets(raw_turn) {
+    var turn = new Visuals.TurnWrapper(raw_turn);
     var planets = turn.planets;
 
     planets.select('.planet_model')
       .filter(planet => {
         return ["jigglypoef", "iepoef", "iepoev", "jigglypuff", "jigglypoev"]
-          .includes(planet.owner)
+          .includes(planet.owner);
       })
       .attr('fill', 'url(#jigglyplanet)');
   }
-}
+};
 
 module.exports = Visuals;
