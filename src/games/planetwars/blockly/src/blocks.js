@@ -1,19 +1,25 @@
-const Blockly = require('node-blockly/browser');
+const Blockly = require('node-blockly');
+
 const defs = require('./blocks/defs');
 const js_gen = require('./blocks/js_gen');
 
-function load_blocks() {
-  // register custom blocks
-  Object.entries(defs).forEach(([cat_name, blocks]) => {
-    Object.entries(blocks).forEach(([block_name, block]) => {
-      Blockly.Blocks[qualified_name(cat_name, block_name)] = block;
+function load_blocks(blockly) {
+  load_block_defs(blockly.Blocks);
+  load_js_generators(blockly.JavaScript);
+}
+
+function load_block_defs(table) {
+   Object.entries(defs).forEach(([cat_name, blocks]) => {
+     Object.entries(blocks).forEach(([block_name, block]) => {
+       table[qualified_name(cat_name, block_name)] = block;
     });
   });
+}
 
-  // register code generators
+function load_js_generators(table) {
   Object.entries(js_gen).forEach(([cat_name, generators]) => {
     Object.entries(generators).forEach(([block_name, generator]) => {
-      Blockly.JavaScript[qualified_name(cat_name, block_name)] = generator;
+      table[qualified_name(cat_name, block_name)] = generator;
     });
   });
 }

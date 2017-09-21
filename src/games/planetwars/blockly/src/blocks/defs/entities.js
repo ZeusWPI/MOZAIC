@@ -1,5 +1,4 @@
 var Blockly = require("node-blockly/browser");
-
 const PW_COLOUR = 275;
 
 module.exports = {

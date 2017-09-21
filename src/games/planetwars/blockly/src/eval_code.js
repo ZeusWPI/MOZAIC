@@ -26,7 +26,7 @@ function eval_code(code, pw) {
   }
 
   function dispatch(num_ships, origin, target) {
-    pw.dispatch(num_ships, orgin, target);
+    pw.dispatch(num_ships, origin, target);
   }
 
   // evaluate code

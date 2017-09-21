@@ -1,4 +1,3 @@
-
 function minimum_by(list, fun) {
   var minimizing_elem = list[0];
   var min = fun(minimizing_elem);

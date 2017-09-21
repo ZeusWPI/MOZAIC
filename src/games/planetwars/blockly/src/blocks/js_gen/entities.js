@@ -1,4 +1,4 @@
-const Blockly = require('node-blockly');
+const Blockly = require('node-blockly/browser');
 const JS = Blockly.JavaScript;
 
 module.exports = {

@@ -3,12 +3,11 @@ const Blocks = require("./src/blocks");
 
 const PlanetWars = require("./src/planetwars");
 
-const eval_code = require("./src/test");
-
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
-Blocks.init();
+Blocks.init(Blockly);
+
 
 var toolbox = {
   'entities': [
@@ -75,10 +74,10 @@ function toolbox_xml(toolbox) {
 }
 
 window.onload = function() {
+  console.log(Blockly.Blocks);
   var workspace = Blockly.inject('blocklyDiv', { toolbox: toolbox_xml(toolbox) });
   workspace.addChangeListener(function() {
     var code = Blockly.JavaScript.workspaceToCode(workspace);
-    document.getElementById('generatedCodeDiv').innerHTML = code;
-    console.log(eval_code(code));
+    document.getElementById('generatedCode').innerHTML = code;
   });
 };
