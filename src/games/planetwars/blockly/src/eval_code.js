@@ -1,5 +1,7 @@
 'use strict';
 
+const { minimum_by, maximum_by, distance } = require('./utils');
+
 function eval_code(code, pw) {
 
   // define closures
