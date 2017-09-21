@@ -8,7 +8,7 @@ Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.8;
 Blocks.inject(Blockly);
 
-var toolbox = {
+const toolbox = {
   'entities': [
     'entities_planets',
     'entities_expeditions',
@@ -72,8 +72,8 @@ function toolbox_xml(toolbox) {
 }
 
 function inject(div_id) {
-  var toolbox = toolbox_xml(toolbox);
-  var workspace = Blockly.inject(div_id, { toolbox: toolbox });
+  var tb = toolbox_xml(toolbox);
+  var workspace = Blockly.inject(div_id, { toolbox: tb });
 }
 
 class PlanetWarsBlockly {
