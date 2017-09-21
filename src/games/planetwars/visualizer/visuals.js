@@ -11,6 +11,10 @@ class Visuals {
     new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
 
+  animateFleets() {
+    Visuals.Fleets.animateFleets(this.svg);
+  }
+
   clearVisuals() {
     this.container.selectAll('.planet_wrapper').remove();
     this.container.selectAll('.expedition').remove();
@@ -294,9 +298,9 @@ Visuals.Fleets = class {
       .append('title').text(d => Visuals.visualOwnerName(d.planet.owner));
   }
 
-  animateFleets() {
+  static animateFleets(svg) {
     d3.timer(elapsed => {
-      this.svg.selectAll('.fleet')
+      svg.selectAll('.fleet')
         .attr('transform', (d, i) => {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
@@ -518,7 +522,7 @@ Visuals.ResourceLoader = class {
       .attr("preserveAspectRation", "none")
       .attr("xlink:href", "res/" + name);
   }
-}
+};
 
 
 // TODO: fix

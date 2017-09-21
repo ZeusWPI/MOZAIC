@@ -2,7 +2,9 @@ const d3 = require('d3');
 
 const Visuals = require('./visuals');
 const Controls = require('./controls');
-const { SpaceMath, DataBinder } = require('./util');
+const Utils = require('./util');
+const space_math = Utils.SpaceMath;
+const DataBinder = Utils.DataBinder;
 const Config = require('./config');
 
 class Visualizer {
@@ -24,8 +26,7 @@ class Visualizer {
     this.clear();
     var turns = this.parseJSON(log);
     this.turn_controller.init(turns);
-    // TODO
-    //this.visuals.Fleets.animateFleets();
+    this.visuals.animateFleets();
   }
 
   clear() {
