@@ -6,7 +6,7 @@
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {
-    "node-blockly": "1.0.26",
-    "d3": "4.10.2"
+    "planetwars-visualizer": "file:../visualizer",
+    "planetwars-blockly": "file:../blockly"
   }
 }

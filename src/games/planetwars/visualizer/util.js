@@ -60,3 +60,8 @@ class DataBinder {
     this.callbacks.forEach(c => c(this.value));
   }
 }
+
+module.exports = {
+  DataBinder,
+  SpaceMath
+};

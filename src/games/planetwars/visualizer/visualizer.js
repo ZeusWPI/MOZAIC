@@ -1,3 +1,6 @@
+const Visuals = require('./visuals');
+const { SpaceMath, DataBinder } = require('./util');
+
 const space_math = new SpaceMath();
 const visuals = new Visuals();
 
@@ -262,3 +265,5 @@ class Expedition {
     return mod * (Math.PI * 2) - Math.PI;
   }
 }
+
+module.exports = Visualizer;

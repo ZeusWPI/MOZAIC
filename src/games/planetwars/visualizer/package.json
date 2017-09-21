@@ -1,11 +1,11 @@
 {
-  "name": "planetwars-blockly",
+  "name": "planetwars-visualizer",
   "version": "1.0.0",
   "description": "",
-  "main": "planetwars_blockly.js",
+  "main": "visualizer.js",
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {
-    "node-blockly": "1.0.26"
+    "d3": "4.10.2"
   }
 }

@@ -1,3 +1,5 @@
+const d3 = require('d3');
+
 // Constants
 const svg = d3.select("#game");
 const container = svg.append('g');
@@ -523,3 +525,5 @@ Visuals.Gimmicks = class {
       .attr('fill', 'url(#jigglyplanet)');
   }
 }
+
+module.exports = Visuals;
