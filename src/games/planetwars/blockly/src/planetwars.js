@@ -1,11 +1,20 @@
 class PlanetWars {
   constructor(player) {
-    this.state = {};
+    this.state = EMPTY_STATE;
     this.player = player;
+    this.planet_map = {};
   }
 
   setState(state) {
     this.state = state;
+    this.rebuildPlanetMap();
+  }
+
+  rebuildPlanetMap() {
+    this.planet_map = {};
+    this.getPlanets().forEach(planet => {
+      this.planet_map[planet.name] = planet;
+    });
   }
   
   getPlayer() {
@@ -20,8 +29,8 @@ class PlanetWars {
     return this.state['planets'];
   }
 
-  getPlanet() {
-    // TODO
+  getPlanet(name) {
+    return this.planet_map[name];
   }
 
   getExpeditions() {
@@ -34,13 +43,12 @@ class PlanetWars {
   dispatch(num_ships, origin, target) {
     // TODO
   }
-
-  // inject planetwars API into a javascript interpreter
-  init_interpreter(interpreter, scope) {
-    register_fn(interpreter, scope, 'getPlayers',function() {
-      
-    });
-  }
 }
+
+const EMPTY_STATE = {
+  'players': [],
+  'planets': [],
+  'expeditions': []
+};
 
 module.exports = PlanetWars;
