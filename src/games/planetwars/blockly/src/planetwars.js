@@ -3,11 +3,14 @@ class PlanetWars {
     this.state = EMPTY_STATE;
     this.player = player;
     this.planet_map = {};
+    this.dispatches = [];
   }
 
+  // set state and start a new turn
   setState(state) {
     this.state = state;
     this.rebuildPlanetMap();
+    this.dispatches = [];
   }
 
   rebuildPlanetMap() {
@@ -37,11 +40,12 @@ class PlanetWars {
     return this.state['expeditions'];
   }
 
-  distance(p1, p2) {
-  }
-
   dispatch(num_ships, origin, target) {
-    // TODO
+    this.dispatches.push({
+      'num_ships': num_ships,
+      'origin': origin['name'],
+      'target': target['name']
+    });
   }
 }
 
