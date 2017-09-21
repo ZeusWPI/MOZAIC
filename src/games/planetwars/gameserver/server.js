@@ -2,9 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const exec = require('child_process').exec;
+const path = require('path');
 
-const app = express()
-app.use(bodyParser.text())
+const app = express();
+app.use(bodyParser.text());
 
 var game_config = {
     "player_map": {
@@ -13,7 +14,14 @@ var game_config = {
     },
     "map_file": "../games/planetwars/maps/hex.json",
     "max_turns": 500
-}
+};
+
+// serve client
+const client_dir = path.normalize(path.join(__dirname, '..', 'client'));
+app.get('/',function(req,res){
+  res.sendFile(path.join(client_dir, 'index.html'));
+});
+app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
@@ -40,7 +48,7 @@ app.post('/bot', function(req, res) {
   config.players.push(player1);
   config.players.push(player2);
   config.game_config = game_config;
-  config.log_file = "/tmp/test.log"
+  config.log_file = "/tmp/test.log";
 
   fs.writeFile("/tmp/test.config", JSON.stringify(config), function(err){
     return console.log(err);
