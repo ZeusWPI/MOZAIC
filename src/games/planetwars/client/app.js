@@ -25,9 +25,11 @@ class PlanetwarsClient {
     if (state == BLOCKLY_STATE) {
       this.blockly_div.classList.remove('invisible');
       this.visualizer_div.classList.add('invisible');
+      this.fab.innerHTML = fa_icon('play');
     } else if (state == VISUALIZER_STATE) {
       this.blockly_div.classList.add('invisible');
       this.visualizer_div.classList.remove('invisible');
+      this.fab.innerHTML = fa_icon('code');
     }
   }
 
@@ -38,6 +40,10 @@ class PlanetwarsClient {
       this.setState(BLOCKLY_STATE);
     }
   }
+}
+
+function fa_icon(name) {
+  return '<i class="fa fa-'+ name + '" aria-hidden="true"></i>';
 }
 
 window.onload = function() {
