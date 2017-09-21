@@ -1,0 +1,11 @@
+{
+  "name": "planetwars-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "dependencies": {
+    "node-blockly": "1.0.26"
+  }
+}
