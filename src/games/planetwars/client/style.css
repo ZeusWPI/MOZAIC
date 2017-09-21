@@ -1,3 +1,5 @@
+@import url('./node_modules/font-awesome/css/font-awesome.min.css');
+
 @font-face {
     font-family: NotoSansFont;
     src: url("res/NotoSansSymbols-Regular.ttf");
@@ -125,4 +127,33 @@ body {
 
 #turn_slider{
   width: 100%;
+}
+
+.invisible {
+  display: none;
+}
+
+#fab {
+  display: inline-block;
+  outline: none;
+  width: 60px;
+  height: 60px;
+  
+  text-align: center;
+  font-size: 32px;
+  z-index: 999;
+  background: #bf1e2e;;
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+  border: 0;
+  overflow: hidden;
+
+  position: fixed;
+  right: 30px;
+  bottom: 120px;
+}
+
+#fab:hover {
+  transform: scale(1.05);
 }

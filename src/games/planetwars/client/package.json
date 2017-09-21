@@ -6,7 +6,8 @@
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {
-    "planetwars-visualizer": "file:../visualizer",
-    "planetwars-blockly": "file:../blockly"
+    "font-awesome": "^4.7.0",
+    "planetwars-blockly": "file:../blockly",
+    "planetwars-visualizer": "file:../visualizer"
   }
 }

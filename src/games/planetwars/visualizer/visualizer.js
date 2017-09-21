@@ -29,7 +29,7 @@ class Visualizer {
     var turns = this.parseJSON(log);
     this.turn_controller.init(turns);
     this.visuals.animateFleets();
-  }
+  } 
 
   clear() {
     this.visuals.clearVisuals();

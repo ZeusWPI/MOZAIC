@@ -7,11 +7,13 @@
     <script type="text/javascript" src="bundle.js" charset="utf-8"></script>
   </head>
   <body>
+    <button id="fab">
+      <i class="fa fa-play" aria-hidden="true"></i>
+    </button>
     <div id="box">
-      <div id="blockly" style="display: none">
-      </div>
+      <div id="blockly"></div>
       
-      <div id="visualizer">
+      <div id="visualizer" class="invisible">
         <!-- Hide/unhide button for scoreboard -->
         <button type="button" name="buton" id="hide_score" class="control control-button">
           <img src="res/minus.svg"/>
