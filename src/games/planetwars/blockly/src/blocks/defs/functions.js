@@ -63,18 +63,25 @@ module.exports = {
   },
   'dispatch': {
     init: function() {
-      this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
-      this.appendValueInput('SHIP_COUNT')
+      
+      this.appendDummyInput()
         .appendField('Dispatch')
-        .setCheck('Number');
+        .setAlign(Blockly.ALIGN_RIGHT);
+      
+      this.appendValueInput('SHIP_COUNT')
+        .appendField('ships')
+        .setCheck('Number')
+        .setAlign(Blockly.ALIGN_RIGHT);
       this.appendValueInput('SOURCE_PLANET')
-        .appendField('ships from')
-        .setCheck('Planet');
+        .appendField('from')
+        .setCheck('Planet')
+        .setAlign(Blockly.ALIGN_RIGHT);
       this.appendValueInput('TARGET_PLANET')
         .appendField('to')
-        .setCheck('Planet');
+        .setCheck('Planet')
+        .setAlign(Blockly.ALIGN_RIGHT);
       this.setColour(FN_COLOUR);
     }
   }
