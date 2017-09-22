@@ -7,16 +7,14 @@ const Executor = require('./executor');
 
 const app = express();
 
-app.use(bodyParser.text());
+app.use(bodyParser.json());
 
-var game_config = {
-    "player_map": {
-        "bert": "player_1",
-        "timp": "player_2"
-    },
+const GAME_CONFIG_DEFAULT = {
     "map_file": "../maps/hex.json",
     "max_turns": 500
 };
+
+const BOT_MAP = "./bots";
 
 // serve client
 const client_dir = path.normalize(path.join(__dirname, '..', 'client'));
@@ -27,22 +25,36 @@ app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
-  
+  console.log(req.body)
+  var code = req.body.code;
+
   var executor = new Executor();
-  console.log(req.body);
-  executor.writeCode(req.body);
+  console.log(code);
+  executor.writeCode(code);
   
+  var name = req.body.name || "bert";
+  var opponent = getRandomPlayer();
+
+  console.log(name, opponent);
+
+  // Shitty working deep clone cause i don't trust no js
+  var game_config = JSON.parse(JSON.stringify(GAME_CONFIG_DEFAULT));
+  game_config.player_map = {};  
+  game_config.player_map[name] = "player_1";
+  game_config.player_map[opponent.name] = "player_2";
+
+
   var config = {
     players: [
       {
-        name: 'bert',
-        command: 'python3',
-        args: ['../bots/simplebot/simple.py']
-      },
-      {
-        name: 'timp',
+        name: name,
         command: 'node',
         args: ['../blockly/runner.js', executor.code_file]
+      },
+      {
+        name: opponent.name,
+        command: 'node',
+        args: ['../blockly/runner.js', opponent.path]
       }
     ],
     game_config: game_config,
@@ -53,8 +65,15 @@ app.post('/bot', function(req, res) {
   executor.writeConfig(config);
 
   executor.run((err, stdout, stderr) => {
+
     console.log(`stdout: ${stdout}`);
     console.log(`stderr: ${stderr}`);
+
+    var winner = getWinnerFromBotDriverOutput(stdout);
+    if (name == winner){
+      writeWinningBot(name, code)
+    }
+
     if (err) {
       res.send(err);
       executor.clean();
@@ -66,7 +85,31 @@ app.post('/bot', function(req, res) {
   });
 });
 
+function getRandomPlayer(){
+  var items = fs.readdirSync(BOT_MAP);
+
+  var rand = items[Math.floor(Math.random() * items.length)];
+  console.log(rand);
+  var name = rand.substr(0, rand.indexOf('.')); 
+  return {
+    "path": BOT_MAP + '/' + rand, //TODO use path
+    "name": name
+  }
+}
+
+function getWinnerFromBotDriverOutput(output){
+  var lines = output.split('\n');
+  var winners = lines[lines.length - 1];
+  var winner = winners.split(/"/)[1];
+  return winner;
+}
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
 });
+
+function writeWinningBot(name, code) {
+  var time = new Date().getTime();
+  var path = `${name}.${time}.js`
+  fs.writeFileSync(path, code);
+}
