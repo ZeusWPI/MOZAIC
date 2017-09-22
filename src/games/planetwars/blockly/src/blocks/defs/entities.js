@@ -1,5 +1,6 @@
 var Blockly = require("node-blockly/browser");
 const PW_COLOUR = 275;
+Blockly.Blocks['entities'] = { HUE: PW_COLOUR };
 
 module.exports = {
   'planets': {

@@ -27,8 +27,7 @@ const toolbox = {
   ],
   'lists': [
     'lists_filter',
-    'lists_minmax',
-    'controls_forEach'
+    'lists_minmax'
   ],
   'logic': [
     'logic_boolean',
@@ -63,9 +62,10 @@ const toolbox = {
 function toolbox_xml(toolbox) {
   var toolbox_str = '<xml>';
   Object.entries(toolbox).forEach(([cat_name, cat_entries]) => {
-    toolbox_str += '<category name="' + cat_name + '">';
+    let colour = Blockly.Blocks[cat_name].HUE;
+    toolbox_str += `<category name="${cat_name}" colour="${colour}">`;
     cat_entries.forEach(block_name => {
-      toolbox_str += '<block type="' + block_name + '"></block>';
+      toolbox_str += `<block type="${block_name}"></block>`;
     });
     toolbox_str += '</category>';
   });
