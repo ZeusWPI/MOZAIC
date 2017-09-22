@@ -27,38 +27,35 @@ const toolbox = {
   ],
   'lists': [
     'lists_filter',
-    'lists_minmax'
+    'lists_minmax',
+    'controls_forEach'
   ],
   'logic': [
     'logic_boolean',
     'logic_compare',
     'logic_null',
     'logic_operation',
-    'logic_ternary'
+    'logic_ternary',
+    'controls_if'
+
   ],
   'variables': [
     'variables_set',
-    'variables_get'
+    'variables_get',
+    'math_change',
+
   ],
   'math': [
     'math_arithmetic',
-    'math_change',
     'math_constant',
     'math_constrain',
     'math_modulo',
     'math_number',
     'math_number_property',
     'math_on_list',
-    'math_random_float',
     'math_random_int',
     'math_round',
-    'math_single',
-    'math_trig'
-  ],
-  'control': [
-    'controls_if',
-    'controls_forEach',
-    'controls_whileUntil'
+    'math_single'
   ]
 };
 
