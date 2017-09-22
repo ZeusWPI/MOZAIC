@@ -1,5 +1,5 @@
 var Blockly = require("node-blockly/browser");
-const PW_COLOUR = 275;
+const PW_COLOUR = 237;
 Blockly.Blocks['entities'] = { HUE: PW_COLOUR };
 
 module.exports = {
