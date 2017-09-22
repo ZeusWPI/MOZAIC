@@ -29,6 +29,7 @@ app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
   
   var executor = new Executor();
+  console.log(req.body);
   executor.writeCode(req.body);
   
   var config = {
@@ -40,8 +41,8 @@ app.post('/bot', function(req, res) {
       },
       {
         name: 'timp',
-        command: 'python3',
-        args: ['../bots/simplebot/simple.py']
+        command: 'node',
+        args: ['../blockly/runner.js', executor.code_file]
       }
     ],
     game_config: game_config,
@@ -55,7 +56,7 @@ app.post('/bot', function(req, res) {
     console.log(`stdout: ${stdout}`);
     console.log(`stderr: ${stderr}`);
     if (err) {
-      // TODO
+      res.send(err);
       executor.clean();
     } else {
       res.sendFile(executor.log_file, e => {
