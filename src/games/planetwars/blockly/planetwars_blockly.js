@@ -26,6 +26,8 @@ const toolbox = {
     'functions_dispatch'
   ],
   'lists': [
+    'lists_isEmpty',
+    'lists_length',
     'lists_filter',
     'lists_minmax',
     'lists_forEach'
