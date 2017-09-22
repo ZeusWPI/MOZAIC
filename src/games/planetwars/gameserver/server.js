@@ -14,7 +14,7 @@ var game_config = {
         "bert": "player_1",
         "timp": "player_2"
     },
-    "map_file": "../games/planetwars/maps/hex.json",
+    "map_file": "../maps/hex.json",
     "max_turns": 500
 };
 
@@ -36,24 +36,33 @@ app.post('/bot', function(req, res) {
       {
         name: 'bert',
         command: 'python3',
-        args: [] // TODO
+        args: ['../bots/simplebot/simple.py']
       },
       {
-        name: 'player',
-        command: 'node',
-        args: [executor.code_file]
+        name: 'timp',
+        command: 'python3',
+        args: ['../bots/simplebot/simple.py']
       }
     ],
-    game_config,
+    game_config: game_config,
     log_file: executor.log_file
   };
+  console.log(JSON.stringify(config));
 
   executor.writeConfig(config);
 
-  // TODO: handle error
-  executor.run();
-  res.sendFile(executor.log_file);
-  executor.clean();
+  executor.run((err, stdout, stderr) => {
+    console.log(`stdout: ${stdout}`);
+    console.log(`stderr: ${stderr}`);
+    if (err) {
+      // TODO
+      executor.clean();
+    } else {
+      res.sendFile(executor.log_file, e => {
+        executor.clean();
+      });
+    }
+  });
 });
 
 class Executor {
@@ -64,30 +73,22 @@ class Executor {
   }
 
   writeCode(code) {
-    fs.writeFile(this.code_file, code, err => {
-      console.log(err);
-    });
+    fs.writeFileSync(this.code_file, code);
   }
 
   writeConfig(config) {
-    fs.writeFile(this.config_file, JSON.stringify(config), err => {
-      console.log(err);
-    });
+    fs.writeFileSync(this.config_file, JSON.stringify(config));
   }
    
-  run() {
-    exec(BOT_DRIVER_PATH + ' ' + this.config_file, (err, stdout, stderr) => {
-      console.log(`stdout: ${stdout}`);
-      console.log(`stderr: ${stderr}`);
-      return err;
-    });
+  run(callback) {
+    exec(BOT_DRIVER_PATH + ' ' + this.config_file, callback);
   }
 
   // remove temp files
   clean() {
-    fs.unlink(this.config_file);
-    fs.unlink(this.code_file);
-    fs.unlink(this.log_file);
+    fs.unlinkSync(this.config_file);
+    fs.unlinkSync(this.code_file);
+    //fs.unlinkSync(this.log_file);
   }
 }
 
