@@ -1,12 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
-const exec = require('child_process').exec;
-const temp = require('temp');
 const path = require('path');
 
+const Executor = require('./executor');
+
 const app = express();
-const BOT_DRIVER_PATH = './bot_driver';
+
 app.use(bodyParser.text());
 
 var game_config = {
@@ -66,32 +66,6 @@ app.post('/bot', function(req, res) {
   });
 });
 
-class Executor {
-  constructor() {
-    this.config_file = temp.path({suffix: '.json'});
-    this.code_file = temp.path({suffix: '.js'});
-    this.log_file = temp.path({suffix: '.log'});
-  }
-
-  writeCode(code) {
-    fs.writeFileSync(this.code_file, code);
-  }
-
-  writeConfig(config) {
-    fs.writeFileSync(this.config_file, JSON.stringify(config));
-  }
-   
-  run(callback) {
-    exec(BOT_DRIVER_PATH + ' ' + this.config_file, callback);
-  }
-
-  // remove temp files
-  clean() {
-    fs.unlinkSync(this.config_file);
-    fs.unlinkSync(this.code_file);
-    //fs.unlinkSync(this.log_file);
-  }
-}
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
