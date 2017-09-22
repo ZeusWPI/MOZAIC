@@ -74,6 +74,7 @@ function toolbox_xml(toolbox) {
 function inject(div_id) {
   var tb = toolbox_xml(toolbox);
   var workspace = Blockly.inject(div_id, { toolbox: tb });
+  return new PlanetWarsBlockly(workspace);
 }
 
 class PlanetWarsBlockly {
