@@ -35,11 +35,31 @@ class PlanetwarsClient {
 
   fabHandler(e) {
     if (this.state == BLOCKLY_STATE) {
-      this.setState(VISUALIZER_STATE);
+      this.submitCode(res => {
+        this.visualizer.visualize(res);
+        this.setState(VISUALIZER_STATE);
+      });
     } else if (this.state == VISUALIZER_STATE) {
       this.setState(BLOCKLY_STATE);
     }
   }
+
+  submitCode(callback) {
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", 'bot');
+    xmlhttp.setRequestHeader("Content-type", "text/plain");
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+        if (xmlhttp.status == 200) {
+          callback(xmlhttp.responseText);
+        } else {
+          alert('ERROR ERROR');
+        }
+      }
+    };
+    xmlhttp.send(this.blockly.getCode());
+  }
+    
 }
 
 function fa_icon(name) {
