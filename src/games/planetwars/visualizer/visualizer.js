@@ -57,6 +57,14 @@ class TurnController {
     this.turns = [];
   }
 
+  play() {
+    this.runningbinder.update(true);
+  }
+
+  pause() {
+    this.runningbinder.update(false);
+  }
+
   init(turns) {
     this.turns = turns;
     var first_turn = this.turns[0];

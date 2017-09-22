@@ -56,11 +56,11 @@ class Controls {
     d3.select('#hide_score').attr("hidden", null);
 
     d3.select('#play').on("click", e => {
-      turn_controller.runningbinder.update(true);
+      turn_controller.play();
     });
 
     d3.select('#pause').on("click", e => {
-      turn_controller.runningbinder.update(false);
+      turn_controller.pause();
     });
 
     d3.select('#next').on("click", e => {
