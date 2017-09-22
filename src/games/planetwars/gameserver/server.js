@@ -18,12 +18,12 @@ const BOT_MAP = "./bots";
 
 // serve client
 const client_dir = path.normalize(path.join(__dirname, '..', 'client'));
-app.get('/',function(req,res){
+app.get('/planetwars/',function(req,res){
   res.sendFile(path.join(client_dir, 'index.html'));
 });
 app.use(express.static(client_dir));
 
-app.post('/bot', function(req, res) {
+app.post('/planetwars/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
   console.log(req.body)
   var code = req.body.code;
@@ -109,6 +109,7 @@ app.listen(3000, function () {
 });
 
 function writeWinningBot(name, code) {
-  var path = `${name}.timestamp.js`
+  var time = new Date().getTime();
+  var path = `${name}.${time}.js`
   fs.writeFileSync(path, code);
 }
