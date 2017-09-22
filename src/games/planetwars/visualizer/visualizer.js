@@ -28,6 +28,7 @@ class Visualizer {
     this.clear();
     var turns = this.parseJSON(log);
     this.turn_controller.init(turns);
+    this.controls.attachEvents(this.turn_controller);
     this.visuals.animateFleets();
   } 
 

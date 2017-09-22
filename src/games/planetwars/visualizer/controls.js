@@ -33,8 +33,7 @@ class Controls {
       d3.select('#hide_score').attr("hidden", null);
       d3.select('#unhide_score').attr("hidden", true);
     });
-    document.getElementById('file-select')
-      .addEventListener('change', e => this.readLog(e), false);
+    d3.select('#file-select').on('change', e => this.readLog(e), false);
   }
 
   readLog(e) {
