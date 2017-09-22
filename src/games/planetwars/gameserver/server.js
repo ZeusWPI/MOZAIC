@@ -70,6 +70,7 @@ app.post('/bot', function(req, res) {
     console.log(`stderr: ${stderr}`);
 
     var winner = getWinnerFromBotDriverOutput(stdout);
+    console.log("Winner: " + winner);
     if (name == winner){
       writeWinningBot(name, code)
     }
@@ -99,9 +100,13 @@ function getRandomPlayer(){
 
 function getWinnerFromBotDriverOutput(output){
   var lines = output.split('\n');
-  var winners = lines[lines.length - 1];
-  var winner = winners.split(/"/)[1];
-  return winner;
+  var winners = lines[lines.length - 2];
+  var winners_split = winners.split(/"/);
+  console.log("Lines: " + lines);
+  console.log("Winners: " + winners); 
+  if (winners_split.length > 4) {
+    return winners_split[1];
+  }
 }
 
 app.listen(3000, function () {
@@ -110,6 +115,6 @@ app.listen(3000, function () {
 
 function writeWinningBot(name, code) {
   var time = new Date().getTime();
-  var path = `${name}.${time}.js`
+  var path = `${BOT_MAP}/${name}.${time}.js`
   fs.writeFileSync(path, code);
 }
