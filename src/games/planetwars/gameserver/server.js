@@ -28,51 +28,53 @@ app.use(express.static(client_dir));
 app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
   
-  var code = req.body;
+  var executor = new Executor();
+  executor.writeCode(req.body);
   
-  var config = {};
-  config.players = [];
-  
-  var player1 = {
-      "name": "bert",
-      "command": "python3",
-      "args": [code_file]
+  var config = {
+    players: [
+      {
+        name: 'bert',
+        command: 'python3',
+        args: [] // TODO
+      },
+      {
+        name: 'player',
+        command: 'node',
+        args: [executor.code_file]
+      }
+    ],
+    game_config,
+    log_file: executor.log_file
   };
 
-  var player2 = {
-    "name": "timp",
-    "command": "python3",
-    "args": [code_file]
-  };
-
-  config.players.push(player1);
-  config.players.push(player2);
-  config.game_config = game_config;
+  executor.writeConfig(config);
 
   // TODO: handle error
-  var executor = new Executor(config, code);
   executor.run();
   res.sendFile(executor.log_file);
   executor.clean();
 });
 
 class Executor {
-  constructor(config, code) {
+  constructor() {
     this.config_file = temp.path({suffix: '.json'});
     this.code_file = temp.path({suffix: '.js'});
     this.log_file = temp.path({suffix: '.log'});
+  }
 
-    // inject log file
-    config.log_file = this.log_file;
-
-    fs.writeFile(this.config_file, JSON.stringify(config), err => {
-      console.log(err);
-    });
+  writeCode(code) {
     fs.writeFile(this.code_file, code, err => {
       console.log(err);
     });
   }
 
+  writeConfig(config) {
+    fs.writeFile(this.config_file, JSON.stringify(config), err => {
+      console.log(err);
+    });
+  }
+   
   run() {
     exec(BOT_DRIVER_PATH + ' ' + this.config_file, (err, stdout, stderr) => {
       console.log(`stdout: ${stdout}`);
