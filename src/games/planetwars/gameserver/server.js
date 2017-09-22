@@ -6,6 +6,7 @@ const temp = require('temp');
 const path = require('path');
 
 const app = express();
+const BOT_DRIVER_PATH = './bot_driver';
 app.use(bodyParser.text());
 
 var game_config = {
@@ -26,16 +27,9 @@ app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
-  var code_file = temp.path({suffix: '.js'});
-  var log_file = temp.path({suffix: '.log'});
-  var config_file = temp.path({suffix: '.json'});
   
   var code = req.body;
   
-  fs.writeFile(code_file, code, function(err){
-    return console.log(err);
-  });
-
   var config = {};
   config.players = [];
   
@@ -54,31 +48,46 @@ app.post('/bot', function(req, res) {
   config.players.push(player1);
   config.players.push(player2);
   config.game_config = game_config;
-  config.log_file = log_file;
 
-  fs.writeFile(config_file, JSON.stringify(config), function(err){
-    return console.log(err);
-  });
-
-  exec('./bot_driver ' + config_file, (err, stdout, stderr) => {
-    if(err) {
-      res.send(err);
-    }
-    console.log(`stdout: ${stdout}`);
-    console.log(`stderr: ${stderr}`);
-
-    fs.readFile(log_file, 'utf8', function (err,data) {
-      if (err) {
-        return console.log(err);
-      }
-      res.send(data);
-    });
-
-    fs.unlink(code_file);
-    fs.unlink(log_file);
-    fs.unlink(config_file);
-  });
+  // TODO: handle error
+  var executor = new Executor(config, code);
+  executor.run();
+  res.sendFile(executor.log_file);
+  executor.clean();
 });
+
+class Executor {
+  constructor(config, code) {
+    this.config_file = temp.path({suffix: '.json'});
+    this.code_file = temp.path({suffix: '.js'});
+    this.log_file = temp.path({suffix: '.log'});
+
+    // inject log file
+    config.log_file = this.log_file;
+
+    fs.writeFile(this.config_file, JSON.stringify(config), err => {
+      console.log(err);
+    });
+    fs.writeFile(this.code_file, code, err => {
+      console.log(err);
+    });
+  }
+
+  run() {
+    exec(BOT_DRIVER_PATH + ' ' + this.config_file, (err, stdout, stderr) => {
+      console.log(`stdout: ${stdout}`);
+      console.log(`stderr: ${stderr}`);
+      return err;
+    });
+  }
+
+  // remove temp files
+  clean() {
+    fs.unlink(this.config_file);
+    fs.unlink(this.code_file);
+    fs.unlink(this.log_file);
+  }
+}
 
 app.listen(3000, function () {
   console.log('Example app listening on port 3000!');
