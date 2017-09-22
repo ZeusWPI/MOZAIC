@@ -18,12 +18,12 @@ const BOT_MAP = "./bots";
 
 // serve client
 const client_dir = path.normalize(path.join(__dirname, '..', 'client'));
-app.get('/planetwars/',function(req,res){
+app.get('/',function(req,res){
   res.sendFile(path.join(client_dir, 'index.html'));
 });
 app.use(express.static(client_dir));
 
-app.post('/planetwars/bot', function(req, res) {
+app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
   console.log(req.body)
   var code = req.body.code;
