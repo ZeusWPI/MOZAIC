@@ -4,16 +4,9 @@ const PlanetWars = require("./src/planetwars");
 
 
 // happier colours
-Blockly.HSV_SATURATION = 0.8;
-Blockly.HSV_VALUE = 0.5;
-Blockly.Blocks.variables.HUE = 93;
-Blockly.Msg.VARIABLES_HUE = 93;
-Blockly.Blocks.logic.HUE = 164;
-Blockly.Msg.LOGIC_HUE = 164;
-Blockly.Blocks.math.HUE = 54;
-Blockly.Msg.MATH_HUE = 54;
-Blockly.Blocks.lists.HUE = 189;
-Blockly.Msg.LISTS_HUE = 189;
+Blockly.HSV_SATURATION = 0.6;
+Blockly.HSV_VALUE = 0.8;
+Blockly.Blocks.variables.HUE = 10;
 Blocks.inject(Blockly);
 
 const toolbox = {
@@ -86,6 +79,7 @@ function toolbox_xml(toolbox) {
 
 function inject(div_id) {
   var tb = toolbox_xml(toolbox);
+  Blockly.Blocks.variables.HUE = 10;
   var workspace = Blockly.inject(div_id, { toolbox: tb });
   return new PlanetWarsBlockly(workspace);
 }
