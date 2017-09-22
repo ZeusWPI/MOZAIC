@@ -4,8 +4,8 @@ const PlanetWars = require("./src/planetwars");
 
 
 // happier colours
-Blockly.HSV_SATURATION = 1;
-Blockly.HSV_VALUE = 0.8;
+Blockly.HSV_SATURATION = 0.6;
+Blockly.HSV_VALUE = 0.6;
 Blockly.Blocks.variables.HUE = 33;
 Blockly.Msg.VARIABLES_HUE = 33;
 Blockly.Blocks.logic.HUE = 183;
