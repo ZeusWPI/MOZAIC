@@ -33,5 +33,17 @@ module.exports = {
       this.setColour(LIST_COLOUR);
       this.setOutput(true);
     }
+  },
+  'forEach': {
+    init: function() {
+      this.appendValueInput('LIST')
+        .appendField('for each')
+        .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
+        .appendField('in')
+        .setCheck('LIST');
+      this.appendStatementInput('DO')
+        .appendField('do');
+      this.setColour(LIST_COLOUR);
+    }
   }
 };

@@ -27,7 +27,8 @@ const toolbox = {
   ],
   'lists': [
     'lists_filter',
-    'lists_minmax'
+    'lists_minmax',
+    'lists_forEach'
   ],
   'logic': [
     'logic_boolean',
