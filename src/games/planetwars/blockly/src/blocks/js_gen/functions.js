@@ -4,40 +4,40 @@ const JS = Blockly.JavaScript;
 module.exports = {
   'owner': function(block) {
     var arg = Blockly.JavaScript.valueToCode(block, 'OBJ');
-    var code = arg + "['owner']";
+    var code = `${arg}.owner`;
     return [code, JS.ORDER_MEMBER];
   },
   'ship_count': function(block) {
     var arg = Blockly.JavaScript.valueToCode(block, 'OBJ');
-    var code = arg + "['ship_count']";
+    var code = `${arg}.ship_count`;
     return [code, JS.ORDER_MEMBER];
   },
   'origin': function(block) {
     var arg = Blockly.JavaScript.valueToCode(block, 'EXPEDITION');
-    var code = 'getPlanet(' + arg + "['origin'])";
+    var code = `getPlanet(${arg}.origin)`;
     return [code, JS.ORDER_FUNCTION_CALL];
   },
   'target': function(block) {
     var arg = Blockly.JavaScirpt.valueToCode(block, 'EXPEDITION');
-    var code = 'getPlanet(' + arg + "['target'])";
+    var code = `getPlanet(${arg}.target)`;
     return [code, JS.ORDER_FUNCTION_CALL];
   },
   'turns_remaining': function(block) {
     var arg = Blockly.JavaScript.valueToCode(block, 'EXPEDITION');
-    var code = arg + "['turns_remaining']";
+    var code = `${arg}.turns_remaining`;
     return [code, JS.ORDER_MEMBER];
   },
   'distance': function(block) {
     var p1 = Blockly.JavaScript.valueToCode(block, 'PLANET1');
     var p2 = Blockly.JavaScript.valueToCode(block, 'PLANET2');
-    var code = 'distance(' + p1 + ', ' + p2 + ')';
+    var code = `distance(${p1}, ${p2})`;
     return [code, JS.ORDER_FUNCTION_CALL];
   },
   'dispatch': function(block) {
     var num_ships = JS.valueToCode(block, 'SHIP_COUNT');
     var source = JS.valueToCode(block, 'SOURCE_PLANET');
     var target = JS.valueToCode(block, 'TARGET_PLANET');
-    var code = 'dispatch('+ num_ships + ', ' + source + ', ' + target + ')';
+    var code = `dispatch(${num_ships}, ${source}, ${target})`;
     return [code, JS.ORDER_FUNCTION_CALL];
   }
 };
