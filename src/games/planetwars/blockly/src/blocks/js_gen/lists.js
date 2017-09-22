@@ -11,7 +11,7 @@ module.exports = {
     );
 
     var body = JS.prefixLines(`return ${predicate};`, JS.INDENT);
-    var pred_str = `(${elem_name}) => {\n${body}};\n}`;
+    var pred_str = `(${elem_name}) => {\n${body}\n}`;
     var code = `${list}.filter(${pred_str})`;
     return [code, JS.ORDER_MEMBER];
   },

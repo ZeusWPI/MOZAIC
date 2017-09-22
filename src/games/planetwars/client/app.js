@@ -13,7 +13,7 @@ class PlanetwarsClient {
     // TODO: put this somewhere else
     // TODO: please don't do this every save
     this.blockly.addChangeListener(e => {
-      window.localStorage.setItem('blocklyCode', this.blockly.getXml());  
+      window.localStorage.setItem('blocklyCode', this.blockly.getXml());
     });
     
     let xml = window.localStorage.getItem('blocklyCode');
@@ -29,7 +29,6 @@ class PlanetwarsClient {
 
     // initial state
     this.setState(BLOCKLY_STATE);
-
   }
 
   setState(state) {
@@ -73,11 +72,12 @@ class PlanetwarsClient {
       }
     };
 
+    console.log(this.blockly.getCode());
+
     var request = JSON.stringify({
       "code": this.blockly.getCode(),
       "name": this.name
     });
-    console.log(request);
     xmlhttp.send(request);
   }
 
