@@ -14,7 +14,7 @@ pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
     expeditions: Vec<Expedition>,
-    // How many expeditions were already dispatched.
+    // How many expeditions were already dispatchd.
     // This is needed for assigning expedition identifiers.
     expedition_num: u64,
     turn_num: u64,
@@ -224,16 +224,19 @@ impl PlanetWars {
         let mut i = 0;
         let exps = &mut self.expeditions;
         while i < exps.len() {
-            exps[i].turns_remaining -= 1;
-            if exps[i].turns_remaining == 0 {
+            // compare with 1 to avoid issues with planet distance 0
+            if exps[i].turns_remaining <= 1 {
+                // remove expedition from expeditions, and add to fleet
                 let exp = exps.swap_remove(i);
                 let planet = self.planets.get_mut(&exp.target).unwrap();
                 planet.orbit(exp.fleet);
             } else {
+                exps[i].turns_remaining -= 1;
                 if let Some(owner) = exps[i].fleet.owner {
                     // owner has an expedition in progress; this is a sign of life.
                     self.players.get_mut(&owner).unwrap().alive = true;
                 }
+                
                 // proceed to next expedition
                 i += 1;
             }
