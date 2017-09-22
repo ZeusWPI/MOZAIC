@@ -70,10 +70,12 @@ class Visuals {
   }
 
   generateWinnerBox(winner, color) {
-    d3.select('#end_card').append('p').text("Game over:");
-    var wrapper = d3.select('#end_card');
-    wrapper.append('p').text(winner).attr('style', 'color: ' + color);
-    wrapper.append('p').text('wins!');
+    var card = d3.select('#end_card');
+    // clear div first to avoid having multiple winner cards
+    card.html('');
+    card.append('p').text("Game over:");
+    card.append('p').text(winner).attr('style', 'color: ' + color);
+    card.append('p').text('wins!');
   }
 
   addNewObjects(raw_turn, color_map) {
