@@ -101,10 +101,12 @@ function getRandomPlayer(){
 function getWinnerFromBotDriverOutput(output){
   var lines = output.split('\n');
   var winners = lines[lines.length - 2];
-  var winner = winners.split(/"/)[1];
+  var winners_split = winners.split(/"/);
   console.log("Lines: " + lines);
   console.log("Winners: " + winners); 
-  return winner;
+  if (winners_split.length > 4) {
+    return winners_split[1];
+  }
 }
 
 app.listen(3000, function () {
