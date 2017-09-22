@@ -37,7 +37,6 @@ module.exports = {
     var num_ships = JS.valueToCode(block, 'SHIP_COUNT');
     var source = JS.valueToCode(block, 'SOURCE_PLANET');
     var target = JS.valueToCode(block, 'TARGET_PLANET');
-    var code = `dispatch(${num_ships}, ${source}, ${target})`;
-    return [code, JS.ORDER_FUNCTION_CALL];
+    return `dispatch(${num_ships}, ${source}, ${target})`;
   }
 };

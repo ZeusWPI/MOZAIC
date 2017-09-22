@@ -41,7 +41,6 @@ module.exports = {
       block.getFieldValue('ELEM_NAME'),
       Blockly.Variables.NAME_TYPE
     );
-    var code = `${list}.forEach((${elem_name}) => {\n${stmts}\n})`;
-    return [code, JS.ORDER_FUNCTION_CALL];
+    return `${list}.forEach((${elem_name}) => {\n${stmts}});\n`;
   }
 };
