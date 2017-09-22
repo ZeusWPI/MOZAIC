@@ -1,23 +1,11 @@
 function minimum_by(list, fun) {
-  var minimizing_elem = list[0];
-  var min = fun(minimizing_elem);
-  for (var i = 1; i < list.length; i++) {
-    if (fun(list[i]) < min) {
-      minimizing_elem = list[i];
-    }
-  }
-  return minimizing_elem;
+  let idx = list.map(fun).reduce((acc, x, i, arr) => x < arr[acc] ? i : acc, 0);
+  return list[idx];
 }
 
 function maximum_by(list, fun) {
-  var maximizing_elem = list[0];
-  var max = fun(maximizing_elem);
-  for (var i = 1; i < list.length; i++) {
-    if (fun(list[i]) > max) {
-      maximizing_elem = list[i];
-    }
-  }
-  return maximizing_elem;
+  let idx = list.map(fun).reduce((acc, x, i, arr) => x > arr[acc] ? i : acc, 0);
+  return list[idx];
 }
 
 function distance(p1, p2) {
