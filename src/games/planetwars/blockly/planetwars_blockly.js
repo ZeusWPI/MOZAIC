@@ -77,6 +77,8 @@ function inject(div_id) {
   return new PlanetWarsBlockly(workspace);
 }
 
+console.log(Blockly.Blocks);
+
 class PlanetWarsBlockly {
   constructor(workspace) {
     this.workspace = workspace;
@@ -86,9 +88,21 @@ class PlanetWarsBlockly {
     return Blockly.JavaScript.workspaceToCode(this.workspace);
   }
 
+  getXml() {
+    var xml = Blockly.Xml.workspaceToDom(this.workspace);
+    var xml_text = Blockly.Xml.domToText(xml);
+    return xml_text;
+  }
+
+  loadXml(xml_text) {
+    var xml = Blockly.Xml.textToDom(xml_text);
+    Blockly.Xml.domToWorkspace(xml, this.workspace);
+  }
+
   addChangeListener(fun) {
     this.workspace.addChangeListener(fun);
   }
+
 };
 
 module.exports = {
