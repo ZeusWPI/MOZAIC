@@ -4,16 +4,16 @@ const PlanetWars = require("./src/planetwars");
 
 
 // happier colours
-Blockly.HSV_SATURATION = 0.8;
-Blockly.HSV_VALUE = 0.5;
-Blockly.Blocks.variables.HUE = 93;
-Blockly.Msg.VARIABLES_HUE = 93;
-Blockly.Blocks.logic.HUE = 164;
-Blockly.Msg.LOGIC_HUE = 164;
-Blockly.Blocks.math.HUE = 54;
-Blockly.Msg.MATH_HUE = 54;
-Blockly.Blocks.lists.HUE = 189;
-Blockly.Msg.LISTS_HUE = 189;
+Blockly.HSV_SATURATION = 1;
+Blockly.HSV_VALUE = 0.8;
+Blockly.Blocks.variables.HUE = 33;
+Blockly.Msg.VARIABLES_HUE = 33;
+Blockly.Blocks.logic.HUE = 183;
+Blockly.Msg.LOGIC_HUE = 183;
+Blockly.Blocks.math.HUE = 213;
+Blockly.Msg.MATH_HUE = 213;
+Blockly.Blocks.lists.HUE = 333;
+Blockly.Msg.LISTS_HUE = 333;
 Blocks.inject(Blockly);
 
 const toolbox = {
