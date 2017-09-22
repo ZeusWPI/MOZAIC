@@ -36,11 +36,13 @@ module.exports = {
   },
   'forEach': {
     init: function() {
+      this.setPreviousStatement(true);
+      this.setNextStatement(true);
       this.appendValueInput('LIST')
         .appendField('for each')
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
-        .setCheck('LIST');
+        .setCheck('List');
       this.appendStatementInput('DO')
         .appendField('do');
       this.setColour(LIST_COLOUR);

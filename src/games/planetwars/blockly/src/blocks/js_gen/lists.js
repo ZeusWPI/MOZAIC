@@ -33,5 +33,15 @@ module.exports = {
 
     var code = `${fun_str}(${list}, ${expr_str})`;
     return [code, JS.ORDER_FUNCTION_CALL];
+  },
+  'forEach': function(block) {
+    var list = JS.valueToCode(block, 'LIST');
+    var stmts = JS.statementToCode(block, 'DO');
+    var elem_name = JS.variableDB_.getName(
+      block.getFieldValue('ELEM_NAME'),
+      Blockly.Variables.NAME_TYPE
+    );
+    var code = `${list}.forEach((${elem_name}) => {\n${stmts}\n})`;
+    return [code, JS.ORDER_FUNCTION_CALL];
   }
 };
