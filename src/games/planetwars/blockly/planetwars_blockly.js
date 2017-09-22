@@ -54,6 +54,11 @@ const toolbox = {
     'math_round',
     'math_single',
     'math_trig'
+  ],
+  'control': [
+    'controls_if',
+    'controls_forEach',
+    'controls_whileUntil'
   ]
 };
 
