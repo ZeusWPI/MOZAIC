@@ -10,7 +10,8 @@ module.exports = {
       Blockly.Variables.NAME_TYPE
     );
 
-    var pred_str = `(${elem_name}) => {\nreturn ${predicate};\n}`;
+    var body = JS.prefixLines(`return ${predicate};`, JS.INDENT);
+    var pred_str = `(${elem_name}) => {\n${body}};\n}`;
     var code = `${list}.filter(${pred_str})`;
     return [code, JS.ORDER_MEMBER];
   },
@@ -23,7 +24,8 @@ module.exports = {
       Blockly.Variables.NAME_TYPE
     );
 
-    var expr_str = `(${elem_name}) => {\nreturn ${value_expr};\n}`;
+    var body = JS.prefixLines(`return ${value_expr};`, JS.INDENT);
+    var expr_str = `(${elem_name}) => {\n${body}\n}`;
     var fun_str;
     if (block.getFieldValue('MODE') == 'MINIMIZE') {
       fun_str = 'minimum_by';
