@@ -5,7 +5,10 @@ const { exec } = require('child_process');
 const BOT_DRIVER_PATH = './bot_driver';
 
 class Executor {
-  constructor() {
+  constructor(player) {
+    if (!player) {
+      
+    }
     this.config_file = temp.path({suffix: '.json'});
     this.code_file = temp.path({suffix: '.js'});
     this.log_file = temp.path({suffix: '.log'});
