@@ -1,6 +1,6 @@
 var Blockly = require("node-blockly/browser");
 
-const FN_COLOUR = 207;
+const FN_COLOUR = 63;
 Blockly.Blocks['functions'] = { HUE: FN_COLOUR };
 
 module.exports = {

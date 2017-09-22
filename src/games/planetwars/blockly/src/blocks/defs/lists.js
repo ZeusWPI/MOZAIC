@@ -1,6 +1,6 @@
 var Blockly = require('node-blockly/browser');
 
-const LIST_COLOUR = 189;//Blockly.Blocks['lists'].HUE;
+const LIST_COLOUR = 333;//Blockly.Blocks['lists'].HUE;
 
 module.exports = {
     'filter': {
