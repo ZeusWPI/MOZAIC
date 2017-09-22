@@ -5,8 +5,9 @@ const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
 
 class PlanetwarsClient {
-  constructor() {
+  constructor(name) {
     this.blockly = Blockly.inject('blockly');
+    this.name = name;
     this.visualizer = new Visualizer();
 
     // controls
@@ -49,19 +50,26 @@ class PlanetwarsClient {
   submitCode(callback) {
     var xmlhttp = new XMLHttpRequest();
     xmlhttp.open("POST", 'bot');
-    xmlhttp.setRequestHeader("Content-type", "text/plain");
+    xmlhttp.setRequestHeader("Content-type", "application/json");
     xmlhttp.onreadystatechange = function() {
       if (xmlhttp.readyState == XMLHttpRequest.DONE) {
         if (xmlhttp.status == 200) {
           callback(xmlhttp.responseText);
         } else {
-          alert('ERROR ERROR');
+          console.log(xmlhttp);
+          alert(`ERROR ERROR ${xmlhttp.status} ${xmlhttp.responseText}`);
         }
       }
     };
-    xmlhttp.send(this.blockly.getCode());
+
+    var request = JSON.stringify({
+      "code": this.blockly.getCode(),
+      "name": this.name
+    });
+    console.log(request);
+    xmlhttp.send(request);
   }
-    
+
 }
 
 function fa_icon(name) {
@@ -69,5 +77,9 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  new PlanetwarsClient();
+  var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
+  var def = "sadeerstejaar";
+  var name = window.prompt(prompt, def);
+
+  new PlanetwarsClient(name);
 };

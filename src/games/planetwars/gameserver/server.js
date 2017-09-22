@@ -7,7 +7,7 @@ const Executor = require('./executor');
 
 const app = express();
 
-app.use(bodyParser.text());
+app.use(bodyParser.json());
 
 const GAME_CONFIG_DEFAULT = {
     "map_file": "../maps/hex.json",
@@ -25,22 +25,23 @@ app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
   //var code = JSON.parse(req.body).code;
-  var code = req.body;
+  console.log(req.body)
+  var code = req.body.code;
 
   var executor = new Executor();
   console.log(code);
   executor.writeCode(code);
   
-  var name = req.header('Name') || "bert";
+  var name = req.body.name || "bert";
   var opponent = getRandomPlayer();
 
   console.log(name, opponent);
 
   // Shitty working deep clone cause i don't trust no js
   var game_config = JSON.parse(JSON.stringify(GAME_CONFIG_DEFAULT));
-
+  game_config.player_map = {};  
   game_config.player_map[name] = "player_1";
-  game_config.player_map[opponent] = "player_2";
+  game_config.player_map[opponent.name] = "player_2";
 
 
   var config = {
@@ -68,7 +69,7 @@ app.post('/bot', function(req, res) {
     console.log(`stdout: ${stdout}`);
     console.log(`stderr: ${stderr}`);
 
-    var winner = getWinnerFromBotDriverOutput(output);
+    var winner = getWinnerFromBotDriverOutput(stdout);
     if (name == winner){
       writeWinningBot(name, code)
     }
@@ -85,21 +86,15 @@ app.post('/bot', function(req, res) {
 });
 
 function getRandomPlayer(){
-  fs.readdir(BOT_MAP, function(err, items){
-    if (err) {
-      console.log(err);
-    }
+  var items = fs.readdirSync(BOT_MAP);
 
-    var rand = items[Math.floor(Math.random() * items.length)];
-    console.log(rand);
-    var name = rand.substr(0, rand.indexOf('.')); 
-
-    return {
-      "path": rand,
-      "name": name
-    }
-
-  })
+  var rand = items[Math.floor(Math.random() * items.length)];
+  console.log(rand);
+  var name = rand.substr(0, rand.indexOf('.')); 
+  return {
+    "path": BOT_MAP + '/' + rand, //TODO use path
+    "name": name
+  }
 }
 
 function getWinnerFromBotDriverOutput(output){
