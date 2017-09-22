@@ -10,8 +10,8 @@ module.exports = {
       Blockly.Variables.NAME_TYPE
     );
 
-    var pred_str = '(' + elem_name + ') => {\n' + 'return ' + predicate + ';\n}';
-    var code = list + '.filter(' + pred_str + ')';
+    var pred_str = `(${elem_name}) => {\nreturn ${predicate};\n}`;
+    var code = `${list}.filter(${pred_str})`;
     return [code, JS.ORDER_MEMBER];
   },
   'minmax': function(block) {
@@ -23,15 +23,15 @@ module.exports = {
       Blockly.Variables.NAME_TYPE
     );
 
-    var expr_str = '(' + elem_name + ') => {\n'  + 'return' + value_expr + ';\n}';
+    var expr_str = `(${elem_name}) => {\nreturn ${value_expr};\n}`;
     var fun_str;
     if (block.getFieldValue('MODE') == 'MINIMIZE') {
       fun_str = 'minimum_by';
     } else {
       fun_str = 'maximum_by';
     }
-    
-    var code = fun_str + '(' + list + ', ' + expr_str + ')';
+
+    var code = `${fun_str}(${list}, ${expr_str})`;
     return [code, JS.ORDER_FUNCTION_CALL];
   }
 };
