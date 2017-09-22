@@ -26,7 +26,11 @@ function run_bot(code) {
   rl.on('line', function(line){
     var state = JSON.parse(line);
     var pw = new PlanetWars(player_name, state);
-    eval_code(code, pw);
+    try {
+      eval_code(code, pw);
+    } catch(err) {
+      // TODO
+    }
     var command = { moves: pw.dispatches };
     console.log(JSON.stringify(command));
   });
