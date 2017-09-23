@@ -65,7 +65,11 @@ class Visuals {
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
       .on('zoom', () => {
-        this.container.attr('transform', d3.event.transform);
+        var transform = d3.event.transform;
+        transform.x = space_math.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
+        transform.y = space_math.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
+        console.log(transform);
+        this.container.attr('transform', transform);
       });
     this.svg.call(zoom);
   }
