@@ -205,7 +205,6 @@ Visuals.Expeditions = class {
   }
 
   static getLocation(exp) {
-    //var point = exp.homannPosition();
     var point = exp.position();
     return Visuals.translation(point);
   }
@@ -239,26 +238,8 @@ Visuals.Expeditions = class {
     d3selector.transition()
       .duration(turn_control.speed)
       .ease(d3.easeLinear)
-      .attr('transform', exp => Visuals.Expeditions.getLocation(exp))
-      /*
-      .attrTween('transform', exp => {
-        var turn_diff = turn_control.turn - turn.lastTurn;
-        var inter = d3.interpolateNumber(exp.homannAngle(exp.turns_remaining + turn_diff), exp.homannAngle(exp.turns_remaining));
-        return t => {
-          var point = exp.homannPosition(inter(t));
-          return Visuals.translation(point);
-        };
-      })*/
-      .on('interrupt', e => console.log("inter"));
-    /*
-    d3selector.select('circle')
-      // This is not used for straigt line stuff
-      //.transition()
-      //.duration(turn_control.speed)
-      //.ease(d3.easeLinear)
-      .attr('transform', exp => {
-        return Visuals.rotate(exp.angle());
-      })*/
+      .attr('transform', exp => Visuals.Expeditions.getLocation(exp));
+
   }
   static removeOld(d3selector) {
     d3selector.exit().remove();
@@ -427,7 +408,7 @@ Visuals.TurnWrapper = class {
 
 Visuals.Scores = class {
   static addScores(d3selector, color_map, scores) {
-    var start_y = 20;
+    var start_y = 50;
     var size = 30;
     Visuals.Scores.max_bar_size = 100;
 
@@ -441,24 +422,24 @@ Visuals.Scores = class {
     d3selector.append('text')
       .attr('class', 'player_name')
       .attr('x', d => "15%")
-      .attr('y', (d, i) => 25 + size * i)
+      .attr('y', (d, i) => start_y + 5 + size * i)
       .text(d => d.player);
     d3selector.append('text')
       .attr('class', 'planet_count')
       .attr('x', d => "45%")
-      .attr('y', (d, i) => 25 + size * i)
+      .attr('y', (d, i) => start_y + 5 + size * i)
       .text(d => d.planets);
     d3selector.append('circle')
       .attr('r', d => "3%")
       .attr('cx', d => "55%")
-      .attr('cy', (d, i) => 19 + size * i)
+      .attr('cy', (d, i) => start_y - 1 + size * i)
       .attr('fill', 'url(#earth)')
       .attr('stroke', d => color_map[d.player]);
     var end_y = 0;
     d3selector.append('text').attr('class', 'strength')
       .attr('x', d => "80%")
       .attr('y', (d, i) => {
-        end_y = 25 + size * i;
+        end_y = start_y + 5 + size * i;
         return end_y;
       })
       .text((d, i) => d.strengths[i] + " \u2694");
@@ -478,6 +459,7 @@ Visuals.Scores = class {
       .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%')
       .attr('height', 20)
       .append('title').text(d => Visuals.visualOwnerName(d.player));
+    d3selector.attr('height', end_y);
   }
 
   static update(d3selector) {

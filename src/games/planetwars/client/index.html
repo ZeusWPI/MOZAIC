@@ -10,24 +10,25 @@
     <button id="fab"></button>
     <div id="box">
       <div id="blockly"></div>
-      
-      <div id="visualizer" class="invisible">
-        <!-- Hide/unhide button for scoreboard -->
-        <button type="button" name="buton" id="hide_score" class="control control-button">
-          <img src="res/minus.svg"/>
-        </button>
 
-        <button type="button" name="buton" id="unhide_score" class="control control-button">
-          <img src="res/plus.svg"/>
-        </button>
+      <div id="visualizer" class="invisible">
         <svg id="score"></svg>
 
+        <!-- Hide/unhide button for scoreboard -->
+        <button title="Hide scoreboard" type="button" name="button" id="hide_score" class="control control-button">
+          <i class="fa fa-times" aria-hidden="true"></i>
+        </button>
+
+        <button type="button" name="button" id="unhide_score" class="control control-button">
+          <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        </button>
+
         <!-- Hide/unhide button -->
-        <button type="button" name="buton" id="hide" class="control control-button">
+        <button title="Show scoreboard" type="button" name="button" id="hide" class="control control-button">
           <img src="res/minus.svg"/>
         </button>
 
-        <button type="button" name="buton" id="unhide" class="control control-button">
+        <button type="button" name="button" id="unhide" class="control control-button">
           <img src="res/plus.svg"/>
         </button>
 
@@ -40,7 +41,7 @@
             <button type="button" name="button" id="tostart" class="control control-button">
               <img src="res/rewind.svg"/>
             </button>
-            
+
             <!-- Speed down button -->
             <button type="button" name="button" id="speeddown" class="control control-button">
               <img src="res/speeddown.svg"/>
@@ -50,7 +51,7 @@
             <button type="button" name="button" id="previous" class="control control-button">
               <img src="res/minus.svg"/>
             </button>
-            
+
             <!-- Play -->
             <button type="button" name="button" id="play" class="control control-button">
               <img src="res/play.svg"/>
@@ -71,7 +72,7 @@
               <img src="res/speedup.svg"/>
             </button>
 
-            
+
             <!-- Forward button -->
             <button type="button" name="button" id="toend" class="control control-button">
               <img src="res/forward.svg"/>

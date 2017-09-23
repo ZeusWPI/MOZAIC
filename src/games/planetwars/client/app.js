@@ -15,7 +15,7 @@ class PlanetwarsClient {
     this.blockly.addChangeListener(e => {
       window.localStorage.setItem('blocklyCode', this.blockly.getXml());
     });
-    
+
     let xml = window.localStorage.getItem('blocklyCode');
     if (xml) {
       this.blockly.loadXml(xml);
@@ -54,6 +54,7 @@ class PlanetwarsClient {
       });
     } else if (this.state == VISUALIZER_STATE) {
       this.setState(BLOCKLY_STATE);
+      window.dispatchEvent(new Event('resize'));
     }
   }
 
@@ -84,7 +85,7 @@ class PlanetwarsClient {
 }
 
 function fa_icon(name) {
-  return '<i class="fa fa-'+ name + '" aria-hidden="true"></i>';
+  return '<i class="fa fa-' + name + '" aria-hidden="true"></i>';
 }
 
 window.onload = function() {
