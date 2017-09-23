@@ -18,5 +18,6 @@
         },
         "map_file": "../games/planetwars/maps/hex.json",
         "max_turns": 500
-    }
+    },
+    "log_file": "gamelog.json"
 }

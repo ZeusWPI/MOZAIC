@@ -1,5 +1,10 @@
+const d3 = require('d3');
+const Config = require('./config');
+const Visualizer = require('./visualizer');
+
 class Controls {
-  constructor() {
+  constructor(visualizer) {
+    this.visualizer = visualizer;
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
     d3.select('#unhide').attr("hidden", true);
@@ -28,6 +33,7 @@ class Controls {
       d3.select('#hide_score').attr("hidden", null);
       d3.select('#unhide_score').attr("hidden", true);
     });
+    d3.select('#file-select').on('change', e => this.readLog(e), false);
   }
 
   readLog(e) {
@@ -39,22 +45,22 @@ class Controls {
     var reader = new FileReader();
     reader.onload = event => {
       var log = event.target.result;
-      this.visualizer = new Visualizer(log);
+      this.visualizer.visualize(log);
       this.attachEvents(this.visualizer.turn_controller);
-    }
+    };
 
-    reader.readAsText(e.files[0]);
+    reader.readAsText(e.target.files[0]);
   }
 
   attachEvents(turn_controller) {
     d3.select('#hide_score').attr("hidden", null);
 
     d3.select('#play').on("click", e => {
-      turn_controller.runningbinder.update(true);
+      turn_controller.play();
     });
 
     d3.select('#pause').on("click", e => {
-      turn_controller.runningbinder.update(false);
+      turn_controller.pause();
     });
 
     d3.select('#next').on("click", e => {
@@ -102,11 +108,11 @@ class Controls {
       });
 
     turn_controller.turnbinder.registerCallback(v => {
-      d3.select('#turn_slider').node().value = v
+      d3.select('#turn_slider').node().value = v;
       if (v >= turn_controller.maxTurns) {
-        d3.select('#end_card').attr('hidden', null)
+        d3.select('#end_card').attr('hidden', null);
       } else {
-        d3.select('#end_card').attr('hidden', 'true')
+        d3.select('#end_card').attr('hidden', 'true');
       }
     });
     turn_controller.runningbinder.registerCallback(v => {
@@ -137,4 +143,4 @@ class Controls {
   }
 }
 
-var controls = new Controls();
+module.exports = Controls;

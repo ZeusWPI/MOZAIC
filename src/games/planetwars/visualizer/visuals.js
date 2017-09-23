@@ -1,15 +1,23 @@
-// Constants
-const svg = d3.select("#game");
-const container = svg.append('g');
+const d3 = require('d3');
+const Config = require('./config');
+const Utils = require('./util');
+const space_math = Utils.SpaceMath;
 
 class Visuals {
-  constructor() {
+  constructor(selector) {
     this.scale = 1;
+    this.svg = d3.select('#game');
+    this.container = this.svg.append('g');
+    new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
 
-  static clearVisuals() {
-    container.selectAll('.planet_wrapper').remove();
-    container.selectAll('.expedition').remove();
+  animateFleets() {
+    Visuals.Fleets.animateFleets(this.svg);
+  }
+
+  clearVisuals() {
+    this.container.selectAll('.planet_wrapper').remove();
+    this.container.selectAll('.expedition').remove();
   }
 
   generateViewBox(planets) {
@@ -49,31 +57,33 @@ class Visuals {
 
     this.scale = max_x / 50;
 
-    svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
+    this.svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
   createZoom() {
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
       .on('zoom', () => {
-        container.attr('transform', d3.event.transform);
+        this.container.attr('transform', d3.event.transform);
       });
-    svg.call(zoom);
+    this.svg.call(zoom);
   }
 
   generateWinnerBox(winner, color) {
-    d3.select('#end_card').append('p').text("Game over:");
-    var wrapper = d3.select('#end_card');
-    wrapper.append('p').text(winner).attr('style', 'color: ' + color);
-    wrapper.append('p').text('wins!');
+    var card = d3.select('#end_card');
+    // clear div first to avoid having multiple winner cards
+    card.html('');
+    card.append('p').text("Game over:");
+    card.append('p').text(winner).attr('style', 'color: ' + color);
+    card.append('p').text('wins!');
   }
 
-  addNewObjects(turn, color_map) {
-    var turn = new Visuals.TurnWrapper(turn);
+  addNewObjects(raw_turn, color_map) {
+    var turn = new Visuals.TurnWrapper(this, raw_turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
-
+    
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
     var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
@@ -89,7 +99,7 @@ class Visuals {
   }
 
   update(turn, turn_control) {
-    var turn = new Visuals.TurnWrapper(turn);
+    var turn = new Visuals.TurnWrapper(this, turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
@@ -128,7 +138,7 @@ class Visuals {
     var dy = b * Math.sin(angle);
 
     // unrotated slope
-    var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2))
+    var t1 = (dx * Math.pow(b, 2)) / (dy * Math.pow(a, 2));
 
     var sx = t1 * Math.cos(w) - Math.sin(w);
     var sy = Math.cos(w) + t1 * Math.sin(w);
@@ -137,7 +147,7 @@ class Visuals {
     return 'rotate(' + (degrees + 180) % 360 + ')';
   }
 
-  registerTakeOverAnimation(planets, planet_map, speed) {
+  static registerTakeOverAnimation(planets, planet_map, speed) {
     planets.select('.planet')
       .filter(d => d.changed_owner)
       .transition(speed / 2)
@@ -146,7 +156,7 @@ class Visuals {
       .attr('transform', d => Visuals.resize(d, 1));
   }
 
-  attachToAllChildren(d3selector) {
+  static attachToAllChildren(d3selector) {
     return d3selector.data((d, i) => {
       return Array(d3selector._groups[i].length).fill(d);
     });
@@ -196,11 +206,11 @@ Visuals.Expeditions = class {
   static getLocation(exp) {
     //var point = exp.homannPosition();
     var point = exp.position();
-    return Visuals.translation(point)
+    return Visuals.translation(point);
   }
 
   static drawExpedition(d3selector, color_map, scale) {
-    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp))
+    d3selector.attr('transform', exp => Visuals.Expeditions.getLocation(exp));
 
     d3selector.append('rect')
       .attr('width', 1 * scale)
@@ -290,15 +300,15 @@ Visuals.Fleets = class {
       .append('title').text(d => Visuals.visualOwnerName(d.planet.owner));
   }
 
-  static animateFleets() {
+  static animateFleets(svg) {
     d3.timer(elapsed => {
       svg.selectAll('.fleet')
         .attr('transform', (d, i) => {
           return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
         });
-    })
+    });
   }
-}
+};
 
 Visuals.Planets = class {
   static addPlanetVisuals(d3selector, color_map, scale) {
@@ -331,9 +341,9 @@ Visuals.Planets = class {
 
   static update(d3selector, turn_control, planet_map) {
     // Text color
-    visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
-    visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
-    visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
+    Visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
+    Visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
+    Visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
 
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
@@ -370,7 +380,7 @@ Visuals.Planets = class {
   static removeOld(d3selector) {
     d3selector.exit().remove();
   }
-}
+};
 
 Visuals.Fleet = class {
   constructor(planet, scale) {
@@ -380,19 +390,25 @@ Visuals.Fleet = class {
     this.speed = space_math.randomIntBetween(100, 1000);
     this.planet = planet;
   }
-}
+};
 
+
+// TODO: please clean this up
 Visuals.TurnWrapper = class {
-  constructor(turn) {
+  constructor(visuals, turn) {
+    this.visuals = visuals;
     this.turn = turn;
   }
 
   get planets() {
-    return container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
+    return this.visuals.container
+      .selectAll('.planet_wrapper')
+      .data(this.turn.planets, d => d.name);
   }
 
   get expeditions() {
-    return container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    return this.visuals.
+      container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
@@ -406,7 +422,7 @@ Visuals.TurnWrapper = class {
   get scores() {
     return d3.select('#score').selectAll('.score').data(this.turn.scores, d => d.player);
   }
-}
+};
 
 Visuals.Scores = class {
   static addScores(d3selector, color_map, scores) {
@@ -476,22 +492,26 @@ Visuals.Scores = class {
       })
       .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%');
   }
-}
+};
 
 Visuals.ResourceLoader = class {
-  static setupPatterns() {
+  constructor(svg) {
+    this.svg = svg;
+  }
+  
+  setupPatterns() {
     // Define patterns
-    svg.append("defs");
+    this.svg.append("defs");
     Config.planet_types.forEach(p => {
       this.setupPattern(p + ".svg", 100, 100, p);
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");
     this.setupPattern("station.svg", 100, 100, "fleet");
-    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet")
+    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
-  static setupPattern(name, width, height, id) {
-    svg.select("defs")
+  setupPattern(name, width, height, id) {
+    this.svg.select("defs")
       .append("pattern")
       .attr("id", id)
       .attr("viewBox", "0 0 " + width + " " + height)
@@ -504,22 +524,27 @@ Visuals.ResourceLoader = class {
       .attr("preserveAspectRation", "none")
       .attr("xlink:href", "res/" + name);
   }
-}
+};
 
+
+// TODO: fix
 Visuals.Gimmicks = class {
   static addGimmicks(turn) {
-    Visuals.Gimmicks.addJigglyPlanets(turn);
+    // No. Just no.
+    //Visuals.Gimmicks.addJigglyPlanets(turn);
   }
 
-  static addJigglyPlanets(turn) {
-    var turn = new Visuals.TurnWrapper(turn);
+  static addJigglyPlanets(raw_turn) {
+    var turn = new Visuals.TurnWrapper(raw_turn);
     var planets = turn.planets;
 
     planets.select('.planet_model')
       .filter(planet => {
         return ["jigglypoef", "iepoef", "iepoev", "jigglypuff", "jigglypoev"]
-          .includes(planet.owner)
+          .includes(planet.owner);
       })
       .attr('fill', 'url(#jigglyplanet)');
   }
-}
+};
+
+module.exports = Visuals;

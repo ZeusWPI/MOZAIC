@@ -1,13 +1,20 @@
-const space_math = new SpaceMath();
-const visuals = new Visuals();
+const d3 = require('d3');
 
+const Visuals = require('./visuals');
+const Controls = require('./controls');
+const Utils = require('./util');
+const space_math = Utils.SpaceMath;
+const DataBinder = Utils.DataBinder;
+const Config = require('./config');
+
+
+// PLEASE PLEASE PLEASE clean up this code
 class Visualizer {
 
-  constructor(log) {
-    this.turn_controller = new TurnController();
-    var turns = this.parseJSON(log);
-    this.turn_controller.init(turns);
-    Visuals.Fleets.animateFleets();
+  constructor() {
+    this.controls = new Controls(this);
+    this.visuals = new Visuals('#game');
+    this.turn_controller = new TurnController(this);
   }
 
   parseJSON(json) {
@@ -17,14 +24,23 @@ class Visualizer {
     });
   }
 
+  visualize(log) {
+    this.clear();
+    var turns = this.parseJSON(log);
+    this.turn_controller.init(turns);
+    this.controls.attachEvents(this.turn_controller);
+    this.visuals.animateFleets();
+  } 
+
   clear() {
-    Visuals.clearVisuals();
+    this.visuals.clearVisuals();
     this.turn_controller.runningbinder.update(false);
   }
 }
 
 class TurnController {
-  constructor() {
+  constructor(visualizer) {
+    this.visualizer = visualizer;
     this.speed = Config.base_speed;
     this.turnbinder = new DataBinder(0);
     this.turnbinder.registerCallback(v => {
@@ -41,11 +57,16 @@ class TurnController {
     this.turns = [];
   }
 
+  play() {
+    this.runningbinder.update(true);
+  }
+
+  pause() {
+    this.runningbinder.update(false);
+  }
+
   init(turns) {
     this.turns = turns;
-    Visuals.ResourceLoader.setupPatterns();
-    Visuals.clearVisuals();
-
     var first_turn = this.turns[0];
 
     // Generate planet_map
@@ -84,10 +105,11 @@ class TurnController {
     }, {});
     this.color_map[null] = "#d3d3d3";
 
-    visuals.generatePlanetStyles(first_turn.planets);
-    visuals.generateViewBox(first_turn.planets);
-    visuals.createZoom();
-    visuals.generateWinnerBox(winner, this.color_map[winner]);
+    
+    this.visualizer.visuals.generatePlanetStyles(first_turn.planets);
+    this.visualizer.visuals.generateViewBox(first_turn.planets);
+    this.visualizer.visuals.createZoom();
+    this.visualizer.visuals.generateWinnerBox(winner, this.color_map[winner]);
     this.turnbinder.update(0);
   }
 
@@ -106,8 +128,8 @@ class TurnController {
       return false;
     } else {
       var turn = this.turns[newTurn];
-      visuals.addNewObjects(turn, this.color_map);
-      visuals.update(turn, this);
+      this.visualizer.visuals.addNewObjects(turn, this.color_map);
+      this.visualizer.visuals.update(turn, this);
       return true;
     }
   }
@@ -262,3 +284,5 @@ class Expedition {
     return mod * (Math.PI * 2) - Math.PI;
   }
 }
+
+module.exports = Visualizer;
