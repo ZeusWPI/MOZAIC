@@ -93,6 +93,7 @@ body {
 }
 
 .speedcontrols {
+  display: flex;
   float: right;
   min-width: 220px;
   width: 20%;
@@ -138,7 +139,7 @@ body {
   outline: none;
   width: 60px;
   height: 60px;
-  
+
   text-align: center;
   font-size: 32px;
   z-index: 999;
