@@ -18,6 +18,7 @@ class Visuals {
   clearVisuals() {
     this.container.selectAll('.planet_wrapper').remove();
     this.container.selectAll('.expedition').remove();
+    d3.select('#score').selectAll('.score').remove();
   }
 
   generateViewBox(planets) {
@@ -83,7 +84,7 @@ class Visuals {
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
-    
+
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
     var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
@@ -408,7 +409,7 @@ Visuals.TurnWrapper = class {
 
   get expeditions() {
     return this.visuals.
-      container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
@@ -475,7 +476,8 @@ Visuals.Scores = class {
       })
       .attr('y', (d, i) => end_y + 20)
       .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%')
-      .attr('height', 20);
+      .attr('height', 20)
+      .append('title').text(d => Visuals.visualOwnerName(d.player));
   }
 
   static update(d3selector) {
@@ -498,7 +500,7 @@ Visuals.ResourceLoader = class {
   constructor(svg) {
     this.svg = svg;
   }
-  
+
   setupPatterns() {
     // Define patterns
     this.svg.append("defs");
