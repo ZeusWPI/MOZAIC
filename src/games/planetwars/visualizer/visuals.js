@@ -232,7 +232,7 @@ Visuals.Expeditions = class {
 
   static update(d3selector, turn_control) {
     d3selector.transition()
-      .duration(turn_control.speed)
+      .duration(turn_control.speed_binder.value)
       .ease(d3.easeLinear)
       .attr('transform', exp => Visuals.Expeditions.getLocation(exp));
 
@@ -321,7 +321,7 @@ Visuals.Planets = class {
     // Text color
     Visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
     Visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
-    Visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed);
+    Visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed_binder.value);
 
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);

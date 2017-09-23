@@ -41,7 +41,13 @@ class Visualizer {
 class TurnController {
   constructor(visualizer) {
     this.visualizer = visualizer;
-    this.speed = Config.base_speed;
+    this.speed_binder = new DataBinder(Config.base_speed);
+    this.speed_binder.registerCallback(s => {
+      if (this.run_binder.value) {
+        this._stopTimer();
+        this._startTimer();
+      }
+    });
     this.turn_binder = new DataBinder(0);
     this.turn_binder.registerCallback(v => {
       this.running = this._showTurn(v);
@@ -138,7 +144,7 @@ class TurnController {
     var callback = elapsed => {
       this.nextTurn();
     };
-    this.turn_timer = d3.interval(callback, this.speed);
+    this.turn_timer = d3.interval(callback, this.speed_binder.value);
 
   }
 

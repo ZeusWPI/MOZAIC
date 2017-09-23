@@ -1,6 +1,5 @@
 class Config {
   static get planet_types() {
-    // return ["water", "red", "moon", "mars", "earth"];
     return ["earth", "jupiter", "mars", "neptune", "sun", "uranus", "venus"];
   }
 
@@ -13,11 +12,11 @@ class Config {
   }
 
   static get base_speed() {
-    return 1000;
+    return 2000;
   }
 
   static get speed_mods() {
-    return [0.25, 0.33, 0.5, 1, 2, 3, 4];
+    return [0.33, 0.5, 0.75, 1, 2, 4, 6];
   }
 
   static get max_scales() {

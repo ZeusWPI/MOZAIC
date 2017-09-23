@@ -75,7 +75,7 @@ class Controls {
       if (this.mod > 0) {
         this.mod--;
         var speed_mod = Config.speed_mods[this.mod];
-        turn_controller.speed = Config.base_speed / speed_mod;
+        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
         this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
@@ -85,6 +85,7 @@ class Controls {
         this.mod++;
         var speed_mod = Config.speed_mods[this.mod];
         turn_controller.speed = Config.base_speed / speed_mod;
+        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
         this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
