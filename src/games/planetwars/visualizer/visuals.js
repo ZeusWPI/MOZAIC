@@ -459,7 +459,7 @@ Visuals.Scores = class {
       .attr('width', (d, i) => (Visuals.Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%')
       .attr('height', 20)
       .append('title').text(d => Visuals.visualOwnerName(d.player));
-    d3selector.attr('height', end_y);
+
   }
 
   static update(d3selector) {

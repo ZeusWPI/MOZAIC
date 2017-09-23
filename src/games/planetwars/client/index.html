@@ -15,71 +15,70 @@
         <svg id="score"></svg>
 
         <!-- Hide/unhide button for scoreboard -->
-        <button title="Hide scoreboard" type="button" name="button" id="hide_score" class="control control-button">
+        <button title="Hide scoreboard" type="button" name="button" id="hide_score" class="control control-button close">
           <i class="fa fa-times" aria-hidden="true"></i>
         </button>
 
-        <button type="button" name="button" id="unhide_score" class="control control-button">
+        <button title="Show scoreboard" type="button" name="button" id="unhide_score" class="control control-button">
           <i class="fa fa-chevron-left" aria-hidden="true"></i>
         </button>
 
         <!-- Hide/unhide button -->
-        <button title="Show scoreboard" type="button" name="button" id="hide" class="control control-button">
-          <img src="res/minus.svg"/>
+        <button title="Hide controls" type="button" name="button" id="hide" class="control control-button">
+          <i class="fa fa-chevron-down" aria-hidden="true"></i>
         </button>
 
-        <button type="button" name="button" id="unhide" class="control control-button">
-          <img src="res/plus.svg"/>
+        <button title="Show controls" type="button" name="button" id="unhide" class="control control-button">
+          <i class="fa fa-chevron-up" aria-hidden="true"></i>
         </button>
 
         <div id="controlbar">
           <input type="range" id="turn_slider" value="0" class="control"/>
 
-          <div class="speedcontrols">
+          <div class="turncontrols">
 
             <!-- Rewind button -->
             <button type="button" name="button" id="tostart" class="control control-button">
-              <img src="res/rewind.svg"/>
-            </button>
-
-            <!-- Speed down button -->
-            <button type="button" name="button" id="speeddown" class="control control-button">
-              <img src="res/speeddown.svg"/>
+              <i class="fa fa-fast-backward" aria-hidden="true"></i>
             </button>
 
             <!-- Previous turn button -->
             <button type="button" name="button" id="previous" class="control control-button">
-              <img src="res/minus.svg"/>
+              <i class="fa fa-step-backward" aria-hidden="true"></i>
             </button>
 
             <!-- Play -->
             <button type="button" name="button" id="play" class="control control-button">
-              <img src="res/play.svg"/>
+              <i class="fa fa-play" aria-hidden="true"></i>
             </button>
 
             <!-- Pause button -->
             <button type="button" name="button" id="pause" class="control control-button" hidden="true">
-              <img src="res/pause.svg"/>
+              <i class="fa fa-pause" aria-hidden="true"></i>
             </button>
 
             <!-- Next turn button -->
             <button type="button" name="button" id="next" class="control control-button">
-              <img src="res/plus.svg"/>
+              <i class="fa fa-step-forward" aria-hidden="true"></i>
             </button>
-
-            <!-- Speedup button -->
-            <button type="button" name="button" id="speedup" class="control control-button">
-              <img src="res/speedup.svg"/>
-            </button>
-
 
             <!-- Forward button -->
             <button type="button" name="button" id="toend" class="control control-button">
-              <img src="res/forward.svg"/>
+              <i class="fa fa-fast-forward" aria-hidden="true"></i>
             </button>
 
           </div>
-          <p class="speed"></p>
+          <div class="speedcontrols">
+            <p class="speed"></p>
+            <!-- Speed down button -->
+            <button type="button" name="button" id="speeddown" class="control control-button">
+              <i class="fa fa-minus" aria-hidden="true"></i>
+            </button>
+            <!-- Speedup button -->
+            <button type="button" name="button" id="speedup" class="control control-button">
+              <i class="fa fa-plus" aria-hidden="true"></i>
+            </button>
+          </div>
         </div>
 
         <!-- The SVG where the game gets rendered" -->
