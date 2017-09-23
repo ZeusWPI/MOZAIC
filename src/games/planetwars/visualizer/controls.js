@@ -10,7 +10,7 @@ class Controls {
     d3.select('#unhide').attr("hidden", true);
     d3.select('#unhide_score').attr("hidden", true);
     d3.select('#hide_score').attr("hidden", true);
-    d3.select('#end_card').attr("hidden", true);
+    d3.select('#end_card').classed("invisible", true);;
 
     d3.select('#hide').on("click", e => {
       d3.select('#controlbar').attr("hidden", true);
@@ -90,13 +90,13 @@ class Controls {
     });
 
     d3.select('#tostart').on("click", e => {
-      turn_controller.turnbinder.update(0);
-      turn_controller.runningbinder.update(false);
+      turn_controller.turn_binder.update(0);
+      turn_controller.run_binder.update(false);
     });
 
     d3.select('#toend').on("click", e => {
-      turn_controller.turnbinder.update(turn_controller.maxTurns);
-      turn_controller.runningbinder.update(false);
+      turn_controller.turn_binder.update(turn_controller.maxTurns);
+      turn_controller.run_binder.update(false);
     });
 
     d3.select('#turn_slider')
@@ -104,18 +104,18 @@ class Controls {
       .attr('max', turn_controller.maxTurns)
       .attr('step', 1)
       .on('change', () => {
-        turn_controller.turnbinder.update(parseInt(d3.select('#turn_slider').node().value));
+        turn_controller.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
-    turn_controller.turnbinder.registerCallback(v => {
+    turn_controller.turn_binder.registerCallback(v => {
       d3.select('#turn_slider').node().value = v;
       if (v >= turn_controller.maxTurns) {
-        d3.select('#end_card').attr('hidden', null);
+        d3.select('#end_card').classed("invisible", false);;
       } else {
-        d3.select('#end_card').attr('hidden', 'true');
+        d3.select('#end_card').classed("invisible", true);;
       }
     });
-    turn_controller.runningbinder.registerCallback(v => {
+    turn_controller.run_binder.registerCallback(v => {
       if (v) {
         this.hidePlayButton();
       } else {

@@ -30,11 +30,11 @@ class Visualizer {
     this.turn_controller.init(turns);
     this.controls.attachEvents(this.turn_controller);
     this.visuals.animateFleets();
-  } 
+  }
 
   clear() {
     this.visuals.clearVisuals();
-    this.turn_controller.runningbinder.update(false);
+    this.turn_controller.run_binder.update(false);
   }
 }
 
@@ -42,12 +42,12 @@ class TurnController {
   constructor(visualizer) {
     this.visualizer = visualizer;
     this.speed = Config.base_speed;
-    this.turnbinder = new DataBinder(0);
-    this.turnbinder.registerCallback(v => {
+    this.turn_binder = new DataBinder(0);
+    this.turn_binder.registerCallback(v => {
       this.running = this._showTurn(v);
     });
-    this.runningbinder = new DataBinder(false);
-    this.runningbinder.registerCallback(v => {
+    this.run_binder = new DataBinder(false);
+    this.run_binder.registerCallback(v => {
       if (v) {
         this._startTimer();
       } else {
@@ -58,11 +58,11 @@ class TurnController {
   }
 
   play() {
-    this.runningbinder.update(true);
+    this.run_binder.update(true);
   }
 
   pause() {
-    this.runningbinder.update(false);
+    this.run_binder.update(false);
   }
 
   init(turns) {
@@ -105,26 +105,26 @@ class TurnController {
     }, {});
     this.color_map[null] = "#d3d3d3";
 
-    
+
     this.visualizer.visuals.generatePlanetStyles(first_turn.planets);
     this.visualizer.visuals.generateViewBox(first_turn.planets);
     this.visualizer.visuals.createZoom();
     this.visualizer.visuals.generateWinnerBox(winner, this.color_map[winner]);
-    this.turnbinder.update(0);
+    this.turn_binder.update(0);
   }
 
   nextTurn() {
-    this.turnbinder.update((this.turnbinder.value) + 1);
+    this.turn_binder.update((this.turn_binder.value) + 1);
   }
 
   previousTurn() {
-    this.turnbinder.update((this.turnbinder.value) - 1);
+    this.turn_binder.update((this.turn_binder.value) - 1);
   }
 
   _showTurn(newTurn) {
     if (newTurn >= this.turns.length) {
       console.log("end of log");
-      this.runningbinder.update(false);
+      this.run_binder.update(false);
       return false;
     } else {
       var turn = this.turns[newTurn];

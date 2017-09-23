@@ -1,5 +1,10 @@
 @import url('./node_modules/font-awesome/css/font-awesome.min.css');
 
+/* Keep this at the top so it keeps having priority */
+.invisible {
+  display: none !important;
+}
+
 body {
   margin: 0;
 }
@@ -73,14 +78,13 @@ body {
   font-family: 'Tahoma';
   background-color: white;
   border: 1px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-#end_card p  {
-  margin: 0;
-}
-
-#end_card p:first-of-type {
-  margin-top: 3vh;
+#end_card p {
+  width: 100%;
 }
 
 .speed {
@@ -141,10 +145,6 @@ body {
 
 #turn_slider{
   width: 100%;
-}
-
-.invisible {
-  display: none;
 }
 
 #fab {
