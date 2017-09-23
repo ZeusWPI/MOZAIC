@@ -87,6 +87,12 @@ body {
   width: 100%;
 }
 
+#end_card button {
+  position: absolute;
+  top: -12.5px;
+  left: -12.5px;
+}
+
 .speed {
   float: left;
   width: 50%;

@@ -16,7 +16,7 @@ class Config {
   }
 
   static get speed_mods() {
-    return [0.33, 0.5, 0.75, 1, 2, 4, 6];
+    return [0.33, 0.5, 0.75, 1, 2, 4, 6, 10];
   }
 
   static get max_scales() {

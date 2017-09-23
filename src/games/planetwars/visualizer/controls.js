@@ -7,33 +7,35 @@ class Controls {
     this.visualizer = visualizer;
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
-    d3.select('#unhide').attr("hidden", true);
-    d3.select('#unhide_score').attr("hidden", true);
-    d3.select('#hide_score').attr("hidden", true);
+    d3.select('#unhide').classed('invisible', true);
+    d3.select('#unhide_score').classed('invisible', true);
+    d3.select('#hide_score').classed('invisible', false);
     d3.select('#end_card').classed("invisible", true);;
 
     d3.select('#hide').on("click", e => {
-      d3.select('#controlbar').attr("hidden", true);
-      d3.select('#hide').attr("hidden", true);
-      d3.select('#unhide').attr("hidden", null);
+      d3.select('#controlbar').classed('invisible', true);
+      d3.select('#hide').classed('invisible', true);
+      d3.select('#unhide').classed('invisible', false);
     });
     d3.select('#unhide').on("click", e => {
-      d3.select('#controlbar').attr("hidden", null);
-      d3.select('#hide').attr("hidden", null);
-      d3.select('#unhide').attr("hidden", true);
+      d3.select('#controlbar').classed('invisible', false);
+      d3.select('#hide').classed('invisible', false);
+      d3.select('#unhide').classed('invisible', true);
     });
 
     d3.select('#hide_score').on("click", e => {
-      d3.select('#score').style('display', 'none');
-      d3.select('#hide_score').attr("hidden", true);
-      d3.select('#unhide_score').attr("hidden", null);
+      d3.select('#score').classed('invisible', true);
+      d3.select('#hide_score').classed('invisible', true);
+      d3.select('#unhide_score').classed('invisible', false);
     });
     d3.select('#unhide_score').on("click", e => {
-      d3.select('#score').style('display', 'block');
-      d3.select('#hide_score').attr("hidden", null);
-      d3.select('#unhide_score').attr("hidden", true);
+      d3.select('#score').classed('invisible', false);
+      d3.select('#hide_score').classed('invisible', false);
+      d3.select('#unhide_score').classed('invisible', true);
     });
-    d3.select('#file-select').on('change', e => this.readLog(e), false);
+    d3.select('#hide_card').on("click", e => {
+      d3.select('#end_card').classed('invisible', true);
+    });
   }
 
   readLog(e) {
