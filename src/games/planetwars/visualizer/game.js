@@ -134,64 +134,6 @@ class Expedition {
     this.owner = log_exp.owner;
     this.turns_remaining = log_exp.turns_remaining;
   }
-
-  position() {
-    var total_distance = Math.ceil(space_math.euclideanDistance(this.origin, this.destination));
-    var mod = this.turns_remaining / total_distance;
-
-    var new_x = this.origin.x - this.destination.x;
-    new_x *= mod;
-    new_x += this.destination.x;
-
-    var new_y = this.origin.y - this.destination.y;
-    new_y *= mod;
-    new_y += this.destination.y;
-
-    return {
-      'x': new_x,
-      'y': new_y
-    };
-  }
-
-  angle() {
-    return (Math.atan2(this.destination.y - this.origin.y, this.destination.x - this.origin.x) * (180 / Math.PI) + 45) % 360;
-  }
-
-  homannPosition(angle) {
-    var total_distance = space_math.euclideanDistance(this.origin, this.destination);
-    if (!angle) angle = this.homannAngle(this.turns_remaining, total_distance);
-
-    var r1 = (this.origin.size) / 2 + 3;
-    var r2 = (this.destination.size) / 2 + 3;
-
-    var a = (total_distance + r1 + r2) / 2;
-    var c = a - r1 / 2 - r2 / 2;
-    var b = Math.sqrt(Math.pow(a, 2) - Math.pow(c, 2));
-
-    var dx = this.origin.x - this.destination.x;
-    var dy = this.origin.y - this.destination.y;
-    var w = Math.atan2(dy, dx);
-
-    var center_x = c * Math.cos(w) + this.destination.x;
-    var center_y = c * Math.sin(w) + this.destination.y;
-
-    var longest = a;
-    var shortest = b;
-
-    longest *= Math.cos(angle);
-    shortest *= Math.sin(angle);
-
-    return {
-      'x': center_x + longest * Math.cos(w) - shortest * Math.sin(w),
-      'y': center_y + longest * Math.sin(w) + shortest * Math.cos(w)
-    };
-  }
-
-  homannAngle(turn, distance) {
-    if (!distance) distance = space_math.euclideanDistance(this.origin, this.destination);
-    var mod = turn / distance;
-    return mod * (Math.PI * 2) - Math.PI;
-  }
 }
 
 module.exports = Game;
