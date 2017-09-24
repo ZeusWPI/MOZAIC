@@ -4,7 +4,7 @@ const Utils = require('./util');
 const space_math = Utils.SpaceMath;
 
 class Visuals {
-  constructor(selector) {
+  constructor() {
     this.scale = 1;
     this.svg = d3.select('#game');
     this.container = this.svg.append('g');
@@ -95,7 +95,6 @@ class Visuals {
     Visuals.Fleets.addFleetVisuals(fleet_wrappers, color_map);
     Visuals.Expeditions.addExpeditionVisuals(new_expeditions, color_map, this.scale);
     Visuals.Scores.addScores(new_scores, color_map);
-    Visuals.Gimmicks.addGimmicks(turn.turn);
   }
 
   update(turn, turn_control) {
@@ -159,19 +158,6 @@ class Visuals {
   static attachToAllChildren(d3selector) {
     return d3selector.data((d, i) => {
       return Array(d3selector._groups[i].length).fill(d);
-    });
-  }
-
-  generatePlanetStyles(planets) {
-    planets.map(planet => {
-      var types = Config.planet_types;
-      var type = types[Math.floor(Math.random() * types.length)];
-      var closest = space_math.findClosest(planet, planets) / 2 - Config.orbit_size * 2;
-      var size = space_math.clamp(closest, 0.5, Config.max_planet_size);
-
-      planet.type = type;
-
-      planet.size = size;
     });
   }
 
@@ -330,6 +316,7 @@ Visuals.Planets = class {
     // Update attribs
     d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
     d3selector.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
+    d3selector.select('.planet_model').attr('fill', d => 'url(#' + d.type + ')');
     d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count).append('title')
       .text(d => Visuals.visualOwnerName(d.owner));
   }
@@ -510,24 +497,52 @@ Visuals.ResourceLoader = class {
   }
 };
 
+Visuals.Preprocessing = class {
+  static addPlanetCues(turns) {
+    var style_map = Visuals.Preprocessing.generatePlanetStyles(turns[0], turns[0].planets);
 
-// TODO: For this to work correctly static planetary maps need to changed to dynamic ones
-Visuals.Gimmicks = class {
-  static addGimmicks(turn) {
-    //Visuals.Gimmicks.addJigglyPlanets(turn);
+    turns.forEach((turn, i) => {
+      turn.planets.forEach(planet => {
+        Visuals.Preprocessing.applyStyle(planet, style_map);
+        if (i > 0) {
+          turns[i - 1].planets.forEach(p2 => {
+            Visuals.Preprocessing.addTakeoverFlag(p2, planet);
+          });
+        }
+        Visuals.Preprocessing.addJigglyFlag(planet);
+      });
+    });
   }
 
-  static addJigglyPlanets(raw_turn) {
-    var turn = new Visuals.TurnWrapper(raw_turn);
-    var planets = turn.planets;
-
-    planets.select('.planet_model')
-      .filter(planet => {
-        return ["jigglypoef", "iepoef", "iepoev", "jigglypuff", "jigglypoev"]
-          .includes(planet.owner);
-      })
-      .attr('fill', 'url(#jigglyplanet)');
+  static generatePlanetStyles(turn, planets) {
+    return turn.planets.reduce((map, planet) => {
+      var types = Config.planet_types;
+      var type = types[Math.floor(Math.random() * types.length)];
+      var closest = space_math.findClosest(planet, planets) / 2 - Config.orbit_size * 2;
+      var size = space_math.clamp(closest, 0.5, Config.max_planet_size);
+      planet.type = type;
+      planet.size = size;
+      map[planet.name] = planet;
+      return map;
+    }, {});
   }
-};
+  static applyStyle(planet, map) {
+    var template = map[planet.name];
+    planet.type = template.type;
+    planet.size = template.size;
+  }
+
+  static addTakeoverFlag(last_turn_planet, planet) {
+    if (planet.name === last_turn_planet.name && planet.owner !== last_turn_planet.owner) {
+      planet.changed_owner = true;
+    }
+  }
+
+  static addJigglyFlag(planet) {
+    if (['jigglypoef', 'iepoef', 'iepoev', 'jigglypuff', 'jigglypoev'].includes(planet.owner)) {
+      planet.type = 'jigglyplanet';
+    }
+  }
+}
 
 module.exports = Visuals;

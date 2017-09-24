@@ -13,7 +13,6 @@ class Game {
     this.turn_binder = new DataBinder(0);
     this.run_binder = new DataBinder(false);
     this.winner = null;
-
   }
 
   parseJSON(json) {
@@ -26,6 +25,7 @@ class Game {
   init(log) {
     this.turns = this.parseJSON(log);
     var first_turn = this.turns[0];
+    //this.generatePlanetStyles(first_turn.planets);
 
     // Generate planet_map
     this.planet_map = first_turn.planets.reduce((map, planet) => {
@@ -33,18 +33,9 @@ class Game {
       return map;
     }, {});
 
-    //TODO do this smarter
-    this.turns.forEach((turn, i) => {
+    //Turn preprocessing
+    this.turns.forEach(turn => {
       turn.prepareData(this.planet_map);
-      if (i > 0) {
-        turn.planets.forEach(p1 => {
-          this.turns[i - 1].planets.forEach(p2 => {
-            if (p1.name === p2.name && p1.owner !== p2.owner) {
-              p1.changed_owner = true;
-            }
-          });
-        });
-      }
     });
 
     // Detect winner
@@ -77,9 +68,12 @@ class Turn {
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
+    this.calculateTurnScore();
+  }
 
-    this.scores = [];
+  calculateTurnScore() {
     //TODO this calculation should perhaps be done in the backend
+    this.scores = [];
     var strengths = [];
     var total_strength = 0;
     this.players.forEach(player => {

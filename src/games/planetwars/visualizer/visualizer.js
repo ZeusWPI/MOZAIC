@@ -8,9 +8,9 @@ const Utils = require('./util');
 class Visualizer {
 
   constructor() {
-    this.model = new Game(this);
+    this.model = new Game();
     this.controls = new Controls();
-    this.visuals = new Visuals('#game');
+    this.visuals = new Visuals();
 
 
     this.model.speed_binder.registerCallback(s => {
@@ -37,7 +37,8 @@ class Visualizer {
     this.clear();
     this.model.init(log);
 
-    this.visuals.generatePlanetStyles(this.model.turns[0].planets);
+    //this.visuals.generatePlanetStyles(this.model.turns[0].planets);
+    Visuals.Preprocessing.addPlanetCues(this.model.turns);
     this.visuals.generateViewBox(this.model.turns[0].planets);
     this.visuals.createZoom();
     this.visuals.generateWinnerBox(this.model.winner, this.model.color_map[this.model.winner]);
@@ -69,14 +70,11 @@ class Visualizer {
 
   _showTurn(newTurn) {
     if (newTurn >= this.model.turns.length) {
-      console.log("end of log");
       this.model.run_binder.update(false);
-      return false;
     } else {
       var turn = this.model.turns[newTurn];
       this.visuals.addNewObjects(turn, this.model.color_map);
       this.visuals.update(turn, this.model);
-      return true;
     }
   }
 
