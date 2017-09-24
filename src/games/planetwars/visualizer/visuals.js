@@ -431,14 +431,11 @@ Visuals.TurnWrapper = class {
   }
 
   get planets() {
-    return this.visuals.container
-      .selectAll('.planet_wrapper')
-      .data(this.turn.planets, d => d.name);
+    return this.visuals.container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
   }
 
   get expeditions() {
-    return this.visuals.
-    container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
+    return this.visuals.container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
   }
 
   get planet_data() {
