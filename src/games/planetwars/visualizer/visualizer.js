@@ -7,8 +7,6 @@ const space_math = Utils.SpaceMath;
 const DataBinder = Utils.DataBinder;
 const Config = require('./config');
 
-
-// PLEASE PLEASE PLEASE clean up this code
 class Visualizer {
 
   constructor() {

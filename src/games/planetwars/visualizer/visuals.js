@@ -171,6 +171,7 @@ class Visuals {
       var size = space_math.clamp(closest, 0.5, Config.max_planet_size);
 
       planet.type = type;
+
       planet.size = size;
     });
   }
@@ -375,7 +376,7 @@ Visuals.Fleet = class {
 };
 
 
-// TODO: please clean this up
+// TODO: clean up
 Visuals.TurnWrapper = class {
   constructor(visuals, turn) {
     this.visuals = visuals;
@@ -511,10 +512,9 @@ Visuals.ResourceLoader = class {
 };
 
 
-// TODO: fix
+// TODO: For this to work correctly static planetary maps need to changed to dynamic ones
 Visuals.Gimmicks = class {
   static addGimmicks(turn) {
-    // No. Just no.
     //Visuals.Gimmicks.addJigglyPlanets(turn);
   }
 
