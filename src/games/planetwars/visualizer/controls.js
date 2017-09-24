@@ -1,10 +1,8 @@
 const d3 = require('d3');
 const Config = require('./config');
-const Visualizer = require('./visualizer');
 
 class Controls {
-  constructor(visualizer) {
-    this.visualizer = visualizer;
+  constructor() {
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
     d3.select('#unhide').classed('invisible', true);
@@ -38,46 +36,30 @@ class Controls {
     });
   }
 
-  readLog(e) {
-    if (this.visualizer) {
-      this.hidePauseButton();
-      this.visualizer.clear();
-    }
-
-    var reader = new FileReader();
-    reader.onload = event => {
-      var log = event.target.result;
-      this.visualizer.visualize(log);
-      this.attachEvents(this.visualizer.turn_controller);
-    };
-
-    reader.readAsText(e.target.files[0]);
-  }
-
-  attachEvents(turn_controller) {
+  attachEvents(model) {
     d3.select('#hide_score').attr("hidden", null);
 
     d3.select('#play').on("click", e => {
-      turn_controller.play();
+      model.run_binder.update(true);
     });
 
     d3.select('#pause').on("click", e => {
-      turn_controller.pause();
+      model.run_binder.update(false);
     });
 
     d3.select('#next').on("click", e => {
-      turn_controller.nextTurn();
+      model.turn_binder.update((model.turn_binder.value) + 1);
     });
 
     d3.select('#previous').on("click", e => {
-      turn_controller.previousTurn();
+      model.turn_binder.update((model.turn_binder.value) - 1);
     });
 
     d3.select('#speeddown').on("click", e => {
       if (this.mod > 0) {
         this.mod--;
         var speed_mod = Config.speed_mods[this.mod];
-        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
+        model.speed_binder.update(Config.base_speed / speed_mod);
         this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
@@ -86,39 +68,38 @@ class Controls {
       if (this.mod < Config.speed_mods.length - 1) {
         this.mod++;
         var speed_mod = Config.speed_mods[this.mod];
-        turn_controller.speed = Config.base_speed / speed_mod;
-        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
+        model.speed_binder.update(Config.base_speed / speed_mod);
         this.updateSpeed(Config.speed_mods[this.mod]);
       }
     });
 
     d3.select('#tostart').on("click", e => {
-      turn_controller.turn_binder.update(0);
-      turn_controller.run_binder.update(false);
+      model.turn_binder.update(0);
+      model.run_binder.update(false);
     });
 
     d3.select('#toend').on("click", e => {
-      turn_controller.turn_binder.update(turn_controller.maxTurns);
-      turn_controller.run_binder.update(false);
+      model.turn_binder.update(model.maxTurns);
+      model.run_binder.update(false);
     });
 
     d3.select('#turn_slider')
       .attr('min', 0)
-      .attr('max', turn_controller.maxTurns)
+      .attr('max', model.maxTurns)
       .attr('step', 1)
       .on('change', () => {
-        turn_controller.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
+        model.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
-    turn_controller.turn_binder.registerCallback(v => {
+    model.turn_binder.registerCallback(v => {
       d3.select('#turn_slider').node().value = v;
-      if (v >= turn_controller.maxTurns) {
+      if (v >= model.maxTurns) {
         d3.select('#end_card').classed("invisible", false);;
       } else {
         d3.select('#end_card').classed("invisible", true);;
       }
     });
-    turn_controller.run_binder.registerCallback(v => {
+    model.run_binder.registerCallback(v => {
       if (v) {
         this.hidePlayButton();
       } else {

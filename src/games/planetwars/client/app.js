@@ -50,11 +50,12 @@ class PlanetwarsClient {
         // visualize game
         this.visualizer.visualize(res);
         this.setState(VISUALIZER_STATE);
-        this.visualizer.turn_controller.play();
+        this.visualizer.play();
       });
     } else if (this.state == VISUALIZER_STATE) {
       this.setState(BLOCKLY_STATE);
       window.dispatchEvent(new Event('resize'));
+      this.visualizer.pause();
     }
   }
 
