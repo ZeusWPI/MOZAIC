@@ -12,7 +12,6 @@ class Visualizer {
     this.controls = new Controls();
     this.visuals = new Visuals();
 
-
     this.model.speed_binder.registerCallback(s => {
       if (this.model.run_binder.value) {
         this._stopTimer();
@@ -37,7 +36,6 @@ class Visualizer {
     this.clear();
     this.model.init(log);
 
-    //this.visuals.generatePlanetStyles(this.model.turns[0].planets);
     Visuals.Preprocessing.addPlanetCues(this.model.turns);
     this.visuals.generateViewBox(this.model.turns[0].planets);
     this.visuals.createZoom();
