@@ -35,15 +35,8 @@ class Visualizer {
   visualize(log) {
     this.clear();
     this.model.init(log);
-
-    Visuals.Preprocessing.addPlanetCues(this.model.turns);
-    this.visuals.generateViewBox(this.model.turns[0].planets);
-    this.visuals.createZoom();
-    this.visuals.generateWinnerBox(this.model.winner, this.model.color_map[this.model.winner]);
-    this.model.turn_binder.update(0);
-
+    this.visuals.init(this.model);
     this.controls.attachEvents(this.model);
-    this.visuals.animateFleets();
   }
 
   clear() {
@@ -71,8 +64,8 @@ class Visualizer {
       this.model.run_binder.update(false);
     } else {
       var turn = this.model.turns[newTurn];
-      this.visuals.addNewObjects(turn, this.model.color_map);
-      this.visuals.update(turn, this.model);
+      this.visuals.addNewObjects(turn);
+      this.visuals.update(turn, this.model.speed_binder.value);
     }
   }
 

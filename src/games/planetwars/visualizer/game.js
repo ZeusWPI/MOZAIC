@@ -25,17 +25,16 @@ class Game {
   init(log) {
     this.turns = this.parseJSON(log);
     var first_turn = this.turns[0];
-    //this.generatePlanetStyles(first_turn.planets);
 
     // Generate planet_map
-    this.planet_map = first_turn.planets.reduce((map, planet) => {
+    var planet_map = first_turn.planets.reduce((map, planet) => {
       map[planet.name] = planet;
       return map;
     }, {});
 
     //Turn preprocessing
     this.turns.forEach(turn => {
-      turn.prepareData(this.planet_map);
+      turn.prepareData(planet_map);
     });
 
     // Detect winner
@@ -44,14 +43,6 @@ class Game {
         this.winner = p.owner;
       }
     });
-
-    // Color map
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
-    this.color_map = first_turn.players.reduce((map, o, i) => {
-      map[o] = color(i);
-      return map;
-    }, {});
-    this.color_map[null] = "#d3d3d3";
   }
 
   get maxTurns() {

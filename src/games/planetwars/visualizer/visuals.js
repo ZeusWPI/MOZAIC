@@ -11,6 +11,15 @@ class Visuals {
     new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
 
+  init(model) {
+    Visuals.Preprocessing.addPlanetCues(model.turns);
+    this.generateViewBox(model.turns[0].planets);
+    this.generateColorMap(model.turns[0].players);
+    this.createZoom();
+    this.generateWinnerBox(model.winner, this.color_map[model.winner]);
+    this.animateFleets();
+  }
+
   animateFleets() {
     Visuals.Fleets.animateFleets(this.svg);
   }
@@ -61,6 +70,16 @@ class Visuals {
     this.svg.attr('viewBox', min_x + ' ' + min_y + ' ' + max_x + ' ' + max_y);
   }
 
+  generateColorMap(players) {
+    // Color map
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+    this.color_map = players.reduce((map, o, i) => {
+      map[o] = color(i);
+      return map;
+    }, {});
+    this.color_map[null] = "#d3d3d3";
+  }
+
   createZoom() {
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
@@ -78,7 +97,7 @@ class Visuals {
     card.select('.winner').text(winner).attr('style', 'color: ' + color);
   }
 
-  addNewObjects(raw_turn, color_map) {
+  addNewObjects(raw_turn) {
     var turn = new Visuals.TurnWrapper(this, raw_turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
@@ -91,25 +110,25 @@ class Visuals {
     var new_scores = scores.enter().append('g').attr('class', 'score');
 
     // Add the new objects
-    Visuals.Planets.addPlanetVisuals(new_planets, color_map, this.scale);
-    Visuals.Fleets.addFleetVisuals(fleet_wrappers, color_map);
-    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, color_map, this.scale);
-    Visuals.Scores.addScores(new_scores, color_map);
+    Visuals.Planets.addPlanetVisuals(new_planets, this.color_map, this.scale);
+    Visuals.Fleets.addFleetVisuals(fleet_wrappers, this.color_map);
+    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, this.color_map, this.scale);
+    Visuals.Scores.addScores(new_scores, this.color_map);
   }
 
-  update(turn, turn_control) {
+  update(turn, speed) {
     var turn = new Visuals.TurnWrapper(this, turn);
     var planets = turn.planets;
     var expeditions = turn.expeditions;
     var scores = turn.scores;
 
     //PLANETS
-    Visuals.Planets.update(planets, turn_control);
+    Visuals.Planets.update(planets, this.color_map, speed);
     Visuals.Planets.removeOld(planets);
     // EXPEDITIONS
-    Visuals.Expeditions.update(expeditions, turn_control, turn.planet_map);
+    Visuals.Expeditions.update(expeditions, speed);
     Visuals.Expeditions.removeOld(expeditions);
-
+    // SCORES
     Visuals.Scores.update(scores);
   }
 
@@ -146,7 +165,7 @@ class Visuals {
     return 'rotate(' + (degrees + 180) % 360 + ')';
   }
 
-  static registerTakeOverAnimation(planets, planet_map, speed) {
+  static registerTakeOverAnimation(planets, speed) {
     planets.select('.planet')
       .filter(d => d.changed_owner)
       .transition(speed / 2)
@@ -223,9 +242,9 @@ Visuals.Expeditions = class {
       .append('title').text(exp => Visuals.visualOwnerName(exp.owner));
   }
 
-  static update(d3selector, turn_control) {
+  static update(d3selector, speed) {
     d3selector.transition()
-      .duration(turn_control.speed_binder.value)
+      .duration(speed)
       .ease(d3.easeLinear)
       .attr('transform', exp => Visuals.Expeditions.getLocation(exp));
 
@@ -368,15 +387,15 @@ Visuals.Planets = class {
       .text(d => Visuals.visualOwnerName(d.owner));
   }
 
-  static update(d3selector, turn_control, planet_map) {
+  static update(d3selector, color_map, speed) {
     // Text color
-    Visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => turn_control.color_map[d.owner]);
+    Visuals.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => color_map[d.owner]);
     Visuals.attachToAllChildren(d3selector.selectAll('title')).text(d => Visuals.visualOwnerName(d.owner));
-    Visuals.registerTakeOverAnimation(d3selector, planet_map, turn_control.speed_binder.value);
+    Visuals.registerTakeOverAnimation(d3selector, speed);
 
     // Update attribs
-    d3selector.select('.orbit').style('stroke', d => turn_control.color_map[d.owner]);
-    d3selector.select('.planet_background').attr('fill', d => turn_control.color_map[d.owner]);
+    d3selector.select('.orbit').style('stroke', d => color_map[d.owner]);
+    d3selector.select('.planet_background').attr('fill', d => color_map[d.owner]);
     d3selector.select('.planet_model').attr('fill', d => 'url(#' + d.type + ')');
     d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count).append('title')
       .text(d => Visuals.visualOwnerName(d.owner));
