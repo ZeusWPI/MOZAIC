@@ -5,6 +5,8 @@ class Controls {
   constructor() {
     this.mod = 3;
     this.updateSpeed(Config.speed_mods[this.mod]);
+
+    // Set visibility for some buttons
     d3.select('#unhide').classed('invisible', true);
     d3.select('#unhide_score').classed('invisible', true);
     d3.select('#hide_score').classed('invisible', false);

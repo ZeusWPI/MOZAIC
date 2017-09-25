@@ -12,6 +12,7 @@ class Visualizer {
     this.controls = new Controls();
     this.visuals = new Visuals();
 
+    // Speed property is already updated, resetting timer will use new speed
     this.model.speed_binder.registerCallback(s => {
       if (this.model.run_binder.value) {
         this._stopTimer();
