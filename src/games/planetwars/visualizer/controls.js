@@ -2,15 +2,15 @@ const d3 = require('d3');
 const Config = require('./config');
 
 class Controls {
-  constructor() {
+  constructor(model) {
     this.mod = 3;
-    this.updateSpeed(Config.speed_mods[this.mod]);
 
     // Set visibility for some buttons
     d3.select('#unhide').classed('invisible', true);
     d3.select('#unhide_score').classed('invisible', true);
     d3.select('#hide_score').classed('invisible', false);
     d3.select('#end_card').classed("invisible", true);;
+    d3.select('#pause').classed('invisible', true);
 
     d3.select('#hide').on("click", e => {
       d3.select('#controlbar').classed('invisible', true);
@@ -38,8 +38,6 @@ class Controls {
   }
 
   attachEvents(model) {
-    d3.select('#hide_score').attr("hidden", null);
-
     d3.select('#play').on("click", e => {
       model.run_binder.update(true);
     });
@@ -59,14 +57,14 @@ class Controls {
     d3.select('#speeddown').on("click", e => {
       if (this.mod > 0) {
         this.mod--;
-        this.updateSpeed();
+        this.updateSpeed(model);
       }
     });
 
     d3.select('#speedup').on("click", e => {
       if (this.mod < Config.speed_mods.length - 1) {
         this.mod++;
-        this.updateSpeed();
+        this.updateSpeed(model);
       }
     });
 
@@ -87,23 +85,23 @@ class Controls {
         model.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
-    model.turn_binder.registerCallback(changeTurnHandler);
-    model.run_binder.registerCallback(setPlayPausButtonState);
+    model.turn_binder.registerCallback(t => this.changeTurnHandler(t, model));
+    model.run_binder.registerCallback(this.setPlayPausButtonState);
   }
 
   setPlayPausButtonState(playing) {
     var play_button = d3.select('#play');
     var pause_button = d3.select('#pause');
     if (playing) {
-      play_button.classed('invisible', false);
-      pause_button.classed('invisible', true);
-    } else {
       play_button.classed('invisible', true);
       pause_button.classed('invisible', false);
+    } else {
+      play_button.classed('invisible', false);
+      pause_button.classed('invisible', true);
     }
   }
 
-  changeTurnHandler(new_turn) {
+  changeTurnHandler(new_turn, model) {
     d3.select('#turn_slider').node().value = new_turn;
     if (new_turn >= model.maxTurns) {
       d3.select('#end_card').classed("invisible", false);;
@@ -112,7 +110,7 @@ class Controls {
     }
   }
 
-  updateSpeed() {
+  updateSpeed(model) {
     var speed_mod = Config.speed_mods[this.mod];
     model.speed_binder.update(Config.base_speed / speed_mod);
     d3.select('.speed').text("Speed x" + Config.speed_mods[this.mod]);
