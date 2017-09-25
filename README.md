@@ -31,7 +31,7 @@ For what we have now (a local client), you can do the following to play a game:
  1. Install rust and cargo
  2. Try to run the botrunner with `cargo run` in the `src\botdriver` directory (it will fail to play a match).
  3. Write a config for a match, or use the example in `src\games\planetwars\config_examples\stub.config.json`.
- 4. Run the botrunner again with `cargo run ..\..\src\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
+ 4. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
  5. It should have generated a log-file `gamelog.json` (or whatever you specified in the config).
  6. Open the visualizer `src\games\planetwars\visualizer\index.html` with your browser.
  7. Click to `browse` button and select the log file.
