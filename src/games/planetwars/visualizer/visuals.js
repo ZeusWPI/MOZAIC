@@ -6,6 +6,10 @@ const VisualsHelper = require('./visualsHelper');
 const ResourceLoader = VisualsHelper.ResourceLoader;
 const Preprocessor = VisualsHelper.Preprocessor;
 const Fleets = VisualsHelper.Fleets;
+const Fleet = VisualsHelper.Fleet;
+const Planets = VisualsHelper.Planets;
+const Expeditions = VisualsHelper.Expeditions;
+const Scores = VisualsHelper.Scores;
 
 
 class Visuals {
@@ -125,6 +129,7 @@ class Visuals {
   addNewObjects(turn, planets, expeditions, scores) {
     // New objects
     var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
+    //TODO: MOVE  data binding
     var fleet_wrappers = new_planets.append('g').data(turn.planets.map(d => new Fleet(d, this.scale)));
     var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
     var new_scores = scores.enter().append('g').attr('class', 'score');
