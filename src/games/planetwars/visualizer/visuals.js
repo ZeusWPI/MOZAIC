@@ -8,6 +8,7 @@ class Visuals {
     this.scale = 1;
     this.svg = d3.select('#game');
     this.container = this.svg.append('g');
+    this.scoreboard_container = d3.select('#score');
     new Visuals.ResourceLoader(this.svg).setupPatterns();
   }
 
@@ -97,30 +98,12 @@ class Visuals {
     card.select('.winner').text(winner).attr('style', 'color: ' + color);
   }
 
-  addNewObjects(raw_turn) {
-    var turn = new Visuals.TurnWrapper(this, raw_turn);
-    var planets = turn.planets;
-    var expeditions = turn.expeditions;
-    var scores = turn.scores;
-
-    // New objects
-    var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
-    var fleet_wrappers = new_planets.append('g').data(turn.planet_data.map(d => new Visuals.Fleet(d, this.scale)));
-    var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
-    var new_scores = scores.enter().append('g').attr('class', 'score');
-
-    // Add the new objects
-    Visuals.Planets.addPlanetVisuals(new_planets, this.color_map, this.scale);
-    Visuals.Fleets.addFleetVisuals(fleet_wrappers, this.color_map);
-    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, this.color_map, this.scale);
-    Visuals.Scores.addScores(new_scores, this.color_map);
-  }
-
   update(turn, speed) {
-    var turn = new Visuals.TurnWrapper(this, turn);
-    var planets = turn.planets;
-    var expeditions = turn.expeditions;
-    var scores = turn.scores;
+    var planets = this.container.selectAll('.planet_wrapper').data(turn.planets, d => d.name);
+    var expeditions = this.container.selectAll('.expedition').data(turn.expeditions, d => d.id);
+    var scores = this.scoreboard_container.selectAll('.score').data(turn.scores, d => d.player);;
+
+    this.addNewObjects(turn, planets, expeditions, scores);
 
     //PLANETS
     Visuals.Planets.update(planets, this.color_map, speed);
@@ -130,6 +113,20 @@ class Visuals {
     Visuals.Expeditions.removeOld(expeditions);
     // SCORES
     Visuals.Scores.update(scores);
+  }
+
+  addNewObjects(turn, planets, expeditions, scores) {
+    // New objects
+    var new_planets = planets.enter().append('g').attr('class', 'planet_wrapper');
+    var fleet_wrappers = new_planets.append('g').data(turn.planets.map(d => new Visuals.Fleet(d, this.scale)));
+    var new_expeditions = expeditions.enter().append('g').attr('class', 'expedition');
+    var new_scores = scores.enter().append('g').attr('class', 'score');
+
+    // Add the new objects
+    Visuals.Planets.addPlanetVisuals(new_planets, this.color_map, this.scale);
+    Visuals.Fleets.addFleetVisuals(fleet_wrappers, this.color_map);
+    Visuals.Expeditions.addExpeditionVisuals(new_expeditions, this.color_map, this.scale);
+    Visuals.Scores.addScores(new_scores, this.color_map);
   }
 
   expHomanRotation(exp) {
@@ -438,35 +435,6 @@ Visuals.Fleet = class {
     this.angle = space_math.randomIntBetween(1, 360);
     this.speed = space_math.randomIntBetween(100, 1000);
     this.planet = planet;
-  }
-};
-
-
-// TODO: clean up
-Visuals.TurnWrapper = class {
-  constructor(visuals, turn) {
-    this.visuals = visuals;
-    this.turn = turn;
-  }
-
-  get planets() {
-    return this.visuals.container.selectAll('.planet_wrapper').data(this.turn.planets, d => d.name);
-  }
-
-  get expeditions() {
-    return this.visuals.container.selectAll('.expedition').data(this.turn.expeditions, d => d.id);
-  }
-
-  get planet_data() {
-    return this.turn.planets;
-  }
-
-  get color_map() {
-    return this.turn.color_map;
-  }
-
-  get scores() {
-    return d3.select('#score').selectAll('.score').data(this.turn.scores, d => d.player);
   }
 };
 
