@@ -64,7 +64,6 @@ class Visualizer {
       this.model.run_binder.update(false);
     } else {
       var turn = this.model.turns[newTurn];
-      //this.visuals.addNewObjects(turn);
       this.visuals.update(turn, this.model.speed_binder.value);
     }
   }
