@@ -2,14 +2,15 @@ const d3 = require('d3');
 const Config = require('./config');
 const Utils = require('./util');
 const space_math = Utils.SpaceMath;
+
 const VisualsHelper = require('./visualsHelper');
-const ResourceLoader = VisualsHelper.ResourceLoader;
-const Preprocessor = VisualsHelper.Preprocessor;
-const Fleets = VisualsHelper.Fleets;
-const Fleet = VisualsHelper.Fleet;
 const Planets = VisualsHelper.Planets;
+const Fleet = VisualsHelper.Fleet;
+const Fleets = VisualsHelper.Fleets;
 const Expeditions = VisualsHelper.Expeditions;
 const Scores = VisualsHelper.Scores;
+const ResourceLoader = VisualsHelper.ResourceLoader;
+const Preprocessor = VisualsHelper.Preprocessor;
 
 
 class Visuals {

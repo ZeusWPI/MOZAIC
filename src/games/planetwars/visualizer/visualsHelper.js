@@ -33,6 +33,143 @@ class Helper {
   }
 }
 
+// Helper objects start here
+
+class Planets {
+  static addPlanetVisuals(d3selector, color_map, scale) {
+    Planets.drawPlanet(d3selector, color_map);
+    Planets.drawName(d3selector, color_map, scale);
+    Planets.drawShipCount(d3selector, color_map, scale);
+  }
+
+  static drawPlanet(d3selector, color_map) {
+    var wrapper = d3selector.append('g')
+      .attr('class', 'planet');
+
+    wrapper.append('circle')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('class', 'planet_background')
+      .attr('fill', d => color_map[d.owner]);
+
+    wrapper.append('circle')
+      .attr('r', d => d.size)
+      .attr('cx', d => d.x)
+      .attr('cy', d => d.y)
+      .attr('class', 'planet_model')
+      .attr('fill', d => 'url(#' + d.type + ')');
+
+    wrapper.append('title')
+      .text(d => Helper.visualOwnerName(d.owner));
+  }
+
+  static update(d3selector, color_map, speed) {
+    // Text color
+    Helper.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => color_map[d.owner]);
+    Helper.attachToAllChildren(d3selector.selectAll('title')).text(d => Helper.visualOwnerName(d.owner));
+    Planets.registerTakeOverAnimation(d3selector, speed);
+
+    // Update attribs
+    d3selector.select('.orbit').style('stroke', d => color_map[d.owner]);
+    d3selector.select('.planet_background').attr('fill', d => color_map[d.owner]);
+    d3selector.select('.planet_model').attr('fill', d => 'url(#' + d.type + ')');
+    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count).append('title')
+      .text(d => Helper.visualOwnerName(d.owner));
+  }
+
+  static drawName(d3selector, color_map, scale) {
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 2 * scale)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 1 * scale + "px")
+      .attr('fill', d => color_map[d.owner])
+      .text(d => d.name)
+      .append('title')
+      .text(d => Helper.visualOwnerName(d.owner));
+  }
+
+  static drawShipCount(d3selector, color_map, scale) {
+    d3selector.append('text')
+      .attr('x', d => d.x)
+      .attr('y', d => d.y + d.size + 3.5 * scale)
+      .attr("font-family", "sans-serif")
+      .attr("font-size", 1 * scale + "px")
+      .attr('fill', d => color_map[d.owner])
+      .attr('class', 'ship_count')
+      .text(d => "\u2694 " + d.ship_count)
+      .append('title')
+      .text(d => Helper.visualOwnerName(d.owner));
+  }
+
+  static registerTakeOverAnimation(planets, speed) {
+    planets.select('.planet')
+      .filter(d => d.changed_owner)
+      .transition(speed / 2)
+      .attr('transform', d => Helper.resize(d, 1.3))
+      .transition(speed / 2)
+      .attr('transform', d => Helper.resize(d, 1));
+  }
+
+  static removeOld(d3selector) {
+    d3selector.exit().remove();
+  }
+}
+
+//TODO: since fleet is just a visual thing it is defined here
+// when this changes do not forget to move this
+class Fleet {
+  constructor(planet, scale) {
+    this.size = 1 * scale;
+    this.distance = planet.size + Config.orbit_size * scale;
+    this.angle = space_math.randomIntBetween(1, 360);
+    this.speed = space_math.randomIntBetween(100, 1000);
+    this.planet = planet;
+  }
+}
+
+class Fleets {
+  static addFleetVisuals(d3selector, color_map) {
+    Fleets.drawOrbit(d3selector, color_map);
+    Fleets.drawFleet(d3selector);
+  }
+
+  static drawOrbit(d3selector, color_map) {
+    d3selector.append('circle')
+      .attr('class', 'orbit')
+      .attr('transform', d => Helper.translation(d.planet))
+      .attr('r', d => d.distance)
+      .style('fill', "none")
+      .style('stroke', d => {
+        return color_map[d.planet.owner];
+      })
+      .style('stroke-opacity', 0.5)
+      .style('stroke-width', 0.05);
+  }
+
+  static drawFleet(d3selector, color_map) {
+    var wrapper = d3selector.append('g')
+      .attr('transform', d => Helper.translation(d.planet));
+
+    wrapper.append('circle')
+      .attr('transform', d => Helper.translation(d.planet))
+      .attr('class', 'fleet')
+      .attr('r', d => d.size * 0.7)
+      .attr('cx', d => d.distance)
+      .attr('cy', 0)
+      .attr('fill', d => "url(#fleet)")
+      .append('title').text(d => Helper.visualOwnerName(d.planet.owner));
+  }
+
+  static animateFleets(svg, elapsed) {
+    svg.selectAll('.fleet')
+      .attr('transform', (d, i) => {
+        return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
+      });
+  }
+}
+
 class Expeditions {
   static addExpeditionVisuals(d3selector, color_map, scale) {
     Expeditions.drawExpedition(d3selector, color_map, scale);
@@ -175,141 +312,6 @@ class Expeditions {
   }
 }
 
-class Fleets {
-  static addFleetVisuals(d3selector, color_map) {
-    Fleets.drawOrbit(d3selector, color_map);
-    Fleets.drawFleet(d3selector);
-  }
-
-  static drawOrbit(d3selector, color_map) {
-    d3selector.append('circle')
-      .attr('class', 'orbit')
-      .attr('transform', d => Helper.translation(d.planet))
-      .attr('r', d => d.distance)
-      .style('fill', "none")
-      .style('stroke', d => {
-        return color_map[d.planet.owner];
-      })
-      .style('stroke-opacity', 0.5)
-      .style('stroke-width', 0.05);
-  }
-
-  static drawFleet(d3selector, color_map) {
-    var wrapper = d3selector.append('g')
-      .attr('transform', d => Helper.translation(d.planet));
-
-    wrapper.append('circle')
-      .attr('transform', d => Helper.translation(d.planet))
-      .attr('class', 'fleet')
-      .attr('r', d => d.size * 0.7)
-      .attr('cx', d => d.distance)
-      .attr('cy', 0)
-      .attr('fill', d => "url(#fleet)")
-      .append('title').text(d => Helper.visualOwnerName(d.planet.owner));
-  }
-
-  static animateFleets(svg, elapsed) {
-    svg.selectAll('.fleet')
-      .attr('transform', (d, i) => {
-        return 'rotate(' + (d.angle - elapsed * (d.speed / 10000)) % 360 + ')';
-      });
-  }
-}
-
-class Planets {
-  static addPlanetVisuals(d3selector, color_map, scale) {
-    Planets.drawPlanet(d3selector, color_map);
-    Planets.drawName(d3selector, color_map, scale);
-    Planets.drawShipCount(d3selector, color_map, scale);
-  }
-
-  static drawPlanet(d3selector, color_map) {
-    var wrapper = d3selector.append('g')
-      .attr('class', 'planet');
-
-    wrapper.append('circle')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y)
-      .attr('class', 'planet_background')
-      .attr('fill', d => color_map[d.owner]);
-
-    wrapper.append('circle')
-      .attr('r', d => d.size)
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y)
-      .attr('class', 'planet_model')
-      .attr('fill', d => 'url(#' + d.type + ')');
-
-    wrapper.append('title')
-      .text(d => Helper.visualOwnerName(d.owner));
-  }
-
-  static update(d3selector, color_map, speed) {
-    // Text color
-    Helper.attachToAllChildren(d3selector.selectAll('text')).attr('fill', d => color_map[d.owner]);
-    Helper.attachToAllChildren(d3selector.selectAll('title')).text(d => Helper.visualOwnerName(d.owner));
-    Planets.registerTakeOverAnimation(d3selector, speed);
-
-    // Update attribs
-    d3selector.select('.orbit').style('stroke', d => color_map[d.owner]);
-    d3selector.select('.planet_background').attr('fill', d => color_map[d.owner]);
-    d3selector.select('.planet_model').attr('fill', d => 'url(#' + d.type + ')');
-    d3selector.select('.ship_count').text(d => "\u2694 " + d.ship_count).append('title')
-      .text(d => Helper.visualOwnerName(d.owner));
-  }
-
-  static drawName(d3selector, color_map, scale) {
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 2 * scale)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * scale + "px")
-      .attr('fill', d => color_map[d.owner])
-      .text(d => d.name)
-      .append('title')
-      .text(d => Helper.visualOwnerName(d.owner));
-  }
-
-  static drawShipCount(d3selector, color_map, scale) {
-    d3selector.append('text')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y + d.size + 3.5 * scale)
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * scale + "px")
-      .attr('fill', d => color_map[d.owner])
-      .attr('class', 'ship_count')
-      .text(d => "\u2694 " + d.ship_count)
-      .append('title')
-      .text(d => Helper.visualOwnerName(d.owner));
-  }
-
-  static registerTakeOverAnimation(planets, speed) {
-    planets.select('.planet')
-      .filter(d => d.changed_owner)
-      .transition(speed / 2)
-      .attr('transform', d => Helper.resize(d, 1.3))
-      .transition(speed / 2)
-      .attr('transform', d => Helper.resize(d, 1));
-  }
-
-  static removeOld(d3selector) {
-    d3selector.exit().remove();
-  }
-};
-
-//TODO: since fleet is just a visual thing it is defined here
-// when this changes do not forget to move this
-class Fleet {
-  constructor(planet, scale) {
-    this.size = 1 * scale;
-    this.distance = planet.size + Config.orbit_size * scale;
-    this.angle = space_math.randomIntBetween(1, 360);
-    this.speed = space_math.randomIntBetween(100, 1000);
-    this.planet = planet;
-  }
-};
-
 class Scores {
   static addScores(d3selector, color_map, scores) {
     var start_y = 50;
@@ -380,38 +382,6 @@ class Scores {
       })
       .attr('width', (d, i) => (Scores.max_bar_size * (d.strengths[i] / d.total_strength)) + '%');
   }
-};
-
-class ResourceLoader {
-  constructor(svg) {
-    this.svg = svg;
-  }
-
-  setupPatterns() {
-    // Define patterns
-    this.svg.append("defs");
-    Config.planet_types.forEach(p => {
-      this.setupPattern(p + ".svg", 100, 100, p);
-    });
-    this.setupPattern("rocket.svg", 100, 100, "ship");
-    this.setupPattern("station.svg", 100, 100, "fleet");
-    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
-  }
-
-  setupPattern(name, width, height, id) {
-    this.svg.select("defs")
-      .append("pattern")
-      .attr("id", id)
-      .attr("viewBox", "0 0 " + width + " " + height)
-      .attr("preserveAspectRation", "none")
-      .attr("width", 1)
-      .attr("height", 1)
-      .append("image")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "res/" + name);
-  }
 }
 
 // TODO: this modefies the model, this should perhaps generate a new model that is vis only
@@ -463,13 +433,45 @@ class Preprocessor {
   }
 }
 
+class ResourceLoader {
+  constructor(svg) {
+    this.svg = svg;
+  }
+
+  setupPatterns() {
+    // Define patterns
+    this.svg.append("defs");
+    Config.planet_types.forEach(p => {
+      this.setupPattern(p + ".svg", 100, 100, p);
+    });
+    this.setupPattern("rocket.svg", 100, 100, "ship");
+    this.setupPattern("station.svg", 100, 100, "fleet");
+    this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
+  }
+
+  setupPattern(name, width, height, id) {
+    this.svg.select("defs")
+      .append("pattern")
+      .attr("id", id)
+      .attr("viewBox", "0 0 " + width + " " + height)
+      .attr("preserveAspectRation", "none")
+      .attr("width", 1)
+      .attr("height", 1)
+      .append("image")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("preserveAspectRation", "none")
+      .attr("xlink:href", "res/" + name);
+  }
+}
+
 module.exports = {
-  ResourceLoader,
-  Fleets,
+  Planets,
   Fleet,
+  Fleets,
+  Scores,
+  Expeditions,
   Scores,
   Preprocessor,
-  Planets,
-  Expeditions,
-  Scores
+  ResourceLoader
 };
