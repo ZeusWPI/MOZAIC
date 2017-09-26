@@ -5,35 +5,38 @@ class Controls {
   constructor(model) {
     this.mod = 3;
 
-    // Set visibility for some buttons
-    d3.select('#unhide').classed('invisible', true);
-    d3.select('#unhide_score').classed('invisible', true);
-    d3.select('#hide_score').classed('invisible', false);
-    d3.select('#end_card').classed("invisible", true);
-    d3.select('#pause').classed('invisible', true);
-
+    this.hide('#unhide');
+    this.hide('#unhide_score');
+    this.show('#hide_score');
+    this.hide('#end_card');
+    this.hide('#pause');
+    
     d3.select('#hide').on("click", e => {
-      d3.select('#controlbar').classed('invisible', true);
-      d3.select('#hide').classed('invisible', true);
-      d3.select('#unhide').classed('invisible', false);
+      this.hide('#controlbar');
+      this.hide('#hide');
+      this.show('#unhide');
     });
+
     d3.select('#unhide').on("click", e => {
-      d3.select('#controlbar').classed('invisible', false);
-      d3.select('#hide').classed('invisible', false);
-      d3.select('#unhide').classed('invisible', true);
+      this.show('#controlbar');
+      this.show('#hide');
+      this.hide('#unhide');
     });
+
     d3.select('#hide_score').on("click", e => {
-      d3.select('#score').classed('invisible', true);
-      d3.select('#hide_score').classed('invisible', true);
-      d3.select('#unhide_score').classed('invisible', false);
+      this.hide('#score');
+      this.hide('#hide_score');
+      this.show('#unhide_score');
     });
+
     d3.select('#unhide_score').on("click", e => {
-      d3.select('#score').classed('invisible', false);
-      d3.select('#hide_score').classed('invisible', false);
-      d3.select('#unhide_score').classed('invisible', true);
+      this.show('#score');
+      this.show('#hide_score');
+      this.hide('#unhide_score');
     });
+
     d3.select('#hide_card').on("click", e => {
-      d3.select('#end_card').classed('invisible', true);
+      this.hide('#end_card');
     });
   }
 
@@ -90,23 +93,21 @@ class Controls {
   }
 
   setPlayPauseButtonState(playing) {
-    var play_button = d3.select('#play');
-    var pause_button = d3.select('#pause');
     if (playing) {
-      play_button.classed('invisible', true);
-      pause_button.classed('invisible', false);
+      this.hide('#play');
+      this.show('#pause');
     } else {
-      play_button.classed('invisible', false);
-      pause_button.classed('invisible', true);
+      this.hide('#pause');
+      this.show('#play');
     }
   }
 
   changeTurnHandler(new_turn, model) {
     d3.select('#turn_slider').node().value = new_turn;
     if (new_turn >= model.maxTurns) {
-      d3.select('#end_card').classed("invisible", false);
+      this.show('#end_card');
     } else {
-      d3.select('#end_card').classed("invisible", true);
+      this.hide('#end_card');
     }
   }
 
@@ -114,6 +115,14 @@ class Controls {
     var speed_mod = Config.speed_mods[this.mod];
     model.speed_binder.update(Config.base_speed / speed_mod);
     d3.select('.speed').text("Speed x" + Config.speed_mods[this.mod]);
+  }
+
+  hide(id){
+    d3.select(id).classed("invisible", true);
+  }
+
+  show(id){
+    d3.select(id).classed("invisible", false);
   }
 }
 
