@@ -9,7 +9,7 @@ class Controls {
     d3.select('#unhide').classed('invisible', true);
     d3.select('#unhide_score').classed('invisible', true);
     d3.select('#hide_score').classed('invisible', false);
-    d3.select('#end_card').classed("invisible", true);;
+    d3.select('#end_card').classed("invisible", true);
     d3.select('#pause').classed('invisible', true);
 
     d3.select('#hide').on("click", e => {
@@ -86,10 +86,10 @@ class Controls {
       });
 
     model.turn_binder.registerCallback(t => this.changeTurnHandler(t, model));
-    model.run_binder.registerCallback(this.setPlayPausButtonState);
+    model.run_binder.registerCallback(s => this.setPlayPauseButtonState(s));
   }
 
-  setPlayPausButtonState(playing) {
+  setPlayPauseButtonState(playing) {
     var play_button = d3.select('#play');
     var pause_button = d3.select('#pause');
     if (playing) {
@@ -104,9 +104,9 @@ class Controls {
   changeTurnHandler(new_turn, model) {
     d3.select('#turn_slider').node().value = new_turn;
     if (new_turn >= model.maxTurns) {
-      d3.select('#end_card').classed("invisible", false);;
+      d3.select('#end_card').classed("invisible", false);
     } else {
-      d3.select('#end_card').classed("invisible", true);;
+      d3.select('#end_card').classed("invisible", true);
     }
   }
 
