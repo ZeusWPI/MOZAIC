@@ -384,7 +384,7 @@ class Scores {
   }
 }
 
-// TODO: this modefies the model, this should perhaps generate a new model that is vis only
+// TODO: this modifies the model, this should perhaps generate a new model that is vis only
 class Preprocessor {
   static preprocess(turns) {
     var style_map = Preprocessor.generatePlanetStyles(turns[0], turns[0].planets);
