@@ -15,6 +15,7 @@ module.exports = {
         .setCheck('Boolean');
       this.setColour(LIST_COLOUR);
       this.setOutput(true, 'List');
+      this.setTooltip('Returns the list fitered by the predicate in the `where` field.');
     }
   },
   'minmax': {
@@ -31,6 +32,7 @@ module.exports = {
         .appendField(new Blockly.FieldDropdown(modes), 'MODE')
         .setCheck('Number');
       this.setColour(LIST_COLOUR);
+      this.setTooltip('Returns the minimum or maximum of an expression when going trough a list.');
       this.setOutput(true);
     }
   },
@@ -46,6 +48,7 @@ module.exports = {
       this.appendStatementInput('DO')
         .appendField('do');
       this.setColour(LIST_COLOUR);
+      this.setTooltip('Loops over every element in a list.');
     }
   }
 };
