@@ -117,3 +117,7 @@ body {
 #turn_slider{
   width: 100%;
 }
+
+.invisible {
+  display: none;
+}
