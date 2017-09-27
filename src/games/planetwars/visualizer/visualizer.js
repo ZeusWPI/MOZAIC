@@ -5,11 +5,12 @@ const Controls = require('./controls');
 const Game = require('./game');
 const Utils = require('./util');
 
+
 class Visualizer {
 
   constructor() {
     this.model = new Game();
-    this.controls = new Controls(this.model);
+    this.controls = new Controls(this);
     this.visuals = new Visuals();
 
     // Speed property is already updated, resetting timer will use new speed

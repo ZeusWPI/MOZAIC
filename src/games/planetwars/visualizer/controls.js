@@ -2,7 +2,7 @@ const d3 = require('d3');
 const Config = require('./config');
 
 class Controls {
-  constructor(model) {
+  constructor(visualizer) {
     this.mod = 3;
 
     this.hide('#unhide');
@@ -38,6 +38,18 @@ class Controls {
     d3.select('#hide_card').on("click", e => {
       this.hide('#end_card');
     });
+
+    const file_select = document.getElementById('file-select');
+    file_select.onchange = function() {
+      var reader = new FileReader();
+      reader.onload = event => {
+        var log = event.target.result;
+        visualizer.visualize(log);
+        visualizer.play();
+      };
+
+      reader.readAsText(file_select.files[0]);
+    };
   }
 
   attachEvents(model) {
