@@ -1,148 +1,140 @@
 const d3 = require('d3');
 const Config = require('./config');
-const Visualizer = require('./visualizer');
 
 class Controls {
   constructor(visualizer) {
-    this.visualizer = visualizer;
     this.mod = 3;
-    this.updateSpeed(Config.speed_mods[this.mod]);
-    d3.select('#unhide').classed('invisible', true);
-    d3.select('#unhide_score').classed('invisible', true);
-    d3.select('#hide_score').classed('invisible', false);
-    d3.select('#end_card').classed("invisible", true);;
 
+    this.hide('#unhide');
+    this.hide('#unhide_score');
+    this.show('#hide_score');
+    this.hide('#end_card');
+    this.hide('#pause');
+    
     d3.select('#hide').on("click", e => {
-      d3.select('#controlbar').classed('invisible', true);
-      d3.select('#hide').classed('invisible', true);
-      d3.select('#unhide').classed('invisible', false);
+      this.hide('#controlbar');
+      this.hide('#hide');
+      this.show('#unhide');
     });
+
     d3.select('#unhide').on("click", e => {
-      d3.select('#controlbar').classed('invisible', false);
-      d3.select('#hide').classed('invisible', false);
-      d3.select('#unhide').classed('invisible', true);
+      this.show('#controlbar');
+      this.show('#hide');
+      this.hide('#unhide');
     });
 
     d3.select('#hide_score').on("click", e => {
-      d3.select('#score').classed('invisible', true);
-      d3.select('#hide_score').classed('invisible', true);
-      d3.select('#unhide_score').classed('invisible', false);
+      this.hide('#score');
+      this.hide('#hide_score');
+      this.show('#unhide_score');
     });
+
     d3.select('#unhide_score').on("click", e => {
-      d3.select('#score').classed('invisible', false);
-      d3.select('#hide_score').classed('invisible', false);
-      d3.select('#unhide_score').classed('invisible', true);
+      this.show('#score');
+      this.show('#hide_score');
+      this.hide('#unhide_score');
     });
+
     d3.select('#hide_card').on("click", e => {
-      d3.select('#end_card').classed('invisible', true);
+      this.hide('#end_card');
     });
-  }
 
-  readLog(e) {
-    if (this.visualizer) {
-      this.hidePauseButton();
-      this.visualizer.clear();
-    }
+    const file_select = document.getElementById('file-select');
+    file_select.onchange = function() {
+      var reader = new FileReader();
+      reader.onload = event => {
+        var log = event.target.result;
+        visualizer.visualize(log);
+        visualizer.play();
+      };
 
-    var reader = new FileReader();
-    reader.onload = event => {
-      var log = event.target.result;
-      this.visualizer.visualize(log);
-      this.attachEvents(this.visualizer.turn_controller);
+      reader.readAsText(file_select.files[0]);
     };
-
-    reader.readAsText(e.target.files[0]);
   }
 
-  attachEvents(turn_controller) {
-    d3.select('#hide_score').attr("hidden", null);
-
+  attachEvents(model) {
     d3.select('#play').on("click", e => {
-      turn_controller.play();
+      model.run_binder.update(true);
     });
 
     d3.select('#pause').on("click", e => {
-      turn_controller.pause();
+      model.run_binder.update(false);
     });
 
     d3.select('#next').on("click", e => {
-      turn_controller.nextTurn();
+      model.turn_binder.update((model.turn_binder.value) + 1);
     });
 
     d3.select('#previous').on("click", e => {
-      turn_controller.previousTurn();
+      model.turn_binder.update((model.turn_binder.value) - 1);
     });
 
     d3.select('#speeddown').on("click", e => {
       if (this.mod > 0) {
         this.mod--;
-        var speed_mod = Config.speed_mods[this.mod];
-        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
-        this.updateSpeed(Config.speed_mods[this.mod]);
+        this.updateSpeed(model);
       }
     });
 
     d3.select('#speedup').on("click", e => {
       if (this.mod < Config.speed_mods.length - 1) {
         this.mod++;
-        var speed_mod = Config.speed_mods[this.mod];
-        turn_controller.speed = Config.base_speed / speed_mod;
-        turn_controller.speed_binder.update(Config.base_speed / speed_mod);
-        this.updateSpeed(Config.speed_mods[this.mod]);
+        this.updateSpeed(model);
       }
     });
 
     d3.select('#tostart').on("click", e => {
-      turn_controller.turn_binder.update(0);
-      turn_controller.run_binder.update(false);
+      model.turn_binder.update(0);
+      model.run_binder.update(false);
     });
 
     d3.select('#toend').on("click", e => {
-      turn_controller.turn_binder.update(turn_controller.maxTurns);
-      turn_controller.run_binder.update(false);
+      model.turn_binder.update(model.maxTurns);
     });
 
     d3.select('#turn_slider')
       .attr('min', 0)
-      .attr('max', turn_controller.maxTurns)
+      .attr('max', model.maxTurns)
       .attr('step', 1)
       .on('change', () => {
-        turn_controller.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
+        model.turn_binder.update(parseInt(d3.select('#turn_slider').node().value));
       });
 
-    turn_controller.turn_binder.registerCallback(v => {
-      d3.select('#turn_slider').node().value = v;
-      if (v >= turn_controller.maxTurns) {
-        d3.select('#end_card').classed("invisible", false);;
-      } else {
-        d3.select('#end_card').classed("invisible", true);;
-      }
-    });
-    turn_controller.run_binder.registerCallback(v => {
-      if (v) {
-        this.hidePlayButton();
-      } else {
-        this.hidePauseButton();
-      }
-    });
+    model.turn_binder.registerCallback(t => this.changeTurnHandler(t, model));
+    model.run_binder.registerCallback(s => this.setPlayPauseButtonState(s));
   }
 
-  hidePauseButton() {
-    var play_button = d3.select('#play');
-    var pause_button = d3.select('#pause');
-    play_button.attr("hidden", null);
-    pause_button.attr("hidden", true);
+  setPlayPauseButtonState(playing) {
+    if (playing) {
+      this.hide('#play');
+      this.show('#pause');
+    } else {
+      this.hide('#pause');
+      this.show('#play');
+    }
   }
 
-  hidePlayButton() {
-    var play_button = d3.select('#play');
-    var pause_button = d3.select('#pause');
-    play_button.attr("hidden", true);
-    pause_button.attr("hidden", null);
+  changeTurnHandler(new_turn, model) {
+    d3.select('#turn_slider').node().value = new_turn;
+    if (new_turn >= model.maxTurns) {
+      this.show('#end_card');
+    } else {
+      this.hide('#end_card');
+    }
   }
 
-  updateSpeed(val) {
-    d3.select('.speed').text("Speed x" + val);
+  updateSpeed(model) {
+    var speed_mod = Config.speed_mods[this.mod];
+    model.speed_binder.update(Config.base_speed / speed_mod);
+    d3.select('.speed').text("Speed x" + Config.speed_mods[this.mod]);
+  }
+
+  hide(id){
+    d3.select(id).classed("invisible", true);
+  }
+
+  show(id){
+    d3.select(id).classed("invisible", false);
   }
 }
 
