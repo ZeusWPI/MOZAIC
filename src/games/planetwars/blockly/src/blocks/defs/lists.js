@@ -9,13 +9,13 @@ module.exports = {
         .appendField('all')
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
-        .setCheck('List');
+        .setCheck('Array');
       this.appendValueInput('PREDICATE')
         .appendField('where')
         .setAlign(Blockly.ALIGN_RIGHT)
         .setCheck('Boolean');
       this.setColour(LIST_COLOUR);
-      this.setOutput(true, 'List');
+      this.setOutput(true, 'Array');
       this.setTooltip('Returns the list fitered by the predicate in the `where` field.');
     }
   },
@@ -25,7 +25,7 @@ module.exports = {
         .appendField('sort')
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
-        .setCheck('List');
+        .setCheck('Array');
       const orders = [
         ['ascending', 'ASC'],
         ['descending', 'DESC']
@@ -36,7 +36,7 @@ module.exports = {
         .setAlign(Blockly.ALIGN_RIGHT)
         .setCheck('Number');
       this.setColour(LIST_COLOUR);
-      this.setOutput(true, 'List');
+      this.setOutput(true, 'Array');
     }
   },
   'minmax': {
@@ -47,7 +47,7 @@ module.exports = {
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
 
-        .setCheck('List');
+        .setCheck('Array');
       this.appendValueInput('EXPR')
         .appendField('that')
         .appendField(new Blockly.FieldDropdown(modes), 'MODE')
@@ -65,7 +65,7 @@ module.exports = {
         .appendField('for each')
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
-        .setCheck('List');
+        .setCheck('Array');
       this.appendStatementInput('DO')
         .appendField('do');
       this.setColour(LIST_COLOUR);
