@@ -15,6 +15,26 @@ module.exports = {
     var code = `${list}.filter(${pred_str})`;
     return [code, JS.ORDER_MEMBER];
   },
+  'sort': function(block) {
+    var list = JS.valueToCode(block, 'LIST');
+    var by = JS.valueToCode(block, 'EXPR');
+    var elem_name = JS.variableDB_.getName(
+      block.getFieldValue('ELEM_NAME'),
+      Blockly.Variables.NAME_TYPE
+    );
+    // These variables should be unique per sort block (maybe generate them randomly)
+    var a_var = "TODO_REPLACE_ME";
+    var b_var = "REPLACE_ME";
+    // I don't think this is secure
+    var applied_a = by.replace(elem_name, a_var);
+    var applied_b = by.replace(elem_name, b_var);
+    // Custom sort function
+    var body = JS.prefixLines(`return applied_a - applied_b;`, JS.INDENT);
+    var arrow_func = `(a_var, b_var) => {\n${body}\n}`;
+    // slices the list up so the original list doesn't get modified
+    var code = `${list}.slice().sort(${arrow_func})`;
+    return [code, JS.ORDER_MEMBER];
+  },
   'minmax': function(block) {
     var list = JS.valueToCode(block, 'LIST');
     var value_expr = JS.valueToCode(block, 'EXPR');
