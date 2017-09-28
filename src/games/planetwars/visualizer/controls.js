@@ -10,7 +10,7 @@ class Controls {
     this.show('#hide_score');
     this.hide('#end_card');
     this.hide('#pause');
-    
+
     d3.select('#hide').on("click", e => {
       this.hide('#controlbar');
       this.hide('#hide');
@@ -122,6 +122,7 @@ class Controls {
     } else {
       this.hide('#end_card');
     }
+    d3.select('#turn_progress').text(new_turn + ' / ' + model.maxTurns);
   }
 
   updateSpeed(model) {
@@ -130,11 +131,11 @@ class Controls {
     d3.select('.speed').text("Speed x" + Config.speed_mods[this.mod]);
   }
 
-  hide(id){
+  hide(id) {
     d3.select(id).classed("invisible", true);
   }
 
-  show(id){
+  show(id) {
     d3.select(id).classed("invisible", false);
   }
 }
