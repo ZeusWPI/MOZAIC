@@ -40,16 +40,17 @@ class Controls {
     });
 
     const file_select = document.getElementById('file-select');
-    file_select.onchange = function() {
-      var reader = new FileReader();
-      reader.onload = event => {
-        var log = event.target.result;
-        visualizer.visualize(log);
-        visualizer.play();
+    if (file_select != null) {
+      file_select.onchange = function() {
+        var reader = new FileReader();
+        reader.onload = event => {
+          var log = event.target.result;
+          visualizer.visualize(log);
+          visualizer.play();
+        };
+        reader.readAsText(file_select.files[0]);
       };
-
-      reader.readAsText(file_select.files[0]);
-    };
+    }
   }
 
   attachEvents(model) {
