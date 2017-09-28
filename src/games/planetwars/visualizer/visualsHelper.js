@@ -28,7 +28,7 @@ class Helper {
   }
 
   static visualOwnerName(name) {
-    if (name === null) return 'None';
+    if (name === null) return Config.visual_null;
     else return name;
   }
 }
