@@ -319,7 +319,7 @@ class Scores {
     Scores.max_bar_size = 100;
 
     d3selector.attr("font-family", "sans-serif")
-      .attr("font-size", 14 + "px")
+      .attr("font-size", 0.8 + "vw")
       .attr('fill', d => color_map[d.player]);
     d3selector.append('circle')
       .attr('r', d => 5)
@@ -384,7 +384,7 @@ class Scores {
   }
 }
 
-// TODO: this modifies the model, this should perhaps generate a new model that is vis only
+// TODO: this modefies the model, this should perhaps generate a new model that is vis only
 class Preprocessor {
   static preprocess(turns) {
     var style_map = Preprocessor.generatePlanetStyles(turns[0], turns[0].planets);
