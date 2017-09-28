@@ -17,7 +17,7 @@ module.exports = {
       this.setOutput(true, 'List');
     }
   },
-    'sort': {
+  'sort': {
     init: function() {
       this.appendValueInput('LIST')
         .appendField('sort')
