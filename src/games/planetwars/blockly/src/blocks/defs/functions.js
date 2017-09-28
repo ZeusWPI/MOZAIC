@@ -10,7 +10,7 @@ module.exports = {
         .setCheck(['Planet', 'Expedition'])
         .appendField('owner of');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the user of a planet or expedition.');
+      this.setTooltip('Get the owner of a planet or expedition.');
       this.setOutput(true, 'Player');
     }
   },
@@ -20,7 +20,7 @@ module.exports = {
         .setCheck(['Planet', 'Expedition'])
         .appendField('fleet size of');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the amount of ships a planet or expedition have.');
+      this.setTooltip('Get the amount of ships a planet or expedition has.');
       this.setOutput(true, 'Number');
     }
   },
@@ -30,7 +30,7 @@ module.exports = {
         .appendField('origin of')
         .setCheck('Expedition');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the planet that an expedition originated from.');
+      this.setTooltip('Get the planet that an expedition originated from.');
       this.setOutput(true, 'Planet');
     }
   },
@@ -40,7 +40,7 @@ module.exports = {
         .appendField('destination of')
         .setCheck('Expedition');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the destination/target of an expedition.');
+      this.setTooltip('Get the destination of an expedition.');
       this.setOutput(true, 'Planet');
     }
   },
@@ -50,7 +50,7 @@ module.exports = {
         .appendField('turns until arrival of')
         .setCheck('Expedition');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the number of turns until an expedition arrives.');
+      this.setTooltip('Get the number of turns until an expedition arrives.');
       this.setOutput(true, 'Number');
     }
   },
@@ -64,7 +64,7 @@ module.exports = {
         .appendField('and')
         .setCheck('Planet');
       this.setColour(FN_COLOUR);
-      this.setTooltip('Returns the distance between two planets in turns.');
+      this.setTooltip('Calculate distance between two planets in turns.');
       this.setOutput(true, 'Number');
     }
   },
@@ -90,7 +90,7 @@ module.exports = {
         .setCheck('Planet')
         .setAlign(Blockly.ALIGN_RIGHT);
       this.setColour(FN_COLOUR);
-      this.setTooltip('Sends `num ships` ships from your `from` planet to a `to` destination planet.')
+      this.setTooltip('Sends `num ships` ships from your `from` planet to a `to` destination planet.');
     }
   }
 };
