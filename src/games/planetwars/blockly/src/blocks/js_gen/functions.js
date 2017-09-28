@@ -37,6 +37,13 @@ module.exports = {
     var num_ships = JS.valueToCode(block, 'SHIP_COUNT');
     var source = JS.valueToCode(block, 'SOURCE_PLANET');
     var target = JS.valueToCode(block, 'TARGET_PLANET');
-    return `dispatch(${num_ships}, ${source}, ${target});`;
+    return `dispatch(${num_ships}, ${source}, ${target});\n`;
+  },
+  'progn': function(block) {
+    var statements = JS.statementToCode(block, 'STATEMENTS');
+    var result = JS.valueToCode(block, 'RETURN');
+    var body = `${statements}return ${result};\n`;
+    var code = `(() => {\n${body}})()`;
+    return [code, JS.ORDER_FUNCTION_CALL];
   }
 };

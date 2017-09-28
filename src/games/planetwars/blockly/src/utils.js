@@ -8,6 +8,14 @@ function maximum_by(list, fun) {
   return list[idx];
 }
 
+function sort_by(list, fun) {
+  var mapped = list.map( (elem, i) => {
+    return { index: i, value: fun(elem)};
+  });
+  mapped.sort((a, b) => a.value - b.value);
+  return mapped.map(elem => list[elem.index]);
+}
+
 function distance(p1, p2) {
   let dx = p1['x'] - p2['x'];
   let dy = p1['y'] - p2['y'];
@@ -18,5 +26,6 @@ function distance(p1, p2) {
 module.exports = {
   minimum_by,
   maximum_by,
+  sort_by,
   distance
 };

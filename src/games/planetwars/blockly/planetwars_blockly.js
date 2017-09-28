@@ -31,14 +31,16 @@ const toolbox = {
     'functions_target',
     'functions_turns_remaining',
     'functions_distance',
-    'functions_dispatch'
+    'functions_dispatch',
+    'functions_progn'
   ],
   'lists': [
     'lists_isEmpty',
     'lists_length',
     'lists_filter',
     'lists_minmax',
-    'lists_forEach'
+    'lists_forEach',
+    'lists_sort'
   ],
   'logic': [
     'logic_boolean',
