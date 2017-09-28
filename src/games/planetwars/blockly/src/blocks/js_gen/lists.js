@@ -24,7 +24,7 @@ module.exports = {
     );
 
     var body = JS.prefixLines(`return ${expr};`, JS.INDENT);
-    var keyfn_str = `(${elem_name}) => {\n${body}\n})`;
+    var keyfn_str = `(${elem_name}) => {\n${body}\n}`;
     var code = `sort_by(${list}, ${keyfn_str})`;
     return [code, JS.ORDER_FUNCTION_CALL];
   },
