@@ -26,8 +26,14 @@ module.exports = {
         .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
         .appendField('in')
         .setCheck('List');
+      const orders = [
+        ['ascending', 'ASC'],
+        ['descending', 'DESC']
+      ];
       this.appendValueInput('EXPR')
+        .appendField(new Blockly.FieldDropdown(orders), 'ORDER')
         .appendField('by')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .setCheck('Number');
       this.setColour(LIST_COLOUR);
       this.setOutput(true, 'List');

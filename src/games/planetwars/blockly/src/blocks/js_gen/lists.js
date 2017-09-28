@@ -17,12 +17,14 @@ module.exports = {
   },
   'sort': function(block) {
     var list = JS.valueToCode(block, 'LIST');
-    var expr = JS.valueToCode(block, 'EXPR');
+    var expr = JS.valueToCode(block, 'EXPR', JS.ORDER_UNARY_NEGATION);
     var elem_name = JS.variableDB_.getName(
       block.getFieldValue('ELEM_NAME'),
       Blockly.Variables.NAME_TYPE
     );
-
+    if (block.getFieldValue('ORDER') == 'DESC') {
+      expr = `-${expr}`;
+    }
     var body = JS.prefixLines(`return ${expr};`, JS.INDENT);
     var keyfn_str = `(${elem_name}) => {\n${body}\n}`;
     var code = `sort_by(${list}, ${keyfn_str})`;
