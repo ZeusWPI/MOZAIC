@@ -45,6 +45,13 @@ class Game {
     });
   }
 
+  reset() {
+    this.speed_binder.update(Config.base_speed);
+    this.turn_binder.update(0);
+    this.run_binder.update(false);
+    this.winner = null;
+  }
+
   get maxTurns() {
     return this.turns.length - 1;
   }

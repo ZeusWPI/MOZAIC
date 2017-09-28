@@ -39,6 +39,7 @@ class Visualizer {
     this.model.init(log);
     this.visuals.init(this.model);
     this.controls.attachEvents(this.model);
+    this.model.reset();
   }
 
   clear() {
