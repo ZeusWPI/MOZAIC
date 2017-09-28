@@ -1,17 +1,17 @@
 const Blockly = require('node-blockly/browser');
 const JS = Blockly.JavaScript;
 
+const ALLEGIANCE_FILTERS = {
+  'ALL': '',
+  'MINE': 'p => p.owner == getPlayer()',
+  'HOSTILE': 'p => p.owner != getPlayer()',
+  'NEUTRAL': 'p => !p.owner',
+  'ENEMY': 'p => p.owner && p.owner != getPlayer()'
+};
+
 module.exports = {
   'planets': function(block) {
-    const filter_strs = {
-      'ALL': '',
-      'MINE': 'p => p.owner == getPlayer()',
-      'HOSTILE': 'p => p.owner != getPlayer()',
-      'NEUTRAL': 'p => !p.owner',
-      'ENEMY': 'p => p.owner && p.owner != getPlayer()'
-    };
-
-    let filter_str = filter_strs[block.getFieldValue('FILTER')];
+    let filter_str = ALLEGIANCE_FILTERS[block.getFieldValue('ALEGIANCE')];
     let code = `getPlanets(${filter_str})`;
     return [code, JS.ORDER_ATOMIC];
   },

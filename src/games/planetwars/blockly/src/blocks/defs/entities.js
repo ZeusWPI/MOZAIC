@@ -2,18 +2,19 @@ var Blockly = require("node-blockly/browser");
 const PW_COLOUR = 93;
 Blockly.Blocks['entities'] = { HUE: PW_COLOUR };
 
+const ALLEGIANCES = [
+  ['all', 'ALL'],
+  ['my', 'MINE'],
+  ['neutral', 'NEUTRAL'],
+  ['enemy', 'ENEMY'],
+  ['hostile', 'HOSTILE']
+];
+
 module.exports = {
   'planets': {
     init: function() {
-      const options = [
-        ['all', 'ALL'],
-        ['my', 'MINE'],
-        ['neutral', 'NEUTRAL'],
-        ['enemy', 'ENEMY'],
-        ['hostile', 'HOSTILE']
-      ];
       this.appendDummyInput()
-        .appendField(new Blockly.FieldDropdown(options), 'FILTER')
+        .appendField(new Blockly.FieldDropdown(ALLEGIANCES), 'ALLEGIANCE')
         .appendField('Planets');
       this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
