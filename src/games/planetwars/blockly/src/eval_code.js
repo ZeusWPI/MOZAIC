@@ -17,8 +17,8 @@ function eval_code(code, pw) {
     return pw.getPlanets(predicate);
   }
 
-  function getExpeditions() {
-    return pw.getExpeditions();
+  function getExpeditions(predicate) {
+    return pw.getExpeditions(predicate);
   }
 
   function getPlanet(name) {

@@ -11,12 +11,14 @@ const ALLEGIANCE_FILTERS = {
 
 module.exports = {
   'planets': function(block) {
-    let filter_str = ALLEGIANCE_FILTERS[block.getFieldValue('ALEGIANCE')];
+    let filter_str = ALLEGIANCE_FILTERS[block.getFieldValue('ALLEGIANCE')];
     let code = `getPlanets(${filter_str})`;
     return [code, JS.ORDER_ATOMIC];
   },
   'expeditions': function(block) {
-    return ['getExpeditions()', JS.ORDER_ATOMIC];
+    let filter_str = ALLEGIANCE_FILTERS[block.getFieldValue('ALLEGIANCE')];
+    let code = `getExpeditions(${filter_str})`;
+    return [code, JS.ORDER_ATOMIC];
   },
   'players': function(block) {
     return ['getPlayers()', JS.ORDER_ATOMIC];

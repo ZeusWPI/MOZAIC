@@ -15,7 +15,7 @@ module.exports = {
     init: function() {
       this.appendDummyInput()
         .appendField(new Blockly.FieldDropdown(ALLEGIANCES), 'ALLEGIANCE')
-        .appendField('Planets');
+        .appendField('planets');
       this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
       this.setTooltip('Returns a list of all planets.');
@@ -23,7 +23,9 @@ module.exports = {
   },
   'expeditions': {
     init: function() {
-      this.appendDummyInput().appendField('Expeditions');
+      this.appendDummyInput()
+        .appendField(new Blockly.FieldDropdown(ALLEGIANCES), 'ALLEGIANCE')
+        .appendField('expeditions');
       this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
       this.setTooltip('Returns a list of all expeditions.');

@@ -33,8 +33,12 @@ class PlanetWars {
     return this.planet_map[name];
   }
 
-  getExpeditions() {
-    return this.state['expeditions'];
+  getExpeditions(predicate) {
+    if (predicate) {
+      return this.state.expeditions.filter(predicate);
+    } else {
+      return this.state.expeditions;
+    }
   }
 
   dispatch(num_ships, origin, target) {
