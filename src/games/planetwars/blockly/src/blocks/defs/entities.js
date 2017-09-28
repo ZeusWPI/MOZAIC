@@ -5,7 +5,16 @@ Blockly.Blocks['entities'] = { HUE: PW_COLOUR };
 module.exports = {
   'planets': {
     init: function() {
-      this.appendDummyInput().appendField('Planets');
+      const options = [
+        ['all', 'ALL'],
+        ['my', 'MINE'],
+        ['neutral', 'NEUTRAL'],
+        ['enemy', 'ENEMY'],
+        ['hostile', 'HOSTILE']
+      ];
+      this.appendDummyInput()
+        .appendField(new Blockly.FieldDropdown(options), 'FILTER')
+        .appendField('Planets');
       this.setColour(PW_COLOUR);
       this.setOutput(true, 'List');
       this.setTooltip('Returns a list of all planets.');

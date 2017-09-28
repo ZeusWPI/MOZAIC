@@ -13,8 +13,8 @@ function eval_code(code, pw) {
     return pw.getPlayers();
   }
 
-  function getPlanets() {
-    return pw.getPlanets();
+  function getPlanets(predicate) {
+    return pw.getPlanets(predicate);
   }
 
   function getExpeditions() {

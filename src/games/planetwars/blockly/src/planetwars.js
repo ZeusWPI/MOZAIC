@@ -18,11 +18,15 @@ class PlanetWars {
   }
 
   getPlayers() {
-    return this.state['players'];
+    return this.state.players;
   }
 
-  getPlanets() {
-    return this.state['planets'];
+  getPlanets(predicate) {
+    if (predicate) {
+      return this.state.planets.filter(predicate);
+    } else {
+      return this.state.planets;
+    }
   }
 
   getPlanet(name) {
