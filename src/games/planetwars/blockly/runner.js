@@ -29,7 +29,7 @@ function run_bot(code) {
     try {
       eval_code(code, pw);
     } catch(err) {
-      // TODO
+      console.error(err);
     }
     var command = { moves: pw.dispatches };
     console.log(JSON.stringify(command));
