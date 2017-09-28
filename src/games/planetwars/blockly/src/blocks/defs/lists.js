@@ -18,6 +18,20 @@ module.exports = {
       this.setTooltip('Returns the list fitered by the predicate in the `where` field.');
     }
   },
+  'sort': {
+    init: function() {
+      this.appendValueInput('LIST')
+        .appendField('sort')
+        .appendField(new Blockly.FieldVariable('element'), 'ELEM_NAME')
+        .appendField('in')
+        .setCheck('List');
+      this.appendValueInput('EXPR')
+        .appendField('by')
+        .setCheck('Number');
+      this.setColour(LIST_COLOUR);
+      this.setOutput(true, 'List');
+    }
+  },
   'minmax': {
     init: function() {
       const modes = [['minimizes', 'MINIMIZE'],
