@@ -12,6 +12,7 @@ module.exports = {
         .setCheck('List');
       this.appendValueInput('PREDICATE')
         .appendField('where')
+        .setAlign(Blockly.ALIGN_RIGHT)
         .setCheck('Boolean');
       this.setColour(LIST_COLOUR);
       this.setOutput(true, 'List');
