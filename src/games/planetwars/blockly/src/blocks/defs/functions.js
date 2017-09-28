@@ -92,5 +92,16 @@ module.exports = {
       this.setColour(FN_COLOUR);
       this.setTooltip('Sends `num ships` ships from your `from` planet to a `to` destination planet.');
     }
+  },
+  'progn': {
+    init: function() {
+      this.appendDummyInput()
+        .appendField('progn');
+      this.appendStatementInput('STATEMENTS');
+      this.appendValueInput('RETURN')
+        .appendField('return');
+      this.setColour(FN_COLOUR);
+      this.setOutput(true);
+    }
   }
 };

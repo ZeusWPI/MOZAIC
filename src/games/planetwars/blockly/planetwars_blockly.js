@@ -31,7 +31,8 @@ const toolbox = {
     'functions_target',
     'functions_turns_remaining',
     'functions_distance',
-    'functions_dispatch'
+    'functions_dispatch',
+    'functions_progn'
   ],
   'lists': [
     'lists_isEmpty',
