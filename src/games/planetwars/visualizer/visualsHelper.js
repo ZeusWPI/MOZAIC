@@ -332,12 +332,12 @@ class Scores {
       .text(d => d.player);
     d3selector.append('text')
       .attr('class', 'planet_count')
-      .attr('x', d => "45%")
+      .attr('x', d => "50%")
       .attr('y', (d, i) => start_y + 5 + size * i)
       .text(d => d.planets);
     d3selector.append('circle')
       .attr('r', d => "3%")
-      .attr('cx', d => "55%")
+      .attr('cx', d => "60%")
       .attr('cy', (d, i) => start_y - 1 + size * i)
       .attr('fill', 'url(#earth)')
       .attr('stroke', d => color_map[d.player]);

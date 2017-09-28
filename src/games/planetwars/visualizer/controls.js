@@ -1,8 +1,10 @@
 const d3 = require('d3');
 const Config = require('./config');
+const Utils = require('./util');
+const space_math = Utils.SpaceMath;
 
 class Controls {
-  constructor(visualizer) {
+  constructor() {
     this.mod = 3;
 
     this.hide('#unhide');
@@ -63,11 +65,11 @@ class Controls {
     });
 
     d3.select('#next').on("click", e => {
-      model.turn_binder.update((model.turn_binder.value) + 1);
+      this.setTurn(model.turn_binder.value + 1, model);
     });
 
     d3.select('#previous').on("click", e => {
-      model.turn_binder.update((model.turn_binder.value) - 1);
+      this.setTurn(model.turn_binder.value - 1, model);
     });
 
     d3.select('#speeddown').on("click", e => {
@@ -105,6 +107,10 @@ class Controls {
     model.run_binder.registerCallback(s => this.setPlayPauseButtonState(s));
   }
 
+  setTurn(turn, model) {
+    model.turn_binder.update(space_math.clamp(turn, 0, model.maxTurns));
+  }
+
   setPlayPauseButtonState(playing) {
     if (playing) {
       this.hide('#play');
@@ -117,6 +123,7 @@ class Controls {
 
   changeTurnHandler(new_turn, model) {
     d3.select('#turn_slider').node().value = new_turn;
+    d3.select('#turn_slider').attr('title', new_turn);
     if (new_turn >= model.maxTurns) {
       this.show('#end_card');
     } else {

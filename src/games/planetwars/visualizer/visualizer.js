@@ -63,7 +63,7 @@ class Visualizer {
   }
 
   _showTurn(newTurn) {
-    if (newTurn >= this.model.turns.length) {
+    if (newTurn >= this.model.maxTurns) {
       this.model.run_binder.update(false);
     } else {
       var turn = this.model.turns[newTurn];
