@@ -28,7 +28,9 @@ Current and planned features:
 # Setup
 
 For what we have now (a local client), you can do the following to play a game:
- 1. Install rust and cargo
+ 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt)
+  * Rust >= 1.18.0
+  * Cargo >= 0.16.0
  2. Try to run the botrunner with `cargo run` in the `src\botdriver` directory (it will fail to play a match).
  3. Write a config for a match, or use the example in `src\games\planetwars\config_examples\stub.config.json`.
  4. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
