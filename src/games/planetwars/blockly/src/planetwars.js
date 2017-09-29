@@ -42,11 +42,15 @@ class PlanetWars {
   }
 
   dispatch(num_ships, origin, target) {
-    this.dispatches.push({
-      'ship_count': num_ships,
-      'origin': origin['name'],
-      'destination': target['name']
-    });
+    if (origin.owner == this.player) {
+      let num_ships = Math.min(origin.ship_count, num_ships);
+      origin.ship_count -= num_ships;
+      this.dispatches.push({
+        'ship_count': num_ships,
+        'origin': origin['name'],
+        'destination': target['name']
+      });
+    }
   }
 }
 
