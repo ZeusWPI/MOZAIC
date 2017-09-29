@@ -23,6 +23,9 @@ class Config {
     return [0.3, 3];
   }
 
+  static get visual_null() {
+    return 'Nobody';
+  }
 }
 
 module.exports = Config;

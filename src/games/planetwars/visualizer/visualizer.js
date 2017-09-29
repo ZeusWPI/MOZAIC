@@ -39,6 +39,7 @@ class Visualizer {
     this.model.init(log);
     this.visuals.init(this.model);
     this.controls.attachEvents(this.model);
+    this.model.reset();
   }
 
   clear() {
@@ -62,7 +63,7 @@ class Visualizer {
   }
 
   _showTurn(newTurn) {
-    if (newTurn >= this.model.turns.length) {
+    if (newTurn >= this.model.maxTurns) {
       this.model.run_binder.update(false);
     } else {
       var turn = this.model.turns[newTurn];

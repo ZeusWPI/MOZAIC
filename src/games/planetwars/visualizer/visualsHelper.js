@@ -28,7 +28,7 @@ class Helper {
   }
 
   static visualOwnerName(name) {
-    if (name === null) return 'None';
+    if (name === null) return Config.visual_null;
     else return name;
   }
 }
@@ -319,7 +319,7 @@ class Scores {
     Scores.max_bar_size = 100;
 
     d3selector.attr("font-family", "sans-serif")
-      .attr("font-size", 14 + "px")
+      .attr("font-size", 0.8 + "vw")
       .attr('fill', d => color_map[d.player]);
     d3selector.append('circle')
       .attr('r', d => 5)
@@ -332,12 +332,12 @@ class Scores {
       .text(d => d.player);
     d3selector.append('text')
       .attr('class', 'planet_count')
-      .attr('x', d => "45%")
+      .attr('x', d => "50%")
       .attr('y', (d, i) => start_y + 5 + size * i)
       .text(d => d.planets);
     d3selector.append('circle')
       .attr('r', d => "3%")
-      .attr('cx', d => "55%")
+      .attr('cx', d => "60%")
       .attr('cy', (d, i) => start_y - 1 + size * i)
       .attr('fill', 'url(#earth)')
       .attr('stroke', d => color_map[d.player]);
@@ -384,7 +384,7 @@ class Scores {
   }
 }
 
-// TODO: this modifies the model, this should perhaps generate a new model that is vis only
+// TODO: this modefies the model, this should perhaps generate a new model that is vis only
 class Preprocessor {
   static preprocess(turns) {
     var style_map = Preprocessor.generatePlanetStyles(turns[0], turns[0].planets);

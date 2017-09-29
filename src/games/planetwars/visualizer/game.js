@@ -39,10 +39,20 @@ class Game {
 
     // Detect winner
     this.turns[this.turns.length - 1].planets.forEach(p => {
-      if (p.owner != null) {
+      if (this.winner != null && this.winner != p.owner) {
+        this.winner = Config.visual_null;
+      }
+      if (p.owner != null && this.winner != Config.visual_null) {
         this.winner = p.owner;
       }
     });
+  }
+
+  reset() {
+    this.speed_binder.update(Config.base_speed);
+    this.turn_binder.update(0);
+    this.run_binder.update(false);
+    this.winner = null;
   }
 
   get maxTurns() {
