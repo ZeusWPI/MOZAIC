@@ -1,34 +1,44 @@
 const Blockly = require('planetwars-blockly');
 const Visualizer = require('planetwars-visualizer');
+const React = require('react');
+const ReactDOM = require('react-dom');
+const h = require('react-hyperscript');
+const {
+  div,
+  span,
+  h1
+} = require('hyperscript-helpers')(h);
 
 const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
 
-class PlanetwarsClient {
-  constructor(name) {
-    this.blockly = Blockly.inject('blockly');
+class PlanetwarsClient extends React.Component {
+  constructor(props) {
+    super(props);
+    //this.blockly = Blockly.inject('blockly');
     this.name = name;
-    this.visualizer = new Visualizer();
+    //this.visualizer = new Visualizer();
+
 
     // TODO: put this somewhere else
     // TODO: please don't do this every save
-    this.blockly.addChangeListener(e => {
+    /*this.blockly.addChangeListener(e => {
       window.localStorage.setItem('blocklyCode', this.blockly.getXml());
-    });
-
-    let xml = window.localStorage.getItem('blocklyCode');
-    if (xml) {
-      this.blockly.loadXml(xml);
-    }
+    });*/
+    /*
+        let xml = window.localStorage.getItem('blocklyCode');
+        if (xml) {
+          this.blockly.loadXml(xml);
+        }*/
 
     // controls
-    this.fab = document.getElementById('fab');
-    this.fab.addEventListener('click', e => this.fabHandler(e));
-    this.blockly_div = document.getElementById('blockly');
-    this.visualizer_div = document.getElementById('visualizer');
+    //this.fab = document.getElementById('fab');
+    //this.fab.addEventListener('click', e => this.fabHandler(e));
+    //this.blockly_div = document.getElementById('blockly');
+    //this.visualizer_div = document.getElementById('visualizer');
 
     // initial state
-    this.setState(BLOCKLY_STATE);
+    //this.setState(BLOCKLY_STATE);
   }
 
   setState(state) {
@@ -83,6 +93,11 @@ class PlanetwarsClient {
     xmlhttp.send(request);
   }
 
+  render() {
+    return h(Visualizer);
+
+  }
+
 }
 
 function fa_icon(name) {
@@ -90,9 +105,16 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
+  /*
   var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
   var def = "sadeerstejaar";
   var name = window.prompt(prompt, def);
 
-  new PlanetwarsClient(name);
+  new PlanetwarsClient(name);*/
+  ReactDOM.render(
+    h(PlanetwarsClient),
+    document.getElementById("box", {
+      props: {}
+    })
+  );
 };

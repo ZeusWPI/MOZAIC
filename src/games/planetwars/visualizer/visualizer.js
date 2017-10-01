@@ -1,17 +1,29 @@
 const d3 = require('d3');
+const React = require('react');
+const h = require('react-hyperscript');
+const {
+  div,
+  span,
+  h1,
+  button,
+  i,
+  input,
+  p,
+  svg
+} = require('hyperscript-helpers')(h);
 
 const Visuals = require('./visuals');
 const Controls = require('./controls');
 const Game = require('./game');
 const Utils = require('./util');
 
+class Visualizer extends React.Component {
 
-class Visualizer {
-
-  constructor() {
+  constructor(props) {
+    super(props);
     this.model = new Game();
-    this.controls = new Controls(this);
-    this.visuals = new Visuals();
+    //this.controls = new Controls(this);
+    //this.visuals = new Visuals();
 
     // Speed property is already updated, resetting timer will use new speed
     this.model.speed_binder.registerCallback(s => {
@@ -84,6 +96,59 @@ class Visualizer {
       this.turn_timer.stop();
     }
   }
+
+  render() {
+    return (
+      div('#visualizer-root-node', [
+        createButton('#hide_score.close', 'Hide scoreboard', 'times'),
+        createButton('#unhide_score', 'Show scoreboard', 'chevron-left'),
+        createButton('#hide', 'Hide controls', 'chevron-down'),
+        createButton('#unhide', 'Show controls', 'chevron-up'),
+        div('#controlbar', [
+          input({
+            type: 'range',
+            id: 'turn_slider',
+            value: 0,
+            className: 'control'
+          }),
+          div('.turncontrols', [
+            createButton('#tostart', '', 'fast-backward'),
+            createButton('#previous', '', 'step-backward'),
+            createButton('#play', '', 'play'),
+            createButton('#pause', '', 'pause'),
+            createButton('#next', '', 'step-forward'),
+            createButton('#toend', '', 'fast-forward'),
+            p('#turn_progress', '100 / 100')
+          ]),
+          div('.speedcontrols', [
+            p('.speed', 'Speed x1'),
+            createButton('#speeddown', '', 'minus'),
+            createButton('#speedup', '', 'plus')
+          ])
+        ]),
+        svg('#game'),
+        div('#end_card', [
+          createButton('#hide_card.close', 'Hide end card', 'times'),
+          p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
+        ])
+      ])
+    );
+  }
+
+  componentDidMount() {
+    this.controls = new Controls(this);
+  }
+}
+
+//TODO move this
+function createButton(selector, title, icon) {
+  return button(`${selector}.control.control-button`, {
+    'title': title,
+    'type': 'button',
+    'aria-hidden': 'true'
+  }, [
+    i(`.fa.fa-${icon}`)
+  ])
 }
 
 module.exports = Visualizer;

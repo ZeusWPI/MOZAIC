@@ -7,7 +7,11 @@
   "license": "MIT",
   "dependencies": {
     "font-awesome": "^4.7.0",
+    "hyperscript-helpers": "^3.0.3",
     "planetwars-blockly": "file:../blockly",
-    "planetwars-visualizer": "file:../visualizer"
+    "planetwars-visualizer": "file:../visualizer",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "react-hyperscript": "^3.0.0"
   }
 }
