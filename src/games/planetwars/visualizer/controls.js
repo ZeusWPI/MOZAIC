@@ -122,7 +122,10 @@ class Controls {
   }
 
   changeTurnHandler(new_turn, model) {
+    console.log('up');
+    d3.select('#turn_slider').attr('value', new_turn);
     d3.select('#turn_slider').node().value = new_turn;
+
     d3.select('#turn_slider').attr('title', new_turn);
     if (new_turn >= model.maxTurns) {
       this.show('#end_card');

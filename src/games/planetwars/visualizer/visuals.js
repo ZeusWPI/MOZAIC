@@ -107,7 +107,7 @@ class Visuals {
 
   generateWinnerBox(winner, color) {
     var card = d3.select('#end_card');
-    card.select('.winner').text(winner).attr('style', 'color: ' + color);
+    card.select('#winner').text(winner).attr('style', 'color: ' + color);
   }
 
   update(turn, speed) {

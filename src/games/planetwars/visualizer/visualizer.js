@@ -22,8 +22,6 @@ class Visualizer extends React.Component {
   constructor(props) {
     super(props);
     this.model = new Game();
-    //this.controls = new Controls(this);
-    //this.visuals = new Visuals();
 
     // Speed property is already updated, resetting timer will use new speed
     this.model.speed_binder.registerCallback(s => {
@@ -97,9 +95,21 @@ class Visualizer extends React.Component {
     }
   }
 
+  componentDidUpdate() {
+    if (this.props.log != 'undefined') {
+      this.visualize(this.props.log);
+    }
+    if (this.props.isVisualizing) {
+      this.play();
+    } else {
+      this.pause();
+    }
+  }
+
   render() {
     return (
       div('#visualizer-root-node', [
+        svg('#score'),
         createButton('#hide_score.close', 'Hide scoreboard', 'times'),
         createButton('#unhide_score', 'Show scoreboard', 'chevron-left'),
         createButton('#hide', 'Hide controls', 'chevron-down'),
@@ -137,6 +147,7 @@ class Visualizer extends React.Component {
 
   componentDidMount() {
     this.controls = new Controls(this);
+    this.visuals = new Visuals();
   }
 }
 

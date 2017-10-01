@@ -15,58 +15,100 @@ const VISUALIZER_STATE = 'VISUALIZER';
 class PlanetwarsClient extends React.Component {
   constructor(props) {
     super(props);
-    //this.blockly = Blockly.inject('blockly');
-    this.name = name;
-    //this.visualizer = new Visualizer();
+    this.state = {};
+    this.submitCallback = this.codeSubmittedHandler.bind(this);
 
 
-    // TODO: put this somewhere else
-    // TODO: please don't do this every save
-    /*this.blockly.addChangeListener(e => {
-      window.localStorage.setItem('blocklyCode', this.blockly.getXml());
-    });*/
-    /*
-        let xml = window.localStorage.getItem('blocklyCode');
-        if (xml) {
-          this.blockly.loadXml(xml);
-        }*/
+
 
     // controls
-    //this.fab = document.getElementById('fab');
-    //this.fab.addEventListener('click', e => this.fabHandler(e));
-    //this.blockly_div = document.getElementById('blockly');
-    //this.visualizer_div = document.getElementById('visualizer');
+    this.fab = document.getElementById('fab');
+    this.fab.addEventListener('click', e => this.fabHandler(e));
 
-    // initial state
-    //this.setState(BLOCKLY_STATE);
   }
 
-  setState(state) {
-    this.state = state;
-    if (state == BLOCKLY_STATE) {
-      this.blockly_div.classList.remove('invisible');
-      this.visualizer_div.classList.add('invisible');
+  componentDidMount() {
+    // initial state
+    this.setMode(BLOCKLY_STATE);
+  }
+
+  setMode(mode) {
+    this.setState({
+      'mode': mode
+    });
+    if (mode == BLOCKLY_STATE) {
       this.fab.innerHTML = fa_icon('play');
-    } else if (state == VISUALIZER_STATE) {
-      this.blockly_div.classList.add('invisible');
-      this.visualizer_div.classList.remove('invisible');
+    } else if (mode == VISUALIZER_STATE) {
       this.fab.innerHTML = fa_icon('code');
     }
   }
 
   fabHandler(e) {
-    if (this.state == BLOCKLY_STATE) {
-      this.submitCode(res => {
-        // visualize game
-        this.visualizer.visualize(res);
-        this.setState(VISUALIZER_STATE);
-        this.visualizer.play();
+    if (this.state.mode == BLOCKLY_STATE) {
+      this.setState({
+        shouldSubmit: true,
+        isVisualizing: true
       });
-    } else if (this.state == VISUALIZER_STATE) {
-      this.setState(BLOCKLY_STATE);
+    } else if (this.state.mode == VISUALIZER_STATE) {
+      this.setMode(BLOCKLY_STATE);
       window.dispatchEvent(new Event('resize'));
-      this.visualizer.pause();
+      this.setState({
+        isVisualizing: false
+      });
     }
+  }
+
+  codeSubmittedHandler(res) {
+    this.state.shouldSubmit = false;
+    this.setMode(VISUALIZER_STATE);
+    this.setState({
+      log: res
+    });
+  }
+
+  render() {
+    if (this.state.mode == VISUALIZER_STATE) {
+      return React.createElement(Visualizer, {
+        log: this.state.log,
+        isVisualizing: this.state.isVisualizing
+      });
+    } else {
+      return React.createElement(BlocklyComponent, {
+        shouldSubmit: this.state.shouldSubmit,
+        submitCallback: this.submitCallback
+      });
+    }
+  }
+}
+
+//TODO only here for prototype
+class BlocklyComponent extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    this.blockly = Blockly.inject('blockly');
+    // TODO: put this somewhere else
+    // TODO: please don't do this every save
+    this.blockly.addChangeListener(e => {
+      window.localStorage.setItem('blocklyCode', this.blockly.getXml());
+    });
+
+    let xml = window.localStorage.getItem('blocklyCode');
+    if (xml) {
+      this.blockly.loadXml(xml);
+    }
+  }
+
+  componentDidUpdate() {
+    if (this.props.shouldSubmit) {
+      this.submitCode(this.props.submitCallback);
+    }
+  }
+
+  render() {
+    return div('#blockly');
   }
 
   submitCode(callback) {
@@ -92,12 +134,6 @@ class PlanetwarsClient extends React.Component {
     });
     xmlhttp.send(request);
   }
-
-  render() {
-    return h(Visualizer);
-
-  }
-
 }
 
 function fa_icon(name) {
@@ -105,16 +141,14 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  /*
   var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
   var def = "sadeerstejaar";
   var name = window.prompt(prompt, def);
 
-  new PlanetwarsClient(name);*/
   ReactDOM.render(
-    h(PlanetwarsClient),
-    document.getElementById("box", {
-      props: {}
-    })
+    h(PlanetwarsClient, {
+      'name': name
+    }),
+    document.getElementById("box")
   );
 };
