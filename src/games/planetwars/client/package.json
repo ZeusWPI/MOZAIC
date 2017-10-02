@@ -1,0 +1,13 @@
+{
+  "name": "planetwars-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "dependencies": {
+    "font-awesome": "^4.7.0",
+    "planetwars-blockly": "file:../blockly",
+    "planetwars-visualizer": "file:../visualizer"
+  }
+}

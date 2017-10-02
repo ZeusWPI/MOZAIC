@@ -1,0 +1,16 @@
+{
+    "name": "MOZAIC_Gameserver",
+    "version": "0.0.1",
+    "description": "Small Node-wrapper around the MOZAIC botdriver",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "dependencies": {
+        "body-parser": "~1.18.1",
+        "express": "~4.15.4",
+        "file-system": "~2.2.2",
+        "temp": "^0.8.3"
+    },
+    "author": "Zeus WPI"
+}

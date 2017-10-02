@@ -1,0 +1,17 @@
+{
+  "name": "planetwars-visualizer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "visualizer.js",
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "dependencies": {
+    "d3": "4.10.2"
+  },
+  "devDependencies": {
+    "webpack": "^3.6.0"
+  },
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
+  }
+}

@@ -3,28 +3,17 @@ extern crate serde_json;
 use rand;
 use rand::Rng;
 
-use game_types::{Game, GameStatus, Player, PlayerInput, PlayerOutput, Outcome, Scoring};
+use game::*;
+use logger::*;
+use std::collections::HashMap;
 
-// Highest possible number that can be chosen.
-const MAX: u32 = 500;
+/// Protocol
 
-/// The gamestate for a higher-lower game.
-///
-/// It's rules are described by it's implementation for types::Game below.
-/// TODO: Add rustdoc links
-pub struct HigherLower {
-    players: Vec<Player>,   // The players still in the game.
-    eliminated: Scoring,    // The scoring for the eliminated players.
-    max: u32,               // Highest possible number that can be chosen.
-    last: u32,              // The value that was generated in the previous iteration.
-    score: i32              // Current iteration (= score). Signed to match types::Score.
-}
-
-// The gamestate passed to the players.
+// State passed to the players.
 #[derive(Serialize, Deserialize)]
 struct State {
-    max: u32,
-    current: u32
+    max: u64,
+    current: u64,
 }
 
 // The commands received from the players.
@@ -32,92 +21,136 @@ struct State {
 // Response should thus be like this:
 // {"answer":"HIGHER"}
 #[derive(Serialize, Deserialize)]
-struct Command {
-    answer: String
+struct Response {
+    answer: Answer,
 }
 
-// An implementation of higher-lower in the form of a types::Game.
+#[derive(Serialize, Deserialize, PartialEq, Eq, Debug)]
+#[serde(rename_all="SCREAMING_SNAKE_CASE")]
+enum Answer {
+    Higher,
+    Lower,
+}
+
+impl Answer {
+    fn get(reference: u64, number: u64) -> Answer {
+        if number < reference {
+            Answer::Lower
+        } else {
+            Answer::Higher
+        }
+    }
+}
+
+
+/// Log
+#[derive(Serialize)]
+struct Turn<'g> {
+    trial_num: u64,
+    current: u64,
+    next: u64,
+    answers: &'g PlayerMap<Answer>,
+}
+
+
+pub struct HigherLowerConfig {
+    pub max: u64,                     // highest number that can be rolled
+}
+
+/// The gamestate for a higher-lower game.
+pub struct HigherLower {
+    players: Vec<PlayerId>,         // Players still in the game.
+    eliminated: PlayerMap<u64>,     // The scoring for the eliminated players.
+    current: u64,                   // The current number
+    next: u64,                      // The next number
+    trial_num: u64,                 // Current iteration (= score).
+    max: u64,                       // highest number that can be rolled
+    logger: Logger,
+}
+
 // Players can keep playing until they guess wrong.
-// When they guess wrong, their score equals the current iteration of the game.
+// When they guess wrong, their score equals the trial number.
 // The game goes on until all players are eliminated.
-// No negative numbers.
 impl Game for HigherLower {
-    fn init(names: Vec<Player>) -> Self {
-        HigherLower { 
-            players: names,
-            eliminated: Scoring::new(),
-            max: MAX,
-            last: 0, // This is always overridden when the game starts.
-            score: 0
-        }
-    }
+    type Config = HigherLowerConfig;
+    type Outcome = PlayerMap<u64>;
 
-    fn start(&mut self) -> GameStatus {
-        let mut stati: PlayerInput = PlayerInput::new();
-        let value = rand::thread_rng().gen_range(0, self.max);
-
-        // Generate the status for every player (all stati should be equal).
-        for player in &self.players {
-            let state = serde_json::to_string( &State { 
-                max: self.max,
-                current: value
-            }).expect("[HIGHER_LOWER] Serializing game state failed.");
-            stati.insert(player.clone(), state);
-        }
-        self.last = value;
-        GameStatus::Running(stati)
-    }
-
-    fn step(&mut self, player_output: &PlayerOutput) -> GameStatus {
-        let mut pi: PlayerInput = PlayerInput::new();
-        let value = rand::thread_rng().gen_range(0, MAX);
-        let n_state = serde_json::to_string( &State {
-            max: self.max,
-            current: value
-        }).expect("Serializing game state failed");
-
-        // Calculate the correct answer.
-        let correct = match value {
-            value if value > self.last => "HIGHER",
-            value if value < self.last => "LOWER",
-            _ => "LOWER" // TODO: Fix same number
+    fn init(match_params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
+        let state = HigherLower {
+            eliminated: HashMap::new(),
+            players: match_params.players.keys().cloned().collect(),
+            current: 0,
+            next: match_params.game_config.max / 2,
+            trial_num: 0,
+            max: match_params.game_config.max,
+            logger: match_params.logger,
         };
+        let status = state.game_status();
+        return (state, status);
+    }
 
-        // Process all player answers.
-        for (player, command) in player_output.iter() {
+    fn step(&mut self, responses: &PlayerMap<String>) -> GameStatus<Self> {
+        let answers = HigherLower::parse_answers(responses);
+        let correct_answer = self.gen_next_number();
+        self.log_turn(&answers);
 
-            // Parse player command.
-            let c: Command = match serde_json::from_str(command) {
-                Ok(command) => command,
-                // TODO: More expressive error
-                Err(err) => {
-                    let msg = format!("Invalid formatted command.\n{}", err);
-                    return GameStatus::Done(Outcome::Error(msg.to_owned()));
-                } 
-            };
-            let answer = c.answer;
 
-            // Update new PlayerInput and/or gamestate.
-            match answer {
-                ref ans if ans == correct => {
-                    pi.insert(player.clone(), n_state.clone());
+        let mut i = 0;
+        while i < self.players.len() {
+            match answers.get(&self.players[i]) {
+                Some(ans) if ans == &correct_answer => {
+                    i += 1;
                 },
                 _ => {
-                    self.eliminated.insert(player.clone(), self.score);
-                    self.players.retain(|p| p != player); // Remove faulty player
-                } 
+                    let removed = self.players.swap_remove(i);
+                    self.eliminated.insert(removed, self.trial_num);
+                }
             }
         }
-        
-        // Game is done.
-        if self.players.is_empty() {
-            GameStatus::Done(Outcome::Score(self.eliminated.clone()))
+        self.trial_num += 1;
+        return self.game_status();
+    }
+}
 
-        // Game is not done.
+impl HigherLower {
+    fn game_status(&self) -> GameStatus<Self> {
+        if self.players.is_empty() {
+            GameStatus::Finished(self.eliminated.clone())
         } else {
-            self.score += 1;
-            self.last = value;
-            GameStatus::Running(pi)
+            GameStatus::Prompting(self.prompts())
         }
+    }
+
+    fn prompts(&self) -> PlayerMap<String> {
+        self.players.iter().map(|&player_id| {
+            let data = serde_json::to_string( &State {
+                max: self.max,
+                current: self.current,
+            }).expect("[HIGHER_LOWER] Serializing game state failed.");
+            return (player_id, data);
+        }).collect()
+    }
+
+    fn log_turn(&mut self, answers: &PlayerMap<Answer>) {
+        self.logger.log_json(&Turn {
+            answers: answers,
+            trial_num: self.trial_num,
+            current: self.current,
+            next: self.next,
+        }).unwrap();
+    }
+
+    fn gen_next_number(&mut self) -> Answer {
+        self.current = self.next;
+        self.next = rand::thread_rng().gen_range(0, self.max);
+        return Answer::get(self.current, self.next);
+    }
+
+    fn parse_answers(responses: &PlayerMap<String>) -> PlayerMap<Answer> {
+        responses.iter().filter_map(|(&player_id, response_text)| {
+            // ignore incorrectly formatted arguments
+            let response: Option<Response> = serde_json::from_str(response_text).ok();
+            return response.map(|resp| (player_id, resp.answer));
+        }).collect()
     }
 }

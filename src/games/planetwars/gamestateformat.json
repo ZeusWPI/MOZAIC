@@ -36,6 +36,7 @@
                 "type": "object",
                 "description": "a command",
                 "properties": {
+                    "id": { "type": "integer" },
                     "ship_count": { 
                         "type": "integer",
                         "minimum": 0

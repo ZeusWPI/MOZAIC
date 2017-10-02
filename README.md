@@ -24,10 +24,25 @@ Current and planned features:
      - [ ] handles network play
      - [ ] "bot management"
   - [ ] Ranking bots
-  
- # Setup
- Sorry, you can't. MOZAIC does not exist yet.
- 
- # Contact
- Have any questions, comments, want to contribute or are even remotely interested in this project, please get in touch!
- You can reach us by [e-mail](mailto:bestuur@zeus.ugent.be), [Facebook](https://www.facebook.com/zeus.wpi), or any other way you prefer listed [here](https://zeus.ugent.be/about/).
+
+# Setup
+
+For what we have now (a local client), you can do the following to play a game:
+ 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt)
+  * Rust >= 1.18.0
+  * Cargo >= 0.16.0
+ 2. Try to run the botrunner with `cargo run` in the `src\botdriver` directory (it will fail to play a match).
+ 3. Write a config for a match, or use the example in `src\games\planetwars\config_examples\stub.config.json`.
+ 4. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
+ 5. It should have generated a log-file `gamelog.json` (or whatever you specified in the config).
+ 6. Open the visualizer `src\games\planetwars\visualizer\index.html` with your browser.
+ 7. Click to `browse` button and select the log file.
+ 8. You're ready to see the game.
+
+You can change the bots, the maps, the startpositions, the max turn and the logfile in the config.
+
+We have no idea if we support Windows, we probably do.
+
+# Contact
+Have any questions, comments, want to contribute or are even remotely interested in this project, please get in touch!
+You can reach us by [e-mail](mailto:bestuur@zeus.ugent.be), [Facebook](https://www.facebook.com/zeus.wpi), or any other way you prefer listed [here](https://zeus.ugent.be/about/).
