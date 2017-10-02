@@ -10,15 +10,23 @@ body {
 }
 
 header {
-  height: 64px;
+  height: 48px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "logo toolbar"
 }
 
-header figure {
-  margin: 0px 0px 0px 0.7em;
+header figure.logo {
+  grid-area: logo;
+  display: inline-block;
+
+  margin: 0px 0px 0px 1em;
+  padding-top: 4px;
 }
 
 header figure img {
-  height: 64px;
+  height: 40px;
 }
 
 #box {
@@ -175,41 +183,42 @@ header figure img {
   width: 100%;
 }
 
-#save {
-    display: inline-block;
-    outline: none;
-    width: 60px;
-    height: 60px;
-    background: #bf1e2e;
-    color: #fff;
+.header-toolbar {
+  grid-area: toolbar;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 
-    position: fixed;
-    right: 0px;
-    top: 0px;
+  list-style: none;
+
+  height: 48px;
+  margin: 0;
+
 }
 
-#switch_view_state {
-  display: inline-block;
+.header-toolbar > li {
+  display: initial;
+  margin: 0px 3px;
+}
+
+.header-toolbar > li > button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #bf1e2e;
+  color: #fff;
   outline: none;
-  width: 60px;
-  height: 60px;
 
   text-align: center;
-  font-size: 32px;
+  font-size: 22px;
   z-index: 999;
-  background: #bf1e2e;;
-  color: #fff;
-  border-radius: 50%;
+
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
   border: 0;
   overflow: hidden;
-
-  position: fixed;
-  right: 30px;
-  bottom: 120px;
 }
 
-#switch_view_state:hover {
+.header-toolbar > li > button:hover {
   transform: scale(1.05);
 }
 
