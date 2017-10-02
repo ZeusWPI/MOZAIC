@@ -9,15 +9,26 @@
   <body>
 
     <header>
-      <figure>
+      <figure class="logo">
         <img
         src="res/logo.png"
         alt="MOSAIC">
       </figure>
-      <button id="save"></button>
+
+      <ul class="header-toolbar">
+        <li>
+            <button id="load"> <i class="fa fa-upload" aria-hidden="true"></i> </button>
+        </li>
+        <li>
+            <button id="save"> <i class="fa fa-floppy-o" aria-hidden="true"></i> </button>
+        </li>
+        <li>
+            <button id="switch_view_state"></button>
+        </li>
+      </ul>
+
     </header>
 
-    <button id="switch_view_state"></button>
     <div id="box">
       <div id="blockly"></div>
 
