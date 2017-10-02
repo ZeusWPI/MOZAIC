@@ -175,6 +175,19 @@ header figure img {
   width: 100%;
 }
 
+#save {
+    display: inline-block;
+    outline: none;
+    width: 60px;
+    height: 60px;
+    background: #bf1e2e;
+    color: #fff;
+
+    position: fixed;
+    right: 0px;
+    top: 0px;
+}
+
 #switch_view_state {
   display: inline-block;
   outline: none;
