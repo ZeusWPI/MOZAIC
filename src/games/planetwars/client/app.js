@@ -27,6 +27,8 @@ class PlanetwarsClient {
     this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
     this.save_btn = document.getElementById('save');
     this.save_btn.addEventListener('click', e => this.saveHandler(e));
+    this.load_btn = document.getElementById('load');
+    this.load_btn.addEventListener('click', e => this.loadHandler(e));
 
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
@@ -51,14 +53,26 @@ class PlanetwarsClient {
   saveHandler(e) {
     console.log("SAVE");
     var xml = this.blockly.getXml();
-    console.log(xml);
     var file = new File([xml], "bot.xml", {type: "text/xml;charset=utf-8"});
     FileSaver.saveAs(file);
   }
 
+  loadHandler(e) {
+    console.log("LOAD");
+    var fileSelect = document.getElementById('file-input');
+    fileSelect.click();
+    fileSelect.onchange = () => {
+        var reader = new FileReader();
+        reader.onload = (event) => {
+          var xml = event.target.result;
+          this.blockly.loadXml(xml);
+        };
+        reader.readAsText(fileSelect.files[0]);
+      };
+  }    
+  
   switch_view_stateHandler(e) {
-    if (this.state == BLOCKLY_STATE) {
-      this.submitCode(res => {
+    if (this.state == BLOCKLY_STATE) {    this.submitCode(res => {
         // visualize game
         this.visualizer.visualize(res);
         this.setState(VISUALIZER_STATE);
