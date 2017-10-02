@@ -4,7 +4,7 @@ const Utils = require('./util');
 const space_math = Utils.SpaceMath;
 
 class Controls {
-  constructor() {
+  constructor(visualizer) {
     this.mod = 3;
 
     this.hide('#unhide');
