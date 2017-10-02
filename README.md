@@ -47,7 +47,7 @@ Current and planned features:
 3. `npm install webpack` or `(sudo) npm install webpack -g`
 4. Run `webpack` in `src/games/planetwars/client`
 5. Run `cargo build --release` in `src/botdriver/`
-6. Symlink `src/botdriver/target/release/mozaic_bot_driver` to `src/games/planetwars/gameserver/bot_driver`
+6. Symlink the botdriver from in the `src/games/planetwars/gameserver/` with `ln -s ../../../botdriver/target/release/mozaic_bot_driver bot_driver`
 7. Run `node server.js` in `src/games/planetwars/gameserver`
 8. The magic happens at `localhost:3000`
 9. You're ready to see the game.
