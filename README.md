@@ -27,19 +27,30 @@ Current and planned features:
 
 # Setup
 
-For what we have now (a local client), you can do the following to play a game:
- 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt)
-  * Rust >= 1.18.0
-  * Cargo >= 0.16.0
- 2. Try to run the botrunner with `cargo run` in the `src\botdriver` directory (it will fail to play a match).
- 3. Write a config for a match, or use the example in `src\games\planetwars\config_examples\stub.config.json`.
- 4. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
- 5. It should have generated a log-file `gamelog.json` (or whatever you specified in the config).
- 6. Open the visualizer `src\games\planetwars\visualizer\index.html` with your browser.
- 7. Click to `browse` button and select the log file.
- 8. You're ready to see the game.
+## Botdriver
 
-You can change the bots, the maps, the startpositions, the max turn and the logfile in the config.
+1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt)
+
+- Rust >= 1.18.0
+- Cargo >= 0.16.0
+
+2. Try to run the botrunner with `cargo run` in the `src\botdriver` directory (it will fail to play a match).
+3. Write a config for a match, or use the example in `src\games\planetwars\config_examples\stub.config.json`.
+4. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\botdriver` directory).
+5. It should have generated a log-file `gamelog.json` (or whatever you specified in the config).
+6. If it did, it works, check setup below for the gameserver.
+
+## Blockly Game Server
+
+1. Install Node v8
+2. `npm install` in `src/games/planetwars/visualizer` en `src/games/planetwars/blockly` en `src/games/planetwars/gameserver`
+3. `npm install webpack` or `(sudo) npm install webpack -g`
+4. Run `webpack` in `src/games/planetwars/client`
+5. Run `cargo build --release` in `src/botdriver/`
+6. Symlink the botdriver from in the `src/games/planetwars/gameserver/` with `ln -s ../../../botdriver/target/release/mozaic_bot_driver bot_driver`
+7. Run `node server.js` in `src/games/planetwars/gameserver`
+8. The magic happens at `localhost:3000`
+9. You're ready to see the game.
 
 We have no idea if we support Windows, we probably do.
 
