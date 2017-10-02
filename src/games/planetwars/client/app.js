@@ -6,9 +6,8 @@ const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
 
 class PlanetwarsClient {
-  constructor(name) {
+  constructor() {
     this.blockly = Blockly.inject('blockly');
-    this.name = name;
     this.visualizer = new Visualizer();
 
     // TODO: put this somewhere else
@@ -29,6 +28,10 @@ class PlanetwarsClient {
     this.save_btn.addEventListener('click', e => this.saveHandler(e));
     this.load_btn = document.getElementById('load');
     this.load_btn.addEventListener('click', e => this.loadHandler(e));
+
+    this.name_field = document.getElementById('uname');
+    this.user_name = this.name_field.value;
+    this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
 
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
@@ -73,7 +76,8 @@ class PlanetwarsClient {
   }    
   
   switch_view_stateHandler(e) {
-    if (this.state == BLOCKLY_STATE) {    this.submitCode(res => {
+    if (this.state == BLOCKLY_STATE) {
+      this.submitCode(res => {
         // visualize game
         this.visualizer.visualize(res);
         this.setState(VISUALIZER_STATE);
@@ -105,7 +109,7 @@ class PlanetwarsClient {
 
     var request = JSON.stringify({
       "code": this.blockly.getCode(),
-      "name": this.name
+      "name": this.user_name
     });
     xmlhttp.send(request);
   }
@@ -117,9 +121,5 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  // var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
-  // var def = "sadeerstejaar";
-  // var name = window.prompt(prompt, def);
-
-  new PlanetwarsClient(name);
+  new PlanetwarsClient();
 };
