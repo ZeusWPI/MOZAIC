@@ -8,6 +8,7 @@
   "dependencies": {
     "font-awesome": "^4.7.0",
     "planetwars-blockly": "file:../blockly",
-    "planetwars-visualizer": "file:../visualizer"
+    "planetwars-visualizer": "file:../visualizer",
+    "webpack": "^3.6.0"
   }
 }
