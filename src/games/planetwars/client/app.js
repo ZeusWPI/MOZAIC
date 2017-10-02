@@ -1,5 +1,6 @@
 const Blockly = require('planetwars-blockly');
 const Visualizer = require('planetwars-visualizer');
+const FileSaver = require('file-saver');
 
 const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
@@ -49,6 +50,10 @@ class PlanetwarsClient {
 
   saveHandler(e) {
     console.log("SAVE");
+    var xml = this.blockly.getXml();
+    console.log(xml);
+    var file = new File([xml], "bot.xml", {type: "text/xml;charset=utf-8"});
+    FileSaver.saveAs(file);
   }
 
   switch_view_stateHandler(e) {
