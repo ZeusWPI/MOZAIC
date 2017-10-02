@@ -117,7 +117,6 @@ app.listen(3000, function() {
 });
 
 function writeWinningBot(name, code) {
-  var time = new Date().getTime();
-  var path = `${BOT_MAP}/${name}.${time}.js`
+  var path = `${BOT_MAP}/${name}.js`
   fs.writeFileSync(path, code);
 }
