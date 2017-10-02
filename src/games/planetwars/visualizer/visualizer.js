@@ -118,7 +118,7 @@ class Visualizer extends React.Component {
           input({
             type: 'range',
             id: 'turn_slider',
-            value: 0,
+            defaultValue: '0',
             className: 'control'
           }),
           div('.turncontrols', [
