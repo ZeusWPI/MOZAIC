@@ -22,6 +22,8 @@ class PlanetwarsClient {
     }
 
     // controls
+    this.save_btn = document.getElementById('save');
+    this.save_btn.addEventListener('click', e => this.saveHandler(e));
     this.fab = document.getElementById('fab');
     this.fab.addEventListener('click', e => this.fabHandler(e));
     this.blockly_div = document.getElementById('blockly');
@@ -42,6 +44,10 @@ class PlanetwarsClient {
       this.visualizer_div.classList.remove('invisible');
       this.fab.innerHTML = fa_icon('code');
     }
+  }
+
+  saveHandler(e) {
+    console.log("SAVE");
   }
 
   fabHandler(e) {
