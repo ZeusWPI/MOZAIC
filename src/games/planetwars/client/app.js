@@ -26,7 +26,7 @@ class PlanetwarsClient {
     this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
     this.save_btn = document.getElementById('save');
     this.save_btn.addEventListener('click', e => this.saveHandler(e));
-    
+
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
 
@@ -47,15 +47,11 @@ class PlanetwarsClient {
     }
   }
 
-<<<<<<< HEAD
-  switch_view_stateHandler(e) {
-=======
   saveHandler(e) {
     console.log("SAVE");
   }
 
-  fabHandler(e) {
->>>>>>> 16f1808d63eea97794ac8221d31309e2d9d56761
+  switch_view_stateHandler(e) {
     if (this.state == BLOCKLY_STATE) {
       this.submitCode(res => {
         // visualize game
