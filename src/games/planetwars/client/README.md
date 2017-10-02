@@ -8,4 +8,4 @@
  3. `npm install webpack` or `(sudo) npm install webpack -g`
  4. Run `webpack` in `/client`
  5. Run `node server.js` in `/gameserver`
- 6. The magic happens at `localhost:3000/planetwars`
+ 6. The magic happens at `localhost:3000`
