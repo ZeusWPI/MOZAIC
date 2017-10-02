@@ -175,7 +175,7 @@ header figure img {
   width: 100%;
 }
 
-#fab {
+#switch_view_state {
   display: inline-block;
   outline: none;
   width: 60px;
@@ -196,7 +196,7 @@ header figure img {
   bottom: 120px;
 }
 
-#fab:hover {
+#switch_view_state:hover {
   transform: scale(1.05);
 }
 

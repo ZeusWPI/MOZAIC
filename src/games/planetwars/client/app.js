@@ -22,8 +22,8 @@ class PlanetwarsClient {
     }
 
     // controls
-    this.fab = document.getElementById('fab');
-    this.fab.addEventListener('click', e => this.fabHandler(e));
+    this.switch_view_state = document.getElementById('switch_view_state');
+    this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
 
@@ -36,15 +36,15 @@ class PlanetwarsClient {
     if (state == BLOCKLY_STATE) {
       this.blockly_div.classList.remove('invisible');
       this.visualizer_div.classList.add('invisible');
-      this.fab.innerHTML = fa_icon('play');
+      this.switch_view_state.innerHTML = fa_icon('play');
     } else if (state == VISUALIZER_STATE) {
       this.blockly_div.classList.add('invisible');
       this.visualizer_div.classList.remove('invisible');
-      this.fab.innerHTML = fa_icon('code');
+      this.switch_view_state.innerHTML = fa_icon('code');
     }
   }
 
-  fabHandler(e) {
+  switch_view_stateHandler(e) {
     if (this.state == BLOCKLY_STATE) {
       this.submitCode(res => {
         // visualize game
