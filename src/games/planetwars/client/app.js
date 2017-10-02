@@ -96,9 +96,9 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
-  var def = "sadeerstejaar";
-  var name = window.prompt(prompt, def);
+  // var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
+  // var def = "sadeerstejaar";
+  // var name = window.prompt(prompt, def);
 
   new PlanetwarsClient(name);
 };
