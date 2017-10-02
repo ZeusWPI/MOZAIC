@@ -12,9 +12,9 @@ body {
 header {
   height: 48px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: auto 1fr 1fr;
   grid-template-areas:
-    "logo toolbar"
+    "logo uname toolbar"
 }
 
 header figure.logo {
@@ -27,6 +27,54 @@ header figure.logo {
 
 header figure img {
   height: 40px;
+}
+
+.uname-form {
+  grid-area: uname;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column-reverse;
+  font-family: sans-serif;
+  margin-left: 1em;
+
+}
+
+.uname-form > label {
+  font-size: 10px;
+  color: gray;
+
+  -webkit-transition: all 0.30s ease-in-out;
+  -moz-transition: all 0.30s ease-in-out;
+  -ms-transition: all 0.30s ease-in-out;
+  -o-transition: all 0.30s ease-in-out;
+}
+
+#uname {
+  border: none;
+  border-bottom: 1px solid gray;
+  outline: none;
+
+  padding: 2px 0px;
+  font-size: 16px;
+  color: #FF7F00; /* color of caret */
+  -webkit-text-fill-color: black;
+
+  -webkit-transition: all 0.30s ease-in-out;
+  -moz-transition: all 0.30s ease-in-out;
+  -ms-transition: all 0.30s ease-in-out;
+  -o-transition: all 0.30s ease-in-out;
+}
+
+input[type=text]#uname:focus {
+  border-bottom: 1px solid #FF7F00;
+  outline: none;
+}
+
+input[type=text]#uname:focus + label {
+  color: #FF7F00;
+  font-size: 10px;
+  
 }
 
 #box {
