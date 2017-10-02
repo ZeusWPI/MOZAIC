@@ -74,18 +74,21 @@ app.post('/bot', function(req, res) {
 
     var winner = getWinnerFromBotDriverOutput(stdout);
     console.log("Winner: " + winner);
-    if (name == winner) {
+    if (winner && winner == name) {
       writeWinningBot(name, code)
     }
 
     if (err) {
       res.send(err);
       executor.clean();
-    } else {
-      res.sendFile(executor.log_file, e => {
-        executor.clean();
-      });
+      return;
     }
+
+    fs.readFile(executor.log_file, (err, log) => {
+      res.send(log);
+      executor.clean();
+    })
+
   });
 });
 
@@ -107,8 +110,10 @@ function getWinnerFromBotDriverOutput(output) {
   var winners_split = winners.split(/"/);
   console.log("Lines: " + lines);
   console.log("Winners: " + winners);
-  if (winners_split.length > 4) {
+  if (winners_split.length == 3) {
     return winners_split[1];
+  } else {
+    return null;
   }
 }
 
