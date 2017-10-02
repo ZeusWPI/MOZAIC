@@ -64,6 +64,7 @@ class PlanetwarsClient {
     fileSelect.onchange = () => {
         var reader = new FileReader();
         reader.onload = (event) => {
+          this.blockly.clear();
           var xml = event.target.result;
           this.blockly.loadXml(xml);
         };
