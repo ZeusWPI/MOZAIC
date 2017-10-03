@@ -16,57 +16,69 @@ class Controls extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      hideBar: false
+      hideBar: false,
+      turn: 0,
+      running: false,
+      mod: 3
     };
+    this.props.model.turn_binder.registerCallback(t => {
+      this.setState({
+        turn: this.props.model.turn_binder.value
+      });
+    });
+    this.props.model.run_binder.registerCallback(t => {
+      this.setState({
+        running: this.props.model.run_binder.value
+      });
+    });
+    //this.mod = 3;
     /*
-    this.mod = 3;
+        this.hide('#unhide');
+        this.hide('#unhide_score');
+        this.show('#hide_score');
+        this.hide('#end_card');
+        this.hide('#pause');
 
-    this.hide('#unhide');
-    this.hide('#unhide_score');
-    this.show('#hide_score');
-    this.hide('#end_card');
-    this.hide('#pause');
+        d3.select('#hide').on("click", e => {
+          this.hide('#controlbar');
+          this.hide('#hide');
+          this.show('#unhide');
+        });
 
-    d3.select('#hide').on("click", e => {
-      this.hide('#controlbar');
-      this.hide('#hide');
-      this.show('#unhide');
-    });
+        d3.select('#unhide').on("click", e => {
+          this.show('#controlbar');
+          this.show('#hide');
+          this.hide('#unhide');
+        });
 
-    d3.select('#unhide').on("click", e => {
-      this.show('#controlbar');
-      this.show('#hide');
-      this.hide('#unhide');
-    });
+        d3.select('#hide_score').on("click", e => {
+          this.hide('#score');
+          this.hide('#hide_score');
+          this.show('#unhide_score');
+        });
 
-    d3.select('#hide_score').on("click", e => {
-      this.hide('#score');
-      this.hide('#hide_score');
-      this.show('#unhide_score');
-    });
+        d3.select('#unhide_score').on("click", e => {
+          this.show('#score');
+          this.show('#hide_score');
+          this.hide('#unhide_score');
+        });
 
-    d3.select('#unhide_score').on("click", e => {
-      this.show('#score');
-      this.show('#hide_score');
-      this.hide('#unhide_score');
-    });
+        d3.select('#hide_card').on("click", e => {
+          this.hide('#end_card');
+        });
 
-    d3.select('#hide_card').on("click", e => {
-      this.hide('#end_card');
-    });
-
-    const file_select = document.getElementById('file-select');
-    if (file_select != null) {
-      file_select.onchange = function() {
-        var reader = new FileReader();
-        reader.onload = event => {
-          var log = event.target.result;
-          visualizer.visualize(log);
-          visualizer.play();
-        };
-        reader.readAsText(file_select.files[0]);
-      };
-    }*/
+        const file_select = document.getElementById('file-select');
+        if (file_select != null) {
+          file_select.onchange = function() {
+            var reader = new FileReader();
+            reader.onload = event => {
+              var log = event.target.result;
+              visualizer.visualize(log);
+              visualizer.play();
+            };
+            reader.readAsText(file_select.files[0]);
+          };
+        }*/
   }
 
   attachEvents(model) {
@@ -186,29 +198,86 @@ class Controls extends React.Component {
           input({
             type: 'range',
             id: 'turn_slider',
-            defaultValue: '0',
-            className: 'control'
+            value: this.state.turn,
+            className: 'control',
+            max: this.props.model.maxTurns,
+            onChange: e => this.props.model.turn_binder.update(+e.target.value)
           }),
           div('.turncontrols', [
-            createButton('#tostart', '', 'fast-backward'),
-            createButton('#previous', '', 'step-backward'),
+            h(ControlButton, {
+              selector: '#to_start',
+              title: 'Go to start of the game',
+              icon: 'fast-backward',
+              callback: () => {
+                this.props.model.turn_binder.update(0);
+                this.props.model.run_binder.update(false);
+              }
+            }),
+            h(ControlButton, {
+              selector: '#previous',
+              title: 'Go back one turn',
+              icon: 'step-backward',
+              callback: () => {
+                this.props.model.turn_binder.update(this.props.model.turn_binder.value - 1);
+              }
+            }),
             h(ToggleButton, {
               selector: '#pause',
               title1: 'Pause game',
               title2: 'Play game',
               icon1: 'pause',
               icon2: 'play',
+              toggled: this.state.running,
               callback1: () => this.props.model.run_binder.update(true),
               callback2: () => this.props.model.run_binder.update(false)
             }),
-            createButton('#next', '', 'step-forward'),
-            createButton('#toend', '', 'fast-forward'),
-            p('#turn_progress', '100 / 100')
+            h(ControlButton, {
+              selector: '#next',
+              title: 'Go forward one turn',
+              icon: 'step-forward',
+              callback: () => {
+                this.props.model.turn_binder.update(this.props.model.turn_binder.value + 1);
+              }
+            }),
+            h(ControlButton, {
+              selector: '#to_end',
+              title: 'Go to end of the game',
+              icon: 'fast-forward',
+              callback: () => {
+                this.props.model.turn_binder.update(this.props.model.maxTurns);
+                this.props.model.run_binder.update(false);
+              }
+            }),
+            p('#turn_progress', `${this.props.model.turn_binder.value} / ${this.props.model.maxTurns}`)
           ]),
           div('.speedcontrols', [
-            p('.speed', 'Speed x1'),
-            createButton('#speeddown', '', 'minus'),
-            createButton('#speedup', '', 'plus')
+            p('.speed', `Speed x${Config.speed_mods[this.state.mod]}`),
+            h(ControlButton, {
+              selector: '#speed_down',
+              title: 'Lower speed',
+              icon: 'minus',
+              callback: () => {
+                if (this.state.mod > 0) {
+                  this.setState({
+                    mod: this.state.mod - 1
+                  });
+                  this.props.model.speed_binder.update(Config.base_speed / Config.speed_mods[this.state.mod]);
+                }
+              }
+            }),
+            h(ControlButton, {
+              selector: '#speed_up',
+              title: 'Increase speed',
+              icon: 'plus',
+              callback: () => {
+                if (this.state.mod < Config.speed_mods.length - 1) {
+                  this.setState({
+                    mod: this.state.mod + 1
+                  });
+                  this.props.model.speed_binder.update(Config.base_speed / Config.speed_mods[this.state.mod]);
+                }
+              }
+            })
           ])
         ])
       })
@@ -225,20 +294,39 @@ class HideableComponent extends React.Component {
 
 }
 
+class ControlButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.click = this.click.bind(this);
+  }
+
+  render() {
+    return button(`${this.props.selector}.control.control-button`, {
+      'title': this.props.title,
+      'type': 'button',
+      'aria-hidden': 'true',
+      'onClick': this.click
+    }, [
+      i(`.fa.fa-${this.props.icon}`)
+    ]);
+  }
+
+  click() {
+    this.props.callback();
+  }
+}
+
 class ToggleButton extends React.Component {
   constructor(props) {
     super(props);
-    this.toggled = false;
-    this.icon1 = this.props.icon1;
-    this.icon2 = this.props.icon2;
-    this.title1 = this.props.title1;
-    this.title2 = this.props.title2;
     this.state = {
-      icon: this.icon1,
-      title: this.title1
+      icon: this.props.icon1,
+      title: this.props.title1
     };
+    this.togged = this.props.toggled;
     this.toggle = this.toggle.bind(this);
   }
+
   render() {
     return button(`${this.props.selector}.control.control-button`, {
       'title': this.state.title,
@@ -251,17 +339,16 @@ class ToggleButton extends React.Component {
   }
 
   toggle() {
-    console.log('testing');
     if (this.toggled) {
       this.setState({
-        icon: this.icon1,
-        title: this.title1
+        icon: this.props.icon1,
+        title: this.props.title1
       });
       this.props.callback1();
     } else {
       this.setState({
-        icon: this.icon2,
-        title: this.title2
+        icon: this.props.icon2,
+        title: this.props.title2
       });
       this.props.callback2();
     }
