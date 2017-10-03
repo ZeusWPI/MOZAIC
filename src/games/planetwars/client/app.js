@@ -148,22 +148,22 @@ class PlanetwarsClient extends React.Component {
     });
   }
 
-  render() {
-    return h(MenuBar, {
-      viewState: this.state.viewState,
-      switchViewHandler: e => this.fabHandler(e)
-    });
-    if (this.state.mode == VISUALIZER_STATE) {
-      return React.createElement(Visualizer, {
-        log: this.state.log,
-        isVisualizing: this.state.isVisualizing
-      });
+  view() {
+    if (this.state.viewState == VIEW_STATE_BLOCKLY) {
+      return h(BlocklyComponent);
     } else {
-      return React.createElement(BlocklyComponent, {
-        shouldSubmit: this.state.shouldSubmit,
-        submitCallback: this.submitCallback
-      });
+      return h(Visualizer);
     }
+  }
+
+  render() {
+    return div('#box', [
+      h(MenuBar, {
+        viewState: this.state.viewState,
+        switchViewHandler: e => this.fabHandler(e)
+      }),
+      this.view()
+    ]);
   }
 }
 
