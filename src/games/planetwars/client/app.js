@@ -36,6 +36,10 @@ class MenuBar extends React.Component {
     super(props);
   }
 
+  handleNameChange(event) {
+    this.setState({ userName: event.target.value });
+  }
+
   view_state_button_icon() {
     if (this.props.viewState == VIEW_STATE_BLOCKLY) {
       return fa_icon('play');
@@ -50,7 +54,11 @@ class MenuBar extends React.Component {
         img({ src: 'res/logo.png', alt: 'MOZAIC' })
       ]),
       div('.uname-form', [
-        input('#uname', {type: 'text', value: 'bert'}),
+        input('#uname', {
+          type: 'text',
+          onChange: this.props.onNameChange,
+          value: this.props.userName
+        }),
         label('Username')
       ]),
       div('.enemy-form', [
@@ -81,8 +89,10 @@ class MenuBar extends React.Component {
 class PlanetwarsClient extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { viewState: VIEW_STATE_BLOCKLY };
-    this.submitCallback = this.codeSubmittedHandler.bind(this);
+    this.state = {
+      userName: 'RoboBert',
+      viewState: VIEW_STATE_BLOCKLY
+    };
   }
 
   setViewState(viewState) {
@@ -91,6 +101,10 @@ class PlanetwarsClient extends React.Component {
 
   setLog(log) {
     this.setState({ 'log': log });
+  }
+
+  handleNameChange(event) {
+    this.setState({'userName': event.target.value });
   }
 
   fabHandler(e) {
@@ -168,7 +182,7 @@ class PlanetwarsClient extends React.Component {
 
     xmlhttp.send(JSON.stringify({
       "code": this.blockly.getCode(),
-      "name": this.user_name
+      "name": this.state.userName
     }));
   }
 
@@ -188,7 +202,9 @@ class PlanetwarsClient extends React.Component {
     return div('#box', [
       h(MenuBar, {
         viewState: this.state.viewState,
-        switchViewHandler: e => this.fabHandler(e)
+        userName: this.state.userName,
+        switchViewHandler: e => this.fabHandler(e),
+        onNameChange: e => this.handleNameChange(e)
       }),
       this.view()
     ]);
