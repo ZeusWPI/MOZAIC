@@ -103,9 +103,6 @@ class PlanetwarsClient extends React.Component {
       this.setViewState(VIEW_STATE_BLOCKLY);
       // TODO: maybe move this
       window.dispatchEvent(new Event('resize'));
-      this.setState({
-        isVisualizing: false
-      });
     }
   }
 
@@ -177,7 +174,9 @@ class PlanetwarsClient extends React.Component {
 
   view() {
     if (this.state.viewState == VIEW_STATE_BLOCKLY) {
-      return h(BlocklyComponent);
+      return h(BlocklyComponent, {
+        ref: (blockly) => { this.blockly = blockly; }
+      });
     } else {
       return h(Visualizer, {
         'log': this.state.log
@@ -196,7 +195,8 @@ class PlanetwarsClient extends React.Component {
   }
 }
 
-//TODO only here for prototype
+// TODO only here for prototype
+// TODO: move to actual blockly package
 class BlocklyComponent extends React.Component {
   constructor(props) {
     super(props);
@@ -214,6 +214,10 @@ class BlocklyComponent extends React.Component {
     if (xml) {
       this.blockly.loadXml(xml);
     }
+  }
+
+  getCode() {
+    return this.blockly.getCode();
   }
 
   render() {
