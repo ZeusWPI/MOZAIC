@@ -16,6 +16,8 @@ const Visuals = require('./visuals');
 const Controls = require('./controls');
 const Game = require('./game');
 const Utils = require('./util');
+const ReactUtils = require('./react_utils');
+const HideableComponent = ReactUtils.HideableComponent;
 
 class Visualizer extends React.Component {
 
