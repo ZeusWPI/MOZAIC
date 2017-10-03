@@ -1,14 +1,8 @@
 const React = require('react');
 const h = require('react-hyperscript');
 const {
-  div,
-  span,
-  h1,
   button,
-  i,
-  input,
-  p,
-  svg
+  i
 } = require('hyperscript-helpers')(h);
 
 class ToggleButton extends React.Component {
@@ -18,7 +12,7 @@ class ToggleButton extends React.Component {
       icon: this.props.icon1,
       title: this.props.title1
     };
-    this.togged = this.props.toggled;
+    this.toggled = this.props.toggled;
     this.toggle = this.toggle.bind(this);
   }
 
@@ -80,8 +74,6 @@ class ControlButton extends React.Component {
     this.props.callback();
   }
 }
-
-
 
 module.exports = {
   HideableComponent,

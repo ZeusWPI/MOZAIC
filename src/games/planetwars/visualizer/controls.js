@@ -17,7 +17,6 @@ const HideableComponent = ReactUtils.HideableComponent;
 const ToggleButton = ReactUtils.ToggleButton;
 const ControlButton = ReactUtils.ControlButton;
 
-
 class Controls extends React.Component {
   constructor(props) {
     super(props);
@@ -89,7 +88,7 @@ class Controls extends React.Component {
               title2: 'Play game',
               icon1: 'pause',
               icon2: 'play',
-              toggled: this.state.running,
+              toggle: false,
               callback1: () => this.props.model.run_binder.update(true),
               callback2: () => this.props.model.run_binder.update(false)
             }),
