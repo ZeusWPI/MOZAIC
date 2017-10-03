@@ -1,5 +1,6 @@
 const Blockly = require('planetwars-blockly');
 const Visualizer = require('planetwars-visualizer');
+
 const React = require('react');
 const ReactDOM = require('react-dom');
 const h = require('react-hyperscript');
@@ -8,6 +9,8 @@ const {
   span,
   h1
 } = require('hyperscript-helpers')(h);
+
+const FileSaver = require('file-saver');
 
 const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
@@ -18,19 +21,30 @@ class PlanetwarsClient extends React.Component {
     this.state = {};
     this.submitCallback = this.codeSubmittedHandler.bind(this);
 
-
-
-
     // controls
-    this.fab = document.getElementById('fab');
+    
     this.fab.addEventListener('click', e => this.fabHandler(e));
 
+    this.switch_view_state = document.getElementById('switch_view_state');
+    this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
+    this.save_btn = document.getElementById('save');
+    this.save_btn.addEventListener('click', e => this.saveHandler(e));
+    this.load_btn = document.getElementById('load');
+    this.load_btn.addEventListener('click', e => this.loadHandler(e));
+
+    this.name_field = document.getElementById('uname');
+    this.user_name = this.name_field.value;
+    this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
+
+    this.blockly_div = document.getElementById('blockly');
+    this.visualizer_div = document.getElementById('visualizer');
   }
 
   componentDidMount() {
     // initial state
     this.setMode(BLOCKLY_STATE);
   }
+
 
   setMode(mode) {
     this.setState({
@@ -54,6 +68,39 @@ class PlanetwarsClient extends React.Component {
       window.dispatchEvent(new Event('resize'));
       this.setState({
         isVisualizing: false
+      });
+    }
+  }
+
+  saveHandler(e) {
+    console.log("SAVE");
+    var xml = this.blockly.getXml();
+    var file = new File([xml], "bot.xml", {type: "text/xml;charset=utf-8"});
+    FileSaver.saveAs(file);
+  }
+
+  loadHandler(e) {
+    console.log("LOAD");
+    var fileSelect = document.getElementById('file-input');
+    fileSelect.click();
+    fileSelect.onchange = () => {
+        var reader = new FileReader();
+        reader.onload = (event) => {
+          this.blockly.clear();
+          var xml = event.target.result;
+          this.blockly.loadXml(xml);
+        };
+      reader.readAsText(fileSelect.files[0]);
+    };
+  }    
+  
+  switch_view_stateHandler(e) {
+    if (this.state == BLOCKLY_STATE) {
+      this.submitCode(res => {
+        // visualize game
+        this.visualizer.visualize(res);
+        this.setState(VISUALIZER_STATE);
+        this.visualizer.play();
       });
     }
   }
@@ -130,7 +177,7 @@ class BlocklyComponent extends React.Component {
 
     var request = JSON.stringify({
       "code": this.blockly.getCode(),
-      "name": this.name
+      "name": this.user_name
     });
     xmlhttp.send(request);
   }
@@ -141,14 +188,5 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  var prompt = "What is your name? Don't be bert and don't use special characters, like bert, he's special.";
-  var def = "sadeerstejaar";
-  var name = window.prompt(prompt, def);
-
-  ReactDOM.render(
-    h(PlanetwarsClient, {
-      'name': name
-    }),
-    document.getElementById("box")
-  );
+  new PlanetwarsClient();
 };

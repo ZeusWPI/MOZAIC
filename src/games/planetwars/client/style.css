@@ -9,6 +9,88 @@ body {
   margin: 0;
 }
 
+header {
+  height: 48px;
+  display: grid;
+  grid-template-columns: auto auto 1fr 1fr;
+  grid-template-areas:
+    "logo uname enemy toolbar"
+}
+
+header figure.logo {
+  grid-area: logo;
+  display: inline-block;
+
+  margin: 0px 0px 0px 1em;
+  padding-top: 4px;
+}
+
+header figure img {
+  height: 40px;
+}
+
+.uname-form {
+  grid-area: uname;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column-reverse;
+  font-family: sans-serif;
+  margin-left: 1em;
+}
+
+.uname-form > label {
+  font-size: 10px;
+  color: gray;
+
+  -webkit-transition: all 0.30s ease-in-out;
+  -moz-transition: all 0.30s ease-in-out;
+  -ms-transition: all 0.30s ease-in-out;
+  -o-transition: all 0.30s ease-in-out;
+}
+
+#uname {
+  border: none;
+  border-bottom: 1px solid gray;
+  outline: none;
+
+  padding: 2px 0px;
+  font-size: 16px;
+  color: #FF7F00; /* color of caret */
+  -webkit-text-fill-color: black;
+
+  -webkit-transition: all 0.30s ease-in-out;
+  -moz-transition: all 0.30s ease-in-out;
+  -ms-transition: all 0.30s ease-in-out;
+  -o-transition: all 0.30s ease-in-out;
+}
+
+input[type=text]#uname:focus {
+  border-bottom: 1px solid #FF7F00;
+  outline: none;
+}
+
+input[type=text]#uname:focus + label {
+  color: #FF7F00;
+  font-size: 10px;
+}
+
+.enemy-form {
+  grid-area: enemy;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  flex-direction: column-reverse;
+  font-family: sans-serif;
+  margin-left: 1em;
+}
+
+.enemy-form > label {
+  font-size: 10px;
+  color: gray;
+  margin-bottom: 7px;
+}
+
 #box {
   height: 100vh;
   width: 100vw;
@@ -163,28 +245,42 @@ body {
   width: 100%;
 }
 
-#fab {
-  display: inline-block;
+.header-toolbar {
+  grid-area: toolbar;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  list-style: none;
+
+  height: 48px;
+  margin: 0;
+
+}
+
+.header-toolbar > li {
+  display: initial;
+  margin: 0px 3px;
+}
+
+.header-toolbar > li > button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #bf1e2e;
+  color: #fff;
   outline: none;
-  width: 60px;
-  height: 60px;
 
   text-align: center;
-  font-size: 32px;
+  font-size: 22px;
   z-index: 999;
-  background: #bf1e2e;;
-  color: #fff;
-  border-radius: 50%;
+
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
   border: 0;
   overflow: hidden;
-
-  position: fixed;
-  right: 30px;
-  bottom: 120px;
 }
 
-#fab:hover {
+.header-toolbar > li > button:hover {
   transform: scale(1.05);
 }
 
