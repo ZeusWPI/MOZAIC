@@ -21,8 +21,9 @@ const {
 
 const FileSaver = require('file-saver');
 
-const BLOCKLY_STATE = 'BLOCKLY';
-const VISUALIZER_STATE = 'VISUALIZER';
+// view states
+const VIEW_STATE_BLOCKLY = 'BLOCKLY';
+const VIEW_STATE_VISUALIZER = 'VISUALIZER';
 
 
 // TODO: move to some helpers module
@@ -33,6 +34,14 @@ function fa_icon(name) {
 class MenuBar extends React.Component {
   constructor(props) {
     super(props);
+  }
+
+  view_state_button_icon() {
+    if (this.props.viewState == VIEW_STATE_BLOCKLY) {
+      return fa_icon('play');
+    } else {
+      return fa_icon('code');
+    }
   }
 
   render() {
@@ -57,7 +66,11 @@ class MenuBar extends React.Component {
           button('#save', [fa_icon('floppy-o')])
         ]),
         li([
-          button('#switch_view_state', [fa_icon('play')])
+          button(
+            '#switch_view_state',
+            { onClick:  this.props.switchViewHandler },
+            [ this.view_state_button_icon() ]
+          )
         ])
       ])
     ]);
@@ -68,53 +81,24 @@ class MenuBar extends React.Component {
 class PlanetwarsClient extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {};
+    this.state = { viewState: VIEW_STATE_BLOCKLY };
     this.submitCallback = this.codeSubmittedHandler.bind(this);
-
-    // controls
-    
-    //this.fab.addEventListener('click', e => this.fabHandler(e));
-
-    this.switch_view_state = document.getElementById('switch_view_state');
-    this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
-    this.save_btn = document.getElementById('save');
-    this.save_btn.addEventListener('click', e => this.saveHandler(e));
-    this.load_btn = document.getElementById('load');
-    this.load_btn.addEventListener('click', e => this.loadHandler(e));
-
-    this.name_field = document.getElementById('uname');
-    this.user_name = this.name_field.value;
-    //this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
-
-    this.blockly_div = document.getElementById('blockly');
-    this.visualizer_div = document.getElementById('visualizer');
   }
 
-  componentDidMount() {
-    // initial state
-    this.setMode(BLOCKLY_STATE);
-  }
-
-
-  setMode(mode) {
+  setViewState(viewState) {
     this.setState({
-      'mode': mode
+      'viewState': viewState
     });
-    if (mode == BLOCKLY_STATE) {
-      //this.fab.innerHTML = fa_icon('play');
-    } else if (mode == VISUALIZER_STATE) {
-      //this.fab.innerHTML = fa_icon('code');
-    }
   }
 
   fabHandler(e) {
-    if (this.state.mode == BLOCKLY_STATE) {
-      this.setState({
-        shouldSubmit: true,
-        isVisualizing: true
-      });
-    } else if (this.state.mode == VISUALIZER_STATE) {
-      this.setMode(BLOCKLY_STATE);
+    if (this.state.viewState == VIEW_STATE_BLOCKLY) {
+      // TODO
+      // this.submitCode();
+      this.setViewState(VIEW_STATE_VISUALIZER);
+    } else if (this.state.viewState == VIEW_STATE_VISUALIZER ) {
+      this.setViewState(VIEW_STATE_BLOCKLY);
+      // TODO: maybe move this
       window.dispatchEvent(new Event('resize'));
       this.setState({
         isVisualizing: false
@@ -143,7 +127,8 @@ class PlanetwarsClient extends React.Component {
       reader.readAsText(fileSelect.files[0]);
     };
   }    
-  
+
+  // TODO: get rid of this
   switch_view_stateHandler(e) {
     if (this.state == BLOCKLY_STATE) {
       this.submitCode(res => {
@@ -164,7 +149,10 @@ class PlanetwarsClient extends React.Component {
   }
 
   render() {
-    return h(MenuBar);
+    return h(MenuBar, {
+      viewState: this.state.viewState,
+      switchViewHandler: e => this.fabHandler(e)
+    });
     if (this.state.mode == VISUALIZER_STATE) {
       return React.createElement(Visualizer, {
         log: this.state.log,
