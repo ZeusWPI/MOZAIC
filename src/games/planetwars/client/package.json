@@ -12,6 +12,7 @@
     "planetwars-visualizer": "file:../visualizer",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
-    "react-hyperscript": "^3.0.0"
+    "react-hyperscript": "^3.0.0",
+    "redux": "^3.7.2"
   }
 }
