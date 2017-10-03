@@ -114,9 +114,7 @@ class Visualizer extends React.Component {
   render() {
     return (
       div('#visualizer-root-node', [
-        svg('#score'),
-        createButton('#hide_score.close', 'Hide scoreboard', 'times'),
-        createButton('#unhide_score', 'Show scoreboard', 'chevron-left'),
+        h(Scoreboard),
         h(Controls, {
           'model': this.model
         }),
@@ -124,7 +122,6 @@ class Visualizer extends React.Component {
         h(HideableComponent, {
           hide: this.state.hide_card,
           render: div('#end_card', [
-            //createButton('#hide_card.close', 'Hide end card', 'times'),
             h(ControlButton, {
               selector: '#hide_card.close',
               title: 'Hide end card',
@@ -142,6 +139,43 @@ class Visualizer extends React.Component {
 
   componentDidMount() {
     this.visuals = new Visuals();
+  }
+}
+
+class Scoreboard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hide: false
+    };
+  }
+
+  render() {
+    return div('#scoreboard_wrapper', [
+      svg(`#score${this.state.hide?'.invisible':''}`),
+      h(HideableComponent, {
+        'hide': this.state.hide,
+        render: h(ControlButton, {
+          selector: '#hide_score.close',
+          title: 'Hide scoreboard',
+          icon: 'times',
+          callback: () => this.setState({
+            hide: true
+          })
+        })
+      }),
+      h(HideableComponent, {
+        hide: !this.state.hide,
+        render: h(ControlButton, {
+          selector: '#unhide_score',
+          title: 'Show scoreboard',
+          icon: 'chevron-left',
+          callback: () => this.setState({
+            hide: false
+          })
+        })
+      })
+    ]);
   }
 }
 
