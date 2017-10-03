@@ -81,15 +81,7 @@ class ControlButton extends React.Component {
   }
 }
 
-function createButton(selector, title, icon) {
-  return button(`${selector}.control.control-button`, {
-    'title': title,
-    'type': 'button',
-    'aria-hidden': 'true'
-  }, [
-    i(`.fa.fa-${icon}`)
-  ])
-}
+
 
 module.exports = {
   HideableComponent,

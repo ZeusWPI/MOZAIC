@@ -18,12 +18,16 @@ const Game = require('./game');
 const Utils = require('./util');
 const ReactUtils = require('./react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
+const ControlButton = ReactUtils.ControlButton;
 
 class Visualizer extends React.Component {
 
   constructor(props) {
     super(props);
     this.model = new Game();
+    this.state = {
+      hide_card: true
+    };
 
     // Speed property is already updated, resetting timer will use new speed
     this.model.speed_binder.registerCallback(s => {
@@ -50,7 +54,6 @@ class Visualizer extends React.Component {
     this.clear();
     this.model.init(log);
     this.visuals.init(this.model);
-    //this.controls.attachEvents(this.model);
     this.model.reset();
   }
 
@@ -118,10 +121,21 @@ class Visualizer extends React.Component {
           'model': this.model
         }),
         svg('#game'),
-        div('#end_card', [
-          createButton('#hide_card.close', 'Hide end card', 'times'),
-          p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
-        ])
+        h(HideableComponent, {
+          hide: this.state.hide_card,
+          render: div('#end_card', [
+            //createButton('#hide_card.close', 'Hide end card', 'times'),
+            h(ControlButton, {
+              selector: '#hide_card.close',
+              title: 'Hide end card',
+              icon: 'times',
+              callback: () => this.setState({
+                hide_card: true
+              })
+            }),
+            p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
+          ])
+        })
       ])
     );
   }
@@ -131,7 +145,6 @@ class Visualizer extends React.Component {
   }
 }
 
-//TODO move this
 function createButton(selector, title, icon) {
   return button(`${selector}.control.control-button`, {
     'title': title,
@@ -141,5 +154,4 @@ function createButton(selector, title, icon) {
     i(`.fa.fa-${icon}`)
   ])
 }
-
 module.exports = Visualizer;
