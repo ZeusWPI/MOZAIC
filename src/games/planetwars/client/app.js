@@ -23,7 +23,7 @@ class PlanetwarsClient extends React.Component {
 
     // controls
     
-    this.fab.addEventListener('click', e => this.fabHandler(e));
+    //this.fab.addEventListener('click', e => this.fabHandler(e));
 
     this.switch_view_state = document.getElementById('switch_view_state');
     this.switch_view_state.addEventListener('click', e => this.switch_view_stateHandler(e));
@@ -34,7 +34,7 @@ class PlanetwarsClient extends React.Component {
 
     this.name_field = document.getElementById('uname');
     this.user_name = this.name_field.value;
-    this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
+    //this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
 
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
@@ -188,5 +188,8 @@ function fa_icon(name) {
 }
 
 window.onload = function() {
-  new PlanetwarsClient();
+  ReactDOM.render(
+    h(PlanetwarsClient),
+    document.getElementById('root')
+  );
 };
