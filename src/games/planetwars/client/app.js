@@ -5,15 +5,65 @@ const React = require('react');
 const ReactDOM = require('react-dom');
 const h = require('react-hyperscript');
 const {
+  button,
   div,
+  figure,
+  h1,
+  header,
+  input,
+  label,
+  select,
+  img,
   span,
-  h1
+  ul,
+  li
 } = require('hyperscript-helpers')(h);
 
 const FileSaver = require('file-saver');
 
 const BLOCKLY_STATE = 'BLOCKLY';
 const VISUALIZER_STATE = 'VISUALIZER';
+
+
+// TODO: move to some helpers module
+function fa_icon(name) {
+  return h('i.fa.fa-' + name, { 'aria-hidden': true});
+}
+
+class MenuBar extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return header([
+      figure('.logo', [
+        img({ src: 'res/logo.png', alt: 'MOZAIC' })
+      ]),
+      div('.uname-form', [
+        input('#uname', {type: 'text', value: 'bert'}),
+        label('Username')
+      ]),
+      div('.enemy-form', [
+        select('#enemy'),
+        label('Enemy')
+      ]),
+      ul('.header-toolbar', [
+        li([
+          button('#load', [fa_icon('upload')]),
+          input('#file-input', { type: 'file', name: 'name', style: {display: 'none'} })
+        ]),
+        li([
+          button('#save', [fa_icon('floppy-o')])
+        ]),
+        li([
+          button('#switch_view_state', [fa_icon('play')])
+        ])
+      ])
+    ]);
+  }
+  
+}
 
 class PlanetwarsClient extends React.Component {
   constructor(props) {
@@ -51,9 +101,9 @@ class PlanetwarsClient extends React.Component {
       'mode': mode
     });
     if (mode == BLOCKLY_STATE) {
-      this.fab.innerHTML = fa_icon('play');
+      //this.fab.innerHTML = fa_icon('play');
     } else if (mode == VISUALIZER_STATE) {
-      this.fab.innerHTML = fa_icon('code');
+      //this.fab.innerHTML = fa_icon('code');
     }
   }
 
@@ -114,6 +164,7 @@ class PlanetwarsClient extends React.Component {
   }
 
   render() {
+    return h(MenuBar);
     if (this.state.mode == VISUALIZER_STATE) {
       return React.createElement(Visualizer, {
         log: this.state.log,
@@ -183,9 +234,6 @@ class BlocklyComponent extends React.Component {
   }
 }
 
-function fa_icon(name) {
-  return '<i class="fa fa-' + name + '" aria-hidden="true"></i>';
-}
 
 window.onload = function() {
   ReactDOM.render(
