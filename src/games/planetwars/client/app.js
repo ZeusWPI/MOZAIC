@@ -86,16 +86,19 @@ class PlanetwarsClient extends React.Component {
   }
 
   setViewState(viewState) {
-    this.setState({
-      'viewState': viewState
-    });
+    this.setState({ 'viewState': viewState });
+  }
+
+  setLog(log) {
+    this.setState({ 'log': log });
   }
 
   fabHandler(e) {
     if (this.state.viewState == VIEW_STATE_BLOCKLY) {
-      // TODO
-      // this.submitCode();
-      this.setViewState(VIEW_STATE_VISUALIZER);
+      this.submitCode(log => {
+        this.setLog(log);
+        this.setViewState(VIEW_STATE_VISUALIZER);
+      });
     } else if (this.state.viewState == VIEW_STATE_VISUALIZER ) {
       this.setViewState(VIEW_STATE_BLOCKLY);
       // TODO: maybe move this
@@ -148,11 +151,37 @@ class PlanetwarsClient extends React.Component {
     });
   }
 
+  // TODO: clean this up, maybe use a library
+  submitCode(callback) {
+    console.log(this.blockly.getCode());
+    
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", 'bot');
+    xmlhttp.setRequestHeader("Content-type", "application/json");
+    xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+        if (xmlhttp.status == 200) {
+          callback(xmlhttp.responseText);
+        } else {
+          console.log(xmlhttp);
+          alert(`ERROR ERROR ${xmlhttp.status} ${xmlhttp.responseText}`);
+        }
+      }
+    };
+
+    xmlhttp.send(JSON.stringify({
+      "code": this.blockly.getCode(),
+      "name": this.user_name
+    }));
+  }
+
   view() {
     if (this.state.viewState == VIEW_STATE_BLOCKLY) {
       return h(BlocklyComponent);
     } else {
-      return h(Visualizer);
+      return h(Visualizer, {
+        'log': this.state.log
+      });
     }
   }
 
@@ -187,38 +216,8 @@ class BlocklyComponent extends React.Component {
     }
   }
 
-  componentDidUpdate() {
-    if (this.props.shouldSubmit) {
-      this.submitCode(this.props.submitCallback);
-    }
-  }
-
   render() {
     return div('#blockly');
-  }
-
-  submitCode(callback) {
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", 'bot');
-    xmlhttp.setRequestHeader("Content-type", "application/json");
-    xmlhttp.onreadystatechange = function() {
-      if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-        if (xmlhttp.status == 200) {
-          callback(xmlhttp.responseText);
-        } else {
-          console.log(xmlhttp);
-          alert(`ERROR ERROR ${xmlhttp.status} ${xmlhttp.responseText}`);
-        }
-      }
-    };
-
-    console.log(this.blockly.getCode());
-
-    var request = JSON.stringify({
-      "code": this.blockly.getCode(),
-      "name": this.user_name
-    });
-    xmlhttp.send(request);
   }
 }
 
