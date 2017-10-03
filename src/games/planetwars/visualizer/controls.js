@@ -2,9 +2,23 @@ const d3 = require('d3');
 const Config = require('./config');
 const Utils = require('./util');
 const space_math = Utils.SpaceMath;
+const React = require('react');
+const h = require('react-hyperscript');
+const {
+  div,
+  button,
+  i,
+  input,
+  p
+} = require('hyperscript-helpers')(h);
 
-class Controls {
-  constructor() {
+class Controls extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hideBar: false
+    };
+    /*
     this.mod = 3;
 
     this.hide('#unhide');
@@ -52,7 +66,7 @@ class Controls {
         };
         reader.readAsText(file_select.files[0]);
       };
-    }
+    }*/
   }
 
   attachEvents(model) {
@@ -148,6 +162,122 @@ class Controls {
   show(id) {
     d3.select(id).classed("invisible", false);
   }
+
+  componentDidMount() {}
+
+  render() {
+    return div('#controls', [
+      h(ToggleButton, {
+        selector: '#hide',
+        title1: 'Hide Controls',
+        title2: 'Show Controls',
+        icon1: 'chevron-down',
+        icon2: 'chevron-up',
+        callback1: () => this.setState({
+          hideBar: true
+        }),
+        callback2: () => this.setState({
+          hideBar: false
+        })
+      }),
+      h(HideableComponent, {
+        hide: this.state.hideBar,
+        render: div('#controlbar', [
+          input({
+            type: 'range',
+            id: 'turn_slider',
+            defaultValue: '0',
+            className: 'control'
+          }),
+          div('.turncontrols', [
+            createButton('#tostart', '', 'fast-backward'),
+            createButton('#previous', '', 'step-backward'),
+            h(ToggleButton, {
+              selector: '#pause',
+              title1: 'Pause game',
+              title2: 'Play game',
+              icon1: 'pause',
+              icon2: 'play',
+              callback1: () => this.props.model.run_binder.update(true),
+              callback2: () => this.props.model.run_binder.update(false)
+            }),
+            createButton('#next', '', 'step-forward'),
+            createButton('#toend', '', 'fast-forward'),
+            p('#turn_progress', '100 / 100')
+          ]),
+          div('.speedcontrols', [
+            p('.speed', 'Speed x1'),
+            createButton('#speeddown', '', 'minus'),
+            createButton('#speedup', '', 'plus')
+          ])
+        ])
+      })
+    ]);
+  }
+}
+
+class HideableComponent extends React.Component {
+  render() {
+    if (this.props.hide)
+      return null;
+    return this.props.render;
+  }
+
+}
+
+class ToggleButton extends React.Component {
+  constructor(props) {
+    super(props);
+    this.toggled = false;
+    this.icon1 = this.props.icon1;
+    this.icon2 = this.props.icon2;
+    this.title1 = this.props.title1;
+    this.title2 = this.props.title2;
+    this.state = {
+      icon: this.icon1,
+      title: this.title1
+    };
+    this.toggle = this.toggle.bind(this);
+  }
+  render() {
+    return button(`${this.props.selector}.control.control-button`, {
+      'title': this.state.title,
+      'type': 'button',
+      'aria-hidden': 'true',
+      'onClick': this.toggle
+    }, [
+      i(`.fa.fa-${this.state.icon}`)
+    ]);
+  }
+
+  toggle() {
+    console.log('testing');
+    if (this.toggled) {
+      this.setState({
+        icon: this.icon1,
+        title: this.title1
+      });
+      this.props.callback1();
+    } else {
+      this.setState({
+        icon: this.icon2,
+        title: this.title2
+      });
+      this.props.callback2();
+    }
+    this.toggled = !this.toggled;
+  }
+}
+
+//TODO move this also this is duplicate prototype stuff ya kno
+function createButton(selector, title, icon) {
+  return button(`${selector}.control.control-button`, {
+    'title': title,
+    'type': 'button',
+    'aria-hidden': 'true'
+  }, [
+    i(`.fa.fa-${icon}`)
+  ])
 }
 
 module.exports = Controls;

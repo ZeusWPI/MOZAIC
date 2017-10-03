@@ -48,7 +48,7 @@ class Visualizer extends React.Component {
     this.clear();
     this.model.init(log);
     this.visuals.init(this.model);
-    this.controls.attachEvents(this.model);
+    //this.controls.attachEvents(this.model);
     this.model.reset();
   }
 
@@ -112,30 +112,9 @@ class Visualizer extends React.Component {
         svg('#score'),
         createButton('#hide_score.close', 'Hide scoreboard', 'times'),
         createButton('#unhide_score', 'Show scoreboard', 'chevron-left'),
-        createButton('#hide', 'Hide controls', 'chevron-down'),
-        createButton('#unhide', 'Show controls', 'chevron-up'),
-        div('#controlbar', [
-          input({
-            type: 'range',
-            id: 'turn_slider',
-            defaultValue: '0',
-            className: 'control'
-          }),
-          div('.turncontrols', [
-            createButton('#tostart', '', 'fast-backward'),
-            createButton('#previous', '', 'step-backward'),
-            createButton('#play', '', 'play'),
-            createButton('#pause', '', 'pause'),
-            createButton('#next', '', 'step-forward'),
-            createButton('#toend', '', 'fast-forward'),
-            p('#turn_progress', '100 / 100')
-          ]),
-          div('.speedcontrols', [
-            p('.speed', 'Speed x1'),
-            createButton('#speeddown', '', 'minus'),
-            createButton('#speedup', '', 'plus')
-          ])
-        ]),
+        h(Controls, {
+          'model': this.model
+        }),
         svg('#game'),
         div('#end_card', [
           createButton('#hide_card.close', 'Hide end card', 'times'),
@@ -146,7 +125,6 @@ class Visualizer extends React.Component {
   }
 
   componentDidMount() {
-    this.controls = new Controls(this);
     this.visuals = new Visuals();
   }
 }
