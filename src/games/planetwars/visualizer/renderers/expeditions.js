@@ -47,9 +47,9 @@ class ExpeditionRenderer {
       .style('stroke-width', 0.05 * scale)
       .attr('fill', exp => "url(#ship)")
       .merge(ships)
-      .style('stroke', exp => this.ownerColor(exp))
+      .style('stroke', exp => Config.player_color(exp.owner))
       .attr('transform', exp => `rotate(${this.expeditionRotation(exp)})`)
-      .append('title').text(exp => this.ownerName(exp.owner));
+      .append('title').text(exp => Config.player_name(exp.owner));
   }
 
   expeditionPos(expedition) {
@@ -80,21 +80,6 @@ class ExpeditionRenderer {
       expedition.destination.x - expedition.origin.x
     );
     return (angle + 45) % 360;
-  }
-
-  // TODO: dedup
-  ownerName(owner) {
-    if (owner) {
-      return owner;
-    } else {
-      // TODO: maybe inject this config
-      return Config.visual_null;
-    }
-  }
-
-  ownerColor(owner) {
-    // TODO
-    return '#d3d3d3';
   }
 }
 

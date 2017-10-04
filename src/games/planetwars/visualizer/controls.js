@@ -24,7 +24,7 @@ class Controls extends React.Component {
       hideBar: false,
       turn: 0,
       running: false,
-      mod: 3
+      speed: 1
     };
     return;
     this.props.model.turn_binder.registerCallback(t => {
@@ -113,7 +113,7 @@ class Controls extends React.Component {
             p('#turn_progress', `${this.props.turnNum} / ${this.props.numTurns}`)
           ]),
           div('.speedcontrols', [
-            p('.speed', `Speed x${Config.speed_mods[this.state.mod]}`),
+            p('.speed', `Speed x${this.state.speed}`),
             h(ControlButton, {
               selector: '#speed_down',
               title: 'Lower speed',

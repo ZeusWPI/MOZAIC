@@ -1,31 +1,26 @@
-class Config {
-  static get planet_types() {
-    return ["earth", "jupiter", "mars", "neptune", "sun", "uranus", "venus"];
+// miscellaneous data and general functions
+module.exports = {
+  planet_types: [
+    'earth',
+    'jupiter',
+    'mars',
+    'neptune',
+    'sun',
+    'uranus',
+    'venus'
+  ],
+  max_planet_size: 2.5,
+  orbit_size: 1,
+  max_scales: [0.3, 3],
+  player_color: player => {
+    //TODO
+    return '#d3d3d3';
+  },
+  player_name: player => {
+    if (player) {
+      return player;
+    } else {
+      return 'Nobody';
+    }
   }
-
-  static get max_planet_size() {
-    return 2.5;
-  }
-
-  static get orbit_size() {
-    return 1;
-  }
-
-  static get base_speed() {
-    return 2000;
-  }
-
-  static get speed_mods() {
-    return [0.33, 0.5, 0.75, 1, 2, 4, 6, 10];
-  }
-
-  static get max_scales() {
-    return [0.3, 3];
-  }
-
-  static get visual_null() {
-    return 'Nobody';
-  }
-}
-
-module.exports = Config;
+};

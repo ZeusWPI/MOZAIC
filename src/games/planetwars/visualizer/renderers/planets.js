@@ -32,7 +32,7 @@ class PlanetRenderer {
       .attr('class', 'background')
       .attr('r', d => d.size)
       .merge(backgrounds)
-      .attr('fill', d => this.ownerColor(d.owner));
+      .attr('fill', d => Config.player_color(d.owner));
   }
 
   drawModels(planets) {
@@ -49,12 +49,12 @@ class PlanetRenderer {
 
     orbits.enter().append('circle')
       .attr('class', 'orbit')
-      .attr('r', d => this.orbitSize(d))
+      .attr('r', d => d.size + Config.orbit_size)
       .style('fill', 'none')
       .style('stroke-opacity', 0.5)
       .style('stroke-width', 0.05)
       .merge(orbits)
-      .style('stroke', d => this.ownerColor(d.owner));
+      .style('stroke', d => Config.player_color(d.owner));
   }
 
   drawTitles(planets) {
@@ -63,7 +63,7 @@ class PlanetRenderer {
     titles.enter().append('title')
       .attr('class', 'title')
       .merge(titles)
-      .text(d => this.ownerName(d.owner));
+      .text(d => Config.player_name(d.owner));
   }
 
   drawNameLabels(planets) {
@@ -79,7 +79,7 @@ class PlanetRenderer {
       .attr("font-size", 1 * scale + "px")
       .text(d => d.name)
       .merge(labels)
-      .attr('fill', d => this.ownerColor(d.owner));
+      .attr('fill', d => Config.player_color(d.owner));
   }
 
   drawShipCounts(planets) {
@@ -94,29 +94,9 @@ class PlanetRenderer {
       .attr("font-family", "sans-serif")
       .attr("font-size", 1 * scale + "px")
       .merge(labels)
-      .attr('fill', d => this.ownerColor(d.owner))
+      .attr('fill', d => Config.player_color(d.owner))
       .text(d => "\u2694 " + d.ship_count);
   }
-
-  ownerName(owner) {
-    if (owner) {
-      return owner;
-    } else {
-      // TODO: maybe inject this config
-      return Config.visual_null;
-    }
-  }
-
-  ownerColor(owner) {
-    // TODO
-    return '#d3d3d3';
-  }
-
-  orbitSize(planet) {
-    // TODO: scale
-    return planet.size + Config.orbit_size;
-  }
-
 }
 
 module.exports = PlanetRenderer;
