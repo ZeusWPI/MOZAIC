@@ -1,6 +1,8 @@
 const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
+const VisualsHelper = require('./visualsHelper');
+
 
 class Renderer extends React.Component {
   componentDidUpdate() {
@@ -9,7 +11,12 @@ class Renderer extends React.Component {
   }
 
   componentDidMount() {
+    this.loadResources();
     this.container = d3.select(this.svg).append('g');
+  }
+  
+  render() {
+    return h('svg.game-svg', { ref: (svg) => { this.svg = svg; } });
   }
 
   calculateViewBox() {
@@ -27,10 +34,12 @@ class Renderer extends React.Component {
     let viewBox = `${x_min} ${y_min} ${x_width} ${y_width}`;
     d3.select(this.svg).attr('viewBox', viewBox);
   }
-  
-  render() {
-    return h('svg.game-svg', { ref: (svg) => { this.svg = svg; } });
+
+  loadResources() {
+    // TODO: improve API
+    new VisualsHelper.ResourceLoader(d3.select(this.svg)).setupPatterns();
   }
+
 }
 
 module.exports = Renderer;
