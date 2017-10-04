@@ -18,11 +18,19 @@ class ExpeditionRenderer {
     selector.exit().remove();
     let expeditions = selector.enter().append('g')
         .attr('class', 'expedition')
-        .merge(selector)
         .attr('transform', d => {
           let pos = this.expeditionPos(d);
           return `translate(${pos.x}, ${pos.y})`;
-        });
+        }).merge(selector);
+    
+    // TODO: fetch speed or something
+    expeditions.transition()
+      .duration(1000)
+      .ease(d3.easeLinear)
+      .attr('transform', d => {
+        let pos = this.expeditionPos(d);
+        return `translate(${pos.x}, ${pos.y})`;
+      });
 
     this.drawShips(expeditions);
   }
