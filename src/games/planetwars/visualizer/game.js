@@ -5,13 +5,8 @@ const Utils = require('./util');
 const DataBinder = Utils.DataBinder;
 const space_math = Utils.SpaceMath;
 
-
-
 class Game {
   constructor() {
-    this.speed_binder = new DataBinder(Config.base_speed);
-    this.turn_binder = new DataBinder(0);
-    this.run_binder = new DataBinder(false);
     this.winner = null;
   }
 
@@ -63,22 +58,21 @@ class Game {
 
 class Turn {
   constructor(turn) {
-    this.players = turn.players;
     this.planets = turn.planets.map(planet => {
       return new Planet(planet);
     });
     this.expeditions = turn.expeditions.map(exp => {
       return new Expedition(exp);
     });
-    this.calculateTurnScore();
+    this.calculateTurnScore(turn.players);
   }
 
-  calculateTurnScore() {
-    //TODO this calculation should perhaps be done in the backend
-    this.scores = [];
+  calculateTurnScore(players) {
+    this.players = [];
     var strengths = [];
     var total_strength = 0;
-    this.players.forEach(player => {
+
+    players.forEach(player => {
       var planets = 0;
       var strength = 0;
       this.planets.forEach(planet => {
@@ -94,7 +88,7 @@ class Turn {
           expeditions++;
         }
       });
-      this.scores.push({
+      this.players.push({
         player: player,
         planets: planets,
         expeditions: expeditions
@@ -102,7 +96,7 @@ class Turn {
       total_strength += strength;
       strengths.push(strength);
     });
-    this.scores.forEach(s => {
+    this.players.forEach(s => {
       s.strengths = strengths;
       s.total_strength = total_strength;
     });

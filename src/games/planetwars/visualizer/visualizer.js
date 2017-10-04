@@ -39,41 +39,38 @@ class Visualizer extends React.Component {
   setTimer() {
     if (this.timer) {
       // remove old timerx
-      this.timer.stop();  
+      this.timer.stop();
     }
-    // step frequency in Hz
-    var freq = 1000 / this.state.speed;
-    this.timer = d3.interval(t => this.nextTurn(), freq);
+    // speed is in Hz
+    var delay = 1000 / this.state.speed;
+    this.timer = d3.interval(t => this.nextTurn(), delay);
   }
 
   visualize(log) {
     // todo: make less ugly
     let game = new Game();
-    this.turns = game.parseJSON(log);
+    this.turns = game.init(log);
     // TODO: this should not happen here
     VisualsHelper.Preprocessor.preprocess(this.turns);
   }
 
-  clear() {
-  }
+  clear() {}
 
-  play() {
-  }
+  play() {}
 
-  pause() {
-  }
+  pause() {}
 
   nextTurn() {
     this.setState((prevState) => {
       return Object.assign(
-        prevState,
-        { turnNum: prevState.turnNum + 1 }
+        prevState, {
+          turnNum: prevState.turnNum + 1
+        }
       );
     });
   }
 
-  previousTurn() {
-  }
+  previousTurn() {}
 
   _startTimer() {
     var callback = elapsed => {
