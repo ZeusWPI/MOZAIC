@@ -3,7 +3,7 @@ const React = require('react');
 const h = require('react-hyperscript');
 const VisualsHelper = require('./visualsHelper');
 
-const PlanetRenderer = require('./renderer/planets');
+const PlanetRenderer = require('./renderers/planets');
 
 
 class Renderer extends React.Component {
@@ -11,7 +11,6 @@ class Renderer extends React.Component {
     this.calculateViewBox();
     console.log(this.props.turn);
     this.draw();
-
   }
 
   componentDidMount() {
