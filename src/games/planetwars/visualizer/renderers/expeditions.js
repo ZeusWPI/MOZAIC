@@ -53,7 +53,6 @@ class ExpeditionRenderer {
   }
 
   expeditionPos(expedition) {
-    console.log(expedition);
     var total_distance = Math.ceil(
       space_math.euclideanDistance(
         expedition.origin,

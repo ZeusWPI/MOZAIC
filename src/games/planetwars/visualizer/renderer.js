@@ -31,7 +31,7 @@ class Renderer extends React.Component {
     let orbit_size = 5;
     let offset = orbit_size + padding;
     let ps = this.props.turn.planets;
-    let x_min = d3.min(ps, p => p.x - p.size) + offset;
+    let x_min = d3.min(ps, p => p.x - p.size) - offset;
     let x_max = d3.max(ps, p => p.x + p.size) + offset;
     let y_min = d3.min(ps, p => p.y - p.size) - offset;
     let y_max = d3.max(ps, p => p.y + p.size) + offset;
