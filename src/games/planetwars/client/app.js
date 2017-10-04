@@ -149,18 +149,6 @@ class PlanetwarsClient extends React.Component {
     };
   }    
 
-  // TODO: get rid of this
-  switch_view_stateHandler(e) {
-    if (this.state == BLOCKLY_STATE) {
-      this.submitCode(res => {
-        // visualize game
-        this.visualizer.visualize(res);
-        this.setState(VISUALIZER_STATE);
-        this.visualizer.play();
-      });
-    }
-  }
-
   // TODO: clean this up, maybe use a library for this request
   submitCode(callback) {
     console.log(this.blockly.getCode());
