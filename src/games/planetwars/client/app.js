@@ -140,12 +140,11 @@ class PlanetwarsClient extends React.Component {
     var fileSelect = document.getElementById('file-input');
     fileSelect.click();
     fileSelect.onchange = () => {
-        var reader = new FileReader();
-        reader.onload = (event) => {
-          this.blockly.clear();
-          var xml = event.target.result;
-          this.blockly.loadXml(xml);
-        };
+      var reader = new FileReader();
+      reader.onload = (event) => {
+        var xml = event.target.result;
+        this.blockly.loadXml(xml);
+      };
       reader.readAsText(fileSelect.files[0]);
     };
   }    
@@ -240,6 +239,11 @@ class BlocklyComponent extends React.Component {
 
   getXml() {
     return this.blockly.getXml();
+  }
+
+  loadXml(xml) {
+    this.blockly.clear();
+    this.blockly.loadXml(xml);
   }
 
   render() {
