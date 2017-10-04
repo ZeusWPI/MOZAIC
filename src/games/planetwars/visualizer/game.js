@@ -56,6 +56,7 @@ class Game {
   }
 
   get maxTurns() {
+    if (!this.turns) return 0;
     return this.turns.length - 1;
   }
 }

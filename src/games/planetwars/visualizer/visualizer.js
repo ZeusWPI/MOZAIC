@@ -16,12 +16,18 @@ const Visuals = require('./visuals');
 const Controls = require('./controls');
 const Game = require('./game');
 const Utils = require('./util');
+const ReactUtils = require('./react_utils');
+const HideableComponent = ReactUtils.HideableComponent;
+const ControlButton = ReactUtils.ControlButton;
 
 class Visualizer extends React.Component {
 
   constructor(props) {
     super(props);
     this.model = new Game();
+    this.state = {
+      hide_card: true
+    };
 
     // Speed property is already updated, resetting timer will use new speed
     this.model.speed_binder.registerCallback(s => {
@@ -48,7 +54,6 @@ class Visualizer extends React.Component {
     this.clear();
     this.model.init(log);
     this.visuals.init(this.model);
-    this.controls.attachEvents(this.model);
     this.model.reset();
   }
 
@@ -109,57 +114,69 @@ class Visualizer extends React.Component {
   render() {
     return (
       div('#visualizer-root-node', [
-        svg('#score'),
-        createButton('#hide_score.close', 'Hide scoreboard', 'times'),
-        createButton('#unhide_score', 'Show scoreboard', 'chevron-left'),
-        createButton('#hide', 'Hide controls', 'chevron-down'),
-        createButton('#unhide', 'Show controls', 'chevron-up'),
-        div('#controlbar', [
-          input({
-            type: 'range',
-            id: 'turn_slider',
-            value: 0,
-            className: 'control'
-          }),
-          div('.turncontrols', [
-            createButton('#tostart', '', 'fast-backward'),
-            createButton('#previous', '', 'step-backward'),
-            createButton('#play', '', 'play'),
-            createButton('#pause', '', 'pause'),
-            createButton('#next', '', 'step-forward'),
-            createButton('#toend', '', 'fast-forward'),
-            p('#turn_progress', '100 / 100')
-          ]),
-          div('.speedcontrols', [
-            p('.speed', 'Speed x1'),
-            createButton('#speeddown', '', 'minus'),
-            createButton('#speedup', '', 'plus')
-          ])
-        ]),
+        h(Scoreboard),
+        h(Controls, {
+          'model': this.model
+        }),
         svg('#game'),
-        div('#end_card', [
-          createButton('#hide_card.close', 'Hide end card', 'times'),
-          p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
-        ])
+        h(HideableComponent, {
+          hide: this.state.hide_card,
+          render: div('#end_card', [
+            h(ControlButton, {
+              selector: '#hide_card.close',
+              title: 'Hide end card',
+              icon: 'times',
+              callback: () => this.setState({
+                hide_card: true
+              })
+            }),
+            p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
+          ])
+        })
       ])
     );
   }
 
   componentDidMount() {
-    this.controls = new Controls(this);
     this.visuals = new Visuals();
   }
 }
 
-//TODO move this
-function createButton(selector, title, icon) {
-  return button(`${selector}.control.control-button`, {
-    'title': title,
-    'type': 'button',
-    'aria-hidden': 'true'
-  }, [
-    i(`.fa.fa-${icon}`)
-  ])
+class Scoreboard extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      hide: false
+    };
+  }
+
+  render() {
+    return div('#scoreboard_wrapper', [
+      svg(`#score${this.state.hide?'.invisible':''}`),
+      h(HideableComponent, {
+        'hide': this.state.hide,
+        render: h(ControlButton, {
+          selector: '#hide_score.close',
+          title: 'Hide scoreboard',
+          icon: 'times',
+          callback: () => this.setState({
+            hide: true
+          })
+        })
+      }),
+      h(HideableComponent, {
+        hide: !this.state.hide,
+        render: h(ControlButton, {
+          selector: '#unhide_score',
+          title: 'Show scoreboard',
+          icon: 'chevron-left',
+          callback: () => this.setState({
+            hide: false
+          })
+        })
+      })
+    ]);
+  }
 }
 
 module.exports = Visualizer;
