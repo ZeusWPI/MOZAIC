@@ -42,14 +42,17 @@ class Visualizer extends React.Component {
       this.timer.stop();  
     }
     // step frequency in Hz
+    // LOL
     var freq = 1000 / this.state.speed;
     this.timer = d3.interval(t => this.nextTurn(), freq);
   }
 
   visualize(log) {
     // todo: make less ugly
+    // kek kek
     let game = new Game();
     game.init(log);
+    // vandalisme
     this.turns = game.turns;
     // TODO: this should not happen here
     VisualsHelper.Preprocessor.preprocess(this.turns);
