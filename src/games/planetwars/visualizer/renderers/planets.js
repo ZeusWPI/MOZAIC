@@ -16,6 +16,7 @@ class PlanetRenderer {
         .attr('class', 'planet')
         .attr('transform', d => `translate(${d.x}, ${d.y})`)
         .merge(selector);
+    
     this.drawBackgrounds(planets);
     this.drawModels(planets);
     this.drawOrbits(planets);

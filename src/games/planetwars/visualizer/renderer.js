@@ -4,6 +4,7 @@ const h = require('react-hyperscript');
 const VisualsHelper = require('./visualsHelper');
 
 const PlanetRenderer = require('./renderers/planets');
+const ExpeditionRenderer = require('./renderers/expeditions');
 
 
 class Renderer extends React.Component {
@@ -17,6 +18,7 @@ class Renderer extends React.Component {
     this.loadResources();
     this.container = d3.select(this.svg).append('g');
     this.planetRenderer = new PlanetRenderer(this.container);
+    this.expeditionRenderer = new ExpeditionRenderer(this.container);
   }
   
   render() {
@@ -46,6 +48,7 @@ class Renderer extends React.Component {
 
   draw() {
     this.planetRenderer.draw(this.props.turn.planets);
+    this.expeditionRenderer.draw(this.props.turn.expeditions);
   }
 }
 
