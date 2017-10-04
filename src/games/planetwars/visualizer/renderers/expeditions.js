@@ -13,7 +13,7 @@ class ExpeditionRenderer {
     return this.container.selectAll('.expedition').data(data, e => e.id);
   }
 
-  draw(data) {
+  draw(data, params) {
     let selector = this.bind(data);
     selector.exit().remove();
     let expeditions = selector.enter().append('g')
@@ -25,26 +25,24 @@ class ExpeditionRenderer {
     
     // TODO: fetch speed or something
     expeditions.transition()
-      .duration(1000)
+      .duration(1000/params.speed)
       .ease(d3.easeLinear)
       .attr('transform', d => {
         let pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       });
 
-    this.drawShips(expeditions);
+    this.drawShips(expeditions, params);
   }
 
-  drawShips(expeditions) {
-    // TODO: scale
-    let scale = 0.75;
+  drawShips(expeditions, params) {
     let ships = expeditions.selectAll('.ship').data(d => [d]);
 
     ships.enter().append('rect')
       .attr('class', 'ship')
-      .attr('width', 1 * scale)
-      .attr('height', 1 * scale)
-      .style('stroke-width', 0.05 * scale)
+      .attr('width', 1 * params.scale)
+      .attr('height', 1 * params.scale)
+      .style('stroke-width', 0.05 * params.scale)
       .attr('fill', exp => "url(#ship)")
       .merge(ships)
       .style('stroke', exp => Config.player_color(exp.owner))

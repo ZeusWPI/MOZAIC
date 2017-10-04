@@ -10,7 +10,7 @@ class PlanetRenderer {
     return this.container.selectAll('.planet').data(data, p => p.name);
   }
   
-  draw(data) {
+  draw(data, params) {
     let selector = this.bind(data);
     let planets = selector.enter().append('g')
         .attr('class', 'planet')
@@ -21,8 +21,8 @@ class PlanetRenderer {
     this.drawModels(planets);
     this.drawOrbits(planets);
     this.drawTitles(planets);
-    this.drawNameLabels(planets);
-    this.drawShipCounts(planets);
+    this.drawNameLabels(planets, params);
+    this.drawShipCounts(planets, params);
   }
 
   drawBackgrounds(planets) {
@@ -66,33 +66,27 @@ class PlanetRenderer {
       .text(d => Config.player_name(d.owner));
   }
 
-  drawNameLabels(planets) {
-    // TODO: scale
-    let scale = 0.75;
-    
+  drawNameLabels(planets, params) {
     let labels = planets.selectAll('.name').data(d => [d]);
     
     labels.enter().append('text')
       .attr('class', 'name')
-      .attr('y', d => d.size + 2 * scale)
+      .attr('y', d => d.size + 2 * params.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * scale + "px")
+      .attr("font-size", 1 * params.scale + "px")
       .text(d => d.name)
       .merge(labels)
       .attr('fill', d => Config.player_color(d.owner));
   }
 
-  drawShipCounts(planets) {
-    // TODO: scale
-    let scale = 0.75;
-
+  drawShipCounts(planets, params) {
     let labels = planets.selectAll('.ship_count').data(d => [d]);
     
     labels.enter().append('text')
       .attr('class', 'ship_count')
-      .attr('y', d => d.size + 3.5 * scale)
+      .attr('y', d => d.size + 3.5 * params.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * scale + "px")
+      .attr("font-size", 1 * params.scale + "px")
       .merge(labels)
       .attr('fill', d => Config.player_color(d.owner))
       .text(d => "\u2694 " + d.ship_count);

@@ -47,8 +47,10 @@ class Renderer extends React.Component {
   }
 
   draw() {
-    this.planetRenderer.draw(this.props.turn.planets);
-    this.expeditionRenderer.draw(this.props.turn.expeditions);
+    // TODO: hook this up
+    let params = { speed: 1, scale: 0.75 };
+    this.planetRenderer.draw(this.props.turn.planets, params);
+    this.expeditionRenderer.draw(this.props.turn.expeditions, params);
   }
 }
 
