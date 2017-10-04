@@ -18,6 +18,7 @@ class PlanetRenderer {
         .merge(selector);
     this.drawBackgrounds(planets);
     this.drawModels(planets);
+    this.drawOrbits(planets);
     this.drawTitles(planets);
     this.drawNameLabels(planets);
     this.drawShipCounts(planets);
@@ -42,10 +43,24 @@ class PlanetRenderer {
       .attr('fill', d => `url(#${d.type})`);
   }
 
+  drawOrbits(planets) {
+    let orbits = planets.selectAll('.orbit').data(d => [d]);
+
+    orbits.enter().append('circle')
+      .attr('class', 'orbit')
+      .attr('r', d => this.orbitSize(d))
+      .style('fill', 'none')
+      .style('stroke-opacity', 0.5)
+      .style('stroke-width', 0.05)
+      .merge(orbits)
+      .style('stroke', d => this.ownerColor(d.owner));
+  }
+
   drawTitles(planets) {
     let titles = planets.selectAll('.title').data(d => [d]);
     
     titles.enter().append('title')
+      .attr('class', 'title')
       .merge(titles)
       .text(d => this.ownerName(d.owner));
   }
@@ -94,6 +109,11 @@ class PlanetRenderer {
   ownerColor(owner) {
     // TODO
     return '#d3d3d3';
+  }
+
+  orbitSize(planet) {
+    // TODO: scale
+    return planet.size + Config.orbit_size;
   }
 
 }
