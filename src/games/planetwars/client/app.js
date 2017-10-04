@@ -67,11 +67,19 @@ class MenuBar extends React.Component {
       ]),
       ul('.header-toolbar', [
         li([
-          button('#load', [fa_icon('upload')]),
+          button(
+            '#load',
+            { onClick: this.props.loadHandler },
+            [fa_icon('upload')]
+          ),
           input('#file-input', { type: 'file', name: 'name', style: {display: 'none'} })
         ]),
         li([
-          button('#save', [fa_icon('floppy-o')])
+          button(
+            '#save',
+            { onClick: this.props.saveHandler },
+            [fa_icon('floppy-o')]
+          )
         ]),
         li([
           button(
@@ -154,15 +162,7 @@ class PlanetwarsClient extends React.Component {
     }
   }
 
-  codeSubmittedHandler(res) {
-    this.state.shouldSubmit = false;
-    this.setMode(VISUALIZER_STATE);
-    this.setState({
-      log: res
-    });
-  }
-
-  // TODO: clean this up, maybe use a library
+  // TODO: clean this up, maybe use a library for this request
   submitCode(callback) {
     console.log(this.blockly.getCode());
     
@@ -204,6 +204,8 @@ class PlanetwarsClient extends React.Component {
         viewState: this.state.viewState,
         userName: this.state.userName,
         switchViewHandler: e => this.fabHandler(e),
+        saveHandler: e => this.saveHandler(e),
+        loadHandler: e => this.loadHandler(e),
         onNameChange: e => this.handleNameChange(e)
       }),
       this.view()
@@ -234,6 +236,10 @@ class BlocklyComponent extends React.Component {
 
   getCode() {
     return this.blockly.getCode();
+  }
+
+  getXml() {
+    return this.blockly.getXml();
   }
 
   render() {
