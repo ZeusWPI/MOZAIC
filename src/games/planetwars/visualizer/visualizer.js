@@ -20,6 +20,7 @@ const ReactUtils = require('./react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
 const Renderer = require('./renderer');
+const VisualsHelper = require('./visualsHelper');
 
 class Visualizer extends React.Component {
 
@@ -28,16 +29,29 @@ class Visualizer extends React.Component {
     this.model = new Game();
     this.state = {
       hide_card: true,
-      turnNum: 0
+      turnNum: 0,
+      speed: 1
     };
 
     this.turns = [];
+  }
+
+  setTimer() {
+    if (this.timer) {
+      // remove old timerx
+      this.timer.stop();  
+    }
+    // step frequency in Hz
+    var freq = 1000 / this.state.speed;
+    this.timer = d3.interval(t => this.nextTurn(), freq);
   }
 
   visualize(log) {
     // todo: make less ugly
     let game = new Game();
     this.turns = game.parseJSON(log);
+    // TODO: this should not happen here
+    VisualsHelper.Preprocessor.preprocess(this.turns);
   }
 
   clear() {
@@ -50,6 +64,12 @@ class Visualizer extends React.Component {
   }
 
   nextTurn() {
+    this.setState((prevState) => {
+      return Object.assign(
+        prevState,
+        { turnNum: prevState.turnNum + 1 }
+      );
+    });
   }
 
   previousTurn() {
@@ -59,27 +79,26 @@ class Visualizer extends React.Component {
     var callback = elapsed => {
       this.nextTurn();
     };
-    this.turn_timer = d3.interval(callback, this.model.speed_binder.value);
-
+    //this.turn_timer = d3.interval(callback, this.speed);
   }
 
   _stopTimer() {
     if (this.turn_timer) {
-      this.turn_timer.stop();
+      //this.turn_timer.stop();
     }
   }
 
   componentDidUpdate() {
-    if (this.props.log != 'undefined') {
-      //this.visualize(this.props.log);
-    }
+    // TODO: parse log
   }
 
   render() {
     return (
       div('#visualizer-root-node', [
         h(Scoreboard),
-        h(Controls),
+        h(Controls, {
+          speed: this.speed
+        }),
         h(Renderer, {
           turn: this.turns[this.state.turnNum]
         }),
@@ -105,6 +124,7 @@ class Visualizer extends React.Component {
   componentDidMount() {
     this.visuals = new Visuals();
     this.visualize(this.props.log);
+    this.setTimer();
   }
 }
 
