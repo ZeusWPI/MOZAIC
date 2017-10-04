@@ -25,7 +25,6 @@ const FileSaver = require('file-saver');
 const VIEW_STATE_BLOCKLY = 'BLOCKLY';
 const VIEW_STATE_VISUALIZER = 'VISUALIZER';
 
-
 // TODO: move to some helpers module
 function fa_icon(name) {
   return h('i.fa.fa-' + name, { 'aria-hidden': true});

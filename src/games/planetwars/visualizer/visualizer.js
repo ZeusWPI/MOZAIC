@@ -49,7 +49,8 @@ class Visualizer extends React.Component {
   visualize(log) {
     // todo: make less ugly
     let game = new Game();
-    this.turns = game.parseJSON(log);
+    game.init(log);
+    this.turns = game.turns;
     // TODO: this should not happen here
     VisualsHelper.Preprocessor.preprocess(this.turns);
   }
