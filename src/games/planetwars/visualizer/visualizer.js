@@ -19,6 +19,7 @@ const Utils = require('./util');
 const ReactUtils = require('./react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
+const Renderer = require('./renderer');
 
 class Visualizer extends React.Component {
 
@@ -26,64 +27,32 @@ class Visualizer extends React.Component {
     super(props);
     this.model = new Game();
     this.state = {
-      hide_card: true
+      hide_card: true,
+      turnNum: 0
     };
 
-    // Speed property is already updated, resetting timer will use new speed
-    this.model.speed_binder.registerCallback(s => {
-      if (this.model.run_binder.value) {
-        this._stopTimer();
-        this._startTimer();
-      }
-    });
-
-    this.model.turn_binder.registerCallback(v => {
-      this.running = this._showTurn(v);
-    });
-
-    this.model.run_binder.registerCallback(v => {
-      if (v) {
-        this._startTimer();
-      } else {
-        this._stopTimer();
-      }
-    });
+    this.turns = [];
   }
 
   visualize(log) {
-    this.clear();
-    this.model.init(log);
-    this.visuals.init(this.model);
-    this.model.reset();
+    // todo: make less ugly
+    let game = new Game();
+    this.turns = game.parseJSON(log);
   }
 
   clear() {
-    this.visuals.clearVisuals();
   }
 
   play() {
-    this.model.run_binder.update(true);
   }
 
   pause() {
-    this.model.run_binder.update(false);
   }
 
   nextTurn() {
-    this.model.turn_binder.update((this.model.turn_binder.value) + 1);
   }
 
   previousTurn() {
-    this.model.turn_binder.update((this.model.turn_binder.value) - 1);
-  }
-
-  _showTurn(newTurn) {
-    if (newTurn >= this.model.maxTurns) {
-      this.model.run_binder.update(false);
-    } else {
-      var turn = this.model.turns[newTurn];
-      this.visuals.update(turn, this.model.speed_binder.value);
-    }
   }
 
   _startTimer() {
@@ -102,12 +71,7 @@ class Visualizer extends React.Component {
 
   componentDidUpdate() {
     if (this.props.log != 'undefined') {
-      this.visualize(this.props.log);
-    }
-    if (this.props.isVisualizing) {
-      this.play();
-    } else {
-      this.pause();
+      //this.visualize(this.props.log);
     }
   }
 
@@ -115,10 +79,11 @@ class Visualizer extends React.Component {
     return (
       div('#visualizer-root-node', [
         h(Scoreboard),
-        h(Controls, {
-          'model': this.model
+        h(Controls),
+        h(Renderer, {
+          turn: this.turns[this.state.turnNum]
         }),
-        svg('#game'),
+        // TODO: move this
         h(HideableComponent, {
           hide: this.state.hide_card,
           render: div('#end_card', [
@@ -139,6 +104,7 @@ class Visualizer extends React.Component {
 
   componentDidMount() {
     this.visuals = new Visuals();
+    this.visualize(this.props.log);
   }
 }
 
