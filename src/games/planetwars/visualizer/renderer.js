@@ -3,16 +3,21 @@ const React = require('react');
 const h = require('react-hyperscript');
 const VisualsHelper = require('./visualsHelper');
 
+const PlanetRenderer = require('./renderer/planets');
+
 
 class Renderer extends React.Component {
   componentDidUpdate() {
     this.calculateViewBox();
     console.log(this.props.turn);
+    this.draw();
+
   }
 
   componentDidMount() {
     this.loadResources();
     this.container = d3.select(this.svg).append('g');
+    this.planetRenderer = new PlanetRenderer(this.container);
   }
   
   render() {
@@ -40,6 +45,9 @@ class Renderer extends React.Component {
     new VisualsHelper.ResourceLoader(d3.select(this.svg)).setupPatterns();
   }
 
+  draw() {
+    this.planetRenderer.draw(this.props.turn.planets);
+  }
 }
 
 module.exports = Renderer;
