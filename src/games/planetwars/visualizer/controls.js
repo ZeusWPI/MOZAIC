@@ -17,132 +17,77 @@ const HideableComponent = ReactUtils.HideableComponent;
 const ToggleButton = ReactUtils.ToggleButton;
 const ControlButton = ReactUtils.ControlButton;
 
-class Controls extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      hideBar: false,
-      turn: 0,
-      running: false,
-      speed: 1
-    };
-    return;
-    this.props.model.turn_binder.registerCallback(t => {
-      this.setState({
-        turn: this.props.model.turn_binder.value
-      });
-    });
-    this.props.model.run_binder.registerCallback(t => {
-      this.setState({
-        running: this.props.model.run_binder.value
-      });
-    });
-  }
+function fa_icon(name) {
+  return h('i.fa.fa-' + name, { 'aria-hidden': true});
+}
 
+class Controls extends React.Component {
   render() {
-    return div('#controls', [
-      h(ToggleButton, {
-        selector: '#hide',
-        title1: 'Hide Controls',
-        title2: 'Show Controls',
-        icon1: 'chevron-down',
-        icon2: 'chevron-up',
-        callback1: () => this.setState({
-          hideBar: true
-        }),
-        callback2: () => this.setState({
-          hideBar: false
-        })
+    return div('#controlbar', [
+      input({
+        type: 'range',
+        id: 'turn_slider',
+        value: this.props.turnNum,
+        className: 'control',
+        max: this.props.numTurns,
+        onChange: e => this.props.setTurn(+e.target.value)
       }),
-      h(HideableComponent, {
-        hide: this.state.hideBar,
-        render: div('#controlbar', [
-          input({
-            type: 'range',
-            id: 'turn_slider',
-            value: this.state.turn,
-            className: 'control',
-            max: this.props.maxTurns
-            //onChange: e => this.props.model.turn_binder.update(+e.target.value)
-          }),
-          div('.turncontrols', [
-            h(ControlButton, {
-              selector: '#to_start',
-              title: 'Go to start of the game',
-              icon: 'fast-backward'
-              // callback: () => {
-              //   this.props.model.turn_binder.update(0);
-              //   this.props.model.run_binder.update(false);
-              // }
-            }),
-            h(ControlButton, {
-              selector: '#previous',
-              title: 'Go back one turn',
-              icon: 'step-backward'
-              // callback: () => {
-              //   this.props.model.turn_binder.update(this.props.model.turn_binder.value - 1);
-              // }
-            }),
-            h(ToggleButton, {
-              selector: '#pause',
-              title1: 'Pause game',
-              title2: 'Play game',
-              icon1: 'pause',
-              icon2: 'play',
-              toggle: false
-              // callback1: () => this.props.model.run_binder.update(true),
-              // callback2: () => this.props.model.run_binder.update(false)
-            }),
-            h(ControlButton, {
-              selector: '#next',
-              title: 'Go forward one turn',
-              icon: 'step-forward'
-              // callback: () => {
-              //   this.props.model.turn_binder.update(this.props.model.turn_binder.value + 1);
-              // }
-            }),
-            h(ControlButton, {
-              selector: '#to_end',
-              title: 'Go to end of the game',
-              icon: 'fast-forward'
-              // callback: () => {
-              //   this.props.model.turn_binder.update(this.props.model.maxTurns);
-              //   this.props.model.run_binder.update(false);
-              // }
-            }),
-            p('#turn_progress', `${this.props.turnNum} / ${this.props.numTurns}`)
-          ]),
-          div('.speedcontrols', [
-            p('.speed', `Speed x${this.state.speed}`),
-            h(ControlButton, {
-              selector: '#speed_down',
-              title: 'Lower speed',
-              icon: 'minus'
-              // callback: () => {
-              //   if (this.state.mod > 0) {
-              //     this.setState({
-              //       mod: this.state.mod - 1
-              //     });
-              //     this.props.model.speed_binder.update(Config.base_speed / Config.speed_mods[this.state.mod]);
-              //   }
-              //}
-            }),
-            h(ControlButton, {
-              selector: '#speed_up',
-              title: 'Increase speed',
-              icon: 'plus'
-              // callback: () => {
-              //   if (this.state.mod < Config.speed_mods.length - 1) {
-              //     this.setState({
-              //       mod: this.state.mod + 1
-              //     });
-              //     this.props.model.speed_binder.update(Config.base_speed / Config.speed_mods[this.state.mod]);
-              //   }
-              //}
-            })
-          ])
-        ])
-      })
+      div('.turncontrols', [
+        button(
+          '.control.control-button',
+          {
+            title: 'Go to first turn',
+            onClick: e => this.props.setTurn(0)
+          },
+          [ fa_icon('fast-backward') ]
+        ),
+        button(
+          '.control.control-button',
+          {
+            title: 'Go to previous turn',
+            onClick: e => this.props.setTurn(this.props.turnNum - 1)
+          },
+          [ fa_icon('step-backward') ]
+        ),
+        h(ToggleButton, {
+          selector: '#pause',
+          title1: 'Pause game',
+          title2: 'Play game',
+          icon1: 'pause',
+          icon2: 'play',
+          toggle: false
+        }),
+        button(
+          '.control.control-button',
+          {
+            title: 'Go to next turn',
+            onClick: e => this.props.setTurn(this.props.turnNum + 1)
+          },
+          [ fa_icon('step-forward') ]
+        ),
+        button(
+          '.control.control-button',
+          {
+            title: 'Go to last turn',
+            onClick: e => this.props.setTurn(this.props.numTurns - 1)
+          },
+          [ fa_icon('fast-forward') ]
+        ),
+        p('#turn_progress', `${this.props.turnNum} / ${this.props.numTurns}`)
+      ]),
+      div('.speedcontrols', [
+        p('.speed', `Speed x${this.props.speed}`),
+        h(ControlButton, {
+          selector: '#speed_down',
+          title: 'Lower speed',
+          icon: 'minus'
+        }),
+        h(ControlButton, {
+          selector: '#speed_up',
+          title: 'Increase speed',
+          icon: 'plus'
+        })
+      ])
     ]);
   }
 }

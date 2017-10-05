@@ -78,5 +78,5 @@ class ControlButton extends React.Component {
 module.exports = {
   HideableComponent,
   ToggleButton,
-  ControlButton
+  ControlButton,
 };

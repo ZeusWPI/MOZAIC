@@ -35,6 +35,10 @@ class Visualizer extends React.Component {
     this.turns = [];
   }
 
+  setTurn(num) {
+    this.setState({ turnNum: num });
+  }
+
   setTimer() {
     if (this.timer) {
       // remove old timerx
@@ -90,6 +94,9 @@ class Visualizer extends React.Component {
       div('#visualizer-root-node', [
         h(Scoreboard),
         h(Controls, {
+          turnNum: this.state.turnNum,
+          numTurns: this.turns.length,
+          setTurn: t => this.setTurn(t),
           speed: this.state.speed
         }),
         h(Renderer, {
