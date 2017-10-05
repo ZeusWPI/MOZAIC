@@ -92,6 +92,13 @@ app.post('/bot', function(req, res) {
   });
 });
 
+app.get('/players', function(req, res) {
+  fs.readdir(BOT_MAP, (err, files) => {
+    players = files.map((file) => file.substring(0, file.length - 3));
+    res.send({ 'players': players });
+  });
+});
+
 function getRandomPlayer() {
   var items = fs.readdirSync(BOT_MAP);
 
