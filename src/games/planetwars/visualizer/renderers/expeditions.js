@@ -33,6 +33,8 @@ class ExpeditionRenderer {
       });
 
     this.drawShips(expeditions, params);
+    this.drawShipCounts(expeditions, params);
+    this.drawTitles(expeditions);
   }
 
   drawShips(expeditions, params) {
@@ -48,6 +50,26 @@ class ExpeditionRenderer {
       .style('stroke', exp => Config.player_color(exp.owner))
       .attr('transform', exp => `rotate(${this.expeditionRotation(exp)})`)
       .append('title').text(exp => Config.player_name(exp.owner));
+  }
+
+  drawShipCounts(expeditions, params) {
+    let counts = expeditions.selectAll('.shipCount').data(d => [d]);
+
+    counts.enter().append('text')
+      .attr('y', 2 * params.scale)
+      .attr('font-family', 'sans-serif')
+      .attr('font-size', 1 * params.scale + 'px')
+      .text(exp => "\u2694 " + exp.ship_count)
+      .attr('fill', exp => Config.player_color(exp.owner));
+  }
+
+  drawTitles(expeditions) {
+    let titles = expeditions.selectAll('.title').data(d => [d]);
+
+    titles.enter().append('title')
+      .attr('class', 'title')
+      .merge(titles)
+      .text(d => Config.player_name(d.owner));
   }
 
   expeditionPos(expedition) {
