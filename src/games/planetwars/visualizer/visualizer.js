@@ -26,7 +26,6 @@ class Visualizer extends React.Component {
 
   constructor(props) {
     super(props);
-    this.model = new Game();
     this.state = {
       hide_card: true,
       turnNum: 0,
@@ -48,10 +47,7 @@ class Visualizer extends React.Component {
 
   visualize(log) {
     // todo: make less ugly
-    // kek kek
-    let game = new Game();
-    game.init(log);
-    // vandalisme
+    let game = new Game(log);
     this.turns = game.turns;
     // TODO: this should not happen here
     VisualsHelper.Preprocessor.preprocess(this.turns);

@@ -2,19 +2,22 @@ const d3 = require('d3');
 
 const Config = require('./config');
 const Utils = require('./util');
-const DataBinder = Utils.DataBinder;
 const space_math = Utils.SpaceMath;
 
 class Game {
-  constructor() {
+  constructor(json) {
     this.winner = null;
+    let turns_json = json.trim().split('\n');
+    this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
+    
+    this.turns = turns_json.map(turn_json => {
+      let obj = JSON.parse(turn_json);
+      return new Turn(obj, this);
+    });
   }
 
-  parseJSON(json) {
-    var turns = json.trim().split('\n');
-    return turns.map(turn => {
-      return new Turn(JSON.parse(turn));
-    });
+  playerColor(name) {
+    return '#ff0000';
   }
 
   init(log) {
@@ -42,29 +45,46 @@ class Game {
       }
     });
   }
-
-  reset() {
-    this.speed_binder.update(Config.base_speed);
-    this.turn_binder.update(0);
-    this.run_binder.update(false);
-    this.winner = null;
-  }
-
-  get maxTurns() {
-    if (!this.turns) return 0;
-    return this.turns.length - 1;
-  }
 }
 
 class Turn {
-  constructor(turn) {
-    this.planets = turn.planets.map(planet => {
-      return new Planet(planet);
+  constructor(turn, game) {
+    this.game = game;
+    this.playerMap = new Map();
+    this.planetMap = new Map();
+
+    this.players = this.parsePlayers(turn.players);
+    this.planets = this.parsePlanets(turn.planets);
+    this.expeditions = [];
+  }
+
+  parsePlayers(player_names) {
+    return player_names.map(name => {
+      let player = {
+        name: name,
+        color: this.game.playerColor(name)
+      };
+      this.playerMap.set(name, player);
+      return player;
     });
-    this.expeditions = turn.expeditions.map(exp => {
-      return new Expedition(exp);
+  }
+
+  parsePlanets(planet_reprs) {
+    return planet_reprs.map(planet_repr => {
+      let planet = this.parsePlanet(planet_repr);
+      this.planetMap.set(planet.name, planet);
+      return planet;
     });
-    this.calculateTurnScore(turn.players);
+  }
+  
+  parsePlanet(repr) {
+    return {
+      name: repr.name,
+      x: repr.x,
+      y: repr.y,
+      ship_count: repr.ship_count,
+      owner: this.playerMap.get(repr.owner)
+    };
   }
 
   calculateTurnScore(players) {
@@ -111,15 +131,6 @@ class Turn {
   }
 }
 
-class Planet {
-  constructor(log_planet) {
-    this.name = log_planet.name;
-    this.x = log_planet.x;
-    this.y = log_planet.y;
-    this.ship_count = log_planet.ship_count;
-    this.owner = log_planet.owner;
-  }
-}
 
 class Expedition {
   constructor(log_exp) {
