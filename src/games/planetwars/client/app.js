@@ -30,8 +30,8 @@ class PlanetwarsClient {
     this.load_btn.addEventListener('click', e => this.loadHandler(e));
 
     this.name_field = document.getElementById('uname');
-    this.user_name = this.name_field.value;
-    this.user_name.addEventListener('change', e => this.user_name = this.name_field.value);
+    this.name_field.addEventListener('change', e => this.user_name = this.name_field.value);
+    this.user_name = this.name_field.value; // Make sure initial name is set
 
     this.blockly_div = document.getElementById('blockly');
     this.visualizer_div = document.getElementById('visualizer');
