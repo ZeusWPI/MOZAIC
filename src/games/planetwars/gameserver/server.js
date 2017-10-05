@@ -24,7 +24,6 @@ app.get('/', function(req, res) {
 app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
-  //var code = JSON.parse(req.body).code;
   console.log(req.body)
   var code = req.body.code;
 
@@ -33,7 +32,7 @@ app.post('/bot', function(req, res) {
   executor.writeCode(code);
 
   var name = req.body.name || "bert";
-  var opponent = getRandomPlayer();
+  var opponent = req.body.opponent || getRandomPlayer();
   // Make sure names are unique for visualizer
   if (opponent.name === name) {
     opponent.name += "2";

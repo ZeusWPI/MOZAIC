@@ -28,7 +28,16 @@ class PlanetwarsClient {
     this.save_btn.addEventListener('click', e => this.saveHandler(e));
     this.load_btn = document.getElementById('load');
     this.load_btn.addEventListener('click', e => this.loadHandler(e));
-
+    this.opponent_field = document.getElementById('opponent');
+    this.opponent_field.addEventListener('change', e => this.opponent = this.opponent_field.value);
+    this.getOpponents((res) => {
+      Array.forEach(res.players, (player, index) => {
+        var el = document.createElement("option");
+        el.textContent = player;
+        el.value = player;
+        this.opponent_field.appendChild(el);
+      })
+    });
 
     // User name
     var names = ['sadeerstejaar', 'klojo', 'darthvaderwannabe', 'nietbert', 'deterpawyndt']
@@ -43,6 +52,23 @@ class PlanetwarsClient {
 
     // initial state
     this.setState(BLOCKLY_STATE);
+  }
+
+    getOpponents(callback){
+      var xmlhttp = new XMLHttpRequest();
+      xmlhttp.open("GET", 'players');
+      xmlhttp.setRequestHeader("Content-type", "application/json");
+      xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE) {
+          if (xmlhttp.status == 200) {
+            callback(JSON.parse(xmlhttp.responseText));
+          } else {
+            console.log(xmlhttp);
+            alert(`Problem fetching players ${xmlhttp.status} ${xmlhttp.responseText}`);
+          }
+        }
+      };
+      xmlhttp.send();
   }
 
   setState(state) {
