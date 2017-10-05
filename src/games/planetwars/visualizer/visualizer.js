@@ -40,17 +40,18 @@ class Visualizer extends React.Component {
   setTurn(num) {
     let turnNum = Math.min(num, this.turns.length - 1);
     if (turnNum == this.turns.length - 1) {
-      this.pause();
+      this.setPlaying(false);
     }
     this.setState({ turnNum: turnNum });
   }
 
   setSpeed(speed) {
-    this.setState({ speed: speed });
-    if (this.state.playing) {
-      // update timer
-      this.setTimer();
-    }
+    this.setState({ speed: speed }, () => {
+      if (this.state.playing) {
+        // update timer
+        this.setTimer();
+      }
+    });
   }
   
   nextTurn() {
@@ -58,8 +59,7 @@ class Visualizer extends React.Component {
   }
 
   setPlaying(value) {
-    this.setState({ playing: value });
-    this.setTimer();
+    this.setState({ playing: value }, () => this.setTimer());
   }
 
   setTimer() {
@@ -89,8 +89,9 @@ class Visualizer extends React.Component {
           turnNum: this.state.turnNum,
           numTurns: this.turns.length,
           playing: this.state.playing,
-          setTurn: t => this.setTurn(t),
           speed: this.state.speed,
+          setPlaying: v => this.setPlaying(v),
+          setTurn: t => this.setTurn(t),
           setSpeed: s => this.setSpeed(s)
         }),
         h(Renderer, {

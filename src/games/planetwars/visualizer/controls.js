@@ -24,6 +24,28 @@ function fa_icon(name) {
 
 // TODO: maybe extract button functionality in helper functions
 class Controls extends React.Component {
+  playButton() {
+    if (this.props.playing) {
+      return button(
+        '.control.control-button',
+        {
+          title: 'Pause',
+          onClick: e => this.props.setPlaying(false)
+        },
+        [ fa_icon('pause') ]
+      );
+    } else {
+      return button(
+        '.control.control-button',
+        {
+          title: 'Play',
+          onClick: e => this.props.setPlaying(true)
+        },
+        [ fa_icon('play') ]
+      );
+    }
+  }
+  
   render() {
     return div('#controlbar', [
       input({
@@ -51,14 +73,7 @@ class Controls extends React.Component {
           },
           [ fa_icon('step-backward') ]
         ),
-        h(ToggleButton, {
-          selector: '#pause',
-          title1: 'Pause game',
-          title2: 'Play game',
-          icon1: 'pause',
-          icon2: 'play',
-          toggle: false
-        }),
+        this.playButton(),
         button(
           '.control.control-button',
           {
