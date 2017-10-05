@@ -21,6 +21,8 @@ function fa_icon(name) {
   return h('i.fa.fa-' + name, { 'aria-hidden': true});
 }
 
+
+// TODO: maybe extract button functionality in helper functions
 class Controls extends React.Component {
   render() {
     return div('#controlbar', [
@@ -77,16 +79,22 @@ class Controls extends React.Component {
       ]),
       div('.speedcontrols', [
         p('.speed', `Speed x${this.props.speed}`),
-        h(ControlButton, {
-          selector: '#speed_down',
-          title: 'Lower speed',
-          icon: 'minus'
-        }),
-        h(ControlButton, {
-          selector: '#speed_up',
-          title: 'Increase speed',
-          icon: 'plus'
-        })
+        button(
+          '.button.control-button',
+          {
+            title: 'Decrease speed',
+            onClick: e => this.props.setSpeed(this.props.speed / 2)
+          },
+          [ fa_icon('minus')]
+        ),
+        button(
+          '.button.control-button',
+          {
+            title: 'Increase speed',
+            onClick: e => this.props.setSpeed(this.props.speed * 2)
+          },
+          [ fa_icon('plus') ]
+        )
       ])
     ]);
   }

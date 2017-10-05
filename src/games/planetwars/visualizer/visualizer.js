@@ -39,6 +39,10 @@ class Visualizer extends React.Component {
     this.setState({ turnNum: num });
   }
 
+  setSpeed(speed) {
+    this.setState({ speed: speed });
+  }
+
   setTimer() {
     if (this.timer) {
       // remove old timerx
@@ -97,7 +101,8 @@ class Visualizer extends React.Component {
           turnNum: this.state.turnNum,
           numTurns: this.turns.length,
           setTurn: t => this.setTurn(t),
-          speed: this.state.speed
+          speed: this.state.speed,
+          setSpeed: s => this.setSpeed(s)
         }),
         h(Renderer, {
           turn: this.turns[this.state.turnNum],
