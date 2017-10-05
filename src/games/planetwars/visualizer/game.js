@@ -14,36 +14,23 @@ class Game {
       let obj = JSON.parse(turn_json);
       return new Turn(obj, this);
     });
+
+    this.findWinner();
   }
 
   playerColor(name) {
     return this.playerColors(name);
   }
-
-  init(log) {
-    this.turns = this.parseJSON(log);
-    var first_turn = this.turns[0];
-
-    // Generate planet_map
-    var planet_map = first_turn.planets.reduce((map, planet) => {
-      map[planet.name] = planet;
-      return map;
-    }, {});
-
-    //Turn preprocessing
-    this.turns.forEach(turn => {
-      turn.prepareData(planet_map);
-    });
-
-    // Detect winner
-    this.turns[this.turns.length - 1].planets.forEach(p => {
-      if (this.winner != null && this.winner != p.owner) {
-        this.winner = Config.visual_null;
-      }
-      if (p.owner != null && this.winner != Config.visual_null) {
-        this.winner = p.owner;
-      }
-    });
+  
+  findWinner() {
+    let players = this.turns[this.turns.length -1].players;
+    let survivors = players.filter(p => p.num_ships > 0);
+    if (survivors.length > 1) {
+      // it's a draw
+      this.winner = null;
+    } else {
+      this.winner = survivors[0];
+    }
   }
 }
 
@@ -115,5 +102,6 @@ class Turn {
       exp.owner.ship_count += exp.ship_count;
     });
   }
+}
 
 module.exports = Game;
