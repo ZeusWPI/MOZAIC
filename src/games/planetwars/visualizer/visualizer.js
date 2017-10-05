@@ -90,10 +90,11 @@ class Visualizer extends React.Component {
       div('#visualizer-root-node', [
         h(Scoreboard),
         h(Controls, {
-          speed: this.speed
+          speed: this.state.speed
         }),
         h(Renderer, {
-          turn: this.turns[this.state.turnNum]
+          turn: this.turns[this.state.turnNum],
+          speed: this.state.speed
         }),
         // TODO: move this
         h(HideableComponent, {

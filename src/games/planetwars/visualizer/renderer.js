@@ -10,7 +10,6 @@ const ExpeditionRenderer = require('./renderers/expeditions');
 class Renderer extends React.Component {
   componentDidUpdate() {
     this.calculateViewBox();
-    console.log(this.props.turn);
     this.draw();
   }
 
@@ -38,6 +37,7 @@ class Renderer extends React.Component {
     let x_width = x_max - x_min;
     let y_width = y_max - y_min;
     let viewBox = `${x_min} ${y_min} ${x_width} ${y_width}`;
+    this.scale = (x_max - x_min) / 50;
     d3.select(this.svg).attr('viewBox', viewBox);
   }
 
@@ -48,7 +48,7 @@ class Renderer extends React.Component {
 
   draw() {
     // TODO: hook this up
-    let params = { speed: 1, scale: 0.75 };
+    let params = { speed: this.props.speed, scale: this.scale };
     this.planetRenderer.draw(this.props.turn.planets, params);
     this.expeditionRenderer.draw(this.props.turn.expeditions, params);
   }
