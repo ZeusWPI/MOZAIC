@@ -29,66 +29,54 @@ class Visualizer extends React.Component {
     this.state = {
       hide_card: true,
       turnNum: 0,
-      speed: 1
+      speed: 1,
+      playing: true
     };
 
     this.turns = [];
   }
 
+  // TODO: this might not be the best way to do this
   setTurn(num) {
-    this.setState({ turnNum: num });
+    let turnNum = Math.min(num, this.turns.length - 1);
+    if (turnNum == this.turns.length - 1) {
+      this.pause();
+    }
+    this.setState({ turnNum: turnNum });
   }
 
   setSpeed(speed) {
     this.setState({ speed: speed });
+    if (this.state.playing) {
+      // update timer
+      this.setTimer();
+    }
+  }
+  
+  nextTurn() {
+    this.setTurn(this.state.turnNum + 1);
+  }
+
+  setPlaying(value) {
+    this.setState({ playing: value });
+    this.setTimer();
   }
 
   setTimer() {
-    if (this.timer) {
-      // remove old timerx
-      this.timer.stop();
+    // stop old timer
+    if (this.timer) { this.timer.stop(); }
+    
+    if (this.state.playing) {
+      var delay = 1000 / this.state.speed;
+      this.timer = d3.interval(t => this.nextTurn(), delay);
     }
-    // speed is in Hz
-    var delay = 1000 / this.state.speed;
-    this.timer = d3.interval(t => this.nextTurn(), delay);
   }
 
   visualize(log) {
     let game = new Game(log);
     this.turns = game.turns;
   }
-
-  clear() {}
-
-  play() {}
-
-  pause() {}
-
-  nextTurn() {
-    this.setState((prevState) => {
-      return Object.assign(
-        prevState, {
-          turnNum: prevState.turnNum + 1
-        }
-      );
-    });
-  }
-
-  previousTurn() {}
-
-  _startTimer() {
-    var callback = elapsed => {
-      this.nextTurn();
-    };
-    //this.turn_timer = d3.interval(callback, this.speed);
-  }
-
-  _stopTimer() {
-    if (this.turn_timer) {
-      //this.turn_timer.stop();
-    }
-  }
-
+  
   componentDidUpdate() {
     // TODO: parse log
   }
@@ -100,6 +88,7 @@ class Visualizer extends React.Component {
         h(Controls, {
           turnNum: this.state.turnNum,
           numTurns: this.turns.length,
+          playing: this.state.playing,
           setTurn: t => this.setTurn(t),
           speed: this.state.speed,
           setSpeed: s => this.setSpeed(s)
@@ -130,7 +119,7 @@ class Visualizer extends React.Component {
   componentDidMount() {
     this.visuals = new Visuals();
     this.visualize(this.props.log);
-    this.setTimer();
+    this.setPlaying(true);
   }
 }
 

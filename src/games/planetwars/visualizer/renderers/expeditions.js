@@ -22,8 +22,7 @@ class ExpeditionRenderer {
           let pos = this.expeditionPos(d);
           return `translate(${pos.x}, ${pos.y})`;
         }).merge(selector);
-    
-    // TODO: fetch speed or something
+
     expeditions.transition()
       .duration(1000/params.speed)
       .ease(d3.easeLinear)
