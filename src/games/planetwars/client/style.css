@@ -96,7 +96,7 @@ body {
 #turn_progress {
   float: right;
   font-family: 'Tahoma';
-  font-size: 1.2vw;
+  font-size: 1.1vw;
   line-height: 0;
   margin-left: 3%;
   align-items: center;
@@ -108,7 +108,7 @@ body {
   width: 50%;
   line-height: 0;
   font-family: 'Tahoma';
-  font-size: 1.2vw;
+  font-size: 1.1vw;
 }
 
 .turncontrols {
