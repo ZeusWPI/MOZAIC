@@ -24,21 +24,19 @@ app.get('/', function(req, res) {
 app.use(express.static(client_dir));
 
 app.post('/bot', function(req, res) {
-  console.log(req.body)
+  console.log("==================================")
   var code = req.body.code;
-
   var executor = new Executor();
-  console.log(code);
   executor.writeCode(code);
 
   var name = req.body.name || "bert";
   var opponent = req.body.opponent || getRandomPlayer();
+  var opponent = createOpponent(opponent);
+  console.log(name, req.body.opponent);
   // Make sure names are unique for visualizer
   if (opponent.name === name) {
     opponent.name += "2";
   }
-
-  console.log(name, opponent);
 
   // Shitty working deep clone cause i don't trust no js
   var game_config = JSON.parse(JSON.stringify(GAME_CONFIG_DEFAULT));
@@ -62,7 +60,6 @@ app.post('/bot', function(req, res) {
     game_config: game_config,
     log_file: executor.log_file
   };
-  console.log(JSON.stringify(config));
 
   executor.writeConfig(config);
 
@@ -98,24 +95,25 @@ app.get('/players', function(req, res) {
   });
 });
 
+function createOpponent(opponent) {
+  return {
+    "path": BOT_MAP + '/' + opponent + '.js',
+    "name": opponent
+  }
+}
+
 function getRandomPlayer() {
   var items = fs.readdirSync(BOT_MAP);
-
   var rand = items[Math.floor(Math.random() * items.length)];
-  console.log(rand);
   var name = rand.substr(0, rand.indexOf('.'));
-  return {
-    "path": BOT_MAP + '/' + rand, //TODO use path
-    "name": name
-  }
+  return name;
 }
 
 function getWinnerFromBotDriverOutput(output) {
   var lines = output.split('\n');
   var winners = lines[lines.length - 2];
   var winners_split = winners.split(/"/);
-  console.log("Lines: " + lines);
-  console.log("Winners: " + winners);
+  console.log("Winners: ", winners_split)
   if (winners_split.length == 3) {
     return winners_split[1];
   } else {

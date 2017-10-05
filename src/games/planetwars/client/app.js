@@ -37,6 +37,7 @@ class PlanetwarsClient {
         el.value = player;
         this.opponent_field.appendChild(el);
       })
+      this.opponent = this.opponent_field.value;
     });
 
     // User name
@@ -137,10 +138,11 @@ class PlanetwarsClient {
     };
 
     console.log(this.blockly.getCode());
-
+    console.log(this.opponent);
     var request = JSON.stringify({
       "code": this.blockly.getCode(),
-      "name": this.user_name
+      "name": this.user_name,
+      "opponent": this.opponent
     });
     xmlhttp.send(request);
   }
