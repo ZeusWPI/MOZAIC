@@ -43,7 +43,11 @@ Current and planned features:
 ## Blockly Game Server
 
 1. Install Node v8
-2. `npm install` in `src/games/planetwars/visualizer` en `src/games/planetwars/blockly` en `src/games/planetwars/gameserver`
+2. Install `npm` dependencies by:
+
+- `npm install i -g recursive-install` and executing `npm-recursive-install` in `src/games/planetwars`
+- **or** you can do `npm install` in `src/games/planetwars/visualizer` and `src/games/planetwars/blockly` and `src/games/planetwars/gameserver` individually
+
 3. `npm install webpack` or `(sudo) npm install webpack -g`
 4. Run `webpack` in `src/games/planetwars/client`
 5. Run `cargo build --release` in `src/botdriver/`
