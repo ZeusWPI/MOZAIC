@@ -17,7 +17,7 @@ class Game {
   }
 
   playerColor(name) {
-    return '#ff0000';
+    return this.playerColors(name);
   }
 
   init(log) {
@@ -55,7 +55,7 @@ class Turn {
 
     this.players = this.parsePlayers(turn.players);
     this.planets = this.parsePlanets(turn.planets);
-    this.expeditions = [];
+    this.expeditions = this.parseExpeditions(turn.expeditions);
   }
 
   parsePlayers(player_names) {
@@ -85,6 +85,19 @@ class Turn {
       ship_count: repr.ship_count,
       owner: this.playerMap.get(repr.owner)
     };
+  }
+
+  parseExpeditions(exp_reprs) {
+    return exp_reprs.map(repr => {
+      return {
+        id: repr.id,
+        origin: this.planetMap.get(repr.origin),
+        destination: this.planetMap.get(repr.destination),
+        ship_count: repr.ship_count,
+        owner: this.playerMap.get(repr.owner),
+        turns_remaining: repr.turns_remaining
+      };
+    });
   }
 
   calculateTurnScore(players) {
@@ -134,12 +147,7 @@ class Turn {
 
 class Expedition {
   constructor(log_exp) {
-    this.id = log_exp.id;
-    this.origin = log_exp.origin;
-    this.destination = log_exp.destination;
-    this.ship_count = log_exp.ship_count;
-    this.owner = log_exp.owner;
-    this.turns_remaining = log_exp.turns_remaining;
+
   }
 }
 
