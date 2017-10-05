@@ -29,8 +29,13 @@ class PlanetwarsClient {
     this.load_btn = document.getElementById('load');
     this.load_btn.addEventListener('click', e => this.loadHandler(e));
 
+
+    // User name
+    var names = ['sadeerstejaar', 'klojo', 'darthvaderwannabe', 'nietbert', 'deterpawyndt']
+    var default_name = names[Math.floor(Math.random() * names.length)];
     this.name_field = document.getElementById('uname');
     this.name_field.addEventListener('change', e => this.user_name = this.name_field.value);
+    this.name_field.value = default_name; 
     this.user_name = this.name_field.value; // Make sure initial name is set
 
     this.blockly_div = document.getElementById('blockly');
