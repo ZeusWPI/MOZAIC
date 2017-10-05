@@ -56,13 +56,17 @@ class Turn {
     this.players = this.parsePlayers(turn.players);
     this.planets = this.parsePlanets(turn.planets);
     this.expeditions = this.parseExpeditions(turn.expeditions);
+    this.calculateScores();
   }
 
   parsePlayers(player_names) {
     return player_names.map(name => {
       let player = {
         name: name,
-        color: this.game.playerColor(name)
+        color: this.game.playerColor(name),
+        // these are calculated in calculateScores.
+        ship_count: 0,
+        planet_count: 0
       };
       this.playerMap.set(name, player);
       return player;
@@ -100,55 +104,16 @@ class Turn {
     });
   }
 
-  calculateTurnScore(players) {
-    this.players = [];
-    var strengths = [];
-    var total_strength = 0;
-
-    players.forEach(player => {
-      var planets = 0;
-      var strength = 0;
-      this.planets.forEach(planet => {
-        if (planet.owner === player) {
-          strength += planet.ship_count;
-          planets++;
-        }
-      });
-      var expeditions = 0;
-      this.expeditions.forEach(exp => {
-        if (exp.owner === player) {
-          strength += exp.ship_count;
-          expeditions++;
-        }
-      });
-      this.players.push({
-        player: player,
-        planets: planets,
-        expeditions: expeditions
-      });
-      total_strength += strength;
-      strengths.push(strength);
+  calculateScores() {
+    this.planets.forEach(planet => {
+      if (planet.owner) {
+        planet.owner.ship_count += planet.ship_count;
+        planet.owner.planet_count += 1;
+      }
     });
-    this.players.forEach(s => {
-      s.strengths = strengths;
-      s.total_strength = total_strength;
+    this.expeditions.forEach(exp => {
+      exp.owner.ship_count += exp.ship_count;
     });
   }
-
-  prepareData(planet_map) {
-    if (this.prepared) return;
-    this.expeditions.map(exp => {
-      exp.origin = planet_map[exp.origin];
-      exp.destination = planet_map[exp.destination];
-    });
-  }
-}
-
-
-class Expedition {
-  constructor(log_exp) {
-
-  }
-}
 
 module.exports = Game;
