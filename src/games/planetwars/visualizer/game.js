@@ -7,21 +7,35 @@ const space_math = Utils.SpaceMath;
 class Game {
   constructor(json) {
     this.winner = null;
-    let turns_json = json.trim().split('\n');
-    this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
     
+    this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
+    this.planetTypeMap = new Map();
+
+    this.parseTurns(json);
+    this.findWinner();
+  }
+
+  parseTurns(json) {
+    let turns_json = json.trim().split('\n');
     this.turns = turns_json.map(turn_json => {
       let obj = JSON.parse(turn_json);
       return new Turn(obj, this);
     });
-
-    this.findWinner();
   }
 
   playerColor(name) {
     return this.playerColors(name);
   }
-  
+
+  planetType(name) {
+    if (!this.planetTypeMap.has(name)) {
+      var types = Config.planet_types;
+      var type = types[Math.floor(Math.random() * types.length)];
+      this.planetTypeMap.set(name, type);
+    }
+    return this.planetTypeMap.get(name);
+  }
+
   findWinner() {
     let players = this.turns[this.turns.length -1].players;
     let survivors = players.filter(p => p.num_ships > 0);
@@ -74,7 +88,9 @@ class Turn {
       x: repr.x,
       y: repr.y,
       ship_count: repr.ship_count,
-      owner: this.playerMap.get(repr.owner)
+      owner: this.playerMap.get(repr.owner),
+      type: this.game.planetType(repr.name),
+      size: 1
     };
   }
 
