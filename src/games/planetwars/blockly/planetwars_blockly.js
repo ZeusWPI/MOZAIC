@@ -113,6 +113,10 @@ class PlanetWarsBlockly {
     var xml = Blockly.Xml.textToDom(xml_text);
     Blockly.Xml.domToWorkspace(xml, this.workspace);
   }
+ 
+  clear() {
+    Blockly.mainWorkspace.clear()
+  }
 
   addChangeListener(fun) {
     this.workspace.addChangeListener(fun);

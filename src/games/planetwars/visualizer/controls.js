@@ -92,7 +92,7 @@ class Controls {
     });
 
     d3.select('#toend').on("click", e => {
-      model.turn_binder.update(model.maxTurns);
+      model.turn_binder.update(model.maxTurns - 1);
     });
 
     d3.select('#turn_slider')

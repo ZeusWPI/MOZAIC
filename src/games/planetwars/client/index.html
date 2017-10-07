@@ -7,7 +7,39 @@
     <script type="text/javascript" src="bundle.js" charset="utf-8"></script>
   </head>
   <body>
-    <button id="fab"></button>
+
+    <header>
+      <figure class="logo">
+        <img
+        src="res/logo.png"
+        alt="MOSAIC">
+      </figure>
+
+      <div class="uname-form">
+        <input id="uname" type="text" value="bert">
+        <label for="uname">Username</label>
+      </div>
+
+      <div class="opponent-form">
+        <select id="opponent">
+        </select>
+        <label for="opponent">Opponent</label>
+      </div>
+
+      <ul class="header-toolbar">
+        <li>
+            <button id="load"> <i class="fa fa-upload" aria-hidden="true"></i> </button>
+            <input id="file-input" type="file" name="name" style="display: none;" />
+        </li>
+        <li>
+          <button id="save"> <i class="fa fa-floppy-o" aria-hidden="true"></i> </button>
+        </li>
+        <li>
+          <button id="switch_view_state"></button>
+        </li>
+      </ul>
+    </header>
+
     <div id="box">
       <div id="blockly"></div>
 
