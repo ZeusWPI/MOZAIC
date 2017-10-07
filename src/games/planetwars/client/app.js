@@ -146,7 +146,6 @@ class PlanetwarsClient {
     });
     xmlhttp.send(request);
   }
-
 }
 
 function fa_icon(name) {

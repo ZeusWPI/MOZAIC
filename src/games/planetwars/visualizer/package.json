@@ -6,7 +6,8 @@
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {
-    "d3": "4.10.2"
+    "d3": "4.10.2",
+    "font-awesome": "^4.7.0"
   },
   "devDependencies": {
     "webpack": "^3.6.0"
