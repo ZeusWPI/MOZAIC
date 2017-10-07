@@ -13,7 +13,7 @@ const PLANET_ALLEGIANCES = [
 const EXPEDITION_ALLEGIANCES = [
   ['all', 'ALL'],
   ['my', 'MINE'],
-  ['hostile', 'HOSTILE']
+  ['enemy', 'ENEMY']
 ];
 
 module.exports = {
