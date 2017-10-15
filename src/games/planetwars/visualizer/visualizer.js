@@ -10,7 +10,7 @@ class Visualizer {
 
   constructor() {
     this.model = new Game();
-    this.controls = new Controls();
+    this.controls = new Controls(this);
     this.visuals = new Visuals();
 
     // Speed property is already updated, resetting timer will use new speed
