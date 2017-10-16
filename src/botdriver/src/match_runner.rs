@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use futures::Future;
 
 use game::*;
 use bot_runner::*;
@@ -23,29 +23,18 @@ impl<'g> MatchRunner<'g> {
             match status {
                 GameStatus::Finished(outcome) => return outcome,
                 GameStatus::Prompting(prompts) => {
-                    self.send_prompts(&prompts);
-                    let responses = self.receive_responses(&prompts);
+                    let responses = self.prompt_bots(&prompts);
                     status = game_state.step(&responses);
                 }
             }
         }
     }
 
-    fn send_prompts(&mut self, prompts: &PlayerMap<String>) {
-        for (player_id, prompt) in prompts {
-            let handle = self.players.get_mut(player_id).unwrap();
-            handle.send_msg(prompt).unwrap();
-        }
-    }
-
-    fn receive_responses(&mut self, prompts: &PlayerMap<String>) -> PlayerMap<String> {
-        let mut responses = HashMap::with_capacity(prompts.len());
-        for player_id in prompts.keys() {
-            let handle = self.players.get_mut(player_id).unwrap();
-            if let Ok(response) = handle.recv_msg() {
-                responses.insert(*player_id, response);
-            }
-        }
-        return responses;
+    fn prompt_bots(&mut self, prompts: &PlayerMap<String>) -> PlayerMap<String> {
+        prompts.iter().map(|(&player_id, prompt_text)| {
+            let handle = self.players.get_mut(&player_id).unwrap();
+            let resp = handle.prompt(prompt_text).wait().unwrap();
+            return (player_id, resp);
+        }).collect()
     }
 }

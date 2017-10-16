@@ -1,6 +1,12 @@
 use std::process;
-use std::process::{Child, ChildStdin, ChildStdout, Stdio};
-use std::io::{Result, LineWriter, BufReader, Write, BufRead};
+use std::io::{LineWriter, BufReader, Write};
+use futures::Future;
+use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
+
+use tokio_io::io;
+use tokio_core::reactor::Handle;
+
+use std::io::Error as IoError;
 
 use game::*;
 use match_runner::*;
@@ -8,19 +14,19 @@ use match_runner::*;
 // A collection of running bots (i.e. process handles)
 pub struct BotRunner {
     // Maps player ids to their process handles
-    processes: PlayerMap<process::Child>,
+    processes: PlayerMap<Child>,
 }
 
 impl BotRunner {
-    pub fn run(players: &PlayerMap<PlayerConfig>) -> Self {
+    pub fn run(handle: &Handle, players: &PlayerMap<PlayerConfig>) -> Self {
         BotRunner {
             processes: players.iter().map(|(&id, config)| {
                 let process = process::Command::new(&config.command)
                     .args(&config.args)
                     .arg(format!("{}", config.name.as_str()))
-                    .stdin(Stdio::piped())
-                    .stdout(Stdio::piped())
-                    .spawn()
+                    .stdin(process::Stdio::piped())
+                    .stdout(process::Stdio::piped())
+                    .spawn_async(handle)
                     .expect(&format!(
                         "\n[DRIVER] Failed to execute process: {} {:?}\n",
                         config.command,
@@ -46,25 +52,24 @@ impl BotRunner {
 
 
 pub struct PlayerHandle<'p> {
-    writer: LineWriter<&'p mut ChildStdin>,
-    reader: BufReader<&'p mut ChildStdout>,
+    process: &'p mut Child
 }
 
 impl<'p> PlayerHandle<'p> {
     pub fn new(process: &'p mut Child) -> Self {
-        PlayerHandle {
-            writer: LineWriter::new(process.stdin.as_mut().unwrap()),
-            reader: BufReader::new(process.stdout.as_mut().unwrap()),
-        }
+        PlayerHandle { process }
     }
 
-    pub fn send_msg(&mut self, msg: &str) -> Result<()> {
-        write!(&mut self.writer, "{}\n", msg)
+    fn write_msg(&mut self, msg: &str) {
+        let stdin = self.process.stdin().as_mut().unwrap();
+        write!(stdin, "{}\n", msg);
     }
 
-    pub fn recv_msg(&mut self) -> Result<String> {
-        let mut buf = String::new();
-        self.reader.read_line(&mut buf)?;
-        return Ok(buf);
+    pub fn prompt<'a>(&'a mut self, msg: &str) -> impl Future<Item = String, Error = IoError> + 'a {
+        self.write_msg(msg);
+        let stdout = self.process.stdout().as_mut().unwrap();
+        let reader = BufReader::new(stdout);
+        let bytes = io::read_until(reader, b'\n', Vec::new());
+        return bytes.map(|(_, vec)| String::from_utf8(vec).unwrap());
     }
 }

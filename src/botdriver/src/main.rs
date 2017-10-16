@@ -1,18 +1,28 @@
+#![feature(conservative_impl_trait)]
+
 mod game;
 mod bot_runner;
 mod games;
 mod match_runner;
 mod logger;
 
+extern crate tokio_core;
+extern crate tokio_io;
+extern crate tokio_process;
+extern crate futures;
+
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate serde;
+
 use std::error::Error;
 use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;
+
+use tokio_core::reactor::Core;
 
 use game::*;
 use bot_runner::*;
@@ -47,7 +57,9 @@ fn main() {
         (num, info)
     }).collect();
 
-    let mut bots = BotRunner::run(&players);
+    let mut core = Core::new().unwrap();
+
+    let mut bots = BotRunner::run(&core.handle(), &players);
 
     {
         let log_file = match_description.log_file.unwrap_or("log.json".to_owned());
