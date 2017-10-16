@@ -1,3 +1,4 @@
 node_modules/
 bot_driver
-bots/
+bots/*
+!bots/simple.js
