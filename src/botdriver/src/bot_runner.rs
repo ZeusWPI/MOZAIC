@@ -7,6 +7,7 @@ use tokio_io::io;
 use tokio_core::reactor::Handle;
 
 use std::io::Error as IoError;
+use std::io::Result;
 
 use game::*;
 use match_runner::*;
@@ -50,6 +51,37 @@ impl BotRunner {
     }
 }
 
+pub struct BotHandle {
+    process: Child,
+    stdin: BufWriter<ChildStdin>,
+    stdout: BufReader<ChildStdout>,
+}
+
+impl Read for BotHandle {
+    fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        self.stdout.read(buf)
+    }
+}
+
+impl Write for BotHandle {
+    fn write(&mut self, buf: &[u8]) -> Result<usize> {
+        self.stdin.write(buf)
+    }
+
+    fn flush(&mut self) -> Result<()> {
+        self.stdin.flush()
+    }
+}
+
+impl BotHandle {
+    fn new(process: Child) -> BotHandle {
+        BotHandle [
+            stdin: process.stdin().take().unwrap(),
+            stdout: process.stdout().take().unwrap(),
+            process: process,
+        ]
+    }
+}
 
 pub struct PlayerHandle<'p> {
     process: &'p mut Child
