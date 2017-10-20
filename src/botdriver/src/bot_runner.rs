@@ -1,10 +1,16 @@
 use std::process;
 use futures::Future;
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
+use tokio_io::codec::{Encoder, Decoder};
 
 use tokio_core::reactor::Handle;
 
-use std::io::{Read, Write, Error, Result};
+use std::io::{Read, Write, Error, ErrorKind, Result};
+use tokio_io::io;
+
+use bytes::{BytesMut, BufMut};
+
+use std::str;
 
 use game::*;
 use match_runner::*;
@@ -81,6 +87,40 @@ impl BotHandle {
     }
 }
 
+pub struct LineCodec;
+
+impl Encoder for LineCodec {
+    type Item = String;
+    type Error = Error;
+
+    fn encode(&mut self, msg: String, buf: &mut BytesMut) -> Result<()> {
+        buf.extend(msg.as_bytes());
+        buf.extend(b"\n");
+        Ok(())
+    }
+}
+
+impl Decoder for LineCodec {
+    type Item = String;
+    type Error = Error;
+
+    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<String>> {
+        if let Some(pos) = buf.iter().position(|&b| b == b'\n') {
+            // remove frame from buffer
+            let line = buf.split_to(pos);
+
+            // remove newline
+            buf.split_to(1);
+
+            match str::from_utf8(&line) {
+                Ok(s)  => Ok(Some(s.to_string())),
+                Err(_) => Err(Error::new(ErrorKind::Other, "invalid UTF-8")),
+            }
+        } else {
+            Ok(None)
+        }
+    }
+}
 
 pub struct PlayerHandle<'p> {
     process: &'p mut Child

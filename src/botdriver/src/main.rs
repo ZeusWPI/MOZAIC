@@ -6,6 +6,8 @@ mod games;
 mod match_runner;
 mod logger;
 
+extern crate bytes;
+
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_process;
