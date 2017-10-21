@@ -1,9 +1,10 @@
 use std::process::{Command, Stdio};
-use futures::{Future, Poll};
+use futures::{Future, Poll, Async, Sink};
+use futures::stream::{Stream, StreamFuture};
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
 use tokio_io::codec::{Encoder, Decoder};
 
-use tokio_core::reactor::Handle;
+use tokio_core::reactor::{Handle, Core};
 
 use std::io::{Read, Write, Error, ErrorKind, Result};
 use tokio_io::{AsyncRead, AsyncWrite};
@@ -135,6 +136,62 @@ impl Decoder for LineCodec {
             Ok(None)
         }
     }
+}
+
+struct PoC<S> {
+    future: StreamFuture<S>,
+    count: usize,
+}
+
+impl<S> PoC<S>
+    where S: Stream
+{
+    fn new(stream: S) -> PoC<S> {
+        PoC {
+            count: 0,
+            future: stream.into_future(),
+        }
+    }
+}
+
+impl<S> Future for PoC<S>
+    where S: Stream<Item = String>
+{
+    type Item = String;
+    type Error = S::Error;
+
+    fn poll(&mut self) -> Poll<String, Self::Error> {
+        loop {
+            let (item, stream) = match (self.future.poll()) {
+                Ok(Async::Ready(t)) => t,
+                Ok(Async::NotReady) => return Ok(Async::NotReady),
+                Err((err, stream)) => return Err(err),
+            };
+            let line = item.unwrap();
+            println!("{}: {}", self.count, line);
+            self.count += 1;
+            if self.count < 10 {
+                self.future = stream.into_future();
+            } else {
+                return Ok(Async::Ready(line));
+            }
+        }
+    }
+}
+
+pub fn test() {
+    let mut core = Core::new().unwrap();
+    let mut cmd = Command::new("./test.sh");
+    let bot = BotHandle::spawn(cmd, &core.handle()).unwrap();
+    let mut transport = bot.framed(LineCodec);
+    let mut i = 0;
+    let action = PoC::new(transport);
+    // let action = transport.for_each(|line| {
+    //     println!("{}: {}", i, line);
+    //     i += 1;
+    //     Ok(())
+    // });
+    core.run(action).unwrap();
 }
 
 pub struct PlayerHandle<'p> {
