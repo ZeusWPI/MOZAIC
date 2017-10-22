@@ -1,6 +1,7 @@
 use std::process::{Command, Stdio};
-use futures::{Future, Poll, Async, Sink};
+use futures::{Future, Poll, Async};
 use futures::stream::{Stream, StreamFuture};
+use futures::sink::{Sink, Send};
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
 use tokio_io::codec::{Encoder, Decoder};
 
@@ -138,40 +139,97 @@ impl Decoder for LineCodec {
     }
 }
 
-struct PoC<S> {
-    future: StreamFuture<S>,
-    count: usize,
+
+enum PromptState<T>
+    where T: Stream + Sink
+{
+    Writing(Send<T>),
+    Reading(StreamFuture<T>),
 }
 
-impl<S> PoC<S>
-    where S: Stream
+struct Prompt<T>
+    where T: Stream + Sink
 {
-    fn new(stream: S) -> PoC<S> {
-        PoC {
-            count: 0,
-            future: stream.into_future(),
+    state: PromptState<T>,
+}
+
+impl<T> Prompt<T>
+    where T: Stream + Sink
+{
+    fn new(trans: T, msg: T::SinkItem) -> Self {
+        Prompt { state: PromptState::Writing(trans.send(msg)) }
+    }
+}
+
+impl<T> Future for Prompt<T>
+    where T: Stream + Sink
+{
+    type Item = (T::Item, T);
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(T::Item, T), ()> {
+        loop {
+            let new_state;
+            match self.state {
+                PromptState::Writing(ref mut future) => {
+                    let transport = match future.poll() {
+                        Ok(Async::Ready(t)) => t,
+                        Ok(Async::NotReady) => return Ok(Async::NotReady),
+                        Err(e) => panic!("error"),
+                    };
+                    new_state = PromptState::Reading(transport.into_future());
+                },
+                PromptState::Reading(ref mut future) => {
+                    let (item, transport) = match future.poll() {
+                        Ok(Async::Ready(p)) => p,
+                        Ok(Async::NotReady) => return Ok(Async::NotReady),
+                        Err((err, transport)) => panic!("error"),
+                    };
+                    return Ok(Async::Ready((item.unwrap(), transport)));
+                }
+            };
+            self.state = new_state;
         }
     }
 }
 
-impl<S> Future for PoC<S>
-    where S: Stream<Item = String>
+
+struct PoC<T>
+    where T: Stream + Sink
+{
+    prompt: Prompt<T>,
+    count: usize,
+}
+
+impl<T> PoC<T>
+    where T: Stream<Item = String> + Sink<SinkItem = String>
+{
+    fn new(transport: T) -> PoC<T> {
+        PoC {
+            count: 0,
+            prompt: Prompt::new(transport, "hoi".to_string()),
+        }
+    }
+}
+
+impl<T> Future for PoC<T>
+    where T: Stream<Item = String> + Sink<SinkItem = String>
 {
     type Item = String;
-    type Error = S::Error;
+    type Error = ();
 
     fn poll(&mut self) -> Poll<String, Self::Error> {
         loop {
-            let (item, stream) = match (self.future.poll()) {
+            let (item, stream) = match (self.prompt.poll()) {
                 Ok(Async::Ready(t)) => t,
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Err((err, stream)) => return Err(err),
+                Err(err) => return Err(err),
             };
-            let line = item.unwrap();
+            let line = item;
             println!("{}: {}", self.count, line);
             self.count += 1;
             if self.count < 10 {
-                self.future = stream.into_future();
+                self.prompt = Prompt::new(stream, line);
             } else {
                 return Ok(Async::Ready(line));
             }
