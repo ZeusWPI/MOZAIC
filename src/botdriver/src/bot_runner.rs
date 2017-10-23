@@ -1,14 +1,15 @@
 use std::process::{Command, Stdio};
-use futures::{Future, Poll, Async};
+use futures::{Future, Poll, Async, StartSend};
 use futures::stream::{Stream, StreamFuture};
 use futures::sink::{Sink, Send};
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
-use tokio_io::codec::{Encoder, Decoder};
+use tokio_io::codec::{Encoder, Decoder, Framed};
 
 use tokio_core::reactor::{Handle, Core};
 
 use std::io::{Read, Write, Error, ErrorKind, Result};
 use tokio_io::{AsyncRead, AsyncWrite};
+use std;
 
 use bytes::{BytesMut, BufMut};
 
@@ -42,12 +43,12 @@ impl BotRunner {
         }
     }
 
-    pub fn player_handles<'p>(&'p mut self) -> PlayerMap<PlayerHandle<'p>> {
-        self.processes.iter_mut().map(|(&player_id, process)| {
-            //(player_id, PlayerHandle::new(process))
-            unimplemented!()
-        }).collect()
-    }
+    // pub fn player_handles<'p>(&'p mut self) -> PlayerMap<PlayerHandle<'p>> {
+    //     self.processes.iter_mut().map(|(&player_id, process)| {
+    //         //(player_id, PlayerHandle::new(process))
+    //         unimplemented!()
+    //     }).collect()
+    // }
 
     pub fn kill(mut self) {
         for handle in self.processes.values_mut() {
@@ -212,6 +213,40 @@ impl<T> PoC<T>
     }
 }
 
+
+// interface towards game implementation
+pub struct PlayerHandle {
+    transport: Framed<BotHandle, LineCodec>,
+}
+
+impl PlayerHandle {
+    pub fn prompt(self, msg: String) -> Prompt<PlayerHandle> {
+        Prompt::new(self, msg)
+    }
+}
+
+impl Stream for PlayerHandle {
+    type Item = String;
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Option<String>, Error> {
+        self.transport.poll()
+    }
+}
+
+impl Sink for PlayerHandle {
+    type SinkItem = String;
+    type SinkError = Error;
+
+    fn start_send(&mut self, item: String) -> StartSend<String, Error> {
+        self.transport.start_send(item)
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), Error> {
+        self.transport.poll_complete()
+    }
+}
+
 impl<T> Future for PoC<T>
     where T: Stream<Item = String> + Sink<SinkItem = String>
 {
@@ -242,16 +277,6 @@ pub fn test() {
     let mut cmd = Command::new("./test.sh");
     let bot = BotHandle::spawn(cmd, &core.handle()).unwrap();
     let mut transport = bot.framed(LineCodec);
-    let mut i = 0;
     let action = PoC::new(transport);
-    // let action = transport.for_each(|line| {
-    //     println!("{}: {}", i, line);
-    //     i += 1;
-    //     Ok(())
-    // });
     core.run(action).unwrap();
-}
-
-pub struct PlayerHandle<'p> {
-    process: &'p mut Child
 }
