@@ -2,7 +2,7 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 use game::*;
-use games::planetwars::protocol;
+use planetwars::protocol;
 use logger::Logger;
 
 use std::io;

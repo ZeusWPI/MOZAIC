@@ -1,19 +1,13 @@
 use std::process::{Command, Stdio};
-use futures::{Future, Poll, Async, StartSend};
-use futures::stream::{Stream, StreamFuture};
-use futures::sink::{Sink, Send};
+use futures::{Future, Poll};
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
-use tokio_io::codec::{Encoder, Decoder, Framed};
+
 
 use tokio_core::reactor::{Handle, Core};
 
-use std::io::{Read, Write, Error, ErrorKind, Result};
+use std::io::{Read, Write, Error, Result};
 use tokio_io::{AsyncRead, AsyncWrite};
-use std;
 
-use bytes::{BytesMut, BufMut};
-
-use std::str;
 
 use game::*;
 use match_runner::*;
@@ -105,178 +99,9 @@ impl BotHandle {
     }
 }
 
-pub struct LineCodec;
-
-impl Encoder for LineCodec {
-    type Item = String;
-    type Error = Error;
-
-    fn encode(&mut self, msg: String, buf: &mut BytesMut) -> Result<()> {
-        buf.extend(msg.as_bytes());
-        buf.extend(b"\n");
-        Ok(())
-    }
-}
-
-impl Decoder for LineCodec {
-    type Item = String;
-    type Error = Error;
-
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<String>> {
-        if let Some(pos) = buf.iter().position(|&b| b == b'\n') {
-            // remove frame from buffer
-            let line = buf.split_to(pos);
-
-            // remove newline
-            buf.split_to(1);
-
-            match str::from_utf8(&line) {
-                Ok(s)  => Ok(Some(s.to_string())),
-                Err(_) => Err(Error::new(ErrorKind::Other, "invalid UTF-8")),
-            }
-        } else {
-            Ok(None)
-        }
-    }
-}
-
-
-enum PromptState<T>
-    where T: Stream + Sink
-{
-    Writing(Send<T>),
-    Reading(StreamFuture<T>),
-}
-
-struct Prompt<T>
-    where T: Stream + Sink
-{
-    state: PromptState<T>,
-}
-
-impl<T> Prompt<T>
-    where T: Stream + Sink
-{
-    fn new(trans: T, msg: T::SinkItem) -> Self {
-        Prompt { state: PromptState::Writing(trans.send(msg)) }
-    }
-}
-
-impl<T> Future for Prompt<T>
-    where T: Stream + Sink
-{
-    type Item = (T::Item, T);
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<(T::Item, T), ()> {
-        loop {
-            let new_state;
-            match self.state {
-                PromptState::Writing(ref mut future) => {
-                    let transport = match future.poll() {
-                        Ok(Async::Ready(t)) => t,
-                        Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err(e) => panic!("error"),
-                    };
-                    new_state = PromptState::Reading(transport.into_future());
-                },
-                PromptState::Reading(ref mut future) => {
-                    let (item, transport) = match future.poll() {
-                        Ok(Async::Ready(p)) => p,
-                        Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err((err, transport)) => panic!("error"),
-                    };
-                    return Ok(Async::Ready((item.unwrap(), transport)));
-                }
-            };
-            self.state = new_state;
-        }
-    }
-}
-
-
-struct PoC<T>
-    where T: Stream + Sink
-{
-    prompt: Prompt<T>,
-    count: usize,
-}
-
-impl<T> PoC<T>
-    where T: Stream<Item = String> + Sink<SinkItem = String>
-{
-    fn new(transport: T) -> PoC<T> {
-        PoC {
-            count: 0,
-            prompt: Prompt::new(transport, "hoi".to_string()),
-        }
-    }
-}
-
-
-// interface towards game implementation
-pub struct PlayerHandle {
-    transport: Framed<BotHandle, LineCodec>,
-}
-
-impl PlayerHandle {
-    pub fn prompt(self, msg: String) -> Prompt<PlayerHandle> {
-        Prompt::new(self, msg)
-    }
-}
-
-impl Stream for PlayerHandle {
-    type Item = String;
-    type Error = Error;
-
-    fn poll(&mut self) -> Poll<Option<String>, Error> {
-        self.transport.poll()
-    }
-}
-
-impl Sink for PlayerHandle {
-    type SinkItem = String;
-    type SinkError = Error;
-
-    fn start_send(&mut self, item: String) -> StartSend<String, Error> {
-        self.transport.start_send(item)
-    }
-
-    fn poll_complete(&mut self) -> Poll<(), Error> {
-        self.transport.poll_complete()
-    }
-}
-
-impl<T> Future for PoC<T>
-    where T: Stream<Item = String> + Sink<SinkItem = String>
-{
-    type Item = String;
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<String, Self::Error> {
-        loop {
-            let (item, stream) = match (self.prompt.poll()) {
-                Ok(Async::Ready(t)) => t,
-                Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Err(err) => return Err(err),
-            };
-            let line = item;
-            println!("{}: {}", self.count, line);
-            self.count += 1;
-            if self.count < 10 {
-                self.prompt = Prompt::new(stream, line);
-            } else {
-                return Ok(Async::Ready(line));
-            }
-        }
-    }
-}
 
 pub fn test() {
     let mut core = Core::new().unwrap();
     let mut cmd = Command::new("./test.sh");
     let bot = BotHandle::spawn(cmd, &core.handle()).unwrap();
-    let mut transport = bot.framed(LineCodec);
-    let action = PoC::new(transport);
-    core.run(action).unwrap();
 }
