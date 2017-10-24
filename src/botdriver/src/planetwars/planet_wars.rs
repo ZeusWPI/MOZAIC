@@ -5,11 +5,90 @@ use game::*;
 use planetwars::protocol;
 use logger::Logger;
 
+use planetwars::player::{PlayerHandle, Prompt};
+use futures::{Future, Async, Poll};
+use futures::future::{join_all, JoinAll};
+
 use std::io;
 use std::io::Read;
 use std::fs::File;
 
-#[derive(Debug)]
+pub struct Match {
+    state: PlanetWars,
+    prompts: JoinAll<Vec<Prompt<PlayerHandle>>>,
+}
+
+impl Future for Match {
+    // names of winners
+    type Item = Vec<String>;
+    type Error = io::Error;
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        loop {
+            let prompts = match self.prompts.poll() {
+                Ok(Async::Ready(prompts)) => prompts,
+                Ok(Async::NotReady) => return Ok(Async::NotReady),
+                Err(err) => panic!("this should never happen"),
+            };
+            // TODO: handle commands
+            if self.state.is_finished() {
+                // TODO: move this logic
+                let alive = self.state.players.values().filter_map(|p| {
+                    if p.alive {
+                        Some(p.name.clone())
+                    } else {
+                        None
+                    }
+                }).collect();
+                return Ok(Async::Ready(alive));
+            } else {
+                // TODO: generate prompts
+                unimplemented!()
+            }
+        }
+    }
+}
+
+impl Match {
+    // TODO: tidy this up
+    pub fn new(conf: PlanetWarsConf) -> Self {
+        let players : PlayerMap<Player> = unimplemented!();
+        // TODO: players should be passed in
+            // params.players.iter()
+            // .map(|(&id, info)| {
+            //     let player = Player {
+            //         id: id,
+            //         name: info.name.clone(),
+            //         alive: true,
+            //     };
+            //     return (id, player);
+            // }).collect();
+
+        let planets = conf.load_map(&players).into_iter()
+            .map(|planet| {
+                (planet.name.clone(), planet)
+            }).collect();
+        
+        let mut state = PlanetWars {
+            planets: planets,
+            players: players,
+            expeditions: Vec::new(),
+            expedition_num: 0,
+            turn_num: 0,
+            max_turns: conf.max_turns,
+            log: unimplemented!(),
+        };
+
+        state.log_state();
+
+        return Match {
+            // TODO: fix up generate_prompts to work here
+            prompts: join_all(unimplemented!()),
+            state: state,
+        }
+    }
+}
+
 pub struct PlanetWars {
     players: HashMap<PlayerId, Player>,
     planets: HashMap<String, Planet>,
@@ -60,74 +139,6 @@ pub struct PlanetWarsConf {
 }
 
 
-impl Game for PlanetWars {
-    // Name of the game winner.
-    type Outcome = Vec<String>;
-    type Config = PlanetWarsConf;
-
-    fn init(params: MatchParams<Self>) -> (Self, GameStatus<Self>) {
-        let players : PlayerMap<Player> = params.players.iter()
-            .map(|(&id, info)| {
-                let player = Player {
-                    id: id,
-                    name: info.name.clone(),
-                    alive: true,
-                };
-                return (id, player);
-            }).collect();
-
-        let planets = params.game_config.load_map(&players).into_iter()
-            .map(|planet| {
-                (planet.name.clone(), planet)
-            }).collect();
-        
-        let mut state = PlanetWars {
-            planets: planets,
-            players: players,
-            expeditions: Vec::new(),
-            expedition_num: 0,
-            turn_num: 0,
-            max_turns: params.game_config.max_turns,
-            log: params.logger,
-        };
-
-        state.log_state();
-        let prompts = state.generate_prompts();
-        return (state, GameStatus::Prompting(prompts));
-    }
-
-    fn step(&mut self, player_output: &PlayerMap<String>) -> GameStatus<Self> {
-        self.turn_num += 1;
-
-        self.execute_commands(player_output);
-         
-        // Play one step of the game, given the new expeditions
-        // Initially mark all players dead, re-marking them as alive once we
-        // find a sign of life.
-        for player in self.players.values_mut() {
-            player.alive = false;
-        }
-        self.repopulate();
-        self.step_expeditions();
-        self.resolve_combat();
-
-        self.log_state();
-
-        if self.is_finished() {
-            let alive = self.players.values().filter_map(|p| {
-                if p.alive {
-                    Some(p.name.clone())
-                } else {
-                    None
-                }
-            }).collect();
-            GameStatus::Finished(alive)
-        } else {
-            GameStatus::Prompting(self.generate_prompts())
-        }
-    }
-}
-
 impl PlanetWars {
     fn execute_commands(&mut self, player_output: &PlayerMap<String>) {
         for (&player_id, command) in player_output.iter() {
@@ -139,6 +150,23 @@ impl PlanetWars {
             }
         }
     }
+
+    fn step(&mut self) {
+        // Play one step of the game, given the new expeditions
+        self.turn_num += 1;
+
+        // Initially mark all players dead, re-marking them as alive once we
+        // find a sign of life.
+        for player in self.players.values_mut() {
+            player.alive = false;
+        }
+        
+        self.repopulate();
+        self.step_expeditions();
+        self.resolve_combat();
+
+        self.log_state();
+}
     
     fn generate_prompts(&self) -> PlayerMap<String> {
         let mut prompts = HashMap::new();
