@@ -2,7 +2,7 @@
 
 mod game;
 mod bot_runner;
-mod games;
+mod planetwars;
 mod match_runner;
 mod logger;
 
@@ -11,6 +11,7 @@ extern crate bytes;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_process;
+#[macro_use]
 extern crate futures;
 
 #[macro_use]
@@ -31,7 +32,7 @@ use bot_runner::*;
 use match_runner::*;
 use logger::Logger;
 
-use games::planetwars;
+use planetwars::Match;
 
 // Load the config and start the game.
 fn main() {
@@ -49,37 +50,13 @@ fn main() {
             std::process::exit(1)
         }
     };
-    let players: PlayerMap<PlayerConfig> = match_description.players
-        .into_iter()
-        .enumerate()
-        .collect();
 
-    let player_names = players.iter().map(|(&num, config)| {
-        let info = PlayerInfo { name: config.name.clone() };
-        (num, info)
-    }).collect();
+    let mut reactor = Core::new().unwrap();
+    let bots = spawn_bots(&reactor.handle(), &match_description.players);
 
-    let mut core = Core::new().unwrap();
 
-    let mut bots = BotRunner::run(&core.handle(), &players);
-
-    {
-        let log_file = match_description.log_file.unwrap_or("log.json".to_owned());
-        let config = MatchParams {
-            players: player_names,
-            game_config: match_description.game_config,
-            logger: Logger::new(&log_file),
-        };
-        
-        
-        let mut runner = MatchRunner {
-            players: bots.player_handles(),
-        };
-        let outcome = runner.run::<planetwars::PlanetWars>(config);
-        println!("Outcome: {:?}", outcome);
-    }
-
-    bots.kill();
+    let matsh = Match::new(bots, match_description.game_config);
+    reactor.run(matsh).unwrap();
 }
 
 #[derive(Serialize, Deserialize)]
