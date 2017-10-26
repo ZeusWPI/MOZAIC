@@ -3,7 +3,6 @@
 mod game;
 mod bot_runner;
 mod planetwars;
-mod match_runner;
 mod logger;
 
 extern crate bytes;
@@ -29,7 +28,6 @@ use tokio_core::reactor::Core;
 
 use game::*;
 use bot_runner::*;
-use match_runner::*;
 use logger::Logger;
 
 use planetwars::Match;
