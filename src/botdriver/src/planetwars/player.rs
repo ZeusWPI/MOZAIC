@@ -10,12 +10,17 @@ use bot_runner::BotHandle;
 
 
 pub struct PlayerHandle {
+    id: usize,
     transport: Framed<BotHandle, LineCodec>,
 }
 
 impl PlayerHandle {
     pub fn prompt(self, msg: String) -> Prompt<PlayerHandle> {
         Prompt::new(self, msg)
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
     }
 }
 
@@ -84,7 +89,7 @@ enum PromptState<T>
     Reading(StreamFuture<T>),
 }
 
-struct Prompt<T>
+pub struct Prompt<T>
     where T: Stream + Sink
 {
     state: PromptState<T>,
