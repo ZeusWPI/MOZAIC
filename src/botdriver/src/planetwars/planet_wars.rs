@@ -29,7 +29,7 @@ impl Future for Match {
             let prompts = match self.prompts.poll() {
                 Ok(Async::Ready(prompts)) => prompts,
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Err(err) => panic!("this should never happen"),
+                Err(_) => panic!("this should never happen"),
             };
             self.state.execute_commands(&prompts);
             self.state.step();

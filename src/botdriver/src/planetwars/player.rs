@@ -126,7 +126,7 @@ impl<T> Future for Prompt<T>
                     let transport = match future.poll() {
                         Ok(Async::Ready(t)) => t,
                         Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err(e) => panic!("error"),
+                        Err(_) => panic!("error"),
                     };
                     new_state = PromptState::Reading(transport.into_future());
                 },
@@ -134,7 +134,7 @@ impl<T> Future for Prompt<T>
                     let (item, transport) = match future.poll() {
                         Ok(Async::Ready(p)) => p,
                         Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err((err, transport)) => panic!("error"),
+                        Err(_) => panic!("error"),
                     };
                     return Ok(Async::Ready((item.unwrap(), transport)));
                 }

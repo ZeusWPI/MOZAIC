@@ -1,7 +1,7 @@
 use std::process::{Command, Stdio};
-use futures::{Future, Poll};
+use futures::Poll;
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
-use tokio_core::reactor::{Handle, Core};
+use tokio_core::reactor::Handle;
 
 use std::io::{Read, Write, Error, Result};
 use tokio_io::{AsyncRead, AsyncWrite};
@@ -34,7 +34,7 @@ pub fn spawn_bots(handle: &Handle, players: &Vec<PlayerConfig>)
 }
 
 pub struct BotHandle {
-    process: Child,
+    _process: Child,
     stdin: ChildStdin,
     stdout: ChildStdout,
 }
@@ -76,14 +76,7 @@ impl BotHandle {
         BotHandle {
             stdin: process.stdin().take().unwrap(),
             stdout: process.stdout().take().unwrap(),
-            process: process,
+            _process: process,
         }
     }
-}
-
-
-pub fn test() {
-    let mut core = Core::new().unwrap();
-    let mut cmd = Command::new("./test.sh");
-    let bot = BotHandle::spawn(cmd, &core.handle()).unwrap();
 }
