@@ -31,6 +31,7 @@ impl Future for Match {
                 Err(err) => panic!("this should never happen"),
             };
             self.state.execute_commands(&prompts);
+            self.state.step();
             if self.state.is_finished() {
                 // TODO: move this logic
                 let alive = self.state.players.values().filter_map(|p| {
