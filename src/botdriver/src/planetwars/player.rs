@@ -1,6 +1,7 @@
 use futures::{Future, Poll, Async, StartSend};
 use futures::stream::{Stream, StreamFuture};
 use futures::sink::{Sink, Send};
+use tokio_io::AsyncRead;
 use tokio_io::codec::{Encoder, Decoder, Framed};
 use bytes::BytesMut;
 use std::str;
@@ -15,6 +16,13 @@ pub struct PlayerHandle {
 }
 
 impl PlayerHandle {
+    pub fn new(id: usize, bot_handle: BotHandle) -> Self {
+        PlayerHandle {
+            id: id,
+            transport: bot_handle.framed(LineCodec),
+        }
+    }
+    
     pub fn prompt(self, msg: String) -> Prompt<PlayerHandle> {
         Prompt::new(self, msg)
     }

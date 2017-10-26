@@ -54,9 +54,9 @@ impl Future for Match {
 
 impl Match {
     // TODO: tidy this up
-    pub fn new(players: HashMap<String, BotHandle>, conf: PlanetWarsConf) -> Self {
+    pub fn new(mut players: HashMap<String, BotHandle>, conf: PlanetWarsConf) -> Self {
         // construct player map
-        let players : HashMap<usize, Player> = players.keys().enumerate()
+        let player_map: HashMap<usize, Player> = players.keys().enumerate()
             .map(|(num, name)| {
                 let player = Player {
                     id: num,
@@ -67,14 +67,19 @@ impl Match {
             }).collect();
 
         // construct planet amp
-        let planets = conf.load_map(&players).into_iter()
+        let planets = conf.load_map(&player_map).into_iter()
             .map(|planet| {
                 (planet.name.clone(), planet)
             }).collect();
 
+        let handles = player_map.values().map(|player| {
+            let handle = players.remove(&player.name).unwrap();
+            return PlayerHandle::new(player.id, handle);
+        }).collect();
+
         let mut state = PlanetWars {
             planets: planets,
-            players: players,
+            players: player_map,
             expeditions: Vec::new(),
             expedition_num: 0,
             turn_num: 0,
@@ -84,8 +89,6 @@ impl Match {
 
         state.log_state();
 
-
-        let handles = unimplemented!();
         return Match {
             // TODO: fix up generate_prompts to work here
             prompts: join_all(state.generate_prompts(handles)),
