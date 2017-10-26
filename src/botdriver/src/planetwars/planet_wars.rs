@@ -30,7 +30,7 @@ impl Future for Match {
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
                 Err(err) => panic!("this should never happen"),
             };
-            // TODO: handle commands
+            self.state.execute_commands(&prompts);
             if self.state.is_finished() {
                 // TODO: move this logic
                 let alive = self.state.players.values().filter_map(|p| {
@@ -140,12 +140,12 @@ pub struct PlanetWarsConf {
 
 
 impl PlanetWars {
-    fn execute_commands(&mut self, player_output: &PlayerMap<String>) {
-        for (&player_id, command) in player_output.iter() {
-            let r = serde_json::from_str::<protocol::Command>(command);
+    fn execute_commands(&mut self, commands: &Vec<(String, PlayerHandle)>) {
+        for &(ref command, ref player) in commands {
+            let r = serde_json::from_str::<protocol::Command>(command.as_str());
             if let Ok(cmd) = r {
                 for mv in cmd.moves.iter() {
-                    self.exec_move(player_id, mv);
+                    self.exec_move(player.id(), mv);
                 }
             }
         }
@@ -201,14 +201,13 @@ impl PlanetWars {
         return protocol::State { players, expeditions, planets };
     }
 
-    fn exec_move(&mut self, player_id: PlayerId, m: &protocol::Move) {
+    fn exec_move(&mut self, player_id: usize, m: &protocol::Move) {
         // TODO: this code sucks.
         // TODO: actually handle errors
         // MOZAIC should support soft errors first, of course.
         // Alternatively, a game implementation could be made responsible for
         // this. This would require more work, but also allow more flexibility.
 
-        let player = self.players.get(&player_id).unwrap();
         if !self.planets.contains_key(&m.origin) {
             return;
         }
@@ -233,7 +232,7 @@ impl PlanetWars {
         // TODO: maybe wrap this in a helper function
         origin.fleets[0].ship_count -= m.ship_count;
         let fleet = Fleet {
-            owner: Some(player.id),
+            owner: Some(player_id),
             ship_count: m.ship_count,
         };
 
