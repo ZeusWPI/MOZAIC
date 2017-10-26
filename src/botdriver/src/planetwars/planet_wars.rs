@@ -42,8 +42,9 @@ impl Future for Match {
                 }).collect();
                 return Ok(Async::Ready(alive));
             } else {
-                // TODO: generate prompts
-                unimplemented!()
+                let handles = prompts.into_iter().map(|(_, handle)| handle).collect();
+                let future = join_all(self.state.generate_prompts(handles));
+                self.prompts = future;
             }
         }
     }
@@ -68,7 +69,6 @@ impl Match {
             .map(|planet| {
                 (planet.name.clone(), planet)
             }).collect();
-        
         let mut state = PlanetWars {
             planets: planets,
             players: players,
@@ -81,9 +81,11 @@ impl Match {
 
         state.log_state();
 
+
+        let handles = unimplemented!();
         return Match {
             // TODO: fix up generate_prompts to work here
-            prompts: join_all(unimplemented!()),
+            prompts: join_all(state.generate_prompts(handles)),
             state: state,
         }
     }
@@ -168,19 +170,19 @@ impl PlanetWars {
         self.log_state();
 }
     
-    fn generate_prompts(&self) -> PlayerMap<String> {
-        let mut prompts = HashMap::new();
-        let state = self.repr();
-
-        for player in self.players.values() {
+    fn generate_prompts(&self, handles: Vec<PlayerHandle>) -> Vec<Prompt<PlayerHandle>> {
+        handles.into_iter().filter_map(|handle| {
+            let player = &self.players[&handle.id()];
+            
             if player.alive {
+                let state = self.repr();
                 let p = serde_json::to_string(&state)
-                        .expect("[PLANET_WARS] Serializing game state failed.");
-                prompts.insert(player.id, p);
-                               
+                    .expect("[PLANET_WARS] Serializing game state failed.");
+                Some(handle.prompt(p))
+            } else {
+                None
             }
-        }
-        return prompts;
+        }).collect()
     }
 
     fn log_state(&mut self) {
