@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use game::*;
 use planetwars::protocol;
 use logger::Logger;
+use bot_runner::BotHandle;
 
 use planetwars::player::{PlayerHandle, Prompt};
 use futures::{Future, Async, Poll};
@@ -53,23 +54,24 @@ impl Future for Match {
 
 impl Match {
     // TODO: tidy this up
-    pub fn new(conf: PlanetWarsConf) -> Self {
-        let players : PlayerMap<Player> = unimplemented!();
-        // TODO: players should be passed in
-            // params.players.iter()
-            // .map(|(&id, info)| {
-            //     let player = Player {
-            //         id: id,
-            //         name: info.name.clone(),
-            //         alive: true,
-            //     };
-            //     return (id, player);
-            // }).collect();
+    pub fn new(players: HashMap<String, BotHandle>, conf: PlanetWarsConf) -> Self {
+        // construct player map
+        let players : HashMap<usize, Player> = players.keys().enumerate()
+            .map(|(num, name)| {
+                let player = Player {
+                    id: num,
+                    name: name.clone(),
+                    alive: true,
+                };
+                return (num, player);
+            }).collect();
 
+        // construct planet amp
         let planets = conf.load_map(&players).into_iter()
             .map(|planet| {
                 (planet.name.clone(), planet)
             }).collect();
+
         let mut state = PlanetWars {
             planets: planets,
             players: players,
@@ -77,7 +79,7 @@ impl Match {
             expedition_num: 0,
             turn_num: 0,
             max_turns: conf.max_turns,
-            log: unimplemented!(),
+            log: Logger::new("log.jsonl"),
         };
 
         state.log_state();
