@@ -1,6 +1,5 @@
 #![feature(conservative_impl_trait)]
 
-mod game;
 mod bot_runner;
 mod planetwars;
 mod logger;
