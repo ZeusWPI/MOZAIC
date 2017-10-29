@@ -1,19 +1,17 @@
 extern crate serde_json;
 
+use std::io;
 use std::collections::HashMap;
-use bot_runner::BotHandle;
 
 use futures::{Future, Async, Poll};
 use futures::future::{join_all, JoinAll};
 
-use std::io;
-use std::io::Read;
-use std::fs::File;
-
+use bot_runner::BotHandle;
 use planetwars::protocol;
 use planetwars::rules::*;
 use planetwars::player::{PlayerHandle, Prompt};
 use planetwars::logger::PlanetWarsLogger;
+use planetwars::Config;
 
 pub struct Match {
     state: PlanetWars,
@@ -61,7 +59,7 @@ impl Future for Match {
 
 impl Match {
     // TODO: split this method a bit
-    pub fn new(mut players: HashMap<String, BotHandle>, conf: PlanetWarsConf) -> Self {
+    pub fn new(mut players: HashMap<String, BotHandle>, conf: Config) -> Self {
         // construct player map
         let player_map: HashMap<usize, Player> = players.keys().enumerate()
             .map(|(num, name)| {
@@ -143,51 +141,6 @@ impl Match {
         }
 
         true
-    }
-}
-
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct PlanetWarsConf {
-    pub map_file: String,
-    pub player_map: HashMap<String, String>,
-    pub max_turns: u64,
-}
-
-impl PlanetWarsConf {
-    fn load_map(&self, players: &HashMap<usize, Player>) -> Vec<Planet> {
-        let map = self.read_map().expect("[PLANET_WARS] reading map failed");
-        
-        let player_translation: HashMap<&str, usize> = players.iter()
-            .map(|(&id, player)| {
-                (self.player_map.get(&player.name).unwrap().as_str(), id)
-            }).collect();
-
-        return map.planets.into_iter().map(|planet| {
-            let mut fleets = Vec::new();
-            if planet.ship_count > 0 {
-                fleets.push(Fleet {
-                    owner: planet.owner.and_then(|ref owner| {
-                        player_translation.get(owner.as_str()).map(|&v| v)
-                    }),
-                    ship_count: planet.ship_count,
-                });
-            }
-            return Planet {
-                name: planet.name,
-                x: planet.x,
-                y: planet.y,
-                fleets: fleets,
-            };
-        }).collect();
-    }
-
-    fn read_map(&self) -> io::Result<protocol::Map> {
-        let mut file = File::open(&self.map_file)?;
-        let mut buf = String::new();
-        file.read_to_string(&mut buf)?;
-        let map = serde_json::from_str(&buf)?;
-        return Ok(map);
     }
 }
 
