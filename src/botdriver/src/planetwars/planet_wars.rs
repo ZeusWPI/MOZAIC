@@ -13,11 +13,12 @@ use std::fs::File;
 use planetwars::protocol;
 use planetwars::rules::*;
 use planetwars::player::{PlayerHandle, Prompt};
-use logger::Logger;
+use planetwars::logger::JSONLogger;
 
 pub struct Match {
     state: PlanetWars,
     prompts: JoinAll<Vec<Prompt<PlayerHandle>>>,
+    logger: JSONLogger,
 }
 
 impl Future for Match {
@@ -69,7 +70,7 @@ impl Match {
                 return (num, player);
             }).collect();
 
-        // construct planet amp
+        // construct planet map
         let planets = conf.load_map(&player_map).into_iter()
             .map(|planet| {
                 (planet.name.clone(), planet)
@@ -94,6 +95,7 @@ impl Match {
         return Match {
             prompts: unimplemented!(),
             state: state,
+            logger: JSONLogger::new("log.jsonl"),
         }
     }
 
@@ -140,6 +142,8 @@ impl Match {
         // Alternatively, a game implementation could be made responsible for
         // this. This would require more work, but also allow more flexibility.
 
+
+        // check whether origin and target exist
         if !self.state.planets.contains_key(&m.origin) {
             return false;
         }
@@ -147,8 +151,8 @@ impl Match {
             return false;
         }
 
+        // check whether player owns origin and has enough ships there
         let origin = &self.state.planets[&m.origin];
-        
         
         if origin.owner() != Some(player_id) {
             return false;

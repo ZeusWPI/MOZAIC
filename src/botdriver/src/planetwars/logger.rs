@@ -4,25 +4,26 @@ use serde::Serialize;
 use serde_json;
 
 #[derive(Debug)]
-pub struct Logger {
+pub struct JSONLogger {
     handle: LineWriter<File>,
 }
 
-impl Logger {
+impl JSONLogger {
     pub fn new(name: &str) -> Self {
-        Logger {
+        JSONLogger {
             handle: LineWriter::new(File::create(name).unwrap()),
         }
     }
 
-    pub fn log_line(&mut self, line: &str) -> Result<()> {
-        write!(&mut self.handle, "{}\n", line)
-    }
-
-    pub fn log_json<S>(&mut self, data: &S) -> Result<()>
+    pub fn log_json<S>(&mut self, record: &S) -> Result<()>
         where S: Serialize
     {
-        let line = serde_json::to_string(data)?;
+        let line = serde_json::to_string(record)?;
         return self.log_line(&line);
+    }
+
+    
+    fn log_line(&mut self, line: &str) -> Result<()> {
+        write!(&mut self.handle, "{}\n", line)
     }
 }

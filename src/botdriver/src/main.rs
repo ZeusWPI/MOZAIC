@@ -2,7 +2,6 @@
 
 mod bot_runner;
 mod planetwars;
-mod logger;
 
 extern crate bytes;
 
