@@ -49,7 +49,7 @@ impl Future for Match {
                 return Ok(Async::Ready(alive));
             } else {
                 let handles = prompts.into_iter().map(|(_, handle)| handle).collect();
-                let future = join_all(self.generate_prompts(handles));
+                let future = prompt_players(&self.state, handles);
                 self.prompts = future;
             }
         }
@@ -76,10 +76,10 @@ impl Match {
                 (planet.name.clone(), planet)
             }).collect();
 
-        // let handles = player_map.values().map(|player| {
-        //     let handle = players.remove(&player.name).unwrap();
-        //     return PlayerHandle::new(player.id, handle);
-        // }).collect();
+        let handles = player_map.values().map(|player| {
+            let handle = players.remove(&player.name).unwrap();
+            return PlayerHandle::new(player.id, handle);
+        }).collect();
 
         let mut state = PlanetWars {
             planets: planets,
@@ -93,7 +93,7 @@ impl Match {
         // TODO: log state
 
         return Match {
-            prompts: unimplemented!(),
+            prompts: prompt_players(&state, handles),
             state: state,
             logger: JSONLogger::new("log.jsonl"),
         }
@@ -112,21 +112,7 @@ impl Match {
         }
     }
     
-    fn generate_prompts(&self, handles: Vec<PlayerHandle>) -> Vec<Prompt<PlayerHandle>> {
-        handles.into_iter().filter_map(|handle| {
-            let player = &self.state.players[&handle.id()];
-            
-            if player.alive {
-                let state = self.state.repr();
-                let p = serde_json::to_string(&state)
-                    .expect("[PLANET_WARS] Serializing game state failed.");
-                Some(handle.prompt(p))
-            } else {
-                None
-            }
-        }).collect()
-    }
-
+    
     fn log_state(&mut self) {
         unimplemented!()
         // let state = self.state.repr();
@@ -208,4 +194,24 @@ impl PlanetWarsConf {
         let map = serde_json::from_str(&buf)?;
         return Ok(map);
     }
+}
+
+// TODO: as this logic gets more complicated, it might be good to
+// sparate this functionality into a purpose-specific struct.
+fn prompt_players(state: &PlanetWars, handles: Vec<PlayerHandle>)
+                  -> JoinAll<Vec<Prompt<PlayerHandle>>>
+{
+    let prompts = handles.into_iter().filter_map(|handle| {
+        let player = &state.players[&handle.id()];
+        
+        if player.alive {
+            let state = state.repr();
+            let p = serde_json::to_string(&state)
+                .expect("[PLANET_WARS] Serializing game state failed.");
+            Some(handle.prompt(p))
+        } else {
+            None
+        }
+    }).collect();
+    return join_all(prompts);
 }
