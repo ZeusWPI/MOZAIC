@@ -89,7 +89,7 @@ impl PlanetWars {
     }
 
     
-    fn repopulate(&mut self) {
+    pub fn repopulate(&mut self) {
         for planet in self.planets.values_mut() {
             if planet.owner().is_some() {
                 planet.fleets[0].ship_count += 1;

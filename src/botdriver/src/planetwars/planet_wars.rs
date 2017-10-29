@@ -13,12 +13,12 @@ use std::fs::File;
 use planetwars::protocol;
 use planetwars::rules::*;
 use planetwars::player::{PlayerHandle, Prompt};
-use planetwars::logger::JSONLogger;
+use planetwars::logger::PlanetWarsLogger;
 
 pub struct Match {
     state: PlanetWars,
     prompts: JoinAll<Vec<Prompt<PlayerHandle>>>,
-    logger: JSONLogger,
+    logger: PlanetWarsLogger,
 }
 
 impl Future for Match {
@@ -33,8 +33,11 @@ impl Future for Match {
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
                 Err(_) => panic!("this should never happen"),
             };
+
+            self.state.repopulate();
             self.execute_commands(&prompts);
             self.state.step();
+            self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
             if self.state.is_finished() {
                 // TODO: move this logic
@@ -81,7 +84,7 @@ impl Match {
             return PlayerHandle::new(player.id, handle);
         }).collect();
 
-        let mut state = PlanetWars {
+        let state = PlanetWars {
             planets: planets,
             players: player_map,
             expeditions: Vec::new(),
@@ -90,12 +93,13 @@ impl Match {
             max_turns: conf.max_turns,
         };
 
-        // TODO: log state
+        let mut logger = PlanetWarsLogger::new("log.json");
+        logger.log(&state).expect("[PLANET_WARS] logging failed");
 
         return Match {
             prompts: prompt_players(&state, handles),
             state: state,
-            logger: JSONLogger::new("log.jsonl"),
+            logger: logger,
         }
     }
 
@@ -111,15 +115,6 @@ impl Match {
             }
         }
     }
-    
-    
-    fn log_state(&mut self) {
-        unimplemented!()
-        // let state = self.state.repr();
-        // self.log.log_json(&state)
-        //     .expect("[PLANET_WARS] logging failed");
-    }
-
     
     fn move_valid(&mut self, player_id: usize, m: &protocol::Move) -> bool {
         // TODO: this code sucks.
