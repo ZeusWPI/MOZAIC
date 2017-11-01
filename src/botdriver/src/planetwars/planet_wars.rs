@@ -15,7 +15,7 @@ use planetwars::Config;
 
 pub struct Match {
     state: PlanetWars,
-    prompts: JoinAll<Vec<Prompt<PlayerHandle>>>,
+    prompts: JoinAll<Vec<Prompt>>,
     logger: PlanetWarsLogger,
 }
 
@@ -49,7 +49,7 @@ impl Future for Match {
                 }).collect();
                 return Ok(Async::Ready(alive));
             } else {
-                let handles = prompts.into_iter().map(|(_, handle)| handle).collect();
+                let handles = prompts.into_iter().map(|r| r.unwrap().1).collect();
                 let future = prompt_players(&self.state, handles);
                 self.prompts = future;
             }
@@ -101,8 +101,9 @@ impl Match {
         }
     }
 
-    fn execute_commands(&mut self, commands: &Vec<(String, PlayerHandle)>) {
-        for &(ref command, ref player) in commands {
+    fn execute_commands(&mut self, commands: &Vec<io::Result<(String, PlayerHandle)>>) {
+        for res in commands {
+            let &(ref command, ref player) = res.as_ref().unwrap();
             let r = serde_json::from_str::<protocol::Command>(command.as_str());
             if let Ok(cmd) = r {
                 for mv in cmd.moves.iter() {
@@ -147,7 +148,7 @@ impl Match {
 // TODO: as this logic gets more complicated, it might be good to
 // sparate this functionality into a purpose-specific struct.
 fn prompt_players(state: &PlanetWars, handles: Vec<PlayerHandle>)
-                  -> JoinAll<Vec<Prompt<PlayerHandle>>>
+                  -> JoinAll<Vec<Prompt>>
 {
     let prompts = handles.into_iter().filter_map(|handle| {
         let player = &state.players[&handle.id()];

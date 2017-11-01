@@ -23,7 +23,7 @@ impl PlayerHandle {
         }
     }
     
-    pub fn prompt(self, msg: String) -> Prompt<PlayerHandle> {
+    pub fn prompt(self, msg: String) -> Prompt {
         Prompt::new(self, msg)
     }
 
@@ -90,35 +90,27 @@ impl Decoder for LineCodec {
     }
 }
 
-enum PromptState<T>
-    where T: Stream + Sink
-{
-    Writing(Send<T>),
-    Reading(StreamFuture<T>),
+enum PromptState {
+    Writing(Send<PlayerHandle>),
+    Reading(StreamFuture<PlayerHandle>),
 }
 
-pub struct Prompt<T>
-    where T: Stream + Sink
-{
-    state: PromptState<T>,
+pub struct Prompt {
+    state: PromptState,
 }
 
-impl<T> Prompt<T>
-    where T: Stream + Sink
-{
-    fn new(trans: T, msg: T::SinkItem) -> Self {
+impl Prompt {
+    fn new(trans: PlayerHandle, msg: String) -> Self {
         Prompt { state: PromptState::Writing(trans.send(msg)) }
     }
 }
 
 // TODO: properly handle errors
-impl<T> Future for Prompt<T>
-    where T: Stream + Sink
-{
-    type Item = (T::Item, T);
+impl Future for Prompt {
+    type Item = io::Result<(String, PlayerHandle)>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<(T::Item, T), ()> {
+    fn poll(&mut self) -> Poll<io::Result<(String, PlayerHandle)>, ()> {
         loop {
             let new_state;
             match self.state {
@@ -126,7 +118,7 @@ impl<T> Future for Prompt<T>
                     let transport = match future.poll() {
                         Ok(Async::Ready(t)) => t,
                         Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err(_) => panic!("error"),
+                        Err(err) => return Ok(Async::Ready(Err(err))),
                     };
                     new_state = PromptState::Reading(transport.into_future());
                 },
@@ -134,9 +126,9 @@ impl<T> Future for Prompt<T>
                     let (item, transport) = match future.poll() {
                         Ok(Async::Ready(p)) => p,
                         Ok(Async::NotReady) => return Ok(Async::NotReady),
-                        Err(_) => panic!("error"),
+                        Err((err, _handle)) => return Ok(Async::Ready(Err(err))),
                     };
-                    return Ok(Async::Ready((item.unwrap(), transport)));
+                    return Ok(Async::Ready(Ok((item.unwrap(), transport))));
                 }
             };
             self.state = new_state;
