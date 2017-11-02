@@ -164,3 +164,38 @@ fn prompt_players(state: &PlanetWars, handles: Vec<PlayerHandle>)
     }).collect();
     return join_all(prompts);
 }
+
+struct Prompts {
+    ids: Vec<usize>,
+    future: JoinAll<Vec<Prompt>>,
+}
+
+struct PromptResults {
+    results: HashMap<usize, io::Result<String>>,
+    handles: HashMap<usize, PlayerHandle>,
+}
+
+impl Future for Prompts {
+    type Item = PromptResults;
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        let responses = try_ready!(self.future.poll());
+        let mut results = HashMap::with_capacity(responses.len());
+        let mut handles = HashMap::with_capacity(responses.len());
+
+        for (i, response) in responses.into_iter().enumerate() {
+            let id = self.ids[i];
+            match response {
+                Ok((answer, handle)) => {
+                    results.insert(id, Ok(answer));
+                    handles.insert(id, handle);
+                },
+                Err(err) => {
+                    results.insert(id, Err(err));
+                }
+            }
+        }
+        return Ok(Async::Ready( PromptResults { results, handles }));
+    }
+}

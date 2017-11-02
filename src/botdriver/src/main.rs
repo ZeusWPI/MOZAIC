@@ -8,6 +8,7 @@ extern crate bytes;
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_process;
+#[macro_use]
 extern crate futures;
 
 #[macro_use]
