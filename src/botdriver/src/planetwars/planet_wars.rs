@@ -15,7 +15,7 @@ use planetwars::Config;
 
 pub struct Match {
     state: PlanetWars,
-    prompts: JoinAll<Vec<Prompt>>,
+    prompts: Prompts,
     logger: PlanetWarsLogger,
 }
 
@@ -26,14 +26,14 @@ impl Future for Match {
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         loop {
-            let prompts = match self.prompts.poll() {
-                Ok(Async::Ready(prompts)) => prompts,
+            let prompt_results = match self.prompts.poll() {
+                Ok(Async::Ready(results)) => results,
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
                 Err(_) => panic!("this should never happen"),
             };
 
             self.state.repopulate();
-            self.execute_commands(&prompts);
+            self.execute_commands(&prompt_results.results);
             self.state.step();
             self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
@@ -49,9 +49,8 @@ impl Future for Match {
                 }).collect();
                 return Ok(Async::Ready(alive));
             } else {
-                let handles = prompts.into_iter().map(|r| r.unwrap().1).collect();
-                let future = prompt_players(&self.state, handles);
-                self.prompts = future;
+                let handles = prompt_results.handles;
+                self.prompts = prompt_players(&self.state, handles);
             }
         }
     }
@@ -79,7 +78,7 @@ impl Match {
 
         let handles = player_map.values().map(|player| {
             let handle = players.remove(&player.name).unwrap();
-            return PlayerHandle::new(player.id, handle);
+            (player.id, PlayerHandle::new(player.id, handle))
         }).collect();
 
         let state = PlanetWars {
@@ -101,13 +100,13 @@ impl Match {
         }
     }
 
-    fn execute_commands(&mut self, commands: &Vec<io::Result<(String, PlayerHandle)>>) {
-        for res in commands {
-            let &(ref command, ref player) = res.as_ref().unwrap();
+    fn execute_commands(&mut self, commands: &HashMap<usize, io::Result<String>>) {
+        for (&id, res) in commands {
+            let command = res.as_ref().unwrap();
             let r = serde_json::from_str::<protocol::Command>(command.as_str());
             if let Ok(cmd) = r {
                 for mv in cmd.moves.iter() {
-                    if self.move_valid(player.id(), mv) {
+                    if self.move_valid(id, mv) {
                         self.state.dispatch(mv);
                     }
                 }
@@ -147,22 +146,22 @@ impl Match {
 
 // TODO: as this logic gets more complicated, it might be good to
 // sparate this functionality into a purpose-specific struct.
-fn prompt_players(state: &PlanetWars, handles: Vec<PlayerHandle>)
-                  -> JoinAll<Vec<Prompt>>
+fn prompt_players(state: &PlanetWars, handles: HashMap<usize, PlayerHandle>)
+                  -> Prompts
 {
-    let prompts = handles.into_iter().filter_map(|handle| {
+    let prompts = handles.into_iter().filter_map(|(id, handle)| {
         let player = &state.players[&handle.id()];
         
         if player.alive {
             let state = state.repr();
             let p = serde_json::to_string(&state)
                 .expect("[PLANET_WARS] Serializing game state failed.");
-            Some(handle.prompt(p))
+            Some((id, handle.prompt(p)))
         } else {
             None
         }
-    }).collect();
-    return join_all(prompts);
+    });
+    return Prompts::from_map(prompts.collect());
 }
 
 struct Prompts {
@@ -173,6 +172,16 @@ struct Prompts {
 struct PromptResults {
     results: HashMap<usize, io::Result<String>>,
     handles: HashMap<usize, PlayerHandle>,
+}
+
+impl Prompts {
+    fn from_map(prompts: HashMap<usize, Prompt>) -> Self {
+        let (ids, futures) = prompts.into_iter().unzip();
+        Prompts {
+            ids: ids,
+            future: join_all(futures),
+        }
+    }
 }
 
 impl Future for Prompts {
