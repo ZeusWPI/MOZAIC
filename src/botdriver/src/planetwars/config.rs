@@ -17,7 +17,24 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load_map(&self, players: &HashMap<usize, Player>) -> Vec<Planet> {
+    pub fn create_game(&self, players: HashMap<usize, Player>) -> PlanetWars {
+        // construct planet map
+        let planets = self.load_map(&players).into_iter()
+            .map(|planet| {
+                (planet.name.clone(), planet)
+            }).collect();
+
+        PlanetWars {
+            planets: planets,
+            players: players,
+            expeditions: Vec::new(),
+            expedition_num: 0,
+            turn_num: 0,
+            max_turns: self.max_turns,
+        }
+    }
+    
+    fn load_map(&self, players: &HashMap<usize, Player>) -> Vec<Planet> {
         let map = self.read_map().expect("[PLANET_WARS] reading map failed");
         
         let player_translation: HashMap<&str, usize> = players.iter()

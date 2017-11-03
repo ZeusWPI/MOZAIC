@@ -68,25 +68,12 @@ impl Match {
                 return (num, player);
             }).collect();
 
-        // construct planet map
-        let planets = conf.load_map(&player_map).into_iter()
-            .map(|planet| {
-                (planet.name.clone(), planet)
-            }).collect();
-
         let handles = player_map.values().map(|player| {
             let handle = players.remove(&player.name).unwrap();
             (player.id, PlayerHandle::new(handle))
         }).collect();
 
-        let state = PlanetWars {
-            planets: planets,
-            players: player_map,
-            expeditions: Vec::new(),
-            expedition_num: 0,
-            turn_num: 0,
-            max_turns: conf.max_turns,
-        };
+        let state = conf.create_game(player_map);
 
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
