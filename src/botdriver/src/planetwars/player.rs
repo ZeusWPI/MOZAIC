@@ -3,7 +3,7 @@ use futures::stream::{Stream, StreamFuture};
 use futures::sink::{Sink, Send};
 use tokio_io::AsyncRead;
 use tokio_io::codec::{Encoder, Decoder, Framed};
-use bytes::{BytesMut, BufMut} ;
+use bytes::BytesMut;
 use std::io;
 
 use std::marker::PhantomData;
@@ -83,7 +83,9 @@ impl<Enc, Dec> Encoder for JsonLines<Enc, Dec>
     type Error = io::Error;
 
     fn encode(&mut self, msg: Enc, buf: &mut BytesMut) -> io::Result<()> {
-        try!(serde_json::to_writer(buf.writer(), &msg));
+        let bytes = serde_json::to_vec(&msg)?;
+        // TODO: avoid this copy
+        buf.extend(&bytes);
         buf.extend(b"\n");
         Ok(())
     }
