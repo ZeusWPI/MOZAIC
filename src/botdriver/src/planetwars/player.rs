@@ -16,24 +16,18 @@ use planetwars::protocol as proto;
 
 
 pub struct PlayerHandle {
-    id: usize,
     transport: Framed<BotHandle, JsonLines<proto::State, proto::Command>>,
 }
 
 impl PlayerHandle {
-    pub fn new(id: usize, bot_handle: BotHandle) -> Self {
+    pub fn new(bot_handle: BotHandle) -> Self {
         PlayerHandle {
-            id: id,
             transport: bot_handle.framed(JsonLines::new()),
         }
     }
     
     pub fn prompt(self, msg: proto::State) -> Prompt {
         Prompt::new(self, msg)
-    }
-
-    pub fn id(&self) -> usize {
-        self.id
     }
 }
 

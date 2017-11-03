@@ -76,7 +76,7 @@ impl Match {
 
         let handles = player_map.values().map(|player| {
             let handle = players.remove(&player.name).unwrap();
-            (player.id, PlayerHandle::new(player.id, handle))
+            (player.id, PlayerHandle::new(handle))
         }).collect();
 
         let state = PlanetWars {
@@ -143,7 +143,7 @@ fn prompt_players(state: &PlanetWars, handles: HashMap<usize, PlayerHandle>)
                   -> Prompts
 {
     let prompts = handles.into_iter().filter_map(|(id, handle)| {
-        let player = &state.players[&handle.id()];
+        let player = &state.players[&id];
         
         if player.alive {
             let state = state.repr();
