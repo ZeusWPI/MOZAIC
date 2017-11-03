@@ -135,6 +135,16 @@ impl PlanetWars {
         return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
+    pub fn living_players(&self) -> Vec<String> {
+        self.players.values().filter_map(|p| {
+            if p.alive {
+                Some(p.name.clone())
+            } else {
+                None
+            }
+        }).collect()
+    }
+
     pub fn repr(&self) -> protocol::State {
         let planets = self.planets.values().map(|p| p.repr(self)).collect();
         let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();

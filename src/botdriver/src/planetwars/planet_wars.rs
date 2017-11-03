@@ -38,16 +38,7 @@ impl Future for Match {
             self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
             if self.state.is_finished() {
-                // TODO: move this logic
-                
-                let alive = self.state.players.values().filter_map(|p| {
-                    if p.alive {
-                        Some(p.name.clone())
-                    } else {
-                        None
-                    }
-                }).collect();
-                return Ok(Async::Ready(alive));
+                return Ok(Async::Ready(self.state.living_players()));
             } else {
                 self.prompts = prompt_players(&self.state, results.handles);
             }
