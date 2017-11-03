@@ -32,23 +32,28 @@ impl Future for Match {
                 Async::NotReady => return Ok(Async::NotReady),
             };
 
-            // TODO: this is not really nice here
-            let rs = results.results.into_iter().map(|(id, result)| {
-                // if we got an outer Err, something bad happened
-                let r = result.expect(&format!("lost connection with player {}", id));
-                return (id, r);
-            }).collect();
-            
-
             self.state.repopulate();
-            self.execute_commands(&rs);
+
+            let mut player_handles = HashMap::new();
+            for (player_id, result) in results.into_iter() {
+                match result {
+                    Ok((command, player_handle)) => {
+                        player_handles.insert(player_id, player_handle);
+                        self.handle_command(player_id, command);
+                    },
+                    Err(err) => {
+                        println!("player {}: {}", player_id, err);
+                    },
+                }
+            }
+
             self.state.step();
             self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
             if self.state.is_finished() {
                 return Ok(Async::Ready(self.state.living_players()));
             } else {
-                self.prompts = prompt_players(&self.state, results.handles);
+                self.prompts = prompt_players(&self.state, player_handles);
             }
         }
     }
@@ -85,42 +90,59 @@ impl Match {
         }
     }
 
-    // TODO: this logic needs to move
-    fn execute_commands(&mut self, commands: &HashMap<usize, json::Result<proto::Command>>) {
-        for (&id, msg) in commands {
-            if let Ok(cmd) = msg.as_ref() {
-                for mv in cmd.moves.iter() {
-                    match self.check_move(id, mv) {
-                        Ok(()) => self.state.dispatch(mv),
-                        Err(err) => panic!(err), // TODO
-                    }
+    fn handle_command(&mut self,
+                      player_id: usize,
+                      command: json::Result<proto::Command>)
+    {
+        match command {
+            Ok(proto::Command { moves }) => {
+                for mv in moves {
+                    self.handle_move(player_id, &mv);
                 }
+            },
+            Err(err) => {
+                // TODO: actually log this
+                println!("player {}: {}", player_id, err);
             }
         }
     }
+
     
-    fn check_move(&mut self, player_id: usize, m: &proto::Move)
-        -> Result<(), String>
-    {
+    
+    fn handle_move(&mut self, player_id: usize, m: &proto::Move) {
+        if self.check_move(player_id, m) {
+            self.state.dispatch(m);
+        }
+    }
+
+    // TODO: actual logging
+    fn check_move(&self, player_id: usize, m: &proto::Move) -> bool {
         // check whether origin and target exist
         if !self.state.planets.contains_key(&m.origin) {
-            return Err("origin planet does not exist".to_string());
+            println!("player {}: {:?}: origin planet does not exist",
+                     player_id, m);
+            return false;
         }
         if !self.state.planets.contains_key(&m.destination) {
-            return Err("destination planet does not exist".to_string());
+            println!("player {}: {:?}: destination planet does not exist",
+                     player_id, m);
+            return false;
         }
 
         // check whether player owns origin and has enough ships there
         let origin = &self.state.planets[&m.origin];
         
         if origin.owner() != Some(player_id) {
-            return Err("origin planet not controlled".to_string());
+            println!("player {}: {:?}: origin planet not controlled",
+                     player_id, m);
+            return false;
         }
         if origin.ship_count() < m.ship_count {
-            return Err("not enough ships".to_string());
+            println!("player {}: {:?}: not enough ships",
+                     player_id, m);
+            return false;
         }
-
-        Ok(())
+        return true;
     }
 }
 
@@ -147,11 +169,6 @@ struct Prompts {
     future: JoinAll<Vec<Prompt>>,
 }
 
-struct PromptResults {
-    results: HashMap<usize, io::Result<json::Result<proto::Command>>>,
-    handles: HashMap<usize, PlayerHandle>,
-}
-
 impl Prompts {
     fn from_map(prompts: HashMap<usize, Prompt>) -> Self {
         let (ids, futures) = prompts.into_iter().unzip();
@@ -163,26 +180,17 @@ impl Prompts {
 }
 
 impl Future for Prompts {
-    type Item = PromptResults;
+    type Item = HashMap<usize, io::Result<(json::Result<proto::Command>, PlayerHandle)>>;
     type Error = ();
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         let responses = try_ready!(self.future.poll());
-        let mut results = HashMap::with_capacity(responses.len());
-        let mut handles = HashMap::with_capacity(responses.len());
 
-        for (i, response) in responses.into_iter().enumerate() {
+        let res = responses.into_iter().enumerate().map(|(i, response)| {
             let id = self.ids[i];
-            match response {
-                Ok((answer, handle)) => {
-                    results.insert(id, Ok(answer));
-                    handles.insert(id, handle);
-                },
-                Err(err) => {
-                    results.insert(id, Err(err));
-                }
-            }
-        }
-        return Ok(Async::Ready( PromptResults { results, handles }));
+            (id, response)
+        }).collect();
+
+        return Ok(Async::Ready(res));
     }
 }
