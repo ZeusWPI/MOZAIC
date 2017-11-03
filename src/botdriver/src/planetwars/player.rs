@@ -3,9 +3,13 @@ use futures::stream::{Stream, StreamFuture};
 use futures::sink::{Sink, Send};
 use tokio_io::AsyncRead;
 use tokio_io::codec::{Encoder, Decoder, Framed};
-use bytes::BytesMut;
+use bytes::{BytesMut, BufMut} ;
 use std::str;
 use std::io;
+
+use std::marker::PhantomData;
+use serde_json;
+use serde::{Serialize, Deserialize};
 
 use bot_runner::BotHandle;
 
@@ -84,6 +88,45 @@ impl Decoder for LineCodec {
                 Ok(s)  => Ok(Some(s.to_string())),
                 Err(_) => Err(io::Error::new(io::ErrorKind::Other, "invalid UTF-8")),
             }
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+pub struct JsonLines<Enc, Dec> {
+    phantom_enc: PhantomData<Enc>,
+    phantom_dec: PhantomData<Dec>,
+}
+
+impl<Enc, Dec> Encoder for JsonLines<Enc, Dec>
+    where Enc: Serialize
+{
+    type Item = Enc;
+    type Error = io::Error;
+
+    fn encode(&mut self, msg: Enc, buf: &mut BytesMut) -> io::Result<()> {
+        serde_json::to_writer(buf.writer(), &msg);
+        buf.extend(b"\n");
+        Ok(())
+    }
+}
+
+impl<Enc, Dec> Decoder for JsonLines<Enc, Dec>
+    where Dec: for <'de> Deserialize<'de>
+{
+    type Item = serde_json::Result<Dec>;
+    type Error = io::Error;
+
+    fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<Self::Item>> {
+        if let Some(pos) = buf.iter().position(|&b| b == b'\n') {
+            // remove frame from buffer
+            let line = buf.split_to(pos);
+            // remove newline
+            buf.split_to(1);
+
+            let res = serde_json::from_slice(&line);
+            return Ok(Some(res));
         } else {
             Ok(None)
         }
