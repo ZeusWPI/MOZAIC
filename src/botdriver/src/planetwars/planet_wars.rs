@@ -26,14 +26,14 @@ impl Future for Match {
 
     fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
         loop {
-            let prompt_results = match self.prompts.poll() {
-                Ok(Async::Ready(results)) => results,
-                Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Err(_) => panic!("this should never happen"),
+            // Prompts never error, unwrapping is fine
+            let results = match self.prompts.poll().unwrap() {
+                Async::Ready(results) => results,
+                Async::NotReady => return Ok(Async::NotReady),
             };
 
             self.state.repopulate();
-            self.execute_commands(&prompt_results.results);
+            self.execute_commands(&results.results);
             self.state.step();
             self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
@@ -49,8 +49,7 @@ impl Future for Match {
                 }).collect();
                 return Ok(Async::Ready(alive));
             } else {
-                let handles = prompt_results.handles;
-                self.prompts = prompt_players(&self.state, handles);
+                self.prompts = prompt_players(&self.state, results.handles);
             }
         }
     }
