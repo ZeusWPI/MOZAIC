@@ -96,41 +96,37 @@ impl Match {
             let r = serde_json::from_str::<protocol::Command>(command.as_str());
             if let Ok(cmd) = r {
                 for mv in cmd.moves.iter() {
-                    if self.move_valid(id, mv) {
-                        self.state.dispatch(mv);
+                    match self.check_move(id, mv) {
+                        Ok(()) => self.state.dispatch(mv),
+                        Err(err) => panic!(err), // TODO
                     }
                 }
             }
         }
     }
     
-    fn move_valid(&mut self, player_id: usize, m: &protocol::Move) -> bool {
-        // TODO: this code sucks.
-        // TODO: actually handle errors
-        // MOZAIC should support soft errors first, of course.
-        // Alternatively, a game implementation could be made responsible for
-        // this. This would require more work, but also allow more flexibility.
-
-
+    fn check_move(&mut self, player_id: usize, m: &protocol::Move)
+        -> Result<(), String>
+    {
         // check whether origin and target exist
         if !self.state.planets.contains_key(&m.origin) {
-            return false;
+            return Err("origin planet does not exist".to_string());
         }
         if !self.state.planets.contains_key(&m.destination) {
-            return false;
+            return Err("destination planet does not exist".to_string());
         }
 
         // check whether player owns origin and has enough ships there
         let origin = &self.state.planets[&m.origin];
         
         if origin.owner() != Some(player_id) {
-            return false;
+            return Err("origin planet not controlled".to_string());
         }
         if origin.ship_count() < m.ship_count {
-            return false;
+            return Err("not enough ships".to_string());
         }
 
-        true
+        Ok(())
     }
 }
 
