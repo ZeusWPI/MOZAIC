@@ -4,30 +4,31 @@ use futures::sink::{Sink, Send};
 use tokio_io::AsyncRead;
 use tokio_io::codec::{Encoder, Decoder, Framed};
 use bytes::{BytesMut, BufMut} ;
-use std::str;
 use std::io;
 
 use std::marker::PhantomData;
 use serde_json;
+use serde_json as json;
 use serde::{Serialize, Deserialize};
 
 use bot_runner::BotHandle;
+use planetwars::protocol as proto;
 
 
 pub struct PlayerHandle {
     id: usize,
-    transport: Framed<BotHandle, LineCodec>,
+    transport: Framed<BotHandle, JsonLines<proto::State, proto::Command>>,
 }
 
 impl PlayerHandle {
     pub fn new(id: usize, bot_handle: BotHandle) -> Self {
         PlayerHandle {
             id: id,
-            transport: bot_handle.framed(LineCodec),
+            transport: bot_handle.framed(JsonLines::new()),
         }
     }
     
-    pub fn prompt(self, msg: String) -> Prompt {
+    pub fn prompt(self, msg: proto::State) -> Prompt {
         Prompt::new(self, msg)
     }
 
@@ -37,19 +38,21 @@ impl PlayerHandle {
 }
 
 impl Stream for PlayerHandle {
-    type Item = String;
+    type Item = json::Result<proto::Command>;
     type Error = io::Error;
 
-    fn poll(&mut self) -> Poll<Option<String>, io::Error> {
+    fn poll(&mut self) -> Poll<Option<Self::Item>, io::Error> {
         self.transport.poll()
     }
 }
 
 impl Sink for PlayerHandle {
-    type SinkItem = String;
+    type SinkItem = proto::State;
     type SinkError = io::Error;
 
-    fn start_send(&mut self, item: String) -> StartSend<String, io::Error> {
+    fn start_send(&mut self, item: Self::SinkItem)
+                  -> StartSend<Self::SinkItem, io::Error>
+    {
         self.transport.start_send(item)
     }
 
@@ -58,46 +61,20 @@ impl Sink for PlayerHandle {
     }
 }
 
-
-pub struct LineCodec;
-
-impl Encoder for LineCodec {
-    type Item = String;
-    type Error = io::Error;
-
-    fn encode(&mut self, msg: String, buf: &mut BytesMut) -> io::Result<()> {
-        buf.extend(msg.as_bytes());
-        buf.extend(b"\n");
-        Ok(())
-    }
-}
-
-impl Decoder for LineCodec {
-    type Item = String;
-    type Error = io::Error;
-
-    fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<String>> {
-        if let Some(pos) = buf.iter().position(|&b| b == b'\n') {
-            // remove frame from buffer
-            let line = buf.split_to(pos);
-
-            // remove newline
-            buf.split_to(1);
-
-            match str::from_utf8(&line) {
-                Ok(s)  => Ok(Some(s.to_string())),
-                Err(_) => Err(io::Error::new(io::ErrorKind::Other, "invalid UTF-8")),
-            }
-        } else {
-            Ok(None)
-        }
-    }
-}
-
 pub struct JsonLines<Enc, Dec> {
     phantom_enc: PhantomData<Enc>,
     phantom_dec: PhantomData<Dec>,
 }
+
+impl<Enc, Dec> JsonLines<Enc, Dec> {
+    pub fn new() -> Self {
+        JsonLines {
+            phantom_enc: PhantomData,
+            phantom_dec: PhantomData,
+        }
+    }
+}
+
 
 impl<Enc, Dec> Encoder for JsonLines<Enc, Dec>
     where Enc: Serialize
@@ -106,7 +83,7 @@ impl<Enc, Dec> Encoder for JsonLines<Enc, Dec>
     type Error = io::Error;
 
     fn encode(&mut self, msg: Enc, buf: &mut BytesMut) -> io::Result<()> {
-        serde_json::to_writer(buf.writer(), &msg);
+        try!(serde_json::to_writer(buf.writer(), &msg));
         buf.extend(b"\n");
         Ok(())
     }
@@ -143,17 +120,17 @@ pub struct Prompt {
 }
 
 impl Prompt {
-    fn new(trans: PlayerHandle, msg: String) -> Self {
+    fn new(trans: PlayerHandle, msg: proto::State) -> Self {
         Prompt { state: PromptState::Writing(trans.send(msg)) }
     }
 }
 
 // TODO: properly handle errors
 impl Future for Prompt {
-    type Item = io::Result<(String, PlayerHandle)>;
+    type Item = io::Result<(json::Result<proto::Command>, PlayerHandle)>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<io::Result<(String, PlayerHandle)>, ()> {
+    fn poll(&mut self) -> Poll<Self::Item, ()> {
         loop {
             let new_state;
             match self.state {

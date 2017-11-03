@@ -1,13 +1,13 @@
-extern crate serde_json;
-
 use std::io;
 use std::collections::HashMap;
 
 use futures::{Future, Async, Poll};
 use futures::future::{join_all, JoinAll};
 
+use serde_json as json;
+
 use bot_runner::BotHandle;
-use planetwars::protocol;
+use planetwars::protocol as proto;
 use planetwars::rules::*;
 use planetwars::player::{PlayerHandle, Prompt};
 use planetwars::logger::PlanetWarsLogger;
@@ -32,8 +32,16 @@ impl Future for Match {
                 Async::NotReady => return Ok(Async::NotReady),
             };
 
+            // TODO: this is not really nice here
+            let rs = results.results.into_iter().map(|(id, result)| {
+                // if we got an outer Err, something bad happened
+                let r = result.expect(&format!("lost connection with player {}", id));
+                return (id, r);
+            }).collect();
+            
+
             self.state.repopulate();
-            self.execute_commands(&results.results);
+            self.execute_commands(&rs);
             self.state.step();
             self.logger.log(&self.state).expect("[PLANET_WARS] logging failed");
             
@@ -90,11 +98,10 @@ impl Match {
         }
     }
 
-    fn execute_commands(&mut self, commands: &HashMap<usize, io::Result<String>>) {
-        for (&id, res) in commands {
-            let command = res.as_ref().unwrap();
-            let r = serde_json::from_str::<protocol::Command>(command.as_str());
-            if let Ok(cmd) = r {
+    // TODO: this logic needs to move
+    fn execute_commands(&mut self, commands: &HashMap<usize, json::Result<proto::Command>>) {
+        for (&id, msg) in commands {
+            if let Ok(cmd) = msg.as_ref() {
                 for mv in cmd.moves.iter() {
                     match self.check_move(id, mv) {
                         Ok(()) => self.state.dispatch(mv),
@@ -105,7 +112,7 @@ impl Match {
         }
     }
     
-    fn check_move(&mut self, player_id: usize, m: &protocol::Move)
+    fn check_move(&mut self, player_id: usize, m: &proto::Move)
         -> Result<(), String>
     {
         // check whether origin and target exist
@@ -140,9 +147,7 @@ fn prompt_players(state: &PlanetWars, handles: HashMap<usize, PlayerHandle>)
         
         if player.alive {
             let state = state.repr();
-            let p = serde_json::to_string(&state)
-                .expect("[PLANET_WARS] Serializing game state failed.");
-            Some((id, handle.prompt(p)))
+            Some((id, handle.prompt(state)))
         } else {
             None
         }
@@ -156,7 +161,7 @@ struct Prompts {
 }
 
 struct PromptResults {
-    results: HashMap<usize, io::Result<String>>,
+    results: HashMap<usize, io::Result<json::Result<proto::Command>>>,
     handles: HashMap<usize, PlayerHandle>,
 }
 
