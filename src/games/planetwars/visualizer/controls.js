@@ -21,7 +21,6 @@ function fa_icon(name) {
   return h('i.fa.fa-' + name, { 'aria-hidden': true});
 }
 
-
 // TODO: maybe extract button functionality in helper functions
 class Controls extends React.Component {
   playButton() {
