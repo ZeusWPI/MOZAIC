@@ -41,17 +41,35 @@ class Controls {
       this.hide('#end_card');
     });
 
-    const file_select = document.getElementById('file-select');
-    if (file_select != null) {
-      file_select.onchange = function() {
-        var reader = new FileReader();
-        reader.onload = event => {
-          var log = event.target.result;
-          visualizer.visualize(log);
-          visualizer.play();
-        };
-        reader.readAsText(file_select.files[0]);
-      };
+    const read = (input, onload) => {
+      var reader = new FileReader();
+      reader.onload = onload;
+      console.log(input.files);
+      reader.readAsText(input.files[0]);
+    };
+
+    const game_select = document.getElementById('game-select');
+    const map_select = document.getElementById('map-select');
+    game_select.onchange = () => {
+      read(game_select, (event) => {
+        var log = event.target.result;
+        visualizer.visualize(log);
+        visualizer.play();
+      });
+    };
+
+    map_select.onchange = () => {
+      read(map_select, (event) => {
+        var log = event.target.result;
+        var map = JSON.parse(log)
+        var mock_log = JSON.stringify({
+          "expeditions": [],
+          "players": map.players,
+          "planets": map.planets
+        })
+        var mock_log = mock_log + '\n' + mock_log;
+        visualizer.visualize(mock_log);
+      });
     }
   }
 
