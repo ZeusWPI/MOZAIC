@@ -61,10 +61,36 @@ body {
 }
 
 #controlbar {
-  height: 6vh;
   position: absolute;
+  height: 6vh;
+  display:flex;
+  flex-direction: column;
+  justify-content: space-around;
   bottom: 4vh;
   width: 99.8%;
+}
+
+#control-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+#turncontrols {
+  display: flex;
+  min-width: 220px;
+  width: 25%;
+}
+
+#filecontrols {
+  display: flex;
+  flex-direction: row;
+}
+
+#speedcontrols {
+  display: flex;
+  float: right;
+  width: 15%;
 }
 
 #end_card {
@@ -85,6 +111,12 @@ body {
 
 #end_card p {
   width: 100%;
+}
+
+.file-finder {
+    height: 40px;
+    min-width: 30px;
+    font-size: 1vw;
 }
 
 #end_card button {
@@ -111,14 +143,6 @@ body {
   font-size: 1.2vw;
 }
 
-.turncontrols {
-  position: absolute;
-  top: 30px;
-  display: flex;
-  min-width: 220px;
-  width: 25%;
-}
-
 .control-button {
   width: 2%;
   min-width: 30px;
@@ -142,12 +166,6 @@ body {
   font-size: 1vw;
 }
 
-.speedcontrols {
-  display: flex;
-  float: right;
-  width: 15%;
-}
-
 .controlbar p {
   font-size: 12px;
   width: auto;
@@ -155,9 +173,6 @@ body {
   text-align: center;
 }
 
-#file-select {
-  margin-left: 25%;
-}
 
 #turn_slider{
   width: 100%;

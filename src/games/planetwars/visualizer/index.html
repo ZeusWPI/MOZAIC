@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Visualization MOZAIC</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div id="visualizer">
-      <svg id="score"></svg>
 
-      <!-- Hide/unhide button for scoreboard -->
-      <button title="Hide scoreboard" type="button" name="button" id="hide_score" class="control control-button close">
-        <i class="fa fa-times" aria-hidden="true"></i>
-      </button>
+<head>
+  <meta charset="utf-8">
+  <title>Visualization MOZAIC</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 
-      <button title="Show scoreboard" type="button" name="button" id="unhide_score" class="control control-button">
-        <i class="fa fa-chevron-left" aria-hidden="true"></i>
-      </button>
+<body>
+  <div id="visualizer">
+    <svg id="score"></svg>
 
-      <!-- Hide/unhide button -->
-      <button title="Hide controls" type="button" name="button" id="hide" class="control control-button">
-        <i class="fa fa-chevron-down" aria-hidden="true"></i>
-      </button>
+    <!-- Hide/unhide button for scoreboard -->
+    <button title="Hide scoreboard" type="button" name="button" id="hide_score" class="control control-button close">
+      <i class="fa fa-times" aria-hidden="true"></i>
+    </button>
 
-      <button title="Show controls" type="button" name="button" id="unhide" class="control control-button">
-        <i class="fa fa-chevron-up" aria-hidden="true"></i>
-      </button>
+    <button title="Show scoreboard" type="button" name="button" id="unhide_score" class="control control-button">
+      <i class="fa fa-chevron-left" aria-hidden="true"></i>
+    </button>
 
-      <div id="controlbar">
-        <input type="range" id="turn_slider" value="0" class="control"/>
+    <!-- Hide/unhide button -->
+    <button title="Hide controls" type="button" name="button" id="hide" class="control control-button">
+      <i class="fa fa-chevron-down" aria-hidden="true"></i>
+    </button>
 
-        <div class="turncontrols">
+    <button title="Show controls" type="button" name="button" id="unhide" class="control control-button">
+      <i class="fa fa-chevron-up" aria-hidden="true"></i>
+    </button>
+
+    <div id="controlbar">
+
+      <input type="range" id="turn_slider" value="0" class="control" />
+
+      <div id="control-buttons">
+        <div id="turncontrols">
 
           <!-- Rewind button -->
           <button type="button" name="button" id="tostart" class="control control-button">
@@ -63,8 +67,20 @@
           </button>
           <p id="turn_progress">100 / 100</p>
         </div>
-        <input id="file-select" type="file" class="control"/>
-        <div class="speedcontrols">
+
+        <!-- Select game or map -->
+        <div id="filecontrols">
+          <div class="file-select">
+            <span>Select game</span>
+            <input id="game-select" type="file" class="control file-finder" />
+          </div>
+          <div class="file-select">
+            <span>Select map</span>
+            <input id="map-select" type="file" class="control file-finder" />
+          </div>
+        </div>
+
+        <div id="speedcontrols">
           <p class="speed">Speed x1</p>
           <!-- Speed down button -->
           <button type="button" name="button" id="speeddown" class="control control-button">
@@ -76,22 +92,25 @@
           </button>
         </div>
       </div>
-
-      <!-- The SVG where the game gets rendered" -->
-      <svg id="game" font-family="sans-serif" font-size="10" text-anchor="middle">
-      </svg>
-      <div id="end_card">
-        <button title="Hide end card" type="button" name="button" id="hide_card" class="control control-button close">
-          <i class="fa fa-times" aria-hidden="true"></i>
-        </button>
-        <p>
-          Game over:
-          <br/>
-          <span class="winner">winner</span> wins!
-        </p>
-      </div>
     </div>
 
-    <script src="./bundle.js"></script>
-  </body>
+    <!-- The SVG where the game gets rendered" -->
+    <svg id="game" font-family="sans-serif" font-size="10" text-anchor="middle">
+    </svg>
+
+    <div id="end_card">
+      <button title="Hide end card" type="button" name="button" id="hide_card" class="control control-button close">
+        <i class="fa fa-times" aria-hidden="true"></i>
+      </button>
+      <p>
+        Game over:
+        <br/>
+        <span class="winner">winner</span> wins!
+      </p>
+    </div>
+  </div>
+
+  <script src="./bundle.js"></script>
+</body>
+
 </html>
