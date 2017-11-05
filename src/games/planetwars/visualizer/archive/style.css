@@ -1,9 +1,8 @@
-@import url('./node_modules/font-awesome/css/font-awesome.min.css');
-
 /* Keep this at the top so it keeps having priority */
 .invisible {
   display: none !important;
 }
+
 
 body {
   margin: 0;
