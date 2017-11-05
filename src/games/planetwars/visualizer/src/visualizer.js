@@ -91,9 +91,9 @@ class Visualizer extends React.Component {
         // TODO: move this
         h(HideableComponent, {
           hide: this.state.hide_card,
-          render: div('#end_card', [
+          render: div('#end-card', [
             h(ControlButton, {
-              selector: '#hide_card.close',
+              selector: '#hide-card.close',
               title: 'Hide end card',
               icon: 'times',
               callback: () => this.setState({
@@ -117,12 +117,12 @@ class Scoreboard extends React.Component {
   }
 
   render() {
-    return div('#scoreboard_wrapper', [
+    return div('#scoreboard-wrapper', [
       svg(`#score${this.state.hide?'.invisible':''}`),
       h(HideableComponent, {
         'hide': this.state.hide,
         render: h(ControlButton, {
-          selector: '#hide_score.close',
+          selector: '#hide-score.close',
           title: 'Hide scoreboard',
           icon: 'times',
           callback: () => this.setState({
@@ -133,7 +133,7 @@ class Scoreboard extends React.Component {
       h(HideableComponent, {
         hide: !this.state.hide,
         render: h(ControlButton, {
-          selector: '#unhide_score',
+          selector: '#unhide-score',
           title: 'Show scoreboard',
           icon: 'chevron-left',
           callback: () => this.setState({

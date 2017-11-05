@@ -17,7 +17,7 @@ class ToggleButton extends React.Component {
   }
 
   render() {
-    return button(`${this.props.selector}.control.control-button`, {
+    return button(`${this.props.selector}.button`, {
       'title': this.state.title,
       'type': 'button',
       'aria-hidden': 'true',
@@ -60,7 +60,7 @@ class ControlButton extends React.Component {
   }
 
   render() {
-    return button(`${this.props.selector}.control.control-button`, {
+    return button(`${this.props.selector}.button`, {
       'title': this.props.title,
       'type': 'button',
       'aria-hidden': 'true',

@@ -21,7 +21,7 @@ class Renderer extends React.Component {
   }
   
   render() {
-    return h('svg.game-svg', { ref: (svg) => { this.svg = svg; } });
+    return h('svg#battlefield', { ref: (svg) => { this.svg = svg; } });
   }
 
   calculateViewBox() {
