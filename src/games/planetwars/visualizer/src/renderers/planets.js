@@ -1,5 +1,5 @@
 const d3 = require('d3');
-const Config = require('../config');
+const Config = require('../util/config');
 
 class PlanetRenderer {
   constructor(container) {

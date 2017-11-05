@@ -15,12 +15,11 @@ const {
 const Visuals = require('./visuals');
 const Controls = require('./controls');
 const Game = require('./game');
-const Utils = require('./util');
-const ReactUtils = require('./react_utils');
+const ReactUtils = require('./util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
 const Renderer = require('./renderer');
-const VisualsHelper = require('./visualsHelper');
+const VisualsHelper = require('./util/visualsHelper');
 
 class Visualizer extends React.Component {
 
@@ -72,15 +71,6 @@ class Visualizer extends React.Component {
     }
   }
 
-  visualize(log) {
-    let game = new Game(log);
-    this.turns = game.turns;
-  }
-  
-  componentDidUpdate() {
-    // TODO: parse log
-  }
-
   render() {
     return (
       div('#visualizer-root-node', [
@@ -115,12 +105,6 @@ class Visualizer extends React.Component {
         })
       ])
     );
-  }
-
-  componentDidMount() {
-    this.visuals = new Visuals();
-    this.visualize(this.props.log);
-    this.setPlaying(true);
   }
 }
 

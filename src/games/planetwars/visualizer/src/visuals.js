@@ -1,9 +1,8 @@
 const d3 = require('d3');
-const Config = require('./config');
-const Utils = require('./util');
-const space_math = Utils.SpaceMath;
+const Config = require('./util/config');
+const space_math = require('./util/spacemath')
 
-const VisualsHelper = require('./visualsHelper');
+const VisualsHelper = require('./util/visualsHelper');
 const Planets = VisualsHelper.Planets;
 const Fleet = VisualsHelper.Fleet;
 const Fleets = VisualsHelper.Fleets;

@@ -1,13 +1,11 @@
 const d3 = require('d3');
 
-const Config = require('./config');
-const Utils = require('./util');
-const space_math = Utils.SpaceMath;
+const Config = require('./util/config');
 
 class Game {
   constructor(json) {
     this.winner = null;
-    
+
     this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
     this.planetTypeMap = new Map();
 

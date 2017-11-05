@@ -1,7 +1,7 @@
 const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
-const VisualsHelper = require('./visualsHelper');
+const VisualsHelper = require('./util/visualsHelper');
 
 const PlanetRenderer = require('./renderers/planets');
 const ExpeditionRenderer = require('./renderers/expeditions');

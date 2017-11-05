@@ -1,7 +1,6 @@
 const d3 = require('d3');
-const Config = require('./config');
-const Utils = require('./util');
-const space_math = Utils.SpaceMath;
+const Config = require('./util/config');
+
 const React = require('react');
 const h = require('react-hyperscript');
 const {
@@ -12,7 +11,7 @@ const {
   p
 } = require('hyperscript-helpers')(h);
 
-const ReactUtils = require('./react_utils');
+const ReactUtils = require('./util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ToggleButton = ReactUtils.ToggleButton;
 const ControlButton = ReactUtils.ControlButton;

@@ -1,8 +1,6 @@
 const d3 = require('d3');
-const Config = require('../config');
-const Utils = require('../util');
-
-const space_math = Utils.SpaceMath;
+const Config = require('../util/config');
+const space_math = require('../util/spacemath');
 
 class ExpeditionRenderer {
   constructor(container) {

@@ -1,7 +1,6 @@
 const d3 = require('d3');
 const Config = require('./config');
-const Utils = require('./util');
-const space_math = Utils.SpaceMath;
+const space_math = require('./spacemath');
 
 class Helper {
   static attachToAllChildren(d3selector) {
