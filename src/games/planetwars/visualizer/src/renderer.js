@@ -9,8 +9,11 @@ const ExpeditionRenderer = require('./renderers/expeditions');
 
 class Renderer extends React.Component {
   componentDidUpdate() {
-    this.calculateViewBox();
-    this.draw();
+    if (this.props.game) {
+      this.turn = this.props.game.turns[this.props.turnNum]
+      this.calculateViewBox();
+      this.draw();
+    }
   }
 
   componentDidMount() {
@@ -19,9 +22,13 @@ class Renderer extends React.Component {
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
   }
-  
+
   render() {
-    return h('svg#battlefield', { ref: (svg) => { this.svg = svg; } });
+    return h('svg#battlefield', {
+      ref: (svg) => {
+        this.svg = svg;
+      }
+    });
   }
 
   calculateViewBox() {
@@ -29,7 +36,7 @@ class Renderer extends React.Component {
     // TODO: hook config for this
     let orbit_size = 5;
     let offset = orbit_size + padding;
-    let ps = this.props.turn.planets;
+    let ps = this.turn.planets;
     let x_min = d3.min(ps, p => p.x - p.size) - offset;
     let x_max = d3.max(ps, p => p.x + p.size) + offset;
     let y_min = d3.min(ps, p => p.y - p.size) - offset;
@@ -47,9 +54,12 @@ class Renderer extends React.Component {
   }
 
   draw() {
-    let params = { speed: this.props.speed, scale: this.scale };
-    this.planetRenderer.draw(this.props.turn.planets, params);
-    this.expeditionRenderer.draw(this.props.turn.expeditions, params);
+    let params = {
+      speed: this.props.speed,
+      scale: this.scale
+    };
+    this.planetRenderer.draw(this.turn.planets, params);
+    this.expeditionRenderer.draw(this.turn.expeditions, params);
   }
 }
 

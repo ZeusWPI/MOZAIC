@@ -1,6 +1,6 @@
 const d3 = require('d3');
 const Config = require('./util/config');
-
+const uuidv4 = require('uuid/v4')
 const React = require('react');
 const h = require('react-hyperscript');
 const {
@@ -24,6 +24,7 @@ function fa_icon(name) {
 
 // TODO: maybe extract button functionality in helper functions
 class Controls extends React.Component {
+
   playButton() {
     if (this.props.playing) {
       return button(
@@ -40,10 +41,6 @@ class Controls extends React.Component {
         }, [fa_icon('play')]
       );
     }
-  }
-
-  loadLog() {
-    
   }
 
   render() {
@@ -86,12 +83,9 @@ class Controls extends React.Component {
           p('#turn-progress', `${this.props.turnNum} / ${this.props.numTurns}`)
         ]),
         div('#file-controls', [
-          input(
-            '#game-select', {
-              type: 'file',
-              onChange: e => this.loadLog()
-            }
-          )
+          h(LogLoaderButton, {
+            handleContents: this.props.setLog
+          })
         ]),
         div('#speed-controls', [
           p('.speed', `Speed x${this.props.speed}`),
@@ -110,6 +104,58 @@ class Controls extends React.Component {
         ])
       ]),
     ]);
+  }
+}
+
+
+class LogLoaderButton extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      elementId: this.props.elementId || uuidv4()
+    }
+
+    this.hide = {
+      width: '0px',
+      opacity: '0',
+      position: 'fixed',
+    }
+
+    // WTF React
+    this.handleFile = this.handleFile.bind(this);
+    this.onClick = this.onClick.bind(this);
+  }
+
+  handleFile(clickEvent) {
+    var reader = new FileReader();
+    reader.onload = (readEvent) => {
+      var log = readEvent.target.result;
+      this.props.handleContents(log);
+    }
+    reader.readAsText(clickEvent.target.files[0]);
+  }
+
+  onClick() {
+    let element = document.getElementById(this.state.elementId);
+    element.value = '';
+    element.click();
+  }
+
+  render(){
+    return div("#log-reader", [
+      input({
+        id: this.state.elementId,
+        type: 'file',
+        style: this.hide,
+        onChange: this.handleFile
+      }),
+      input({
+        type: 'button',
+        value: 'Load game',
+        onClick: this.onClick
+      })
+    ])
   }
 }
 
