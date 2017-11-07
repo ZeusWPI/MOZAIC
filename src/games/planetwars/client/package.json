@@ -1,0 +1,23 @@
+{
+  "name": "planetwars-client",
+  "version": "0.0.1",
+  "description": "Client for PlanetWars and the MOZAIC framework",
+  "main": "dist/main.js",
+  "scripts": {
+    "start": "./node_modules/.bin/electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zeus WPI",
+  "license": "ISC",
+  "dependencies": {
+    "electron": "^1.7.9"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-sourcemaps": "^2.6.1",
+    "gulp-typescript": "^3.2.3",
+    "del": "^3.0.0",
+    "merge-stream": "^1.0.1",
+    "typescript": "^2.6.1"
+  }
+}
