@@ -19,7 +19,7 @@ class PlanetRenderer {
     
     this.drawBackgrounds(planets);
     this.drawModels(planets);
-    this.drawOrbits(planets);
+    // this.drawOrbits(planets);
     this.drawTitles(planets);
     this.drawNameLabels(planets, params);
     this.drawShipCounts(planets, params);

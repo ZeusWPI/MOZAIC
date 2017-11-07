@@ -2,13 +2,13 @@ const d3 = require('d3');
 const Config = require('./util/config');
 const space_math = require('./util/spacemath')
 
+const ResourceLoader = require('./util/resourceLoader').ResourceLoader;
 const VisualsHelper = require('./util/visualsHelper');
 const Planets = VisualsHelper.Planets;
 const Fleet = VisualsHelper.Fleet;
 const Fleets = VisualsHelper.Fleets;
 const Expeditions = VisualsHelper.Expeditions;
 const Scores = VisualsHelper.Scores;
-const ResourceLoader = VisualsHelper.ResourceLoader;
 const Preprocessor = VisualsHelper.Preprocessor;
 
 
@@ -90,18 +90,6 @@ class Visuals {
       return map;
     }, {});
     this.color_map[null] = "#d3d3d3";
-  }
-
-  createZoom() {
-    var zoom = d3.zoom()
-      .scaleExtent(Config.max_scales)
-      .on('zoom', () => {
-        var transform = d3.event.transform;
-        transform.x = space_math.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
-        transform.y = space_math.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
-        this.container.attr('transform', transform);
-      });
-    this.svg.call(zoom);
   }
 
   generateWinnerBox(winner, color) {

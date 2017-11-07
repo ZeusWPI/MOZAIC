@@ -1,8 +1,10 @@
 const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
-const VisualsHelper = require('./util/visualsHelper');
 
+const ResourceLoader = require('./util/resourceLoader').ResourceLoader;
+const spaceMath = require('./util/spacemath')
+const Config = require('./util/config');
 const PlanetRenderer = require('./renderers/planets');
 const ExpeditionRenderer = require('./renderers/expeditions');
 
@@ -21,6 +23,7 @@ class Renderer extends React.Component {
     this.container = d3.select(this.svg).append('g');
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
+    this.createZoom();
   }
 
   render() {
@@ -45,12 +48,27 @@ class Renderer extends React.Component {
     let y_width = y_max - y_min;
     let viewBox = `${x_min} ${y_min} ${x_width} ${y_width}`;
     this.scale = (x_max - x_min) / 50;
+    this.min = [x_min, y_min];
+    this.max = [x_max, y_max];
     d3.select(this.svg).attr('viewBox', viewBox);
   }
 
   loadResources() {
     // TODO: improve API
-    new VisualsHelper.ResourceLoader(d3.select(this.svg)).setupPatterns();
+    new ResourceLoader(d3.select(this.svg)).setupPatterns();
+  }
+
+  createZoom() {
+    console.log("test");
+    var zoom = d3.zoom()
+      .scaleExtent(Config.max_scales)
+      .on('zoom', () => {
+        var transform = d3.event.transform;
+        transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
+        transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
+        this.container.attr('transform', transform);
+      });
+    d3.select(this.svg).call(zoom);
   }
 
   draw() {

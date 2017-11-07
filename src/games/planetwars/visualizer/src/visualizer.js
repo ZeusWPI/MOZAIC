@@ -12,7 +12,6 @@ const {
   svg
 } = require('hyperscript-helpers')(h);
 
-const Visuals = require('./visuals');
 const Controls = require('./controls');
 const Game = require('./game');
 const ReactUtils = require('./util/react_utils');

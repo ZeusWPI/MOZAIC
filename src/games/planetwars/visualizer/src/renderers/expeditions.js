@@ -100,4 +100,5 @@ class ExpeditionRenderer {
   }
 }
 
+
 module.exports = ExpeditionRenderer;
