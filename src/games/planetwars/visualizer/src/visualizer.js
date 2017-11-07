@@ -14,6 +14,7 @@ const {
 
 const Controls = require('./controls');
 const Game = require('./game');
+const Scoreboard = require('./scoreboard');
 const ReactUtils = require('./util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
@@ -90,7 +91,16 @@ class Visualizer extends React.Component {
       setLog: l => this.setLog(l)
     });
 
-    let scoreboard = h(Scoreboard);
+    if(!this.state.game){
+      return div('#visualizer-root-node', [
+        controls
+      ])
+    }
+
+    let scoreboard = h(Scoreboard, {
+      game: this.state.game,
+      turnNum: this.state.turnNum
+    });
 
     let renderer = h(Renderer, {
       game: this.state.game,
@@ -119,43 +129,7 @@ class Visualizer extends React.Component {
       renderer,
       endGameCard
     ]);
-  }
-}
 
-class Scoreboard extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      hide: false
-    };
-  }
-
-  render() {
-    return div('#scoreboard-wrapper', [
-      svg(`#score${this.state.hide?'.invisible':''}`),
-      h(HideableComponent, {
-        'hide': this.state.hide,
-        render: h(ControlButton, {
-          selector: '#hide-score.close',
-          title: 'Hide scoreboard',
-          icon: 'times',
-          callback: () => this.setState({
-            hide: true
-          })
-        })
-      }),
-      h(HideableComponent, {
-        hide: !this.state.hide,
-        render: h(ControlButton, {
-          selector: '#unhide-score',
-          title: 'Show scoreboard',
-          icon: 'chevron-left',
-          callback: () => this.setState({
-            hide: false
-          })
-        })
-      })
-    ]);
   }
 }
 

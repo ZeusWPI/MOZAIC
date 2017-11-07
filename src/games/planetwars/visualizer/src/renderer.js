@@ -2,7 +2,7 @@ const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
 
-const ResourceLoader = require('./util/resourceLoader').ResourceLoader;
+const ResourceLoader = require('./util/resourceLoader');
 const spaceMath = require('./util/spacemath')
 const Config = require('./util/config');
 const PlanetRenderer = require('./renderers/planets');

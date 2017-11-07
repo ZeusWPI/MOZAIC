@@ -32,6 +32,4 @@ class ResourceLoader {
   }
 }
 
-module.exports = {
-    ResourceLoader
-}
+module.exports = ResourceLoader;
