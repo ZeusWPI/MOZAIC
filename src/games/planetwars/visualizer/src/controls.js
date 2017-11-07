@@ -84,7 +84,10 @@ class Controls extends React.Component {
         ]),
         div('#file-controls', [
           h(LogLoaderButton, {
-            handleContents: this.props.setLog
+            handleContents: (log) => {
+              this.props.setLog(log);
+              this.props.setPlaying(true);
+            }
           })
         ]),
         div('#speed-controls', [
@@ -150,11 +153,11 @@ class LogLoaderButton extends React.Component {
         style: this.hide,
         onChange: this.handleFile
       }),
-      input({
+      button({
         type: 'button',
-        value: 'Load game',
-        onClick: this.onClick
-      })
+        onClick: this.onClick,
+        autoFocus: true
+      },["Load game"])
     ])
   }
 }

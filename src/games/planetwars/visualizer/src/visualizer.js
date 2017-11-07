@@ -58,7 +58,6 @@ class Visualizer extends React.Component {
     this.setState({
       game: game,
       numTurns: game.turns.length,
-      playing: true
     })
   }
   
