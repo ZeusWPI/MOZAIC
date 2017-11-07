@@ -14,7 +14,7 @@ header {
   display: grid;
   grid-template-columns: auto auto 1fr 1fr;
   grid-template-areas:
-    "logo uname enemy toolbar"
+    "logo uname opponent toolbar"
 }
 
 header figure.logo {
@@ -75,8 +75,8 @@ input[type=text]#uname:focus + label {
   font-size: 10px;
 }
 
-.enemy-form {
-  grid-area: enemy;
+.opponent-form {
+  grid-area: opponent;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -85,7 +85,7 @@ input[type=text]#uname:focus + label {
   margin-left: 1em;
 }
 
-.enemy-form > label {
+.opponent-form > label {
   font-size: 10px;
   color: gray;
   margin-bottom: 7px;
@@ -178,7 +178,7 @@ input[type=text]#uname:focus + label {
 #turn_progress {
   float: right;
   font-family: 'Tahoma';
-  font-size: 1.2vw;
+  font-size: 1.1vw;
   line-height: 0;
   margin-left: 3%;
   align-items: center;
@@ -190,7 +190,7 @@ input[type=text]#uname:focus + label {
   width: 50%;
   line-height: 0;
   font-family: 'Tahoma';
-  font-size: 1.2vw;
+  font-size: 1.1vw;
 }
 
 .turncontrols {

@@ -1,76 +1,15 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Visualization MOZAIC</title>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <div id="view">
-      <!-- Hide/unhide button for scoreboard -->
-      <button type="button" name="buton" id="hide_score" class="control control-button">
-          <img src="res/minus.svg"/>
-      </button>
 
-      <button type="button" name="buton" id="unhide_score" class="control control-button">
-          <img src="res/plus.svg"/>
-      </button>
-      <svg id="score">
-      </svg>
+<head>
+  <meta charset="utf-8">
+  <title>Planet Wars</title>
+  <link rel="stylesheet" type="text/css" href="app/main.css">
+</head>
 
-      <!-- Hide/unhide button -->
-      <button type="button" name="buton" id="hide" class="control control-button">
-          <img src="res/minus.svg"/>
-      </button>
+<body>
+  <div id="visualizer"></div>
+  <script src="./app/bundle.js"></script>
+</body>
 
-      <button type="button" name="buton" id="unhide" class="control control-button">
-          <img src="res/plus.svg"/>
-      </button>
-
-      <div id="controlbar">
-        <input type="range" id="turn_slider" value="0" class="control"/>
-        <input id="file-select" type="file" class="control"/>
-
-        <div class="speedcontrols">
-
-          <!-- Rewind button -->
-          <button type="button" name="buton" id="tostart" class="control control-button">
-              <img src="res/rewind.svg"/>
-          </button><button type="button" name="button" id="speeddown" class="control control-button">
-          <!-- Speed down button -->
-            <img src="res/speeddown.svg"/>
-          </button><button type="button" name="button" id="previous" class="control control-button">
-          <!-- Previous turn button -->
-            <img src="res/minus.svg"/>
-          </button><button type="button" name="button" id="play" class="control control-button">
-          <!-- Play -->
-            <img src="res/play.svg"/>
-          </button><button type="button" name="button" id="pause" class="control control-button" hidden="true">
-          <!-- Pause button -->
-            <img src="res/pause.svg"/>
-          </button><button type="button" name="button" id="next" class="control control-button">
-          <!-- Next turn button -->
-            <img src="res/plus.svg"/>
-          </button><button type="button" name="button" id="speedup" class="control control-button">
-          <!-- Speedup button -->
-            <img src="res/speedup.svg"/>
-          </button><button type="button" name="button" id="toend" class="control control-button">
-
-          <!-- Forward button -->
-            <img src="res/forward.svg"/>
-          </button>
-
-        </div>
-        <p class="speed"></p>
-      </div>
-
-      <!-- The SVG where the game gets rendered" -->
-      <svg id="game" font-family="sans-serif" font-size="10" text-anchor="middle">
-      </svg>
-      <div id="end_card">
-      </div>
-    </div>
-
-    <script src="./bundle.js"></script>
-  </body>
 </html>
