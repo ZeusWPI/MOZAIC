@@ -13,7 +13,7 @@ gulp.task('clean:output', function () {
 });
 
 gulp.task('watch', ['compile'], function(){
-  gulp.watch(['**/*.ts', '!**/dist'], ['default'], { ignoreInitial: false });
+  gulp.watch(['**/*.ts','**/*.html', '**/*.less', '!**/dist'], ['compile']);
 });
 
 
@@ -27,12 +27,9 @@ gulp.task('compile', ['clean:output'], function(){
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(dest));
 
-    var html = gulp.src('**/*.html')
-          .pipe(gulp.dest(dest));
-
     var dts = result.dts.pipe(gulp.dest(dest));
 
-    return merge(js, dts, html);
+    return merge(js, dts);
 });
 
 gulp.task('default', ['compile']);
