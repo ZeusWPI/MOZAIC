@@ -1,5 +1,15 @@
 # PlanetWars Client
 
+## How to get started
+
+This project contains quite some advanced libraries and technologies,
+but there's no need to be daunted. When you now the entry points, and have a
+limited understanding of some off the core tech (React & Redux), you'll be off
+in no time.
+
+Be sure to ask the devs to help you get started. Also have a look at our docs,
+and maybe do some quick tutorials on React, Redux, or TypeScript.
+
 ## Setup
 
 Should work on Linux, macOS, and Windows.
@@ -32,4 +42,3 @@ Might help to install electron and cross-env globally with NPM with
 - TSX to Hyperscript
 - Check package.json build
 - Check need for `asar`
-- Add `npm install -g cross-env` somewhere
