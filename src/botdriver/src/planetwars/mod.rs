@@ -5,6 +5,7 @@ mod rules;
 mod logger;
 mod config;
 mod writer;
+mod client_handle;
 
 pub use self::planet_wars::Match;
 pub use self::rules::PlanetWars;
