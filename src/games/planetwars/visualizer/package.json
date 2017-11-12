@@ -2,7 +2,7 @@
   "name": "planetwars-visualizer",
   "version": "1.0.0",
   "description": "",
-  "main": "visualizer.js",
+  "main": "src/index.js",
   "author": "Zeus WPI",
   "license": "MIT",
   "dependencies": {

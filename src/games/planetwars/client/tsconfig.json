@@ -10,7 +10,6 @@
       "dom.iterable",
       "scripthost"
     ],
-    "types": [],
 
     "alwaysStrict": true,
     "strictNullChecks": true,
@@ -34,6 +33,7 @@
     "app/**/*.tsx",
     "test/**/*.ts",
     "test/**/*.tsx",
+    "types/**/*.ts",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [

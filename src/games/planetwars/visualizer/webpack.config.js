@@ -7,11 +7,12 @@ const extractLess = new ExtractTextPlugin({
 })
 
 module.exports = {
-  entry: ["./src/app.js", "./src/assets/style/main.less"],
+  entry: ["./src/index.js", "./src/assets/style/main.less"],
   output: {
+    library: "planetwars_visualizer",
     path: __dirname + '/app/',
-    filename: "bundle.js",
-    sourceMapFilename: "bundle.js.map"
+    filename: "index.js",
+    sourceMapFilename: "index.js.map"
   },
   devtool: 'sourcemap',
   resolveLoader: {
