@@ -18,6 +18,26 @@ enum MoveError {
 }
 
 impl Controller {
+    pub fn step(&mut self) {
+        if !self.waiting_for.is_empty() {
+            return;
+        }
+
+        self.state.repopulate();
+        for mv in self.dispatches.drain(0..) {
+            self.state.dispatch(mv);
+        }
+        self.state.step();
+
+        // TODO: dispatch moves
+
+        for player in self.state.players.values() {
+            if player.alive {
+                self.waiting_for.insert(player.id);
+            }
+        }
+    }
+    
     pub fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
         for mv in cmd.moves.into_iter() {
             let res = self.handle_move(player_id, mv);
