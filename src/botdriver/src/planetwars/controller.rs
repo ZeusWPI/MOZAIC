@@ -39,6 +39,7 @@ impl Controller {
         }
         
         self.state.step();
+        self.logger.log(&self.state);
 
         if !self.state.is_finished() {
             self.prompt_players(handles);
