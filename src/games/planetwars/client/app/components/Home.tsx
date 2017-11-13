@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Visualizer } from 'planetwars-visualizer';
+import { Visualizer } from './visualizer/index';
 
 // let styles = require('./Home.scss');
 

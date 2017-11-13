@@ -17,6 +17,7 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noUnusedLocals": true,
+    "allowJs": true,
     
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
