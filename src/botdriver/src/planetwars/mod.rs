@@ -2,6 +2,7 @@ mod planet_wars;
 mod protocol;
 mod player;
 mod rules;
+mod controller;
 mod logger;
 mod config;
 mod writer;
