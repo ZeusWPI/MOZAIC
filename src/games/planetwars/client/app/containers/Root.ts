@@ -5,6 +5,7 @@ import { History } from 'history';
 import { Provider } from 'react-redux';
 import { ConnectedRouter } from 'react-router-redux';
 import Routes from '../routes';
+import { h } from 'react-hyperscript-helpers';
 
 interface IRootType {
   store: Redux.Store<any>;
@@ -13,10 +14,10 @@ interface IRootType {
 
 export default function Root({ store, history }: IRootType) {
   return (
-    <Provider store={store}>
-      <ConnectedRouter history={history}>
-        <Routes />
-      </ConnectedRouter>
-    </Provider>
+    h(Provider, { store: store}, [
+      h(ConnectedRouter, {history: history}, [
+        h(Routes)
+      ])
+    ])
   );
 }

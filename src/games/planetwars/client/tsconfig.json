@@ -16,7 +16,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
+    // "noUnusedLocals": true,
     "allowJs": true,
     
     "experimentalDecorators": true,
@@ -27,13 +27,11 @@
     "outDir": "dist"
   },
   "files": [
-    "app/index.tsx"
+    "app/index.ts"
   ],
   "include": [
     "app/**/*.ts",
-    "app/**/*.tsx",
     "test/**/*.ts",
-    "test/**/*.tsx",
     "types/**/*.ts",
     "node_modules/@types/**/*.d.ts"
   ],
