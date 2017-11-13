@@ -2,11 +2,12 @@ const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
 
-const ResourceLoader = require('./util/resourceLoader');
-const spaceMath = require('./util/spacemath')
-const Config = require('./util/config');
-const PlanetRenderer = require('./renderers/planets');
-const ExpeditionRenderer = require('./renderers/expeditions');
+const ResourceLoader = require('../util/resourceLoader');
+const spaceMath = require('../util/spacemath')
+const Config = require('../util/config');
+const PlanetRenderer = require('../renderers/planets');
+const ExpeditionRenderer = require('../renderers/expeditions');
+let styles = require('./renderer.scss');
 
 
 class Renderer extends React.Component {
@@ -29,7 +30,7 @@ class Renderer extends React.Component {
   }
 
   render() {
-    return h('svg#battlefield', {
+    return h(`svg.${styles.battlefield}`, {
       ref: (svg) => {
         this.svg = svg;
       }

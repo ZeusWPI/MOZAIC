@@ -1,6 +1,6 @@
 const d3 = require('d3');
 
-const Config = require('./util/config');
+const Config = require('../util/config');
 
 class Game {
   constructor(json) {

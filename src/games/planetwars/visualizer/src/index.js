@@ -1,4 +1,4 @@
-const Visualizer = require('./visualizer');
+const Visualizer = require('./components/visualizer');
 
 module.exports = {
     Visualizer

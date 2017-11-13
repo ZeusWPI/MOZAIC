@@ -13,6 +13,8 @@ const {
   svg
 } = require('hyperscript-helpers')(h);
 
+const styles = require('./scoreboard.scss');
+
 class Scoreboard extends React.Component {
   constructor(props){
     super(props);
@@ -39,8 +41,8 @@ class Scoreboard extends React.Component {
         ])
       ])
     });
-    return div('#scoreboard', [
-      ul('#scoreboard-player-stats', playerStats)
+    return div(`.${styles.scoreboard}`, [
+      ul('', playerStats)
     ]);
   };
 }

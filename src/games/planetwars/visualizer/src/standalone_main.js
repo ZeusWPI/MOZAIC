@@ -1,4 +1,4 @@
-const Visualizer = require('./visualizer');
+const Visualizer = require('./components/visualizer');
 const ReactDOM = require('react-dom');
 const h = require('react-hyperscript');
 

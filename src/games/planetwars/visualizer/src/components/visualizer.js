@@ -15,11 +15,12 @@ const {
 const Controls = require('./controls');
 const Game = require('./game');
 const Scoreboard = require('./scoreboard');
-const ReactUtils = require('./util/react_utils');
+const ReactUtils = require('../util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
 const Renderer = require('./renderer');
-const VisualsHelper = require('./util/visualsHelper');
+const VisualsHelper = require('../util/visualsHelper');
+const styles = require('./visualizer.scss');
 
 class Visualizer extends React.Component {
 
@@ -92,7 +93,7 @@ class Visualizer extends React.Component {
     });
 
     if(!this.state.game){
-      return div('#visualizer-root-node', [
+      return div(`.${styles.visualizerRootNode}`, [
         controls
       ])
     }
@@ -110,20 +111,20 @@ class Visualizer extends React.Component {
 
     let endGameCard = h(HideableComponent, {
       hide: this.state.hide_card,
-      render: div('#end-card', [
+      render: div(`.${styles.endCard}`, [
         h(ControlButton, {
-          selector: '#hide-card.close',
+          selector: `.${styles.hideCard}.${styles.close}`,
           title: 'Hide end card',
           icon: 'times',
           callback: () => this.setState({
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span('#winner', 'winner'), ' wins!'])
+        p(['Game over', h('br'), span(`${styles.winner}`, 'winner'), ' wins!'])
       ])
     });
 
-    return div('#visualizer-root-node', [
+    return div(`${styles.visualizerRootNode}`, [
       controls,
       scoreboard,
       renderer,

@@ -7,7 +7,7 @@ const extractSass = new ExtractTextPlugin({
 })
 
 module.exports = {
-  entry: ["./src/standalone_main.js", "./src/assets/style/main.scss"],
+  entry: ["./src/standalone_main.js"],
   output: {
     library: "planetwars_visualizer",
     path: __dirname + '/app/',
@@ -21,21 +21,30 @@ module.exports = {
     ]
   },
   module: {
-    rules: [{
-      test: /\.scss$/,
-      use: extractSass.extract({
-        use: [{
-          loader: "css-loader"
-        }, {
-          loader: "sass-loader"
-        }]
-      }), 
-    }, {
-      test: /\.(jpe|jpg|woff|woff2|eot|ttf|svg)(\?.*$|$)/,
-      loader: 'file-loader',
-    }]
+    loaders: [
+      {
+        test: /\.(scss|sass)$/,
+        use: ExtractTextPlugin.extract({
+          use: [{
+            loader: 'css-loader',
+            options: {
+              //modules: true,
+              importLoaders: 1,
+              localIdentName: '[name]__[local]__[hash:base64:5]',
+            }
+          },
+          {
+            loader: 'sass-loader'
+          }]
+        })
+      },
+      {
+        test: /\.(jpe|jpg|woff|woff2|eot|ttf|svg)(\?.*$|$)/,
+        loader: 'file-loader',
+      }
+    ]
   },
   plugins: [
-    extractSass
+    new ExtractTextPlugin('style.css'),
   ]
 };

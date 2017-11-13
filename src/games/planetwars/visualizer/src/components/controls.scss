@@ -1,38 +1,7 @@
-$fa-font-path: "~font-awesome/fonts";
-@import '~font-awesome/scss/font-awesome';
-// /* Keep this at the top so it keeps having priority */
-// .invisible {
-//   display: none !important;
-// }
-#visualizer-root-node {
-    height: 100%;
-    width: 100%;
-    max-height: 100vh;
-    max-width: 100vw;
-    #battlefield {
-        width: 100%;
-        height: 90%;
-        margin: 0;
-        box-sizing: border-box;
-    }
-    #scoreboard-wrapper {
-        #score {
-            width: 20%;
-            height: 50%;
-            position: absolute;
-            right: 1px;
-        }
-        #hide-score {
-            position: absolute;
-            top: 5px;
-            right: 19%;
-        }
-        #unhide-score {
-            position: absolute;
-            right: 0;
-        }
-    }
-    #control-bar {
+@import '../app.global.scss';
+
+:local {
+    .controlBar {
         position: absolute;
         height: 6vh;
         display: flex;
@@ -40,20 +9,19 @@ $fa-font-path: "~font-awesome/fonts";
         justify-content: center;
         bottom: 4vh;
         width: 99.8%;
-        #turn-slider {
+        .turnSlider {
             width: 100%;
         }
-
-        #control-buttons {
+        .controlButtons {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
-            #turn-controls {
+            .turnControls {
                 display: flex;
                 min-width: 220px;
                 width: 25%;
             }
-            #speed-controls {
+            .speedControls {
                 display: flex;
                 float: right;
                 width: 15%;
@@ -71,39 +39,6 @@ $fa-font-path: "~font-awesome/fonts";
                 margin: 0;
             }
         }
-    }
-    #end-card {
-        position: absolute;
-        top: 30vh;
-        height: 30vh;
-        width: 40%;
-        left: 30%;
-        text-align: center;
-        font-size: 50px;
-        font-family: 'Tahoma';
-        background-color: white;
-        border: 1px solid black;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        p {
-            width: 100%;
-        }
-        button {
-            position: absolute;
-            top: -12.5px;
-            right: -12.5px;
-        }
-    }
-    .close {
-        outline: none;
-        width: 25px;
-        height: 25px;
-        text-align: center;
-        background: inherit;
-        border-radius: 50%;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
-        border: 0;
     }
 
     /* Slider should prob use a lib for this but I lack self respect */
