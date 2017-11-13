@@ -16,6 +16,10 @@ pub struct ClientHandle<T>
 impl<T> ClientHandle<T>
     where T: Stream + Sink
 {
+    pub fn send(&mut self, msg: T::SinkItem) {
+        self.writer.write(msg);
+    }
+    
     fn poll_message(&mut self) -> Poll<T::Item, T::Error> {
         let poll = self.stream_future.poll().map_err(|(err, stream)| err);
         let (item, stream) = try_ready!(poll);

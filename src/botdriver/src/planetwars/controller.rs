@@ -1,7 +1,11 @@
+use std::collections::{HashSet, HashMap};
+
+use planetwars::client_handle::ClientHandle;
 use planetwars::rules::PlanetWars;
+use planetwars::player::PwTransport;
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::protocol as proto;
-use std::collections::HashSet;
+
 
 struct Controller {
     state: PlanetWars,
@@ -17,26 +21,30 @@ enum MoveError {
     NotEnoughShips,
 }
 
+type Client = ClientHandle<PwTransport>;
+
 impl Controller {
-    pub fn step(&mut self) {
+    pub fn game_finished(&self) -> bool {
+        self.state.is_finished()
+    }
+    
+    pub fn step(&mut self, handles: &mut HashMap<usize, Client>) {
         if !self.waiting_for.is_empty() {
             return;
         }
 
         self.state.repopulate();
         for mv in self.dispatches.drain(0..) {
-            self.state.dispatch(mv);
+            self.state.dispatch(&mv);
         }
+        
         self.state.step();
 
-        // TODO: dispatch moves
-
-        for player in self.state.players.values() {
-            if player.alive {
-                self.waiting_for.insert(player.id);
-            }
+        if !self.state.is_finished() {
+            self.prompt_players(handles);
         }
     }
+
     
     pub fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
         for mv in cmd.moves.into_iter() {
@@ -48,6 +56,15 @@ impl Controller {
         }
     }
         
+    fn prompt_players(&mut self, handles: &mut HashMap<usize, Client>) {
+        for player in self.state.players.values() {
+            if player.alive {
+                let handle = handles.get_mut(&player.id).unwrap();
+                handle.send(self.state.repr());
+                self.waiting_for.insert(player.id);
+            }
+        }
+    }
         
     fn handle_move(&mut self, player_id: usize, mv: proto::Move)
                    -> Result<(), MoveError>

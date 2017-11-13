@@ -14,6 +14,8 @@ use serde::{Serialize, Deserialize};
 use bot_runner::BotHandle;
 use planetwars::protocol as proto;
 
+pub type PwCodec = JsonLines<proto::State, proto::Command>;
+pub type PwTransport = Framed<BotHandle, PwCodec>;
 
 pub struct PlayerHandle {
     transport: Framed<BotHandle, JsonLines<proto::State, proto::Command>>,
