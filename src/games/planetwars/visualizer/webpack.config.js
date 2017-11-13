@@ -2,12 +2,12 @@ const path = require('path');
 
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
-const extractLess = new ExtractTextPlugin({
+const extractSass = new ExtractTextPlugin({
     filename: "[name].css"
 })
 
 module.exports = {
-  entry: ["./src/index.js", "./src/assets/style/main.less"],
+  entry: ["./src/standalone_main.js", "./src/assets/style/main.scss"],
   output: {
     library: "planetwars_visualizer",
     path: __dirname + '/app/',
@@ -22,12 +22,12 @@ module.exports = {
   },
   module: {
     rules: [{
-      test: /\.less$/,
-      use: extractLess.extract({
+      test: /\.scss$/,
+      use: extractSass.extract({
         use: [{
           loader: "css-loader"
         }, {
-          loader: "less-loader"
+          loader: "sass-loader"
         }]
       }), 
     }, {
@@ -36,6 +36,6 @@ module.exports = {
     }]
   },
   plugins: [
-    extractLess
+    extractSass
   ]
 };
