@@ -11,6 +11,13 @@ use std::str;
 use bot_runner::BotHandle;
 use planetwars::writer::Writer;
 
+
+
+pub struct ClientMessage {
+    pub client_id: usize,
+    pub message: String,
+}
+
 pub struct ClientController {
     client_id: usize,
     
@@ -20,13 +27,13 @@ pub struct ClientController {
     ctrl_chan: UnboundedReceiver<String>,
     ctrl_handle: UnboundedSender<String>,
     
-    game_handle: UnboundedSender<String>,
+    game_handle: UnboundedSender<ClientMessage>,
 }
 
 impl ClientController {
     pub fn new(client_id: usize,
                conn: BotHandle,
-               game_handle: UnboundedSender<String>)
+               game_handle: UnboundedSender<ClientMessage>)
                -> Self
     {
         let (snd, rcv) = unbounded();
@@ -52,7 +59,7 @@ impl ClientController {
     
     fn handle_commands(&mut self) -> Poll<(), ()> {
         while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
-            println!("{}", command);
+            self.writer.write(command);
         }
         Ok(Async::Ready(()))
     }
@@ -60,7 +67,10 @@ impl ClientController {
     fn handle_client_msgs(&mut self) -> Poll<(), io::Error> {
         while let Some(msg) = try_ready!(self.client_msgs.poll()) {
             // for now, just forward messages
-            self.game_handle.unbounded_send(msg).expect("game handle broke");
+            self.game_handle.unbounded_send(ClientMessage {
+                client_id: self.client_id,
+                message: msg,
+            }).expect("game handle broke");
         }
         Ok(Async::Ready(()))
     }
@@ -84,6 +94,7 @@ impl Future for ClientController {
 
     fn poll(&mut self) -> Poll<(), ()> {
         // disregard errors for now
+        self.try_poll().unwrap();
         self.try_poll().unwrap();
         Ok(Async::NotReady)
     }

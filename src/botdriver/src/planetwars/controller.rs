@@ -3,6 +3,9 @@ use std::collections::{HashSet, HashMap};
 use futures::{Future, Async, Poll, Stream, Sink};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
+use serde_json;
+
+use planetwars::client_controller::ClientMessage;
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Player};
 use planetwars::logger::PlanetWarsLogger;
@@ -16,7 +19,7 @@ pub struct Controller {
     dispatches: Vec<proto::Move>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
-    client_msgs: UnboundedReceiver<String>,
+    client_msgs: UnboundedReceiver<ClientMessage>,
 }
 
 #[derive(Debug)]
@@ -31,7 +34,7 @@ impl Controller {
                // temporary: player names
                // this should probaly go in the match config later on
                player_names: HashMap<usize, String>,
-               chan: UnboundedReceiver<String>,
+               chan: UnboundedReceiver<ClientMessage>,
                conf: Config,)
                -> Self
     {
@@ -50,7 +53,7 @@ impl Controller {
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
         
-        Controller {
+        let mut controller = Controller {
             state: state,
             logger: logger,
 
@@ -59,8 +62,11 @@ impl Controller {
             
             client_handles: clients,
             client_msgs: chan,
-        }
+        };
+        controller.prompt_players();
+        return controller;
     }
+    
     pub fn game_finished(&self) -> bool {
         self.state.is_finished()
     }
@@ -83,21 +89,33 @@ impl Controller {
         }
     }
 
+        
+    fn prompt_players(&mut self) {
+        for player in self.state.players.values() {
+            if player.alive {
+                let state = self.state.repr();
+                let repr = serde_json::to_string(&state).unwrap();
+                let handle = self.client_handles.get_mut(&player.id).unwrap();
+                handle.unbounded_send(repr);
+                self.waiting_for.insert(player.id);
+            }
+        }
+    }
+
     
-    pub fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
+    fn handle_message(&mut self, player_id: usize, msg: String) {
+        if let Ok(cmd) = serde_json::from_str(&msg) {
+            self.handle_command(player_id, cmd);
+        }
+        self.waiting_for.remove(&player_id);
+    }
+
+    fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
         for mv in cmd.moves.into_iter() {
             let res = self.handle_move(player_id, mv);
             if let Err(err) = res {
                 // TODO: this is where errors should be sent to clients
                 println!("player {}: {:?}", player_id, err);
-            }
-        }
-    }
-        
-    fn prompt_players(&mut self) {
-        for player in self.state.players.values() {
-            if player.alive {
-                // TODO
             }
         }
     }
@@ -134,8 +152,8 @@ impl Future for Controller {
 
     fn poll(&mut self) -> Poll<Vec<String>, ()> {
         while !self.state.is_finished() {
-            let msg = try_ready!(self.client_msgs.poll());
-            // TODO: handle message
+            let msg = try_ready!(self.client_msgs.poll()).unwrap();
+            self.handle_message(msg.client_id, msg.message);
             self.step();
         }
         Ok(Async::Ready(self.state.living_players()))
