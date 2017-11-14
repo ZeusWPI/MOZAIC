@@ -1,6 +1,7 @@
 use futures::{Future, Poll, Async};
-use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use futures::stream::{Stream, SplitStream, SplitSink};
+use tokio_io::AsyncRead;
 use tokio_io::codec::Framed;
 use tokio_io::codec::{Encoder, Decoder};
 use bytes::{BytesMut, BufMut};
@@ -16,13 +17,36 @@ struct ClientController {
     writer: Writer<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
 
-    control_chan: UnboundedReceiver<String>,
+    ctrl_chan: UnboundedReceiver<String>,
+    ctrl_handle: UnboundedSender<String>,
+    
     game_handle: UnboundedSender<String>,
 }
 
 impl ClientController {
+    pub fn new(client_id: usize,
+               conn: BotHandle,
+               game_handle: UnboundedSender<String>)
+               -> Self
+    {
+        let (snd, rcv) = unbounded();
+        let (sink, stream) = conn.framed(LineCodec).split();
+
+        ClientController {
+            client_id: client_id,
+
+            writer: Writer::new(sink),
+            client_msgs: stream,
+
+            ctrl_chan: rcv,
+            ctrl_handle: snd,
+
+            game_handle: game_handle,
+        }
+    }
+    
     fn handle_commands(&mut self) -> Poll<(), ()> {
-        while let Some(command) = try_ready!(self.control_chan.poll()) {
+        while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
             println!("{}", command);
         }
         Ok(Async::Ready(()))
@@ -40,10 +64,12 @@ impl ClientController {
         self.writer.poll()
     }
 
-    fn try_poll(&mut self) -> Poll<(), io::Error> {
-        try!(self.handle_commands());
+    fn try_poll(&mut self) -> Result<(), io::Error> {
+        // we own this channel, it should not fail
+        self.handle_commands().unwrap();
         try!(self.handle_client_msgs());
         try!(self.write_messages());
+        Ok(())
     }
 }
 

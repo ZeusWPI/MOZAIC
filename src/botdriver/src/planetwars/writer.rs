@@ -41,6 +41,13 @@ pub struct Writer<S>
 impl<S> Writer<S>
     where S: Sink
 {
+    pub fn new(sink: S) -> Self {
+        Writer {
+            state: Some(SinkState::Ready(sink)),
+            buffer: Vec::new(),
+        }
+    }
+    
     pub fn write(&mut self, item: S::SinkItem) {
         let state = self.state.take().unwrap();
         let mut buffer = &mut self.buffer;
