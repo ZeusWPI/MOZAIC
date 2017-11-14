@@ -1,5 +1,6 @@
 use futures::{Future, Poll, Async};
-use futures::stream::{Stream, StreamFuture, SplitStream, SplitSink};
+use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+use futures::stream::{Stream, SplitStream, SplitSink};
 use tokio_io::codec::Framed;
 use tokio_io::codec::{Encoder, Decoder};
 use bytes::{BytesMut, BufMut};
@@ -9,25 +10,40 @@ use std::str;
 use bot_runner::BotHandle;
 use planetwars::writer::Writer;
 
-
-// This is rather temporary.
-type Transport = Framed<BotHandle, LineCodec>;
-
 struct ClientController {
     client_id: usize,
     
     writer: Writer<SplitSink<Transport>>,
-    receive: StreamFuture<SplitStream<Transport>>,
+    client_msgs: SplitStream<Transport>,
+
+    control_chan: UnboundedReceiver<String>,
+    game_handle: UnboundedSender<String>,
 }
 
 impl ClientController {
-    fn poll_client(&mut self) -> Poll<String, io::Error> {
-        let poll = self.receive.poll().map_err(|(err, stream)| err);
-        let (item, stream) = try_ready!(poll);
-        // update receive future
-        self.receive = stream.into_future();
-        // TODO: don't unwrap
-        Ok(Async::Ready(item.unwrap()))
+    fn handle_commands(&mut self) -> Poll<(), ()> {
+        while let Some(command) = try_ready!(self.control_chan.poll()) {
+            println!("{}", command);
+        }
+        Ok(Async::Ready(()))
+    }
+
+    fn handle_client_msgs(&mut self) -> Poll<(), io::Error> {
+        while let Some(msg) = try_ready!(self.client_msgs.poll()) {
+            // for now, just forward messages
+            self.game_handle.unbounded_send(msg).expect("game handle broke");
+        }
+        Ok(Async::Ready(()))
+    }
+
+    fn write_messages(&mut self) -> Poll<(), io::Error> {
+        self.writer.poll()
+    }
+
+    fn try_poll(&mut self) -> Poll<(), io::Error> {
+        try!(self.handle_commands());
+        try!(self.handle_client_msgs());
+        try!(self.write_messages());
     }
 }
 
@@ -36,13 +52,16 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        // for now, assume errors don't happen
-        let write = self.writer.poll().unwrap();
-        let read = self.poll_client().unwrap();
+        // disregard errors for now
+        self.try_poll().unwrap();
         Ok(Async::NotReady)
     }
 }
 
+
+
+// This is rather temporary.
+type Transport = Framed<BotHandle, LineCodec>;
 
 struct LineCodec;
 
