@@ -11,6 +11,9 @@ struct Controller {
     logger: PlanetWarsLogger,
     waiting_for: HashSet<usize>,
     dispatches: Vec<proto::Move>,
+
+    client_handles: HashMap<usize, UnboundedSender<String>>,
+    client_msgs: UnboundedReceiver<String>,
 }
 
 #[derive(Debug)]
@@ -20,14 +23,12 @@ enum MoveError {
     NotEnoughShips,
 }
 
-type Client = ClientHandle<PwTransport>;
-
 impl Controller {
     pub fn game_finished(&self) -> bool {
         self.state.is_finished()
     }
     
-    pub fn step(&mut self, handles: &mut HashMap<usize, Client>) {
+    pub fn step(&mut self) {
         if !self.waiting_for.is_empty() {
             return;
         }
@@ -89,5 +90,19 @@ impl Controller {
 
         self.dispatches.push(mv);
         Ok(())
+    }
+}
+
+impl Future for Controller {
+    type Item = Vec<String>;
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        while !self.state.is_finished() {
+            let msg = try_ready!(self.client_msgs.poll());
+            // TODO: handle message
+            self.step();
+        }
+        Ok(Async::Ready(self.state.living_players()))
     }
 }
