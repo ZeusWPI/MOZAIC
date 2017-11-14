@@ -1,12 +1,15 @@
 use std::collections::{HashSet, HashMap};
 
-use planetwars::client_handle::ClientHandle;
-use planetwars::rules::PlanetWars;
+use futures::{Future, Async, Poll, Stream, Sink};
+use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+
+use planetwars::config::Config;
+use planetwars::rules::{PlanetWars, Player};
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::protocol as proto;
 
 
-struct Controller {
+pub struct Controller {
     state: PlanetWars,
     logger: PlanetWarsLogger,
     waiting_for: HashSet<usize>,
@@ -24,6 +27,40 @@ enum MoveError {
 }
 
 impl Controller {
+    pub fn new(clients: HashMap<usize, UnboundedSender<String>>,
+               // temporary: player names
+               // this should probaly go in the match config later on
+               player_names: HashMap<usize, String>,
+               chan: UnboundedReceiver<String>,
+               conf: Config,)
+               -> Self
+    {
+        // TODO: this should be replaced by something nicer
+        let player_map = player_names.into_iter().map(|(id, name)| {
+            let player = Player {
+                id: id,
+                name: name,
+                alive: true,
+            };
+            return (id, player);
+        }).collect();
+        
+        let state = conf.create_game(player_map);
+        
+        let mut logger = PlanetWarsLogger::new("log.json");
+        logger.log(&state).expect("[PLANET_WARS] logging failed");
+        
+        Controller {
+            state: state,
+            logger: logger,
+
+            waiting_for: HashSet::with_capacity(clients.len()),
+            dispatches: Vec::new(),
+            
+            client_handles: clients,
+            client_msgs: chan,
+        }
+    }
     pub fn game_finished(&self) -> bool {
         self.state.is_finished()
     }
@@ -42,7 +79,7 @@ impl Controller {
         self.logger.log(&self.state);
 
         if !self.state.is_finished() {
-            self.prompt_players(handles);
+            self.prompt_players();
         }
     }
 
@@ -57,12 +94,10 @@ impl Controller {
         }
     }
         
-    fn prompt_players(&mut self, handles: &mut HashMap<usize, Client>) {
+    fn prompt_players(&mut self) {
         for player in self.state.players.values() {
             if player.alive {
-                let handle = handles.get_mut(&player.id).unwrap();
-                handle.send(self.state.repr());
-                self.waiting_for.insert(player.id);
+                // TODO
             }
         }
     }
@@ -97,7 +132,7 @@ impl Future for Controller {
     type Item = Vec<String>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<(), ()> {
+    fn poll(&mut self) -> Poll<Vec<String>, ()> {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll());
             // TODO: handle message
