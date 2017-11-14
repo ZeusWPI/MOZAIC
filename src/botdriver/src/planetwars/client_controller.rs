@@ -11,7 +11,7 @@ use std::str;
 use bot_runner::BotHandle;
 use planetwars::writer::Writer;
 
-struct ClientController {
+pub struct ClientController {
     client_id: usize,
     
     writer: Writer<SplitSink<Transport>>,
@@ -43,6 +43,11 @@ impl ClientController {
 
             game_handle: game_handle,
         }
+    }
+
+
+    pub fn handle(&self) -> UnboundedSender<String> {
+        self.ctrl_handle.clone()
     }
     
     fn handle_commands(&mut self) -> Poll<(), ()> {
