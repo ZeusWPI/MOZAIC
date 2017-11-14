@@ -2,11 +2,11 @@ mod planet_wars;
 mod protocol;
 mod player;
 mod rules;
-mod controller;
 mod logger;
 mod config;
 mod writer;
 mod client_handle;
+mod client_controller;
 
 pub use self::planet_wars::Match;
 pub use self::rules::PlanetWars;

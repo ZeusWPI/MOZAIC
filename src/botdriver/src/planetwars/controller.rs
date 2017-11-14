@@ -2,7 +2,6 @@ use std::collections::{HashSet, HashMap};
 
 use planetwars::client_handle::ClientHandle;
 use planetwars::rules::PlanetWars;
-use planetwars::player::PwTransport;
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::protocol as proto;
 
