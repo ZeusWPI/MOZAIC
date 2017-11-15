@@ -1,0 +1,14 @@
+{
+    "players": [
+        {
+            "name": "bert",
+            "command": "python3",
+            "args": ["../games/planetwars/bots/simplebot/simple.py"]
+        },
+        {
+            "name": "timp",
+            "command": "python3",
+            "args": ["../games/planetwars/bots/simplebot/simple.py"]
+        }
+    ]
+}

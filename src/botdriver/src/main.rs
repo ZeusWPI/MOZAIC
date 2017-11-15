@@ -2,6 +2,7 @@
 
 mod bot_runner;
 mod planetwars;
+mod lobby;
 
 extern crate bytes;
 
@@ -27,16 +28,21 @@ use futures::sync::mpsc;
 
 use std::collections::HashMap;
 use bot_runner::*;
-
+use lobby::lobby_args;
 use planetwars::{ClientController, Controller};
 
 // Load the config and start the game.
 fn main() {
     let args: Vec<_> = env::args().collect();
-    if args.len() != 2 {
-        let msg = format!("Expected 1 argument (config file). {} given.", args.len() - 1).to_owned();
+    if args.len() < 2 {
+        let msg = format!("Expected at least 1 argument (config file). {} given.", args.len() - 1).to_owned();
         println!("{}", msg);
         std::process::exit(1)
+    }
+
+    if &args[1]== "--lobby" {
+        let x = lobby_args(&args);
+        std::process::exit(x);
     }
 
     let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
