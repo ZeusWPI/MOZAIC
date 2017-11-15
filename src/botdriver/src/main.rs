@@ -1,5 +1,3 @@
-#![feature(conservative_impl_trait)]
-
 mod bot_runner;
 mod client_controller;
 mod writer;
