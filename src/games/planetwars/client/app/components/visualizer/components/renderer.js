@@ -13,7 +13,7 @@ let styles = require('./renderer.scss');
 class Renderer extends React.Component {
   componentDidUpdate() {
     if (this.props.game) {
-      this.turn = this.props.game.turns[this.props.turnNum]
+      this.turn = this.props.game.turns[this.props.turnNum];
       this.calculateViewBox();
       this.draw();
     }
@@ -62,7 +62,6 @@ class Renderer extends React.Component {
   }
 
   createZoom() {
-    console.log("test");
     var zoom = d3.zoom()
       .scaleExtent(Config.max_scales)
       .on('zoom', () => {
