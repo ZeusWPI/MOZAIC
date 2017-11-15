@@ -38,8 +38,8 @@ class Visualizer extends React.Component {
 
   // TODO: this might not be the best way to do this
   setTurn(num) {
-    let turnNum = Math.min(num, this.state.numTurns - 1);
-    if (turnNum == this.state.numTurns - 1) {
+    let turnNum = Math.min(num, this.state.numTurns);
+    if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
     }
     this.setState({ turnNum: turnNum });
@@ -58,10 +58,10 @@ class Visualizer extends React.Component {
     var game = new Game(log);
     this.setState({
       game: game,
-      numTurns: game.turns.length,
+      numTurns: game.turns.length - 1,
     })
   }
-  
+
   nextTurn() {
     this.setTurn(this.state.turnNum + 1);
   }
@@ -73,7 +73,7 @@ class Visualizer extends React.Component {
   setTimer() {
     // stop old timer
     if (this.timer) { this.timer.stop(); }
-    
+
     if (this.state.playing) {
       var delay = 1000 / this.state.speed;
       this.timer = d3.interval(t => this.nextTurn(), delay);
