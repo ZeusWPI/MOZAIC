@@ -5,7 +5,7 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use serde_json;
 
-use planetwars::client_controller::ClientMessage;
+use client_controller::ClientMessage;
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Player};
 use planetwars::logger::PlanetWarsLogger;

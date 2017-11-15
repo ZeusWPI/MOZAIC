@@ -1,6 +1,8 @@
 #![feature(conservative_impl_trait)]
 
 mod bot_runner;
+mod client_controller;
+mod writer;
 mod planetwars;
 
 extern crate bytes;
@@ -28,7 +30,8 @@ use futures::sync::mpsc;
 use std::collections::HashMap;
 use bot_runner::*;
 
-use planetwars::{ClientController, Controller};
+use client_controller::ClientController;
+use planetwars::Controller;
 
 // Load the config and start the game.
 fn main() {

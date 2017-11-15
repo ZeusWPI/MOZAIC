@@ -9,7 +9,7 @@ use std::io;
 use std::str;
 
 use bot_runner::BotHandle;
-use planetwars::writer::Writer;
+use writer::Writer;
 
 
 
