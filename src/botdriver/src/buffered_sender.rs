@@ -31,24 +31,24 @@ impl<S> SinkState<S>
     }
 }
 
-pub struct Writer<S>
+pub struct BufferedSender<S>
     where S: Sink
 {
     state: Option<SinkState<S>>,
     buffer: Vec<S::SinkItem>,
 }
 
-impl<S> Writer<S>
+impl<S> BufferedSender<S>
     where S: Sink
 {
     pub fn new(sink: S) -> Self {
-        Writer {
+        BufferedSender {
             state: Some(SinkState::Ready(sink)),
             buffer: Vec::new(),
         }
     }
     
-    pub fn write(&mut self, item: S::SinkItem) {
+    pub fn send(&mut self, item: S::SinkItem) {
         let state = self.state.take().unwrap();
         let buffer = &mut self.buffer;
         let new_state = match state {
@@ -73,7 +73,7 @@ impl<S> Writer<S>
     }
 }
 
-impl<S> Future for Writer<S>
+impl<S> Future for BufferedSender<S>
     where S: Sink
 {
     type Item = ();
@@ -83,7 +83,7 @@ impl<S> Future for Writer<S>
         while !self.buffer.is_empty() {
             try_ready!(self.poll_state());
             let item = self.buffer.remove(0);
-            self.write(item);
+            self.send(item);
         }
         return self.poll_state();
     }

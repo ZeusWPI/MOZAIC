@@ -1,6 +1,6 @@
 mod bot_runner;
 mod client_controller;
-mod writer;
+mod buffered_sender;
 mod planetwars;
 
 extern crate bytes;

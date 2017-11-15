@@ -9,7 +9,7 @@ use std::io;
 use std::str;
 
 use bot_runner::BotHandle;
-use writer::Writer;
+use buffered_sender::BufferedSender;
 
 
 
@@ -21,7 +21,7 @@ pub struct ClientMessage {
 pub struct ClientController {
     client_id: usize,
     
-    writer: Writer<SplitSink<Transport>>,
+    sender: BufferedSender<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
 
     ctrl_chan: UnboundedReceiver<String>,
@@ -42,7 +42,7 @@ impl ClientController {
         ClientController {
             client_id: client_id,
 
-            writer: Writer::new(sink),
+            sender: BufferedSender::new(sink),
             client_msgs: stream,
 
             ctrl_chan: rcv,
@@ -59,7 +59,7 @@ impl ClientController {
     
     fn handle_commands(&mut self) -> Poll<(), ()> {
         while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
-            self.writer.write(command);
+            self.sender.send(command);
         }
         Ok(Async::Ready(()))
     }
@@ -76,7 +76,7 @@ impl ClientController {
     }
 
     fn write_messages(&mut self) -> Poll<(), io::Error> {
-        self.writer.poll()
+        self.sender.poll()
     }
 
     fn try_poll(&mut self) -> Result<(), io::Error> {
