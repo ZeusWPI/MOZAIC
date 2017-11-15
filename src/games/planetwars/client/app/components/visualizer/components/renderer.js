@@ -7,6 +7,7 @@ const spaceMath = require('../util/spacemath')
 const Config = require('../util/config');
 const PlanetRenderer = require('../renderers/planets');
 const ExpeditionRenderer = require('../renderers/expeditions');
+const Voronoi = require('./voronoi.js')
 let styles = require('./renderer.scss');
 
 
@@ -16,16 +17,24 @@ class Renderer extends React.Component {
       this.turn = this.props.game.turns[this.props.turnNum]
       this.calculateViewBox();
       this.draw();
+      this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
     }
   }
 
   componentDidMount() {
     this.loadResources();
+    this.voronoiContainer = d3.select(this.svg).append('g').attr('transform', 'translate(1, -7)');
     this.container = d3.select(this.svg).append('g')
       // TODO: There are some bugs with viewboxes and centering
       .attr('transform', 'translate(1, -7)');
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
+    //function initVoronoi(turns, color_map, box){
+
+    this.turn = this.props.game.turns[0];
+    this.calculateViewBox();
+    console.log(this.props.game);
+    this.voronoiRenderer = Voronoi.initVoronoi(this.props.game.turns, Config.player_color, [this.min, this.max]);
     this.createZoom();
   }
 
@@ -70,6 +79,7 @@ class Renderer extends React.Component {
         transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
         transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
         this.container.attr('transform', transform);
+        this.voronoiContainer.attr('transform', transform);
       });
     d3.select(this.svg).call(zoom);
   }
