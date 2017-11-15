@@ -1,6 +1,6 @@
 const d3 = require('d3');
 
-const sections = 20;
+const sections = 25;
 const fancy = true;
 
 function equals(p1, p2){
@@ -12,12 +12,6 @@ function equals(p1, p2){
 
 function dist(p1, p2){
   return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
-}
-
-function goodDist(point, layer, pol1, pol2){
-  var toMiddle = Math.min(dist(point, pol1.point), dist(point, pol2.point));
-  var toEachOther = dist(pol1.getPoint(point, layer), pol2.getPoint(point, layer));
-  return toMiddle > toEachOther;
 }
 
 function getIndex(list, point){
@@ -40,8 +34,6 @@ class Polygon {
     this.point = point;
     this.polygon = points;
 
-    // extras for calculating gradients and neighbouring polygons
-    this.pointToPointMap = {};
     this.neighbours = {};
 
     this.polygon.forEach(p => {
@@ -62,7 +54,6 @@ class Polygon {
         }
       });
     });
-    console.log(this.neighbourPairs);
   }
 
   isPossible(point, hardEnd, owner, target, data){
@@ -74,11 +65,6 @@ class Polygon {
     if(owner !== this.owner){
       return false;
     }
-    /*
-    if(data.used[this.name] && this.polygon.indexOf(hardEnd) === -1){
-      return false;
-    }
-    */
     return this.polygon[(i+1) % this.polygon.length];
   }
 
@@ -87,45 +73,23 @@ class Polygon {
     if(i === 0){
       return point;
     }
-    //TODO: add pointToPointMap
-    /*
-    if(this.pointToPointMap[point] === undefined){
-      var line = new Line(point, this.point, false);
-      var radius = this.point.radius || 0.1;
-      this.pointToPointMap[point] = new Point(this.point.x+(line.cos()*radius), this.point.y+(line.sin()*radius));
-    } */
 
     var w1 = i;
     var w2 = max - i;
     return [(this.point[0]*w2 + point[0]*w1)/max, (this.point[1]*w2 + point[1]*w1)/max];
   }
 
-  // data :: {used::[Bool], polygons::[Polygon]}
-  maybeStart(layer, point, hardEnd, owner, target, data, returnList){
+  maybeStart(layer, point, hardEnd, owner, target, data){
     var i = getIndex(this.polygon, point);
     if(i === -1){
-      console.log("no points of me");
       return false;
     }
 
     if(owner !== this.owner){
-      console.log("not my owner");
       return false;
     }
 
-/*
-    if(data.used[this.name] && this.polygon.indexOf(hardEnd) === -1){
-      console.log("already used");
-      return false;
-    } */
-
-    var endi = (i-1+this.polygon.length)%this.polygon.length;
-  //  var endi = i;
-
     data.used[this.name] = true;
-    returnList.push(this.name);
-    //console.log(returnList);
-    //target.push(this.polygon[i]);
 
     i = (i + 1) % this.polygon.length;
 
@@ -137,11 +101,8 @@ class Polygon {
       var nextPol = undefined;
       var nextPolPoint = undefined;
       for (var pol of this.neighbours[p]) {
-        // which one should i do? the most right ofc
         var nextPoint = pol.isPossible(p, hardEnd, owner, target, data);
-        var returnIndex =returnList.indexOf(pol.name);
-        //console.log(returnIndex);
-        if(nextPoint){//}&& (returnIndex > -1 || goodDist(p, layer, pol, this))){
+        if(nextPoint){
           if(nextPol === undefined || isRight(p, nextPolPoint, nextPoint)){
             nextPol = pol;
             nextPolPoint = nextPoint;
@@ -163,7 +124,7 @@ class Polygon {
           target.push([(pmiddle[0]*w2 + p[0]*w1)/sections, (pmiddle[1]*w2 + p[1]*w1)/sections]);
         }
 
-        nextPol.maybeStart(layer, p, hardEnd, owner, target, data, returnList);
+        nextPol.maybeStart(layer, p, hardEnd, owner, target, data);
         return true;
       }
 
@@ -238,7 +199,7 @@ function initVoronoi(turns, colorFunction, box){
   var pointsMade = [];
 
   for(var pl of polys){
-    for (var i = 0; i < pl.length; i++) {
+    for (let i = 0; i < pl.length; i++) {
       var alreadyHasPoint = false;
       for(var p of pointsMade){
         if(equals(pl[i], p)){
@@ -293,7 +254,7 @@ function initVoronoi(turns, colorFunction, box){
     if(changed || turnPolygonPoints.length < 1){
       var polygonPoints = [];
 
-      for (var i = 0; i < data.polygons.length; i++) {
+      for (let i = 0; i < data.polygons.length; i++) {
         let poly = data.polygons[i];
         if(!data.used[poly.name]){
           var si = poly.getGoodIndex();
@@ -320,68 +281,19 @@ function initVoronoi(turns, colorFunction, box){
 
   //                                              <<<<<<<<<<<<<<<<<<MAKING TURNS
 
-
-  console.log(turnPolygonPoints);
-
-  console.log(data);
-
   return function(turn, svg) {
     svg.selectAll("*").remove();
-    var poliess = turnPolygonPoints[turn];
 
-    var first = true;
-    var toDraw;
-    var colors = ["black", "grey", "limegreen", "green", "red", "purple", "yellow"];
-    var colorI = 0;
+    var poliess = turnPolygonPoints[turn];
 
     var startDraw = [] ;
     for(var polygonWrap of poliess){
       svg.append("path")
       .attr("d", getPath(polygonWrap.target)).attr("class", "polygon")
-      .style("fill",polygonWrap.color).style("opacity", 1/sections);
+      .style("fill",polygonWrap.color).style("opacity", 0.7/sections);
 
       startDraw.push({p: polygonWrap.target[0], color: polygonWrap.color});
-
-      if(first){
-        first = false;
-        toDraw = polygonWrap.target;
-      }
-      //points.forEach(p => p.draw("black", svg));
     }
-    /*
-    for(let p of toDraw){
-      svg.append("circle").attr("cx", p[0]).attr("cy", p[1]).attr("r", 0.3).attr("fill", colors[colorI]).attr("opacity", 0.5);
-      colorI = (colorI + 1) % colors.length;
-    }
-
-    for(let p of startDraw){
-      svg.append("circle").attr("cx", p.p[0]).attr("cy", p.p[1]).attr("r", 0.3).attr("fill", p.color);
-    } */
-
-    /*
-    svg.selectAll("*").remove();
-
-    var step = merged[0];//turns.indexOf(turn)];
-    var polycount = 0;
-
-    for(let owner in step){
-      if(step.hasOwnProperty(owner)){
-        var color = color_map[owner];
-        for(var points of step[owner]){
-          if(points.length > 0){
-            polycount ++;
-            console.log("points");
-            console.log(points);
-            svg.append("path")
-            .attr("d", getPath(points)).attr("class", "polygon")
-            .style("fill",color).style("opacity", 1);
-            //points.forEach(p => p.draw("black", svg));
-          }
-        }
-      }
-    }
-    console.log("polygCOUNT "+polycount);
-    */
   };
 }
 
