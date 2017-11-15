@@ -1,6 +1,6 @@
 use std::collections::{HashSet, HashMap};
 
-use futures::{Future, Async, Poll, Stream, Sink};
+use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use serde_json;
@@ -67,10 +67,6 @@ impl Controller {
         return controller;
     }
     
-    pub fn game_finished(&self) -> bool {
-        self.state.is_finished()
-    }
-    
     pub fn step(&mut self) {
         if !self.waiting_for.is_empty() {
             return;
@@ -82,7 +78,7 @@ impl Controller {
         }
         
         self.state.step();
-        self.logger.log(&self.state);
+        self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
             self.prompt_players();
@@ -96,7 +92,7 @@ impl Controller {
                 let state = self.state.repr();
                 let repr = serde_json::to_string(&state).unwrap();
                 let handle = self.client_handles.get_mut(&player.id).unwrap();
-                handle.unbounded_send(repr);
+                handle.unbounded_send(repr).unwrap();
                 self.waiting_for.insert(player.id);
             }
         }

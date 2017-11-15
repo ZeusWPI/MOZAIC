@@ -50,7 +50,7 @@ impl<S> Writer<S>
     
     pub fn write(&mut self, item: S::SinkItem) {
         let state = self.state.take().unwrap();
-        let mut buffer = &mut self.buffer;
+        let buffer = &mut self.buffer;
         let new_state = match state {
             SinkState::Sending(send) => {
                 buffer.push(item);
