@@ -1,6 +1,6 @@
 const d3 = require('d3');
 
-const sections = 25;
+const sections = 20;
 const fancy = true;
 
 function equals(p1, p2){
@@ -47,18 +47,22 @@ class Polygon {
     this.polygon.forEach(p => {
       this.neighbours[p] = [];
     });
+
+    this.neighbourPairs = {};
   }
 
   initNeighbours(data){
+    data.polygons.forEach(poly => this.neighbourPairs[poly.name] = []);
     this.polygon.forEach(point => {
       data.polygons.forEach(poly => {
         var index = getIndex(poly.polygon, point);
         if(poly !== this && index > -1){
           this.neighbours[point].push(poly);
+          this.neighbourPairs[poly.name].push(point);
         }
       });
     });
-    console.log(this.neighbours);
+    console.log(this.neighbourPairs);
   }
 
   isPossible(point, hardEnd, owner, target, data){
@@ -146,6 +150,19 @@ class Polygon {
       }
 
       if(nextPol !== undefined){
+
+        if(this.neighbours[p].some(pol => pol.owner !== this.owner)){
+          var x = 0;
+          var y = 0;
+
+          this.neighbourPairs[nextPol.name].forEach(mp => { x+= mp[0]; y += mp[1]; });
+          var pmiddle = [x/this.neighbourPairs[nextPol.name].length, y / this.neighbourPairs[nextPol.name].length];
+
+          var w2 = layer;
+          var w1 = sections - layer;
+          target.push([(pmiddle[0]*w2 + p[0]*w1)/sections, (pmiddle[1]*w2 + p[1]*w1)/sections]);
+        }
+
         nextPol.maybeStart(layer, p, hardEnd, owner, target, data, returnList);
         return true;
       }
