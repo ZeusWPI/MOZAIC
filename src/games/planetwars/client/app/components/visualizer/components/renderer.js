@@ -27,6 +27,11 @@ class Renderer extends React.Component {
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
     this.createZoom();
+    if (this.props.game) {
+      this.turn = this.props.game.turns[this.props.turnNum]
+      this.calculateViewBox();
+      this.draw();
+    }
   }
 
   render() {
