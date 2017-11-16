@@ -15,7 +15,12 @@ use buffered_sender::BufferedSender;
 
 pub struct ClientMessage {
     pub client_id: usize,
-    pub message: String,
+    pub message: Message,
+}
+
+pub enum Message {
+    Data(String),
+    Disconnected,
 }
 
 pub struct ClientController {
@@ -64,13 +69,18 @@ impl ClientController {
         Ok(Async::Ready(()))
     }
 
+    fn send_message(&mut self, message: Message) {
+        let msg = ClientMessage {
+            client_id: self.client_id,
+            message: message,
+        };
+        self.game_handle.unbounded_send(msg).expect("game handle broke");
+    }
+
     fn handle_client_msgs(&mut self) -> Poll<(), io::Error> {
-        while let Some(msg) = try_ready!(self.client_msgs.poll()) {
-            // for now, just forward messages
-            self.game_handle.unbounded_send(ClientMessage {
-                client_id: self.client_id,
-                message: msg,
-            }).expect("game handle broke");
+        while let Some(line) = try_ready!(self.client_msgs.poll()) {
+            let msg = Message::Data(line);
+            self.send_message(msg);
         }
         Ok(Async::Ready(()))
     }

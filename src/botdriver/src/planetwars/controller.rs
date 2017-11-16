@@ -5,7 +5,7 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use serde_json;
 
-use client_controller::ClientMessage;
+use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Player};
 use planetwars::logger::PlanetWarsLogger;
@@ -99,11 +99,19 @@ impl Controller {
     }
 
     
-    fn handle_message(&mut self, player_id: usize, msg: String) {
-        if let Ok(cmd) = serde_json::from_str(&msg) {
-            self.handle_command(player_id, cmd);
+    fn handle_message(&mut self, client_id: usize, msg: Message) {
+        match msg {
+            Message::Data(line) => {
+                if let Ok(cmd) = serde_json::from_str(&line) {
+                    self.handle_command(client_id, cmd);
+                }
+                self.waiting_for.remove(&client_id);
+            },
+            Message::Disconnected => {
+                // TODO: handle this case gracefully
+                panic!("client {} disconnected", client_id);
+            }
         }
-        self.waiting_for.remove(&player_id);
     }
 
     fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
