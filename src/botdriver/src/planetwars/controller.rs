@@ -41,11 +41,11 @@ impl Controller {
         // TODO: this should be replaced by something nicer
         let player_map = player_names.into_iter().map(|(id, name)| {
             let player = Player {
-                id: id,
+                id: id as u64,
                 name: name,
                 alive: true,
             };
-            return (id, player);
+            return (id as u64, player);
         }).collect();
         
         let state = conf.create_game(player_map);
@@ -89,11 +89,13 @@ impl Controller {
     fn prompt_players(&mut self) {
         for player in self.state.players.values() {
             if player.alive {
+                // TODO: client ids and player ids are not the same thing
+                let id = player.id as usize;
                 let state = self.state.repr();
                 let repr = serde_json::to_string(&state).unwrap();
-                let handle = self.client_handles.get_mut(&player.id).unwrap();
+                let handle = self.client_handles.get_mut(&id).unwrap();
                 handle.unbounded_send(repr).unwrap();
-                self.waiting_for.insert(player.id);
+                self.waiting_for.insert(id);
             }
         }
     }
@@ -103,7 +105,7 @@ impl Controller {
         match msg {
             Message::Data(line) => {
                 if let Ok(cmd) = serde_json::from_str(&line) {
-                    self.handle_command(client_id, cmd);
+                    self.handle_command(client_id as u64, cmd);
                 }
                 self.waiting_for.remove(&client_id);
             },
@@ -114,7 +116,7 @@ impl Controller {
         }
     }
 
-    fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
+    fn handle_command(&mut self, player_id: u64, cmd: proto::Command) {
         for mv in cmd.moves.into_iter() {
             let res = self.handle_move(player_id, mv);
             if let Err(err) = res {
@@ -124,7 +126,7 @@ impl Controller {
         }
     }
         
-    fn handle_move(&mut self, player_id: usize, mv: proto::Move)
+    fn handle_move(&mut self, player_id: u64, mv: proto::Move)
                    -> Result<(), MoveError>
     {
         // check whether origin and target exist

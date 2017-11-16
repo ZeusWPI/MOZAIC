@@ -4,7 +4,7 @@ pub struct Expedition {
     pub ship_count: u64,
     pub origin: String,
     pub destination: String,
-    pub owner: String,
+    pub owner: u64,
     pub turns_remaining: u64,
 }
 
@@ -13,13 +13,12 @@ pub struct Planet {
     pub ship_count: u64,
     pub x: f64,
     pub y: f64,
-    pub owner: Option<String>,
+    pub owner: Option<u64>,
     pub name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct State {
-    pub players: Vec<String>,
     pub planets: Vec<Planet>,
     pub expeditions: Vec<Expedition>,
 }
@@ -38,6 +37,5 @@ pub struct Move {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Map {
-    pub players: Vec<String>,
     pub planets: Vec<Planet>,
 }

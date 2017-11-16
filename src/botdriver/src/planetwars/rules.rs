@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use planetwars::protocol;
 
 pub struct PlanetWars {
-    pub players: HashMap<usize, Player>,
+    pub players: HashMap<u64, Player>,
     pub planets: HashMap<String, Planet>,
     pub expeditions: Vec<Expedition>,
     // How many expeditions were already dispatched.
@@ -15,14 +15,14 @@ pub struct PlanetWars {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: usize,
+    pub id: u64,
     pub name: String,
     pub alive: bool,
 }
 
 #[derive(Debug)]
 pub struct Fleet {
-    pub owner: Option<usize>,
+    pub owner: Option<u64>,
     pub ship_count: u64,
 }
 
@@ -148,14 +148,13 @@ impl PlanetWars {
     pub fn repr(&self) -> protocol::State {
         let planets = self.planets.values().map(|p| p.repr(self)).collect();
         let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();
-        let players = self.players.values().map(|p| p.name.clone()).collect();
-        return protocol::State { players, expeditions, planets };
+        return protocol::State { expeditions, planets };
     }
 }
 
 
 impl Planet {
-    pub fn owner(&self) -> Option<usize> {
+    pub fn owner(&self) -> Option<u64> {
         self.fleets.first().and_then(|f| f.owner)
     }
     
@@ -210,7 +209,7 @@ impl Planet {
             ship_count: self.ship_count(),
             x: self.x as f64,
             y: self.y as f64,
-            owner: self.owner().map(|id| pw.players[&id].name.clone())
+            owner: self.owner().map(|id| id + 1),
         }
     }
 }
@@ -223,7 +222,7 @@ impl Expedition {
             destination: self.target.clone(),
             // We can unwrap here, because the protocol currently does not allow
             // for expeditions without an owner.
-            owner: pw.players[&self.fleet.owner.unwrap()].name.clone(),
+            owner: self.fleet.owner.unwrap() + 1,
             ship_count: self.fleet.ship_count,
             turns_remaining: self.turns_remaining,
         }
