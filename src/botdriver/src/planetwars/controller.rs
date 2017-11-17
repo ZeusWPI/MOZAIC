@@ -18,7 +18,7 @@ pub struct Controller {
     planet_map: HashMap<String, usize>,
     logger: PlanetWarsLogger,
     waiting_for: HashSet<usize>,
-    
+
     commands: HashMap<usize, String>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
@@ -50,16 +50,16 @@ impl Controller {
             };
             return (id as u64, player);
         }).collect();
-        
+
         let state = conf.create_game(player_map);
-        
+
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
-        
+
         let mut controller = Controller {
             state: state,
             logger: logger,
@@ -67,14 +67,14 @@ impl Controller {
 
             waiting_for: HashSet::with_capacity(clients.len()),
             commands: HashMap::with_capacity(clients.len()),
-            
+
             client_handles: clients,
             client_msgs: chan,
         };
         controller.prompt_players();
         return controller;
     }
-    
+
     pub fn step(&mut self) {
         if !self.waiting_for.is_empty() {
             return;
@@ -83,7 +83,7 @@ impl Controller {
         self.state.repopulate();
         self.handle_commands();
         self.state.step();
-        
+
         self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
@@ -91,7 +91,7 @@ impl Controller {
         }
     }
 
-        
+
     fn prompt_players(&mut self) {
         for player in self.state.players.iter() {
             if player.alive {
@@ -106,7 +106,7 @@ impl Controller {
         }
     }
 
-    
+
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
             Message::Data(msg) => {
@@ -148,22 +148,22 @@ impl Controller {
             }
         }
     }
-        
+
     fn parse_move(&self, player_id: usize, mv: &proto::Move)
                   -> Result<Dispatch, MoveError>
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
             .ok_or(MoveError::NonexistentPlanet)?;
-        
+
         let target_id = *self.planet_map
             .get(&mv.destination)
             .ok_or(MoveError::NonexistentPlanet)?;
-        
+
         if self.state.planets[origin_id].owner() != Some(player_id) {
             return Err(MoveError::PlanetNotOwned);
         }
-        
+
         if self.state.planets[origin_id].ship_count() < mv.ship_count {
             return Err(MoveError::NotEnoughShips);
         }

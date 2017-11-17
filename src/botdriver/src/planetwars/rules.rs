@@ -58,7 +58,7 @@ impl PlanetWars {
 
         let origin = &mut self.planets[dispatch.origin];
         origin.fleets[0].ship_count -= dispatch.ship_count;
-        
+
 
         let expedition = Expedition {
             id: self.expedition_num,
@@ -75,7 +75,7 @@ impl PlanetWars {
         self.expedition_num += 1;
         self.expeditions.push(expedition);
     }
-    
+
     // Play one step of the game
     pub fn step(&mut self) {
         self.turn_num += 1;
@@ -85,12 +85,12 @@ impl PlanetWars {
         for player in self.players.iter_mut() {
             player.alive = false;
         }
-    
+
         self.step_expeditions();
         self.resolve_combat();
     }
 
-    
+
     pub fn repopulate(&mut self) {
         for planet in self.planets.iter_mut() {
             if planet.owner().is_some() {
@@ -98,7 +98,7 @@ impl PlanetWars {
             }
         }
     }
-    
+
     fn step_expeditions(&mut self) {
         let mut i = 0;
         let exps = &mut self.expeditions;
@@ -115,7 +115,7 @@ impl PlanetWars {
                     // owner has an expedition in progress; this is a sign of life.
                     self.players[owner_id].alive = true;
                 }
-                
+
                 // proceed to next expedition
                 i += 1;
             }
@@ -159,7 +159,7 @@ impl Planet {
     pub fn owner(&self) -> Option<usize> {
         self.fleets.first().and_then(|f| f.owner)
     }
-    
+
     pub fn ship_count(&self) -> u64 {
         self.fleets.first().map_or(0, |f| f.ship_count)
     }
@@ -183,7 +183,7 @@ impl Planet {
         // note: in the current implementation, we could resolve by doing
         // winner.ship_count -= second_largest.ship_count, but this does not
         // allow for simple customizations (such as changing combat balance).
-        
+
         self.fleets.sort_by(|a, b| a.ship_count.cmp(&b.ship_count).reverse());
         while self.fleets.len() > 1 {
             let fleet = self.fleets.pop().unwrap();
