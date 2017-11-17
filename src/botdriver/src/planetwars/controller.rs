@@ -41,7 +41,7 @@ impl Controller {
         // TODO: this should be replaced by something nicer
         let player_map = player_names.into_iter().map(|(id, name)| {
             let player = Player {
-                id: id as u64,
+                id: id,
                 name: name,
                 alive: true,
             };
@@ -87,7 +87,7 @@ impl Controller {
 
         
     fn prompt_players(&mut self) {
-        for player in self.state.players.values() {
+        for player in self.state.players.iter() {
             if player.alive {
                 // TODO: client ids and player ids are not the same thing
                 let id = player.id as usize;
@@ -105,7 +105,7 @@ impl Controller {
         match msg {
             Message::Data(line) => {
                 if let Ok(cmd) = serde_json::from_str(&line) {
-                    self.handle_command(client_id as u64, cmd);
+                    self.handle_command(client_id, cmd);
                 }
                 self.waiting_for.remove(&client_id);
             },
@@ -116,7 +116,7 @@ impl Controller {
         }
     }
 
-    fn handle_command(&mut self, player_id: u64, cmd: proto::Command) {
+    fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
         for mv in cmd.moves.into_iter() {
             let res = self.handle_move(player_id, mv);
             if let Err(err) = res {
@@ -126,7 +126,7 @@ impl Controller {
         }
     }
         
-    fn handle_move(&mut self, player_id: u64, mv: proto::Move)
+    fn handle_move(&mut self, player_id: usize, mv: proto::Move)
                    -> Result<(), MoveError>
     {
         // check whether origin and target exist

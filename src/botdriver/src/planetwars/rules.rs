@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use planetwars::protocol;
 
 pub struct PlanetWars {
-    pub players: HashMap<u64, Player>,
+    pub players: Vec<Player>,
     pub planets: HashMap<String, Planet>,
     pub expeditions: Vec<Expedition>,
     // How many expeditions were already dispatched.
@@ -15,14 +15,14 @@ pub struct PlanetWars {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: u64,
+    pub id: usize,
     pub name: String,
     pub alive: bool,
 }
 
 #[derive(Debug)]
 pub struct Fleet {
-    pub owner: Option<u64>,
+    pub owner: Option<usize>,
     pub ship_count: u64,
 }
 
@@ -64,7 +64,7 @@ impl PlanetWars {
             target: mv.destination.clone(),
             turns_remaining: distance,
             fleet: Fleet {
-                owner: origin.owner().clone(),
+                owner: origin.owner().map(|num| num as usize),
                 ship_count: mv.ship_count,
             },
         };
@@ -80,7 +80,7 @@ impl PlanetWars {
 
         // Initially mark all players dead, re-marking them as alive once we
         // encounter a sign of life.
-        for player in self.players.values_mut() {
+        for player in self.players.iter_mut() {
             player.alive = false;
         }
     
@@ -109,9 +109,9 @@ impl PlanetWars {
                 planet.orbit(exp.fleet);
             } else {
                 exps[i].turns_remaining -= 1;
-                if let Some(owner) = exps[i].fleet.owner {
+                if let Some(owner_id) = exps[i].fleet.owner {
                     // owner has an expedition in progress; this is a sign of life.
-                    self.players.get_mut(&owner).unwrap().alive = true;
+                    self.players[owner_id].alive = true;
                 }
                 
                 // proceed to next expedition
@@ -123,20 +123,20 @@ impl PlanetWars {
     fn resolve_combat(&mut self) {
         for planet in self.planets.values_mut() {
             planet.resolve_combat();
-            if let Some(owner) = planet.owner() {
+            if let Some(owner_id) = planet.owner() {
                 // owner owns a planet; this is a sign of life.
-                self.players.get_mut(&owner).unwrap().alive = true;
+                self.players[owner_id].alive = true;
             }
         }
     }
 
     pub fn is_finished(&self) -> bool {
-        let remaining = self.players.values().filter(|p| p.alive).count();
+        let remaining = self.players.iter().filter(|p| p.alive).count();
         return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
     pub fn living_players(&self) -> Vec<String> {
-        self.players.values().filter_map(|p| {
+        self.players.iter().filter_map(|p| {
             if p.alive {
                 Some(p.name.clone())
             } else {
@@ -154,7 +154,7 @@ impl PlanetWars {
 
 
 impl Planet {
-    pub fn owner(&self) -> Option<u64> {
+    pub fn owner(&self) -> Option<usize> {
         self.fleets.first().and_then(|f| f.owner)
     }
     
@@ -209,7 +209,7 @@ impl Planet {
             ship_count: self.ship_count(),
             x: self.x as f64,
             y: self.y as f64,
-            owner: self.owner().map(|id| id + 1),
+            owner: self.owner().map(|id| (id + 1) as u64),
         }
     }
 }
@@ -222,7 +222,7 @@ impl Expedition {
             destination: self.target.clone(),
             // We can unwrap here, because the protocol currently does not allow
             // for expeditions without an owner.
-            owner: self.fleet.owner.unwrap() + 1,
+            owner: (self.fleet.owner.unwrap() + 1) as u64,
             ship_count: self.fleet.ship_count,
             turns_remaining: self.turns_remaining,
         }

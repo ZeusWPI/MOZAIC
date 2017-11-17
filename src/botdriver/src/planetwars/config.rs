@@ -17,16 +17,20 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn create_game(&self, players: HashMap<u64, Player>) -> PlanetWars {
+    pub fn create_game(&self, mut players: HashMap<u64, Player>) -> PlanetWars {
         // construct planet map
         let planets = self.load_map(&players).into_iter()
             .map(|planet| {
                 (planet.name.clone(), planet)
             }).collect();
 
+        // TODO: simplify this from upstream
+        let ps = (0..players.len())
+            .map(|num| players.remove(&(num as u64)).unwrap()).collect();
+
         PlanetWars {
             planets: planets,
-            players: players,
+            players: ps,
             expeditions: Vec::new(),
             expedition_num: 0,
             turn_num: 0,
@@ -47,7 +51,7 @@ impl Config {
             if planet.ship_count > 0 {
                 fleets.push(Fleet {
                     owner: planet.owner.and_then(|ref owner| {
-                        player_translation.get(owner).cloned()
+                        player_translation.get(owner).map(|&num| num as usize)
                     }),
                     ship_count: planet.ship_count,
                 });
