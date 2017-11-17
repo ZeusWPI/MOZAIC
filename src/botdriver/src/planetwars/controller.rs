@@ -1,4 +1,5 @@
 use std::collections::{HashSet, HashMap};
+use std::mem;
 
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
@@ -17,7 +18,8 @@ pub struct Controller {
     planet_map: HashMap<String, usize>,
     logger: PlanetWarsLogger,
     waiting_for: HashSet<usize>,
-    dispatches: Vec<Dispatch>,
+    
+    commands: HashMap<usize, String>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
@@ -64,7 +66,7 @@ impl Controller {
             planet_map: planet_map,
 
             waiting_for: HashSet::with_capacity(clients.len()),
-            dispatches: Vec::new(),
+            commands: HashMap::with_capacity(clients.len()),
             
             client_handles: clients,
             client_msgs: chan,
@@ -79,11 +81,9 @@ impl Controller {
         }
 
         self.state.repopulate();
-        for dispatch in self.dispatches.drain(0..) {
-            self.state.dispatch(dispatch);
-        }
-        
+        self.handle_commands();
         self.state.step();
+        
         self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
@@ -109,10 +109,8 @@ impl Controller {
     
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
-            Message::Data(line) => {
-                if let Ok(cmd) = serde_json::from_str(&line) {
-                    self.handle_command(client_id, &cmd);
-                }
+            Message::Data(msg) => {
+                self.commands.insert(client_id, msg);
                 self.waiting_for.remove(&client_id);
             },
             Message::Disconnected => {
@@ -122,10 +120,27 @@ impl Controller {
         }
     }
 
+    fn handle_commands(&mut self) {
+        let commands = mem::replace(
+            &mut self.commands,
+            HashMap::with_capacity(self.client_handles.len())
+        );
+        for (&client_id, message) in commands.iter() {
+            match serde_json::from_str(&message) {
+                Ok(cmd) => {
+                    self.handle_command(client_id, &cmd);
+                },
+                Err(_) => {
+                    // TODO
+                }
+            }
+        }
+    }
+
     fn handle_command(&mut self, player_id: usize, cmd: &proto::Command) {
         for mv in cmd.moves.iter() {
             match self.parse_move(player_id, mv) {
-                Ok(dispatch) => self.dispatches.push(dispatch),
+                Ok(dispatch) => self.state.dispatch(dispatch),
                 Err(err) => {
                     // TODO: this is where errors should be sent to clients
                     println!("player {}: {:?}", player_id, err);
@@ -134,7 +149,7 @@ impl Controller {
         }
     }
         
-    fn parse_move(&mut self, player_id: usize, mv: &proto::Move)
+    fn parse_move(&self, player_id: usize, mv: &proto::Move)
                   -> Result<Dispatch, MoveError>
     {
         let origin_id = *self.planet_map
