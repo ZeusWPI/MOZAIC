@@ -7,7 +7,7 @@ use serde_json;
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
-use planetwars::rules::{PlanetWars, Player};
+use planetwars::rules::{PlanetWars, Player, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::protocol as proto;
 
@@ -74,7 +74,8 @@ impl Controller {
 
         self.state.repopulate();
         for mv in self.dispatches.drain(0..) {
-            self.state.dispatch(&mv);
+            //TODO
+            //self.state.dispatch(&mv);
         }
         
         self.state.step();

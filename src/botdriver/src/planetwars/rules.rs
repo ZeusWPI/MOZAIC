@@ -42,24 +42,32 @@ pub struct Expedition {
     pub turns_remaining: u64,
 }
 
+#[derive(Debug)]
+pub struct Dispatch {
+    pub origin: usize,
+    pub target: usize,
+    pub ship_count: u64,
+}
+
 impl PlanetWars {
 
-    /// Dispatch an expedition.
-    /// Does not check its parameters!
-    pub fn dispatch(&mut self, mv: &protocol::Move) {
-        let distance = unimplemented!();
-        let origin: &mut Planet = unimplemented!();
+    pub fn dispatch(&mut self, dispatch: Dispatch) {
+        let distance = self.planets[dispatch.origin].distance(
+            &self.planets[dispatch.target]
+        );
 
-        origin.fleets[0].ship_count -= mv.ship_count;
+        let origin = &mut self.planets[dispatch.origin];
+        origin.fleets[0].ship_count -= dispatch.ship_count;
         
+
         let expedition = Expedition {
             id: self.expedition_num,
-            origin: unimplemented!(),
-            target: unimplemented!(),
+            origin: dispatch.origin,
+            target: dispatch.target,
             turns_remaining: distance,
             fleet: Fleet {
-                owner: origin.owner().map(|num| num as usize),
-                ship_count: mv.ship_count,
+                owner: origin.owner(),
+                ship_count: dispatch.ship_count,
             },
         };
 
