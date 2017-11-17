@@ -1,10 +1,8 @@
-use std::collections::HashMap;
-
 use planetwars::protocol;
 
 pub struct PlanetWars {
     pub players: Vec<Player>,
-    pub planets: HashMap<String, Planet>,
+    pub planets: Vec<Planet>,
     pub expeditions: Vec<Expedition>,
     // How many expeditions were already dispatched.
     // This is needed for assigning expedition identifiers.
@@ -28,6 +26,7 @@ pub struct Fleet {
 
 #[derive(Debug)]
 pub struct Planet {
+    pub id: usize,
     pub name: String,
     pub fleets: Vec<Fleet>,
     pub x: f64,
@@ -37,8 +36,8 @@ pub struct Planet {
 #[derive(Debug)]
 pub struct Expedition {
     pub id: u64,
-    pub origin: String,
-    pub target: String,
+    pub origin: usize,
+    pub target: usize,
     pub fleet: Fleet,
     pub turns_remaining: u64,
 }
@@ -48,20 +47,15 @@ impl PlanetWars {
     /// Dispatch an expedition.
     /// Does not check its parameters!
     pub fn dispatch(&mut self, mv: &protocol::Move) {
-        let distance = {
-            let origin = &self.planets[&mv.origin];
-            let destination = &self.planets[&mv.destination];
-            origin.distance(destination)
-        };
-        
-        let origin = self.planets.get_mut(&mv.origin).unwrap();
+        let distance = unimplemented!();
+        let origin: &mut Planet = unimplemented!();
 
         origin.fleets[0].ship_count -= mv.ship_count;
         
         let expedition = Expedition {
             id: self.expedition_num,
-            origin: origin.name.clone(),
-            target: mv.destination.clone(),
+            origin: unimplemented!(),
+            target: unimplemented!(),
             turns_remaining: distance,
             fleet: Fleet {
                 owner: origin.owner().map(|num| num as usize),
@@ -90,7 +84,7 @@ impl PlanetWars {
 
     
     pub fn repopulate(&mut self) {
-        for planet in self.planets.values_mut() {
+        for planet in self.planets.iter_mut() {
             if planet.owner().is_some() {
                 planet.fleets[0].ship_count += 1;
             }
@@ -105,7 +99,7 @@ impl PlanetWars {
             if exps[i].turns_remaining <= 1 {
                 // remove expedition from expeditions, and add to fleet
                 let exp = exps.swap_remove(i);
-                let planet = self.planets.get_mut(&exp.target).unwrap();
+                let planet = &mut self.planets[exp.target];
                 planet.orbit(exp.fleet);
             } else {
                 exps[i].turns_remaining -= 1;
@@ -121,7 +115,7 @@ impl PlanetWars {
     }
 
     fn resolve_combat(&mut self) {
-        for planet in self.planets.values_mut() {
+        for planet in self.planets.iter_mut() {
             planet.resolve_combat();
             if let Some(owner_id) = planet.owner() {
                 // owner owns a planet; this is a sign of life.
@@ -146,7 +140,7 @@ impl PlanetWars {
     }
 
     pub fn repr(&self) -> protocol::State {
-        let planets = self.planets.values().map(|p| p.repr(self)).collect();
+        let planets = self.planets.iter().map(|p| p.repr(self)).collect();
         let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();
         return protocol::State { expeditions, planets };
     }
@@ -218,8 +212,8 @@ impl Expedition {
     fn repr(&self, pw: &PlanetWars) -> protocol::Expedition {
         protocol::Expedition {
             id: self.id,
-            origin: self.origin.clone(),
-            destination: self.target.clone(),
+            origin: pw.planets[self.origin].name.clone(),
+            destination: pw.planets[self.target].name.clone(),
             // We can unwrap here, because the protocol currently does not allow
             // for expeditions without an owner.
             owner: (self.fleet.owner.unwrap() + 1) as u64,

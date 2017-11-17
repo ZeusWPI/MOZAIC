@@ -129,26 +129,7 @@ impl Controller {
     fn handle_move(&mut self, player_id: usize, mv: proto::Move)
                    -> Result<(), MoveError>
     {
-        // check whether origin and target exist
-        if !self.state.planets.contains_key(&mv.origin) {
-            return Err(MoveError::NonexistentPlanet);
-        }
-        if !self.state.planets.contains_key(&mv.destination) {
-            return Err(MoveError::NonexistentPlanet);
-        }
-
-        // check whether player owns origin and has enough ships there
-        let origin = &self.state.planets[&mv.origin];
-        
-        if origin.owner() != Some(player_id) {
-            return Err(MoveError::PlanetNotOwned);
-        }
-        if origin.ship_count() < mv.ship_count {
-            return Err(MoveError::NotEnoughShips);
-        }
-
-        self.dispatches.push(mv);
-        Ok(())
+        unimplemented!()
     }
 }
 

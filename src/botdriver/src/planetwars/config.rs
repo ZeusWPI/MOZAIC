@@ -18,12 +18,8 @@ pub struct Config {
 
 impl Config {
     pub fn create_game(&self, mut players: HashMap<u64, Player>) -> PlanetWars {
-        // construct planet map
-        let planets = self.load_map(&players).into_iter()
-            .map(|planet| {
-                (planet.name.clone(), planet)
-            }).collect();
-
+        let planets = self.load_map(&players);
+        
         // TODO: simplify this from upstream
         let ps = (0..players.len())
             .map(|num| players.remove(&(num as u64)).unwrap()).collect();
@@ -46,7 +42,7 @@ impl Config {
                 (self.player_map[&player.name], id)
             }).collect();
 
-        return map.planets.into_iter().map(|planet| {
+        return map.planets.into_iter().enumerate().map(|(num, planet)| {
             let mut fleets = Vec::new();
             if planet.ship_count > 0 {
                 fleets.push(Fleet {
@@ -57,6 +53,7 @@ impl Config {
                 });
             }
             return Planet {
+                id: num,
                 name: planet.name,
                 x: planet.x,
                 y: planet.y,
