@@ -14,9 +14,10 @@ use planetwars::protocol as proto;
 
 pub struct Controller {
     state: PlanetWars,
+    planet_map: HashMap<String, usize>,
     logger: PlanetWarsLogger,
     waiting_for: HashSet<usize>,
-    dispatches: Vec<proto::Move>,
+    dispatches: Vec<Dispatch>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
@@ -52,10 +53,15 @@ impl Controller {
         
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
+
+        let planet_map = state.planets.iter().map(|planet| {
+            (planet.name.clone(), planet.id)
+        }).collect();
         
         let mut controller = Controller {
             state: state,
             logger: logger,
+            planet_map: planet_map,
 
             waiting_for: HashSet::with_capacity(clients.len()),
             dispatches: Vec::new(),
@@ -73,9 +79,8 @@ impl Controller {
         }
 
         self.state.repopulate();
-        for mv in self.dispatches.drain(0..) {
-            //TODO
-            //self.state.dispatch(&mv);
+        for dispatch in self.dispatches.drain(0..) {
+            self.state.dispatch(dispatch);
         }
         
         self.state.step();
@@ -106,31 +111,53 @@ impl Controller {
         match msg {
             Message::Data(line) => {
                 if let Ok(cmd) = serde_json::from_str(&line) {
-                    self.handle_command(client_id, cmd);
+                    self.handle_command(client_id, &cmd);
                 }
                 self.waiting_for.remove(&client_id);
             },
             Message::Disconnected => {
                 // TODO: handle this case gracefully
-                panic!("client {} disconnected", client_id);
+                panic!("CLIENT {} disconnected", client_id);
             }
         }
     }
 
-    fn handle_command(&mut self, player_id: usize, cmd: proto::Command) {
-        for mv in cmd.moves.into_iter() {
-            let res = self.handle_move(player_id, mv);
-            if let Err(err) = res {
-                // TODO: this is where errors should be sent to clients
-                println!("player {}: {:?}", player_id, err);
+    fn handle_command(&mut self, player_id: usize, cmd: &proto::Command) {
+        for mv in cmd.moves.iter() {
+            match self.parse_move(player_id, mv) {
+                Ok(dispatch) => self.dispatches.push(dispatch),
+                Err(err) => {
+                    // TODO: this is where errors should be sent to clients
+                    println!("player {}: {:?}", player_id, err);
+                }
             }
         }
     }
         
-    fn handle_move(&mut self, player_id: usize, mv: proto::Move)
-                   -> Result<(), MoveError>
+    fn parse_move(&mut self, player_id: usize, mv: &proto::Move)
+                  -> Result<Dispatch, MoveError>
     {
-        unimplemented!()
+        let origin_id = *self.planet_map
+            .get(&mv.origin)
+            .ok_or(MoveError::NonexistentPlanet)?;
+        
+        let target_id = *self.planet_map
+            .get(&mv.destination)
+            .ok_or(MoveError::NonexistentPlanet)?;
+        
+        if self.state.planets[origin_id].owner() != Some(player_id) {
+            return Err(MoveError::PlanetNotOwned);
+        }
+        
+        if self.state.planets[origin_id].ship_count() < mv.ship_count {
+            return Err(MoveError::NotEnoughShips);
+        }
+
+        Ok(Dispatch {
+            origin: origin_id,
+            target: target_id,
+            ship_count: mv.ship_count,
+        })
     }
 }
 
