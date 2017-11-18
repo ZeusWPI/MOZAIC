@@ -146,12 +146,6 @@ impl PlanetWars {
             }
         }).collect()
     }
-
-    pub fn repr(&self) -> protocol::State {
-        let planets = self.planets.iter().map(|p| p.repr(self)).collect();
-        let expeditions = self.expeditions.iter().map(|e| e.repr(self)).collect();
-        return protocol::State { expeditions, planets };
-    }
 }
 
 
@@ -203,30 +197,5 @@ impl Planet {
         let dx = self.x - other.x;
         let dy = self.y - other.y;
         return (dx.powi(2) + dy.powi(2)).sqrt().ceil() as u64;
-    }
-
-    fn repr(&self, pw: &PlanetWars) -> protocol::Planet {
-        protocol::Planet {
-            name: self.name.clone(),
-            ship_count: self.ship_count(),
-            x: self.x as f64,
-            y: self.y as f64,
-            owner: self.owner().map(|id| (id + 1) as u64),
-        }
-    }
-}
-
-impl Expedition {
-    fn repr(&self, pw: &PlanetWars) -> protocol::Expedition {
-        protocol::Expedition {
-            id: self.id,
-            origin: pw.planets[self.origin].name.clone(),
-            destination: pw.planets[self.target].name.clone(),
-            // We can unwrap here, because the protocol currently does not allow
-            // for expeditions without an owner.
-            owner: (self.fleet.owner.unwrap() + 1) as u64,
-            ship_count: self.fleet.ship_count,
-            turns_remaining: self.turns_remaining,
-        }
     }
 }

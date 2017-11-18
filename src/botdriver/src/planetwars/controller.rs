@@ -10,6 +10,7 @@ use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Player, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
+use planetwars::serializer::Serializer;
 use planetwars::protocol as proto;
 
 
@@ -97,8 +98,9 @@ impl Controller {
             if player.alive {
                 // TODO: client ids and player ids are not the same thing
                 let id = player.id as usize;
-                let state = self.state.repr();
-                let repr = serde_json::to_string(&state).unwrap();
+                let serializer = Serializer::new(&self.state);
+                let serialized = serializer.serialize();
+                let repr = serde_json::to_string(&serialized).unwrap();
                 let handle = self.client_handles.get_mut(&id).unwrap();
                 handle.unbounded_send(repr).unwrap();
                 self.waiting_for.insert(id);

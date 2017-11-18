@@ -3,6 +3,7 @@ mod rules;
 mod logger;
 mod config;
 mod controller;
+mod serializer;
 
 //pub use self::planet_wars::Match;
 pub use self::rules::PlanetWars;
