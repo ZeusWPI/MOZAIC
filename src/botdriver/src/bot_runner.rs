@@ -21,7 +21,6 @@ pub fn spawn_bots(handle: &Handle, players: &Vec<PlayerConfig>)
     players.iter().map(|config| {
         let mut cmd = Command::new(&config.command);
         cmd.args(&config.args);
-        cmd.arg(format!("{}", config.name.as_str()));
 
         let handle = BotHandle::spawn(cmd, handle)
             .expect(&format!(
