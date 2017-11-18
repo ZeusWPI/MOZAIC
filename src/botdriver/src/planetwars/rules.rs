@@ -1,5 +1,3 @@
-use planetwars::protocol;
-
 pub struct PlanetWars {
     pub players: Vec<Player>,
     pub planets: Vec<Planet>,

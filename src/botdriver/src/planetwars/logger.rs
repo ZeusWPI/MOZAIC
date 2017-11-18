@@ -22,7 +22,7 @@ impl PlanetWarsLogger {
     }
 
     pub fn log(&mut self, state: &PlanetWars) -> Result<()> {
-        let repr = Serializer::new(state).serialize();
+        let repr = Serializer::new(state, 0).serialize();
         return self.logger.log_json(&repr);
     }
 }

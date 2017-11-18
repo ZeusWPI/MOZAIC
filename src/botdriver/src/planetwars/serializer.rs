@@ -3,12 +3,14 @@ use planetwars::protocol as proto;
 
 pub struct Serializer<'a> {
     state: &'a PlanetWars,
+    player_offset: usize,
 }
 
 impl<'a> Serializer<'a> {
-    pub fn new(state: &'a PlanetWars) -> Self {
+    pub fn new(state: &'a PlanetWars, player_offset: usize) -> Self {
         Serializer {
             state: state,
+            player_offset: player_offset,
         }
     }
 
@@ -24,7 +26,10 @@ impl<'a> Serializer<'a> {
     }
 
     pub fn serialize_player(&self, player_id: usize) -> u64 {
-        (player_id + 1) as u64
+        let num_players = self.state.players.len();
+        let rotated_id = (player_id + self.player_offset) % num_players;
+        // protocol player ids start at 1
+        return (rotated_id + 1) as u64;
     }
 
     pub fn serialize_planet(&self, planet: &Planet) -> proto::Planet {

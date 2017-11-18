@@ -96,14 +96,16 @@ impl Controller {
     fn prompt_players(&mut self) {
         for player in self.state.players.iter() {
             if player.alive {
-                // TODO: client ids and player ids are not the same thing
-                let id = player.id as usize;
-                let serializer = Serializer::new(&self.state);
+                // how much we need to rotate for this player to become
+                // player 0 in his state dump
+                let offset = self.state.players.len() - player.id;
+
+                let serializer = Serializer::new(&self.state, offset);
                 let serialized = serializer.serialize();
                 let repr = serde_json::to_string(&serialized).unwrap();
-                let handle = self.client_handles.get_mut(&id).unwrap();
+                let handle = self.client_handles.get_mut(&player.id).unwrap();
                 handle.unbounded_send(repr).unwrap();
-                self.waiting_for.insert(id);
+                self.waiting_for.insert(player.id);
             }
         }
     }
