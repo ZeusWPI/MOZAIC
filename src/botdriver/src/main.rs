@@ -71,7 +71,6 @@ fn main() {
 
     let controller = Controller::new(
         handles,
-        player_names,
         chan,
         match_description.game_config
     ); 

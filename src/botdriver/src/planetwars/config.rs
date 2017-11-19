@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::io;
@@ -12,21 +11,19 @@ use planetwars::rules::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub map_file: String,
-    pub player_map: HashMap<String, u64>,
     pub max_turns: u64,
 }
 
 impl Config {
-    pub fn create_game(&self, mut players: HashMap<u64, Player>) -> PlanetWars {
-        let planets = self.load_map(&players);
+    pub fn create_game(&self, num_players: usize) -> PlanetWars {
+        let players = (0..num_players)
+            .map(|id| Player { id, alive: true })
+            .collect();
+        let planets = self.load_map(num_players);
         
-        // TODO: simplify this from upstream
-        let ps = (0..players.len())
-            .map(|num| players.remove(&(num as u64)).unwrap()).collect();
-
         PlanetWars {
+            players: players,
             planets: planets,
-            players: ps,
             expeditions: Vec::new(),
             expedition_num: 0,
             turn_num: 0,
@@ -34,21 +31,27 @@ impl Config {
         }
     }
     
-    fn load_map(&self, players: &HashMap<u64, Player>) -> Vec<Planet> {
+    fn load_map(&self, num_players: usize) -> Vec<Planet> {
         let map = self.read_map().expect("[PLANET_WARS] reading map failed");
         
-        let player_translation: HashMap<u64, u64> = players.iter()
-            .map(|(&id, player)| {
-                (self.player_map[&player.name], id)
-            }).collect();
-
-        return map.planets.into_iter().enumerate().map(|(num, planet)| {
+        return map.planets
+            .into_iter()
+            .enumerate()
+            .map(|(num, planet)| {
             let mut fleets = Vec::new();
+                let owner = planet.owner.and_then(|num| {
+                    // subtract one to convert from player num to player id
+                    let id = num as usize - 1;
+                    // ignore players that are not in the game
+                    if id < num_players {
+                        Some(id)
+                    } else { 
+                        None
+                    }
+                });
             if planet.ship_count > 0 {
                 fleets.push(Fleet {
-                    owner: planet.owner.and_then(|ref owner| {
-                        player_translation.get(owner).map(|&num| num as usize)
-                    }),
+                    owner: owner,
                     ship_count: planet.ship_count,
                 });
             }

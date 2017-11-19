@@ -8,7 +8,7 @@ use serde_json;
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
-use planetwars::rules::{PlanetWars, Player, Dispatch};
+use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::serializer::Serializer;
 use planetwars::protocol as proto;
@@ -35,24 +35,11 @@ enum MoveError {
 
 impl Controller {
     pub fn new(clients: HashMap<usize, UnboundedSender<String>>,
-               // temporary: player names
-               // this should probaly go in the match config later on
-               player_names: HashMap<usize, String>,
                chan: UnboundedReceiver<ClientMessage>,
                conf: Config,)
                -> Self
     {
-        // TODO: this should be replaced by something nicer
-        let player_map = player_names.into_iter().map(|(id, name)| {
-            let player = Player {
-                id: id,
-                name: name,
-                alive: true,
-            };
-            return (id as u64, player);
-        }).collect();
-
-        let state = conf.create_game(player_map);
+        let state = conf.create_game(clients.len());
 
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
@@ -181,10 +168,10 @@ impl Controller {
 }
 
 impl Future for Controller {
-    type Item = Vec<String>;
+    type Item = Vec<usize>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<Vec<String>, ()> {
+    fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
