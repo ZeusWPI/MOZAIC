@@ -130,8 +130,14 @@ impl Controller {
                 Ok(cmd) => {
                     self.handle_command(client_id, &cmd);
                 },
-                Err(_) => {
-                    // TODO
+                Err(err) => {
+                    // TODO: get some proper logging going
+                    // Careful: these are client ids, not player numbers.
+                    println!(
+                        "Got invalid command from client {}: {}",
+                        client_id,
+                        err
+                    );
                 }
             }
         }
