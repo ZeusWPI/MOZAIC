@@ -5,13 +5,11 @@ def move(command):
     print(json.dumps(record))
     sys.stdout.flush()
     
-name = sys.argv[1]
-
 for line in sys.stdin:
     state = json.loads(line)
     # find planet with most ships
-    my_planets = [p for p in state['planets'] if p['owner'] == name]
-    other_planets = [p for p in state['planets'] if p['owner'] != name]
+    my_planets = [p for p in state['planets'] if p['owner'] == 1]
+    other_planets = [p for p in state['planets'] if p['owner'] != 1]
     
     if not my_planets or not other_planets:
         move(None)
