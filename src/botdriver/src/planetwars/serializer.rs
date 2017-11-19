@@ -41,9 +41,8 @@ impl<'a> Serializer<'a> {
     }
 
     /// Gets the player number for given player id.
-    /// Player numbers are 1-based (as opposed to player ids), They will
-    /// aoeuaosetuh asonuh ason also be rotated based on the number offset for
-    /// this serializer.
+    /// Player numbers are 1-based (as opposed to player ids), They will also be
+    /// rotated based on the number offset for this serializer.
     fn player_num(&self, player_id: usize) -> u64 {
         let num_players = self.state.players.len();
         let rotated_id = (player_id + self.player_num_offset) % num_players;
