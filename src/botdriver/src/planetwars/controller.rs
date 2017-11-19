@@ -10,7 +10,7 @@ use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
-use planetwars::serializer::Serializer;
+use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
 
 
@@ -87,8 +87,7 @@ impl Controller {
                 // player 0 in his state dump
                 let offset = self.state.players.len() - player.id;
 
-                let serializer = Serializer::new(&self.state, offset);
-                let serialized = serializer.serialize();
+                let serialized = serialize_rotated(&self.state, offset);
                 let repr = serde_json::to_string(&serialized).unwrap();
                 let handle = self.client_handles.get_mut(&player.id).unwrap();
                 handle.unbounded_send(repr).unwrap();

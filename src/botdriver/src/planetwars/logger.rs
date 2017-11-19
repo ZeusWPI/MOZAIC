@@ -4,7 +4,7 @@ use serde::Serialize;
 use serde_json;
 
 use planetwars::PlanetWars;
-use planetwars::serializer::Serializer;
+use planetwars::serializer::serialize;
 
 
 // TODO: it is not hard to see a common pattern here.
@@ -22,7 +22,7 @@ impl PlanetWarsLogger {
     }
 
     pub fn log(&mut self, state: &PlanetWars) -> Result<()> {
-        let repr = Serializer::new(state, 0).serialize();
+        let repr = serialize(state);
         return self.logger.log_json(&repr);
     }
 }

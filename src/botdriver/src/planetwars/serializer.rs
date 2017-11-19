@@ -1,51 +1,70 @@
 use planetwars::rules::{PlanetWars, Planet, Expedition};
 use planetwars::protocol as proto;
 
-pub struct Serializer<'a> {
+/// Serialize given gamestate
+pub fn serialize(state: &PlanetWars) -> proto::State {
+    serialize_rotated(state, 0)
+}
+
+/// Serialize given gamestate with player numbers rotated by given offset.
+pub fn serialize_rotated(state: &PlanetWars, offset: usize) -> proto::State {
+    let serializer = Serializer::new(state, offset);
+    serializer.serialize_state()
+}
+
+struct Serializer<'a> {
     state: &'a PlanetWars,
-    player_offset: usize,
+    player_num_offset: usize,
 }
 
 impl<'a> Serializer<'a> {
-    pub fn new(state: &'a PlanetWars, player_offset: usize) -> Self {
+    fn new(state: &'a PlanetWars, offset: usize) -> Self {
         Serializer {
             state: state,
-            player_offset: player_offset,
+            player_num_offset: offset,
         }
     }
 
-    pub fn serialize(&self) -> proto::State {
+    fn serialize_state(&self) -> proto::State {
         proto::State {
-            planets: self.state.planets.iter().map(|planet| {
-                self.serialize_planet(planet)
-            }).collect(),
-            expeditions: self.state.expeditions.iter().map(|exp| {
-                self.serialize_expedition(exp)
-            }).collect(),
+            planets: self.state
+                .planets
+                .iter()
+                .map(|planet| self.serialize_planet(planet))
+                .collect(),
+            expeditions: self.state
+                .expeditions
+                .iter()
+                .map(|exp| self.serialize_expedition(exp))
+                .collect(),
         }
     }
 
-    pub fn serialize_player(&self, player_id: usize) -> u64 {
+    /// Gets the player number for given player id.
+    /// Player numbers are 1-based (as opposed to player ids), They will
+    /// aoeuaosetuh asonuh ason also be rotated based on the number offset for
+    /// this serializer.
+    fn player_num(&self, player_id: usize) -> u64 {
         let num_players = self.state.players.len();
-        let rotated_id = (player_id + self.player_offset) % num_players;
+        let rotated_id = (player_id + self.player_num_offset) % num_players;
         // protocol player ids start at 1
         return (rotated_id + 1) as u64;
     }
 
-    pub fn serialize_planet(&self, planet: &Planet) -> proto::Planet {
+    fn serialize_planet(&self, planet: &Planet) -> proto::Planet {
         proto::Planet {
             name: planet.name.clone(),
             x: planet.x,
             y: planet.y,
-            owner: planet.owner().map(|id| self.serialize_player(id)),
+            owner: planet.owner().map(|id| self.player_num(id)),
             ship_count: planet.ship_count(),
         }
     }
 
-    pub fn serialize_expedition(&self, exp: &Expedition) -> proto::Expedition {
+    fn serialize_expedition(&self, exp: &Expedition) -> proto::Expedition {
         proto::Expedition {
             id: exp.id,
-            owner: self.serialize_player(exp.fleet.owner.unwrap()),
+            owner: self.player_num(exp.fleet.owner.unwrap()),
             ship_count: exp.fleet.ship_count,
             origin: self.state.planets[exp.origin].name.clone(),
             destination: self.state.planets[exp.target].name.clone(),
