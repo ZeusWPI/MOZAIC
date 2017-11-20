@@ -12,21 +12,21 @@ use planetwars::rules::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {
     pub map_file: String,
-    pub player_map: HashMap<String, String>,
+    pub player_map: HashMap<String, u64>,
     pub max_turns: u64,
 }
 
 impl Config {
-    pub fn create_game(&self, players: HashMap<usize, Player>) -> PlanetWars {
-        // construct planet map
-        let planets = self.load_map(&players).into_iter()
-            .map(|planet| {
-                (planet.name.clone(), planet)
-            }).collect();
+    pub fn create_game(&self, mut players: HashMap<u64, Player>) -> PlanetWars {
+        let planets = self.load_map(&players);
+        
+        // TODO: simplify this from upstream
+        let ps = (0..players.len())
+            .map(|num| players.remove(&(num as u64)).unwrap()).collect();
 
         PlanetWars {
             planets: planets,
-            players: players,
+            players: ps,
             expeditions: Vec::new(),
             expedition_num: 0,
             turn_num: 0,
@@ -34,25 +34,26 @@ impl Config {
         }
     }
     
-    fn load_map(&self, players: &HashMap<usize, Player>) -> Vec<Planet> {
+    fn load_map(&self, players: &HashMap<u64, Player>) -> Vec<Planet> {
         let map = self.read_map().expect("[PLANET_WARS] reading map failed");
         
-        let player_translation: HashMap<&str, usize> = players.iter()
+        let player_translation: HashMap<u64, u64> = players.iter()
             .map(|(&id, player)| {
-                (self.player_map.get(&player.name).unwrap().as_str(), id)
+                (self.player_map[&player.name], id)
             }).collect();
 
-        return map.planets.into_iter().map(|planet| {
+        return map.planets.into_iter().enumerate().map(|(num, planet)| {
             let mut fleets = Vec::new();
             if planet.ship_count > 0 {
                 fleets.push(Fleet {
                     owner: planet.owner.and_then(|ref owner| {
-                        player_translation.get(owner.as_str()).map(|&v| v)
+                        player_translation.get(owner).map(|&num| num as usize)
                     }),
                     ship_count: planet.ship_count,
                 });
             }
             return Planet {
+                id: num,
                 name: planet.name,
                 x: planet.x,
                 y: planet.y,
