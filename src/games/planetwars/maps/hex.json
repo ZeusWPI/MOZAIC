@@ -1,14 +1,10 @@
 {
-    "players": [
-        "player_1",
-        "player_2"
-    ],
     "planets": [
         {
             "name": "protos",
             "x": -6,
             "y": 0,
-            "owner": "player_1",
+            "owner": 1,
             "ship_count": 6
         },
         {
@@ -27,7 +23,7 @@
             "name": "tetartos",
             "x": 6,
             "y": 0,
-            "owner": "player_2",
+            "owner": 2,
             "ship_count": 6
         },
         {

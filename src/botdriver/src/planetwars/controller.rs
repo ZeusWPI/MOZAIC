@@ -8,8 +8,9 @@ use serde_json;
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
-use planetwars::rules::{PlanetWars, Player, Dispatch};
+use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
+use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
 
 
@@ -34,24 +35,11 @@ enum MoveError {
 
 impl Controller {
     pub fn new(clients: HashMap<usize, UnboundedSender<String>>,
-               // temporary: player names
-               // this should probaly go in the match config later on
-               player_names: HashMap<usize, String>,
                chan: UnboundedReceiver<ClientMessage>,
                conf: Config,)
                -> Self
     {
-        // TODO: this should be replaced by something nicer
-        let player_map = player_names.into_iter().map(|(id, name)| {
-            let player = Player {
-                id: id,
-                name: name,
-                alive: true,
-            };
-            return (id as u64, player);
-        }).collect();
-
-        let state = conf.create_game(player_map);
+        let state = conf.create_game(clients.len());
 
         let mut logger = PlanetWarsLogger::new("log.json");
         logger.log(&state).expect("[PLANET_WARS] logging failed");
@@ -95,13 +83,15 @@ impl Controller {
     fn prompt_players(&mut self) {
         for player in self.state.players.iter() {
             if player.alive {
-                // TODO: client ids and player ids are not the same thing
-                let id = player.id as usize;
-                let state = self.state.repr();
-                let repr = serde_json::to_string(&state).unwrap();
-                let handle = self.client_handles.get_mut(&id).unwrap();
+                // how much we need to rotate for this player to become
+                // player 0 in his state dump
+                let offset = self.state.players.len() - player.id;
+
+                let serialized = serialize_rotated(&self.state, offset);
+                let repr = serde_json::to_string(&serialized).unwrap();
+                let handle = self.client_handles.get_mut(&player.id).unwrap();
                 handle.unbounded_send(repr).unwrap();
-                self.waiting_for.insert(id);
+                self.waiting_for.insert(player.id);
             }
         }
     }
@@ -183,10 +173,10 @@ impl Controller {
 }
 
 impl Future for Controller {
-    type Item = Vec<String>;
+    type Item = Vec<usize>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<Vec<String>, ()> {
+    fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
