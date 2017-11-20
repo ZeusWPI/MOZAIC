@@ -14,18 +14,25 @@ use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
 
 
+/// The controller forms the bridge between game rules and clients.
+/// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: PlanetWarsLogger,
+    
+    // Ids of players which we need a command for
     waiting_for: HashSet<usize>,
 
+    // The commands we already received
     commands: HashMap<usize, String>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
 }
 
+/// What went wrong when trying to perform a move.
+// TODO: add some more information here
 #[derive(Debug)]
 enum MoveError {
     NonexistentPlanet,
@@ -34,6 +41,8 @@ enum MoveError {
 }
 
 impl Controller {
+    // TODO: this method does both controller initialization and game staritng.
+    // It would be nice to split these.
     pub fn new(clients: HashMap<usize, UnboundedSender<String>>,
                chan: UnboundedReceiver<ClientMessage>,
                conf: Config,)
@@ -63,7 +72,7 @@ impl Controller {
         return controller;
     }
 
-    pub fn step(&mut self) {
+    fn step(&mut self) {
         if !self.waiting_for.is_empty() {
             return;
         }

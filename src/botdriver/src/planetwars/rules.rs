@@ -1,3 +1,4 @@
+/// The planet wars game rules.
 pub struct PlanetWars {
     pub players: Vec<Player>,
     pub planets: Vec<Planet>,
