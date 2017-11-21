@@ -34,7 +34,7 @@ pub struct Controller {
 
 /// What went wrong when trying to perform a move.
 // TODO: add some more information here
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum CommandError {
     NonexistentPlanet,
     PlanetNotOwned,
