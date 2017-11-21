@@ -24,12 +24,13 @@ pub struct State {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Command {
-    pub moves: Vec<Move>,
+pub struct Action {
+    #[serde(rename = "moves")]
+    pub commands: Vec<Command>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Move {
+pub struct Command {
     pub origin: String,
     pub destination: String,
     pub ship_count: u64,

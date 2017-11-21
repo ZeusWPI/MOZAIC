@@ -142,8 +142,8 @@ impl Controller {
         }
     }
 
-    fn handle_command(&mut self, player_id: usize, cmd: &proto::Command) {
-        for mv in cmd.moves.iter() {
+    fn handle_command(&mut self, player_id: usize, cmd: &proto::Action) {
+        for mv in cmd.commands.iter() {
             match self.parse_move(player_id, mv) {
                 Ok(dispatch) => self.state.dispatch(dispatch),
                 Err(err) => {
@@ -154,7 +154,7 @@ impl Controller {
         }
     }
 
-    fn parse_move(&self, player_id: usize, mv: &proto::Move)
+    fn parse_move(&self, player_id: usize, mv: &proto::Command)
                   -> Result<Dispatch, MoveError>
     {
         let origin_id = *self.planet_map
