@@ -49,7 +49,7 @@ pub struct Dispatch {
 
 impl PlanetWars {
 
-    pub fn dispatch(&mut self, dispatch: Dispatch) {
+    pub fn dispatch(&mut self, dispatch: &Dispatch) {
         let distance = self.planets[dispatch.origin].distance(
             &self.planets[dispatch.target]
         );

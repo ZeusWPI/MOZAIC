@@ -12,6 +12,7 @@ use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
+use planetwars::log;
 
 
 /// The controller forms the bridge between game rules and clients.
@@ -127,7 +128,7 @@ impl Controller {
         for (&client_id, message) in commands.iter() {
             match serde_json::from_str(&message) {
                 Ok(cmd) => {
-                    self.execute_action(client_id, &cmd);
+                    self.execute_action(client_id, cmd);
                 },
                 Err(err) => {
                     // TODO: get some proper logging going
@@ -142,15 +143,30 @@ impl Controller {
         }
     }
 
-    fn execute_action(&mut self, player_id: usize, cmd: &proto::Action) {
-        for mv in cmd.commands.iter() {
-            match self.parse_command(player_id, mv) {
-                Ok(dispatch) => self.state.dispatch(dispatch),
-                Err(err) => {
-                    // TODO: this is where errors should be sent to clients
-                    println!("player {}: {:?}", player_id, err);
-                }
-            }
+    fn execute_action(&mut self, player_id: usize, action: proto::Action)
+                      -> log::Action
+    {
+        let logs = action.commands.into_iter().map(|cmd| {
+            self.execute_command(player_id, cmd)
+        }).collect();
+
+        log::Action {
+            commands: logs,
+        }
+    }
+
+    fn execute_command(&mut self, player_id: usize, cmd: proto::Command)
+                       -> log::Command
+    {
+        let res = self.parse_command(player_id, &cmd);
+
+        if let Ok(ref dispatch) = res {
+            self.state.dispatch(dispatch);
+        }
+
+        log::Command {
+            command: cmd,
+            error: res.err(),
         }
     }
 
@@ -159,18 +175,18 @@ impl Controller {
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
-            .ok_or(MoveError::NonexistentPlanet)?;
+            .ok_or(CommandError::NonexistentPlanet)?;
 
         let target_id = *self.planet_map
             .get(&mv.destination)
-            .ok_or(MoveError::NonexistentPlanet)?;
+            .ok_or(CommandError::NonexistentPlanet)?;
 
         if self.state.planets[origin_id].owner() != Some(player_id) {
-            return Err(MoveError::PlanetNotOwned);
+            return Err(CommandError::PlanetNotOwned);
         }
 
         if self.state.planets[origin_id].ship_count() < mv.ship_count {
-            return Err(MoveError::NotEnoughShips);
+            return Err(CommandError::NotEnoughShips);
         }
 
         Ok(Dispatch {
