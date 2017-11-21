@@ -34,7 +34,7 @@ pub struct Controller {
 /// What went wrong when trying to perform a move.
 // TODO: add some more information here
 #[derive(Debug)]
-enum MoveError {
+pub enum MoveError {
     NonexistentPlanet,
     PlanetNotOwned,
     NotEnoughShips,
@@ -127,7 +127,7 @@ impl Controller {
         for (&client_id, message) in commands.iter() {
             match serde_json::from_str(&message) {
                 Ok(cmd) => {
-                    self.handle_command(client_id, &cmd);
+                    self.execute_action(client_id, &cmd);
                 },
                 Err(err) => {
                     // TODO: get some proper logging going
@@ -142,9 +142,9 @@ impl Controller {
         }
     }
 
-    fn handle_command(&mut self, player_id: usize, cmd: &proto::Action) {
+    fn execute_action(&mut self, player_id: usize, cmd: &proto::Action) {
         for mv in cmd.commands.iter() {
-            match self.parse_move(player_id, mv) {
+            match self.parse_command(player_id, mv) {
                 Ok(dispatch) => self.state.dispatch(dispatch),
                 Err(err) => {
                     // TODO: this is where errors should be sent to clients
@@ -154,8 +154,8 @@ impl Controller {
         }
     }
 
-    fn parse_move(&self, player_id: usize, mv: &proto::Command)
-                  -> Result<Dispatch, MoveError>
+    fn parse_command(&self, player_id: usize, mv: &proto::Command)
+                     -> Result<Dispatch, MoveError>
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
