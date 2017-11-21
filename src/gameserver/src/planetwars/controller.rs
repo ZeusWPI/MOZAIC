@@ -34,7 +34,7 @@ pub struct Controller {
 /// What went wrong when trying to perform a move.
 // TODO: add some more information here
 #[derive(Debug)]
-pub enum MoveError {
+pub enum CommandError {
     NonexistentPlanet,
     PlanetNotOwned,
     NotEnoughShips,
@@ -155,7 +155,7 @@ impl Controller {
     }
 
     fn parse_command(&self, player_id: usize, mv: &proto::Command)
-                     -> Result<Dispatch, MoveError>
+                     -> Result<Dispatch, CommandError>
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
