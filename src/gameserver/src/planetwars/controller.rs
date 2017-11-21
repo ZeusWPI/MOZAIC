@@ -14,6 +14,9 @@ use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
 use planetwars::log;
 
+use std::fs::File;
+use std::io::Write;
+
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
@@ -21,6 +24,7 @@ pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: PlanetWarsLogger,
+    clients_logs: HashMap<usize, File>,
     
     // Ids of players which we need a command for
     waiting_for: HashSet<usize>,
@@ -58,10 +62,16 @@ impl Controller {
             (planet.name.clone(), planet.id)
         }).collect();
 
+        let client_logs = clients.keys().map(|&id| {
+            (id, File::create(format!("logs/client_{}.jsonl", id)).unwrap())
+        }).collect();
+
         let mut controller = Controller {
             state: state,
             logger: logger,
             planet_map: planet_map,
+
+            clients_logs: client_logs,
 
             waiting_for: HashSet::with_capacity(clients.len()),
             messages: HashMap::with_capacity(clients.len()),
@@ -126,8 +136,10 @@ impl Controller {
             HashMap::with_capacity(self.client_handles.len())
         );
         for (client_id, message) in messages.drain() {
-            // TODO: actually log this entry
-            let _log_entry = self.execute_message(client_id, message);
+            let log_entry = self.execute_message(client_id, message);
+            let handle = self.clients_logs.get_mut(&client_id).unwrap();
+            let entry = serde_json::to_string(&log_entry).unwrap();
+            write!(handle, "{}\n", entry);
         }
     }
 
