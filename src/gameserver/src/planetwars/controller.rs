@@ -26,7 +26,7 @@ pub struct Controller {
     waiting_for: HashSet<usize>,
 
     // The commands we already received
-    commands: HashMap<usize, String>,
+    messages: HashMap<usize, String>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
@@ -64,7 +64,7 @@ impl Controller {
             planet_map: planet_map,
 
             waiting_for: HashSet::with_capacity(clients.len()),
-            commands: HashMap::with_capacity(clients.len()),
+            messages: HashMap::with_capacity(clients.len()),
 
             client_handles: clients,
             client_msgs: chan,
@@ -79,7 +79,7 @@ impl Controller {
         }
 
         self.state.repopulate();
-        self.handle_commands();
+        self.execute_messages();
         self.state.step();
 
         self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
@@ -110,7 +110,7 @@ impl Controller {
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
             Message::Data(msg) => {
-                self.commands.insert(client_id, msg);
+                self.messages.insert(client_id, msg);
                 self.waiting_for.remove(&client_id);
             },
             Message::Disconnected => {
@@ -120,26 +120,33 @@ impl Controller {
         }
     }
 
-    fn handle_commands(&mut self) {
-        let commands = mem::replace(
-            &mut self.commands,
+    fn execute_messages(&mut self) {
+        let mut messages = mem::replace(
+            &mut self.messages,
             HashMap::with_capacity(self.client_handles.len())
         );
-        for (&client_id, message) in commands.iter() {
-            match serde_json::from_str(&message) {
-                Ok(cmd) => {
-                    self.execute_action(client_id, cmd);
-                },
-                Err(err) => {
-                    // TODO: get some proper logging going
-                    // Careful: these are client ids, not player numbers.
-                    println!(
-                        "Got invalid command from client {}: {}",
-                        client_id,
-                        err
-                    );
-                }
-            }
+        for (client_id, message) in messages.drain() {
+            // TODO: actually log this entry
+            let _log_entry = self.execute_message(client_id, message);
+        }
+    }
+
+    fn execute_message(&mut self, player_id: usize, msg: String)
+                       -> log::Message
+    {
+        let log_value = match serde_json::from_str(&msg) {
+            Ok(action) => {
+                let action_log = self.execute_action(player_id, action);
+                log::MessageValue::Content(action_log)
+            },
+            Err(_err) => {
+                // TODO: fix error type
+                log::MessageValue::Error("Parse error".to_string())
+            },
+        };
+        log::Message {
+            raw_content: msg,
+            value: log_value,
         }
     }
 
