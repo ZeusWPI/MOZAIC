@@ -16,6 +16,10 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate serde;
 
+#[macro_use]
+extern crate slog;
+extern crate slog_json;
+
 use std::error::Error;
 use std::io::{Read};
 use std::env;

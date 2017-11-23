@@ -14,18 +14,22 @@ use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
 use planetwars::log;
 
-use std::fs::File;
-use std::io::Write;
+use slog;
+use slog::Drain;
+use slog_json;
+use std::sync::Mutex;
 
+use std::fs::File;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    logger: PlanetWarsLogger,
-    clients_logs: HashMap<usize, File>,
-    
+    pw_logger: PlanetWarsLogger,
+    logger: slog::Logger,
+
+
     // Ids of players which we need a command for
     waiting_for: HashSet<usize>,
 
@@ -55,23 +59,25 @@ impl Controller {
     {
         let state = conf.create_game(clients.len());
 
-        let mut logger = PlanetWarsLogger::new("log.json");
-        logger.log(&state).expect("[PLANET_WARS] logging failed");
+        let mut pw_logger = PlanetWarsLogger::new("game_log.json");
+        pw_logger.log(&state).expect("[PLANET_WARS] logging failed");
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        let client_logs = clients.keys().map(|&id| {
-            (id, File::create(format!("logs/client_{}.jsonl", id)).unwrap())
-        }).collect();
+        let log_file = File::create("log.json").unwrap();
+        
+        let logger = slog::Logger::root( 
+            Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
+            o!()
+        );
 
         let mut controller = Controller {
             state: state,
-            logger: logger,
+            pw_logger: pw_logger,
             planet_map: planet_map,
-
-            clients_logs: client_logs,
+            logger: logger,
 
             waiting_for: HashSet::with_capacity(clients.len()),
             messages: HashMap::with_capacity(clients.len()),
@@ -92,9 +98,10 @@ impl Controller {
         self.execute_messages();
         self.state.step();
 
-        self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
+        self.pw_logger.log(&self.state).expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
+            info!(self.logger, "starting turn"; "turn" => self.state.turn_num);
             self.prompt_players();
         }
     }
@@ -136,10 +143,8 @@ impl Controller {
             HashMap::with_capacity(self.client_handles.len())
         );
         for (client_id, message) in messages.drain() {
-            let log_entry = self.execute_message(client_id, message);
-            let handle = self.clients_logs.get_mut(&client_id).unwrap();
-            let entry = serde_json::to_string(&log_entry).unwrap();
-            write!(handle, "{}\n", entry);
+            // TODO
+            let _log_entry = self.execute_message(client_id, message);
         }
     }
 
