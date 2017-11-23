@@ -25,6 +25,14 @@ use std::fs::File;
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
+
+    // TODO: actually, we probably want to dump the game states into
+    // the main log as well, once that slog will allow nesting json
+    // values. We'd tag the messages that contain a game state as such,
+    // so that they can easily be extracted for replay logs or similar.
+    // This way, we never have to 'reconstruct'' a log, because
+    // everything will be in the same, sequential log.
+    // i.e. the main log will tell the entire story.
     pw_logger: PlanetWarsLogger,
     logger: slog::Logger,
 
@@ -74,6 +82,7 @@ impl Controller {
 
         let mut controller = Controller {
             state: state,
+
             pw_logger: pw_logger,
             planet_map: planet_map,
             logger: logger,

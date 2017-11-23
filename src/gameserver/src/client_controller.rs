@@ -23,6 +23,7 @@ pub enum Message {
     Disconnected,
 }
 
+// TODO: the client controller should also be handed a log handle
 pub struct ClientController {
     client_id: usize,
     
