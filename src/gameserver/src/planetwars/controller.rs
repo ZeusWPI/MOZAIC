@@ -127,14 +127,20 @@ impl Controller {
         match msg {
             Message::Data(msg) => {
                 info!(self.logger, "message received";
-                        "client_id" => client_id,
-                        "content" => &msg,
+                    "client_id" => client_id,
+                    "content" => &msg,
                 );
 
                 self.messages.insert(client_id, msg);
                 self.waiting_for.remove(&client_id);
             },
             Message::Disconnected => {
+                // TODO: should a reason be included here?
+                // It might be more useful to have the client controller log
+                // disconnect reasons.
+                info!(self.logger, "client disconnected";
+                    "client_id" => client_id
+                );
                 // TODO: handle this case gracefully
                 panic!("CLIENT {} disconnected", client_id);
             }
