@@ -173,7 +173,7 @@ impl Controller {
                         "client_id" => player_id,
                         // TODO: this is not nice, a solution will become
                         // available in the slog crate.
-                        "dispatch" => serde_json::to_string(&action).unwrap()
+                        "command" => serde_json::to_string(&action).unwrap()
                     );
                     self.state.dispatch(&dispatch);
                 },
