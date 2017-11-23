@@ -12,7 +12,6 @@ use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::logger::PlanetWarsLogger;
 use planetwars::serializer::serialize_rotated;
 use planetwars::protocol as proto;
-use planetwars::log;
 
 use slog;
 use slog::Drain;
@@ -127,6 +126,11 @@ impl Controller {
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
             Message::Data(msg) => {
+                info!(self.logger, "message received";
+                        "client_id" => client_id,
+                        "content" => &msg,
+                );
+
                 self.messages.insert(client_id, msg);
                 self.waiting_for.remove(&client_id);
             },
@@ -143,54 +147,44 @@ impl Controller {
             HashMap::with_capacity(self.client_handles.len())
         );
         for (client_id, message) in messages.drain() {
-            // TODO
-            let _log_entry = self.execute_message(client_id, message);
+            self.execute_message(client_id, message);
         }
     }
 
-    fn execute_message(&mut self, player_id: usize, msg: String)
-                       -> log::Message
-    {
-        let log_value = match serde_json::from_str(&msg) {
+    fn execute_message(&mut self, player_id: usize, msg: String) {
+        match serde_json::from_str(&msg) {
             Ok(action) => {
-                let action_log = self.execute_action(player_id, action);
-                log::MessageValue::Content(action_log)
+                self.execute_action(player_id, action);
             },
-            Err(_err) => {
-                // TODO: fix error type
-                log::MessageValue::Error("Parse error".to_string())
+            Err(err) => {
+                info!(self.logger, "parse error";
+                    "client_id" => player_id,
+                    "error" => err.to_string()
+                );
             },
         };
-        log::Message {
-            raw_content: msg,
-            value: log_value,
-        }
     }
 
-    fn execute_action(&mut self, player_id: usize, action: proto::Action)
-                      -> log::Action
-    {
-        let logs = action.commands.into_iter().map(|cmd| {
-            self.execute_command(player_id, cmd)
-        }).collect();
-
-        log::Action {
-            commands: logs,
-        }
-    }
-
-    fn execute_command(&mut self, player_id: usize, cmd: proto::Command)
-                       -> log::Command
-    {
-        let res = self.parse_command(player_id, &cmd);
-
-        if let Ok(ref dispatch) = res {
-            self.state.dispatch(dispatch);
-        }
-
-        log::Command {
-            command: cmd,
-            error: res.err(),
+    fn execute_action(&mut self, player_id: usize, action: proto::Action) {
+        for cmd in action.commands.iter() {
+            match self.parse_command(player_id, &cmd) {
+                Ok(dispatch) => {
+                    info!(self.logger, "dispatch";
+                        "client_id" => player_id,
+                        // TODO: this is not nice, a solution will become
+                        // available in the slog crate.
+                        "dispatch" => serde_json::to_string(&action).unwrap()
+                    );
+                    self.state.dispatch(&dispatch);
+                },
+                Err(_err) => {
+                    // TODO: also log actual error
+                    info!(self.logger, "illegal command";
+                        "client_id" => player_id,
+                        "command" => serde_json::to_string(&action).unwrap()
+                    );
+                }
+            }
         }
     }
 
