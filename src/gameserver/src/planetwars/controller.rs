@@ -97,6 +97,7 @@ impl Controller {
         return controller;
     }
 
+    /// Advance the game by one turn.
     fn step(&mut self) {
         self.state.repopulate();
         self.execute_messages();
@@ -126,10 +127,12 @@ impl Controller {
         }
     }
 
-
+    /// Handle an incoming message.
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
             Message::Data(msg) => {
+                // TODO: maybe it would be better to log this in the
+                // client_controller.
                 info!(self.logger, "message received";
                     "client_id" => client_id,
                     "content" => &msg,
@@ -161,6 +164,7 @@ impl Controller {
         }
     }
 
+    /// Parse and execute a player message.
     fn execute_message(&mut self, player_id: usize, msg: String) {
         match serde_json::from_str(&msg) {
             Ok(action) => {
