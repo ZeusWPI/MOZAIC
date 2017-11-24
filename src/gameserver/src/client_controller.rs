@@ -57,16 +57,8 @@ impl ClientController {
         }
     }
 
-
     pub fn handle(&self) -> UnboundedSender<String> {
         self.ctrl_handle.clone()
-    }
-    
-    fn handle_commands(&mut self) -> Poll<(), ()> {
-        while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
-            self.sender.send(command);
-        }
-        Ok(Async::Ready(()))
     }
 
     fn send_message(&mut self, message: Message) {
@@ -82,6 +74,21 @@ impl ClientController {
             let msg = Message::Data(line);
             self.send_message(msg);
         }
+        // When the client disconnected, let the game know.
+        // TODO: this might not be the clean way to handle this.
+        // When an actual error happens, the disconnect message should also
+        // be sent. Perhaps the clean way would be to consider termination
+        // of this channel as an error, and also throw one here.
+        // That way, errors could be caught in the poll method, and disconnects
+        // could be fired there.
+        self.send_message(Message::Disconnected);
+        Ok(Async::Ready(()))
+    }
+
+    fn handle_commands(&mut self) -> Poll<(), ()> {
+        while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
+            self.sender.send(command);
+        }
         Ok(Async::Ready(()))
     }
 
@@ -89,12 +96,12 @@ impl ClientController {
         self.sender.poll()
     }
 
-    fn try_poll(&mut self) -> Result<(), io::Error> {
-        // we own this channel, it should not fail
+    fn try_poll(&mut self) -> Poll<(), io::Error> {
+        // we own this channel, it should not fail or terminate.
         self.handle_commands().unwrap();
-        try!(self.handle_client_msgs());
+        let status = try!(self.handle_client_msgs());
         try!(self.write_messages());
-        Ok(())
+        Ok(status)
     }
 }
 
@@ -103,10 +110,8 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        // disregard errors for now
-        self.try_poll().unwrap();
-        self.try_poll().unwrap();
-        Ok(Async::NotReady)
+        // TODO: errors should be handled
+        Ok(self.try_poll().unwrap())
     }
 }
 
