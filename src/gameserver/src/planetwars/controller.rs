@@ -98,14 +98,9 @@ impl Controller {
     }
 
     fn step(&mut self) {
-        if !self.waiting_for.is_empty() {
-            return;
-        }
-
         self.state.repopulate();
         self.execute_messages();
         self.state.step();
-
         self.pw_logger.log(&self.state).expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
@@ -236,7 +231,10 @@ impl Future for Controller {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
-            self.step();
+
+            if self.waiting_for.is_empty() {
+                self.step();
+            }
         }
         Ok(Async::Ready(self.state.living_players()))
     }
