@@ -67,10 +67,12 @@ impl ClientController {
         }
     }
 
+    /// Get a handle to the control channel for this client.
     pub fn handle(&self) -> UnboundedSender<String> {
         self.ctrl_handle.clone()
     }
 
+    /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
         let msg = ClientMessage {
             client_id: self.client_id,
@@ -79,6 +81,7 @@ impl ClientController {
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
 
+    /// Pull messages from the client, and handle them.
     fn handle_client_msgs(&mut self) -> Poll<(), Error> {
         while let Some(line) = try_ready!(self.client_msgs.poll()) {
             let msg = Message::Data(line);
@@ -87,6 +90,7 @@ impl ClientController {
         bail!(ErrorKind::ConnectionClosed)
     }
 
+    /// Pull commands from the control channel, and handle them.
     fn handle_commands(&mut self) -> Poll<(), ()> {
         while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
             self.sender.send(command);
@@ -94,16 +98,20 @@ impl ClientController {
         Ok(Async::Ready(()))
     }
 
+    /// Try sending messages to the client, in an asynchronous fashion.
     fn write_messages(&mut self) -> Poll<(), io::Error> {
         self.sender.poll()
     }
 
+    /// Step the future, allowing errors to be thrown.
+    /// These errors then get handled in the actual poll implementation.
     fn try_poll(&mut self) -> Poll<(), Error> {
         // we own this channel, it should not fail or terminate.
         self.handle_commands().unwrap();
         try!(self.handle_client_msgs());
         try!(self.write_messages());
-        // TODO: returning NotReady here might be a little dodgy.
+        // TODO: returning NotReady unconditionally here might be a little
+        // dodgy.
         Ok(Async::NotReady)
     }
 }
