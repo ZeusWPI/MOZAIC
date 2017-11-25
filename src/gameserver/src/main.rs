@@ -12,6 +12,9 @@ extern crate tokio_process;
 extern crate futures;
 
 #[macro_use]
+extern crate error_chain;
+
+#[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate serde;

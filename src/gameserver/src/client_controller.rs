@@ -12,6 +12,14 @@ use bot_runner::BotHandle;
 use buffered_sender::BufferedSender;
 
 
+error_chain! {
+    errors {
+        ConnectionClosed
+    }
+    foreign_links {
+        Io(io::Error);
+    }
+}
 
 pub struct ClientMessage {
     pub client_id: usize,
@@ -22,6 +30,8 @@ pub enum Message {
     Data(String),
     Disconnected,
 }
+
+
 
 pub struct ClientController {
     client_id: usize,
@@ -69,20 +79,12 @@ impl ClientController {
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
 
-    fn handle_client_msgs(&mut self) -> Poll<(), io::Error> {
+    fn handle_client_msgs(&mut self) -> Poll<(), Error> {
         while let Some(line) = try_ready!(self.client_msgs.poll()) {
             let msg = Message::Data(line);
             self.send_message(msg);
         }
-        // When the client disconnected, let the game know.
-        // TODO: this might not be the clean way to handle this.
-        // When an actual error happens, the disconnect message should also
-        // be sent. Perhaps the clean way would be to consider termination
-        // of this channel as an error, and also throw one here.
-        // That way, errors could be caught in the poll method, and disconnects
-        // could be fired there.
-        self.send_message(Message::Disconnected);
-        Ok(Async::Ready(()))
+        bail!(ErrorKind::ConnectionClosed)
     }
 
     fn handle_commands(&mut self) -> Poll<(), ()> {
@@ -96,12 +98,13 @@ impl ClientController {
         self.sender.poll()
     }
 
-    fn try_poll(&mut self) -> Poll<(), io::Error> {
+    fn try_poll(&mut self) -> Poll<(), Error> {
         // we own this channel, it should not fail or terminate.
         self.handle_commands().unwrap();
-        let status = try!(self.handle_client_msgs());
+        try!(self.handle_client_msgs());
         try!(self.write_messages());
-        Ok(status)
+        // TODO: returning NotReady here might be a little dodgy.
+        Ok(Async::NotReady)
     }
 }
 
@@ -110,8 +113,26 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
+        self.send_message(Message::Disconnected);
         // TODO: errors should be handled
-        Ok(self.try_poll().unwrap())
+        Ok(match self.try_poll() {
+            // Returning ready terminates the task. We only want to do that when
+            // an error happens.
+            // TODO: how do we handle graceful disconnects?
+            Ok(Async::Ready(())) => panic!("something bad happened"),
+            Ok(Async::NotReady) => Async::NotReady,
+            Err(_err) => {
+                // TODO: are some errors recoverable?
+                // should they be handled in this method, or ad-hoc?
+                // TODO: log the actual error
+                // Let the game know this client failed.
+                self.send_message(Message::Disconnected);
+                // TODO: what do when this fails?
+                self.write_messages().expect("could not write messages");
+                // terminate the task
+                Async::Ready(())
+            }
+        })
     }
 }
 
@@ -138,7 +159,7 @@ impl Decoder for LineCodec {
     type Item = String;
     type Error = io::Error;
 
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<String>, io::Error> {
+    fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<String>> {
         // Check to see if the frame contains a new line
         if let Some(n) = buf.as_ref().iter().position(|b| *b == b'\n') {
             // remove line from buffer
