@@ -16,6 +16,7 @@ error_chain! {
     errors {
         ConnectionClosed
     }
+
     foreign_links {
         Io(io::Error);
     }
@@ -90,12 +91,26 @@ impl ClientController {
         bail!(ErrorKind::ConnectionClosed)
     }
 
-    /// Pull commands from the control channel, and handle them.
-    fn handle_commands(&mut self) -> Poll<(), ()> {
-        while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
+    /// The unit error type of ctrl_chan.poll() means that it won't error. Since
+    /// we can't cast "won't error" to our custom error type, we cannot use the
+    /// try_ready! macro with polling ith ctrl_chan. This method provides an
+    /// adapter to Poll with our error type.
+    fn poll_ctrl_chan(&mut self) -> Poll<Option<String>, Error> {
+        let res = self.ctrl_chan.poll();
+        Ok(res.unwrap())
+    }
+
+    /// Pull commands from the control channel, and handle them. Note: for now
+    /// this should never error, but once we actually handle commands errors
+    /// might be possible.
+    fn handle_commands(&mut self) -> Poll<(), Error> {
+        while let Some(command) = try_ready!(self.poll_ctrl_chan()) {
             self.sender.send(command);
         }
-        Ok(Async::Ready(()))
+        // Since we entirely control this channel, it should not fail.
+        // If it does, something is very wrong and we should find out what
+        // to do about that.
+        panic!("Command handle broke");
     }
 
     /// Try sending messages to the client, in an asynchronous fashion.
@@ -106,8 +121,7 @@ impl ClientController {
     /// Step the future, allowing errors to be thrown.
     /// These errors then get handled in the actual poll implementation.
     fn try_poll(&mut self) -> Poll<(), Error> {
-        // we own this channel, it should not fail or terminate.
-        self.handle_commands().unwrap();
+        try!(self.handle_commands());
         try!(self.handle_client_msgs());
         try!(self.write_messages());
         // TODO: returning NotReady unconditionally here might be a little
