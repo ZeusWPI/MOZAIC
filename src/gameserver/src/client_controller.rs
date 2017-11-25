@@ -121,7 +121,6 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        self.send_message(Message::Disconnected);
         // TODO: errors should be handled
         Ok(match self.try_poll() {
             // Returning ready terminates the task. We only want to do that when
