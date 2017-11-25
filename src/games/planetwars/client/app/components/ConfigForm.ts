@@ -1,276 +1,145 @@
 import * as React from 'react';
+import { h } from 'react-hyperscript-helpers';
+import Form from "react-jsonschema-form";
+import FormProps from "react-jsonschema-form";
 
-const h = require('react-hyperscript');
-const {
-  div,
-  ul,
-  li,
-  ol,
-  input
-} = require('hyperscript-helpers')(h);
+const {dialog} = require('electron').remote;
+var fs = require('fs');
 
-interface Config {
-  players: Player[],
-  game_config: GameConfig,
-  log_file: string
-}
+// let styles = require('./ConfigForm.scss');
 
-interface Player {
-  name:string,
-  command:string,
-  args:string[]
-}
-
-interface GameConfig {
-  player_map: PlayerMap,
-  map_file: string,
-  max_turns: number
-}
-
-interface PlayerMap {
-  [key:string]:string
-}
-
-interface ConfigFormState {
-  config: Config
-}
-
-export class ConfigForm extends React.Component<any, ConfigFormState> {
-  constructor(props:any){
-    super(props)
-    this.state = {
-      config: defaultConfig(),
+const schema = {
+  title: "Configuration",
+  type: "object",
+  properties: {
+      players: {
+        type:"array",
+        title: "Players",
+        minItems: 1,
+        items: {
+          type: "object",
+          title: "Player",
+          properties: {
+            name: { type: "string", title: "Name*", default: "" },
+            cmd: { type: "string", title: "Command*", default: "" },
+            args: {
+              type: "array",
+              title: "Arguments",
+              items: { type: "string", title: "Argument" },
+              default: [""]
+            }
+          }
+        },
+        default: [{name: "", cmd: "", args: [""]}]
+      },
+      game_config: {
+        type: "object",
+        title: "Game Config",
+        properties: {
+          map_file: { type: "string", title: "Map File*"/*, format: "data-url"*/},
+          max_turns: { type: "integer", title: "Max Turns*", default: 500, "minimum": 0},
+        }
+      },
+      log_file: {type: "string", title:"Log File*", default: "gamelog.json"}
     }
-  }
-  render() {
-    var allPlayers = [];
-    var playerConfig = this.state.config.players.slice();
-    var size = playerConfig.length;
-    for(var i = 0; i < size; i++)
-    {
-      var player = playerConfig[i];
-      allPlayers.push(li({ key: i }, [new PlayerField({
-          index: i,
-          config: this.state.config,
-          updateConfig: this.updateConfig.bind(this)
-        }).render()]))
+};
+
+const uiSchema = {
+  game_config: {
+    max_turns: {
+      "ui:widget" : "updown"
     }
-    return div([
-      ol(
-        allPlayers
-      ),
-      input({type: "button", value: "Add Player", onClick:() => this.addPlayer()}),
-      input({type: "text", placeholder:"Map File", onChange: (evt: Event) => this.setMapFile((<HTMLInputElement>evt.target).value)}),
-      input({type: "text", placeholder:"Max Turns", onChange: (evt: Event) => this.setMaxTurns((<HTMLInputElement>evt.target).value)}),
-      input({type: "text", placeholder:"Log File", onChange: (evt: Event) => this.setLogFile((<HTMLInputElement>evt.target).value)}),
-      input({type: "button", value: "Done", onClick:() => this.outputJSON()})
-    ])
-  }
+  },
+  // classNames: `${ styles.arrayList }`
+}
 
-  addPlayer() {
-    var conf = this.state.config;
-    conf.players.push(defaultPlayer());
-    this.setState({config: conf});
-  }
+const onSubmit = (form:any) => submit(form.formData);
+const onError = (err:any) => console.log(err);
 
-  setMapFile(value:string) {
-    var conf = this.state.config;
-    conf.game_config.map_file = value;
-    this.setState({config: conf});
-  }
+function submit(formData:any) {
+  var content = JSON.stringify(formData);
+  dialog.showSaveDialog({filters:[{name:"JSON (default)", extensions: ['json']}, {name:"Custom File Type", extensions: ['']}]}, (fileName:string) => {
+      if (fileName === undefined){
+          return;
+      }
 
-  setMaxTurns(value:string) {
-    var conf = this.state.config;
-    conf.game_config.max_turns = parseInt(value);
-    this.setState({config: conf});
-  }
+      fs.writeFile(fileName, content, (err:any) => {
+          if(err){
+              alert("An error ocurred creating the file "+ err.message)
+          }
+      });
+    });
+}
 
-  setLogFile(value:string) {
-    var conf = this.state.config;
-    conf.log_file = value;
-    this.setState({config: conf});
-  }
+function validate(form:any, errors:any) {
+  const requiredField = "This is a required field";
 
-  removePlayer() {
-    var conf = this.state.config;
-    conf.players.pop();
-    this.setState({config: conf});
-  }
-
-  updateConfig(conf:Config)
+  if(!testUnique(form.players.map((a:any) => a.name)))
   {
-    this.setState({ config: conf});
+    errors.players.addError("Duplicate names found");
   }
 
-  outputJSON() {
-    console.log(JSON.stringify(this.state.config));
-  }
-}
-
-interface PlayerFieldProps {
-  index:number,
-  config: Config,
-  updateConfig: Function
-}
-
-interface PlayerFieldState {
-  index:number,
-  config: Config,
-  updateConfig: Function
-  name: string,
-  command: string,
-  args: string[]
-}
-
-class PlayerField extends React.Component<PlayerFieldProps, PlayerFieldState>
-{
-  constructor(props:PlayerFieldProps) {
-    super(props);
-    this.state = {
-      index: this.props.index,
-      config: this.props.config,
-      updateConfig: this.props.updateConfig,
-      name: this.props.config.players[this.props.index].name,
-      command: this.props.config.players[this.props.index].command,
-      args: this.props.config.players[this.props.index].args,
-    }
-  }
-  render() {
-    return ul([
-        li({key: 1}, [input({type: "text", value: this.state.name, placeholder: "Name", onChange: (evt: Event) => this.setName((<HTMLInputElement>evt.target).value)} ), input({type: "button", value: "Remove Player", onClick:() => this.removePlayer()})]),
-        li({key: 2}, [input({type: "text", value: this.state.command, placeholder: "Command", onChange: (evt: Event) => this.setCommand((<HTMLInputElement>evt.target).value)})]),
-        li({key: 3}, [new ArgumentsField({arguments: this.state.args, updateArgs: this.updateArgs.bind(this)}).render()])
-      ])
-  }
-  setName(name:string) {
-    var conf = this.state.config;
-    conf.players[this.state.index].name = name;
-    this.state.updateConfig(conf);
-  }
-  setCommand(cmd:string) {
-    var conf = this.state.config;
-    conf.players[this.state.index].command = cmd;
-    this.state.updateConfig(conf);
-  }
-  setArgs(args:string[]) {
-    var conf = this.state.config;
-    conf.players[this.state.index].args = args;
-    this.state.updateConfig(conf);
-  }
-  removePlayer() {
-    var conf = this.state.config;
-    conf.players.splice(this.state.index, 1);
-    this.state.updateConfig(conf);
-  }
-  updateArgs(args:string[]) {
-    var conf = this.state.config;
-    conf.players[this.state.index].args = args;
-    this.state.updateConfig(conf);
-  }
-}
-
-interface ArgumentsFieldProps {
-  arguments: string[],
-  updateArgs: Function
-}
-
-interface ArgumentsFieldState {
-  arguments: string[],
-  updateArgs: Function
-}
-
-class ArgumentsField extends React.Component<ArgumentsFieldProps, ArgumentsFieldState> {
-  constructor(props:ArgumentsFieldProps) {
-    super(props);
-    this.state = {
-      arguments: this.props.arguments,
-      updateArgs: this.props.updateArgs
-    }
-  }
-  render() {
-    var allArgs = []
-    for(var i = 0; i < this.state.arguments.length; i++)
+  for(var i = 0; i < form.players.length; i++)
+  {
+    if(isEmpty(form.players[i].name))
     {
-      allArgs.push(li({key: i}, [new ArgField({ argument: this.state.arguments[i], index: i, updateArgument: this.setArg.bind(this)}).render()]));
+      errors.players[i].name.addError(requiredField);
     }
-    return div([ul(allArgs), input({type: "button", value: "+", onClick: () => this.addArgument()})]);
-  }
-  setArg(arg:string, index:number, remove:boolean) {
-    if(remove)
+
+    if(isEmpty(form.players[i].cmd))
     {
-      this.state.arguments.splice(index, 1)
-    } else {
-      this.state.arguments[index] = arg;
+      errors.players[i].cmd.addError(requiredField);
     }
-    this.state.updateArgs(this.state.arguments);
-  }
-  addArgument() {
-    this.state.arguments.push("");
-    this.state.updateArgs(this.state.arguments);
-  }
-}
 
-interface ArgFieldProps {
-  argument: string,
-  index: number,
-  updateArgument: Function
-}
-
-interface ArgFieldState {
-  argument: string,
-  index: number,
-  updateArgument: Function
-}
-
-class ArgField extends React.Component<ArgFieldState, ArgFieldProps> {
-  constructor(props: ArgFieldProps) {
-    super(props);
-    this.state = {
-      argument: this.props.argument,
-      index: this.props.index,
-      updateArgument: this.props.updateArgument
+    for(var j = 0; j < form.players[i].args.length; j++)
+    {
+      if(isEmpty(form.players[i].args[j]))
+      {
+        errors.players[i].args[j].addError("Please remove empty arguments");
+      }
     }
   }
-  render() {
-    return div([
-      input({
-        type: "text",
-        value: this.state.argument,
-        placeholder: "Argument",
-        onChange: (evt: Event) => this.state.updateArgument((<HTMLInputElement>evt.target).value, this.state.index, false)
-      }),
-      input({
-        type:"button",
-        value:"-",
-        onClick: () => this.state.updateArgument("", this.state.index, true)
-      })
-    ])
+
+  if(isEmpty(form.log_file))
+  {
+    errors.log_file.addError(requiredField);
   }
+
+  if(isEmpty(form.game_config.map_file))
+  {
+    errors.game_config.map_file.addError(requiredField);
+  }
+
+  if(isEmpty(form.game_config.max_turns))
+  {
+    errors.game_config.max_turns.addError(requiredField);
+  }
+  return errors;
 }
 
-function defaultConfig()
+function isEmpty(value:any)
 {
-  return {
-    players: [defaultPlayer()],
-    game_config: defaultGameConfig(),
-    log_file: ""
-  }
+  return (value == "" || value == undefined)
 }
 
-function defaultGameConfig()
+function testUnique(list:Array<any>)
 {
-  return {
-    player_map: {},
-    map_file: "",
-    max_turns: 0
+  var unique = true;
+
+  for(var i = 0; i < list.length; i++)
+  {
+    if(!(list.indexOf(list[i]) === i))
+    {
+      unique = false;
+    }
   }
+  return unique;
 }
 
-function defaultPlayer()
+export class ConfigForm extends React.Component
 {
-  return {
-    name: "",
-    command: "",
-    args: [""]
+  render()
+  {
+    return h(Form, {schema: schema, uiSchema: uiSchema, onSubmit: onSubmit, validate: validate, showErrorList: false, noHtml5Validate: true});
   }
 }

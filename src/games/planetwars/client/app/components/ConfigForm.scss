@@ -1,5 +1,4 @@
-$fa-font-path: "~font-awesome/fonts";
-@import "~font-awesome/scss/font-awesome.scss";
+:local {}
 .i.glyphicon { display: none; }
 .btn-add::after { content: 'Add'; }
 .array-item-move-up::after { content: 'Move Up'; }

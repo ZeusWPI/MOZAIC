@@ -155,8 +155,10 @@
     "webpack-merge": "^2.0.0"
   },
   "dependencies": {
+    "@types/react-jsonschema-form": "^0.51.1",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
+    "eslint-plugin-react": "^7.4.0",
     "font-awesome": "^4.7.0",
     "history": "^4.6.1",
     "hyperscript-helpers": "^3.0.3",
@@ -165,6 +167,7 @@
     "react-helpers": "0.0.1",
     "react-hyperscript": "^3.0.0",
     "react-hyperscript-helpers": "^1.2.0",
+    "react-jsonschema-form": "^1.0.0",
     "react-redux": "^5.0.1",
     "react-router": "^4.1.1",
     "react-router-dom": "^4.1.1",
