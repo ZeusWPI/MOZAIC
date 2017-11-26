@@ -58,7 +58,6 @@ class Polygon {
         }
       });
     });
-    console.log(this.neighbours);
   }
 
   isPossible(point, hardEnd, owner, target, data){
@@ -302,11 +301,6 @@ function initVoronoi(turns, colorFunction, box){
   }
 
   //                                              <<<<<<<<<<<<<<<<<<MAKING TURNS
-
-
-  console.log(turnPolygonPoints);
-
-  console.log(data);
 
   return function(turn, svg) {
     svg.selectAll("*").remove();
