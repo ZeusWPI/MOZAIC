@@ -43,3 +43,6 @@ main.js
 main.js.map
 
 .idea
+
+# Configuration files
+configs
