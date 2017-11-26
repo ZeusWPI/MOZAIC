@@ -1,0 +1,11 @@
+:local {
+  .configForm {
+    font-size: 10px;
+    .players {
+      .player>fieldset {
+        display: flex;
+        flex-direction: row;
+      }
+    }
+  }
+}

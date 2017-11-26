@@ -156,6 +156,7 @@
   },
   "dependencies": {
     "@types/react-jsonschema-form": "^0.51.1",
+    "bootstrap-sass": "^3.3.7",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
     "eslint-plugin-react": "^7.4.0",

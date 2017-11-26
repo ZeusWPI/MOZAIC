@@ -1,0 +1,17 @@
+:local {
+  .configSelector {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    .configSelectorItems {
+      flex-grow: 1.2;
+    }
+    p {
+      flex-grow: 1;
+      align-items: right;
+      button {
+        float: right;
+      }
+    }
+  }
+}

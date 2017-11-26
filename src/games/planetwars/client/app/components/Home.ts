@@ -1,17 +1,97 @@
+import * as path from 'path';
+import * as fs from 'fs';
+
 import * as React from 'react';
 
 import { Visualizer } from './visualizer/index';
-import { ConfigForm } from './ConfigForm';
-import { h } from 'react-hyperscript-helpers';
+import { ConfigForm } from './configform/ConfigForm';
+import { ConfigSelector } from './configSelector/ConfigSelector';
+import { h, div } from 'react-hyperscript-helpers';
 
-// let styles = require('./Home.scss');
+let styles = require('./Home.scss');
 
-export default class Home extends React.Component {
-  render() {
-    // TODO: The visualizer should of course not be the only component here,
-    // we need things like a navbar, config editing, etc...
-    // We should make a container with a default layout.
-    // Could be the HomePage (this), but probably better something different.
-    return h('div', [h(Visualizer), h(ConfigForm)])
+interface State {
+  configFiles: path.ParsedPath[],
+  selectedConfig?: NamedConfig
+}
+
+interface Props { };
+
+export default class Home extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      configFiles: ConfigSelector.readConfigs(),
+    }
   }
+
+  render() {
+    return div(`.${styles.homePage}`, [
+      div(`.${styles.configController}`, [
+        h(ConfigSelector, {
+          files: this.state.configFiles,
+          previewFile: (p: path.ParsedPath) => {
+            this.setState({selectedConfig: this.loadConfig(p)})
+          },
+          selectFile: (p: path.ParsedPath) => this.play(p),
+        }),
+        h(ConfigForm, {
+          matchConfig: this.state.selectedConfig,
+          onSubmit: (config: any) => this.saveConfig(config)
+        })
+      ]),
+      // div(`.${styles.visualizer}`, [h(Visualizer)]),
+    ])
+  }
+
+  play(config: path.ParsedPath) {
+    alert("Yowkes!");
+  }
+
+  loadConfig(p: path.ParsedPath): NamedConfig | undefined {
+    try {
+      let contents = fs.readFileSync(path.format(p), 'utf8');
+      let config = JSON.parse(contents);
+      return {configName: p.name, config: config};
+    } catch (e) {
+      // TODO: Improve error handling
+      alert("Could not load configuration");
+      console.error(e);
+      return undefined;
+    }
+  }
+
+  saveConfig(config: NamedConfig): any {
+    let p = path.join('.', 'configs', `${config.configName}.json`);
+    let warn = () => {
+      return confirm(`Configuration with name ${config.configName} already exist, do you want to overwrite it?`)
+    }
+    if (!(fs.existsSync(p)) || warn()) {
+      // TODO: Errors
+      fs.writeFileSync(p, JSON.stringify(config.config, null, 2)); 
+      alert(`Succesfully saved configuration ${config.configName.toString()}.`);
+    }
+  }
+}
+
+export interface NamedConfig {
+  configName: string,
+  config: MatchConfig,
+}
+
+// Note the distinction in casing between MatchConfig and the config schema.
+interface MatchConfig {
+  players: PlayerConfig[],
+  game_config: GameConfig,
+}
+
+interface GameConfig {
+  map_file: string,
+  max_turns: number,
+}
+
+interface PlayerConfig {
+  name: string,
+  cmd: string,
+  args: string[],
 }

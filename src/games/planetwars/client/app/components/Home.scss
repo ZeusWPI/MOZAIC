@@ -1,16 +1,14 @@
 :local {
-  .container {
-    position: absolute;
-    top: 30%;
-    left: 10px;
-    text-align: center;
-  }
-
-  .container h2 {
-    font-size: 5rem;
-  }
-
-  .container a {
-    font-size: 1.4rem;
+  .homePage {
+    display: flex;
+    flex-direction: row;
+    padding-left: 10px;
+    .configController {
+      width: 40%;
+      padding: 10px 10px 10px 10px;
+    }
+    .visualizer {
+      width: 60%;
+    }
   }
 }
