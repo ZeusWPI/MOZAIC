@@ -1,11 +1,14 @@
+import { loadConfig } from 'read-config-file/out/main';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as cp from 'child_process';
 
 import * as React from 'react';
+import { h, div } from 'react-hyperscript-helpers';
 
 import { ConfigForm } from './configform/ConfigForm';
 import { ConfigSelector } from './configSelector/ConfigSelector';
-import { h, div } from 'react-hyperscript-helpers';
+import { Display } from './display/Display';
 
 let styles = require('./GameSetup.scss');
 
@@ -25,12 +28,12 @@ export class GameSetup extends React.Component<Props, State> {
   }
 
   render() {
-    return div(`.${styles.homePage}`, [
+    return div(`.${styles.gameSetup}`, [
       div(`.${styles.configController}`, [
         h(ConfigSelector, {
           files: this.state.configFiles,
           previewFile: (p: path.ParsedPath) => {
-            this.setState({selectedConfig: this.loadConfig(p)})
+            this.setState({ selectedConfig: this.loadConfig(p) })
           },
           selectFile: (p: path.ParsedPath) => this.play(p),
         }),
@@ -38,20 +41,33 @@ export class GameSetup extends React.Component<Props, State> {
           matchConfig: this.state.selectedConfig,
           onSubmit: (config: NamedConfig) => this.saveConfig(config),
           onRemove: (config: NamedConfig) => this.removeConfig(config),
-        })
+        }),
+      ]),
+      div(`.${styles.display}`, [
+        h(Display)
       ])
     ])
   }
 
-  play(config: path.ParsedPath) {
-    alert("Yowkes!");
+  play(p: path.ParsedPath) {
+    // TODO: Fix
+    alert("Will be fixed soon!");
+    let execPath = path.resolve('bin', 'bot_driver');
+    console.log(execPath);
+    let child = cp.execFile(execPath, (error) => {
+      if (error) { console.error(error); }
+      console.log("succes");
+      // fs.readFile("./gamelog.json", "utf-8", (err, data) => { 
+      //   console.log(data);
+      // });
+    });
   }
 
   loadConfig(p: path.ParsedPath): NamedConfig | undefined {
     try {
       let contents = fs.readFileSync(path.format(p), 'utf8');
       let config = JSON.parse(contents);
-      return {configName: p.name, config: config};
+      return { configName: p.name, config: config };
     } catch (e) {
       // TODO: Improve error handling
       alert("Could not load configuration");
@@ -67,20 +83,20 @@ export class GameSetup extends React.Component<Props, State> {
     }
     if (!(fs.existsSync(p)) || warn()) {
       // TODO: Errors
-      fs.writeFileSync(p, JSON.stringify(config.config, null, 2)); 
+      fs.writeFileSync(p, JSON.stringify(config.config, null, 2));
       alert(`Succesfully saved configuration ${config.configName}.`);
     }
   }
 
   removeConfig(config: NamedConfig): any {
-    this.setState({selectedConfig: undefined});
+    this.setState({ selectedConfig: undefined });
     let p = path.join('.', 'configs', `${config.configName}.json`);
     let warn = () => {
       return confirm(`Are you certain you want to remove config with name ${config.configName}?`)
     }
     if (!(fs.existsSync(p)) || warn()) {
       // TODO: Errors
-      fs.unlinkSync(p); 
+      fs.unlinkSync(p);
       alert(`Succesfully removed configuration ${config.configName}.`);
     }
   }

@@ -2,6 +2,11 @@
 logs
 *.log
 
+# Binaries (eg: bot_driver)
+bin/*
+
+!.gitkeep
+
 # Runtime data
 pids
 *.pid

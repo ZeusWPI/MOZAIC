@@ -36,6 +36,11 @@ class Renderer extends React.Component {
     console.log(this.props.game);
     this.voronoiRenderer = Voronoi.initVoronoi(this.props.game.turns, Config.player_color, [this.min, this.max]);
     this.createZoom();
+    if (this.props.game) {
+      this.turn = this.props.game.turns[this.props.turnNum]
+      this.calculateViewBox();
+      this.draw();
+    }
   }
 
   render() {

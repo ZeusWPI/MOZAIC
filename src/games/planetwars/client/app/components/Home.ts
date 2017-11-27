@@ -18,7 +18,7 @@ export default class Home extends React.Component<Props, State> {
 
   render() {
     return div(`.${styles.homePage}`, [
-      div(`.${styles.configController}`, [
+      div(`.${styles.gameSetup}`, [
         h(GameSetup)
       ]),
       // div(`.${styles.visualizer}`, [h(Visualizer)]),
