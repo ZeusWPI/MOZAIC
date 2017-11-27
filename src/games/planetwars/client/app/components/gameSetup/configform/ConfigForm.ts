@@ -5,7 +5,7 @@ import { h, div, button, p } from 'react-hyperscript-helpers';
 import Form from 'react-jsonschema-form';
 import FormProps from 'react-jsonschema-form';
 
-import { NamedConfig } from '../Home';
+import { NamedConfig } from '../GameSetup';
 import { configSchema, configUISchema } from './Schemas';
 
 let styles = require('./ConfigForm.scss');
