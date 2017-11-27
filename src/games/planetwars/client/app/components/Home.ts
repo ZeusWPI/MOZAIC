@@ -37,7 +37,8 @@ export default class Home extends React.Component<Props, State> {
         }),
         h(ConfigForm, {
           matchConfig: this.state.selectedConfig,
-          onSubmit: (config: any) => this.saveConfig(config)
+          onSubmit: (config: NamedConfig) => this.saveConfig(config),
+          onRemove: (config: NamedConfig) => this.removeConfig(config),
         })
       ]),
       // div(`.${styles.visualizer}`, [h(Visualizer)]),
@@ -69,7 +70,20 @@ export default class Home extends React.Component<Props, State> {
     if (!(fs.existsSync(p)) || warn()) {
       // TODO: Errors
       fs.writeFileSync(p, JSON.stringify(config.config, null, 2)); 
-      alert(`Succesfully saved configuration ${config.configName.toString()}.`);
+      alert(`Succesfully saved configuration ${config.configName}.`);
+    }
+  }
+
+  removeConfig(config: NamedConfig): any {
+    this.setState({selectedConfig: undefined});
+    let p = path.join('.', 'configs', `${config.configName}.json`);
+    let warn = () => {
+      return confirm(`Are you certain you want to remove config with name ${config.configName}?`)
+    }
+    if (!(fs.existsSync(p)) || warn()) {
+      // TODO: Errors
+      fs.unlinkSync(p); 
+      alert(`Succesfully removed configuration ${config.configName}.`);
     }
   }
 }

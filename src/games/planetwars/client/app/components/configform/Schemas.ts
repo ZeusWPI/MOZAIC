@@ -5,6 +5,7 @@ export const configSchema = {
   properties: {
     configName: { type: 'string', title: 'Configuration Name*', default: '' },
     config: {
+      title: 'Config',
       type: 'object',
       properties: {
         players: {
@@ -41,9 +42,10 @@ export const configSchema = {
 };
 
 export const configUISchema = {
-  classNames: `${styles.configInput}`,
+  classNames: `${styles.configWrapper}`,
   configName: {},
   config: {
+    classNames: `${styles.configInput}`,
     players: {
       classNames: `${styles.players}`,
       items: {

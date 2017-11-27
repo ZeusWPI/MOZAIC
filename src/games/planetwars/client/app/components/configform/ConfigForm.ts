@@ -17,6 +17,7 @@ interface State {
 interface Props {
   matchConfig?: NamedConfig,
   onSubmit(config: NamedConfig): any,
+  onRemove(config: NamedConfig): any,
 }
 
 export class ConfigForm extends React.Component<Props, State> {
@@ -41,7 +42,19 @@ export class ConfigForm extends React.Component<Props, State> {
       showErrorList: false,
       noHtml5Validate: true,
       onSubmit: (form: any) => this.props.onSubmit(form.formData),
-    });
+    }, [
+      div([
+        button('.btn.btn-info', { type: 'submit' }, ['Save']),
+        button('.btn.btn-warning', { 
+          type: 'reset',
+          onClick: () => this.forceUpdate(),
+        }, ['Reset']),
+        button('.btn.btn-danger', { 
+          type: 'button',
+          onClick: (form: any) => this.props.onRemove(this.state.formData),
+        }, ['Remove']),
+      ])
+    ]);
   }
 }
 

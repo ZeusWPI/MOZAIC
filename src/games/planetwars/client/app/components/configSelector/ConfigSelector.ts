@@ -100,10 +100,6 @@ const emptySchema = {
 
 const uiSchema = {
   classNames: `${styles.configSelectorItems}`,
-  'ui:options': {
-    label: false,
-    title: false
-  },
   config: {
     'ui:options': {
       label: false
