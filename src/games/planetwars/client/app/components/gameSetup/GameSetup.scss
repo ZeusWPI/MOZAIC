@@ -1,18 +1,8 @@
 :local {
   .gameSetup {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     width: 100%;
     justify-content: space-between;
-    .configController {
-      width: 50%;
-      padding-right: 10px;
-      padding-left: 10px;
-    }
-    .display {
-      width: 50%;
-      padding-right: 10px;
-      padding-left: 10px;
-    }
   }
 }

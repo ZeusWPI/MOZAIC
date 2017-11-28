@@ -6,22 +6,18 @@ import { h, div, p } from 'react-hyperscript-helpers';
 
 const styles = require('./Display.scss');
 
-interface Props { };
+interface Props { 
+  stdout: Readable,
+  stderr: Readable,
+};
+
 interface State { };
 
 export class Display extends React.Component<Props, State> {
-  stream: Readable;
-
-  constructor(props: Props) {
-    super(props);
-    this.stream = new Readable();
-    this.stream._read = function noop() {};
-    this.stream.push('testtet stream');
-  }
   render() {
     return div(`.${styles.display}`, [
-      h(StreamField, { stream: this.stream, type: 'stdout' }),
-      h(StreamField, { stream: this.stream, type: 'stderr' }),
+      h(StreamField, { stream: this.props.stdout, type: 'stdout' }),
+      h(StreamField, { stream: this.props.stderr, type: 'stderr' }),
     ]);
   }
 }

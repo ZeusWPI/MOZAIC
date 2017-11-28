@@ -1,4 +1,3 @@
-import { loadConfig } from 'read-config-file/out/main';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as cp from 'child_process';
@@ -8,7 +7,7 @@ import { h, div } from 'react-hyperscript-helpers';
 
 import { ConfigForm } from './configform/ConfigForm';
 import { ConfigSelector } from './configSelector/ConfigSelector';
-import { Display } from './display/Display';
+import { NamedConfig } from '../../utils/MatchConfig';
 
 let styles = require('./GameSetup.scss');
 
@@ -17,7 +16,9 @@ interface State {
   selectedConfig?: NamedConfig
 }
 
-interface Props { };
+interface Props {
+  onReady(p: path.ParsedPath): void,
+};
 
 export class GameSetup extends React.Component<Props, State> {
   constructor(props: Props) {
@@ -29,41 +30,21 @@ export class GameSetup extends React.Component<Props, State> {
 
   render() {
     return div(`.${styles.gameSetup}`, [
-      div(`.${styles.configController}`, [
-        h(ConfigSelector, {
-          files: this.state.configFiles,
-          previewFile: (p: path.ParsedPath) => {
-            this.setState({ selectedConfig: this.loadConfig(p) })
-          },
-          selectFile: (p: path.ParsedPath) => this.play(p),
-        }),
-        h(ConfigForm, {
-          matchConfig: this.state.selectedConfig,
-          onSubmit: (config: NamedConfig) => this.saveConfig(config),
-          onRemove: (config: NamedConfig) => this.removeConfig(config),
-        }),
-      ]),
-      div(`.${styles.display}`, [
-        h(Display)
-      ])
+      h(ConfigSelector, {
+        files: this.state.configFiles,
+        selectFile: (p: path.ParsedPath) => this.ready(p),
+      }),
+      h(ConfigForm, {
+        matchConfig: this.state.selectedConfig,
+        onSubmit: (config: NamedConfig) => this.saveConfig(config),
+        onRemove: (config: NamedConfig) => this.removeConfig(config),
+      })
     ])
   }
 
-  play(p: path.ParsedPath) {
-    let execPath = path.resolve('bin', 'bot_driver');
-    console.log(execPath);
-    let child = cp.spawn(execPath, [path.format(p)]);
-    child.stdout.on('data', (data) => {
-      console.log(`stdout: ${data}`);
-    });
-    
-    child.stderr.on('data', (data) => {
-      console.log(`stderr: ${data}`);
-    });
-    
-    child.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-    });
+  ready(p: path.ParsedPath) {
+    this.setState({ selectedConfig: this.loadConfig(p) })
+    this.props.onReady(p);
   }
 
   loadConfig(p: path.ParsedPath): NamedConfig | undefined {
@@ -103,26 +84,4 @@ export class GameSetup extends React.Component<Props, State> {
       alert(`Succesfully removed configuration ${config.configName}.`);
     }
   }
-}
-
-export interface NamedConfig {
-  configName: string,
-  config: MatchConfig,
-}
-
-// Note the distinction in casing between MatchConfig and the config schema.
-interface MatchConfig {
-  players: PlayerConfig[],
-  game_config: GameConfig,
-}
-
-interface GameConfig {
-  map_file: string,
-  max_turns: number,
-}
-
-interface PlayerConfig {
-  name: string,
-  cmd: string,
-  args: string[],
 }

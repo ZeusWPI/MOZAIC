@@ -5,7 +5,7 @@ import { h, div, button, p } from 'react-hyperscript-helpers';
 import Form from 'react-jsonschema-form';
 import FormProps from 'react-jsonschema-form';
 
-import { NamedConfig } from '../GameSetup';
+import { NamedConfig } from '../../../utils/MatchConfig';
 import { configSchema, configUISchema } from './Schemas';
 
 let styles = require('./ConfigForm.scss');
@@ -16,8 +16,8 @@ interface State {
 
 interface Props {
   matchConfig?: NamedConfig,
-  onSubmit(config: NamedConfig): any,
-  onRemove(config: NamedConfig): any,
+  onSubmit(config: NamedConfig): void,
+  onRemove(config: NamedConfig): void,
 }
 
 export class ConfigForm extends React.Component<Props, State> {

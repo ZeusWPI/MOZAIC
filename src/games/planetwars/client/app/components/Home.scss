@@ -2,10 +2,13 @@
   .homePage {
     display: flex;
     flex-direction: row;
-    padding-left: 10px;
     .gameSetup {
-      width: 100%;
-      padding: 10px 10px 10px 10px;
+      width: 50%;
+      margin-right: 10px;
+    }
+    .gamePlayer {
+      width: 50%;
+      margin-left: 10px;
     }
     .visualizer {
       width: 60%;

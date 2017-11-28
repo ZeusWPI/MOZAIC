@@ -10,8 +10,7 @@ let styles = require('./ConfigSelector.scss');
 
 interface Props {
   files: path.ParsedPath[],
-  selectFile(path: path.ParsedPath): any,
-  previewFile(path: path.ParsedPath): any,
+  selectFile(path: path.ParsedPath): void,
 }
 
 interface State {
@@ -53,16 +52,15 @@ export class ConfigSelector extends React.Component<Props, State> {
         formData: { config: this.state.selectedConfig },
         showErrorList: false,
         noHtml5Validate: true,
-        onSubmit: (form: any) => this.props.selectFile(this.getSelected(form)),
         onChange: (form: any) => {
           form.errorSchema = {};
           if(form.formData.config >= 0) {
-            this.props.previewFile(this.getSelected(form));
+            this.props.selectFile(this.getSelected(form));
           }
         },
       },
       [
-        p([button('.btn.btn-info', { type: 'submit' }, ['Play!'])])
+        p([button(`.${styles.submitButton}`, { type: 'submit' })])
       ]
     );
   }
