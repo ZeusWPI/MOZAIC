@@ -50,16 +50,19 @@ export class GameSetup extends React.Component<Props, State> {
   }
 
   play(p: path.ParsedPath) {
-    // TODO: Fix
-    alert("Will be fixed soon!");
     let execPath = path.resolve('bin', 'bot_driver');
     console.log(execPath);
-    let child = cp.execFile(execPath, (error) => {
-      if (error) { console.error(error); }
-      console.log("succes");
-      // fs.readFile("./gamelog.json", "utf-8", (err, data) => { 
-      //   console.log(data);
-      // });
+    let child = cp.spawn(execPath, [path.format(p)]);
+    child.stdout.on('data', (data) => {
+      console.log(`stdout: ${data}`);
+    });
+    
+    child.stderr.on('data', (data) => {
+      console.log(`stderr: ${data}`);
+    });
+    
+    child.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
     });
   }
 

@@ -65,7 +65,7 @@ function defaultValues() {
       'players': [{ 'name': '', 'cmd': '', 'args': [''] }],
       'game_config': {
         'map_file': '',
-        'max_turns': 500
+        'max_turns': 100
       },
       'log_file': 'gamelog.json'
     }

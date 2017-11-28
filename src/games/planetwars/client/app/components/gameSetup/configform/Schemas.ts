@@ -3,7 +3,7 @@ let styles = require('./ConfigForm.scss');
 export const configSchema = {
   type: 'object',
   properties: {
-    configName: { type: 'string', title: 'Configuration Name*', default: '' },
+    configName: { type: 'string', title: 'Configuration Name', default: '' },
     config: {
       title: 'Config',
       type: 'object',
@@ -15,8 +15,8 @@ export const configSchema = {
           items: {
             type: 'object',
             properties: {
-              name: { type: 'string', title: 'Name*', default: '' },
-              cmd: { type: 'string', title: 'Command*', default: '' },
+              name: { type: 'string', title: 'Name', default: '' },
+              command: { type: 'string', title: 'Command', default: '' },
               args: {
                 type: 'array',
                 title: 'Arguments',
@@ -31,11 +31,11 @@ export const configSchema = {
           type: 'object',
           title: 'Game Config',
           properties: {
-            map_file: { type: 'string', title: 'Map File*'/*, format: 'data-url'*/ },
-            max_turns: { type: 'integer', title: 'Max Turns*', default: 500, 'minimum': 0 },
+            map_file: { type: 'string', title: 'Map File'/*, format: 'data-url'*/ },
+            max_turns: { type: 'integer', title: 'Max Turns', default: 500, 'minimum': 0 },
           }
         },
-        log_file: { type: 'string', title: 'Log File*', default: 'gamelog.json' }
+        log_file: { type: 'string', title: 'Log File', default: 'gamelog.json' }
       }
     }
   }
