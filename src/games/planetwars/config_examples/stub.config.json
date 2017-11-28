@@ -12,10 +12,6 @@
         }
     ],
     "game_config": {
-        "player_map": {
-            "bert": "player_1",
-            "timp": "player_2"
-        },
         "map_file": "../games/planetwars/maps/hex.json",
         "max_turns": 500
     },

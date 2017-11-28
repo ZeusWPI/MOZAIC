@@ -1,25 +1,35 @@
-mod game;
 mod bot_runner;
-mod games;
-mod match_runner;
-mod logger;
+mod client_controller;
+mod buffered_sender;
+mod planetwars;
+
+extern crate bytes;
+
+extern crate tokio_core;
+extern crate tokio_io;
+extern crate tokio_process;
+#[macro_use]
+extern crate futures;
 
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
 extern crate serde;
+
 use std::error::Error;
 use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;
 
-use game::*;
-use bot_runner::*;
-use match_runner::*;
-use logger::Logger;
+use tokio_core::reactor::Core;
+use futures::sync::mpsc;
 
-use games::planetwars;
+use std::collections::HashMap;
+use bot_runner::*;
+
+use client_controller::ClientController;
+use planetwars::Controller;
 
 // Load the config and start the game.
 fn main() {
@@ -37,35 +47,35 @@ fn main() {
             std::process::exit(1)
         }
     };
-    let players: PlayerMap<PlayerConfig> = match_description.players
-        .into_iter()
-        .enumerate()
-        .collect();
 
-    let player_names = players.iter().map(|(&num, config)| {
-        let info = PlayerInfo { name: config.name.clone() };
-        (num, info)
+    let mut reactor = Core::new().unwrap();
+
+    let player_names: HashMap<usize, String> = match_description.players
+        .iter()
+        .enumerate()
+        .map(|(num, config)| {
+            (num, config.name.clone())
+        }).collect();
+    
+    let mut bots = spawn_bots(&reactor.handle(), &match_description.players);
+
+    let (handle, chan) = mpsc::unbounded();
+
+    let handles = player_names.iter().map(|(&id, name)| {
+        let bot_handle = bots.remove(name).unwrap();
+        let controller = ClientController::new(id, bot_handle, handle.clone());
+        let ctrl_handle = controller.handle();
+        reactor.handle().spawn(controller);
+        return (id, ctrl_handle);
     }).collect();
 
-    let mut bots = BotRunner::run(&players);
-
-    {
-        let log_file = match_description.log_file.unwrap_or("log.json".to_owned());
-        let config = MatchParams {
-            players: player_names,
-            game_config: match_description.game_config,
-            logger: Logger::new(&log_file),
-        };
-        
-        
-        let mut runner = MatchRunner {
-            players: bots.player_handles(),
-        };
-        let outcome = runner.run::<planetwars::PlanetWars>(config);
-        println!("Outcome: {:?}", outcome);
-    }
-
-    bots.kill();
+    let controller = Controller::new(
+        handles,
+        chan,
+        match_description.game_config
+    ); 
+    
+    reactor.run(controller).unwrap();
 }
 
 #[derive(Serialize, Deserialize)]
