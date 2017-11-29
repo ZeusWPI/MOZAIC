@@ -56,6 +56,7 @@ class Visualizer extends React.Component {
 
   setLog(log) {
     var game = new Game(log);
+    console.log(game);
     this.setState({
       game: game,
       numTurns: game.turns.length - 1,
@@ -79,7 +80,9 @@ class Visualizer extends React.Component {
       this.timer = d3.interval(t => this.nextTurn(), delay);
     }
   }
-
+  componentWillReceiveProps(newprops) {
+    this.setLog(newprops.gamelog);
+  }
   render() {
     let controls = h(Controls, {
       turnNum: this.state.turnNum,
