@@ -29,7 +29,7 @@ use std::collections::HashMap;
 use bot_runner::*;
 
 use client_controller::ClientController;
-use planetwars::Controller;
+use planetwars::{Controller, Client};
 
 // Load the config and start the game.
 fn main() {
@@ -66,7 +66,12 @@ fn main() {
         let controller = ClientController::new(id, bot_handle, handle.clone());
         let ctrl_handle = controller.handle();
         reactor.handle().spawn(controller);
-        return (id, ctrl_handle);
+
+        Client {
+            id: id,
+            player_name: name.clone(),
+            handle: ctrl_handle,
+        }
     }).collect();
 
     let controller = Controller::new(

@@ -9,8 +9,8 @@ use serde_json;
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
-use planetwars::logger::PlanetWarsLogger;
-use planetwars::serializer::serialize_rotated;
+use planetwars::logger::JsonLogger;
+use planetwars::serializer::{serialize, serialize_rotated};
 use planetwars::protocol as proto;
 
 
@@ -19,7 +19,7 @@ use planetwars::protocol as proto;
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    logger: PlanetWarsLogger,
+    logger: JsonLogger,
     
     // Ids of players which we need a command for
     waiting_for: HashSet<usize>,
@@ -40,34 +40,59 @@ enum MoveError {
     NotEnoughShips,
 }
 
+pub struct Client {
+    pub id: usize,
+    pub player_name: String,
+    pub handle: UnboundedSender<String>,
+}
+
 impl Controller {
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
-    pub fn new(clients: HashMap<usize, UnboundedSender<String>>,
+    pub fn new(clients: Vec<Client>,
                chan: UnboundedReceiver<ClientMessage>,
                conf: Config,)
                -> Self
     {
         let state = conf.create_game(clients.len());
 
-        let mut logger = PlanetWarsLogger::new("log.json");
-        logger.log(&state).expect("[PLANET_WARS] logging failed");
+        let mut logger = JsonLogger::new("log.json");
+        
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
+
+        let mut client_handles = HashMap::new();
+        let mut player_names = Vec::new();
+
+        for client in clients.into_iter() {
+            client_handles.insert(client.id, client.handle);
+            player_names.push(client.player_name);
+        }
+
+        let game_info = proto::GameInfo {
+            players: player_names,
+        };
+
+        logger.log_json(&game_info)
+            .expect("[PLANET_WARS] logging game info failed");
+        logger.log_json(&serialize(&state))
+            .expect("[PLANET_WARS] logging failed");
 
         let mut controller = Controller {
             state: state,
             logger: logger,
             planet_map: planet_map,
 
-            waiting_for: HashSet::with_capacity(clients.len()),
-            commands: HashMap::with_capacity(clients.len()),
+            waiting_for: HashSet::new(),
+            commands: HashMap::new(),
 
-            client_handles: clients,
+            client_handles: client_handles,
             client_msgs: chan,
         };
+
+
         controller.prompt_players();
         return controller;
     }
@@ -81,7 +106,8 @@ impl Controller {
         self.handle_commands();
         self.state.step();
 
-        self.logger.log(&self.state).expect("[PLANET WARS] logging failed");
+        self.logger.log_json(&serialize(&self.state))
+            .expect("[PLANET WARS] logging failed");
 
         if !self.state.is_finished() {
             self.prompt_players();

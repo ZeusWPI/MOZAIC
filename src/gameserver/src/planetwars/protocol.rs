@@ -23,6 +23,11 @@ pub struct State {
     pub expeditions: Vec<Expedition>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GameInfo {
+    pub players: Vec<String>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Command {
     pub moves: Vec<Move>,
