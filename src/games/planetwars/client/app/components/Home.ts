@@ -7,6 +7,7 @@ import { Visualizer } from './visualizer/index';
 import { GameSetup } from './gameSetup/GameSetup';
 import { GamePlayer } from './gamePlayer/GamePlayer';
 
+
 let styles = require('./Home.scss');
 
 interface State { 
@@ -18,7 +19,8 @@ interface Props { };
 export default class Home extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
-    this.state = {};
+    this.state = {
+    };
   }
 
   render() {
@@ -30,7 +32,10 @@ export default class Home extends React.Component<Props, State> {
       ]),
       div(`.${styles.gamePlayer}`, [
         h(GamePlayer, {
-          configPath: this.state.configPath
+          configPath: this.state.configPath,
+          callback: () => {
+            // TODO: start visualizer on log.json
+          }
         })
       ])
       // div(`.${styles.visualizer}`, [h(Visualizer)]),

@@ -11,6 +11,7 @@ const styles = require('./GamePlayer.scss');
 
 interface Props {
   configPath?: path.ParsedPath,
+  callback: Function,
 };
 
 interface State { 
@@ -48,6 +49,8 @@ export class GamePlayer extends React.Component<Props, State> {
   }
 
   play(){
+    // TODO: this logic should not be in the display code.
+    // the proper way to go about this would probably be a redux middleware.
     let p = <path.ParsedPath> this.props.configPath;
     let execPath = path.resolve('bin', 'bot_driver');
     console.log(execPath);
@@ -56,7 +59,7 @@ export class GamePlayer extends React.Component<Props, State> {
       if(code) {
         alert(`child process exited with code ${code}`);
       } else {
-        alert(`Game played successfully!`)
+        this.props.callback();
       }
     });
     this.setState({ 
