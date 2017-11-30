@@ -15,6 +15,11 @@ class Game {
 
   parseTurns(json) {
     let turns_json = json.trim().split('\n');
+    let meta_json = turns_json.shift();
+
+    this.metaData = JSON.parse(meta_json);
+    console.log(this.metaData);
+    this.players = this.metaData.players;
     this.turns = turns_json.map(turn_json => {
       let obj = JSON.parse(turn_json);
       return new Turn(obj, this);
@@ -49,17 +54,17 @@ class Game {
 class Turn {
   constructor(turn, game) {
     this.game = game;
-    this.playerMap = new Map();
+    this.playerMap = [];
     this.planetMap = new Map();
 
-    this.players = this.parsePlayers(turn.players);
+    this.players = this.initPlayers(game.players);
     this.planets = this.parsePlanets(turn.planets);
     this.expeditions = this.parseExpeditions(turn.expeditions);
     this.calculateScores();
   }
 
-  parsePlayers(player_names) {
-    return player_names.map(name => {
+  initPlayers(player_names) {
+    return player_names.map((name, index) => {
       let player = {
         name: name,
         color: this.game.playerColor(name),
@@ -67,7 +72,7 @@ class Turn {
         ship_count: 0,
         planet_count: 0
       };
-      this.playerMap.set(name, player);
+      this.playerMap[index] = player;
       return player;
     });
   }
@@ -79,14 +84,14 @@ class Turn {
       return planet;
     });
   }
-  
+
   parsePlanet(repr) {
     return {
       name: repr.name,
       x: repr.x,
       y: repr.y,
       ship_count: repr.ship_count,
-      owner: this.playerMap.get(repr.owner),
+      owner: this.playerMap[repr.owner - 1],
       type: this.game.planetType(repr.name),
       size: 1
     };
@@ -99,7 +104,7 @@ class Turn {
         origin: this.planetMap.get(repr.origin),
         destination: this.planetMap.get(repr.destination),
         ship_count: repr.ship_count,
-        owner: this.playerMap.get(repr.owner),
+        owner: this.playerMap[repr.owner - 1],
         turns_remaining: repr.turns_remaining
       };
     });
