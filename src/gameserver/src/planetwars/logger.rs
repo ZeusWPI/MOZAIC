@@ -3,40 +3,15 @@ use std::fs::File;
 use serde::Serialize;
 use serde_json;
 
-use planetwars::PlanetWars;
-use planetwars::serializer::serialize;
-
-
-// TODO: it is not hard to see a common pattern here.
-// A logger trait might prove an useful abstraction.
-
-pub struct PlanetWarsLogger {
-    logger: JSONLogger,
-}
-
-impl PlanetWarsLogger {
-    pub fn new(file_name: &str) -> Self {
-        PlanetWarsLogger {
-            logger: JSONLogger::new(file_name),
-        }
-    }
-
-    pub fn log(&mut self, state: &PlanetWars) -> Result<()> {
-        let repr = serialize(state);
-        return self.logger.log_json(&repr);
-    }
-}
-
-
 /// A logger that logs to JSON-lines
 #[derive(Debug)]
-pub struct JSONLogger {
+pub struct JsonLogger {
     handle: LineWriter<File>,
 }
 
-impl JSONLogger {
+impl JsonLogger {
     pub fn new(file_name: &str) -> Self {
-        JSONLogger {
+        JsonLogger {
             handle: LineWriter::new(File::create(file_name).unwrap()),
         }
     }

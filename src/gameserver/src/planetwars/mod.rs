@@ -10,4 +10,4 @@ pub use self::rules::PlanetWars;
 pub use self::protocol::Map;
 pub use self::config::Config;
 
-pub use self::controller::Controller;
+pub use self::controller::{Controller, Client};
