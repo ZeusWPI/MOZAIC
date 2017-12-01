@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 const d3 = require('d3');
 const React = require('react');
 const h = require('react-hyperscript');
@@ -22,10 +24,14 @@ const Renderer = require('./renderer');
 const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
-class Visualizer extends React.Component {
+export class Visualizer extends React.Component {
 
   constructor(props) {
     super(props);
+    if(props.gamelog) {
+      jsonlog = fs.readFileSync(props.gamelog.dir + "/" + props.gamelog.name + props.gamelog.ext)
+      this.setLog(jsonlog)
+    }
     this.state = {
       hide_card: true,
       turnNum: 0,
@@ -137,4 +143,4 @@ class Visualizer extends React.Component {
   }
 }
 
-module.exports = Visualizer;
+// module.exports = Visualizer;
