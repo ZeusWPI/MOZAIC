@@ -18,7 +18,7 @@ class Game {
     let meta_json = turns_json.shift();
 
     this.metaData = JSON.parse(meta_json);
-    console.log(this.metaData);
+    
     this.players = this.metaData.players;
     this.turns = turns_json.map(turn_json => {
       let obj = JSON.parse(turn_json);

@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as React from 'react';
+import * as d3 from 'd3';
 
-const d3 = require('d3');
-const React = require('react');
 const h = require('react-hyperscript');
 const {
   div,
@@ -26,7 +26,7 @@ const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
 interface VisualizerProps {
-  gamelog?: path.ParsedPath
+  gamelog: path.ParsedPath
 }
 
 interface VisualizerState {
@@ -39,13 +39,9 @@ interface VisualizerState {
 }
 
 export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
+  timer: d3.timer;
   constructor(props: VisualizerProps) {
-    //  @ts-ignore
     super(props);
-    if(props.gamelog) {
-      let jsonlog:Buffer = fs.readFileSync(props.gamelog.dir + "/" + props.gamelog.name + props.gamelog.ext);
-      this.setLog(jsonlog)
-    }
     this.state = {
       hide_card: true,
       turnNum: 0,
@@ -55,7 +51,11 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       game: null
     };
   }
-
+  componentDidMount() {
+    let jsonlog:string = (fs.readFileSync(this.props.gamelog.dir + "/" + this.props.gamelog.base)).toString();
+    this.setLog(jsonlog);
+    this.setPlaying(true);
+  }
   // TODO: this might not be the best way to do this
   setTurn(num:number) {
     let turnNum = Math.min(num, this.state.numTurns);
@@ -74,7 +74,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     });
   }
 
-  setLog(log:Buffer) {
+  setLog(log:string) {
     var game = new Game(log);
     console.log(game);
     this.setState({
@@ -101,11 +101,8 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     }
   }
   componentWillReceiveProps(props:VisualizerProps) {
-    if (props.gamelog)
-    {
-      let jsonlog:Buffer = fs.readFileSync(props.gamelog.dir + "/" + props.gamelog.name + props.gamelog.ext);
-      this.setLog(jsonlog)
-    }
+    let jsonlog:string = (fs.readFileSync(props.gamelog.dir + "/" + props.gamelog.base)).toString();
+    this.setLog(jsonlog)
   }
   render() {
     let controls = h(Controls, {
@@ -116,7 +113,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       setPlaying: (v:boolean) => this.setPlaying(v),
       setTurn: (t:number) => this.setTurn(t),
       setSpeed: (s:number) => this.setSpeed(s),
-      setLog: (l:Buffer) => this.setLog(l)
+      setLog: (l:string) => this.setLog(l)
     });
 
     if(!this.state.game){

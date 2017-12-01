@@ -12,6 +12,7 @@ let styles = require('./Home.scss');
 
 interface State {
   configPath?: path.ParsedPath,
+  gamelog: path.ParsedPath,
   configMode: boolean
 }
 
@@ -23,33 +24,32 @@ export default class Home extends React.Component<Props, State> {
     super(props);
     this.state = {
       configMode: true,
-      configPath: {root: "C:\\", dir: "C:\\Users\\robbe\\Documents\\MOZAIC\\src\\games\\planetwars\\client\\configs", base: "doraBig.json", ext: ".json", name: "doraBig"}
+      gamelog: {root: "C:\\", dir: "C:\\Users\\robbe\\Documents\\MOZAIC\\src\\games\\planetwars\\client\\", base: "log.json", ext: ".json", name: "log"}
     };
   }
 
   render() {
-    // if(this.state.configMode) {
-    //   return div(`.${styles.homePage}`, [
-    //     div(`.${styles.gameSetup}`, [
-    //       h(GameSetup, {
-    //         onReady: (p: path.ParsedPath) => this.setState({configPath: p})
-    //       })
-    //     ]),
-    //     div(`.${styles.gamePlayer}`, [
-    //       h(GamePlayer, {
-    //         configPath: this.state.configPath,
-    //         callback: () => {
-    //           this.setState({ configMode: false });
-    //         }
-    //       })
-    //     ])
-    //     // div(`.${styles.visualizer}`, [h(Visualizer)]),
-    //   ])
-    // } else {
-        // return h(Visualizer as any);
-    // }
-      console.log(typeof(Visualizer as React.Component));
-    return div()//h((Visualizer as React.Component), { gamelog: this.state.configPath} as VisualizerProps )
+    if(this.state.configMode) {
+      return div(`.${styles.homePage}`, [
+        div(`.${styles.gameSetup}`, [
+          h(GameSetup, {
+            onReady: (p: path.ParsedPath) => this.setState({configPath: p})
+          })
+        ]),
+        div(`.${styles.gamePlayer}`, [
+          h(GamePlayer, {
+            configPath: this.state.configPath,
+            callback: () => {
+              this.setState({ configMode: false });
+            }
+          })
+        ])
+        // return h("div", [h(Visualizer)]);
+      ])
+    } else {
+      return div(`.${styles.visualizer}`, [h(Visualizer, <any>{ gamelog: this.state.gamelog })]);
+    }
+      // console.log(typeof(Visualizer as React.Component));
   }
 }
 
