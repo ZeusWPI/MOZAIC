@@ -24,7 +24,7 @@ export default class Home extends React.Component<Props, State> {
     super(props);
     this.state = {
       configMode: true,
-      gamelog: {root: "C:\\", dir: "C:\\Users\\robbe\\Documents\\MOZAIC\\src\\games\\planetwars\\client\\", base: "log.json", ext: ".json", name: "log"}
+      gamelog: path.parse("./log.json")
     };
   }
 
