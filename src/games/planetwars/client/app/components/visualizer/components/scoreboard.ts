@@ -1,9 +1,9 @@
-import Game from "./game"
-import Turn from "./turn"
-import { Player } from "./interfaces"
-import * as React from "react"
+import Game from "./game";
+import Turn from "./turn";
+import { Player } from "./interfaces";
+import * as React from "react";
+import * as d3 from "d3";
 
-const d3 = require('d3');
 const h = require('react-hyperscript');
 const {
   div,
@@ -61,11 +61,11 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
     if (this.props.game) {
       //if(!this.scores)
       this.scores = this.state.scores;
-      /*
-      this.scores.forEach((score, i) => {
+
+      this.scores.forEach((score:Score, i:number) => {
         score.player.ship_count = this.state.scores[i].player.ship_count;
         score.player.planet_count = this.state.scores[i].player.planet_count;
-      });*/
+      });
       this.draw();
     }
   }
@@ -88,6 +88,7 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
   }
 
   draw() {
+    d3.select(this.svg).selectAll('*').remove();
     var scores:any = d3.select(this.svg).selectAll('.score').data(this.scores);
 
     var container:any = scores.enter().append('g').attr('class', 'score');
