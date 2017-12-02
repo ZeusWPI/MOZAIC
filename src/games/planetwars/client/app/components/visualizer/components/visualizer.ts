@@ -63,6 +63,9 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     let turnNum = Math.min(num, this.state.numTurns);
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
+      if(turnNum > 0) {
+        this.setState({ hide_card: false });
+      }
     }
     this.setState({ turnNum: turnNum });
   }
@@ -147,11 +150,11 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span(`${styles.winner}`, 'winner'), ' wins!'])
+        p(['Game over', h('br'), span(`${styles.winner}`, this.state.game.winner.name), ' wins!'])
       ])
     });
 
-    return div(`${styles.visualizerRootNode}`, [
+    return div(`.${styles.visualizerRootNode}`, [
       controls,
       scoreboard,
       renderer,

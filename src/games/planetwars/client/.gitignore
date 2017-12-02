@@ -51,3 +51,6 @@ main.js.map
 
 # Configuration files
 configs
+
+# Gamelog
+log.json
