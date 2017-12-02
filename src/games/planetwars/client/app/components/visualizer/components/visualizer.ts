@@ -54,6 +54,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   componentDidMount() {
     let p = path.format(this.props.gamelog);
     let jsonLog = fs.readFileSync(p).toString();
+    this.setLog(jsonLog);
     this.setPlaying(true);
   }
   // TODO: this might not be the best way to do this
