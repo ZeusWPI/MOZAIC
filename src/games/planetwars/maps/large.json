@@ -1,35 +1,29 @@
 {
-    "players": [
-        "player_1",
-        "player_2",
-        "player_3",
-        "player_4"
-    ],
     "planets": [
         {
             "name": "OJCKCVKJGJ",
-            "owner": "player_1",
+            "owner": 1,
             "ship_count": 1,
             "x": 78,
             "y": 31
         },
         {
             "name": "OTJPKJXLQX",
-            "owner": "player_2",
+            "owner": 2,
             "ship_count": 1,
             "x": 30,
             "y": 74
         },
         {
             "name": "RSSGYXGAIS",
-            "owner": "player_3",
+            "owner": 3,
             "ship_count": 1,
             "x": 48,
             "y": 80
         },
         {
             "name": "LWMVSTXKRV",
-            "owner": "player_4",
+            "owner": 4,
             "ship_count": 1,
             "x": 19,
             "y": 96

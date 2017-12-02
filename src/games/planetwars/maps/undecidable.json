@@ -1,21 +1,17 @@
 {
-    "players": [
-        "player_1",
-        "player_2"
-    ],
     "planets": [
         {
             "name": "unmoveable object",
             "x": -5,
             "y": 0,
-            "owner": "player_1",
+            "owner": 1,
             "ship_count": 6
         },
         {
             "name": "unstopable force",
             "x": 5,
             "y": 0,
-            "owner": "player_2",
+            "owner": 2,
             "ship_count": 6
         }
     ]
