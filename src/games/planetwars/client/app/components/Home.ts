@@ -3,7 +3,7 @@ import * as path from 'path';
 
 import { h, div } from 'react-hyperscript-helpers';
 
-import { Visualizer } from './visualizer/components/visualizer';
+import { Visualizer } from './visualizer/index';
 import { GameSetup } from './gameSetup/GameSetup';
 import { GamePlayer } from './gamePlayer/GamePlayer';
 
@@ -44,15 +44,9 @@ export default class Home extends React.Component<Props, State> {
             }
           })
         ])
-        // return h("div", [h(Visualizer)]);
       ])
     } else {
       return div(`.${styles.visualizer}`, [h(Visualizer, <any>{ gamelog: this.state.gamelog })]);
     }
-      // console.log(typeof(Visualizer as React.Component));
   }
-}
-
-interface VisualizerProps {
-  gamelog?: path.ParsedPath
 }

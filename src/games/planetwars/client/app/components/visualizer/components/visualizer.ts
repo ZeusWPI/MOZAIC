@@ -52,12 +52,12 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     };
   }
   componentDidMount() {
-    let jsonlog:string = (fs.readFileSync(this.props.gamelog.dir + "/" + this.props.gamelog.base)).toString();
-    this.setLog(jsonlog);
+    let p = path.format(this.props.gamelog);
+    let jsonLog = fs.readFileSync(p).toString();
     this.setPlaying(true);
   }
   // TODO: this might not be the best way to do this
-  setTurn(num:number) {
+  setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
@@ -65,7 +65,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     this.setState({ turnNum: turnNum });
   }
 
-  setSpeed(speed:number) {
+  setSpeed(speed: number) {
     this.setState({ speed: speed }, () => {
       if (this.state.playing) {
         // update timer
@@ -74,7 +74,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     });
   }
 
-  setLog(log:string) {
+  setLog(log: string) {
     var game = new Game(log);
     console.log(game);
     this.setState({
@@ -87,7 +87,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     this.setTurn(this.state.turnNum + 1);
   }
 
-  setPlaying(value:boolean) {
+  setPlaying(value: boolean) {
     this.setState({ playing: value }, () => this.setTimer());
   }
 
@@ -100,9 +100,10 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  componentWillReceiveProps(props:VisualizerProps) {
-    let jsonlog:string = (fs.readFileSync(props.gamelog.dir + "/" + props.gamelog.base)).toString();
-    this.setLog(jsonlog)
+  componentWillReceiveProps(props: VisualizerProps) {
+    let p = path.format(props.gamelog);
+    let jsonLog = fs.readFileSync(p).toString();
+    this.setLog(jsonLog)
   }
   render() {
     let controls = h(Controls, {
@@ -157,5 +158,3 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   }
 }
-
-// module.exports = Visualizer;
