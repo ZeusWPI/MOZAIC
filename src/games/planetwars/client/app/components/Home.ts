@@ -10,9 +10,12 @@ import { GamePlayer } from './gamePlayer/GamePlayer';
 
 let styles = require('./Home.scss');
 
-interface State { 
+interface State {
   configPath?: path.ParsedPath,
+  gamelog: path.ParsedPath,
+  configMode: boolean
 }
+
 
 interface Props { };
 
@@ -20,25 +23,30 @@ export default class Home extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
+      configMode: true,
+      gamelog: path.parse("./log.json")
     };
   }
 
   render() {
-    return div(`.${styles.homePage}`, [
-      div(`.${styles.gameSetup}`, [
-        h(GameSetup, {
-          onReady: (p: path.ParsedPath) => this.setState({configPath: p})
-        })
-      ]),
-      div(`.${styles.gamePlayer}`, [
-        h(GamePlayer, {
-          configPath: this.state.configPath,
-          callback: () => {
-            // TODO: start visualizer on log.json
-          }
-        })
+    if(this.state.configMode) {
+      return div(`.${styles.homePage}`, [
+        div(`.${styles.gameSetup}`, [
+          h(GameSetup, {
+            onReady: (p: path.ParsedPath) => this.setState({configPath: p})
+          })
+        ]),
+        div(`.${styles.gamePlayer}`, [
+          h(GamePlayer, {
+            configPath: this.state.configPath,
+            callback: () => {
+              this.setState({ configMode: false });
+            }
+          })
+        ])
       ])
-      // div(`.${styles.visualizer}`, [h(Visualizer)]),
-    ])
+    } else {
+      return div(`.${styles.visualizer}`, [h(Visualizer, <any>{ gamelog: this.state.gamelog })]);
+    }
   }
 }

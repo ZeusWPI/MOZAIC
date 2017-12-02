@@ -1,5 +1,8 @@
-const d3 = require('d3');
-const React = require('react');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as React from 'react';
+import * as d3 from 'd3';
+
 const h = require('react-hyperscript');
 const {
   div,
@@ -22,9 +25,22 @@ const Renderer = require('./renderer');
 const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
-class Visualizer extends React.Component {
+interface VisualizerProps {
+  gamelog: path.ParsedPath
+}
 
-  constructor(props) {
+interface VisualizerState {
+  hide_card: boolean,
+  turnNum: number,
+  numTurns: number,
+  speed: number,
+  playing: boolean,
+  game: any
+}
+
+export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
+  timer: d3.timer;
+  constructor(props: VisualizerProps) {
     super(props);
     this.state = {
       hide_card: true,
@@ -35,9 +51,13 @@ class Visualizer extends React.Component {
       game: null
     };
   }
-
+  componentDidMount() {
+    let p = path.format(this.props.gamelog);
+    let jsonLog = fs.readFileSync(p).toString();
+    this.setPlaying(true);
+  }
   // TODO: this might not be the best way to do this
-  setTurn(num) {
+  setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
@@ -45,7 +65,7 @@ class Visualizer extends React.Component {
     this.setState({ turnNum: turnNum });
   }
 
-  setSpeed(speed) {
+  setSpeed(speed: number) {
     this.setState({ speed: speed }, () => {
       if (this.state.playing) {
         // update timer
@@ -54,7 +74,7 @@ class Visualizer extends React.Component {
     });
   }
 
-  setLog(log) {
+  setLog(log: string) {
     var game = new Game(log);
     console.log(game);
     this.setState({
@@ -67,7 +87,7 @@ class Visualizer extends React.Component {
     this.setTurn(this.state.turnNum + 1);
   }
 
-  setPlaying(value) {
+  setPlaying(value: boolean) {
     this.setState({ playing: value }, () => this.setTimer());
   }
 
@@ -77,11 +97,13 @@ class Visualizer extends React.Component {
 
     if (this.state.playing) {
       var delay = 1000 / this.state.speed;
-      this.timer = d3.interval(t => this.nextTurn(), delay);
+      this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  componentWillReceiveProps(newprops) {
-    this.setLog(newprops.gamelog);
+  componentWillReceiveProps(props: VisualizerProps) {
+    let p = path.format(props.gamelog);
+    let jsonLog = fs.readFileSync(p).toString();
+    this.setLog(jsonLog)
   }
   render() {
     let controls = h(Controls, {
@@ -89,10 +111,10 @@ class Visualizer extends React.Component {
       numTurns: this.state.numTurns,
       playing: this.state.playing,
       speed: this.state.speed,
-      setPlaying: v => this.setPlaying(v),
-      setTurn: t => this.setTurn(t),
-      setSpeed: s => this.setSpeed(s),
-      setLog: l => this.setLog(l)
+      setPlaying: (v:boolean) => this.setPlaying(v),
+      setTurn: (t:number) => this.setTurn(t),
+      setSpeed: (s:number) => this.setSpeed(s),
+      setLog: (l:string) => this.setLog(l)
     });
 
     if(!this.state.game){
@@ -136,5 +158,3 @@ class Visualizer extends React.Component {
 
   }
 }
-
-module.exports = Visualizer;
