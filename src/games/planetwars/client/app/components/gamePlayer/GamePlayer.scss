@@ -1,0 +1,21 @@
+:local {
+  .gamePlayer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+    .playButton {
+      border-radius: 50%;
+      width: 200px;
+      height: 200px; 
+      /* width and height can be anything, as long as they're equal */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: whitesmoke;
+      font-size: 50px;
+      background-color: #b5bd68;
+    }
+  }
+}

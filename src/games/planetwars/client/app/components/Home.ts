@@ -1,16 +1,52 @@
 import * as React from 'react';
+import * as path from 'path';
+
+import { h, div } from 'react-hyperscript-helpers';
 
 import { Visualizer } from './visualizer/index';
-import { h } from 'react-hyperscript-helpers';
+import { GameSetup } from './gameSetup/GameSetup';
+import { GamePlayer } from './gamePlayer/GamePlayer';
 
-// let styles = require('./Home.scss');
 
-export default class Home extends React.Component {
+let styles = require('./Home.scss');
+
+interface State {
+  configPath?: path.ParsedPath,
+  gamelog: path.ParsedPath,
+  configMode: boolean
+}
+
+
+interface Props { };
+
+export default class Home extends React.Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = {
+      configMode: true,
+      gamelog: path.parse("./log.json")
+    };
+  }
+
   render() {
-    // TODO: The visualizer should of course not be the only component here,
-    // we need things like a navbar, config editing, etc...
-    // We should make a container with a default layout.
-    // Could be the HomePage (this), but probably better something different.
-    return h(Visualizer)
+    if(this.state.configMode) {
+      return div(`.${styles.homePage}`, [
+        div(`.${styles.gameSetup}`, [
+          h(GameSetup, {
+            onReady: (p: path.ParsedPath) => this.setState({configPath: p})
+          })
+        ]),
+        div(`.${styles.gamePlayer}`, [
+          h(GamePlayer, {
+            configPath: this.state.configPath,
+            callback: () => {
+              this.setState({ configMode: false });
+            }
+          })
+        ])
+      ])
+    } else {
+      return div(`.${styles.visualizer}`, [h(Visualizer, <any>{ gamelog: this.state.gamelog })]);
+    }
   }
 }

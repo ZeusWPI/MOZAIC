@@ -1,2 +1,18 @@
+// Fix Bootstrap Sass & Font Loading
+$bs-icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
+$bootstrap-sass-asset-helper: true;
+// @import '~bootstrap-sass/assets/stylesheets/_bootstrap.scss';
+// @font-face {
+//     font-family: 'Glyphicons Halflings';
+//     src: url(#{$bs-icon-font-path}#{$icon-font-name}.ttf) format('truetype');
+//     src: url(#{$bs-icon-font-path}#{$icon-font-name}.eot?#iefix)
+//     format('embedded-opentype'),
+//     url(#{$bs-icon-font-path}#{$icon-font-name}.woff) format('woff'),
+//     url(#{$bs-icon-font-path}#{$icon-font-name}.ttf) , format('truetype'),
+//     url(#{$bs-icon-font-path}#{$icon-font-name}.svg##{$icon-font-svg-id})
+//     format('svg');
+// }
+
+// Fix Font Awesome Font Loading
 $fa-font-path: "~font-awesome/fonts";
 @import "~font-awesome/scss/font-awesome.scss";

@@ -1,0 +1,27 @@
+:local {
+  .display {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    width: 100%;
+    .streamField {
+      margin-top: 5px;
+      margin-bottom: 5px;
+      height: 100%;
+      background-color: #373b41;
+      color: #c5c8c6;
+      overflow: scroll;
+      white-space: pre;
+      > p {
+        padding-left: 20px;
+      }
+    }
+    .stdout {
+      border: 3px #b5bd68 solid;
+    }
+    .stderr {
+      border: 3px #a54242 solid;
+    }
+  }
+}

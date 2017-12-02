@@ -1,16 +1,17 @@
 :local {
-  .container {
-    position: absolute;
-    top: 30%;
-    left: 10px;
-    text-align: center;
-  }
-
-  .container h2 {
-    font-size: 5rem;
-  }
-
-  .container a {
-    font-size: 1.4rem;
+  .homePage {
+    display: flex;
+    flex-direction: row;
+    .gameSetup {
+      width: 50%;
+      margin-right: 10px;
+    }
+    .gamePlayer {
+      width: 50%;
+      margin-left: 10px;
+    }
+    .visualizer {
+      width: 60%;
+    }
   }
 }
