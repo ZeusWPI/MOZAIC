@@ -50,26 +50,19 @@ fn main() {
 
     let mut reactor = Core::new().unwrap();
 
-    let player_names: HashMap<usize, String> = match_description.players
-        .iter()
-        .enumerate()
-        .map(|(num, config)| {
-            (num, config.name.clone())
-        }).collect();
-    
     let mut bots = spawn_bots(&reactor.handle(), &match_description.players);
 
     let (handle, chan) = mpsc::unbounded();
 
-    let handles = player_names.iter().map(|(&id, name)| {
-        let bot_handle = bots.remove(name).unwrap();
-        let controller = ClientController::new(id, bot_handle, handle.clone());
+    let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
+        let bot_handle = bots.remove(&desc.name).unwrap();
+        let controller = ClientController::new(num, bot_handle, handle.clone());
         let ctrl_handle = controller.handle();
         reactor.handle().spawn(controller);
 
         Client {
-            id: id,
-            player_name: name.clone(),
+            id: num,
+            player_name: desc.name.clone(),
             handle: ctrl_handle,
         }
     }).collect();
