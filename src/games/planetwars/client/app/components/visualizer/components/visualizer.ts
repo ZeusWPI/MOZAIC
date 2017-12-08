@@ -39,7 +39,7 @@ interface VisualizerState {
 }
 
 export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
-  timer: d3.Timer;
+  timer:any;
   constructor(props: VisualizerProps) {
     super(props);
     this.state = {
