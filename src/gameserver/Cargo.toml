@@ -15,4 +15,4 @@ tokio-process = "0.1.1"
 futures = "0.1.14"
 bytes = "0.4.5"
 slog = { version = "2.1.1", features = ["nested-values"] }
-slog-json = "2.2.0"
+slog-json = { version = "2.2.0", features = ["nested-values"] }
