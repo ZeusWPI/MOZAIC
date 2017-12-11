@@ -38,6 +38,7 @@ enum MoveError {
     NonexistentPlanet,
     PlanetNotOwned,
     NotEnoughShips,
+    ZeroShipMove,
 }
 
 pub struct Client {
@@ -199,6 +200,10 @@ impl Controller {
             return Err(MoveError::NotEnoughShips);
         }
 
+        if mv.ship_count == 0 {
+            return Err(MoveError::ZeroShipMove);
+        }
+
         Ok(Dispatch {
             origin: origin_id,
             target: target_id,
@@ -214,6 +219,7 @@ impl Future for Controller {
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
+            // msg nie goed return iets anders
             self.handle_message(msg.client_id, msg.message);
             self.step();
         }
