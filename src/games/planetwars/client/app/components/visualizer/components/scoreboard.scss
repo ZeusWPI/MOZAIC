@@ -1,6 +1,15 @@
 :local {
-    .scoreboard {
-      position: absolute;
-      right: 0;
-    }
+  .scoreboard {
+    border: 1px solid black;
+    background-color: #ffffff;
+    position: absolute;
+    right: 0;
+    top: 3%;
+    padding: 1%;
+    font-family: sans-serif;
+    font-size: 1vw;
+  }
+  .playerdata {
+
+  }
 }

@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 import * as d3 from 'd3';
+import Game from './game';
+import Scoreboard from "./scoreboard"
 
 const h = require('react-hyperscript');
 const {
@@ -16,8 +18,6 @@ const {
 } = require('hyperscript-helpers')(h);
 
 const Controls = require('./controls');
-const Game = require('./game');
-const Scoreboard = require('./scoreboard');
 const ReactUtils = require('../util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
@@ -39,7 +39,7 @@ interface VisualizerState {
 }
 
 export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
-  timer: d3.timer;
+  timer:any;
   constructor(props: VisualizerProps) {
     super(props);
     this.state = {
@@ -51,17 +51,22 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       game: null
     };
   }
+
   componentDidMount() {
     let p = path.format(this.props.gamelog);
     let jsonLog = fs.readFileSync(p).toString();
     this.setLog(jsonLog);
     this.setPlaying(true);
   }
+
   // TODO: this might not be the best way to do this
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
+      if(turnNum > 0) {
+        this.setState({ hide_card: false });
+      }
     }
     this.setState({ turnNum: turnNum });
   }
@@ -101,11 +106,11 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  componentWillReceiveProps(props: VisualizerProps) {
-    let p = path.format(props.gamelog);
-    let jsonLog = fs.readFileSync(p).toString();
-    this.setLog(jsonLog)
-  }
+  // componentWillReceiveProps(props: VisualizerProps) {
+  //   let p = path.format(props.gamelog);
+  //   let jsonLog = fs.readFileSync(p).toString();
+  //   this.setLog(jsonLog)
+  // }
   render() {
     let controls = h(Controls, {
       turnNum: this.state.turnNum,
@@ -146,11 +151,11 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span(`${styles.winner}`, 'winner'), ' wins!'])
+        p(['Game over', h('br'), span(`${styles.winner}`, this.state.game.winner.name), ' wins!'])
       ])
     });
 
-    return div(`${styles.visualizerRootNode}`, [
+    return div(`.${styles.visualizerRootNode}`, [
       controls,
       scoreboard,
       renderer,
