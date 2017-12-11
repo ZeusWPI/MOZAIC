@@ -35,9 +35,10 @@ pub struct Controller {
 // TODO: add some more information here
 #[derive(Debug)]
 enum MoveError {
-    NonexistentPlanet,
-    PlanetNotOwned,
+    OriginDoesNotExist,
+    DestinationDoesNotExist,
     NotEnoughShips,
+    OriginNotOwned,
     ZeroShipMove,
 }
 
@@ -186,14 +187,14 @@ impl Controller {
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
-            .ok_or(MoveError::NonexistentPlanet)?;
+            .ok_or(MoveError::OriginDoesNotExist)?;
 
         let target_id = *self.planet_map
             .get(&mv.destination)
-            .ok_or(MoveError::NonexistentPlanet)?;
+            .ok_or(MoveError::DestinationDoesNotExist)?;
 
         if self.state.planets[origin_id].owner() != Some(player_id) {
-            return Err(MoveError::PlanetNotOwned);
+            return Err(MoveError::OriginNotOwned);
         }
 
         if self.state.planets[origin_id].ship_count() < mv.ship_count {
