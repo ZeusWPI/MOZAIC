@@ -9,8 +9,7 @@ use serde_json;
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
-use planetwars::logger::PlanetWarsLogger;
-use planetwars::serializer::serialize_rotated;
+use planetwars::serializer::{serialize, serialize_rotated};
 use planetwars::protocol as proto;
 
 use slog;
@@ -25,15 +24,6 @@ use std::fs::File;
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-
-    // TODO: actually, we probably want to dump the game states into
-    // the main log as well, once that slog will allow nesting json
-    // values. We'd tag the messages that contain a game state as such,
-    // so that they can easily be extracted for replay logs or similar.
-    // This way, we never have to 'reconstruct'' a log, because
-    // everything will be in the same, sequential log.
-    // i.e. the main log will tell the entire story.
-    pw_logger: PlanetWarsLogger,
     logger: slog::Logger,
 
 
@@ -66,9 +56,6 @@ impl Controller {
     {
         let state = conf.create_game(clients.len());
 
-        let mut pw_logger = PlanetWarsLogger::new("game_log.json");
-        pw_logger.log(&state).expect("[PLANET_WARS] logging failed");
-
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
@@ -83,7 +70,6 @@ impl Controller {
         let mut controller = Controller {
             state: state,
 
-            pw_logger: pw_logger,
             planet_map: planet_map,
             logger: logger,
 
@@ -93,8 +79,14 @@ impl Controller {
             client_handles: clients,
             client_msgs: chan,
         };
+        controller.log_state();
         controller.prompt_players();
         return controller;
+    }
+
+    fn log_state(&self) {
+        info!(self.logger, "game state";
+            "state" => serialize(&self.state));
     }
 
     /// Advance the game by one turn.
@@ -102,10 +94,10 @@ impl Controller {
         self.state.repopulate();
         self.execute_messages();
         self.state.step();
-        self.pw_logger.log(&self.state).expect("[PLANET WARS] logging failed");
+
+        self.log_state();
 
         if !self.state.is_finished() {
-            info!(self.logger, "starting turn"; "turn" => self.state.turn_num);
             self.prompt_players();
         }
     }
