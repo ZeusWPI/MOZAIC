@@ -1,10 +1,13 @@
 import * as React from 'react';
 import { h } from "react-hyperscript-helpers"
 
+import BotsConfig from "../components/bots/BotsConfig"
+import BotsList from "../components/bots/BotsList"
+
 let styles = require("./Bots.scss");
 
 interface BotsProps {
-
+  bot:string
 }
 
 interface BotsState {
@@ -16,12 +19,9 @@ export default class Bots extends React.Component<BotsProps, BotsState> {
     super(props);
   }
   render() {
-    // TODO: Load bots from machine
-    let bots = ["Testbot", "Testbot2"]
-
-    return h("div", [
-      h("table", bots.map((botName:string) => h("tr", [botName, h("button", ["remove"]), h("button", ["edit"])].map((x:any) => h("td", [x]))))),
-      h("button", ["Add new bot"])
-    ]);
+    return h("div", `.${styles.bots}`, [
+      h("div", `.${styles.botslist}`, [h(BotsList)]),
+      h("div", `.${styles.botsconfig}`, [h(BotsConfig, { botName: this.props.bot })])
+    ])
   }
 }

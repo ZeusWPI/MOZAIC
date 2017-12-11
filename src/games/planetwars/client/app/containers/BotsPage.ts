@@ -4,12 +4,21 @@ import { h } from 'react-hyperscript-helpers';
 
 import Bots from "../components/Bots"
 
-export class BotsPage extends React.Component<RouteComponentProps<any>, void> {
+interface BotsPageProps {
+  match: any
+}
+
+interface BotsPageState {
+
+}
+
+export default class BotsPage extends React.Component<BotsPageProps, BotsPageState> {
+  constructor(props: BotsPageProps) {
+    super(props);
+  }
   render() {
     return (
-      h(Bots)
+      h(Bots, { bot: this.props.match.params.bot })
     );
   }
 }
-
-export default (BotsPage as any as React.StatelessComponent<RouteComponentProps<any>>);

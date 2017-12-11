@@ -13,7 +13,7 @@ import { h, ul, li } from 'react-hyperscript-helpers';
 let styles = require('./routes.scss');
 
 export default () => (
-    h(App, [
+    h(App, `.${styles.root}`, [
       ul(`.${styles.navbar}`, [
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/home" }, ["Home"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/bots" }, ["Bots"])]),
@@ -30,6 +30,10 @@ export default () => (
         h(Route, {
           path: '/play',
           component: PlayPage
+        }),
+        h(Route, {
+          path: '/bots/:bot',
+          component: BotsPage
         }),
         h(Route, {
           path: '/bots',
