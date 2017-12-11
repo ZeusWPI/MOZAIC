@@ -220,7 +220,6 @@ impl Future for Controller {
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
-            // msg nie goed return iets anders
             self.handle_message(msg.client_id, msg.message);
             self.step();
         }
