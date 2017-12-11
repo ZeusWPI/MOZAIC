@@ -155,6 +155,7 @@
     "webpack-merge": "^2.0.0"
   },
   "dependencies": {
+    "@types/d3": "^4.12.0",
     "@types/react-jsonschema-form": "^0.51.1",
     "bootstrap-sass": "^3.3.7",
     "d3": "^4.11.0",
