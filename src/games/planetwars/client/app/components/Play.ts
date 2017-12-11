@@ -8,7 +8,7 @@ import { GameSetup } from './gameSetup/GameSetup';
 import { GamePlayer } from './gamePlayer/GamePlayer';
 
 
-let styles = require('./Home.scss');
+let styles = require('./Play.scss');
 
 interface State {
   configPath?: path.ParsedPath,
@@ -19,7 +19,7 @@ interface State {
 
 interface Props { };
 
-export default class Home extends React.Component<Props, State> {
+export default class Play extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = {
@@ -30,7 +30,7 @@ export default class Home extends React.Component<Props, State> {
 
   render() {
     if(this.state.configMode) {
-      return div(`.${styles.homePage}`, [
+      return div(`.${styles.playPage}`, [
         div(`.${styles.gameSetup}`, [
           h(GameSetup, {
             onReady: (p: path.ParsedPath) => this.setState({configPath: p})
