@@ -54,3 +54,6 @@ configs
 
 # Gamelog
 log.json
+
+# Bots
+bots/*
