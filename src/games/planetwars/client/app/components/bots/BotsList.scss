@@ -15,3 +15,12 @@
 .botsentry:hover {
   background-color: grey;
 }
+
+.botlistitem:hover button {
+  display: inline;
+}
+
+.removebot {
+  display: none;
+  float: right;
+}

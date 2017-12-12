@@ -18,8 +18,8 @@ export default () => (
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/home" }, ["Home"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/bots" }, ["Bots"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/play" }, ["Play"])]),
-        li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/history" }, ["Game History"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/queue" }, ["Queue"])]),
+        li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/history" }, ["Game History"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/about" }, ["About"])])
       ]),
       h(Switch, [
