@@ -2,12 +2,21 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { h } from 'react-hyperscript-helpers';
 
-export class AboutPage extends React.Component<RouteComponentProps<any>, void> {
+import About from "../components/About"
+
+interface AboutPageProps {
+
+}
+
+interface AboutPageState {
+
+}
+
+
+export default class AboutPage extends React.Component<AboutPageProps, AboutPageState> {
   render() {
     return (
-      h("div", ["Here be about page"])
+      h(About)
     );
   }
 }
-
-export default (AboutPage as any as React.StatelessComponent<RouteComponentProps<any>>);

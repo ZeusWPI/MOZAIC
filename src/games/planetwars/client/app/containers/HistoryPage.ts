@@ -2,12 +2,21 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { h } from 'react-hyperscript-helpers';
 
-export class HistoryPage extends React.Component<RouteComponentProps<any>, void> {
+import History from "../components/History"
+
+interface HistoryPageProps {
+
+}
+
+interface HistoryPageState {
+
+}
+
+
+export default class HistoryPage extends React.Component<HistoryPageProps, HistoryPageState> {
   render() {
     return (
-      h("div", ["Here be history page"])
+      h(History)
     );
   }
 }
-
-export default (HistoryPage as any as React.StatelessComponent<RouteComponentProps<any>>);

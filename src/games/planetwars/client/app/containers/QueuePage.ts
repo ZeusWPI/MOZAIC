@@ -2,12 +2,21 @@ import * as React from 'react';
 import { RouteComponentProps } from 'react-router';
 import { h } from 'react-hyperscript-helpers';
 
-export class QueuePage extends React.Component<RouteComponentProps<any>, void> {
+import Queue from "../components/Queue"
+
+interface QueuePageProps {
+
+}
+
+interface QueuePageState {
+
+}
+
+
+export default class QueuePage extends React.Component<QueuePageProps, QueuePageState> {
   render() {
     return (
-      h("div", ["Here be queue page"])
+      h(Queue)
     );
   }
 }
-
-export default (QueuePage as any as React.StatelessComponent<RouteComponentProps<any>>);
