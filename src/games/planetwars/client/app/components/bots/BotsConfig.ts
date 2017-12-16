@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import { RouteComponentProps } from 'react-router';
 import { h } from 'react-hyperscript-helpers';
 
+let styles = require("./BotsConfig.scss");
+
 interface BotsConfigProps {
   botName: string,
   rerender: Function
@@ -13,7 +15,8 @@ interface BotsConfigState {
   loadedName?: string,
   name: string,
   cmd: string,
-  args: string[]
+  args: string[],
+  errors: string[]
 }
 
 export default class BotsConfig extends React.Component<BotsConfigProps, BotsConfigState> {
@@ -26,21 +29,27 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
       this.updateState();
     }
     return (
-      h("div", [
-        "Name: ", h("input", { type: "text", value: this.state.name, onChange: (x:any) => this.setState({ name: x.target.value })}),
-        "Command: ", h("input", { type: "text", value: this.state.cmd, onChange: (x:any) => this.setState({ cmd: x.target.value })}),
+      h("form", {
+        onSubmit: () => this.saveBot(),
+      }, [
+        "Name: ", h("input", `.${styles.nameField}`, { type: "text", value: this.state.name, onChange: (x:any) => this.setState({ name: x.target.value })}),
+        "Command: ", h("input", `.${styles.cmdField}`, { type: "text", value: this.state.cmd, onChange: (x:any) => this.setState({ cmd: x.target.value })}),
         "Arguments: ", h(ArgumentFields, {
           args: this.state.args,
           addArg: () => this.addArg(),
           removeArg: (x:number) => this.removeArg(x),
           handleChange: (value:string, num:number) => this.handleArgumentChange(value, num)
         }),
-        h("button", { onClick: () => this.saveBot() }, ["Save"])
-      ])
-    );
-  }
+        h("input", { type:"submit", value: "Save"}),
+        h("ul", `.${styles.errorList}`, this.state.errors.map(
+          (error:string, key:number) =>
+            h("li", `.${styles.errorItem}`, { key: key }, [error])
+        ))
+        ])
+      );
+    }
   setDefaultState() {
-      this.setState({ loadedName: this.props.botName, name:"", cmd:"", args: [""] })
+        this.setState({ loadedName: this.props.botName, name:"", cmd:"", args: [""], errors: [] })
   }
   saveBot() {
     if(!this.checkValid()){
@@ -59,8 +68,22 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
     this.props.rerender();
   }
   checkValid(){
-    // TODO: validate form
-    return true;
+    let errors = []
+    if(!this.state.name) {
+      errors.push("Name cannot be empty");
+    }
+    if(!this.state.cmd) {
+      errors.push("Command cannot be empty");
+    }
+    if(this.state.args.indexOf("") != -1) {
+      errors.push("Please remove empty arguments");
+    }
+    this.setState({ errors: errors });
+    if(errors.length == 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
   addArg() {
     let args = this.state.args;
@@ -80,13 +103,15 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
         loadedName: botData.name,
         name: botData.name,
         cmd: botData.command,
-        args: botData.args
+        args: botData.args,
+        errors: this.state.errors
       }
     } else {
       this.state = {
         name: "",
         cmd: "",
-        args: [""]
+        args: [""],
+        errors: []
       }
     }
   }
@@ -139,6 +164,6 @@ interface ArgumentFieldState {
 
 export class ArgumentField extends React.Component<ArgumentFieldProps, ArgumentFieldState> {
   render() {
-    return h("input", { type:"text", value: this.props.arg, onChange: (x:any) => this.props.handleChange(x.target.value) })
+    return h("input", `.${styles.argField}`, { type:"text", value: this.props.arg, onChange: (x:any) => this.props.handleChange(x.target.value) })
   }
 }
