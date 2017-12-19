@@ -44,6 +44,33 @@ pub struct State {
     pub expeditions: Vec<Expedition>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameInfo {
+    pub players: Vec<String>,
+}
+
+
+impl slog::Value for Command {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 key: slog::Key,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_serde(key, self)
+    }
+}
+
+impl slog::SerdeValue for Command {
+    fn as_serde(&self) -> &erased_serde::Serialize {
+        self
+    }
+
+    fn to_sendable(&self) -> Box<slog::SerdeValue + Send + 'static> {
+        Box::new(self.clone())
+    }
+}
+
 impl slog::Value for State {
     fn serialize(&self,
                  _record: &slog::Record,
@@ -65,11 +92,6 @@ impl slog::SerdeValue for State {
     }
 }
 
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GameInfo {
-    pub players: Vec<String>,
-}
 
 impl slog::Value for GameInfo {
     fn serialize(&self,
