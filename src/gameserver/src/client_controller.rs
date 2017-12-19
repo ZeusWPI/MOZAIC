@@ -12,6 +12,15 @@ use bot_runner::BotHandle;
 use buffered_sender::BufferedSender;
 
 
+error_chain! {
+    errors {
+        ConnectionClosed
+    }
+
+    foreign_links {
+        Io(io::Error);
+    }
+}
 
 pub struct ClientMessage {
     pub client_id: usize,
@@ -24,6 +33,8 @@ pub enum Message {
 }
 
 // TODO: the client controller should also be handed a log handle
+
+
 pub struct ClientController {
     client_id: usize,
     
@@ -58,18 +69,12 @@ impl ClientController {
         }
     }
 
-
+    /// Get a handle to the control channel for this client.
     pub fn handle(&self) -> UnboundedSender<String> {
         self.ctrl_handle.clone()
     }
-    
-    fn handle_commands(&mut self) -> Poll<(), ()> {
-        while let Some(command) = try_ready!(self.ctrl_chan.poll()) {
-            self.sender.send(command);
-        }
-        Ok(Async::Ready(()))
-    }
 
+    /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
         let msg = ClientMessage {
             client_id: self.client_id,
@@ -78,24 +83,51 @@ impl ClientController {
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
 
-    fn handle_client_msgs(&mut self) -> Poll<(), io::Error> {
+    /// Pull messages from the client, and handle them.
+    fn handle_client_msgs(&mut self) -> Poll<(), Error> {
         while let Some(line) = try_ready!(self.client_msgs.poll()) {
             let msg = Message::Data(line);
             self.send_message(msg);
         }
-        Ok(Async::Ready(()))
+        bail!(ErrorKind::ConnectionClosed)
     }
 
+    /// The unit error type of ctrl_chan.poll() means that it won't error. Since
+    /// we can't cast "won't error" to our custom error type, we cannot use the
+    /// try_ready! macro with polling ith ctrl_chan. This method provides an
+    /// adapter to Poll with our error type.
+    fn poll_ctrl_chan(&mut self) -> Poll<Option<String>, Error> {
+        let res = self.ctrl_chan.poll();
+        Ok(res.unwrap())
+    }
+
+    /// Pull commands from the control channel, and handle them. Note: for now
+    /// this should never error, but once we actually handle commands errors
+    /// might be possible.
+    fn handle_commands(&mut self) -> Poll<(), Error> {
+        while let Some(command) = try_ready!(self.poll_ctrl_chan()) {
+            self.sender.send(command);
+        }
+        // Since we entirely control this channel, it should not fail.
+        // If it does, something is very wrong and we should find out what
+        // to do about that.
+        panic!("Command handle broke");
+    }
+
+    /// Try sending messages to the client, in an asynchronous fashion.
     fn write_messages(&mut self) -> Poll<(), io::Error> {
         self.sender.poll()
     }
 
-    fn try_poll(&mut self) -> Result<(), io::Error> {
-        // we own this channel, it should not fail
-        self.handle_commands().unwrap();
+    /// Step the future, allowing errors to be thrown.
+    /// These errors then get handled in the actual poll implementation.
+    fn try_poll(&mut self) -> Poll<(), Error> {
+        try!(self.handle_commands());
         try!(self.handle_client_msgs());
         try!(self.write_messages());
-        Ok(())
+        // TODO: returning NotReady unconditionally here might be a little
+        // dodgy.
+        Ok(Async::NotReady)
     }
 }
 
@@ -104,10 +136,25 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        // disregard errors for now
-        self.try_poll().unwrap();
-        self.try_poll().unwrap();
-        Ok(Async::NotReady)
+        // TODO: errors should be handled
+        Ok(match self.try_poll() {
+            // Returning ready terminates the task. We only want to do that when
+            // an error happens.
+            // TODO: how do we handle graceful disconnects?
+            Ok(Async::Ready(())) => panic!("something bad happened"),
+            Ok(Async::NotReady) => Async::NotReady,
+            Err(_err) => {
+                // TODO: are some errors recoverable?
+                // should they be handled in this method, or ad-hoc?
+                // TODO: log the actual error
+                // Let the game know this client failed.
+                self.send_message(Message::Disconnected);
+                // TODO: what do when this fails?
+                self.write_messages().expect("could not write messages");
+                // terminate the task
+                Async::Ready(())
+            }
+        })
     }
 }
 
@@ -134,7 +181,7 @@ impl Decoder for LineCodec {
     type Item = String;
     type Error = io::Error;
 
-    fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<String>, io::Error> {
+    fn decode(&mut self, buf: &mut BytesMut) -> io::Result<Option<String>> {
         // Check to see if the frame contains a new line
         if let Some(n) = buf.as_ref().iter().position(|b| *b == b'\n') {
             // remove line from buffer
@@ -146,7 +193,9 @@ impl Decoder for LineCodec {
             // Try to decode the line as UTF-8
             return match str::from_utf8(&line.as_ref()) {
                 Ok(s) => Ok(Some(s.to_string())),
-                Err(_) => Err(io::Error::new(io::ErrorKind::Other, "invalid string")),
+                Err(_) => Err(io::Error::new(
+                    io::ErrorKind::Other, "invalid string")
+                ),
             }
         }
 
