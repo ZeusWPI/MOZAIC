@@ -37,9 +37,9 @@ Current and planned features:
 - Rust >= 1.18.0
 - Cargo >= 0.16.0
 
-1. Try to run the botrunner with `cargo run` in the `src\gameserver` directory. It should compile, but fail to play a match.
-1. Run the botrunner again with `cargo run ..\games\planetwars\config_examples\stub.config.json` (still in the `src\gameserver` directory).
-1. It should have generated a log-file `log.json` (or whatever you specified in the config).
+1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
+1. Run the botrunner again with `cargo run ..\planetwars\config_examples\stub.config.json` (still in the `gameserver` directory).
+1. It should have generated a log-file `log.json`.
 1. If it did, great, it works! Check setup below for the client.
 
 ### Client
@@ -47,13 +47,13 @@ Current and planned features:
 Note: Do the setup for the gameserver first
 
 1. Install Node v8 and npm.
-1. Go the `src\games\planetwars\client` directory
+1. Go the `planetwars\client` directory
 1. Install dependencies with `npm install`.
-1. Go the `.\bin` dir and symlink the gameserver with `ln -s ../../../../gameserver/target/release/mozaic_bot_driver`.
+1. Go the `.\bin` dir and symlink the gameserver with `ln -s ../../../gameserver/target/release/mozaic_bot_driver`.
 1. Go pack the `client` dir and run `rpm run dev`.
 1. An electron client should be at your disposal!
 
-We should support Windows, for the symlink run this instead: `mklink bot_driver.exe ..\..\..\..\gameserver\target\release\mozaic_bot_driver`
+We should support Windows, for the symlink run this instead: `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
 
 ## Contact
 
