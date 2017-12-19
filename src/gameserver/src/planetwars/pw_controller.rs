@@ -57,6 +57,10 @@ impl PwController {
         }
     }
 
+    pub fn init(&mut self, step_lock: &mut StepLock){
+        self.prompt_players(step_lock);
+    }
+
     /// Advance the game by one turn.
     pub fn step(&mut self,
                 lock: &mut StepLock,

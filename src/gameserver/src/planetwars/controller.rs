@@ -103,6 +103,7 @@ impl Future for Controller {
     type Error = ();
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
+        self.pw_controller.init(&mut self.step_lock);
         loop {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
