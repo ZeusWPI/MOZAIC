@@ -60,6 +60,14 @@ impl PwController {
         }
     }
 
+    pub fn outcome(&self) -> Option<Vec<usize>> {
+        if self.state.is_finished() {
+            Some(self.state.living_players())
+        } else {
+            None
+        }
+    }
+
     pub fn log_state(&self) {
         // TODO: add turn number
         info!(self.logger, "game state";

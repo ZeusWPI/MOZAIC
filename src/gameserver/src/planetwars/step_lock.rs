@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::mem;
 
+
 pub struct StepLock {
     client_messages: HashMap<usize, String>,
     awaiting_clients: HashSet<usize>,
