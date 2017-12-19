@@ -45,8 +45,7 @@ use planetwars::{Controller, Client};
 fn main() {
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
-        let msg = format!("Expected 1 argument (config file). {} given.", args.len() - 1).to_owned();
-        println!("{}", msg);
+        println!("Expected 1 argument (config file). {} given.", args.len() - 1);
         std::process::exit(1)
     }
 
