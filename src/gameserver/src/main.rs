@@ -77,7 +77,7 @@ fn main() {
         chan,
         match_description.game_config
     );
-    
+
     reactor.run(controller).unwrap();
 }
 

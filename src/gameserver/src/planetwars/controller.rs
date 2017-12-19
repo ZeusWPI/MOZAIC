@@ -52,12 +52,14 @@ impl Controller {
             o!()
         );
 
-        Controller {
+        let mut c = Controller {
             pw_controller: PwController::new(conf, clients, logger.clone()),
             step_lock: StepLock::new(),
             client_msgs,
             logger,
-        }
+        };
+        c.init();
+        return c;
     }
 
     fn init(&mut self) {
