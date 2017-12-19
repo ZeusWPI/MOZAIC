@@ -76,6 +76,7 @@ impl Controller {
                     "client_id" => client_id
                 );
                 self.step_lock.remove(client_id);
+                self.pw_controller.handle_disconnect(client_id);
             }
         }
     }

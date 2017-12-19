@@ -85,6 +85,10 @@ impl PwController {
         }
     }
 
+    pub fn handle_disconnect(&mut self, client_id: usize) {
+        self.client_map.remove(&client_id);
+    }
+
     fn log_state(&self) {
         // TODO: add turn number
         info!(self.logger, "game state";
@@ -105,15 +109,16 @@ impl PwController {
     fn prompt_players(&mut self, lock: &mut StepLock) {
         for player in self.state.players.iter() {
             if player.alive {
-                // how much we need to rotate for this player to become
-                // player 0 in his state dump
-                let offset = self.state.players.len() - player.id;
+                if let Some(client) = self.client_map.get_mut(&player.id) {
+                    // how much we need to rotate for this player to become
+                    // player 0 in his state dump
+                    let offset = self.state.players.len() - player.id;
 
-                let serialized = serialize_rotated(&self.state, offset);
-                let repr = serde_json::to_string(&serialized).unwrap();
-                let client = self.client_map.get_mut(&player.id).unwrap();
-                client.send_msg(repr);
-                lock.wait_for(player.id);
+                    let serialized = serialize_rotated(&self.state, offset);
+                    let repr = serde_json::to_string(&serialized).unwrap();
+                    client.send_msg(repr);
+                    lock.wait_for(player.id);
+                }   
             }
         }
     }
