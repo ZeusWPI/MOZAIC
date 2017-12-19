@@ -34,7 +34,7 @@ impl StepLock {
     }
 
     pub fn remove(&mut self, client_id: usize) {
-        self.client_messages.remove(client_id);
-        self.awaiting_clients.remove(client_id);
+        self.client_messages.remove(&client_id);
+        self.awaiting_clients.remove(&client_id);
     }
 }
