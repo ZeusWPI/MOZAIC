@@ -44,7 +44,7 @@ impl PwController {
     pub fn step(&mut self,
                 lock: &mut StepLock,
                 messages: HashMap<usize, String>)
-                -> bool
+                -> Option<Vec<usize>>
     {
         self.state.repopulate();
         self.execute_messages(messages);
@@ -54,8 +54,10 @@ impl PwController {
 
         if !self.state.is_finished() {
             self.prompt_players(lock);
+            return None;
+        } else {
+            return Some(self.state.living_players());
         }
-        return self.state.is_finished();
     }
 
     pub fn log_state(&self) {

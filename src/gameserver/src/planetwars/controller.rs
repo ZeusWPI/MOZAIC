@@ -109,15 +109,15 @@ impl Future for Controller {
     type Error = ();
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
-        let mut finished = false;
-        while !finished {
+        let mut result = None;
+        while result.is_none() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
             if self.step_lock.is_ready() {
                 let msgs = self.step_lock.take_messages();
-                finished = self.pw_controller.step(&mut self.step_lock, msgs);
+                result = self.pw_controller.step(&mut self.step_lock, msgs);
             }
         }
-        Ok(Async::Ready(self.state.living_players()))
+        Ok(Async::Ready(result.unwrap()))
     }
 }
