@@ -1,52 +1,16 @@
 import * as React from 'react';
-import * as path from 'path';
+import { h } from 'react-hyperscript-helpers'
 
-import { h, div } from 'react-hyperscript-helpers';
+interface HomeProps {
 
-import { Visualizer } from './visualizer/index';
-import { GameSetup } from './gameSetup/GameSetup';
-import { GamePlayer } from './gamePlayer/GamePlayer';
-
-
-let styles = require('./Home.scss');
-
-interface State {
-  configPath?: path.ParsedPath,
-  gamelog: path.ParsedPath,
-  configMode: boolean
 }
 
+interface HomeState {
 
-interface Props { };
+}
 
-export default class Home extends React.Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      configMode: true,
-      gamelog: path.parse("./log.json")
-    };
-  }
-
+export default class Home extends React.Component<HomeProps, HomeState>{
   render() {
-    if(this.state.configMode) {
-      return div(`.${styles.homePage}`, [
-        div(`.${styles.gameSetup}`, [
-          h(GameSetup, {
-            onReady: (p: path.ParsedPath) => this.setState({configPath: p})
-          })
-        ]),
-        div(`.${styles.gamePlayer}`, [
-          h(GamePlayer, {
-            configPath: this.state.configPath,
-            callback: () => {
-              this.setState({ configMode: false });
-            }
-          })
-        ])
-      ])
-    } else {
-      return div(`.${styles.visualizer}`, [h(Visualizer, <any>{ gamelog: this.state.gamelog })]);
-    }
+    return h("div", ["Here be Home page"])
   }
 }

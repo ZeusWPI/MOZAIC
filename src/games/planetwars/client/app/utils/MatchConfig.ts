@@ -15,7 +15,7 @@ interface GameConfig {
   max_turns: number,
 }
 
-interface PlayerConfig {
+export interface PlayerConfig {
   name: string,
   cmd: string,
   args: string[],
