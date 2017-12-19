@@ -54,9 +54,9 @@ impl Controller {
             player_names.push(client.player_name);
         }
 
-        let game_info = proto::GameInfo {
-            players: player_names,
-        };
+        // let game_info = proto::GameInfo {
+        //     players: player_names,
+        // };
 
         let log_file = File::create("log.json").unwrap();
         
@@ -71,7 +71,8 @@ impl Controller {
             client_msgs: chan,
             step_lock: StepLock::new(),
         };
-        controller.prompt_players();
+        // TODO
+        // controller.prompt_players();
         return controller;
     }
 
@@ -87,8 +88,7 @@ impl Controller {
                     "content" => &msg,
                 );
 
-                self.messages.insert(client_id, msg);
-                self.waiting_for.remove(&client_id);
+                self.step_lock.attach_command(client_id, msg);
             },
             Message::Disconnected => {
                 // TODO: should a reason be included here?
@@ -109,12 +109,13 @@ impl Future for Controller {
     type Error = ();
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
-        while !self.state.is_finished() {
+        let mut finished = false;
+        while !finished {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
-
-            if self.waiting_for.is_empty() {
-                self.step();
+            if self.step_lock.is_ready() {
+                let msgs = self.step_lock.take_messages();
+                finished = self.pw_controller.step(&mut self.step_lock, msgs);
             }
         }
         Ok(Async::Ready(self.state.living_players()))
