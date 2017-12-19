@@ -32,4 +32,9 @@ impl StepLock {
     pub fn take_messages(&mut self) -> HashMap<usize, String> {
         mem::replace(&mut self.client_messages, HashMap::new())
     }
+
+    pub fn remove(&mut self, client_id: usize) {
+        self.client_messages.remove(client_id);
+        self.awaiting_clients.remove(client_id);
+    }
 }
