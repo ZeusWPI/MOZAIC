@@ -108,8 +108,9 @@ impl Controller {
     }
 
     fn log_state(&self) {
+        // TODO: add turn number
         info!(self.logger, "game state";
-            "state" => serialize(&self.state));
+            "step" => serialize(&self.state));
     }
 
     /// Advance the game by one turn.
