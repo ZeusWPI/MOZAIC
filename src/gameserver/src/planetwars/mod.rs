@@ -1,6 +1,5 @@
 mod protocol;
 mod rules;
-mod logger;
 mod config;
 mod controller;
 mod serializer;

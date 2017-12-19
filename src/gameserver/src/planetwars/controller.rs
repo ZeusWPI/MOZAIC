@@ -9,23 +9,28 @@ use serde_json;
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
-use planetwars::logger::JsonLogger;
 use planetwars::serializer::{serialize, serialize_rotated};
 use planetwars::protocol as proto;
 
+use slog;
+use slog::Drain;
+use slog_json;
+use std::sync::Mutex;
+
+use std::fs::File;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    logger: JsonLogger,
-    
+    logger: slog::Logger,
+
     // Ids of players which we need a command for
     waiting_for: HashSet<usize>,
 
     // The commands we already received
-    commands: HashMap<usize, String>,
+    messages: HashMap<usize, String>,
 
     client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
@@ -33,15 +38,18 @@ pub struct Controller {
 
 /// What went wrong when trying to perform a move.
 // TODO: add some more information here
-#[derive(Debug)]
-enum MoveError {
-    OriginDoesNotExist,
-    DestinationDoesNotExist,
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum CommandError {
     NotEnoughShips,
     OriginNotOwned,
     ZeroShipMove,
+    OriginDoesNotExist,
+    DestinationDoesNotExist,
 }
 
+#[derive(Clone)]
 pub struct Client {
     pub id: usize,
     pub player_name: String,
@@ -58,9 +66,6 @@ impl Controller {
     {
         let state = conf.create_game(clients.len());
 
-        let mut logger = JsonLogger::new("log.json");
-        
-
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
@@ -68,6 +73,7 @@ impl Controller {
         let mut client_handles = HashMap::new();
         let mut player_names = Vec::new();
 
+        let client_len = clients.len();
         for client in clients.into_iter() {
             client_handles.insert(client.id, client.handle);
             player_names.push(client.player_name);
@@ -77,39 +83,42 @@ impl Controller {
             players: player_names,
         };
 
-        logger.log_json(&game_info)
-            .expect("[PLANET_WARS] logging game info failed");
-        logger.log_json(&serialize(&state))
-            .expect("[PLANET_WARS] logging failed");
+        let log_file = File::create("log.json").unwrap();
+        
+        let logger = slog::Logger::root( 
+            Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
+            o!()
+        );
 
         let mut controller = Controller {
             state: state,
-            logger: logger,
-            planet_map: planet_map,
 
-            waiting_for: HashSet::new(),
-            commands: HashMap::new(),
+            planet_map: planet_map,
+            logger: logger,
+
+            waiting_for: HashSet::with_capacity(client_len),
+            messages: HashMap::with_capacity(client_len),
 
             client_handles: client_handles,
             client_msgs: chan,
         };
-
-
+        controller.log_state();
         controller.prompt_players();
         return controller;
     }
 
-    fn step(&mut self) {
-        if !self.waiting_for.is_empty() {
-            return;
-        }
+    fn log_state(&self) {
+        info!(self.logger, "game state";
+            "state" => serialize(&self.state));
+    }
 
+    /// Advance the game by one turn.
+    fn step(&mut self) {
         self.state.repopulate();
-        self.handle_commands();
+        self.execute_messages();
         self.state.step();
 
-        self.logger.log_json(&serialize(&self.state))
-            .expect("[PLANET WARS] logging failed");
+        self.log_state();
 
         if !self.state.is_finished() {
             self.prompt_players();
@@ -133,76 +142,100 @@ impl Controller {
         }
     }
 
-
+    /// Handle an incoming message.
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
             Message::Data(msg) => {
-                self.commands.insert(client_id, msg);
+                // TODO: maybe it would be better to log this in the
+                // client_controller.
+                info!(self.logger, "message received";
+                    "client_id" => client_id,
+                    "content" => &msg,
+                );
+
+                self.messages.insert(client_id, msg);
                 self.waiting_for.remove(&client_id);
             },
             Message::Disconnected => {
+                // TODO: should a reason be included here?
+                // It might be more useful to have the client controller log
+                // disconnect reasons.
+                info!(self.logger, "client disconnected";
+                    "client_id" => client_id
+                );
                 // TODO: handle this case gracefully
                 panic!("CLIENT {} disconnected", client_id);
             }
         }
     }
 
-    fn handle_commands(&mut self) {
-        let commands = mem::replace(
-            &mut self.commands,
+    fn execute_messages(&mut self) {
+        let mut messages = mem::replace(
+            &mut self.messages,
             HashMap::with_capacity(self.client_handles.len())
         );
-        for (&client_id, message) in commands.iter() {
-            match serde_json::from_str(&message) {
-                Ok(cmd) => {
-                    self.handle_command(client_id, &cmd);
+        for (client_id, message) in messages.drain() {
+            self.execute_message(client_id, message);
+        }
+    }
+
+    /// Parse and execute a player message.
+    fn execute_message(&mut self, player_id: usize, msg: String) {
+        match serde_json::from_str(&msg) {
+            Ok(action) => {
+                self.execute_action(player_id, action);
+            },
+            Err(err) => {
+                info!(self.logger, "parse error";
+                    "client_id" => player_id,
+                    "error" => err.to_string()
+                );
+            },
+        };
+    }
+
+    fn execute_action(&mut self, player_id: usize, action: proto::Action) {
+        for cmd in action.commands.iter() {
+            let log_keys = o!(
+                "client_id" => player_id,
+                // TODO: this is not nice, a solution will become
+                // available in the slog crate.
+                "command" => serde_json::to_string(&action).unwrap()
+            );
+            match self.parse_command(player_id, &cmd) {
+                Ok(dispatch) => {
+                    info!(self.logger, "dispatch"; log_keys);
+                    self.state.dispatch(&dispatch);
                 },
-                Err(err) => {
-                    // TODO: get some proper logging going
-                    // Careful: these are client ids, not player numbers.
-                    println!(
-                        "Got invalid command from client {}: {}",
-                        client_id,
-                        err
-                    );
+                Err(_err) => {
+                    // TODO: include actual error
+                    info!(self.logger, "illegal command"; log_keys);
                 }
             }
         }
     }
 
-    fn handle_command(&mut self, player_id: usize, cmd: &proto::Command) {
-        for mv in cmd.moves.iter() {
-            match self.parse_move(player_id, mv) {
-                Ok(dispatch) => self.state.dispatch(dispatch),
-                Err(err) => {
-                    // TODO: this is where errors should be sent to clients
-                    println!("player {}: {:?}", player_id, err);
-                }
-            }
-        }
-    }
-
-    fn parse_move(&self, player_id: usize, mv: &proto::Move)
-                  -> Result<Dispatch, MoveError>
+    fn parse_command(&self, player_id: usize, mv: &proto::Command)
+                     -> Result<Dispatch, CommandError>
     {
         let origin_id = *self.planet_map
             .get(&mv.origin)
-            .ok_or(MoveError::OriginDoesNotExist)?;
+            .ok_or(CommandError::OriginDoesNotExist)?;
 
         let target_id = *self.planet_map
             .get(&mv.destination)
-            .ok_or(MoveError::DestinationDoesNotExist)?;
+            .ok_or(CommandError::DestinationDoesNotExist)?;
 
         if self.state.planets[origin_id].owner() != Some(player_id) {
-            return Err(MoveError::OriginNotOwned);
+            return Err(CommandError::OriginNotOwned);
         }
 
         if self.state.planets[origin_id].ship_count() < mv.ship_count {
-            return Err(MoveError::NotEnoughShips);
+            return Err(CommandError::NotEnoughShips);
         }
 
         if mv.ship_count == 0 {
-            return Err(MoveError::ZeroShipMove);
+            return Err(CommandError::ZeroShipMove);
         }
 
         Ok(Dispatch {
@@ -221,7 +254,10 @@ impl Future for Controller {
         while !self.state.is_finished() {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
-            self.step();
+
+            if self.waiting_for.is_empty() {
+                self.step();
+            }
         }
         Ok(Async::Ready(self.state.living_players()))
     }
