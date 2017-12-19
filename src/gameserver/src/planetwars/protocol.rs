@@ -61,6 +61,16 @@ impl slog::Value for Command {
     }
 }
 
+impl slog::KV for Command {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_serde("command", self)
+    }
+}
+
 impl slog::SerdeValue for Command {
     fn as_serde(&self) -> &erased_serde::Serialize {
         self

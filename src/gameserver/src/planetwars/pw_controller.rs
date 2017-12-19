@@ -146,14 +146,14 @@ impl PwController {
                 Ok(dispatch) => {
                     info!(self.logger, "dispatch";
                         "client_id" => player_id,
-                        "command" => cmd);
+                        cmd);
                     self.state.dispatch(&dispatch);
                 },
                 Err(err) => {
                     // TODO: include actual error
                     info!(self.logger, "illegal command";
                         "client_id" => player_id,
-                        "command" => cmd,
+                        cmd,
                         "error" => serde_json::to_string(&err).unwrap());
                 }
             }
