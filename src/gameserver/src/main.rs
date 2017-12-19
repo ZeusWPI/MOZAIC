@@ -28,6 +28,8 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 
+use slog::Drain;
+use std::sync::Mutex;
 use tokio_core::reactor::Core;
 use futures::sync::mpsc;
 
@@ -72,10 +74,18 @@ fn main() {
         }
     }).collect();
 
+    let log_file = File::create("log.json").unwrap();
+
+    let logger = slog::Logger::root( 
+        Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
+        o!()
+    );
+
     let controller = Controller::new(
         handles,
         chan,
-        match_description.game_config
+        match_description.game_config,
+        logger,
     );
 
     reactor.run(controller).unwrap();

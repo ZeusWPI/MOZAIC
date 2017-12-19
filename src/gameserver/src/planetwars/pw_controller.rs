@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use futures::sync::mpsc::UnboundedSender;
 
 use planetwars::Config;
 use planetwars::rules::{PlanetWars, Dispatch};

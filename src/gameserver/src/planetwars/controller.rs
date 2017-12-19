@@ -7,11 +7,6 @@ use planetwars::step_lock::StepLock;
 use planetwars::pw_controller::PwController;
 
 use slog;
-use slog::Drain;
-use slog_json;
-use std::sync::Mutex;
-
-use std::fs::File;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
@@ -43,16 +38,9 @@ impl Controller {
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
-               conf: Config,)
+               conf: Config, logger: slog::Logger,)
                -> Self
     {
-        let log_file = File::create("log.json").unwrap();
-        
-        let logger = slog::Logger::root( 
-            Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
-            o!()
-        );
-
         let mut c = Controller {
             pw_controller: PwController::new(conf, clients, logger.clone()),
             step_lock: StepLock::new(),
