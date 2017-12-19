@@ -35,7 +35,7 @@ impl Controller {
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
-               chan: UnboundedReceiver<ClientMessage>,
+               client_msgs: UnboundedReceiver<ClientMessage>,
                conf: Config,)
                -> Self
     {
@@ -52,15 +52,16 @@ impl Controller {
             o!()
         );
 
-        let mut controller = Controller {
+        Controller {
             pw_controller: PwController::new(conf, clients, logger.clone()),
-            logger: logger,
-            client_msgs: chan,
             step_lock: StepLock::new(),
-        };
-        // TODO
-        // controller.prompt_players();
-        return controller;
+            client_msgs,
+            logger,
+        }
+    }
+
+    fn init(&mut self) {
+        self.pw_controller.init(&mut self.step_lock);
     }
 
 
