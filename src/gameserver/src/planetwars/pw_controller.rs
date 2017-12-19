@@ -53,6 +53,8 @@ impl PwController {
     }
 
     pub fn init(&mut self, step_lock: &mut StepLock){
+        self.log_info();
+        self.log_state();
         self.prompt_players(step_lock);
     }
 
@@ -84,10 +86,21 @@ impl PwController {
         }
     }
 
-    pub fn log_state(&self) {
+    fn log_state(&self) {
         // TODO: add turn number
         info!(self.logger, "game state";
             "step" => serialize(&self.state));
+    }
+
+    fn log_info(&self) {
+        let info = proto::GameInfo {
+            players: self.client_map.values().map(|c| {
+                c.player_name.clone()
+            }).collect(),
+        };
+        info!(self.logger, "game info";
+            "info" => info);
+
     }
 
     fn prompt_players(&mut self, lock: &mut StepLock) {
