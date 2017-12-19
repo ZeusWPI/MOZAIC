@@ -1,0 +1,26 @@
+.botslist {
+  list-style-type: none;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.botsentry {
+  text-decoration: none;
+  color: black;
+  // background-color: green;
+}
+
+.botsentry:hover {
+  background-color: grey;
+}
+
+.botlistitem:hover button {
+  display: inline;
+}
+
+.removebot {
+  display: none;
+  float: right;
+}

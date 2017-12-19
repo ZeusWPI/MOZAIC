@@ -1,0 +1,17 @@
+:local {
+  .playPage {
+    display: flex;
+    flex-direction: row;
+    .gameSetup {
+      width: 50%;
+      margin-right: 10px;
+    }
+    .gamePlayer {
+      width: 50%;
+      margin-left: 10px;
+    }
+    .visualizer {
+      width: 60%;
+    }
+  }
+}
