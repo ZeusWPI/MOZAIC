@@ -88,7 +88,6 @@ impl PlanetWars {
         self.resolve_combat();
     }
 
-
     pub fn repopulate(&mut self) {
         for planet in self.planets.iter_mut() {
             if planet.owner().is_some() {
