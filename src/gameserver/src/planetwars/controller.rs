@@ -11,6 +11,8 @@ use planetwars::config::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::serializer::{serialize, serialize_rotated};
 use planetwars::protocol as proto;
+use planetwars::step_lock::StepLock;
+use planetwars::pw_controller::PwController;
 
 use slog;
 use slog::Drain;
@@ -23,16 +25,11 @@ use std::fs::File;
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     state: PlanetWars,
-    planet_map: HashMap<String, usize>,
     logger: slog::Logger,
 
-    // Ids of players which we need a command for
-    waiting_for: HashSet<usize>,
+    step_lock: StepLock,
+    pw_controller: PwController,
 
-    // The commands we already received
-    messages: HashMap<usize, String>,
-
-    client_handles: HashMap<usize, UnboundedSender<String>>,
     client_msgs: UnboundedReceiver<ClientMessage>,
 }
 
