@@ -15,8 +15,7 @@ use serde_json;
 pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-
-    client_handles: HashMap<usize, UnboundedSender<String>>,
+    client_map: HashMap<usize, Client>,
     logger: slog::Logger,
 }
 
@@ -41,18 +40,14 @@ impl PwController {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        let mut client_handles = HashMap::new();
-        let mut player_names = Vec::new();
-
-        for client in clients.into_iter() {
-            client_handles.insert(client.id, client.handle);
-            player_names.push(client.player_name);
-        }
+        let client_map = clients.into_iter().map(|c| {
+            (c.id, c)
+        }).collect();
 
         PwController {
             state,
             planet_map,
-            client_handles,
+            client_map,
             logger,
         }
     }
@@ -104,8 +99,8 @@ impl PwController {
 
                 let serialized = serialize_rotated(&self.state, offset);
                 let repr = serde_json::to_string(&serialized).unwrap();
-                let handle = self.client_handles.get_mut(&player.id).unwrap();
-                handle.unbounded_send(repr).unwrap();
+                let client = self.client_map.get_mut(&player.id).unwrap();
+                client.send_msg(repr);
                 lock.wait_for(player.id);
             }
         }

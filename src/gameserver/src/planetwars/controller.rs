@@ -31,6 +31,13 @@ pub struct Client {
     pub handle: UnboundedSender<String>,
 }
 
+impl Client {
+    pub fn send_msg(&mut self, msg: String) {
+        // unbounded channels don't fail
+        self.handle.unbounded_send(msg).unwrap();
+    }
+}
+
 impl Controller {
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
@@ -39,10 +46,6 @@ impl Controller {
                conf: Config,)
                -> Self
     {
-        // let game_info = proto::GameInfo {
-        //     players: player_names,
-        // };
-
         let log_file = File::create("log.json").unwrap();
         
         let logger = slog::Logger::root( 
