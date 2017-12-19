@@ -59,13 +59,25 @@ fn main() {
 
     let mut reactor = Core::new().unwrap();
 
+    let log_file = File::create("log.json").unwrap();
+
+    let logger = slog::Logger::root( 
+        Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
+        o!()
+    );
+
     let mut bots = spawn_bots(&reactor.handle(), &match_description.players);
 
     let (handle, chan) = mpsc::unbounded();
 
+
     let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
         let bot_handle = bots.remove(&desc.name).unwrap();
-        let controller = ClientController::new(num, bot_handle, handle.clone());
+        let controller = ClientController::new(
+            num,
+            bot_handle,
+            handle.clone(),
+            &logger);
         let ctrl_handle = controller.handle();
         reactor.handle().spawn(controller);
 
@@ -76,12 +88,6 @@ fn main() {
         }
     }).collect();
 
-    let log_file = File::create("log.json").unwrap();
-
-    let logger = slog::Logger::root( 
-        Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
-        o!()
-    );
 
     let controller = Controller::new(
         handles,

@@ -7,6 +7,7 @@ use tokio_io::codec::{Encoder, Decoder};
 use bytes::{BytesMut, BufMut};
 use std::io;
 use std::str;
+use slog;
 
 use bot_runner::BotHandle;
 use buffered_sender::BufferedSender;
@@ -45,27 +46,33 @@ pub struct ClientController {
     ctrl_handle: UnboundedSender<String>,
     
     game_handle: UnboundedSender<ClientMessage>,
+
+    logger: slog::Logger,
 }
 
 impl ClientController {
     pub fn new(client_id: usize,
                conn: BotHandle,
-               game_handle: UnboundedSender<ClientMessage>)
+               game_handle: UnboundedSender<ClientMessage>,
+               logger: &slog::Logger)
                -> Self
     {
         let (snd, rcv) = unbounded();
         let (sink, stream) = conn.framed(LineCodec).split();
 
         ClientController {
-            client_id: client_id,
-
             sender: BufferedSender::new(sink),
             client_msgs: stream,
 
             ctrl_chan: rcv,
             ctrl_handle: snd,
 
-            game_handle: game_handle,
+            game_handle,
+            client_id,
+
+            logger: logger.new(
+                o!("client_id" => client_id)
+            ),
         }
     }
 
