@@ -6,6 +6,7 @@ use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::controller::Client;
 use planetwars::protocol as proto;
 use planetwars::serializer::{serialize, serialize_rotated};
+use planetwars::step_lock::StepLock;
 
 use slog;
 use serde_json;
@@ -40,15 +41,18 @@ impl PwController {
     }
 
     /// Advance the game by one turn.
-    fn step(&mut self) {
+    fn step(&mut self,
+            lock: &mut StepLock,
+            messages: HashMap<usize, String>)
+    {
         self.state.repopulate();
-        self.execute_messages();
+        self.execute_messages(messages);
         self.state.step();
 
         self.log_state();
 
         if !self.state.is_finished() {
-            self.prompt_players();
+            self.prompt_players(lock);
         }
     }
 
@@ -58,7 +62,7 @@ impl PwController {
             "step" => serialize(&self.state));
     }
 
-    fn prompt_players(&mut self) {
+    fn prompt_players(&mut self, lock: &mut StepLock) {
         for player in self.state.players.iter() {
             if player.alive {
                 // how much we need to rotate for this player to become
@@ -69,16 +73,12 @@ impl PwController {
                 let repr = serde_json::to_string(&serialized).unwrap();
                 let handle = self.client_handles.get_mut(&player.id).unwrap();
                 handle.unbounded_send(repr).unwrap();
-                self.waiting_for.insert(player.id);
+                lock.wait_for(player.id);
             }
         }
     }
 
-        fn execute_messages(&mut self) {
-        let mut messages = mem::replace(
-            &mut self.messages,
-            HashMap::with_capacity(self.client_handles.len())
-        );
+    fn execute_messages(&mut self, messages: HashMap<usize, String>) {
         for (client_id, message) in messages.drain() {
             self.execute_message(client_id, message);
         }
