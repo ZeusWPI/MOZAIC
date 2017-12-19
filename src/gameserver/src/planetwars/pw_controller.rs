@@ -41,9 +41,9 @@ impl PwController {
     }
 
     /// Advance the game by one turn.
-    fn step(&mut self,
-            lock: &mut StepLock,
-            messages: HashMap<usize, String>)
+    pub fn step(&mut self,
+                lock: &mut StepLock,
+                messages: HashMap<usize, String>)
     {
         self.state.repopulate();
         self.execute_messages(messages);

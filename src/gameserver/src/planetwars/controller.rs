@@ -69,7 +69,7 @@ impl Controller {
             logger: logger,
             pw_controller: PwController::new(conf, clients),
             client_msgs: chan,
-            step_lock: unimplemented!()
+            step_lock: StepLock::new(),
         };
         controller.prompt_players();
         return controller;
