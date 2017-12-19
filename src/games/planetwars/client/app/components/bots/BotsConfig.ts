@@ -56,6 +56,9 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
       return;
     }
     let path = `./bots/${ this.state.name }.json`
+    if(!fs.existsSync("./bots")) {
+      fs.mkdirSync("./bots");
+    }
     if (!fs.existsSync(path) || confirm(`Bot ${ this.state.name } already exists, are you sure you want to overwrite it?`) ) {
       fs.writeFileSync(path, JSON.stringify(
         {

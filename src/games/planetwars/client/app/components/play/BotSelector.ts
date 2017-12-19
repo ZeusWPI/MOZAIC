@@ -83,6 +83,7 @@ export class BotSelector extends React.Component<BotSelectorProps, BotSelectorSt
     let dir = "./bots"
     if (fs.existsSync(dir)) {
       let fileNames = fs.readdirSync(dir);
+      fileNames = fileNames.filter(file => fs.lstatSync("./bots/" + file).isFile())
       let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
       return paths;
     }

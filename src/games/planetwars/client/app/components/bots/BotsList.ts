@@ -52,6 +52,7 @@ export default class BotsList extends React.Component<BotsListProps, BotsListSta
     let dir = "./bots"
     if (fs.existsSync(dir)) {
       let fileNames = fs.readdirSync(dir);
+      fileNames = fileNames.filter(file => fs.lstatSync("./bots/" + file).isFile())
       let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
       return paths;
     }
