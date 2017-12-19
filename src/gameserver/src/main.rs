@@ -31,7 +31,6 @@ use std::fs::File;
 use tokio_core::reactor::Core;
 use futures::sync::mpsc;
 
-use std::collections::HashMap;
 use bot_runner::*;
 
 use client_controller::ClientController;

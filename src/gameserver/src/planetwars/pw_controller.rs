@@ -30,14 +30,31 @@ pub enum CommandError {
 }
 
 impl PwController {
-    pub fn new(conf: Config, clients: Vec<Client>) -> Self {
+    pub fn new(conf: Config,
+               clients: Vec<Client>,
+               logger: slog::Logger)
+               -> Self
+    {
         let state = conf.create_game(clients.len());
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        unimplemented!()
+        let mut client_handles = HashMap::new();
+        let mut player_names = Vec::new();
+
+        for client in clients.into_iter() {
+            client_handles.insert(client.id, client.handle);
+            player_names.push(client.player_name);
+        }
+
+        PwController {
+            state,
+            planet_map,
+            client_handles,
+            logger,
+        }
     }
 
     /// Advance the game by one turn.
@@ -90,8 +107,8 @@ impl PwController {
         }
     }
 
-    fn execute_messages(&mut self, messages: HashMap<usize, String>) {
-        for (client_id, message) in messages.drain() {
+    fn execute_messages(&mut self, mut msgs: HashMap<usize, String>) {
+        for (client_id, message) in msgs.drain() {
             self.execute_message(client_id, message);
         }
     }

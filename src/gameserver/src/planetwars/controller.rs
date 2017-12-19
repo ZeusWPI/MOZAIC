@@ -1,12 +1,8 @@
-use std::collections::{HashSet, HashMap};
-use std::mem;
-
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
-use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::step_lock::StepLock;
 use planetwars::pw_controller::PwController;
 
@@ -45,15 +41,6 @@ impl Controller {
     {
 
 
-        let mut client_handles = HashMap::new();
-        let mut player_names = Vec::new();
-
-        let client_len = clients.len();
-        for client in clients.into_iter() {
-            client_handles.insert(client.id, client.handle);
-            player_names.push(client.player_name);
-        }
-
         // let game_info = proto::GameInfo {
         //     players: player_names,
         // };
@@ -66,8 +53,8 @@ impl Controller {
         );
 
         let mut controller = Controller {
+            pw_controller: PwController::new(conf, clients, logger.clone()),
             logger: logger,
-            pw_controller: PwController::new(conf, clients),
             client_msgs: chan,
             step_lock: StepLock::new(),
         };
@@ -119,7 +106,7 @@ impl Future for Controller {
         loop {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
-            
+
             if let Some(result) = self.pw_controller.outcome() {
                 return Ok(Async::Ready(result));
             }
