@@ -141,20 +141,19 @@ impl PwController {
 
     fn execute_action(&mut self, player_id: usize, action: proto::Action) {
         for cmd in action.commands.iter() {
-            let log_keys = o!(
-                "client_id" => player_id,
-                // TODO: this is not nice, a solution will become
-                // available in the slog crate.
-                "command" => serde_json::to_string(&action).unwrap()
-            );
             match self.parse_command(player_id, &cmd) {
                 Ok(dispatch) => {
-                    info!(self.logger, "dispatch"; log_keys);
+                    info!(self.logger, "dispatch";
+                        "client_id" => player_id,
+                        "command" => cmd);
                     self.state.dispatch(&dispatch);
                 },
-                Err(_err) => {
+                Err(err) => {
                     // TODO: include actual error
-                    info!(self.logger, "illegal command"; log_keys);
+                    info!(self.logger, "illegal command";
+                        "client_id" => player_id,
+                        "command" => cmd,
+                        "error" => serde_json::to_string(&err).unwrap());
                 }
             }
         }
