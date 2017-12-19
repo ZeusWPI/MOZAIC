@@ -66,7 +66,7 @@ impl Controller {
                     "client_id" => client_id,
                     "content" => &msg,
                 );
-                self.handle_command(client_id, msg);
+                self.step_lock.attach_command(client_id, msg);
             },
             Message::Disconnected => {
                 // TODO: should a reason be included here?
@@ -75,17 +75,8 @@ impl Controller {
                 info!(self.logger, "client disconnected";
                     "client_id" => client_id
                 );
-                // TODO: handle this case gracefully
-                panic!("CLIENT {} disconnected", client_id);
+                self.step_lock.remove(client_id);
             }
-        }
-    }
-
-    fn handle_command(&mut self, client_id: usize, msg: String) {
-        self.step_lock.attach_command(client_id, msg);
-        if self.step_lock.is_ready() {
-            let msgs = self.step_lock.take_messages();
-            self.pw_controller.step(&mut self.step_lock, msgs);
         }
     }
 }
@@ -99,10 +90,14 @@ impl Future for Controller {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
 
-            if let Some(result) = self.pw_controller.outcome() {
-                return Ok(Async::Ready(result));
+            while self.step_lock.is_ready() {
+                let msgs = self.step_lock.take_messages();
+                self.pw_controller.step(&mut self.step_lock, msgs);
+
+                if let Some(result) = self.pw_controller.outcome() {
+                    return Ok(Async::Ready(result));
+                }
             }
         }
-
     }
 }
