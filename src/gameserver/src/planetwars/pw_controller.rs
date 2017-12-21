@@ -87,8 +87,7 @@ impl PwController {
 
     fn log_state(&self) {
         // TODO: add turn number
-        info!(self.logger, "step";
-            "state" => serialize(&self.state));
+        info!(self.logger, "step"; serialize(&self.state));
     }
 
     fn log_info(&self) {
