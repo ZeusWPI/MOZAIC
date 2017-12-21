@@ -92,6 +92,16 @@ impl slog::Value for State {
     }
 }
 
+impl slog::KV for State {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_serde("state", self)
+    }
+}
+
 impl slog::SerdeValue for State {
     fn as_serde(&self) -> &erased_serde::Serialize {
         self
