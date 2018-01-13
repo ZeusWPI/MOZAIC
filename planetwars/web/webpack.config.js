@@ -4,6 +4,16 @@ const webpack = require('webpack');
 module.exports = {
   entry: './frontend/index.ts',
   output: { path: path.join(__dirname, "dist/"), filename: 'bundle.js' },
+  devtool: 'source-map',
+  // https://webpack.github.io/docs/configuration.html#resolve
+  resolve: {
+    extensions: ['.js', '.ts', '.tsx', '.json'],
+    modules: [
+      path.join(__dirname, 'frontend'),
+      'node_modules',
+    ]
+  },
+
   module: {
     loaders: [
       {

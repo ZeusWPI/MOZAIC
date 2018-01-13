@@ -1,11 +1,18 @@
-import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { h, h1 } from 'react-hyperscript-helpers';
+import { h } from 'react-hyperscript-helpers';
 
-class App extends React.Component<any, any> {
-  render() {
-    return h1("Hello World!");
-  }
-}
+import Home from './Home';
+import Root from './Root';
 
-ReactDOM.render(h(App), document.getElementById('app'));
+const { configureStore, history } = require('./store/configureStore');
+const store = configureStore();
+
+console.log(store, history);
+
+ReactDOM.render(
+  h(Root, {
+    store: store,
+    history: history
+  }),
+  document.getElementById('app')
+);
