@@ -22,4 +22,6 @@ The client-side should do these things:
 - `rustup install nightly`
 - `rustup update && cargo update`
 - run `rustup override set nightly` in this dir to set nightly builds for this project, or `rustup default nightly` to use it everywhere
-1. `cargo run`
+1. Have Node.js and NPM installed
+1. Run `npm install`
+1. Run `npm run build && npm start` to build and run

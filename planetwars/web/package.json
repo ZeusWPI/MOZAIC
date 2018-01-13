@@ -1,0 +1,30 @@
+{
+  "name": "planetwars-web",
+  "version": "0.1.0",
+  "description": "Website for the BattleBots competition",
+  "main": "frontend/index.js",
+  "scripts": {
+    "start": "cargo run",
+    "build": "cargo build && node_modules/webpack/bin/webpack.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeusWPI/MOZAIC.git"
+  },
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ZeusWPI/MOZAIC/issues"
+  },
+  "homepage": "https://github.com/ZeusWPI/MOZAIC#readme",
+  "devDependencies": {
+    "babel-core": "^6.21.0",
+    "babel-loader": "^6.2.10",
+    "babel-preset-es2015": "^6.18.0",
+    "babel-preset-react": "^6.16.0",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
+    "webpack": "^1.14.0"
+  }
+}
