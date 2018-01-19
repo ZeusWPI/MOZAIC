@@ -1,7 +1,6 @@
 import * as ReactDOM from 'react-dom';
 import { h } from 'react-hyperscript-helpers';
 
-import Home from './Home';
 import Root from './Root';
 
 const { configureStore, history } = require('./store/configureStore');
