@@ -10,12 +10,14 @@ export default class Footer extends React.Component<{}, {}> {
         p([
           'Made with ',
           h(FA, {name: 'heart', className: 'heart'}),
-          ' by Zeus WPI']
-        ),
+          ' by ',
+          a({href: 'https://zeus.ugent.be'}, ['Zeus WPI'])
+        ]),
         p([
-          a({href: 'https://zeus.ugent.be'}, [
-            'View on GitHub ',
-             h(FA, { name:'github' })
+          'View on ',
+          a({href: 'https://github.com/ZeusWPI/MOZAIC/'}, [
+            'GitHub ',
+            h(FA, { name:'github' })
           ])
         ])
       ])

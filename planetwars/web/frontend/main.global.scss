@@ -14,14 +14,59 @@ $footer-background-color: $primary;
 
 @import '~bulma';
 
-.hello {
+#home-hero-body {
   height: 100%;
-  width: 100%;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  img {
+    max-width: 300px;
+    width: 80%;
+  }
+  #code-play-win {
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    .cpw-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 2.5em;
+      span {
+        font-size: 4em;
+        padding: 5px;
+      }
+    }
+  }
+  button > a {
+    border: none;
+  }
+  #intro-text {
+    max-width: 700px;
+    font-size: 1.5em;
+    color: $color5;
+  }
 }
 
 .navbar {
   border-bottom: 1px solid $color4;
+  max-height: 50px;
+  .navbar-brand {
+    justify-content: center;
+    align-items: center;
+    #navbar-logo {
+      max-height: 60%;
+      width: auto;
+    }
+  }
+}
+
+a {
+  border-bottom: $color4 1px dotted;
 }
 
 .footer {

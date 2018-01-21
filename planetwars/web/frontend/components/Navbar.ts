@@ -1,16 +1,21 @@
 import * as React from 'react';
-import { h, h1, div, Children } from 'react-hyperscript-helpers';
+import { h, h1, div, Children, img } from 'react-hyperscript-helpers';
 import { Navbar, NavbarBrand, NavbarMenu, NavbarStart,
          NavbarItem, Container} from 'bloomer';
 import { Link, NavLink, NavLinkProps } from 'react-router-dom';
 import { NavbarEnd } from 'bloomer/lib/components/Navbar/NavbarEnd';
+
+require('../static/small_logo_trans.png');
 
 export default class NavBar extends React.Component<{}, {}> {
   render() {
     return h(Navbar, '.is-primary', [
       h(Container, [
         h(Link, `.navbar-brand`, {to: '/'}, [
-          h1(`.is-size-3`, 'BottleBats')
+         img('#navbar-logo', {
+           src:'./static/small_logo_trans.png',
+           alt: 'BottleBats 2018 AI Competition',
+          })
         ]),
         h(NavbarMenu, [
           h(NavbarStart, [
