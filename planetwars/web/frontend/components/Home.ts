@@ -37,10 +37,9 @@ const Logo: React.SFC<{}> = (props) => {
 
 const Intro: React.SFC<{}> = (props) => {
   return p('#intro-text', [`
-    Compete with your friends and rivals to create the smartest AI. 
-    Build your bot and let it battle in this epic space themed game.
-    Experiment with complex strategies; tweak, tune and perfect,
-    and before you know, you'll be on top of the leaderboard.
+    Code an AI, download the game, and let your bot battle it out against your friend and rivals.
+    Experiment with the hottest techniques from the comfort of your own environment.
+    Tune, tweak, and tinker, and before you know you'll be on top of the leaderboard. Get ready player one!
   `]);
 }
 
