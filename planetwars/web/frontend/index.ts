@@ -7,7 +7,7 @@ const { configureStore, history } = require('./store/configureStore');
 const store = configureStore();
 const styles = require('./main.global.scss');
 
-require('./static/favicon.ico');
+require.context('./static/', true);
 
 ReactDOM.render(
   h(Root, {

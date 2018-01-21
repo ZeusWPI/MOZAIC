@@ -50,9 +50,12 @@ module.exports = {
           }
         }
       },
-      // Statics
+      // Favicon & statics
       {
-        test: /\.(?:ico)$/,
+        test: /.$/,
+        include: [
+          path.resolve(__dirname, 'frontend/static/favicon/')
+        ],
         use: {
           loader: 'file-loader',
           options: { name: '[name].[ext]' }
@@ -61,6 +64,9 @@ module.exports = {
       // Common Image Formats
       {
         test: /\.(?:|gif|png|jpg|jpeg|webp)$/,
+        exclude: [
+          path.resolve(__dirname, 'frontend/static/favicon/')
+        ],
         use: {
           loader: 'file-loader',
           options: { 
