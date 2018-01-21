@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as FA from 'react-fontawesome';
 import { Link } from 'react-router-dom';
-import { h, h1, h2, div, section, img, p } from 'react-hyperscript-helpers';
+import { h, h1, h2, div, section, img, p, span } from 'react-hyperscript-helpers';
 import { Hero, HeroBody, HeroFooter, HeroHeader, Container, Button } from 'bloomer';
 
 import Navbar from './Navbar';
@@ -38,14 +38,14 @@ const Logo: React.SFC<{}> = (props) => {
 const Intro: React.SFC<{}> = (props) => {
   return p('#intro-text', [`
     Code an AI, download the game, and let your bot battle it out against your friend and rivals.
-    Experiment with the hottest techniques from the comfort of your own environment.
+    Experiment with the hottest techniques from the comfort of your local environment.
     Tune, tweak, and tinker, and before you know you'll be on top of the leaderboard. Get ready player one!
   `]);
 }
 
 const Teaser: React.SFC<{}> = (props) => {
   return div([
-    h1('.title.is-size-1', ['BottleBats 2.018']),
+    h1('.title.is-size-1', ['BottleBats ', span('#title2k', ['2.018']), '']),
     h2('.subtitle.is-size-3', ['Coming this spring!']),
   ]);
 }
@@ -62,7 +62,7 @@ interface ICPWItemProps { name: string, text: string }
 const CPWItem: React.SFC<ICPWItemProps> = (props) => {
   return div('.cpw-item', [
     // TS complains about the size type while it shouldn't
-    h(FA, <any> {name: props.name}),
+    h(FA, <any> {name: props.name, fixedWidth: true }),
     p([props.text]),
   ]);
 }

@@ -36,6 +36,9 @@ $footer-background-color: $primary;
       align-items: center;
       justify-content: space-between;
       font-size: 2.5em;
+      border-radius: 10%;
+      padding: 10px;
+      background-color: $secondary;
       span {
         font-size: 4em;
         padding: 5px;
@@ -49,6 +52,9 @@ $footer-background-color: $primary;
     max-width: 700px;
     font-size: 1.5em;
     color: $color5;
+  }
+  #title2k {
+    color: $secondary;
   }
 }
 
