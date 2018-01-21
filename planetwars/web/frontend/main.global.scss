@@ -1,7 +1,35 @@
+@import "~bulma/sass/utilities/initial-variables";
+@import "~bulma/sass/utilities/functions";
+
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/scss/font-awesome.scss';
+
+$primary: #201f1d;
+$secondary: #DE8D47;
+$color3: #FFFFFF;
+$color4: #868685;
+$color5: #DCDCDC;
+
+$footer-background-color: $primary;
+
 @import '~bulma';
 
 .hello {
   height: 100%;
   width: 100%;
   text-align: center;
+}
+
+.navbar {
+  border-bottom: 1px solid $color4;
+}
+
+.footer {
+  border-top: 1px solid $color4;
+  padding: 1rem 1rem 1rem;
+  color: $color4;
+}
+
+.heart {
+  color: $secondary;
 }

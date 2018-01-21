@@ -6,7 +6,7 @@ import NavBar from './components/Navbar';
 export default class App extends React.Component {
   render() {
     return (
-      div([h(NavBar), this.props.children])
+      div([this.props.children])
     );
   }
 }

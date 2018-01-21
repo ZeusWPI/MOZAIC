@@ -2,7 +2,8 @@ const path = require('path');
 const webpack = require('webpack');
 
 module.exports = {
-  entry: './frontend/index.ts',
+  context: path.resolve(__dirname, 'frontend'),
+  entry: './index.ts',
   output: { path: path.join(__dirname, "dist/"), filename: 'bundle.js' },
   devtool: 'source-map',
   // https://webpack.github.io/docs/configuration.html#resolve
@@ -27,10 +28,7 @@ module.exports = {
       },
       {
         test: /\.scss$/,
-        use: [
-          {
-            loader: 'style-loader'
-          },
+        use: ['style-loader',
           {
             loader: 'css-loader',
             options: {
@@ -42,47 +40,8 @@ module.exports = {
           }
         ]
       },
-      // WOFF Font
       {
-        test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/font-woff',
-          }
-        },
-      },
-      // WOFF2 Font
-      {
-        test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/font-woff',
-          }
-        }
-      },
-      // TTF Font
-      {
-        test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/octet-stream'
-          }
-        }
-      },
-      // EOT Font
-      {
-        test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        use: 'file-loader',
-      },
-      // SVG Font
-      {
-        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+        test: /\.(?:svg|ttf|otf|eot|woff2|woff)(\?v=\d+\.\d+\.\d+)?$/,
         use: {
           loader: 'url-loader',
           options: {
@@ -91,10 +50,23 @@ module.exports = {
           }
         }
       },
+      // Statics
+      {
+        test: /\.(?:ico)$/,
+        use: {
+          loader: 'file-loader',
+          options: { name: '[name].[ext]' }
+        }
+      },
       // Common Image Formats
       {
-        test: /\.(?:ico|gif|png|jpg|jpeg|webp)$/,
-        use: 'url-loader',
+        test: /\.(?:|gif|png|jpg|jpeg|webp)$/,
+        use: {
+          loader: 'file-loader',
+          options: { 
+            name: '[path][name].[ext]'
+          }
+        }
       }
     ]
   },
