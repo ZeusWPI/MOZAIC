@@ -44,9 +44,9 @@ const Intro: React.SFC<{}> = (props) => {
 }
 
 const Teaser: React.SFC<{}> = (props) => {
-  return div([
-    h1('.title.is-size-1', ['BottleBats ', span('#title2k', ['2.018']), '']),
-    h2('.subtitle.is-size-3', ['Coming this spring!']),
+  return div('#title', [
+    h1('.title.is-size-2', ['BottleBats ', span('#title2k', ['2.018']), '']),
+    h2('.subtitle.is-size-4', ['Coming this spring!']),
   ]);
 }
 
