@@ -4,8 +4,7 @@ import { h, ul, li } from 'react-hyperscript-helpers';
 
 import App from './App';
 import Home from './components/Home';
-import Downloads from './components/Downloads';
-import Rankings from './components/Rankings';
+import Info from './components/Info';
 import Signup from './components/Signup';
 
 export default () => (
@@ -17,12 +16,8 @@ export default () => (
         exact: true
       }),
       h(Route, {
-        path: '/downloads',
-        component: Downloads
-      }),
-      h(Route, {
-        path: '/rankings',
-        component: Rankings
+        path: '/info',
+        component: Info
       }),
       h(Route, {
         path: '/signup',

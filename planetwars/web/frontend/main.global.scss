@@ -93,6 +93,12 @@ $footer-background-color: $primary;
       max-height: 45px;
       width: auto;
     }
+    #nav-title {
+      padding-left: 10px;
+      span {
+        color: $secondary;
+      }
+    }
   }
   a { border-bottom: none; }
 }

@@ -1,13 +1,19 @@
 import * as React from 'react';
+import * as FA from 'react-fontawesome';
 import { h, h1, div, Children, img, span } from 'react-hyperscript-helpers';
 import { Navbar, NavbarBrand, NavbarMenu, NavbarStart,
-         NavbarItem, NavbarEnd, Container} from 'bloomer';
+         NavbarItem, NavbarEnd, Container, NavbarBurger } from 'bloomer';
 import { Link, NavLink, NavLinkProps } from 'react-router-dom';
-import { NavbarBurger } from 'bloomer/lib/components/Navbar/NavbarBurger';
 
 require('../static/small_logo_trans.png');
 
-export default class NavBar extends React.Component<{}, {}> {
+export default class NavBar extends React.Component<{}, {isActive: boolean }> {
+  state = { isActive: false };
+
+  onClickNav = () => {
+    this.setState((state) => ({ isActive: !state.isActive }));
+  }
+
   render() {
     return h(Navbar, '.is-primary', [
       h(Container, [
@@ -17,15 +23,16 @@ export default class NavBar extends React.Component<{}, {}> {
               src:'./static/small_logo_trans.png',
               alt: 'BottleBats 2018 AI Competition',
             }),
+            h(BottleBats)
           ]),
-          h(NavbarBurger)
+          h(NavbarBurger, {isActive: this.state.isActive, onClick: this.onClickNav})
         ]),
-        h(NavbarMenu, [
-          h(NavbarStart, [
-            CNavLink({to: '/downloads'}, ['Downloads']),
-            CNavLink({to: '/rankings'}, ['Rankings']),
-          ]),
+        h(NavbarMenu, {isActive: this.state.isActive, onClick: this.onClickNav}, [
           h(NavbarEnd, [
+            CNavLink({to: '/info'}, [
+              h(FA, <any> { name:'info-circle', fixedWidth: true }),
+              'Info',
+            ]),
             CNavLink({to: '/sign-up'}, ["Sign up"])
           ])
         ])
@@ -37,4 +44,11 @@ export default class NavBar extends React.Component<{}, {}> {
 const CNavLink = (props: NavLinkProps, children: Children) => {
   props.activeClassName = 'is-active';
   return h(NavLink, `.navbar-item`, props, children)
+}
+
+const BottleBats: React.SFC<{}> = (props) => {
+  return h1('.title#nav-title', [
+    'BottleBats ',
+    span(['2.018']),
+  ])
 }

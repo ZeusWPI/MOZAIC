@@ -70,7 +70,7 @@ const CPWItem: React.SFC<ICPWItemProps> = (props) => {
 const GetStartedButton: React.SFC<{}> = (props) => {
   return h(Link, 
     '.button.is-inverted.is-large.is-link.is-outlined.is-primary', 
-    {to: '/downloads',},
-    ['Get started!']
+    {to: '/info',},
+    ['Learn more!']
   );
 }
