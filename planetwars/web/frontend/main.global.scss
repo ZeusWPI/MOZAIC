@@ -14,10 +14,18 @@ $footer-background-color: $primary;
 
 @import '~bulma';
 
+#info {
+  height: 100%;
+  background-color: $primary;
+  p {
+    // font-size: 1em;
+  }
+}
+
 #home-hero-body {
   height: 100%;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   flex-direction: column;
   align-items: center;
   flex-wrap: wrap;
@@ -87,10 +95,12 @@ $footer-background-color: $primary;
 
 .navbar {
   border-bottom: 1px solid $color4;
+  min-height: 85px;
   .navbar-brand {
     justify-content: center;
     align-items: center;
     padding: 8px;
+    max-height: 100%;
     #navbar-logo {
       max-height: 45px;
       width: auto;
@@ -98,9 +108,6 @@ $footer-background-color: $primary;
     #nav-title {
       padding-left: 10px;
       color: $color3;
-      .t2018 {
-        color: $secondary;
-      }
     }
   }
   a { border-bottom: none; }
@@ -128,3 +135,20 @@ a {
 
 .grow { transition: all .2s ease-in-out; }
 .grow:hover { transform: scale(1.1); }
+
+html, body {
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.push {
+  flex: 1 0 auto;
+}
+
+.t2018 {
+  color: $secondary;
+}

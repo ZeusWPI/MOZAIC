@@ -30,10 +30,13 @@ export default class NavBar extends React.Component<{}, {isActive: boolean }> {
         h(NavbarMenu, {isActive: this.state.isActive, onClick: this.onClickNav}, [
           h(NavbarEnd, [
             CNavLink({to: '/info'}, [
-              h(FA, <any> { name:'info-circle', fixedWidth: true }),
+              h(FA, <any> { name:'info-circle', fixedWidth: true, size: '2x' }),
               'Info',
             ]),
-            CNavLink({to: '/sign-up'}, ["Sign up"])
+            CNavLink({to: '/signup'}, [
+              h(FA, <any> { name:'envelope', fixedWidth: true, size: '2x' }),
+              'Sign up'
+            ])
           ])
         ])
       ])

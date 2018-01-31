@@ -14,7 +14,7 @@ export default class Home extends React.Component<{}, {}> {
   render() {
     return [
       h(Navbar),
-      h(Hero, { isColor: 'primary', isFullHeight: true }, [
+      h(Hero, '.push', { isColor: 'primary'}, [
         h(HeroBody, [
           h(Container, '#home-hero-body', { hasTextAlign: 'centered' }, [
             h(Teaser),
