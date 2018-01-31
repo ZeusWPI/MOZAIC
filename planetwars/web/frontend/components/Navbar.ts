@@ -47,8 +47,8 @@ const CNavLink = (props: NavLinkProps, children: Children) => {
 }
 
 const BottleBats: React.SFC<{}> = (props) => {
-  return h1('.title#nav-title', [
-    'BottleBats ',
-    span(['2.018']),
+  return h1('.title#nav-title.is-hidden-touch', [
+    span('BottleBats '),
+    span('.t2018', ['2.018']),
   ])
 }

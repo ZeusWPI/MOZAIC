@@ -12,19 +12,21 @@ require('../static/small_logo_trans.png');
 
 export default class Home extends React.Component<{}, {}> {
   render() {
-    return h(Hero, { isColor: 'primary', isFullHeight: true }, [
-      h(HeroHeader, [h(Navbar)]),
-      h(HeroBody, [
-        h(Container, '#home-hero-body', { hasTextAlign: 'centered' }, [
-          h(Teaser),
-          // h(Logo),
-          h(CodePlayWin),
-          h(Intro),
-          h(GetStartedButton),
+    return [
+      h(Navbar),
+      h(Hero, { isColor: 'primary', isFullHeight: true }, [
+        h(HeroBody, [
+          h(Container, '#home-hero-body', { hasTextAlign: 'centered' }, [
+            h(Teaser),
+            // h(Logo),
+            h(CodePlayWin),
+            h(Intro),
+            h(GetStartedButton),
+          ])
         ])
       ]),
-      h(HeroFooter, [h(Footer)]),
-    ])
+      h(Footer)
+    ]
   }
 }
 
@@ -60,7 +62,7 @@ const CodePlayWin: React.SFC<{}> = (props) => {
 
 interface ICPWItemProps { name: string, text: string }
 const CPWItem: React.SFC<ICPWItemProps> = (props) => {
-  return div('.cpw-item', [
+  return div('.cpw-item.grow', [
     // TS complains about the size type while it shouldn't
     h(FA, <any> {name: props.name, fixedWidth: true }),
     p([props.text]),

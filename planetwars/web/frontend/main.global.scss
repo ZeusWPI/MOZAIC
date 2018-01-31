@@ -17,7 +17,7 @@ $footer-background-color: $primary;
 #home-hero-body {
   height: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: space-around;
   flex-direction: column;
   align-items: center;
   flex-wrap: wrap;
@@ -26,7 +26,6 @@ $footer-background-color: $primary;
     width: 80%;
   }
   #code-play-win {
-    padding: 20px 0px 20px 0px;
     width: 80%;
     display: flex;
     flex-direction: row;
@@ -51,13 +50,11 @@ $footer-background-color: $primary;
     border: none;
   }
   #intro-text {
-    padding: 20px 0px 20px 0px;
     max-width: 700px;
     font-size: 1.5em;
     color: $color5;
   }
   #title {
-    padding: 20px 0px 20px 0px;
     #title2k {
       color: $secondary;
     }
@@ -67,6 +64,7 @@ $footer-background-color: $primary;
 /* Style homescreen for small devices */
 @media all and (max-width: 1000px) {
   #code-play-win {
+    padding: 20px 0px 20px 0px;
     .cpw-item {
       max-width: 20vw !important;
       font-size: 4vw !important;
@@ -75,10 +73,14 @@ $footer-background-color: $primary;
       }
     }
   }
+  #title {
+    padding: 0px 0px 20px 0px;
+  }
   .title {
     font-size: 2em !important;
   }
   #intro-text {
+    padding: 20px 0px 20px 0px;
     font-size: 1em !important;
   }
 }
@@ -95,7 +97,8 @@ $footer-background-color: $primary;
     }
     #nav-title {
       padding-left: 10px;
-      span {
+      color: $color3;
+      .t2018 {
         color: $secondary;
       }
     }
@@ -112,8 +115,16 @@ a {
   border-top: 1px solid $color4;
   padding: 1rem 1rem 1rem;
   color: $color4;
+  a {
+    color: $color4;
+  }
 }
+
+// General stuff
 
 .heart {
   color: $secondary;
 }
+
+.grow { transition: all .2s ease-in-out; }
+.grow:hover { transform: scale(1.1); }
