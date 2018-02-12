@@ -15,10 +15,12 @@ $footer-background-color: $primary;
 @import '~bulma';
 
 #info {
-  height: 100%;
   background-color: $primary;
-  p {
-    // font-size: 1em;
+  .feature-tile {
+    font-size: x-large;
+    background: $secondary;
+    padding: 10px;
+    border-radius: 10px;
   }
 }
 

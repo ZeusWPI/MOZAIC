@@ -3,7 +3,7 @@ import * as ReactDOM from 'react-dom';
 import { h, div, p, Children, span, strong, br, a } from 'react-hyperscript-helpers';
 import NavBar from './Navbar';
 import Footer from './Footer';
-import { Section, Hero, HeroBody, Container } from 'bloomer';
+import { Section, Hero, HeroBody, Container, Tile, Box } from 'bloomer';
 
 export default class Info extends React.Component<{}, {}> {
   render() {
@@ -67,7 +67,7 @@ const WhereWhen: React.SFC<{}> = (props) => {
         div('.title', ['Where?']),
         p('.is-size-5-widescreen', [
           'On the internet! From the comfort of your own. ',
-          'But we\'ll also do live tournaments and theory-crafting sessions in the Zeus kelder, or other yet to specify locations.',
+          'But we\'ll also do live tournaments and theory-crafting sessions in the Zeus kelder, or other yet to specify locations. ',
           'When? No fixed dates yet. Assume end februari, begin march.'
         ]),
       ])
@@ -76,5 +76,37 @@ const WhereWhen: React.SFC<{}> = (props) => {
 }
 
 const Features: React.SFC<{}> = props => {
-  return h('div', ['test']);
+  return h(Hero, '.is-primary', [
+    h(Container, [
+      h(HeroBody, [
+        h(Tile, {isAncestor: true, isVertical: true}, [
+          h(Tile, [
+            CTile('Simple game'),
+            CTile('Fancy visuals'),
+            CTile('Friendly client'),
+          ]),
+          h(Tile, [
+            CTile('Online play'),
+            CTile('Local play'),
+            CTile('Test bots'),
+          ]),
+          h(Tile, [
+            CTile('Matchmaking'),
+            CTile('Challenge friends'),
+            CTile('Local debugging'),
+          ]),
+        ])
+      ])
+    ]),
+  ]);
+}
+
+const CTile = (feature: string) => {
+  return h(Tile, {isParent: true}, [
+    h(Tile, '.has-text-centered.feature-tile.grow', {
+      isChild: true,
+    }, [
+      feature
+    ])
+  ])
 }
