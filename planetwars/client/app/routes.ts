@@ -8,6 +8,7 @@ import BotsPage from './containers/BotsPage';
 import QueuePage from './containers/QueuePage';
 import HistoryPage from './containers/HistoryPage';
 import AboutPage from './containers/AboutPage';
+import VisualizerPage from './containers/VisualizerPage';
 import { h, ul, li } from 'react-hyperscript-helpers';
 
 let styles = require('./routes.scss');
@@ -20,7 +21,8 @@ export default () => (
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/play" }, ["Play"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/queue" }, ["Queue"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/history" }, ["Game History"])]),
-        li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/about" }, ["About"])])
+        li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/about" }, ["About"])]),
+        li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/visualizer" }, ["Visualizer"])])
       ]),
       h(Switch, [
         h(Route, {
@@ -50,6 +52,10 @@ export default () => (
         h(Route, {
           path: '/about',
           component: AboutPage
+        }),
+        h(Route, {
+          path: '/visualizer',
+          component: VisualizerPage
         })
       ])
     ])
