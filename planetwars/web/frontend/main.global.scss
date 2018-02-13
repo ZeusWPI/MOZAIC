@@ -24,6 +24,30 @@ $footer-background-color: $primary;
   }
 }
 
+#signup-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  #signup-box {
+    max-width: 700px;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .input, .button {
+      border-color: $secondary;
+    }
+    .label {
+      text-align: center;
+      color: $color3;
+    }
+    .submit {
+      color: $color3;
+      background-color: $secondary;
+    }
+  }
+}
+
 #home-hero-body {
   height: 100%;
   display: flex;
