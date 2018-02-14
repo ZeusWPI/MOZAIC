@@ -16,3 +16,12 @@ $bootstrap-sass-asset-helper: true;
 // Fix Font Awesome Font Loading
 $fa-font-path: "~font-awesome/fonts";
 @import "~font-awesome/scss/font-awesome.scss";
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+body {
+  margin: 0px;
+}

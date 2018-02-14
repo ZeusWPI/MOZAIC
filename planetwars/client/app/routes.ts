@@ -24,39 +24,41 @@ export default () => (
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/about" }, ["About"])]),
         li(`.${styles.navbarelement}`, [h(Link, `.${styles.navbarlink}`, { to:"/visualizer" }, ["Visualizer"])])
       ]),
-      h(Switch, [
-        h(Route, {
-          path: '/home',
-          component: HomePage
-        }),
-        h(Route, {
-          path: '/play',
-          component: PlayPage
-        }),
-        h(Route, {
-          path: '/bots/:bot',
-          component: BotsPage
-        }),
-        h(Route, {
-          path: '/bots',
-          component: BotsPage
-        }),
-        h(Route, {
-          path: '/history',
-          component: HistoryPage
-        }),
-        h(Route, {
-          path: '/queue',
-          component: QueuePage
-        }),
-        h(Route, {
-          path: '/about',
-          component: AboutPage
-        }),
-        h(Route, {
-          path: '/visualizer',
-          component: VisualizerPage
-        })
+      h("div", `.${styles.container}`, [
+        h(Switch, [
+          h(Route, {
+            path: '/home',
+            component: HomePage
+          }),
+          h(Route, {
+            path: '/play',
+            component: PlayPage
+          }),
+          h(Route, {
+            path: '/bots/:bot',
+            component: BotsPage
+          }),
+          h(Route, {
+            path: '/bots',
+            component: BotsPage
+          }),
+          h(Route, {
+            path: '/history',
+            component: HistoryPage
+          }),
+          h(Route, {
+            path: '/queue',
+            component: QueuePage
+          }),
+          h(Route, {
+            path: '/about',
+            component: AboutPage
+          }),
+          h(Route, {
+            path: '/visualizer',
+            component: VisualizerPage
+          })
+        ])
       ])
     ])
   );
