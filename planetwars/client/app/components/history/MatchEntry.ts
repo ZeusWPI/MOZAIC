@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { h } from 'react-hyperscript-helpers'
 
+import { GameData } from "./GameData"
+
 let styles = require("./MatchEntry.scss");
 
 interface MatchEntryProps {
-  winner:String,
-  numTurns:number
+  gameData:GameData
 }
 
 interface MatchEntryState {
@@ -18,7 +19,7 @@ export default class MatchEntry extends React.Component<MatchEntryProps, MatchEn
   }
   render() {
     return h("div", `.${styles.matchEntry}`, [
-      `Winner: ${this.props.winner} | ${this.props.numTurns} turns`
+      `Winner: ${this.props.gameData.players[this.props.gameData.winner]} | ${this.props.gameData.gameLog.length} turns`
     ])
   }
 }
