@@ -17,16 +17,26 @@ export default class GameAnalyser {
     return new GameAnalyser(gameFile[0], gameFile.slice(1));
   }
 
-  constructor(playerData:PlayerData, gameFile:GameState[]) {
+  constructor(playerData:PlayerData, gameLog:GameState[]) {
+    let seenShips = new Set()
     let shipsSent = [[0]]
+    gameLog.map((turn, turnNum) => {
+      shipsSent[turnNum] = new Array(playerData.players.length + 1).fill(0);
+      turn.expeditions.filter((exp) => !seenShips.has(exp.id)).map((exp) => {
+        // console.log(turnNum, exp.owner)
+        seenShips.add(exp.id)
+        shipsSent[turnNum][exp.owner] += exp.ship_count
+      })
+    })
+    // console.log(shipsSent)
     let planetsTaken = [0]
-    let winner= 0
-    let timestamp = 0
+    let winner = 0
+    let timestamp = 0 // TODO
 
     this.gameData = {
       players: playerData.players,
       shipsSent: shipsSent,
-      gameLog: gameFile,
+      gameLog: gameLog,
       planetsTaken: planetsTaken,
       winner: winner,
       timestamp: timestamp
