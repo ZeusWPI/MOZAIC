@@ -84,8 +84,8 @@ class Controls extends React.Component {
         ]),
         div(`.${styles.fileControl}`, [
           h(LogLoaderButton, {
-            handleContents: (log) => {
-              this.props.setLog(log);
+            handleContents: (playerData, gameLog) => {
+              this.props.setLog(playerData, gameLog);
               this.props.setPlaying(true);
             }
           })
@@ -134,7 +134,10 @@ class LogLoaderButton extends React.Component {
     var reader = new FileReader();
     reader.onload = (readEvent) => {
       var log = readEvent.target.result;
-      this.props.handleContents(log);
+
+      let lines = log.trim().split("\n");
+      let gameFile = lines.map((value) => JSON.parse(value));
+      this.props.handleContents(gameFile[0], gameFile.slice(1));
     }
     reader.readAsText(clickEvent.target.files[0]);
   }

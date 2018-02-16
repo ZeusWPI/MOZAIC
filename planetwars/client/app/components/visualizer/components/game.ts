@@ -1,5 +1,6 @@
 import { Player, TurnData } from "./interfaces"
 import Turn from "./turn"
+import { GameState } from "../../history/GameData"
 
 const d3 = require('d3');
 const Config = require('../util/config');
@@ -16,25 +17,15 @@ export default class Game {
   players: string[];
   turns: Turn[];
 
-  constructor(json:string) {
+  constructor(playerData:MetaData, gameLog:GameState[]) {
     this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
     this.planetTypeMap = new Map();
 
-    this.parseTurns(json);
-    this.findWinner();
-  }
-
-  parseTurns(json:string) {
-    let turns_json:string[] = json.trim().split('\n');
-    let meta_json:string = turns_json.shift() as string;
-
-    this.metaData = JSON.parse(meta_json);
-
+    this.metaData = playerData
     this.players = this.metaData.players;
-    this.turns = turns_json.map(turn_json => {
-      let obj:TurnData = JSON.parse(turn_json);
-      return new Turn(obj, this);
-    });
+    this.turns = gameLog.map((turn) => new Turn(turn, this))
+
+    this.findWinner();
   }
 
   playerColor(name:string) {

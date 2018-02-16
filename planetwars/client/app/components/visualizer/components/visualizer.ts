@@ -4,6 +4,7 @@ import * as React from 'react';
 import * as d3 from 'd3';
 import Game from './game';
 import Scoreboard from "./scoreboard"
+import { GameState } from "../../history/GameData"
 
 const h = require('react-hyperscript');
 const {
@@ -25,8 +26,13 @@ const Renderer = require('./renderer');
 const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
+interface PlayerData {
+  players: string[]
+}
+
 interface VisualizerProps {
-  gamelog?: path.ParsedPath
+  playerData: PlayerData,
+  gameLog?: GameState[]
 }
 
 interface VisualizerState {
@@ -53,11 +59,9 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   }
 
   componentDidMount() {
-    if(this.props.gamelog)
+    if(this.props.gameLog && this.props.playerData)
     {
-      let p = path.format(this.props.gamelog);
-      let jsonLog = fs.readFileSync(p).toString();
-      this.setLog(jsonLog);
+      this.setLog(this.props.playerData, this.props.gameLog);
       this.setPlaying(true);
     }
   }
@@ -83,9 +87,9 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     });
   }
 
-  setLog(log: string) {
-    var game = new Game(log);
-    console.log(game);
+  setLog(playerData:PlayerData, gameLog:GameState[]) {
+    var game = new Game(playerData, gameLog);
+    // console.log(game);
     this.setState({
       game: game,
       numTurns: game.turns.length - 1,
@@ -115,16 +119,18 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   //   this.setLog(jsonLog)
   // }
   render() {
-    let controls = h(Controls, {
-      turnNum: this.state.turnNum,
-      numTurns: this.state.numTurns,
-      playing: this.state.playing,
-      speed: this.state.speed,
-      setPlaying: (v:boolean) => this.setPlaying(v),
-      setTurn: (t:number) => this.setTurn(t),
-      setSpeed: (s:number) => this.setSpeed(s),
-      setLog: (l:string) => this.setLog(l)
-    });
+    let controls = div(`.${styles.control}`, [
+      h(Controls, {
+        turnNum: this.state.turnNum,
+        numTurns: this.state.numTurns,
+        playing: this.state.playing,
+        speed: this.state.speed,
+        setPlaying: (v:boolean) => this.setPlaying(v),
+        setTurn: (t:number) => this.setTurn(t),
+        setSpeed: (s:number) => this.setSpeed(s),
+        setLog: (playerData:PlayerData, gameLog:GameState[]) => this.setLog(playerData, gameLog)
+      })
+    ])
 
     if(!this.state.game){
       return div(`.${styles.visualizerRootNode}`, [

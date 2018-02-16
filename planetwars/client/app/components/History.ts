@@ -6,6 +6,7 @@ import { h } from 'react-hyperscript-helpers'
 import MatchEntry from "./history/MatchEntry"
 import { GameData } from "./history/GameData"
 import GameAnalyser from "./history/GameAnalyser"
+import { Visualizer } from "./visualizer"
 
 let styles = require("./History.scss");
 
@@ -41,7 +42,8 @@ export default class History extends React.Component<HistoryProps, HistoryState>
         h("div", `.${styles.rightPane}`, [
           `Number of ships sent for player 1: ${this.state.gameData.shipsSent.reduce((a, b) => a + b[1], 0)}. `,
           h("br"),
-          `Number of planets taken by player 1: ${this.state.gameData.planetsTaken[1]}`
+          `Number of planets taken by player 1: ${this.state.gameData.planetsTaken[1]}`,
+          h(Visualizer, {gameLog: this.state.gameData.gameLog, playerData: { players: this.state.gameData.players }} )
         ])
       ])
     } else {
