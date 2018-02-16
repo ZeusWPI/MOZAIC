@@ -22,6 +22,8 @@ export default class GameAnalyser {
     let planetOwners = gameLog[0].planets.map((planet) => planet.owner)
     let shipsSent = [[0]]
     let planetsTaken = new Array(playerData.players.length + 1).fill(0)
+    let winner = 0
+
     gameLog.map((turn, turnNum) => {
       shipsSent[turnNum] = new Array(playerData.players.length + 1).fill(0)
       turn.expeditions.filter((exp) => !seenShips.has(exp.id))
@@ -39,8 +41,15 @@ export default class GameAnalyser {
         }
       }
     })
-    let winner = 0
-    let timestamp = 0 // TODO
+    let lastTurn = gameLog[gameLog.length - 1]
+    let lastPlanetOwners = new Set(lastTurn.planets.map((p) => p.owner).filter((entry) => entry != null))
+    let lastExpeditionOwners = new Set(lastTurn.expeditions.map((p) => p.owner).filter((entry) => entry != null))
+    if(lastPlanetOwners.size == 1 && lastExpeditionOwners.size == 1 && lastPlanetOwners.values().next().value == lastExpeditionOwners.values().next().value)
+    {
+      winner = lastPlanetOwners.values().next().value
+    }
+
+    let timestamp = 0 // Not logged yet
 
     this.gameData = {
       players: playerData.players,
