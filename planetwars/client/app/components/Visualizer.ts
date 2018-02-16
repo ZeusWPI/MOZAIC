@@ -3,15 +3,15 @@ import { h } from 'react-hyperscript-helpers'
 
 import { Visualizer } from './visualizer/index';
 
-interface QueueProps {
+interface VisualizerProps {
 
 }
 
-interface QueueState {
+interface VisualizerState {
 
 }
 
-export default class Queue extends React.Component<QueueProps, QueueState>{
+export default class Visualizer extends React.Component<VisualizerProps, VisualizerState>{
   render() {
     return h(Visualizer)
   }
