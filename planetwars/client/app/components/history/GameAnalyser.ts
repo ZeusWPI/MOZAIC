@@ -31,15 +31,12 @@ export default class GameAnalyser {
         seenShips.add(exp.id)
         shipsSent[turnNum][exp.owner] += exp.ship_count
       })
-      let prevPlanetOwners = planetOwners.slice(0)
-      planetOwners = turn.planets.map((planet) => planet.owner)
-      for (let i in planetOwners)
-      {
-        if(planetOwners[i] != prevPlanetOwners[i] && planetOwners[i] != null)
+      turn.planets.map((planet, planetIndex) => {
+        if(planet.owner && gameLog[Math.max(0,turnNum - 1)].planets[planetIndex].owner != planet.owner)
         {
-          planetsTaken[planetOwners[i]] += 1
+          planetsTaken[planet.owner] += 1
         }
-      }
+      })
     })
     let lastTurn = gameLog[gameLog.length - 1]
     let lastPlanetOwners = new Set(lastTurn.planets.map((p) => p.owner).filter((entry) => entry != null))
