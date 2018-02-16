@@ -19,7 +19,7 @@ export default class MatchEntry extends React.Component<MatchEntryProps, MatchEn
   }
   render() {
     return h("div", `.${styles.matchEntry}`, [
-      `Winner: ${this.props.gameData.players[this.props.gameData.winner]} | ${this.props.gameData.gameLog.length} turns`
+      `Player 1: ${this.props.gameData.players[this.props.gameData.winner]} | ${this.props.gameData.gameLog.length - 1} turns`
     ])
   }
 }

@@ -39,7 +39,9 @@ export default class History extends React.Component<HistoryProps, HistoryState>
       return h("div", `.${styles.history}`, [
         h("ul", `.${styles.leftPane}`, gamesElements),
         h("div", `.${styles.rightPane}`, [
-          `Number of ships sent for player 1: ${this.state.gameData.shipsSent.reduce((a, b) => a + b[1], 0)}`
+          `Number of ships sent for player 1: ${this.state.gameData.shipsSent.reduce((a, b) => a + b[1], 0)}. `,
+          h("br"),
+          `Number of planets taken by player 1: ${this.state.gameData.planetsTaken[1]}`
         ])
       ])
     } else {
