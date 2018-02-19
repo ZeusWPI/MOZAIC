@@ -8,10 +8,17 @@ extern crate rocket_contrib;
 #[macro_use] extern crate serde_derive;
 
 use std::io;
+use std::io::Write;
 use std::path::{Path, PathBuf};
+use std::fs::OpenOptions;
 use rocket_contrib::Json;
 use rocket::response::NamedFile;
+use rocket::response::Failure;
 use rocket::response::status;
+use rocket::Response;
+use rocket::http::Status;
+
+static EMAIL_FILE: &'static str = "emails.txt";
 
 
 #[get("/")]
@@ -30,10 +37,27 @@ struct SubscribeForm {
 }
 
 #[post("/subscribe", format = "application/json", data = "<form>")]
-fn subscribe(form: Json<SubscribeForm>) -> status::NoContent<> {
+fn subscribe<'r>(form: Json<SubscribeForm>) -> Result<status::NoContent<>, Response<'r>> {
     let form: SubscribeForm = form.into_inner();
-    println!("{}", form.email);
-    status::NoContent
+    let resp = match save_email(form.email) {
+        Ok(_) => Ok(status::NoContent),
+        Err(err) => {
+            let err = Response::build()
+                .status(Status::InternalServerError)
+                .finalize();
+            Err(err)
+        }
+    };
+    resp
+}
+
+fn save_email(email: String) -> io::Result<()> {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open(EMAIL_FILE)?;
+    println!("{}", email);
+    writeln!(file, "{}", email)
 }
 
 fn main() {

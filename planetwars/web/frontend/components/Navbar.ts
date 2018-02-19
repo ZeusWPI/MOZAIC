@@ -33,10 +33,10 @@ export default class NavBar extends React.Component<{}, {isActive: boolean }> {
               h(FA, <any> { name:'info-circle', fixedWidth: true, size: '2x' }),
               'Info',
             ]),
-            CNavLink({to: '/signup'}, [
-              h(FA, <any> { name:'envelope', fixedWidth: true, size: '2x' }),
-              'Sign up'
-            ])
+            // CNavLink({to: '/signup'}, [
+            //   h(FA, <any> { name:'envelope', fixedWidth: true, size: '2x' }),
+            //   'Sign up'
+            // ])
           ])
         ])
       ])
