@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package mozaic.client_server;
+
+message CreateMatch {
+    int64 player_count = 1;
+    bytes match_data = 2;
+}
+
+message CreateMatchResponse {
+    oneof response {
+        MatchCreated created = 1;
+        string error = 2;
+    }
+}
+
+message MatchCreated {
+    bytes game_token = 2;
+    repeated bytes player_tokens = 1;
+}
