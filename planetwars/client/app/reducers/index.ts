@@ -1,11 +1,30 @@
 import { combineReducers, Reducer } from 'redux';
-import { routerReducer as routing } from 'react-router-redux';
+import { routerReducer as routing, RouterState } from 'react-router-redux';
 
-const rootReducer = combineReducers({
-  routing: routing as Reducer<any>
-});
 
 export interface IState {
+  routing: RouterState,
+  about: AboutState,
+  botpage: BotsState,
 }
+
+export type AboutState = { counter: number; };
+export type BotsState = {};
+
+const aboutReducer = combineReducers<AboutState>({
+  counter: (state = 0, action) => {
+    switch(action.type) {
+      case 'TEST': {
+        return state + 1;
+      }
+      default: return state;
+    }
+  }
+});
+
+const rootReducer = combineReducers({
+  routing: routing as Reducer<any>,
+  about: aboutReducer,
+});
 
 export default rootReducer;
