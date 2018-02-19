@@ -18,3 +18,30 @@ message MatchCreated {
     bytes game_token = 2;
     repeated bytes player_tokens = 1;
 }
+
+message Connect {
+    bytes token = 1;
+}
+
+message ConnectResponse {
+    oneof response {
+        Connected connected = 1;
+        string error = 2;
+    }
+}
+
+message Connected {}
+
+
+message ClientMessage {
+    oneof message {
+        GameData game_data = 1;
+        Disconnect disconnect = 3;
+    }
+}
+
+message GameData {
+    bytes data = 1;
+}
+
+message Disconnect {}
