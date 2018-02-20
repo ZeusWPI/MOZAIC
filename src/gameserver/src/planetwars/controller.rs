@@ -4,7 +4,6 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::step_lock::StepLock;
-use planetwars::pw_controller::PwController;
 
 use slog;
 
@@ -12,7 +11,7 @@ use slog;
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     step_lock: StepLock,
-    pw_controller: PwController,
+//    pw_controller: PwController,
 
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
@@ -41,20 +40,13 @@ impl Controller {
                conf: Config, logger: slog::Logger,)
                -> Self
     {
-        let mut c = Controller {
-            pw_controller: PwController::new(conf, clients, logger.clone()),
-            step_lock: StepLock::new(),
+        let c = Controller {
+            step_lock: StepLock::new(conf, clients, logger.clone()),
             client_msgs,
             logger,
         };
-        c.init();
         return c;
     }
-
-    fn init(&mut self) {
-        self.pw_controller.init(&mut self.step_lock);
-    }
-
 
     /// Handle an incoming message.
     fn handle_message(&mut self, client_id: usize, msg: Message) {
@@ -76,7 +68,12 @@ impl Controller {
                     "client_id" => client_id
                 );
                 self.step_lock.remove(client_id);
-                self.pw_controller.handle_disconnect(client_id);
+            }
+            Message::Connected => {
+                info!(self.logger, "client connected";
+                    "client_id" => client_id
+                );
+                self.step_lock.attach_command(client_id, String::new());
             }
         }
     }
@@ -92,10 +89,7 @@ impl Future for Controller {
             self.handle_message(msg.client_id, msg.message);
 
             while self.step_lock.is_ready() {
-                let msgs = self.step_lock.take_messages();
-                self.pw_controller.step(&mut self.step_lock, msgs);
-
-                if let Some(result) = self.pw_controller.outcome() {
+                if let Some(result) = self.step_lock.do_step() {
                     return Ok(Async::Ready(result));
                 }
             }

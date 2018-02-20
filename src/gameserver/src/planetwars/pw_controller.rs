@@ -5,7 +5,6 @@ use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::controller::Client;
 use planetwars::protocol as proto;
 use planetwars::serializer::{serialize, serialize_rotated};
-use planetwars::step_lock::StepLock;
 
 use slog;
 use serde_json;
@@ -51,26 +50,27 @@ impl PwController {
         }
     }
 
-    pub fn init(&mut self, step_lock: &mut StepLock){
+    pub fn start(&mut self) -> Vec<usize>{
         self.log_info();
         self.log_state();
-        self.prompt_players(step_lock);
+        self.prompt_players()
     }
 
     /// Advance the game by one turn.
     pub fn step(&mut self,
-                lock: &mut StepLock,
-                messages: HashMap<usize, String>)
+                msgs: HashMap<usize, String>,
+        ) -> Vec<usize>
     {
         self.state.repopulate();
-        self.execute_messages(messages);
+        self.execute_messages(msgs);
         self.state.step();
 
         self.log_state();
 
         if !self.state.is_finished() {
-            self.prompt_players(lock);
+            return self.prompt_players();
         }
+        return Vec::new();
     }
 
     pub fn outcome(&self) -> Option<Vec<usize>> {
@@ -99,10 +99,10 @@ impl PwController {
         };
         info!(self.logger, "game info";
             "info" => info);
-
     }
 
-    fn prompt_players(&mut self, lock: &mut StepLock) {
+    fn prompt_players(&mut self) -> Vec<usize> {
+        let mut players = Vec::new();
         for player in self.state.players.iter() {
             if player.alive {
                 if let Some(client) = self.client_map.get_mut(&player.id) {
@@ -113,13 +113,15 @@ impl PwController {
                     let serialized = serialize_rotated(&self.state, offset);
                     let repr = serde_json::to_string(&serialized).unwrap();
                     client.send_msg(repr);
-                    lock.wait_for(player.id);
+
+                    players.push(player.id);
                 }   
             }
         }
+        return players;
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<usize, String>) {
+    fn execute_messages(&mut self, mut msgs:HashMap<usize, String>) {
         for (client_id, message) in msgs.drain() {
             self.execute_message(client_id, message);
         }

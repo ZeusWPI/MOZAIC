@@ -30,11 +30,11 @@ pub struct ClientMessage {
 
 pub enum Message {
     Data(String),
+    Connected,
     Disconnected,
 }
 
 // TODO: the client controller should also be handed a log handle
-
 
 pub struct ClientController {
     client_id: usize,
@@ -60,7 +60,7 @@ impl ClientController {
         let (snd, rcv) = unbounded();
         let (sink, stream) = conn.framed(LineCodec).split();
 
-        ClientController {
+        let mut c = ClientController {
             sender: BufferedSender::new(sink),
             client_msgs: stream,
 
@@ -73,7 +73,9 @@ impl ClientController {
             logger: logger.new(
                 o!("client_id" => client_id)
             ),
-        }
+        };
+        c.send_message(Message::Connected);
+        return c;
     }
 
     /// Get a handle to the control channel for this client.
