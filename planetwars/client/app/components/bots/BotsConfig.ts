@@ -40,7 +40,7 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
           removeArg: (x:number) => this.removeArg(x),
           handleChange: (value:string, num:number) => this.handleArgumentChange(value, num)
         }),
-        h("input", { type:"submit", value: "Save"}),
+        h("input", '.button', { type:"submit", value: "Save"}),
         h("ul", `.${styles.errorList}`, this.state.errors.map(
           (error:string, key:number) =>
             h("li", `.${styles.errorItem}`, { key: key }, [error])
@@ -143,9 +143,9 @@ export class ArgumentFields extends React.Component<ArgumentFieldsProps, Argumen
           arg:arg,
           handleChange: (value:string) => this.props.handleChange(value, num)
         }),
-        h("button", { onClick: () => this.props.removeArg(num) }, ["-"])
+        h("button", '.button', { onClick: () => this.props.removeArg(num) }, ["-"])
       ])),
-      h("button", { onClick: () => this.props.addArg() }, ["+"])
+      h("button", '.button', { onClick: () => this.props.addArg() }, ["+"])
     ]);
   }
 }

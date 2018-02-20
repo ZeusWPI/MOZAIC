@@ -16,7 +16,18 @@ $bootstrap-sass-asset-helper: true;
 // Fix Font Awesome Font Loading
 $fa-font-path: "~font-awesome/fonts";
 @import "~font-awesome/scss/font-awesome.scss";
-@import '~bulma/css/bulma';
+
+@import '~bulma/sass/utilities/initial-variables';
+// Custom Variables
+$background: #181818;
+$body-background-color: $background;
+$navbar-background-color: $background;
+$navbar-item-hover-background-color: lighten(#181818, 1.5);
+$navbar-item-color: $white-ter;
+$text: $white-ter;
+
+// Bulma Npm
+@import '~bulma/bulma';
 
 #root {
   width: 100vw;
