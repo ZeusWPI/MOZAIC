@@ -3,7 +3,7 @@ import * as path from 'path'; import * as fs from 'fs'; import * as React from
 'react';
 
 import { BotSelector } from "./BotSelector"
-import { MatchConfig, PlayerConfig } from "../../utils/MatchConfig"
+import { MatchConfig, PlayerConfig } from "../../utils/Models"
 import { h } from 'react-hyperscript-helpers';
 
 let styles = require('./Setup.scss');
