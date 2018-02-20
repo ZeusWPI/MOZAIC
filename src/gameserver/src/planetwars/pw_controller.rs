@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 use planetwars::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
@@ -50,16 +51,17 @@ impl PwController {
         }
     }
 
-    pub fn start(&mut self) -> Vec<usize>{
+    pub fn start(&mut self) -> HashSet<usize>{
         self.log_info();
         self.log_state();
+
         self.prompt_players()
     }
 
     /// Advance the game by one turn.
     pub fn step(&mut self,
                 msgs: HashMap<usize, String>,
-        ) -> Vec<usize>
+        ) -> HashSet<usize>
     {
         self.state.repopulate();
         self.execute_messages(msgs);
@@ -70,7 +72,7 @@ impl PwController {
         if !self.state.is_finished() {
             return self.prompt_players();
         }
-        return Vec::new();
+        return HashSet::new();
     }
 
     pub fn outcome(&self) -> Option<Vec<usize>> {
@@ -101,8 +103,8 @@ impl PwController {
             "info" => info);
     }
 
-    fn prompt_players(&mut self) -> Vec<usize> {
-        let mut players = Vec::new();
+    fn prompt_players(&mut self) -> HashSet<usize> {
+        let mut players = HashSet::new();
         for player in self.state.players.iter() {
             if player.alive {
                 if let Some(client) = self.client_map.get_mut(&player.id) {
@@ -114,8 +116,8 @@ impl PwController {
                     let repr = serde_json::to_string(&serialized).unwrap();
                     client.send_msg(repr);
 
-                    players.push(player.id);
-                }   
+                    players.insert(player.id);
+                }
             }
         }
         return players;

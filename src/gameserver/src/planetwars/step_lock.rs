@@ -6,6 +6,7 @@ use planetwars::controller::Client;
 use planetwars::config::Config;
 
 use slog;
+use std::mem;
 
 
 pub struct StepLock {
@@ -30,11 +31,13 @@ impl StepLock {
     pub fn do_step(&mut self) -> Option<Vec<usize>> {
         if self.awaiting_clients.is_empty() {
             if self.running {
-                let players_next_turn = self.pw_controller.step(self.client_messages.clone());
-                self.awaiting_clients.extend(players_next_turn.iter());
+                mem::replace(&mut self.awaiting_clients, 
+                    self.pw_controller.step(self.client_messages.clone())
+                    );
             }else{
-                self.awaiting_clients.extend(self.pw_controller.start().iter());
-                print!("{:?}", self.awaiting_clients);
+                mem::replace(&mut self.awaiting_clients, 
+                    self.pw_controller.start()
+                    );
                 self.running = true;
             }
             self.client_messages.clear();
@@ -56,5 +59,10 @@ impl StepLock {
         self.pw_controller.handle_disconnect(client_id);
         self.client_messages.remove(&client_id);
         self.awaiting_clients.remove(&client_id);
+    }
+
+    /// This will be useful to check for time-outs
+    pub fn act(&mut self) {
+
     }
 }

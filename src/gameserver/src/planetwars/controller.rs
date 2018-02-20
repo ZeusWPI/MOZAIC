@@ -11,8 +11,6 @@ use slog;
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
     step_lock: StepLock,
-//    pw_controller: PwController,
-
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
 }
@@ -85,11 +83,13 @@ impl Future for Controller {
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
+            self.step_lock.act();
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
 
             while self.step_lock.is_ready() {
                 if let Some(result) = self.step_lock.do_step() {
+                    print!("Winner: {:?}", result);
                     return Ok(Async::Ready(result));
                 }
             }
