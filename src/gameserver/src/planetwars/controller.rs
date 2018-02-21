@@ -4,13 +4,15 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::step_lock::StepLock;
+use planetwars::game_controller::GameController;
+use planetwars::pw_controller::PwController;
 
 use slog;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
-    step_lock: StepLock,
+    step_lock: StepLock<PwController>,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
 }
@@ -39,7 +41,7 @@ impl Controller {
                -> Self
     {
         let c = Controller {
-            step_lock: StepLock::new(conf, clients, logger.clone()),
+            step_lock: StepLock::new(GameController::new(conf, clients, logger.clone())),
             client_msgs,
             logger,
         };

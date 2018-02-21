@@ -1,47 +1,43 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use planetwars::pw_controller::PwController;
-use planetwars::controller::Client;
-use planetwars::config::Config;
+use planetwars::game_controller::GameController;
 
-use slog;
-use std::mem;
-
-
-pub struct StepLock {
-    client_messages: HashMap<usize, String>,
-    awaiting_clients: HashSet<usize>,
-    pw_controller: PwController,
-    running: bool,
+enum GameState {
+    Waiting,
+    Running,
 }
 
-impl StepLock {
-    pub fn new(conf: Config, clients: Vec<Client>, logger: slog::Logger) -> StepLock {
-        let mut awaiting_clients = HashSet::new();
-        awaiting_clients.extend(clients.iter().map(|a| a.id));
+pub struct StepLock<G: GameController> {
+    client_messages: HashMap<usize, String>,
+    awaiting_clients: HashSet<usize>,
+    game_controller: G,
+    running: GameState,
+}
+
+impl<G> StepLock<G>
+    where G: GameController 
+{
+    pub fn new(game_controller: G) -> StepLock<G> {
         StepLock {
             client_messages: HashMap::new(),
-            awaiting_clients: awaiting_clients,
-            pw_controller: PwController::new(conf, clients, logger),
-            running: false,
+            awaiting_clients: HashSet::new(),
+            game_controller,
+            running: GameState::Waiting,
         }
     }
 
     pub fn do_step(&mut self) -> Option<Vec<usize>> {
         if self.awaiting_clients.is_empty() {
-            if self.running {
-                mem::replace(&mut self.awaiting_clients, 
-                    self.pw_controller.step(self.client_messages.clone())
-                    );
-            }else{
-                mem::replace(&mut self.awaiting_clients, 
-                    self.pw_controller.start()
-                    );
-                self.running = true;
+            match self.running {
+                GameState::Waiting => {
+                                self.running = GameState::Running;
+                                self.awaiting_clients = self.game_controller.start();
+                            },
+                GameState::Running => self.awaiting_clients = self.game_controller.step(self.client_messages.clone()),
             }
             self.client_messages.clear();
-            return self.pw_controller.outcome();
+            return self.game_controller.outcome();
         }
         return None;
     }
@@ -56,13 +52,13 @@ impl StepLock {
     }
 
     pub fn remove(&mut self, client_id: usize) {
-        self.pw_controller.handle_disconnect(client_id);
         self.client_messages.remove(&client_id);
         self.awaiting_clients.remove(&client_id);
+
     }
 
     /// This will be useful to check for time-outs
     pub fn act(&mut self) {
-
+        
     }
 }

@@ -6,6 +6,7 @@ use planetwars::rules::{PlanetWars, Dispatch};
 use planetwars::controller::Client;
 use planetwars::protocol as proto;
 use planetwars::serializer::{serialize, serialize_rotated};
+use planetwars::game_controller::GameController;
 
 use slog;
 use serde_json;
@@ -28,65 +29,6 @@ pub enum CommandError {
 }
 
 impl PwController {
-    pub fn new(conf: Config,
-               clients: Vec<Client>,
-               logger: slog::Logger)
-               -> Self
-    {
-        let state = conf.create_game(clients.len());
-
-        let planet_map = state.planets.iter().map(|planet| {
-            (planet.name.clone(), planet.id)
-        }).collect();
-
-        let client_map = clients.into_iter().map(|c| {
-            (c.id, c)
-        }).collect();
-
-        PwController {
-            state,
-            planet_map,
-            client_map,
-            logger,
-        }
-    }
-
-    pub fn start(&mut self) -> HashSet<usize>{
-        self.log_info();
-        self.log_state();
-
-        self.prompt_players()
-    }
-
-    /// Advance the game by one turn.
-    pub fn step(&mut self,
-                msgs: HashMap<usize, String>,
-        ) -> HashSet<usize>
-    {
-        self.state.repopulate();
-        self.execute_messages(msgs);
-        self.state.step();
-
-        self.log_state();
-
-        if !self.state.is_finished() {
-            return self.prompt_players();
-        }
-        return HashSet::new();
-    }
-
-    pub fn outcome(&self) -> Option<Vec<usize>> {
-        if self.state.is_finished() {
-            Some(self.state.living_players())
-        } else {
-            None
-        }
-    }
-
-    pub fn handle_disconnect(&mut self, client_id: usize) {
-        self.client_map.remove(&client_id);
-    }
-
     fn log_state(&self) {
         // TODO: add turn number
         info!(self.logger, "step";
@@ -192,5 +134,62 @@ impl PwController {
             target: target_id,
             ship_count: mv.ship_count,
         })
+    }
+}
+
+impl GameController for PwController {
+    fn new(conf: Config,
+               clients: Vec<Client>,
+               logger: slog::Logger)
+               -> Self
+    {
+        let state = conf.create_game(clients.len());
+
+        let planet_map = state.planets.iter().map(|planet| {
+            (planet.name.clone(), planet.id)
+        }).collect();
+
+        let client_map = clients.into_iter().map(|c| {
+            (c.id, c)
+        }).collect();
+
+        PwController {
+            state,
+            planet_map,
+            client_map,
+            logger,
+        }
+    }
+
+    fn start(&mut self) -> HashSet<usize>{
+        self.log_info();
+        self.log_state();
+
+        self.prompt_players()
+    }
+
+    /// Advance the game by one turn.
+    fn step(&mut self,
+                msgs: HashMap<usize, String>,
+        ) -> HashSet<usize>
+    {
+        self.state.repopulate();
+        self.execute_messages(msgs);
+        self.state.step();
+
+        self.log_state();
+
+        if !self.state.is_finished() {
+            return self.prompt_players();
+        }
+        return HashSet::new();
+    }
+
+    fn outcome(&self) -> Option<Vec<usize>> {
+        if self.state.is_finished() {
+            Some(self.state.living_players())
+        } else {
+            None
+        }
     }
 }
