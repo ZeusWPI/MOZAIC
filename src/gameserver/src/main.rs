@@ -3,10 +3,13 @@ mod client_controller;
 mod buffered_sender;
 mod planetwars;
 
+mod protobuf_codec;
+
 extern crate bytes;
 
 extern crate tokio_core;
 extern crate tokio_io;
+extern crate tokio;
 extern crate tokio_process;
 #[macro_use]
 extern crate futures;
@@ -25,6 +28,14 @@ extern crate serde_derive;
 extern crate slog;
 extern crate slog_json;
 
+extern crate prost;
+#[macro_use]
+extern crate prost_derive;
+
+pub mod client_server {
+    include!(concat!(env!("OUT_DIR"), "/mozaic.client_server.rs"));
+}
+
 use std::error::Error;
 use std::io::{Read};
 use std::env;
@@ -34,7 +45,9 @@ use std::fs::File;
 use slog::Drain;
 use std::sync::Mutex;
 use tokio_core::reactor::Core;
+use tokio::net::TcpListener;
 use futures::sync::mpsc;
+use futures::Stream;
 
 use bot_runner::*;
 
@@ -43,6 +56,18 @@ use planetwars::{Controller, Client};
 
 // Load the config and start the game.
 fn main() {
+    let addr = "127.0.0.1:9142".parse().unwrap();
+    let listener = TcpListener::bind(&addr).unwrap();
+    let server = listener.incoming().for_each(|socket| {
+        println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
+        Ok(())
+    });
+
+
+    let mut reactor = Core::new().unwrap();
+    reactor.run(server).unwrap();
+
+    
     let args: Vec<_> = env::args().collect();
     if args.len() != 2 {
         println!("Expected 1 argument (config file). {} given.", args.len() - 1);
@@ -57,7 +82,7 @@ fn main() {
         }
     };
 
-    let mut reactor = Core::new().unwrap();
+
 
     let log_file = File::create("log.json").unwrap();
 
