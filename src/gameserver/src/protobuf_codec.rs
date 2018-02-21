@@ -1,7 +1,7 @@
 // Code adapted from tokio_io::length_delimited and prost.
 
 use prost::{Message, EncodeError, DecodeError};
-use prost::encoding::decode_varint;
+use prost::encoding::{encode_varint, decode_varint};
 use std::marker::PhantomData;
 use bytes::{BytesMut, Buf, BufMut};
 use std::io::{Result, Error, ErrorKind, Cursor};
@@ -11,8 +11,8 @@ use std::cmp::min;
 use tokio_io::codec;
 
 
-struct Decoder {
-    state: DecoderState,
+struct LengthDelimited {
+    decoder_state: DecoderState,
 }
 
 enum DecoderState {
@@ -20,28 +20,30 @@ enum DecoderState {
     Data(usize),
 }
 
-impl Decoder {
-    fn decode_len(&mut self, buf: &mut BytesMut) -> Result<Option<usize>> {
-        let mut cur = Cursor::new(buf);
-        let mut value : u64 = 0;
-
-        // TODO: can this be implemented in a prettier way?
-        for byte_num in 0..min(10, cur.remaining()) {
-            let byte = cur.get_u8();
-            value |= ((byte & 0x7F) as u64) << (byte_num * 7);
-            if byte <= 0x7F {
-                // Remove parsed bytes and return their parsed value
-                cur.into_inner().split_to(byte_num);
-                // for now, assume there is no overflow
-                let num = value as usize;
-                return Ok(Some(num));
-            }
+impl LengthDelimited {
+    fn new() -> Self {
+        LengthDelimited {
+            decoder_state: DecoderState::Head,
         }
+    }
 
-        if cur.remaining() == 0 {
-            return Ok(None);
+    fn decode_head(&self, buf: &mut BytesMut) -> Result<Option<usize>> {
+        let mut cur = Cursor::new(buf);
+
+        if let Ok(num) = decode_varint(&mut cur) {
+            // num correctly parsed, advance buffer
+            let pos = cur.position() as usize;
+            cur.into_inner().split_to(pos);
+            // TODO: properly handle this cast
+            Ok(Some(num as usize))
         } else {
-            return Err(Error::new(ErrorKind::Other, "invalid LEB128 number"));
+            if cur.position() < 10 {
+                return Ok(None);
+            } else {
+                return Err(
+                    Error::new(ErrorKind::Other, "invalid LEB128 number")
+                );
+            }
         }
     }
 
@@ -56,16 +58,16 @@ impl Decoder {
     }
 }
 
-impl codec::Decoder for Decoder {
+impl codec::Decoder for LengthDelimited {
     type Item = BytesMut;
     type Error = Error;
 
     fn decode(&mut self, buf: &mut BytesMut) -> Result<Option<BytesMut>> {
-        let n = match self.state {
+        let n = match self.decoder_state {
             DecoderState::Head => {
-                match try!(self.decode_len(buf)) {
+                match try!(self.decode_head(buf)) {
                     Some(n) => {
-                        self.state = DecoderState::Data(n);
+                        self.decoder_state = DecoderState::Data(n);
                         n
                     },
                     None => return Ok(None),
@@ -76,7 +78,7 @@ impl codec::Decoder for Decoder {
 
         match try!(self.decode_data(n, buf)) {
             Some(data) => {
-                self.state = DecoderState::Head;
+                self.decoder_state = DecoderState::Head;
                 Ok(Some(data))
             },
             None => Ok(None)
