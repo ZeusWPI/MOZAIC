@@ -5,16 +5,17 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
-use planetwars::step_lock::StepLock;
 use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
-use planetwars::pw_controller::PwController;
+use std::marker::PhantomData;
 
 use slog;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
-pub struct Controller<L: Lock<GameController>>  {
+pub struct Controller<G: GameController, L: Lock<G>>
+{
+    phantom: PhantomData<G>,
     lock: L,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
@@ -35,19 +36,20 @@ impl Client {
     }
 }
 
-impl<L> Controller<L> 
-    where L: Lock<GameController>
+impl<G, L> Controller<G, L> 
+    where G: GameController, L: Lock<G>
 {
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
                conf: Config, logger: slog::Logger,)
-               -> Controller<L>
+               -> Controller<G, L>
     {
         let mut client_ids = HashSet::new();
         client_ids.extend(clients.iter().map(|c| c.id));
         Controller {
+            phantom: PhantomData,
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
             logger
@@ -85,8 +87,8 @@ impl<L> Controller<L>
     }
 }
 
-impl<L> Future for Controller<L>
-    where L: Lock<GameController>
+impl<G, L> Future for Controller<G, L>
+    where G:GameController, L: Lock<G>
 {
     type Item = Vec<usize>;
     type Error = ();

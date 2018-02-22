@@ -43,6 +43,9 @@ use planetwars::pw_controller::PwController;
 use planetwars::step_lock::StepLock;
 use planetwars::{Controller, Client};
 
+type SubController<G> = Controller<G, StepLock<G>>;
+type FullController = SubController<PwController>;
+
 // Load the config and start the game.
 fn main() {
     let args: Vec<_> = env::args().collect();
@@ -90,7 +93,7 @@ fn main() {
         }
     }).collect();
 
-    let controller: Controller<(StepLock<PwController>)> = Controller::<(StepLock<PwController>)>::new(
+    let controller: FullController = Controller::new(
         handles,
         chan,
         match_description.game_config,

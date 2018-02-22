@@ -3,8 +3,8 @@ mod rules;
 mod config;
 mod controller;
 mod serializer;
-pub mod step_lock;
 pub mod pw_controller;
+pub mod step_lock;
 mod game_controller;
 mod lock;
 

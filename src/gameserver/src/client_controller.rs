@@ -67,7 +67,7 @@ impl ClientController {
         let (snd, rcv) = unbounded();
         let (sink, stream) = conn.framed(LineCodec).split();
 
-        let mut c = ClientController {
+        let c = ClientController {
             sender: BufferedSender::new(sink),
             client_msgs: stream,
 
