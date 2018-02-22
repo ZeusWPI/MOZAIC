@@ -1,7 +1,7 @@
 // Code adapted from tokio_io::length_delimited and prost.
 
 use prost::{Message, EncodeError, DecodeError};
-use prost::encoding::{encode_varint, decode_varint};
+use prost::encoding;
 use std::marker::PhantomData;
 use bytes::{BytesMut, Buf, BufMut};
 use std::io::{Result, Error, ErrorKind, Cursor};
@@ -30,7 +30,7 @@ impl LengthDelimited {
     fn decode_head(&self, buf: &mut BytesMut) -> Result<Option<usize>> {
         let mut cur = Cursor::new(buf);
 
-        if let Ok(num) = decode_varint(&mut cur) {
+        if let Ok(num) = encoding::decode_varint(&mut cur) {
             // num correctly parsed, advance buffer
             let pos = cur.position() as usize;
             cur.into_inner().split_to(pos);
@@ -83,5 +83,19 @@ impl codec::Decoder for LengthDelimited {
             },
             None => Ok(None)
         }
+    }
+}
+
+impl codec::Encoder for LengthDelimited {
+    type Item = BytesMut;
+    type Error = Error;
+
+    fn encode(&mut self, bytes: BytesMut, buf: &mut BytesMut) -> Result<()> {
+        let num_bytes = bytes.len();
+        let head_len = encoding::encoded_len_varint(num_bytes as u64);
+        buf.reserve(head_len + num_bytes);
+        encoding::encode_varint(num_bytes as u64, buf);
+        buf.extend(bytes);
+        Ok(())
     }
 }
