@@ -1,9 +1,12 @@
+use std::collections::HashSet;
+
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use client_controller::{ClientMessage, Message};
 use planetwars::config::Config;
 use planetwars::step_lock::StepLock;
+use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
 use planetwars::pw_controller::PwController;
 
@@ -12,7 +15,7 @@ use slog;
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
 pub struct Controller {
-    step_lock: StepLock<PwController>,
+    lock: StepLock<PwController>,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
 }
@@ -40,12 +43,13 @@ impl Controller {
                conf: Config, logger: slog::Logger,)
                -> Self
     {
-        let c = Controller {
-            step_lock: StepLock::new(GameController::new(conf, clients, logger.clone())),
+        let mut client_ids = HashSet::new();
+        client_ids.extend(clients.iter().map(|c| c.id));
+        Controller {
+            lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
-            logger,
-        };
-        return c;
+            logger
+        }
     }
 
     /// Handle an incoming message.
@@ -58,7 +62,7 @@ impl Controller {
                     "client_id" => client_id,
                     "content" => &msg,
                 );
-                self.step_lock.attach_command(client_id, msg);
+                self.lock.attach_command(client_id, msg);
             },
             Message::Disconnected => {
                 // TODO: should a reason be included here?
@@ -67,13 +71,13 @@ impl Controller {
                 info!(self.logger, "client disconnected";
                     "client_id" => client_id
                 );
-                self.step_lock.remove(client_id);
+                self.lock.disconnect(client_id);
             }
             Message::Connected => {
                 info!(self.logger, "client connected";
                     "client_id" => client_id
                 );
-                self.step_lock.attach_command(client_id, String::new());
+                self.lock.connect(client_id);
             }
         }
     }
@@ -85,13 +89,13 @@ impl Future for Controller {
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            self.step_lock.act();
+            self.lock.act();
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
 
-            while self.step_lock.is_ready() {
-                if let Some(result) = self.step_lock.do_step() {
-                    print!("Winner: {:?}", result);
+            while self.lock.is_ready() {
+                if let Some(result) = self.lock.do_step() {
+                    println!("Winner: {:?}", result);
                     return Ok(Async::Ready(result));
                 }
             }

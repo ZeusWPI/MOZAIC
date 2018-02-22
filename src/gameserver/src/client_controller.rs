@@ -34,6 +34,12 @@ pub enum Message {
     Disconnected,
 }
 
+#[derive(PartialEq)]
+enum Connection {
+    Connected,
+    Disconnected,
+}
+
 // TODO: the client controller should also be handed a log handle
 
 pub struct ClientController {
@@ -48,6 +54,7 @@ pub struct ClientController {
     game_handle: UnboundedSender<ClientMessage>,
 
     logger: slog::Logger,
+    connected: Connection,
 }
 
 impl ClientController {
@@ -73,8 +80,8 @@ impl ClientController {
             logger: logger.new(
                 o!("client_id" => client_id)
             ),
+            connected: Connection::Disconnected,
         };
-        c.send_message(Message::Connected);
         return c;
     }
 
@@ -132,6 +139,12 @@ impl ClientController {
     /// These errors then get handled in the actual poll implementation.
     fn try_poll(&mut self) -> Poll<(), Error> {
         try!(self.handle_commands());
+
+        if self.connected == Connection::Disconnected {
+            self.connected = Connection::Connected;
+            self.send_message(Message::Connected);
+        }
+
         try!(self.handle_client_msgs());
         try!(self.write_messages());
         // TODO: returning NotReady unconditionally here might be a little

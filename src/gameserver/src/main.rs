@@ -88,7 +88,6 @@ fn main() {
         }
     }).collect();
 
-
     let controller = Controller::new(
         handles,
         chan,
@@ -96,6 +95,7 @@ fn main() {
         logger,
     );
 
+    println!("starting loop");
     reactor.run(controller).unwrap();
 }
 

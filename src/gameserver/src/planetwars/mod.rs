@@ -6,6 +6,7 @@ mod serializer;
 mod step_lock;
 mod pw_controller;
 mod game_controller;
+mod lock;
 
 //pub use self::planet_wars::Match;
 pub use self::rules::PlanetWars;
