@@ -39,6 +39,8 @@ use futures::sync::mpsc;
 use bot_runner::*;
 
 use client_controller::ClientController;
+use planetwars::pw_controller::PwController;
+use planetwars::step_lock::StepLock;
 use planetwars::{Controller, Client};
 
 // Load the config and start the game.
@@ -88,7 +90,7 @@ fn main() {
         }
     }).collect();
 
-    let controller = Controller::new(
+    let controller: Controller<(StepLock<PwController>)> = Controller::<(StepLock<PwController>)>::new(
         handles,
         chan,
         match_description.game_config,

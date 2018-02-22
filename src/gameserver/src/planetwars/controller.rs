@@ -14,8 +14,8 @@ use slog;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
-pub struct Controller {
-    lock: StepLock<PwController>,
+pub struct Controller<L: Lock<GameController>>  {
+    lock: L,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
 }
@@ -35,13 +35,15 @@ impl Client {
     }
 }
 
-impl Controller {
+impl<L> Controller<L> 
+    where L: Lock<GameController>
+{
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
                conf: Config, logger: slog::Logger,)
-               -> Self
+               -> Controller<L>
     {
         let mut client_ids = HashSet::new();
         client_ids.extend(clients.iter().map(|c| c.id));
@@ -83,7 +85,9 @@ impl Controller {
     }
 }
 
-impl Future for Controller {
+impl<L> Future for Controller<L>
+    where L: Lock<GameController>
+{
     type Item = Vec<usize>;
     type Error = ();
 
