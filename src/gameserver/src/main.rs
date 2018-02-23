@@ -39,8 +39,8 @@ use futures::sync::mpsc;
 use bot_runner::*;
 
 use client_controller::ClientController;
-use planetwars::pw_controller::PwController;
-use planetwars::step_lock::StepLock;
+use planetwars::modules::pw_controller::PwController;
+use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
 
 type SubController<G> = Controller<G, StepLock<G>>;
@@ -107,13 +107,13 @@ fn main() {
 #[derive(Serialize, Deserialize)]
 pub struct MatchDescription {
     pub players: Vec<PlayerConfig>,
-    pub game_config: planetwars::Config,
-    pub log_file: Option<String>
+    pub log_file: Option<String>,
+    pub game_config: Path,
 }
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config(path: &Path) -> Result<MatchDescription, Box<Error>> {
+pub fn parse_config(path: &Path) -> Result<Box<MatchDescription>, Box<Error>> {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
 

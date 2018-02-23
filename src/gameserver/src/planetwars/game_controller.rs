@@ -1,6 +1,7 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::path::Path;
 
 use planetwars::Config;
 use planetwars::controller::Client;
@@ -11,7 +12,7 @@ use slog;
 /// players aren't waited for and just deliver empty Strings
 pub trait GameController {
     /// Creates new GameController, something that communicates with the game
-    fn new(conf: Config, clients: Vec<Client>, logger: slog::Logger) -> Self;
+    fn new(conf: Path, clients: Vec<Client>, logger: slog::Logger) -> Self;
 
     /// Tells the GameController that all players are connected
     /// Returns client_id's that are wanted for the next turn

@@ -1,4 +1,5 @@
 use std::collections::HashSet;
+use std::path::Path;
 
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
@@ -43,7 +44,7 @@ impl<G, L> Controller<G, L>
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
-               conf: Config, logger: slog::Logger,)
+               conf: Path, logger: slog::Logger,)
                -> Controller<G, L>
     {
         let mut client_ids = HashSet::new();

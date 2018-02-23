@@ -3,10 +3,10 @@ mod rules;
 mod config;
 mod controller;
 mod serializer;
-pub mod pw_controller;
-pub mod step_lock;
 mod game_controller;
 mod lock;
+
+pub mod modules;
 
 //pub use self::planet_wars::Match;
 pub use self::rules::PlanetWars;

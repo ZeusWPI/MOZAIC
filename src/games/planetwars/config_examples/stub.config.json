@@ -11,8 +11,5 @@
             "args": ["../games/planetwars/bots/simplebot/simple.py"]
         }
     ],
-    "game_config": {
-        "map_file": "../games/planetwars/maps/hex.json",
-        "max_turns": 500
-    }
+    "game_config": "../games/planetwars/game_configs/simple.json"
 }
