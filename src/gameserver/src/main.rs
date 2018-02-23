@@ -46,8 +46,8 @@ use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
 
 type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
-type FullController = SubController<PwController, planetwars::Config>;
-type FullMatchDescription = MatchDescription<planetwars::Config>;
+type FullController = SubController<PwController, planetwars::modules::Config>;
+type FullMatchDescription = MatchDescription<planetwars::modules::Config>;
 
 // Load the config and start the game.
 fn main() {

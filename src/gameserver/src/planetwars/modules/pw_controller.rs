@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
-use planetwars::Config;
-use planetwars::rules::{PlanetWars, Dispatch};
+use planetwars::modules::Config;
+use planetwars::modules::pw_rules::{PlanetWars, Dispatch};
+use planetwars::modules::pw_serializer::{serialize, serialize_rotated};
+use planetwars::modules::pw_protocol as proto;
 use planetwars::controller::Client;
-use planetwars::protocol as proto;
-use planetwars::serializer::{serialize, serialize_rotated};
 use planetwars::game_controller::GameController;
 
 use slog;

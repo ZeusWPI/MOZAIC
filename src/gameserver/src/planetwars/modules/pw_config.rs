@@ -4,8 +4,8 @@ use std::io;
 
 use serde_json;
 
-use planetwars::protocol;
-use planetwars::rules::*;
+use planetwars::modules::pw_protocol;
+use planetwars::modules::pw_rules::*;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -65,7 +65,7 @@ impl Config {
         }).collect();
     }
 
-    fn read_map(&self) -> io::Result<protocol::Map> {
+    fn read_map(&self) -> io::Result<pw_protocol::Map> {
         let mut file = File::open(&self.map_file)?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;
