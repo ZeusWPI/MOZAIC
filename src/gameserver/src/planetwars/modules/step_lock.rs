@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use serde::de::DeserializeOwned;
+use std::marker::PhantomData;
+
 use planetwars::game_controller::GameController;
 use planetwars::lock::Lock;
 
@@ -9,7 +12,8 @@ enum GameState {
     Running,
 }
 
-pub struct StepLock<G: GameController> {
+pub struct StepLock<G: GameController<C>, C: DeserializeOwned> {
+    phantom_config: PhantomData<C>,
     client_messages: HashMap<usize, String>,
     awaiting_clients: HashSet<usize>,
     connected_clients: HashSet<usize>,
@@ -17,11 +21,12 @@ pub struct StepLock<G: GameController> {
     running: GameState,
 }
 
-impl<G> Lock<G> for StepLock<G>
-    where G: GameController 
+impl<G, C> Lock<G, C> for StepLock<G, C>
+    where G: GameController<C>, C: DeserializeOwned
 {
-    fn new(game_controller: G, awaiting_clients: HashSet<usize>) -> StepLock<G> {
+    fn new(game_controller: G, awaiting_clients: HashSet<usize>) -> StepLock<G, C> {
         StepLock {
+            phantom_config: PhantomData,
             client_messages: HashMap::new(),
             awaiting_clients,
             connected_clients: HashSet::new(),

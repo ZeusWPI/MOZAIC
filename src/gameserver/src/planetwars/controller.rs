@@ -1,22 +1,23 @@
 use std::collections::HashSet;
-use std::path::Path;
 
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use client_controller::{ClientMessage, Message};
-use planetwars::config::Config;
 use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
 use std::marker::PhantomData;
+
+use serde::de::DeserializeOwned;
 
 use slog;
 
 /// The controller forms the bridge between game rules and clients.
 /// It is responsible for communications, the control flow, and logging.
-pub struct Controller<G: GameController, L: Lock<G>>
+pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
 {
-    phantom: PhantomData<G>,
+    phantom_game_controller: PhantomData<G>,
+    phantom_config: PhantomData<C>,
     lock: L,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
@@ -37,20 +38,21 @@ impl Client {
     }
 }
 
-impl<G, L> Controller<G, L> 
-    where G: GameController, L: Lock<G>
+impl<G, L, C> Controller<G, L, C> 
+    where G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned
 {
     // TODO: this method does both controller initialization and game staritng.
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
-               conf: Path, logger: slog::Logger,)
-               -> Controller<G, L>
+               conf: C, logger: slog::Logger,)
+               -> Controller<G, L, C>
     {
         let mut client_ids = HashSet::new();
         client_ids.extend(clients.iter().map(|c| c.id));
         Controller {
-            phantom: PhantomData,
+            phantom_game_controller: PhantomData,
+            phantom_config: PhantomData,
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
             logger
@@ -88,8 +90,8 @@ impl<G, L> Controller<G, L>
     }
 }
 
-impl<G, L> Future for Controller<G, L>
-    where G:GameController, L: Lock<G>
+impl<G, L, C> Future for Controller<G, L, C>
+    where G:GameController<C>, L: Lock<G, C>, C: DeserializeOwned
 {
     type Item = Vec<usize>;
     type Error = ();

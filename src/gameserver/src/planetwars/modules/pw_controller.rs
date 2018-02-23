@@ -1,10 +1,5 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::path::Path;
-use std::fs::File;
-use std::error::Error;
-use std::io::{Read};
-use std::env;
 
 use planetwars::Config;
 use planetwars::rules::{PlanetWars, Dispatch};
@@ -142,14 +137,13 @@ impl PwController {
     }
 }
 
-impl GameController for PwController {
-    fn new(conf_path: Path,
+impl GameController<Config> for PwController {
+    fn new(conf: Config,
                clients: Vec<Client>,
                logger: slog::Logger)
                -> Self
     {
-        let state = get_conf::<Config>(&conf_path).create_game(clients.len());
-        //let state = conf.create_game(clients.len());
+        let state = conf.create_game(clients.len());
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
@@ -198,22 +192,4 @@ impl GameController for PwController {
             None
         }
     }
-}
-
-fn get_conf<T>(path: &Path) -> T {
-    match read_conf::<T>(path) {
-        Ok(conf) => return conf,
-        Err(e) => {
-            println!("{}", e);
-            std::process::exit(1)
-        },
-    }
-}
-
-fn read_conf<T>(path: &Path) -> Result<T,Box<Error>> {
-    let mut file = File::open(path)?;
-    let mut contents = String::new();
-    file.read_to_string(&mut contents)?;
-    let config: T = serde_json::from_str(&contents)?;
-    Ok(config)
 }

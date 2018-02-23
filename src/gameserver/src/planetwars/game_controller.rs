@@ -1,18 +1,18 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
-use std::path::Path;
 
-use planetwars::Config;
+use serde::de::DeserializeOwned;
+
 use planetwars::controller::Client;
 
 use slog;
 
 /// No connections because MOZAIC handles them disconnected
 /// players aren't waited for and just deliver empty Strings
-pub trait GameController {
+pub trait GameController<C: DeserializeOwned> {
     /// Creates new GameController, something that communicates with the game
-    fn new(conf: Path, clients: Vec<Client>, logger: slog::Logger) -> Self;
+    fn new(conf: C, clients: Vec<Client>, logger: slog::Logger) -> Self;
 
     /// Tells the GameController that all players are connected
     /// Returns client_id's that are wanted for the next turn

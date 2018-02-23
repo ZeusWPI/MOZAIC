@@ -36,6 +36,8 @@ use std::sync::Mutex;
 use tokio_core::reactor::Core;
 use futures::sync::mpsc;
 
+use serde::de::DeserializeOwned;
+
 use bot_runner::*;
 
 use client_controller::ClientController;
@@ -43,8 +45,9 @@ use planetwars::modules::pw_controller::PwController;
 use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
 
-type SubController<G> = Controller<G, StepLock<G>>;
-type FullController = SubController<PwController>;
+type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
+type FullController = SubController<PwController, planetwars::Config>;
+type FullMatchDescription = MatchDescription<planetwars::Config>;
 
 // Load the config and start the game.
 fn main() {
@@ -54,7 +57,7 @@ fn main() {
         std::process::exit(1)
     }
 
-    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
+    let match_description: FullMatchDescription = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
@@ -104,16 +107,17 @@ fn main() {
     reactor.run(controller).unwrap();
 }
 
+#[serde(bound(deserialize = ""))]
 #[derive(Serialize, Deserialize)]
-pub struct MatchDescription {
+pub struct MatchDescription<T: DeserializeOwned> {
     pub players: Vec<PlayerConfig>,
     pub log_file: Option<String>,
-    pub game_config: Path,
+    pub game_config: T,
 }
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config(path: &Path) -> Result<Box<MatchDescription>, Box<Error>> {
+pub fn parse_config<C: DeserializeOwned>(path: &Path) -> Result<MatchDescription<C>, Box<Error>> {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
 
@@ -122,7 +126,7 @@ pub fn parse_config(path: &Path) -> Result<Box<MatchDescription>, Box<Error>> {
     file.read_to_string(&mut contents)?;
 
     println!("Parsing config");
-    let config: MatchDescription = serde_json::from_str(&contents)?;
+    let config: MatchDescription<C> = serde_json::from_str(&contents)?;
 
     println!("Config parsed succesfully");
     Ok(config)

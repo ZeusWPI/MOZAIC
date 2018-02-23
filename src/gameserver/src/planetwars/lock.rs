@@ -2,7 +2,9 @@
 use std::collections::HashSet;
 use planetwars::game_controller::GameController;
 
-pub trait Lock<G: GameController> {
+use serde::de::DeserializeOwned;
+
+pub trait Lock<G: GameController<C>, C: DeserializeOwned> {
     /// Creates new Lock
     fn new (game_controller: G, awaiting_clients: HashSet<usize>) -> Self;
     /// Flushes the lock, maybe returning a vector of winner ids
