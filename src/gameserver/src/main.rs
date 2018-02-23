@@ -48,8 +48,13 @@ use tokio_core::reactor::Core;
 use tokio::net::TcpListener;
 use futures::sync::mpsc;
 use futures::Stream;
+use tokio_io::codec::Framed;
+use tokio_io::{AsyncRead, AsyncWrite};
+use prost::Message;
+use futures::Future;
 
 use bot_runner::*;
+use protobuf_codec::LengthDelimited;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
@@ -60,7 +65,15 @@ fn main() {
     let listener = TcpListener::bind(&addr).unwrap();
     let server = listener.incoming().for_each(|socket| {
         println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
-        Ok(())
+        let transport = socket.framed(LengthDelimited::new());
+        let conn = transport.into_future()
+            .map_err(|(e, _)| e)
+            .and_then(|(bytes, transport)| {
+                let msg = try!(client_server::Connect::decode(bytes.bytes()));
+                println!("{:?}", msg);
+                Ok(())
+            });
+        return conn;
     });
 
 
