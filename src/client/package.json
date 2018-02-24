@@ -3,11 +3,13 @@
   "version": "0.0.0",
   "description": "Client code for MOZAIC framework",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "gulp build",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Zeus WPI",
   "license": "MIT",
   "devDependencies": {
+    "gulp": "^4.0.0",
     "protobufjs": "^6.8.5",
     "typescript": "^2.7.2"
   }
