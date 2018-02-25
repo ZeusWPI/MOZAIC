@@ -9,6 +9,7 @@ const path = require('path');
 
 const protobuf = require('protobufjs');
 
+const TS_SOURCES = "src/**/*.ts";
 
 const targets = {
     'static': require('protobufjs/cli/targets/static'),
@@ -78,10 +79,11 @@ function copy_generated() {
 
 const tsProject = ts.createProject('tsconfig.json');
 function compile_ts() {
-    return tsProject.src()
+    return gulp.src(TS_SOURCES)
         .pipe(tsProject())
         .pipe(gulp.dest('dist'));
 }
+
 
 gulp.task('gen_proto', generate_proto);
 
@@ -94,5 +96,9 @@ gulp.task('build', gulp.series(
     'gen_proto',
     'compile'
 ));
+
+gulp.task('watch', () => {
+    gulp.watch(TS_SOURCES, compile_ts);
+});
 
 gulp.task('default', gulp.series('build'));
