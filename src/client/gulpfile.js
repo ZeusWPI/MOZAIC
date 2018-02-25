@@ -1,5 +1,6 @@
 
 const through = require('through2');
+const Vinyl = require('vinyl');
 const gutil = require('gulp-util');
 
 const gulp = require('gulp');
@@ -14,7 +15,7 @@ const targets = {
     'static-module': require('protobufjs/cli/targets/static-module')
 };
 
-function pbjs() {
+function compile_protobuf() {
     var options = {
         target: "static-module",
         create: true,
@@ -25,7 +26,7 @@ function pbjs() {
         delimited: true,
         beautify: true,
         comments: true,
-        es6: null,
+        es6: false,
         wrap: 'commonjs',
         "keep-case": false,
         "force-long": false,
@@ -33,49 +34,65 @@ function pbjs() {
         "force-enum-string": false,
         "force-message": false
     };
-    
-    return through.obj(function(file, enc, callback) {
-        
+
+    var root = new protobuf.Root();
+
+    function parse_file(file, enc, callback) {
         if (!file.isBuffer()) {
             callback(new gutil.PluginError('pbjs', 'unsupported'));
         }
-        var root = new protobuf.Root();
+
         protobuf.parse(file.contents, root, options);
 
+        callback();
+    }
+
+    function gen_output(callback) {
         var target = targets[options.target];
         target(root, options, function(err, result) {
             if (err) {
                 callback(err);
             } else {
-                file.contents = new Buffer(result);
-                file.path = gutil.replaceExtension(file.path, '.js');
-                callback(null, file);
+                callback(null, new Vinyl({
+                    path: 'proto.js',
+                    contents: new Buffer(result)
+                }));
             }
         });
-    });
-
+    }
     
+    return through.obj(parse_file, gen_output);
 }
 
-function compile_protobuf() {
+function generate_proto() {
     return gulp.src('../client_server.proto')
-        .pipe(pbjs())
+        .pipe(compile_protobuf())
         .pipe(gulp.dest('generated'));
 }
 
-const tsProject = ts.createProject('tsconfig.json');
+function copy_generated() {
+    return gulp.src('generated/**/*')
+        .pipe(gulp.dest('dist'));
+}
 
+
+const tsProject = ts.createProject('tsconfig.json');
 function compile_ts() {
     return tsProject.src()
         .pipe(tsProject())
         .pipe(gulp.dest('dist'));
 }
 
-const compile = gulp.series(
-    compile_protobuf,
-    compile_ts
-);
+gulp.task('gen_proto', generate_proto);
 
+gulp.task('compile', gulp.series(
+    compile_ts,
+    copy_generated
+));
 
-gulp.task('default', compile);
-gulp.task('build', compile);
+gulp.task('build', gulp.series(
+    'gen_proto',
+    'compile'
+));
+
+gulp.task('default', gulp.series('build'));
