@@ -8,6 +8,6 @@
     "noImplicitAny": false,
     "baseUrl": ".",
     "rootDirs": ["src", "generated"]
-    }
-  } 
+  },
+  "include": ["src/**/*"] 
 }
