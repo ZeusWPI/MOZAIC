@@ -45,7 +45,7 @@ impl PwController {
             "info" => info);
     }
 
-    fn prompt_players(&mut self) -> HashSet<usize> {
+    fn prompt_players(&mut self) -> (HashSet<usize>, u64) {
         let mut players = HashSet::new();
         for player in self.state.players.iter() {
             if player.alive {
@@ -62,7 +62,7 @@ impl PwController {
                 }
             }
         }
-        return players;
+        return (players, 20);
     }
 
     fn execute_messages(&mut self, mut msgs:HashMap<usize, String>) {
@@ -161,7 +161,7 @@ impl GameController<Config> for PwController {
         }
     }
 
-    fn start(&mut self) -> HashSet<usize>{
+    fn start(&mut self) -> (HashSet<usize>, u64) {
         self.log_info();
         self.log_state();
 
@@ -171,7 +171,7 @@ impl GameController<Config> for PwController {
     /// Advance the game by one turn.
     fn step(&mut self,
                 msgs: HashMap<usize, String>,
-        ) -> HashSet<usize>
+        ) -> (HashSet<usize>, u64)
     {
         self.state.repopulate();
         self.execute_messages(msgs);
@@ -182,7 +182,7 @@ impl GameController<Config> for PwController {
         if !self.state.is_finished() {
             return self.prompt_players();
         }
-        return HashSet::new();
+        return (HashSet::new(), 0);
     }
 
     fn outcome(&self) -> Option<Vec<usize>> {

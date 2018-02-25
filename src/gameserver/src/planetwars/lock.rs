@@ -6,7 +6,7 @@ use serde::de::DeserializeOwned;
 
 pub trait Lock<G: GameController<C>, C: DeserializeOwned> {
     /// Creates new Lock
-    fn new (game_controller: G, awaiting_clients: HashSet<usize>) -> Self;
+    fn new (game_controller: G, awaiting_clients: HashSet<usize>, time_out: u64) -> Self;
     /// Flushes the lock, maybe returning a vector of winner ids
     fn do_step(&mut self) -> Option<Vec<usize>>;
 
@@ -23,5 +23,5 @@ pub trait Lock<G: GameController<C>, C: DeserializeOwned> {
     /// till it connects again
     fn disconnect(&mut self, client_id: usize);
     /// Lock act's, mainly used for timouts
-    fn act(&mut self);
+    fn act(&mut self) -> Option<Vec<usize>>;
 }

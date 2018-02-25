@@ -101,6 +101,7 @@ fn main() {
         chan,
         match_description.game_config,
         logger,
+        500,
     );
 
     println!("starting loop");

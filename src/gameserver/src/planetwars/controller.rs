@@ -45,7 +45,7 @@ impl<G, L, C> Controller<G, L, C>
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
-               conf: C, logger: slog::Logger,)
+               conf: C, logger: slog::Logger, time_out: u64, )
                -> Controller<G, L, C>
     {
         let mut client_ids = HashSet::new();
@@ -53,7 +53,7 @@ impl<G, L, C> Controller<G, L, C>
         Controller {
             phantom_game_controller: PhantomData,
             phantom_config: PhantomData,
-            lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
+            lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids, time_out),
             client_msgs,
             logger
         }
@@ -98,16 +98,13 @@ impl<G, L, C> Future for Controller<G, L, C>
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            self.lock.act();
+            if let Some(result) = self.lock.act() {
+                println!("Winner: {:?}", result);
+                return Ok(Async::Ready(result));
+            }
+
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
-
-            while self.lock.is_ready() {
-                if let Some(result) = self.lock.do_step() {
-                    println!("Winner: {:?}", result);
-                    return Ok(Async::Ready(result));
-                }
-            }
         }
     }
 }
