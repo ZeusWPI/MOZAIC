@@ -2,6 +2,7 @@ use futures::{Future, Poll, Async};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use futures::stream::{Stream, SplitStream, SplitSink};
 use tokio_io::AsyncRead;
+use tokio::net::TcpStream;
 use tokio_io::codec::Framed;
 use tokio_io::codec::{Encoder, Decoder};
 use bytes::{BytesMut, BufMut};
@@ -33,6 +34,11 @@ pub enum Message {
     Disconnected,
 }
 
+pub enum Command {
+    Send(String),
+    Connect(TcpStream),
+}
+
 // TODO: the client controller should also be handed a log handle
 
 
@@ -42,8 +48,8 @@ pub struct ClientController {
     sender: BufferedSender<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
 
-    ctrl_chan: UnboundedReceiver<String>,
-    ctrl_handle: UnboundedSender<String>,
+    ctrl_chan: UnboundedReceiver<Command>,
+    ctrl_handle: UnboundedSender<Command>,
     
     game_handle: UnboundedSender<ClientMessage>,
 
@@ -77,7 +83,7 @@ impl ClientController {
     }
 
     /// Get a handle to the control channel for this client.
-    pub fn handle(&self) -> UnboundedSender<String> {
+    pub fn handle(&self) -> UnboundedSender<Command> {
         self.ctrl_handle.clone()
     }
 
@@ -103,22 +109,21 @@ impl ClientController {
     /// we can't cast "won't error" to our custom error type, we cannot use the
     /// try_ready! macro with polling ith ctrl_chan. This method provides an
     /// adapter to Poll with our error type.
-    fn poll_ctrl_chan(&mut self) -> Poll<Option<String>, Error> {
-        let res = self.ctrl_chan.poll();
-        Ok(res.unwrap())
+    fn poll_ctrl_chan(&mut self) -> Async<Command> {
+        // we hold a handle to this channel, so it can never close.
+        // this means errors can not happen.
+        let value = self.ctrl_chan.poll().unwrap();
+        return value.map(|item| item.unwrap());
     }
 
-    /// Pull commands from the control channel, and handle them. Note: for now
-    /// this should never error, but once we actually handle commands errors
-    /// might be possible.
-    fn handle_commands(&mut self) -> Poll<(), Error> {
-        while let Some(command) = try_ready!(self.poll_ctrl_chan()) {
-            self.sender.send(command);
+    /// Pull commands from the control channel and execute them.
+    fn handle_commands(&mut self) {
+        while let Async::Ready(command) = self.poll_ctrl_chan() {
+            match command {
+                Command::Send(message) => self.sender.send(message),
+                Command::Connect(sock) => unimplemented!(),
+            }
         }
-        // Since we entirely control this channel, it should not fail.
-        // If it does, something is very wrong and we should find out what
-        // to do about that.
-        panic!("Command handle broke");
     }
 
     /// Try sending messages to the client, in an asynchronous fashion.
@@ -129,7 +134,7 @@ impl ClientController {
     /// Step the future, allowing errors to be thrown.
     /// These errors then get handled in the actual poll implementation.
     fn try_poll(&mut self) -> Poll<(), Error> {
-        try!(self.handle_commands());
+        self.handle_commands();
         try!(self.handle_client_msgs());
         try!(self.write_messages());
         // TODO: returning NotReady unconditionally here might be a little

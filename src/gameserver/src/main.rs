@@ -68,8 +68,9 @@ fn main() {
         let transport = socket.framed(LengthDelimited::new());
         let conn = transport.into_future()
             .map_err(|(e, _)| e)
-            .and_then(|(bytes, transport)| {
-                let msg = try!(client_server::Connect::decode(bytes.bytes()));
+            .and_then(|(item, _)| {
+                let bytes = item.unwrap().freeze();
+                let msg = try!(client_server::Connect::decode(bytes));
                 println!("{:?}", msg);
                 Ok(())
             });
@@ -122,7 +123,8 @@ fn main() {
         Client {
             id: num,
             player_name: desc.name.clone(),
-            handle: ctrl_handle,
+            // TODO
+            handle: unimplemented!(),
         }
     }).collect();
 
