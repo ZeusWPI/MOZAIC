@@ -27,4 +27,6 @@ pub trait GameController<C: DeserializeOwned> {
 
     /// Returns the player id of the winner(s) or None if the game is still going
     fn outcome(& self) -> Option<Vec<usize>>;
+
+    fn time_out(& self) -> usize;
 }

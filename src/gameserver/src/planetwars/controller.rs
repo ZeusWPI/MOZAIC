@@ -79,12 +79,23 @@ impl<G, L, C> Controller<G, L, C>
                     "client_id" => client_id
                 );
                 self.lock.disconnect(client_id);
-            }
+            },
             Message::Connected => {
                 info!(self.logger, "client connected";
                     "client_id" => client_id
                 );
                 self.lock.connect(client_id);
+            },
+            Message::TimeOut => {
+                let (time_out, maybe_result) = self.lock.do_time_out();
+                // set next time_out
+                match maybe_result {
+                    Some(result) => {
+                            println!("Winner: {:?}", result);
+                            //return Ok(Async::Ready(result));
+                        },
+                    None => {},
+                }
             }
         }
     }
@@ -98,14 +109,18 @@ impl<G, L, C> Future for Controller<G, L, C>
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            self.lock.act();
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
 
             while self.lock.is_ready() {
-                if let Some(result) = self.lock.do_step() {
-                    println!("Winner: {:?}", result);
-                    return Ok(Async::Ready(result));
+                let (time_out, maybe_result) = self.lock.do_step();
+                // set next time_out
+                match maybe_result {
+                    Some(result) => {
+                            println!("Winner: {:?}", result);
+                            return Ok(Async::Ready(result));
+                        },
+                    None => {},
                 }
             }
         }

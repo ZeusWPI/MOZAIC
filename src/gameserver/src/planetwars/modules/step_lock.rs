@@ -35,19 +35,16 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         }
     }
 
-    fn do_step(&mut self) -> Option<Vec<usize>> {
-        if self.is_ready()  {
-            match self.running {
-                GameState::Waiting => {
-                                self.running = GameState::Running;
-                                self.awaiting_clients = self.game_controller.start();
-                            },
-                GameState::Running => self.awaiting_clients = self.game_controller.step(self.client_messages.clone()),
-            }
-            self.client_messages.clear();
-            return self.game_controller.outcome();
+    fn do_step(&mut self) -> (usize, Option<Vec<usize>>) {
+        match self.running {
+            GameState::Waiting => {
+                            self.running = GameState::Running;
+                            self.awaiting_clients = self.game_controller.start();
+                        },
+            GameState::Running => self.awaiting_clients = self.game_controller.step(self.client_messages.clone()),
         }
-        return None;
+        self.client_messages.clear();
+        return (self.game_controller.time_out(), self.game_controller.outcome());
     }
 
     fn is_ready(&self) -> bool {
@@ -70,8 +67,11 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         self.connected_clients.remove(&client_id);
     }
 
-    /// This will be useful to check for time-outs
-    fn act(&mut self) {
-        
+    fn do_time_out(&mut self) -> (usize, Option<Vec<usize>>) {
+        self.awaiting_clients.clone().iter().for_each(|c| {
+                                            self.client_messages.insert(*c, String::new());
+                                            }
+                                        );
+        self.do_step()
     }
 }

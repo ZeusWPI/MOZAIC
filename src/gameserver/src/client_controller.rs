@@ -32,6 +32,7 @@ pub enum Message {
     Data(String),
     Connected,
     Disconnected,
+    TimeOut,
 }
 
 #[derive(PartialEq)]

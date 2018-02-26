@@ -161,6 +161,10 @@ impl GameController<Config> for PwController {
         }
     }
 
+    fn time_out(&self) -> usize {
+        500
+    }
+
     fn start(&mut self) -> HashSet<usize>{
         self.log_info();
         self.log_state();
