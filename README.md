@@ -39,7 +39,7 @@ Current and planned features:
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
 1. Run the botrunner again (still in the `gameserver` directory) with:
-    * Linux -  `cargo run ..\planetwars\config_examples\stub.config.json`
+    * Linux -  `cargo run ../planetwars/config_examples/stub.config.json`
     * Windows -  `cargo run ..\planetwars\config_examples\stub.config_windows.json`
 1. It should have generated a log-file `log.json`.
 1. If it did, great, it works! Check setup below for the client.
