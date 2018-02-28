@@ -8,6 +8,11 @@ use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
 use std::marker::PhantomData;
 
+use std::time::Duration;
+
+use tokio_timer::Sleep;
+use tokio_timer::Timer;
+
 use serde::de::DeserializeOwned;
 
 use slog;
@@ -21,6 +26,7 @@ pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
     lock: L,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
+    sleeper: Sleep,
 }
 
 
@@ -55,10 +61,15 @@ impl<G, L, C> Controller<G, L, C>
             phantom_config: PhantomData,
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
-            logger
+            logger,
+            sleeper: Timer::default().sleep(Duration::from_millis(5000)),
         }
     }
 
+    fn start_time_out(&mut self, time: usize) {
+        let timer = Timer::default();
+        self.sleeper = timer.sleep(Duration::from_millis(time as u64));
+    }
     /// Handle an incoming message.
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
@@ -86,18 +97,17 @@ impl<G, L, C> Controller<G, L, C>
                 );
                 self.lock.connect(client_id);
             },
-            Message::TimeOut => {
-                let (time_out, maybe_result) = self.lock.do_time_out();
-                // set next time_out
-                match maybe_result {
-                    Some(result) => {
-                            println!("Winner: {:?}", result);
-                            //return Ok(Async::Ready(result));
-                        },
-                    None => {},
-                }
-            }
         }
+    }
+
+    fn force_lock_step(&mut self) -> Option<Poll<Vec<usize>, ()>> {
+        let (time_out, maybe_result) = self.lock.do_step();
+        self.start_time_out(time_out);
+        if let Some(result) = maybe_result {
+            println!("Winner: {:?}", result);
+            return Some(Ok(Async::Ready(result)));
+        }
+        None
     }
 }
 
@@ -109,20 +119,28 @@ impl<G, L, C> Future for Controller<G, L, C>
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            let msg = try_ready!(self.client_msgs.poll()).unwrap();
-            self.handle_message(msg.client_id, msg.message);
+            let sub = try!(self.client_msgs.poll());
+            match sub {
+                Async::Ready(mmsg) => {
+                    let msg = mmsg.unwrap();
+                    self.handle_message(msg.client_id, msg.message);
 
-            while self.lock.is_ready() {
-                let (time_out, maybe_result) = self.lock.do_step();
-                // set next time_out
-                match maybe_result {
-                    Some(result) => {
-                            println!("Winner: {:?}", result);
-                            return Ok(Async::Ready(result));
-                        },
-                    None => {},
+                    while self.lock.is_ready() {
+                        if let Some(re) = self.force_lock_step() {
+                            return re;
+                        }
+                    }
+                },
+                Async::NotReady => {
+                    if self.sleeper.is_expired() {
+                        if let Some(re) = self.force_lock_step() {
+                            return re;
+                        }
+                    }
+                    return Ok(Async::NotReady);
                 }
             }
+
         }
     }
 }
