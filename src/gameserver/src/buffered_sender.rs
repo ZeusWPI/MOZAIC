@@ -4,27 +4,34 @@ use futures::sink::{Sink, Send};
 enum SinkState<S>
     where S: Sink
 {
+    Disconnected,
     Sending(Send<S>),
     Ready(S)
 }
+
 
 impl<S> SinkState<S>
     where S: Sink
 {
     fn step(self) -> Result<SinkState<S>, S::SinkError> {
-        match self {
-            SinkState::Ready(sink) => Ok(SinkState::Ready(sink)),
+        let new_state = match self {
+            SinkState::Disconnected => SinkState::Disconnected,
+            SinkState::Ready(sink) => SinkState::Ready(sink),
             SinkState::Sending(mut send) => {
-                match send.poll()? {
-                    Async::Ready(sink) => Ok(SinkState::Ready(sink)),
-                    Async::NotReady => Ok(SinkState::Sending(send)),
+                match try!(send.poll()) {
+                    Async::Ready(sink) => SinkState::Ready(sink),
+                    Async::NotReady => SinkState::Sending(send),
                 }
             },
-        }
+        };
+        return Ok(new_state);
     }
 
     fn poll(&self) -> Async<()> {
         match self {
+            // Disconnected is not a waiting state because there is no
+            // underlying IO being performed
+            &SinkState::Disconnected => Async::Ready(()),
             &SinkState::Sending(_) => Async::NotReady,
             &SinkState::Ready(_) => Async::Ready(()),
         }
@@ -50,23 +57,18 @@ impl<S> BufferedSender<S>
     
     pub fn send(&mut self, item: S::SinkItem) {
         let state = self.state.take().unwrap();
-        let buffer = &mut self.buffer;
-        let new_state = match state {
-            SinkState::Sending(send) => {
-                buffer.push(item);
-                SinkState::Sending(send)
-            },
-            SinkState::Ready(sink) => {
-                let send = sink.send(item);
-                SinkState::Sending(send)
-            }
-        };
-        self.state = Some(new_state);
+
+        if let SinkState::Ready(sink) = state {
+            let send = sink.send(item);
+            self.state = Some(SinkState::Sending(send));
+        } else {
+            self.buffer.push(item);
+        }
     }
 
     fn poll_state(&mut self) -> Poll<(), S::SinkError> {
         let mut state = self.state.take().unwrap();
-        state = state.step()?;
+        state = try!(state.step());
         let async = state.poll();
         self.state = Some(state);
         Ok(async)
