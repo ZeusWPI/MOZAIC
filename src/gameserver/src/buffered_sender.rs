@@ -1,5 +1,6 @@
 use futures::{Future, Poll, Async};
 use futures::sink::{Sink, Send};
+use std::mem;
 
 enum SinkState<S>
     where S: Sink
@@ -41,7 +42,7 @@ impl<S> SinkState<S>
 pub struct BufferedSender<S>
     where S: Sink
 {
-    state: Option<SinkState<S>>,
+    state: SinkState<S>,
     buffer: Vec<S::SinkItem>,
 }
 
@@ -50,27 +51,28 @@ impl<S> BufferedSender<S>
 {
     pub fn new(sink: S) -> Self {
         BufferedSender {
-            state: Some(SinkState::Ready(sink)),
+            state: SinkState::Ready(sink),
             buffer: Vec::new(),
         }
     }
     
     pub fn send(&mut self, item: S::SinkItem) {
-        let state = self.state.take().unwrap();
+        let state = mem::replace(&mut self.state, SinkState::Disconnected);
 
         if let SinkState::Ready(sink) = state {
             let send = sink.send(item);
-            self.state = Some(SinkState::Sending(send));
+            self.state = SinkState::Sending(send);
         } else {
             self.buffer.push(item);
+            self.state = state;
         }
     }
 
     fn poll_state(&mut self) -> Poll<(), S::SinkError> {
-        let mut state = self.state.take().unwrap();
+        let mut state = mem::replace(&mut self.state, SinkState::Disconnected);
         state = try!(state.step());
         let async = state.poll();
-        self.state = Some(state);
+        self.state = state;
         Ok(async)
     }
 }
