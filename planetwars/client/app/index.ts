@@ -6,7 +6,7 @@ import './app.global.scss';
 import { h } from 'react-hyperscript-helpers';
 
 const { configureStore, history } = require('./store/configureStore');
-const store = configureStore();
+export const store = configureStore();
 
 render(
   h(AppContainer, [

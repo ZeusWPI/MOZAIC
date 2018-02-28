@@ -3,3 +3,22 @@ export const plusOne = () => {
     type: 'TEST'
   }
 }
+
+export const gameStarted = () => {
+  return {
+    type: 'gameStarted'
+  }
+}
+
+
+export const gameFinished = () => {
+  return {
+    type: 'gameFinished'
+  }
+}
+
+export const gameCrashed = () => {
+  return {
+    type: 'gameCrashed'
+  }
+}
