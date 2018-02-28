@@ -44,11 +44,17 @@ export interface PlayerConfig {
 }
 
 // Used in GameData.ts
-export interface GameData {
+export interface GameMetrics {
   players: string[],
   winner: number,
   gameLog: GameState[],
   planetsTaken: number[],
   shipsSent: number[][],
+  // use Date instead of number
   timestamp: number
+}
+
+export interface GameLog {
+  players: string[],
+  turns: GameState[]
 }
