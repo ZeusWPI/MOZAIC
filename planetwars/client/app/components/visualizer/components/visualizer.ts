@@ -85,7 +85,6 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   setLog(log: string) {
     var game = new Game(log);
-    console.log(game);
     this.setState({
       game: game,
       numTurns: game.turns.length - 1,
@@ -109,11 +108,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  // componentWillReceiveProps(props: VisualizerProps) {
-  //   let p = path.format(props.gamelog);
-  //   let jsonLog = fs.readFileSync(p).toString();
-  //   this.setLog(jsonLog)
-  // }
+  
   render() {
     let controls = h(Controls, {
       turnNum: this.state.turnNum,

@@ -6,16 +6,6 @@ import * as d3 from "d3";
 
 const h = require('react-hyperscript');
 const {
-  div,
-  span,
-  h1,
-  button,
-  i,
-  li,
-  input,
-  p,
-  ul,
-  svg,
   table,
   tr,
   td,
@@ -63,9 +53,7 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
 
   componentDidUpdate() {
     if (this.props.game) {
-      //if(!this.scores)
       this.scores = this.state.scores;
-
       this.scores.forEach((score:Score, i:number) => {
         score.player.ship_count = this.state.scores[i].player.ship_count;
         score.player.planet_count = this.state.scores[i].player.planet_count;
@@ -83,8 +71,15 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
   }
 
   render() {
-    let rows = this.state.scores.map((x:Score) => tr({ style:{ color: x.player.color } }, [td("\u25CF"), td(x.player.name),td(x.player.planet_count + ((x.player.planet_count == 1)?" Planet":" Planets")),td(x.player.ship_count + "\u2694")]))
-    return table(`.${styles.scoreboard}`, {width: "20%"}, tbody(/*`.${styles.playerdata}`, */rows))
+    let rows = this.state.scores.map((x:Score) => {
+      return tr({ style:{ color: x.player.color } }, [
+        td("\u25CF"),
+        td(x.player.name),
+        td(x.player.planet_count + ((x.player.planet_count == 1) ? "Planet" : " Planets")),
+        td(x.player.ship_count + "\u2694")
+      ])
+  });
+    return table(`.${styles.scoreboard}`, {width: "20%"}, tbody(rows));
   }
   updateScore(players:Player[]) {
     let scores:Score[] = [];
