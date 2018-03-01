@@ -1,4 +1,5 @@
 mod client_controller;
-mod buffered_sender;
+mod client_connection;
+mod receiver;
 
 pub use self::client_controller::*;
