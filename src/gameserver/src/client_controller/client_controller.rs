@@ -11,7 +11,7 @@ use std::str;
 use slog;
 
 use bot_runner::BotHandle;
-use buffered_sender::BufferedSender;
+use super::buffered_sender::BufferedSender;
 
 
 error_chain! {

@@ -1,6 +1,5 @@
 mod bot_runner;
 mod client_controller;
-mod buffered_sender;
 mod planetwars;
 
 mod protobuf_codec;
