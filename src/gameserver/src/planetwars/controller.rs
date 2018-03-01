@@ -62,14 +62,11 @@ impl<G, L, C> Controller<G, L, C>
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
             logger,
-            sleeper: Timer::default().sleep(Duration::from_millis(5000)),
+            // initial connection timeout starts at 1 minute
+            sleeper: Timer::default().sleep(Duration::from_millis(60000)),
         }
     }
 
-    fn start_time_out(&mut self, time: usize) {
-        let timer = Timer::default();
-        self.sleeper = timer.sleep(Duration::from_millis(time as u64));
-    }
     /// Handle an incoming message.
     fn handle_message(&mut self, client_id: usize, msg: Message) {
         match msg {
@@ -100,12 +97,30 @@ impl<G, L, C> Controller<G, L, C>
         }
     }
 
+    /// Sets new timeout future
+    fn start_time_out(&mut self, time: usize) {
+        let timer = Timer::default();
+        self.sleeper = timer.sleep(Duration::from_millis(time as u64));
+    }
+
+    /// Steps the lock step 1 step, and sets a new timeout
     fn force_lock_step(&mut self) -> Option<Poll<Vec<usize>, ()>> {
         let (time_out, maybe_result) = self.lock.do_step();
         self.start_time_out(time_out);
+
         if let Some(result) = maybe_result {
             println!("Winner: {:?}", result);
             return Some(Ok(Async::Ready(result)));
+        }
+        None
+    }
+
+    /// Steps the lock while ready, or until the game finishes
+    fn run_lock(&mut self) -> Option<Poll<Vec<usize>, ()>> {
+        while self.lock.is_ready() {
+            if let Some(re) = self.force_lock_step() {
+                return Some(re);
+            }
         }
         None
     }
@@ -119,21 +134,21 @@ impl<G, L, C> Future for Controller<G, L, C>
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            let sub = try!(self.client_msgs.poll());
-            match sub {
+            match try!(self.client_msgs.poll()) {
                 Async::Ready(mmsg) => {
                     let msg = mmsg.unwrap();
                     self.handle_message(msg.client_id, msg.message);
 
-                    while self.lock.is_ready() {
-                        if let Some(re) = self.force_lock_step() {
-                            return re;
-                        }
+                    if let Some(re) = self.run_lock() {
+                        return re;
                     }
                 },
                 Async::NotReady => {
                     if self.sleeper.is_expired() {
                         if let Some(re) = self.force_lock_step() {
+                            return re;
+                        }
+                        if let Some(re) = self.run_lock() {
                             return re;
                         }
                     }
