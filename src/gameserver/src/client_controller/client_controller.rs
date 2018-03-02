@@ -10,8 +10,8 @@ use std::io;
 use std::str;
 use slog;
 
+use super::client_connection::ClientConnection;
 use bot_runner::BotHandle;
-use super::buffered_sender::BufferedSender;
 
 
 error_chain! {
@@ -45,8 +45,7 @@ pub enum Command {
 pub struct ClientController {
     client_id: usize,
     
-    sender: BufferedSender<SplitSink<Transport>>,
-    client_msgs: SplitStream<Transport>,
+    connection: ClientConnection<Transport>,
 
     ctrl_chan: UnboundedReceiver<Command>,
     ctrl_handle: UnboundedSender<Command>,
@@ -58,17 +57,18 @@ pub struct ClientController {
 
 impl ClientController {
     pub fn new(client_id: usize,
-               conn: BotHandle,
+               transport: Transport,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
                -> Self
     {
         let (snd, rcv) = unbounded();
-        let (sink, stream) = conn.framed(LineCodec).split();
+
+        let mut connection = ClientConnection::new();
+        connection.set_transport(transport);
 
         ClientController {
-            sender: BufferedSender::new(sink),
-            client_msgs: stream,
+            connection: connection,
 
             ctrl_chan: rcv,
             ctrl_handle: snd,
@@ -97,17 +97,16 @@ impl ClientController {
     }
 
     /// Pull messages from the client, and handle them.
-    fn handle_client_msgs(&mut self) -> Poll<(), Error> {
-        while let Some(line) = try_ready!(self.client_msgs.poll()) {
-            let msg = Message::Data(line);
-            self.send_message(msg);
+    fn handle_client_msgs(&mut self) -> Result<()> {
+        while let Some(line) = try!(self.connection.poll()) {
+            
         }
-        bail!(ErrorKind::ConnectionClosed)
+        return Ok(());
     }
 
     /// The unit error type of ctrl_chan.poll() means that it won't error. Since
     /// we can't cast "won't error" to our custom error type, we cannot use the
-    /// try_ready! macro with polling ith ctrl_chan. This method provides an
+    /// try_ready! macro for polling the ctrl_chan. This method provides an
     /// adapter to Poll with our error type.
     fn poll_ctrl_chan(&mut self) -> Async<Command> {
         // we hold a handle to this channel, so it can never close.
@@ -120,25 +119,35 @@ impl ClientController {
     fn handle_commands(&mut self) {
         while let Async::Ready(command) = self.poll_ctrl_chan() {
             match command {
-                Command::Send(message) => self.sender.send(message),
+                Command::Send(message) => self.connection.queue_send(message),
                 Command::Connect(sock) => unimplemented!(),
             }
         }
     }
 
-    /// Try sending messages to the client, in an asynchronous fashion.
-    fn write_messages(&mut self) -> Poll<(), io::Error> {
-        self.sender.poll()
+    fn poll_client_connection(&mut self) -> Result<()> {
+        try!(self.connection.flush());
+        while let Some(msg) = try!(self.connection.poll()) {
+            self.handle_client_message(msg);
+        }
+        return Ok(());
+    }
+
+    fn handle_client_message(&mut self, msg: String) {
+        let data = Message::Data(msg);
+        self.send_message(data);
     }
 
     /// Step the future, allowing errors to be thrown.
     /// These errors then get handled in the actual poll implementation.
     fn try_poll(&mut self) -> Poll<(), Error> {
+        let res = self.poll_client_connection();
+        if let Err(err) = res {
+            self.connection.drop_transport();
+            // TODO: log
+        }
         self.handle_commands();
-        try!(self.handle_client_msgs());
-        try!(self.write_messages());
-        // TODO: returning NotReady unconditionally here might be a little
-        // dodgy.
+
         Ok(Async::NotReady)
     }
 }
@@ -148,25 +157,15 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        // TODO: errors should be handled
-        Ok(match self.try_poll() {
-            // Returning ready terminates the task. We only want to do that when
-            // an error happens.
-            // TODO: how do we handle graceful disconnects?
-            Ok(Async::Ready(())) => panic!("something bad happened"),
-            Ok(Async::NotReady) => Async::NotReady,
-            Err(_err) => {
-                // TODO: are some errors recoverable?
-                // should they be handled in this method, or ad-hoc?
-                // TODO: log the actual error
-                // Let the game know this client failed.
-                self.send_message(Message::Disconnected);
-                // TODO: what do when this fails?
-                self.write_messages().expect("could not write messages");
-                // terminate the task
-                Async::Ready(())
-            }
-        })
+        let res = self.poll_client_connection();
+        if let Err(_err) = res {
+            // TODO: log
+            self.connection.drop_transport();
+        }
+        
+        self.handle_commands();
+        // TODO: proper exit
+        Ok(Async::NotReady)
     }
 }
 
@@ -175,7 +174,7 @@ impl Future for ClientController {
 // This is rather temporary.
 type Transport = Framed<BotHandle, LineCodec>;
 
-struct LineCodec;
+pub struct LineCodec;
 
 impl Encoder for LineCodec {
     type Item = String;

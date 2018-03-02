@@ -34,7 +34,7 @@ impl<S> ClientConnection<S>
     }
 
     /// Drop the connection in use
-    pub fn drop_connection(&mut self) {
+    pub fn drop_transport(&mut self) {
         self.stream = None;
         self.sink_state = None;
     }
