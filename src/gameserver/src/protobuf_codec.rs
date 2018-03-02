@@ -2,16 +2,55 @@
 
 use prost::{Message, EncodeError, DecodeError};
 use prost::encoding;
-use std::marker::PhantomData;
 use bytes::{BytesMut, Buf, BufMut};
 use std::io::{Result, Error, ErrorKind, Cursor};
+use futures::{Poll, Sink, Stream, StartSend};
 
-use std::cmp::min;
+use tokio_io::{codec, AsyncRead, AsyncWrite};
 
-use tokio_io::codec;
+pub struct ProtobufTransport<T> {
+    inner: codec::Framed<T, LengthDelimited>,
+}
 
+impl<T> ProtobufTransport<T>
+    where T: AsyncRead + AsyncWrite
+{
+    pub fn new(stream: T) -> Self {
+        ProtobufTransport {
+            inner: stream.framed(LengthDelimited::new()),
+        }
+    }
+}
 
-struct LengthDelimited {
+impl<T> Stream for ProtobufTransport<T>
+    where T: AsyncRead
+{
+    type Item = BytesMut;
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Option<BytesMut>, Error> {
+        self.inner.poll()
+    }
+}
+
+impl<T> Sink for ProtobufTransport<T>
+    where T: AsyncWrite
+{
+    type SinkItem = BytesMut;
+    type SinkError = Error;
+
+    fn start_send(&mut self, item: BytesMut) -> StartSend<BytesMut, Error> {
+        self.inner.start_send(item)
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), Error> {
+        self.inner.poll_complete()
+    }
+}
+
+// ===== Varint-delimited codec ======
+
+pub struct LengthDelimited {
     decoder_state: DecoderState,
 }
 
@@ -21,7 +60,7 @@ enum DecoderState {
 }
 
 impl LengthDelimited {
-    fn new() -> Self {
+    pub fn new() -> Self {
         LengthDelimited {
             decoder_state: DecoderState::Head,
         }

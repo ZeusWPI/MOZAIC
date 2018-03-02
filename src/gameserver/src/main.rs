@@ -47,13 +47,12 @@ use tokio_core::reactor::Core;
 use tokio::net::TcpListener;
 use futures::sync::mpsc;
 use futures::Stream;
-use tokio_io::codec::Framed;
 use tokio_io::{AsyncRead, AsyncWrite};
 use prost::Message;
 use futures::Future;
 
 use bot_runner::*;
-use protobuf_codec::LengthDelimited;
+use protobuf_codec::ProtobufTransport;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
@@ -64,7 +63,7 @@ fn main() {
     let listener = TcpListener::bind(&addr).unwrap();
     let server = listener.incoming().for_each(|socket| {
         println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
-        let transport = socket.framed(LengthDelimited::new());
+        let transport = ProtobufTransport::new(socket);
         let conn = transport.into_future()
             .map_err(|(e, _)| e)
             .and_then(|(item, _)| {
@@ -113,7 +112,7 @@ fn main() {
         let bot_handle = bots.remove(&desc.name).unwrap();
         let controller = ClientController::new(
             num,
-            bot_handle,
+            unimplemented!(),
             handle.clone(),
             &logger);
         let ctrl_handle = controller.handle();
