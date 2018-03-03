@@ -46,7 +46,12 @@ export default class Game {
     let survivors:Player[] = players.filter(p => p.ship_count > 0);
     if (survivors.length > 1) {
       // it's a draw
-      this.winner = undefined;
+      this.winner = {
+        name: "Nobody",
+        color: d3.color("black"),
+        ship_count: 0,
+        planet_count: 0
+      };
     } else {
       this.winner = survivors[0];
     }
