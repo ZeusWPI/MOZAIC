@@ -1,16 +1,12 @@
 use fnv::FnvHashMap;
+use futures::{Future, Poll, Stream};
 use futures::sync::mpsc::{UnboundedReceiver};
 
 use transports::TransportHandle;
 
-use super::{ConnectionHandle};
+use super::ConnectionHandle;
 use super::types::*;
 
-
-pub enum RouterCommand {
-    Send(Packet),
-    Receive(Packet),
-}
 
 pub struct Router {
     connections: FnvHashMap<u64, ConnectionHandle>,
@@ -34,6 +30,21 @@ impl Router {
             c.receive(packet);
         } else {
             unimplemented!()
+        }
+    }
+}
+
+impl Future for Router {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        loop {
+            let cmd = try_ready!(self.ctrl_chan.poll()).unwrap();
+            match cmd {
+                RouterCommand::Send(packet) => self.send(packet),
+                RouterCommand::Receive(packet) => self.receive(packet),
+            };
         }
     }
 }
