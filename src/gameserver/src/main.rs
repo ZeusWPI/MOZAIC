@@ -3,6 +3,11 @@ mod client_controller;
 mod planetwars;
 
 mod protobuf_codec;
+mod router;
+pub mod protocol {
+    include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
+}
+
 
 extern crate bytes;
 
@@ -12,6 +17,7 @@ extern crate tokio;
 extern crate tokio_process;
 #[macro_use]
 extern crate futures;
+extern crate fnv;
 
 extern crate serde;
 extern crate serde_json;
@@ -31,9 +37,6 @@ extern crate prost;
 #[macro_use]
 extern crate prost_derive;
 
-pub mod client_server {
-    include!(concat!(env!("OUT_DIR"), "/mozaic.client_server.rs"));
-}
 
 use std::error::Error;
 use std::io::{Read};
@@ -68,7 +71,7 @@ fn main() {
             .map_err(|(e, _)| e)
             .and_then(|(item, _)| {
                 let bytes = item.unwrap().freeze();
-                let msg = try!(client_server::Connect::decode(bytes));
+                let msg = try!(protocol::Connect::decode(bytes));
                 println!("{:?}", msg);
                 Ok(())
             });

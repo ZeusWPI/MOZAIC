@@ -1,6 +1,11 @@
 syntax = "proto3";
 
-package mozaic.client_server;
+package mozaic.protocol;
+
+message Packet {
+    uint64 connection_id = 1;
+    bytes data = 2;
+}
 
 message CreateMatch {
     int64 player_count = 1;
