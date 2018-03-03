@@ -37,7 +37,7 @@ export default class BotsList extends React.Component<BotsListProps, BotsListSta
       ])
     )
     return (
-      h("ul", `.${styles.botslist}`, botElements)
+      h("ul", `.menu-list.${styles.botslist}`, botElements)
     );
   }
   removeBot(name:string, evt:any) {
