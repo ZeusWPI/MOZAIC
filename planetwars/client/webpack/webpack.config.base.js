@@ -5,7 +5,7 @@
 const path = require('path');
 const {
   dependencies: externals
-} = require('./app/package.json');
+} = require('../app/package.json');
 
 module.exports = {
   module: {
