@@ -64,6 +64,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
+    this.setState({ hide_card: true});
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
       if(turnNum > 0) {

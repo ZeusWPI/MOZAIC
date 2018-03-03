@@ -77,7 +77,7 @@ class Controls extends React.Component {
           button(
             `.${styles.button}`, {
               title: 'Go to last turn',
-              onClick: e => this.props.setTurn(this.props.numTurns - 1)
+              onClick: e => this.props.setTurn(this.props.numTurns)
             }, [fa_icon('fast-forward')]
           ),
           p(`.${styles.turnProgress}`, `${this.props.turnNum} / ${this.props.numTurns}`)
@@ -145,7 +145,7 @@ class LogLoaderButton extends React.Component {
     element.click();
   }
 
-  render(){
+  render() {
     return div('', [
       input({
         id: this.state.elementId,
@@ -157,7 +157,7 @@ class LogLoaderButton extends React.Component {
         type: 'button',
         onClick: this.onClick,
         autoFocus: true
-      },["Load game"])
+      }, ["Load game"])
     ])
   }
 }
