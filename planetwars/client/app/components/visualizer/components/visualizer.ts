@@ -66,9 +66,9 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     }
   }
 
-  // TODO: this might not be the best way to do this
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
+    this.setState({ hide_card: true});
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
       if(turnNum > 0) {
@@ -89,9 +89,10 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   setLog(playerData:PlayerData, gameLog:GameState[]) {
     var game = new Game(playerData, gameLog);
-    // console.log(game);
     this.setState({
       game: game,
+      turnNum: 0,
+      hide_card: true,
       numTurns: game.turns.length - 1,
     })
   }
@@ -113,11 +114,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  // componentWillReceiveProps(props: VisualizerProps) {
-  //   let p = path.format(props.gamelog);
-  //   let jsonLog = fs.readFileSync(p).toString();
-  //   this.setLog(jsonLog)
-  // }
+
   render() {
     let controls = div(`.${styles.control}`, [
       h(Controls, {
@@ -166,7 +163,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span(`${styles.winner}`, winner), ' wins!'])
+        p(['Game over', h('br'), span({style: {color: this.state.game.winner.color}}, this.state.game.winner.name), ' wins!'])
       ])
     });
 

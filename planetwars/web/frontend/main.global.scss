@@ -1,0 +1,180 @@
+@import "~bulma/sass/utilities/initial-variables";
+@import "~bulma/sass/utilities/functions";
+
+$fa-font-path: "~font-awesome/fonts";
+@import '~font-awesome/scss/font-awesome.scss';
+
+$primary: #201f1d;
+$secondary: #DE8D47;
+$color3: #FFFFFF;
+$color4: #868685;
+$color5: #DCDCDC;
+
+$footer-background-color: $primary;
+
+@import '~bulma';
+
+#info {
+  background-color: $primary;
+  .feature-tile {
+    font-size: x-large;
+    background: $secondary;
+    padding: 10px;
+    border-radius: 10px;
+  }
+}
+
+#signup-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  #signup-box {
+    max-width: 700px;
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    .input, .button {
+      border-color: $secondary;
+    }
+    .label {
+      text-align: center;
+      color: $color3;
+    }
+    .submit {
+      color: $color3;
+      background-color: $secondary;
+    }
+  }
+}
+
+#home-hero-body {
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  align-items: center;
+  flex-wrap: wrap;
+  img {
+    max-width: 300px;
+    width: 80%;
+  }
+  #code-play-win {
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    .cpw-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 2.5em;
+      border-radius: 10%;
+      padding: 10px;
+      background-color: $secondary;
+      span {
+        font-size: 4em;
+        padding: 5px;
+      }
+    }
+  }
+  button > a {
+    border: none;
+  }
+  #intro-text {
+    max-width: 700px;
+    font-size: 1.5em;
+    color: $color5;
+  }
+  #title {
+    #title2k {
+      color: $secondary;
+    }
+  }
+}
+
+/* Style homescreen for small devices */
+@media all and (max-width: 1000px) {
+  #code-play-win {
+    padding: 20px 0px 20px 0px;
+    .cpw-item {
+      max-width: 20vw !important;
+      font-size: 4vw !important;
+      span {
+        font-size: 15vw !important;
+      }
+    }
+  }
+  #title {
+    padding: 0px 0px 20px 0px;
+  }
+  .title {
+    font-size: 2em !important;
+  }
+  #intro-text {
+    padding: 20px 0px 20px 0px;
+    font-size: 1em !important;
+  }
+}
+
+.navbar {
+  border-bottom: 1px solid $color4;
+  min-height: 85px;
+  .navbar-brand {
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+    max-height: 100%;
+    #navbar-logo {
+      max-height: 45px;
+      width: auto;
+    }
+    #nav-title {
+      padding-left: 10px;
+      color: $color3;
+    }
+  }
+  a { border-bottom: none; }
+}
+
+// Link Style
+a {
+  border-bottom: $color4 1px dotted;
+}
+
+.footer {
+  border-top: 1px solid $color4;
+  padding: 1rem 1rem 1rem;
+  color: $color4;
+  a {
+    color: $color4;
+  }
+}
+
+// General stuff
+
+.heart {
+  color: $secondary;
+}
+
+.grow { transition: all .2s ease-in-out; }
+.grow:hover { transform: scale(1.1); }
+
+html, body {
+  height: 100%;
+}
+
+#app {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+.push {
+  flex: 1 0 auto;
+}
+
+.t2018 {
+  color: $secondary;
+}

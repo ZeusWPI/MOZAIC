@@ -1,16 +1,18 @@
 import * as React from 'react';
-import { h } from 'react-hyperscript-helpers'
+import { h, div, p, button } from 'react-hyperscript-helpers'
 
-interface AboutProps {
-
+interface IProps {
+  counter: number;
+  onIncrement: () => void;
 }
 
-interface AboutState {
+interface IState {};
 
-}
-
-export default class About extends React.Component<AboutProps, AboutState>{
+export default class About extends React.Component<any, IState>{
   render() {
-    return h("div", ["Here be About page"])
+    return div([
+      p([this.props.counter]),
+      button({onClick: () =>this.props.onIncrement() }, ['+1'])
+    ])
   }
 }

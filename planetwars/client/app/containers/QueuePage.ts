@@ -1,22 +1,32 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
-import { h } from 'react-hyperscript-helpers';
 
+import { IState } from "../reducers";
 import Queue from "../components/Queue"
+import {connect} from "react-redux";
 
-interface QueuePageProps {
+const gameA =  {
+  gameID: 1,
+  players: ['player1', 'player2'],
+  numTurns: 7
+};
 
-}
+const gameB= {
+  gameID: 2,
+  players: ['player3', 'player4'],
+  numTurns: 8
+};
 
-interface QueuePageState {
+const mapStateToProps = (state: IState) => {
+  return {
+    runningGames: [gameA, gameB]
 
-}
-
-
-export default class QueuePage extends React.Component<QueuePageProps, QueuePageState> {
-  render() {
-    return (
-      h(Queue)
-    );
   }
-}
+};
+
+
+const mapDispatchToProps = (dispatch: Function) => {
+  return {
+
+  }
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(Queue)
