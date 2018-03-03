@@ -1,6 +1,7 @@
 
-import * as path from 'path'; import * as fs from 'fs'; import * as React from
-  'react';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as React from 'react';
 
 import { BotSelector } from "./BotSelector"
 import { MatchConfig, PlayerConfig } from "../../utils/Models"
@@ -14,9 +15,7 @@ interface SetupState {
   map_path: path.ParsedPath | { name: string }
 }
 
-interface SetupProps {
-
-}
+interface SetupProps { }
 
 export class Setup extends React.Component<SetupProps, SetupState> {
   constructor(props: SetupProps) {
