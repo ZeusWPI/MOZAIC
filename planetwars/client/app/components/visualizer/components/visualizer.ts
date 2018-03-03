@@ -84,9 +84,12 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   }
 
   setLog(log: string) {
+    console.log('change log');
     var game = new Game(log);
     this.setState({
       game: game,
+      turnNum: 0,
+      hide_card: true,
       numTurns: game.turns.length - 1,
     })
   }
@@ -108,7 +111,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       this.timer = d3.interval((t:any) => this.nextTurn(), delay);
     }
   }
-  
+
   render() {
     let controls = h(Controls, {
       turnNum: this.state.turnNum,

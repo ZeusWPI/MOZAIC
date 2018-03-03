@@ -3,38 +3,38 @@ const d3 = require('d3');
 const sections = 25;
 const fancy = true;
 
-function equals(p1, p2){
+function equals(p1, p2) {
   var dx = p1[0] - p2[0];
   var dy = p1[1] - p2[1];
   var delta = 0.0000001;
   return (Math.abs(dx) < delta) && (Math.abs(dy) < delta);
 }
 
-function dist(p1, p2){
+function dist(p1, p2) {
   return Math.hypot(p2[0] - p1[0], p2[1] - p1[1]);
 }
 
-function goodDist(point, layer, pol1, pol2){
+function goodDist(point, layer, pol1, pol2) {
   var toMiddle = Math.min(dist(point, pol1.point), dist(point, pol2.point));
   var toEachOther = dist(pol1.getPoint(point, layer), pol2.getPoint(point, layer));
   return toMiddle > toEachOther;
 }
 
-function getIndex(list, point){
+function getIndex(list, point) {
   for (var i = 0; i < list.length; i++) {
-    if(equals(list[i], point)){
+    if (equals(list[i], point)) {
       return i;
     }
   }
   return -1;
 }
 
-function isRight(p1, p2, p3){
+function isRight(p1, p2, p3) {
   return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p2[1] - p1[1]) * (p3[0] - p1[0]) <= 0;
 }
 
 class Polygon {
-  constructor(owner, name, point, points){
+  constructor(owner, name, point, points) {
     this.owner = owner;
     this.name = name;
     this.point = point;
@@ -49,24 +49,24 @@ class Polygon {
     });
   }
 
-  initNeighbours(data){
+  initNeighbours(data) {
     this.polygon.forEach(point => {
       data.polygons.forEach(poly => {
         var index = getIndex(poly.polygon, point);
-        if(poly !== this && index > -1){
+        if (poly !== this && index > -1) {
           this.neighbours[point].push(poly);
         }
       });
     });
   }
 
-  isPossible(point, hardEnd, owner, target, data){
+  isPossible(point, hardEnd, owner, target, data) {
     var i = getIndex(this.polygon, point);
-    if(i === -1){
+    if (i === -1) {
       return false;
     }
 
-    if(owner !== this.owner){
+    if (owner !== this.owner) {
       return false;
     }
     /*
@@ -74,12 +74,12 @@ class Polygon {
       return false;
     }
     */
-    return this.polygon[(i+1) % this.polygon.length];
+    return this.polygon[(i + 1) % this.polygon.length];
   }
 
-  getPoint(point, i){
+  getPoint(point, i) {
     var max = sections;
-    if(i === 0){
+    if (i === 0) {
       return point;
     }
     //TODO: add pointToPointMap
@@ -92,30 +92,30 @@ class Polygon {
 
     var w1 = i;
     var w2 = max - i;
-    return [(this.point[0]*w2 + point[0]*w1)/max, (this.point[1]*w2 + point[1]*w1)/max];
+    return [(this.point[0] * w2 + point[0] * w1) / max, (this.point[1] * w2 + point[1] * w1) / max];
   }
 
   // data :: {used::[Bool], polygons::[Polygon]}
-  maybeStart(layer, point, hardEnd, owner, target, data, returnList){
+  maybeStart(layer, point, hardEnd, owner, target, data, returnList) {
     var i = getIndex(this.polygon, point);
-    if(i === -1){
+    if (i === -1) {
       console.log("no points of me");
       return false;
     }
 
-    if(owner !== this.owner){
+    if (owner !== this.owner) {
       console.log("not my owner");
       return false;
     }
 
-/*
-    if(data.used[this.name] && this.polygon.indexOf(hardEnd) === -1){
-      console.log("already used");
-      return false;
-    } */
+    /*
+        if(data.used[this.name] && this.polygon.indexOf(hardEnd) === -1){
+          console.log("already used");
+          return false;
+        } */
 
-    var endi = (i-1+this.polygon.length)%this.polygon.length;
-  //  var endi = i;
+    var endi = (i - 1 + this.polygon.length) % this.polygon.length;
+    //  var endi = i;
 
     data.used[this.name] = true;
     returnList.push(this.name);
@@ -128,23 +128,23 @@ class Polygon {
 
     target.push(this.getPoint(p, layer));
 
-    while(!equals(p, hardEnd)){
+    while (!equals(p, hardEnd)) {
       var nextPol = undefined;
       var nextPolPoint = undefined;
       for (var pol of this.neighbours[p]) {
         // which one should i do? the most right ofc
         var nextPoint = pol.isPossible(p, hardEnd, owner, target, data);
-        var returnIndex =returnList.indexOf(pol.name);
+        var returnIndex = returnList.indexOf(pol.name);
         //console.log(returnIndex);
-        if(nextPoint){//}&& (returnIndex > -1 || goodDist(p, layer, pol, this))){
-          if(nextPol === undefined || isRight(p, nextPolPoint, nextPoint)){
+        if (nextPoint) { //}&& (returnIndex > -1 || goodDist(p, layer, pol, this))){
+          if (nextPol === undefined || isRight(p, nextPolPoint, nextPoint)) {
             nextPol = pol;
             nextPolPoint = nextPoint;
           }
         }
       }
 
-      if(nextPol !== undefined){
+      if (nextPol !== undefined) {
         nextPol.maybeStart(layer, p, hardEnd, owner, target, data, returnList);
         return true;
       }
@@ -158,17 +158,17 @@ class Polygon {
     return true;
   }
 
-  getGoodIndex(){
+  getGoodIndex() {
     var owner = this.owner;
     for (var i = 0; i < this.polygon.length; i++) {
       var point = this.polygon[i];
       var good = true;
-      for(var oPolygon of this.neighbours[point]){
-        if(oPolygon.owner === owner){
+      for (var oPolygon of this.neighbours[point]) {
+        if (oPolygon.owner === owner) {
           good = false;
         }
       }
-      if(good){
+      if (good) {
         return i;
       }
     }
@@ -177,40 +177,40 @@ class Polygon {
 }
 
 function getPath(points) {
-  if(fancy){
+  if (fancy) {
     var betterpoints = [];
-    for (var j = points.length-1, i = 0; i < points.length;j = i, i++) {
-      betterpoints.push([(points[j][0] + points[i][0])/2, (points[j][1] + points[i][1])/2]);
+    for (var j = points.length - 1, i = 0; i < points.length; j = i, i++) {
+      betterpoints.push([(points[j][0] + points[i][0]) / 2, (points[j][1] + points[i][1]) / 2]);
       betterpoints.push(points[i]);
     }
     points = betterpoints;
   }
   var point_strings = [];
-  points.forEach(p => point_strings.push(p[0]+","+p[1]));
-  if(fancy){
-    var out = "M"+point_strings[0];
-    for (var i = 2; i < point_strings.length; i+= 2) {
-      out += "Q"+point_strings[i-1]+" "+point_strings[i];
+  points.forEach(p => point_strings.push(p[0] + "," + p[1]));
+  if (fancy) {
+    var out = "M" + point_strings[0];
+    for (var i = 2; i < point_strings.length; i += 2) {
+      out += "Q" + point_strings[i - 1] + " " + point_strings[i];
     }
-    out+= "Q"+point_strings[point_strings.length-1]+" "+point_strings[0];
+    out += "Q" + point_strings[point_strings.length - 1] + " " + point_strings[0];
     return out;
-  }else{
-    return "M"+point_strings.join("L")+"Z";
+  } else {
+    return "M" + point_strings.join("L") + "Z";
   }
 }
 
-function getAngle(middle, point){
+function getAngle(middle, point) {
   var dx = middle[0] - point[0];
   var dy = middle[1] - point[1];
   var angle = Math.atan2(dy, dx);
-  var degrees = 180*angle/Math.PI;
-  return (360+Math.round(degrees))%360;
+  var degrees = 180 * angle / Math.PI;
+  return (360 + Math.round(degrees)) % 360;
 }
 
-function initVoronoi(turns, colorFunction, box){
+function initVoronoi(turns, colorFunction, box) {
   var voronoi = d3.voronoi().extent(box);
   var planets = turns[0].planets;
-  var posMap = {};                              // maps middle coordinate on the planet
+  var posMap = {}; // maps middle coordinate on the planet
   planets.forEach(p => posMap[[p.x, p.y]] = p);
 
   var points = planets.map(p => [p.x, p.y]);
@@ -219,16 +219,16 @@ function initVoronoi(turns, colorFunction, box){
   //                                              >>>>>>>>>>>>>>>>>DEDUPLICATION
   var pointsMade = [];
 
-  for(var pl of polys){
+  for (var pl of polys) {
     for (var i = 0; i < pl.length; i++) {
       var alreadyHasPoint = false;
-      for(var p of pointsMade){
-        if(equals(pl[i], p)){
+      for (var p of pointsMade) {
+        if (equals(pl[i], p)) {
           pl[i] = p;
           alreadyHasPoint = true;
         }
       }
-      if(!alreadyHasPoint){
+      if (!alreadyHasPoint) {
         pointsMade.push(pl[i]);
       }
     }
@@ -244,7 +244,7 @@ function initVoronoi(turns, colorFunction, box){
   data.polygons = [];
   data.polygonsNameMap = {};
 
-  for(var polyPoints of polys){
+  for (var polyPoints of polys) {
     var planet = posMap[polyPoints.data];
     data.used[planet.name] = false;
     let pol = new Polygon(planet.owner, planet.name, polyPoints.data, polyPoints);
@@ -252,8 +252,8 @@ function initVoronoi(turns, colorFunction, box){
     data.polygonsNameMap[pol.name] = pol;
   }
 
-  data.polygons.sort((a,o) => {
-    return getAngle([0,0], o.point) - getAngle([0,0], a.point);
+  data.polygons.sort((a, o) => {
+    return getAngle([0, 0], o.point) - getAngle([0, 0], a.point);
   });
 
   //                                              <<<<<<<<<<<<MAKING DATA STRUCT
@@ -263,39 +263,42 @@ function initVoronoi(turns, colorFunction, box){
   //                                              >>>>>>>>>>>>>>>>>>MAKING TURNS
   var turnPolygonPoints = [];
 
-  for(var turn of turns){
+  for (var turn of turns) {
     var changed = false;
     turn.planets.forEach(p => {
       data.used[p.name] = false;
-      if(data.polygonsNameMap[p.name].owner !== p.owner){
+      if (data.polygonsNameMap[p.name].owner !== p.owner) {
         changed = true;
         data.polygonsNameMap[p.name].owner = p.owner;
       }
     });
-    if(changed || turnPolygonPoints.length < 1){
+    if (changed || turnPolygonPoints.length < 1) {
       var polygonPoints = [];
 
       for (var i = 0; i < data.polygons.length; i++) {
         let poly = data.polygons[i];
-        if(!data.used[poly.name]){
+        if (!data.used[poly.name]) {
           var si = poly.getGoodIndex();
 
-          if(si === undefined){
+          if (si === undefined) {
             continue;
           }
           var sie = (si - 1 + poly.polygon.length) % poly.polygon.length;
-          for(let layer = 0; layer < sections; layer ++){
+          for (let layer = 0; layer < sections; layer++) {
             var target = [poly.getPoint(poly.polygon[si], layer)];
 
             poly.maybeStart(layer, poly.polygon[si], poly.polygon[sie], poly.owner, target, data, []);
-            polygonPoints.push({target: target, color: colorFunction(poly.owner)});
+            polygonPoints.push({
+              target: target,
+              color: colorFunction(poly.owner)
+            });
           }
         }
       }
 
       turnPolygonPoints.push(polygonPoints);
-    }else{
-      var last = turnPolygonPoints[turnPolygonPoints.length-1];
+    } else {
+      var last = turnPolygonPoints[turnPolygonPoints.length - 1];
       turnPolygonPoints.push(last);
     }
   }
@@ -311,15 +314,18 @@ function initVoronoi(turns, colorFunction, box){
     var colors = ["black", "grey", "limegreen", "green", "red", "purple", "yellow"];
     var colorI = 0;
 
-    var startDraw = [] ;
-    for(var polygonWrap of poliess){
+    var startDraw = [];
+    for (var polygonWrap of poliess) {
       svg.append("path")
-      .attr("d", getPath(polygonWrap.target)).attr("class", "polygon")
-      .style("fill",polygonWrap.color).style("opacity", 1/sections);
+        .attr("d", getPath(polygonWrap.target)).attr("class", "polygon")
+        .style("fill", polygonWrap.color).style("opacity", 1 / sections);
 
-      startDraw.push({p: polygonWrap.target[0], color: polygonWrap.color});
+      startDraw.push({
+        p: polygonWrap.target[0],
+        color: polygonWrap.color
+      });
 
-      if(first){
+      if (first) {
         first = false;
         toDraw = polygonWrap.target;
       }

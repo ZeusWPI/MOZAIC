@@ -29,11 +29,9 @@ class Renderer extends React.Component {
       .attr('transform', 'translate(1, -7)');
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
-    //function initVoronoi(turns, color_map, box){
 
     this.turn = this.props.game.turns[0];
     this.calculateViewBox();
-    console.log(this.props.game);
     this.voronoiRenderer = Voronoi.initVoronoi(this.props.game.turns, Config.player_color, [this.min, this.max]);
     this.createZoom();
     if (this.props.game) {
