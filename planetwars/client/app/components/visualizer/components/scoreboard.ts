@@ -79,7 +79,7 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
         td(x.player.ship_count + "\u2694")
       ])
   });
-    return table(`.${styles.scoreboard}`, {width: "20%"}, tbody(rows));
+    return table(`.${styles.scoreboard}`, {}, tbody(rows));
   }
   updateScore(players:Player[]) {
     let scores:Score[] = [];
