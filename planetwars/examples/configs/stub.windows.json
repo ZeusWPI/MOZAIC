@@ -1,19 +1,18 @@
 {
-    "players": [
-        {
-            "name": "bert",
-            "command": "python",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
-        },
-        {
-            "name": "timp",
-            "command": "python",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
-        }
-    ],
-    "game_config": {
-        "map_file": "../planetwars/maps/hex.json",
-        "max_turns": 500
+  "players": [{
+      "name": "bert",
+      "command": "python",
+      "args": ["..\\planetwars\\bots\\simplebot\\simple.py"]
     },
-    "log_file": "gamelog.json"
+    {
+      "name": "timp",
+      "command": "python",
+      "args": ["..\\planetwars\\bots\\simplebot\\simple.py"]
+    }
+  ],
+  "game_config": {
+    "map_file": "..\\planetwars\\maps\\hex.json",
+    "max_turns": 500
+  },
+  "log_file": "gamelog.json"
 }
