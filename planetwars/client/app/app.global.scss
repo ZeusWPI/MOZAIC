@@ -1,35 +1,64 @@
-// Fix Bootstrap Sass & Font Loading
-$bs-icon-font-path: "~bootstrap-sass/assets/fonts/bootstrap/";
-$bootstrap-sass-asset-helper: true;
-// @import '~bootstrap-sass/assets/stylesheets/_bootstrap.scss';
-// @font-face {
-//     font-family: 'Glyphicons Halflings';
-//     src: url(#{$bs-icon-font-path}#{$icon-font-name}.ttf) format('truetype');
-//     src: url(#{$bs-icon-font-path}#{$icon-font-name}.eot?#iefix)
-//     format('embedded-opentype'),
-//     url(#{$bs-icon-font-path}#{$icon-font-name}.woff) format('woff'),
-//     url(#{$bs-icon-font-path}#{$icon-font-name}.ttf) , format('truetype'),
-//     url(#{$bs-icon-font-path}#{$icon-font-name}.svg##{$icon-font-svg-id})
-//     format('svg');
-// }
-
-// Fix Font Awesome Font Loading
+//------------------------------------------------------------------------------
+// Font Awesome
+//------------------------------------------------------------------------------
 $fa-font-path: "~font-awesome/fonts";
 @import "~font-awesome/scss/font-awesome.scss";
 
+//------------------------------------------------------------------------------
+// Bulma
+//------------------------------------------------------------------------------
 @import '~bulma/sass/utilities/initial-variables';
-// Custom Variables
-$background: #181818;
-$body-background-color: $background;
-$navbar-background-color: $background;
-$navbar-item-hover-background-color: lighten(#181818, 1.5);
-$navbar-item-color: $white-ter;
-$text: $white-ter;
 
-// Bulma Npm
+// Custom Variables
+$background: #201f1d;
+$primary:#FFFFFF;
+$secondary: #DE8D47;
+$tertiary: #868685;
+
+// Bulma variables
+$body-background-color: $background;
+$text: $primary;
+
+$navbar-background-color: $background;
+$navbar-item-hover-background-color: lighten($background, 5);
+$navbar-item-color: $primary;
+
+$link: $secondary;
+$link-active: $secondary;
+$link-hover: $secondary;
+
+$menu-item-hover-color: $secondary;
+$menu-item-active-color: $secondary;
+
+
 @import '~bulma/bulma';
 
-#root {
+//------------------------------------------------------------------------------
+// Global Sass
+//------------------------------------------------------------------------------
+html,
+body {
+  // Hide scrollbar, scrollbars should be added only on the
+  // the elements that require them.
+  overflow-x: hidden;
+  overflow-y: hidden;
   width: 100vw;
   height: 100vh;
+}
+
+#root {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+.navbar {
+  border-bottom: 1px solid $tertiary;
+}
+
+.button {
+  background-color: $background;
+  color: $primary;
+  border-color: $primary;
 }
