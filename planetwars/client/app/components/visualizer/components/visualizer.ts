@@ -62,7 +62,6 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     }
   }
 
-  // TODO: this might not be the best way to do this
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
     if (turnNum == this.state.numTurns) {
@@ -84,7 +83,6 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   }
 
   setLog(log: string) {
-    console.log('change log');
     var game = new Game(log);
     this.setState({
       game: game,
@@ -140,6 +138,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       turnNum: this.state.turnNum,
       speed: this.state.speed
     });
+    console.log(this.state.game.winner);
 
     let endGameCard = h(HideableComponent, {
       hide: this.state.hide_card,
@@ -152,7 +151,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span(`${styles.winner}`, this.state.game.winner.name), ' wins!'])
+        p(['Game over', h('br'), span({style: {color: this.state.game.winner.color}}, this.state.game.winner.name), ' wins!'])
       ])
     });
 

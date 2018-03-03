@@ -23,10 +23,8 @@ class Renderer extends React.Component {
 
   componentDidMount() {
     this.loadResources();
-    this.voronoiContainer = d3.select(this.svg).append('g').attr('transform', 'translate(1, -7)');
-    this.container = d3.select(this.svg).append('g')
-      // TODO: There are some bugs with viewboxes and centering
-      .attr('transform', 'translate(1, -7)');
+    this.voronoiContainer = d3.select(this.svg).append('g');
+    this.container = d3.select(this.svg).append('g');
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
 
