@@ -4,7 +4,7 @@ import { h } from 'react-hyperscript-helpers';
 
 import About from "../components/About"
 import { IState, AboutState } from '../reducers/index';
-import { plusOne } from '../actions/actions';
+import { incrementAbout } from '../actions/actions';
 import { connect } from 'react-redux';
 
 const mapStateToProps = (state: IState) => {
@@ -13,12 +13,12 @@ const mapStateToProps = (state: IState) => {
   }
 }
 
-const mapDistpatchToProps = (dispatch: any) => {
+const mapDispatchToProps = (dispatch: any) => {
   return {
     onIncrement: () => {
-      dispatch(plusOne())
+      dispatch(incrementAbout())
     }
   }
 }
 
-export default connect(mapStateToProps, mapDistpatchToProps)(About);
+export default connect(mapStateToProps, mapDispatchToProps)(About);
