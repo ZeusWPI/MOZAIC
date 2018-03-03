@@ -34,13 +34,13 @@ Current and planned features:
 ### Gameserver
 
 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt).
-    * Rust >= 1.18.0
-    * Cargo >= 0.16.0
+    - Rust >= 1.18.0
+    - Cargo >= 0.16.0
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
 1. Run the botrunner again (still in the `gameserver` directory) with:
-    * Linux -  `cargo run ../planetwars/config_examples/stub.config.json`
-    * Windows -  `cargo run ..\planetwars\config_examples\stub.config_windows.json`
+    - Linux - `cargo run ../planetwars/examples/configs/stub.json`
+    - Windows - `cargo run ..\planetwars\examples\configs\stub.windows.json`
 1. It should have generated a log-file `log.json`.
 1. If it did, great, it works! Now run 'cargo build --release'.
 1. Check setup below for the client.

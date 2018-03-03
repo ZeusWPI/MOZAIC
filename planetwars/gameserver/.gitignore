@@ -1,4 +1,0 @@
-node_modules/
-bot_driver
-bots/*
-!bots/simple.js
