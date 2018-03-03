@@ -1,20 +1,39 @@
 use fnv::FnvHashMap;
+use futures::sync::mpsc::{UnboundedReceiver};
 
-use super::{ConnectionHandle, TransportHandle};
+use transports::TransportHandle;
+
+use super::{ConnectionHandle};
 use super::types::*;
 
 
-struct Router {
+pub enum RouterCommand {
+    Send(Packet),
+    Receive(Packet),
+}
+
+pub struct Router {
     connections: FnvHashMap<u64, ConnectionHandle>,
     transports: FnvHashMap<u64, TransportHandle>,
+    ctrl_chan: UnboundedReceiver<RouterCommand>,
 }
 
 impl Router {
     fn send(&mut self, packet: Packet) {
-        unimplemented!()
+        let transport = self.transports.get_mut(&packet.transport_id);
+        if let Some(t) = transport {
+            t.send(packet);
+        } else {
+            unimplemented!()
+        }
     }
 
     fn receive(&mut self, packet: Packet) {
-        unimplemented!()
+        let connection = self.connections.get_mut(&packet.connection_id);
+        if let Some(c) = connection {
+            c.receive(packet);
+        } else {
+            unimplemented!()
+        }
     }
 }

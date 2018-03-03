@@ -1,7 +1,6 @@
 mod connection;
 mod router;
-mod transport;
 mod types;
 
 pub use self::connection::{Connection, ConnectionHandle};
-pub use self::transport::TransportHandle;
+pub use self::types::Packet;

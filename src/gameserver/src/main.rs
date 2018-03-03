@@ -1,6 +1,7 @@
 mod bot_runner;
 mod client_controller;
 mod planetwars;
+mod transports;
 
 mod protobuf_codec;
 mod router;
