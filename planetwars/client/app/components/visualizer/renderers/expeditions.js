@@ -15,14 +15,14 @@ class ExpeditionRenderer {
     let selector = this.bind(data);
     selector.exit().remove();
     let expeditions = selector.enter().append('g')
-        .attr('class', 'expedition')
-        .attr('transform', d => {
-          let pos = this.expeditionPos(d);
-          return `translate(${pos.x}, ${pos.y})`;
-        }).merge(selector);
+      .attr('class', 'expedition')
+      .attr('transform', d => {
+        let pos = this.expeditionPos(d);
+        return `translate(${pos.x}, ${pos.y})`;
+      }).merge(selector);
 
     expeditions.transition()
-      .duration(1000/params.speed)
+      .duration(1000 / params.speed)
       .ease(d3.easeLinear)
       .attr('transform', d => {
         let pos = this.expeditionPos(d);
@@ -42,7 +42,7 @@ class ExpeditionRenderer {
       .attr('width', 1 * params.scale)
       .attr('height', 1 * params.scale)
       .style('stroke-width', 0.05 * params.scale)
-      .attr('fill', exp => "url(#ship)")
+      .attr('fill', exp => Config.player_color(exp.owner))
       .merge(ships)
       .style('stroke', exp => Config.player_color(exp.owner))
       .attr('transform', exp => `rotate(${this.expeditionRotation(exp)})`)
@@ -56,6 +56,7 @@ class ExpeditionRenderer {
       .attr('y', 2 * params.scale)
       .attr('font-family', 'sans-serif')
       .attr('font-size', 1 * params.scale + 'px')
+      .style("text-anchor", "middle")
       .text(exp => "\u2694 " + exp.ship_count)
       .attr('fill', exp => Config.player_color(exp.owner));
   }

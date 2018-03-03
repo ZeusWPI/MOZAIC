@@ -138,7 +138,6 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       turnNum: this.state.turnNum,
       speed: this.state.speed
     });
-    console.log(this.state.game.winner);
 
     let endGameCard = h(HideableComponent, {
       hide: this.state.hide_card,
