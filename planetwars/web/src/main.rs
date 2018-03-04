@@ -20,6 +20,7 @@ use rocket::Response;
 use rocket::request::{self, Request, FromRequest};
 
 static EMAIL_FILE: &'static str = "emails.txt";
+static CMD_AGENTS: &'static [&'static str] = &["Wget", "curl", "HTTPie"];
 
 struct UserAgent(Option<String>);
 
@@ -37,11 +38,11 @@ impl<'a, 'r> FromRequest<'a, 'r> for UserAgent {
 #[get("/")]
 fn index(user_agent: UserAgent) -> io::Result<NamedFile> {
     let UserAgent(ua) = user_agent;
-    let ua_is_wget = match ua {
-        Some(agent_str) => agent_str.starts_with("Wget") || agent_str.starts_with("curl") || agent_str.starts_with("HTTPie"),
-        None => false,
+    let is_cmdline = match ua {
+        Some(agent_str) => CMD_AGENTS.iter().any(|a| agent_str.starts_with(a)),
+        _ => false,
     };
-    if ua_is_wget {
+    if is_cmdline {
         NamedFile::open("index.txt")
     } else {
         NamedFile::open("index.html")
