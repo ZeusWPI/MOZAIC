@@ -6,12 +6,8 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 use client_controller::{ClientMessage, Message};
 use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
+use planetwars::time_out::Timeout;
 use std::marker::PhantomData;
-
-use std::time::Duration;
-
-use tokio_timer::Sleep;
-use tokio_timer::Timer;
 
 use serde::de::DeserializeOwned;
 
@@ -26,7 +22,7 @@ pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
     lock: L,
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
-    sleeper: Sleep,
+    timeout: Timeout,
 }
 
 
@@ -51,19 +47,22 @@ impl<G, L, C> Controller<G, L, C>
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                client_msgs: UnboundedReceiver<ClientMessage>,
-               conf: C, logger: slog::Logger,)
+               conf: C, mut timeout: Timeout, logger: slog::Logger,)
                -> Controller<G, L, C>
     {
         let mut client_ids = HashSet::new();
         client_ids.extend(clients.iter().map(|c| c.id));
+        
+        // initial connection timeout starts at 1 minute
+        timeout.set_timeout(60000);
+        
         Controller {
             phantom_game_controller: PhantomData,
             phantom_config: PhantomData,
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
             client_msgs,
             logger,
-            // initial connection timeout starts at 1 minute
-            sleeper: Timer::default().sleep(Duration::from_millis(60000)),
+            timeout,
         }
     }
 
@@ -94,13 +93,19 @@ impl<G, L, C> Controller<G, L, C>
                 );
                 self.lock.connect(client_id);
             },
+            Message::Timeout => {
+                if self.timeout.is_expired() {
+                    println!("timeout");
+                    self.force_lock_step();
+                    self.run_lock();
+                }
+            }
         }
     }
 
     /// Sets new timeout future
-    fn start_time_out(&mut self, time: usize) {
-        let timer = Timer::default();
-        self.sleeper = timer.sleep(Duration::from_millis(time as u64));
+    fn start_time_out(&mut self, time: u64) {
+        self.timeout.set_timeout(time);
     }
 
     /// Steps the lock step 1 step, and sets a new timeout
@@ -109,9 +114,9 @@ impl<G, L, C> Controller<G, L, C>
         self.start_time_out(time_out);
 
         if let Some(result) = maybe_result {
-            println!("Winner: {:?}", result);
             return Some(Ok(Async::Ready(result)));
         }
+
         None
     }
 
@@ -134,28 +139,13 @@ impl<G, L, C> Future for Controller<G, L, C>
 
     fn poll(&mut self) -> Poll<Vec<usize>, ()> {
         loop {
-            match try!(self.client_msgs.poll()) {
-                Async::Ready(mmsg) => {
-                    let msg = mmsg.unwrap();
-                    self.handle_message(msg.client_id, msg.message);
-
-                    if let Some(re) = self.run_lock() {
-                        return re;
-                    }
-                },
-                Async::NotReady => {
-                    if self.sleeper.is_expired() {
-                        if let Some(re) = self.force_lock_step() {
-                            return re;
-                        }
-                        if let Some(re) = self.run_lock() {
-                            return re;
-                        }
-                    }
-                    return Ok(Async::NotReady);
-                }
+            if let Some(result) = self.run_lock() {
+                println!("ended {:?}", result);
+                return result;
             }
 
+            let msg = try_ready!(self.client_msgs.poll()).unwrap();
+            self.handle_message(msg.client_id, msg.message);
         }
     }
 }

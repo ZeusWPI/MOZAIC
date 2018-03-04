@@ -45,6 +45,7 @@ use client_controller::ClientController;
 use planetwars::modules::pw_controller::PwController;
 use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
+use planetwars::time_out::Timeout;
 
 type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
 type FullController = SubController<PwController, planetwars::modules::Config>;
@@ -101,6 +102,7 @@ fn main() {
         handles,
         chan,
         match_description.game_config,
+        Timeout::new(handle.clone(), reactor.handle().clone()),
         logger,
     );
 

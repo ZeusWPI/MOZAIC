@@ -1,6 +1,7 @@
 mod controller;
 mod game_controller;
 mod lock;
+pub mod time_out;
 
 pub mod modules;
 

@@ -161,8 +161,8 @@ impl GameController<Config> for PwController {
         }
     }
 
-    fn time_out(&self) -> usize {
-        500
+    fn time_out(&self) -> u64 {
+        50
     }
 
     fn start(&mut self) -> HashSet<usize>{

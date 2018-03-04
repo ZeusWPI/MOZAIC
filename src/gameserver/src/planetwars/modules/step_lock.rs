@@ -35,7 +35,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         }
     }
 
-    fn do_step(&mut self) -> (usize, Option<Vec<usize>>) {
+    fn do_step(&mut self) -> (u64, Option<Vec<usize>>) {
         match self.running {
             GameState::Waiting => {
                             self.running = GameState::Running;
@@ -67,7 +67,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         self.connected_clients.remove(&client_id);
     }
 
-    fn do_time_out(&mut self) -> (usize, Option<Vec<usize>>) {
+    fn do_time_out(&mut self) -> (u64, Option<Vec<usize>>) {
         self.awaiting_clients.clone().iter().for_each(|c| {
                                             self.client_messages.insert(*c, String::new());
                                             }
