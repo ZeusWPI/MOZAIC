@@ -1,12 +1,74 @@
 // Code adapted from tokio_io::length_delimited and prost.
 
-use prost::{Message, EncodeError, DecodeError};
-use prost::encoding;
-use bytes::{BytesMut, Buf, BufMut};
+use prost::{encoding, Message};
+use bytes::BytesMut;
 use std::io::{Result, Error, ErrorKind, Cursor};
-use futures::{Poll, Sink, Stream, StartSend};
+use std::marker::PhantomData;
+use futures::{Poll, Async, Sink, Stream, StartSend, AsyncSink};
 
 use tokio_io::{codec, AsyncRead, AsyncWrite};
+
+pub struct MessageTransport<T, M> {
+    inner: ProtobufTransport<T>,
+    phantom_m: PhantomData<M>,
+    buffered: Option<BytesMut>,
+}
+
+impl<T, M> MessageTransport<T, M>
+    where T: AsyncRead + AsyncWrite
+{
+    pub fn new(stream: T) -> Self {
+        MessageTransport {
+            inner: ProtobufTransport::new(stream),
+            phantom_m: PhantomData,
+            buffered: None,
+        }
+    }
+}
+
+impl<T, M> Stream for MessageTransport<T, M>
+    where T: AsyncRead,
+          M: Message + Default
+{
+    type Item = M;
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Option<M>, Error> {
+        let item = match try_ready!(self.inner.poll()) {
+            None => None,
+            Some(buf) => {
+                let msg = try!(M::decode(buf.freeze()));
+                Some(msg)
+            }
+        };
+        return Ok(Async::Ready(item));
+    }
+}
+
+impl<T, M> Sink for MessageTransport<T, M>
+    where T: AsyncWrite,
+          M: Message
+{
+    type SinkItem = M;
+    type SinkError = Error;
+
+    fn start_send(&mut self, msg: M) -> StartSend<M, Error> {
+        let mut buf = BytesMut::with_capacity(msg.encoded_len());
+        try!(msg.encode(&mut buf));
+        return Ok(AsyncSink::Ready);
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), Error> {
+        if let Some(bytes) = self.buffered.take() {
+            if let AsyncSink::NotReady(bytes) = self.inner.start_send(bytes)? {
+                self.buffered = Some(bytes);
+                return Ok(Async::NotReady);
+            }
+        }
+        return self.inner.poll_complete();
+    }
+}
+
 
 pub struct ProtobufTransport<T> {
     inner: codec::Framed<T, LengthDelimited>,
