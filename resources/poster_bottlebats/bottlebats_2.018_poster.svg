@@ -15,7 +15,7 @@
    version="1.1"
    id="svg8593"
    inkscape:version="0.92.2 5c3e80d, 2017-08-06"
-   sodipodi:docname="battlebots_2.0.18_poster.svg"
+   sodipodi:docname="bottlebats_2.018_poster.svg"
    inkscape:export-filename="/home/rien/Development/Rust/MOZAIC/resources/battlebots_2.0.18_poster.png"
    inkscape:export-xdpi="96"
    inkscape:export-ydpi="96">
@@ -36,9 +36,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.35"
-     inkscape:cx="801.90761"
-     inkscape:cy="-60.498786"
+     inkscape:zoom="0.49497475"
+     inkscape:cx="678.78232"
+     inkscape:cy="415.33501"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -60,7 +60,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -68,16 +68,9 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <rect
-       style="fill:#999999;fill-opacity:1;stroke-width:0.26458332"
-       id="rect10691"
-       width="423.33331"
-       height="296.33334"
-       x="0"
-       y="0.66666663" />
     <g
        id="Pattern"
-       transform="matrix(2.1437523,0,0,2.1437523,358.09964,4.3706186)">
+       transform="matrix(3.2983567,0,0,3.2983567,314.64435,170.54125)">
       <rect
          style="fill:#000000"
          x="0"
@@ -2335,7 +2328,7 @@
     </g>
     <g
        id="g4421"
-       transform="matrix(0.22168445,0,0,0.22168445,9.1110588,238.61255)"
+       transform="matrix(0.22168445,0,0,0.22168445,9.1110588,96.795807)"
        style="fill:#0071c5">
       <path
          d="m 88.79854,84.35368 v 48.12215 H 73.47991 v -60.4873 l 31.62545,0.0314 c 13.43261,0 18.00847,9.47252 18.00847,18.07669 v 42.37928 h -15.29098 v -42.3 c 0,-3.60428 -1.86574,-5.82215 -6.36602,-5.82215 H 88.79854 Z m 104.16449,-0.7227 c -5.23588,0 -9.28815,2.69169 -10.9806,6.34574 -1.00293,2.19391 -1.34768,3.87529 -1.46567,6.56144 h 23.56698 c -0.30235,-6.56144 -3.27795,-12.90718 -11.12071,-12.90718 m -12.44627,23.33285 c 0,7.83538 4.87084,13.60222 13.56719,13.60222 6.76608,0 10.12884,-1.87496 14.041,-5.76684 l 9.46146,9.03373 c -6.05813,5.98071 -12.41493,9.61264 -23.61492,9.61264 -14.66415,0 -28.69778,-7.99578 -28.69778,-31.29913 0,-19.91109 12.2527,-31.18297 28.35302,-31.18297 16.31972,0 25.74799,13.19662 25.74799,30.4824 v 5.51795 h -38.85796 m -28.17419,25.43641 c -12.47946,0 -17.77434,-8.68713 -17.77434,-17.26733 V 55.50842 h 15.29467 v 16.48011 h 11.52999 V 84.35368 H 149.8629 v 29.82054 c 0,3.51394 1.65926,5.46449 5.30778,5.46449 h 6.22221 v 12.76153 h -9.05032 M 59.85003,63.62956 H 44.42632 V 48.97832 h 15.42371 z m 0.0388,69.48232 C 48.33856,132.00202 44.40981,124.99627 44.40981,116.912 l 0.0167,-44.92347 h 15.46244 v 61.12335 z m 183.82912,-1.29238 c -11.52631,-1.1117 -15.43662,-8.10639 -15.43662,-16.1796 V 46.89318 h 15.43662 z M 297.68253,56.82845 C 283.69314,-11.37625 151.29731,-15.694 65.95986,36.25734 v 5.7355 c 85.2508,-43.81176 206.15719,-43.55366 217.17282,19.26582 3.68539,20.77206 -8.01975,42.42906 -28.92455,54.87717 v 16.28654 c 25.16172,-9.20519 50.96686,-39.05523 43.47439,-75.59392 M 142.55855,176.16037 C 83.66229,181.60458 22.28821,173.05572 13.70063,127.03347 9.49718,104.34589 19.83251,80.29588 33.54351,65.35703 v -7.9884 c -24.68238,21.64409 -38.07812,49.0458 -30.36626,81.42344 9.84309,41.51829 62.51713,65.04656 142.91552,57.2333 31.80981,-3.10465 73.44426,-13.33305 102.38908,-29.21952 v -22.56957 c -26.2642,15.63941 -69.72568,28.57239 -105.9233,31.92409"
@@ -2348,7 +2341,7 @@
     </g>
     <g
        id="g6155"
-       transform="matrix(0.26458333,0,0,0.26458333,121.38575,224.78517)">
+       transform="matrix(0.26458333,0,0,0.26458333,10.368211,189.82789)">
       <g
          id="g8566">
         <g
@@ -5987,7 +5980,7 @@
                id="rect7635"
                style="fill:#292928" />
             <polygon
-               points="580.408,73.516 537.732,73.516 537.732,73.339 517,73.339 517,181.424 517.823,181.424 517.823,181.748 580.408,181.748 580.408,161.016 537.732,161.016 537.732,94.248 580.408,94.248 "
+               points="517.823,181.748 580.408,181.748 580.408,161.016 537.732,161.016 537.732,94.248 580.408,94.248 580.408,73.516 537.732,73.516 537.732,73.339 517,73.339 517,181.424 517.823,181.424 "
                id="polygon7637"
                style="fill:#292928" />
             <path
@@ -6008,104 +6001,35 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:10.58333302px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="11.641655"
-       y="229.79575"
-       id="text9850"><tspan
-         sodipodi:role="line"
-         id="tspan9848"
-         x="11.641655"
-         y="229.79575"
-         style="font-size:16.93333244px;stroke-width:0.26458332">Powered by</tspan></text>
-    <text
-       xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:50.79999924px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="15.119048"
-       y="53.507736"
+       x="101.90242"
+       y="47.686901"
        id="text9854"><tspan
          sodipodi:role="line"
          id="tspan9852"
-         x="15.119048"
-         y="53.507736"
-         style="stroke-width:0.26458332">BottleBats</tspan></text>
+         x="101.90242"
+         y="47.686901"
+         style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:50.79999924px;font-family:Roboto;-inkscape-font-specification:'Roboto, Bold';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;stroke-width:0.26458332">BottleBats</tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:25.39999962px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="273.80585"
-       y="54.641685"
+       x="345.62122"
+       y="48.442879"
        id="text9858"><tspan
          sodipodi:role="line"
          id="tspan9856"
-         x="273.80585"
-         y="54.641685"
-         style="fill:#ff7f00;fill-opacity:1;stroke-width:0.26458332">v2.018</tspan></text>
-    <g
-       id="g10699"
-       transform="matrix(1.4267836,0,0,1.3358059,-154.02456,-102.60237)">
-      <path
-         style="fill:#f2f2f2;stroke-width:0.26458332"
-         inkscape:connector-curvature="0"
-         id="path19"
-         d="m 317.5,191.16666 v -57.85564 c 0,-1.75339 1.42161,-3.175 3.175,-3.175 h 72.67231 c 1.75339,0 3.175,1.42161 3.175,3.175 v 57.85564" />
-      <path
-         style="fill:#202c3c;stroke-width:0.26458332"
-         inkscape:connector-curvature="0"
-         id="path21"
-         d="m 317.5,191.16666 v -57.06189 c 0,-1.75339 1.42161,-3.175 3.175,-3.175 h 71.08481 c 1.75339,0 3.175,1.42161 3.175,3.175 v 57.06189" />
-      <path
-         style="fill:#ffffff;stroke-width:0.26458332"
-         inkscape:connector-curvature="0"
-         id="path23"
-         d="m 317.5,136.39791 v -3.08689 c 0,-1.75339 1.42161,-3.175 3.175,-3.175 h 72.67231 c 1.75339,0 3.175,1.42161 3.175,3.175 v 3.08689" />
-      <circle
-         style="fill:#c61934;stroke-width:0.26458332"
-         id="circle25"
-         r="0.92604166"
-         cy="133.25598"
-         cx="320.0466" />
-      <circle
-         style="fill:#fbd50a;stroke-width:0.26458332"
-         id="circle27"
-         r="0.92604166"
-         cy="133.25598"
-         cx="322.69244" />
-      <circle
-         style="fill:#39b54a;stroke-width:0.26458332"
-         id="circle29"
-         r="0.92604166"
-         cy="133.25598"
-         cx="325.33829" />
-    </g>
+         x="345.62122"
+         y="48.442879"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.93333244px;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';fill:#ff7f00;fill-opacity:1;stroke-width:0.26458332">v2.018</tspan></text>
     <text
        y="145.83473"
        x="320.0466"
        font-size="36"
        id="text31"
        style="font-size:9.52499962px;font-family:MyriadPro-Cond;fill:#39b54a;stroke-width:0.26458332" />
-    <text
-       xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.72121525px;line-height:1.25;font-family:'Fira Mono';-inkscape-font-specification:'Fira Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#37c837;fill-opacity:1;stroke:none;stroke-width:0.11040911"
-       x="302.20822"
-       y="95.883705"
-       id="text10667"><tspan
-         sodipodi:role="line"
-         id="tspan10665"
-         x="302.20822"
-         y="95.883705"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.72121525px;font-family:'Fira Mono';-inkscape-font-specification:'Fira Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#37c837;fill-opacity:1;stroke-width:0.11040911">&gt; code(); </tspan><tspan
-         sodipodi:role="line"
-         x="302.20822"
-         y="114.28522"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.72121525px;font-family:'Fira Mono';-inkscape-font-specification:'Fira Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#37c837;fill-opacity:1;stroke-width:0.11040911"
-         id="tspan10669">&gt; play(); </tspan><tspan
-         sodipodi:role="line"
-         x="302.20822"
-         y="132.68674"
-         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.72121525px;font-family:'Fira Mono';-inkscape-font-specification:'Fira Mono, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;fill:#37c837;fill-opacity:1;stroke-width:0.11040911"
-         id="tspan10705">&gt; win();</tspan></text>
     <g
        id="g10"
-       transform="matrix(0.10593842,0,0,-0.10593842,336.08406,284.61602)">
+       transform="matrix(0.10593842,0,0,-0.10593842,13.292251,192.0118)">
       <g
          id="g12">
         <g
@@ -6124,45 +6048,50 @@
     </g>
     <text
        xml:space="preserve"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
-       x="21.166656"
-       y="114.96677"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;letter-spacing:0px;word-spacing:0px;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
+       x="408.16364"
+       y="80.570938"
        id="text10763"><tspan
          sodipodi:role="line"
-         id="tspan10761"
-         x="21.166656"
-         y="114.96677"
-         style="fill:#000000;fill-opacity:1;stroke-width:0.26458332">Join our AI competition</tspan><tspan
+         x="413.323"
+         y="80.570938"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
+         id="tspan2059">Code je eigen AI bot. </tspan><tspan
          sodipodi:role="line"
-         x="21.166656"
-         y="143.189"
-         style="fill:#000000;fill-opacity:1;stroke-width:0.26458332"
-         id="tspan10775">this semester.</tspan><tspan
+         x="408.16364"
+         y="108.79316"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
+         id="tspan2065">Verpletter anderen.</tspan><tspan
          sodipodi:role="line"
-         x="21.166656"
-         y="171.41122"
-         style="fill:#000000;fill-opacity:1;stroke-width:0.26458332"
+         x="408.16364"
+         y="137.01538"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
+         id="tspan2063">Win prijzen.</tspan><tspan
+         sodipodi:role="line"
+         x="408.16364"
+         y="165.23761"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
          id="tspan10765" /><tspan
          sodipodi:role="line"
-         x="21.166656"
-         y="199.63344"
-         style="font-size:16.93333244px;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
+         x="408.16364"
+         y="193.45982"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.93333244px;font-family:'Roboto Condensed';-inkscape-font-specification:'Roboto Condensed, ';text-align:end;text-anchor:end;fill:#000000;fill-opacity:1;stroke-width:0.26458332"
          id="tspan10767" /></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#ff7000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
        x="13.468334"
-       y="193.8121"
+       y="279.53702"
        id="text10779"><tspan
          sodipodi:role="line"
          id="tspan10777"
          x="13.468334"
-         y="193.8121"
-         style="font-size:16.93333244px;fill:#ff7000;fill-opacity:1;stroke-width:0.26458332"><tspan
-   style="fill:#000000"
+         y="279.53702"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.69999981px;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';fill:#ff7000;fill-opacity:1;stroke-width:0.26458332"><tspan
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.69999981px;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';fill:#000000"
    id="tspan10797">wget</tspan> https://battlebots.zeuswpi.org <tspan
-   style="fill:#000000"
-   id="tspan10799">for more info</tspan></tspan></text>
+   style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:12.69999981px;font-family:'Roboto Mono';-inkscape-font-specification:'Roboto Mono';fill:#808080"
+   id="tspan2067"># voor meer info</tspan></tspan></text>
     <text
        xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:22.57777786px;line-height:1.25;font-family:'Noto Sans';-inkscape-font-specification:'Noto Sans';letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26458332"
