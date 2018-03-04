@@ -101,7 +101,7 @@ impl TcpTransport {
                     };
                     let size = proto_packet.encoded_len();
                     let mut buf = BytesMut::with_capacity(size);
-                    proto_packet.encode(&mut buf);
+                    try!(proto_packet.encode(&mut buf));
                     self.inner = SinkState::Sending(sink.send(buf));
                 }
             }
