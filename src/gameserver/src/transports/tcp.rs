@@ -1,6 +1,8 @@
+use bytes::BytesMut;
 use futures::{Future, Poll, Async, Stream};
 use futures::sink::{Sink, Send};
 use futures::sync::mpsc::UnboundedReceiver;
+use prost::Message;
 use std::io;
 use std::io::{Error, ErrorKind};
 use std::mem;
@@ -11,7 +13,7 @@ use protocol;
 use router::{Packet, RouterHandle};
 
 use super::types::TransportCommand;
-use super::protobuf_codec::MessageTransport;
+use super::protobuf_codec::ProtobufTransport;
 
 
 enum SinkState<S: Sink> {
@@ -62,13 +64,12 @@ impl<S> SinkState<S>
 }
 
 
-type T = MessageTransport<TcpStream, protocol::Packet>;
+type T = ProtobufTransport<TcpStream>;
 
 pub struct TcpTransport {
     transport_id: u64,
     ctrl_chan: UnboundedReceiver<TransportCommand>,
     router_handle: RouterHandle,
-
     inner: SinkState<T>,
 }
 
@@ -94,11 +95,14 @@ impl TcpTransport {
 
             match cmd {
                 TransportCommand::Send(packet) => {
-                    let send = sink.send(protocol::Packet {
+                    let proto_packet = protocol::Packet {
                         connection_id: packet.connection_id,
                         data: packet.data,
-                    });
-                    self.inner = SinkState::Sending(send);
+                    };
+                    let size = proto_packet.encoded_len();
+                    let mut buf = BytesMut::with_capacity(size);
+                    proto_packet.encode(&mut buf);
+                    self.inner = SinkState::Sending(sink.send(buf));
                 }
             }
         }
@@ -106,7 +110,8 @@ impl TcpTransport {
 
     fn recv_data(&mut self) -> Poll<(), Error> {
         loop {
-            let proto_packet = try_ready!(self.inner.poll_recv());
+            let bytes = try_ready!(self.inner.poll_recv());
+            let proto_packet = try!(protocol::Packet::decode(bytes.freeze()));
             self.router_handle.receive(Packet {
                 transport_id: self.transport_id,
                 connection_id: proto_packet.connection_id,
