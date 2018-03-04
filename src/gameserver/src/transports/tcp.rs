@@ -1,19 +1,17 @@
-use bytes::BytesMut;
-use futures::{Future, Poll, Async};
+use futures::{Future, Poll, Async, Stream};
 use futures::sink::{Sink, Send};
-use futures::stream::{Stream, SplitStream, SplitSink};
 use futures::sync::mpsc::UnboundedReceiver;
 use std::io;
 use std::io::{Error, ErrorKind};
 use std::mem;
 use tokio::net::TcpStream;
 
-use std::collections::VecDeque;
+use protocol;
 
 use router::{Packet, RouterHandle};
 
 use super::types::TransportCommand;
-use super::protobuf_codec::ProtobufTransport;
+use super::protobuf_codec::MessageTransport;
 
 
 enum SinkState<S: Sink> {
@@ -64,9 +62,10 @@ impl<S> SinkState<S>
 }
 
 
-type T = ProtobufTransport<TcpStream>;
+type T = MessageTransport<TcpStream, protocol::Packet>;
 
 pub struct TcpTransport {
+    transport_id: u64,
     ctrl_chan: UnboundedReceiver<TransportCommand>,
     router_handle: RouterHandle,
 
@@ -95,10 +94,31 @@ impl TcpTransport {
 
             match cmd {
                 TransportCommand::Send(packet) => {
-                    unimplemented!()
+                    let send = sink.send(protocol::Packet {
+                        connection_id: packet.connection_id,
+                        data: packet.data,
+                    });
+                    self.inner = SinkState::Sending(send);
                 }
             }
         }
+    }
+
+    fn recv_data(&mut self) -> Poll<(), Error> {
+        loop {
+            let proto_packet = try_ready!(self.inner.poll_recv());
+            self.router_handle.receive(Packet {
+                transport_id: self.transport_id,
+                connection_id: proto_packet.connection_id,
+                data: proto_packet.data,
+            });
+        }
+    }
+
+    fn try_poll(&mut self) -> io::Result<()> {
+        try!(self.recv_commands());
+        try!(self.recv_data());
+        return Ok(());
     }
 }
 
@@ -107,6 +127,9 @@ impl Future for TcpTransport {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        return Ok(Async::NotReady);
+        match self.try_poll() {
+            Ok(()) => Ok(Async::NotReady),
+            Err(_) => Ok(Async::Ready(())),
+        }
     }
 }
