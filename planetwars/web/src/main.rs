@@ -13,17 +13,39 @@ use std::path::{Path, PathBuf};
 use std::fs::OpenOptions;
 use rocket_contrib::Json;
 use rocket::response::NamedFile;
-use rocket::response::Failure;
 use rocket::response::status;
-use rocket::Response;
 use rocket::http::Status;
+use rocket::Outcome;
+use rocket::Response;
+use rocket::request::{self, Request, FromRequest};
 
 static EMAIL_FILE: &'static str = "emails.txt";
 
+struct UserAgent(Option<String>);
+
+impl<'a, 'r> FromRequest<'a, 'r> for UserAgent {
+    type Error = ();
+
+    fn from_request(request: &'a Request<'r>) -> request::Outcome<UserAgent, ()> {
+        let keys: Vec<_> = request.headers().get("user-agent").collect();
+        let user_agent = keys.get(0).map(|k| k.to_string());
+        return Outcome::Success(UserAgent(user_agent));
+    }
+}
+
 
 #[get("/")]
-fn index() -> io::Result<NamedFile> {
-    NamedFile::open("index.html")
+fn index(user_agent: UserAgent) -> io::Result<NamedFile> {
+    let UserAgent(ua) = user_agent;
+    let ua_is_wget = match ua {
+        Some(agent_str) => agent_str.starts_with("Wget") || agent_str.starts_with("curl") || agent_str.starts_with("HTTPie"),
+        None => false,
+    };
+    if ua_is_wget {
+        NamedFile::open("index.txt")
+    } else {
+        NamedFile::open("index.html")
+    }
 }
 
 #[get("/<asset..>")]
@@ -41,7 +63,7 @@ fn subscribe<'r>(form: Json<SubscribeForm>) -> Result<status::NoContent<>, Respo
     let form: SubscribeForm = form.into_inner();
     let resp = match save_email(form.email) {
         Ok(_) => Ok(status::NoContent),
-        Err(err) => {
+        Err(_err) => {
             let err = Response::build()
                 .status(Status::InternalServerError)
                 .finalize();
