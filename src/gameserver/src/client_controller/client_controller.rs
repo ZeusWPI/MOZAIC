@@ -6,8 +6,8 @@ use std::io;
 use std::str;
 use slog;
 
-use super::client_connection::ClientConnection;
 use protobuf_codec::ProtobufTransport;
+use super::client_connection::ClientConnection;
 
 
 
@@ -115,13 +115,14 @@ impl ClientController {
         }
     }
 
-    fn poll_client_connection(&mut self) -> Result<()> {
+    fn poll_client_connection(&mut self) -> Poll<(), io::Error> {
         try!(self.connection.flush());
-        while let Some(bytes) = try!(self.connection.poll()) {
+        loop {
+            let bytes = try_ready!(self.connection.poll());
             self.handle_client_message(bytes.freeze().to_vec());
         }
-        return Ok(());
     }
+ 
 
     fn handle_client_message(&mut self, bytes: Vec<u8>) {
         let data = Message::Data(bytes);
