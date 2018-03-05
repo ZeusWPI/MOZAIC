@@ -47,7 +47,8 @@
     "productName": "ElectronReactTypescript",
     "appId": "io.github.irath96.ElectronReactTypescript",
     "dmg": {
-      "contents": [{
+      "contents": [
+        {
           "x": 410,
           "y": 150,
           "type": "link",
@@ -102,6 +103,7 @@
   ],
   "homepage": "https://github.com/ZeusWPI/MOZAIC/",
   "devDependencies": {
+    "@types/bluebird": "^3.5.20",
     "@types/enzyme": "^3.1.1",
     "@types/history": "^4.5.2",
     "@types/jest": "^21.1.1",
@@ -156,6 +158,7 @@
   "dependencies": {
     "@types/d3": "^4.12.0",
     "@types/react-jsonschema-form": "^0.51.1",
+    "bluebird": "^3.5.1",
     "bulma": "^0.6.2",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",

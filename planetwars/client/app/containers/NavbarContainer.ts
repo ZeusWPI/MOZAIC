@@ -1,10 +1,10 @@
 import { connect } from 'react-redux';
 
-import { IState } from '../reducers/index';
+import { IGState } from '../reducers/index';
 import { toggleNavMenu } from '../actions/actions';
 import { Navbar } from '../components/Navbar';
 
-const mapStateToProps = (state: IState) => {
+const mapStateToProps = (state: IGState) => {
   return {
     toggled: state.navbar.toggled
   }
