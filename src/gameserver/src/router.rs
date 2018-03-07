@@ -1,32 +1,33 @@
-use fnv::FnvHashMap;
+use std::collections::HashMap;
 use futures::{Future, Poll, Stream};
 use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::net::TcpStream;
 use client_controller::Command as ClientControllerCommand;
 
+pub struct ConnectionRequest {
+    pub stream: TcpStream,
+    pub connection_id: u64,
+}
+
 pub enum RouterCommand {
-    RouteRequest {
-        stream: TcpStream,
-    },
-    Close {
-        connection_id: u64,
-    },
+    Connect(ConnectionRequest),
 }
 
 pub struct Router {
-    connections: FnvHashMap<u64, UnboundedSender<ClientControllerCommand>>,
+    connections: HashMap<u64, UnboundedSender<ClientControllerCommand>>,
     ctrl_chan: UnboundedReceiver<RouterCommand>,
 }
 
 impl Router {
     fn handle_command(&mut self, cmd: RouterCommand) {
         match cmd {
-            RouterCommand::RouteRequest { stream } => {
-                unimplemented!()
+            RouterCommand::Connect(request) => {
+                let connection = self.connections.get(&request.connection_id);
+                if let Some(handle) = connection {
+                    let cmd = ClientControllerCommand::Connect(request.stream);
+                    handle.unbounded_send(cmd).unwrap();
+                }
             },
-            RouterCommand::Close { connection_id } => {
-                self.connections.remove(&connection_id);
-            }
         }
     }
 }
