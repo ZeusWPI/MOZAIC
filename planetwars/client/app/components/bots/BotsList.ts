@@ -6,6 +6,7 @@ import {RouteComponentProps} from 'react-router';
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 import BotElement from './BotElement';
+import {IState} from "../../reducers";
 
 let styles = require("./BotsList.scss");
 
@@ -18,47 +19,17 @@ interface BotsListState {
 
 }
 
-// export default class BotsList extends React.Component<BotsListProps> {
-//   constructor(props: BotsListProps) {
-//     super(props);
-//   }
-//
-//   render() {
-//
-//     let bots = this.props.bots;
-//
-//     let botElements = bots.map((botName: string) =>
-//       h(BotElement, {name: botName, removeBot: this.removeBot})
-//     );
-//
-//     botElements.push(
-//       h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
-//         h("li", `.${styles.botlistitem}`, ["New Bot"])
-//       ])
-//     );
-//
-//     return (
-//       h("ul", `.${styles.botslist}`, botElements)
-//     );
-//   }
-//
-  function  removeBot(name: string, evt: any) {
-    evt.preventDefault(); // Stop the Link from being activated
-    let path = `./bots/${ name }.json`;
-    if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
-      fs.unlinkSync(path);
-    }
-    props.rerender();
+export default class BotsList extends React.Component<any, IState> {
+  constructor(props: BotsListProps) {
+    super(props);
   }
 
+  render() {
 
-
-
-const BotsList = (props: BotsListProps) => {
-  let bots = props.bots;
+    let bots = this.props.bots;
 
     let botElements = bots.map((botName: string) =>
-      h(BotElement, {name: botName, removeBot: removeBot})
+      h(BotElement, {name: botName, removeBot: this.removeBot})
     );
 
     botElements.push(
@@ -70,9 +41,40 @@ const BotsList = (props: BotsListProps) => {
     return (
       h("ul", `.${styles.botslist}`, botElements)
     );
+  }
 
-};
+   removeBot(name: string, evt: any) {
+    evt.preventDefault(); // Stop the Link from being activated
+    let path = `./bots/${ name }.json`;
+    if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
+      fs.unlinkSync(path);
+    }
+    this.props.rerender();
+  }
+}
 
-export default BotsList
+
+
+
+// const BotsList = (props: BotsListProps) => {
+//   let bots = props.bots;
+//
+//     let botElements = bots.map((botName: string) =>
+//       h(BotElement, {name: botName, removeBot: removeBot})
+//     );
+//
+//     botElements.push(
+//       h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
+//         h("li", `.${styles.botlistitem}`, ["New Bot"])
+//       ])
+//     );
+//
+//     return (
+//       h("ul", `.${styles.botslist}`, botElements)
+//     );
+//
+// };
+//
+// export default BotsList
 
 

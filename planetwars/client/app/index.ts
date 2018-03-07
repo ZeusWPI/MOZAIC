@@ -19,7 +19,7 @@ render(
 );
 
 if ((module as any).hot) {
-  (module as any).hot.accept('./ontainers/Root', () => {
+  (module as any).hot.accept('./containers/Root', () => {
     const NextRoot = require('./containers/Root').default;
     render(
       h(AppContainer, [

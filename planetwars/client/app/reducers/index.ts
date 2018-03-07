@@ -9,7 +9,7 @@ export interface IState {
 }
 
 export type AboutState = { counter: number; };
-export type BotsState = {};
+export type BotsState = { bots: string[]};
 
 const aboutReducer = combineReducers<AboutState>({
   counter: (state = 0, action) => {
@@ -21,6 +21,17 @@ const aboutReducer = combineReducers<AboutState>({
     }
   }
 });
+
+const botsReducer = combineReducers<BotsState>( {
+  rerender: (state = 0, action) => {
+    switch(action.type) {
+      case 'botsRerender': {
+        return
+      }
+      default: return state;
+    }
+  }
+})
 
 const rootReducer = combineReducers({
   routing: routing as Reducer<any>,

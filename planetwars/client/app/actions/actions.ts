@@ -22,3 +22,9 @@ export const gameCrashed = () => {
     type: 'gameCrashed'
   }
 }
+
+export const botsRerender = () => {
+  return {
+    type: 'botsRerender'
+  }
+}
