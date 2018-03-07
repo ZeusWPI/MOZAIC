@@ -3,11 +3,11 @@ import * as React from 'react';
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 
-let styles = require("./BotsConfig");
+let styles = require("./BotsList.scss");
 
 interface BotElementProps {
   name: string
-  handleClick: Function
+  removeBot: Function
 }
 
 export default class BotElement extends React.Component<BotElementProps> {
@@ -19,7 +19,7 @@ export default class BotElement extends React.Component<BotElementProps> {
     return h(Link, `.${styles.botsentry}`, {to: `/bots/${this.props.name}`}, [
       h("li", `.${styles.botlistitem}`, [
         this.props.name,
-        h("button", `.${styles.removebot}`, {onClick: this.props.handleClick}, ["x"])
+        h("button", `.${styles.removebot}`, {onClick: (evt:any) => this.props.removeBot(this.props.name, evt)}, ["x"])
       ])
     ])
   }

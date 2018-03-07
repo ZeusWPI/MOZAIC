@@ -10,26 +10,56 @@ import BotElement from './BotElement';
 let styles = require("./BotsList.scss");
 
 interface BotsListProps {
-  rerender: Function
+  rerender: () => any
+  bots: string[]
 }
 
 interface BotsListState {
 
 }
 
-export default class BotsList extends React.Component<BotsListProps, BotsListState> {
-  constructor(props: BotsListProps) {
-    super(props);
+// export default class BotsList extends React.Component<BotsListProps> {
+//   constructor(props: BotsListProps) {
+//     super(props);
+//   }
+//
+//   render() {
+//
+//     let bots = this.props.bots;
+//
+//     let botElements = bots.map((botName: string) =>
+//       h(BotElement, {name: botName, removeBot: this.removeBot})
+//     );
+//
+//     botElements.push(
+//       h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
+//         h("li", `.${styles.botlistitem}`, ["New Bot"])
+//       ])
+//     );
+//
+//     return (
+//       h("ul", `.${styles.botslist}`, botElements)
+//     );
+//   }
+//
+  function  removeBot(name: string, evt: any) {
+    evt.preventDefault(); // Stop the Link from being activated
+    let path = `./bots/${ name }.json`;
+    if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
+      fs.unlinkSync(path);
+    }
+    props.rerender();
   }
 
-  render() {
 
-    let bots = this.readBots().map((x: path.ParsedPath) => x.name);
+
+
+const BotsList = (props: BotsListProps) => {
+  let bots = props.bots;
 
     let botElements = bots.map((botName: string) =>
-      h(BotElement, {name: botName, handleClick: this.removeBot})
+      h(BotElement, {name: botName, removeBot: removeBot})
     );
-
 
     botElements.push(
       h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
@@ -37,29 +67,12 @@ export default class BotsList extends React.Component<BotsListProps, BotsListSta
       ])
     );
 
-
     return (
       h("ul", `.${styles.botslist}`, botElements)
     );
-  }
 
-  removeBot(name: string, evt: any) {
-    evt.preventDefault(); // Stop the Link from being activated
-    let path = `./bots/${ name }.json`;
-    if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
-      fs.unlinkSync(path);
-    }
-    this.props.rerender();
-  }
+};
 
-  readBots(): path.ParsedPath[] {
-    let dir = "./bots";
-    if (fs.existsSync(dir)) {
-      let fileNames = fs.readdirSync(dir);
-      fileNames = fileNames.filter(file => fs.lstatSync("./bots/" + file).isFile());
-      let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
-      return paths;
-    }
-    return [];
-  }
-}
+export default BotsList
+
+

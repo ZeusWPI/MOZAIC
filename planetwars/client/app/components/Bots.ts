@@ -2,7 +2,7 @@ import * as React from 'react';
 import { h } from "react-hyperscript-helpers"
 
 import BotsConfig from "../components/bots/BotsConfig"
-import BotsList from "../components/bots/BotsList"
+import BotsList from "../components/bots/containers/BotsListContainer"
 
 let styles = require("./Bots.scss");
 
