@@ -9,7 +9,7 @@ interface IProps { match: any }
 
 const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
   return {
-    bots: state.bots.bots,
+    // bots: state.bots.bots,
     bot: ownProps.match.params.bot,
   }
 }

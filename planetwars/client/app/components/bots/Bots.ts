@@ -8,32 +8,48 @@ import { BotConfig } from '../../utils/Models';
 let styles = require("./Bots.scss");
 
 export interface IBotsProps {
-  bot: string,
-  bots: BotConfig[],
+  bot: string
 }
 
 export class Bots extends React.Component<IBotsProps, {}> {
+  constructor(props: IBotsProps) {
+    super(props);
+  }
   render() {
-    const bots = this.props.bots;
-    const cards = bots.map(bot => h(BotCard, { bot: bot }));
-    return div(cards.concat(h(NewBot)));
+    return h("div", `.${styles.bots}`, [
+      h("div", `.${styles.botslist}`, [h(BotsList, { rerender: () => this.forceUpdate() })]),
+      h("div", `.${styles.botsconfig}`, [h(BotsConfig, { botName: this.props.bot, rerender: () => this.forceUpdate() })])
+    ])
   }
 }
 
-const BotCard: React.SFC<{ bot: BotConfig }> = props => {
-  const bot = props.bot;
-  const args: any[] = bot.args.map(arg => li([p(arg)]))
-  return div([
-    p(['-------']),
-    p([bot.name]),
-    p([bot.command]),
-    ul(args),
-    p(['-------'])
-  ]);
-}
+// export interface IBotsProps {
+//   bot: string,
+//   bots: BotConfig[],
+// }
 
-const NewBot: React.SFC<void> = props => {
-  return div([
-    "new bot"
-  ])
-}
+// export class Bots extends React.Component<IBotsProps, {}> {
+//   render() {
+//     const bots = this.props.bots;
+//     const cards = bots.map(bot => h(BotCard, { bot: bot }));
+//     return div(cards.concat(h(NewBot)));
+//   }
+// }
+
+// const BotCard: React.SFC<{ bot: BotConfig }> = props => {
+//   const bot = props.bot;
+//   const args: any[] = bot.args.map(arg => li([p(arg)]))
+//   return div([
+//     p(['-------']),
+//     p([bot.name]),
+//     p([bot.command]),
+//     ul(args),
+//     p(['-------'])
+//   ]);
+// }
+
+// const NewBot: React.SFC<void> = props => {
+//   return div([
+//     "new bot"
+//   ])
+// }
