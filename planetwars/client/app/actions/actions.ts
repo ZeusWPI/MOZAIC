@@ -23,8 +23,18 @@ export const gameCrashed = () => {
   }
 }
 
-export const botsRerender = () => {
+export const botsRerender = (bots: string[]) => {
   return {
-    type: 'botsRerender'
+    type: 'botsRerender',
+    bots: bots
   }
+}
+
+export const removeBot = (name: string, evt:any) => {
+  return {
+    type: 'removeBot',
+    name: name,
+    evt: evt
+  }
+
 }

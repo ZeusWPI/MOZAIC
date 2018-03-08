@@ -20,7 +20,7 @@ export default class Bots extends React.Component<BotsProps, BotsState> {
   }
   render() {
     return h("div", `.${styles.bots}`, [
-      h("div", `.${styles.botslist}`, [h(BotsList, { rerender: () => this.forceUpdate() })]),
+      h("div", `.${styles.botslist}`, [h(BotsList)]),
       h("div", `.${styles.botsconfig}`, [h(BotsConfig, { botName: this.props.bot, rerender: () => this.forceUpdate() })])
     ])
   }

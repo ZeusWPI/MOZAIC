@@ -7,6 +7,7 @@ import {h} from "react-hyperscript-helpers";
 import {connect} from "react-redux";
 import {IState} from "../../../reducers";
 import {botsRerender} from "../../../actions/actions";
+import {readBotFilesAsNames} from "../helpers/BotFileManager";
 
 
 const mapStateToProps = (state: IState) => {
@@ -18,26 +19,14 @@ const mapStateToProps = (state: IState) => {
 const mapDispatchToProps = (dispatch: any) => {
   return {
     rerender: () => {
-      dispatch(botsRerender())
+      let bots: string[] = readBotFilesAsNames();
+      dispatch(botsRerender(bots))
     }
   }
 
 };
 
 
-
-const bots = readBots().map((x: path.ParsedPath) => x.name);
-
-function readBots(): path.ParsedPath[] {
-  let dir = "./bots";
-  if (fs.existsSync(dir)) {
-    let fileNames = fs.readdirSync(dir);
-    fileNames = fileNames.filter(file => fs.lstatSync("./bots/" + file).isFile());
-    let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
-    return paths;
-  }
-  return [];
-}
 
 export default connect(mapStateToProps, mapDispatchToProps)(BotsList)
 

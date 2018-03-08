@@ -5,13 +5,13 @@ import * as fs from 'fs';
 import {RouteComponentProps} from 'react-router';
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
-import BotElement from './BotElement';
+import BotElement from './containers/BotElementContainer';
 import {IState} from "../../reducers";
 
 let styles = require("./BotsList.scss");
 
 interface BotsListProps {
-  rerender: () => any
+  rerender: () => void,
   bots: string[]
 }
 
@@ -19,17 +19,20 @@ interface BotsListState {
 
 }
 
-export default class BotsList extends React.Component<any, IState> {
+export default class BotsList extends React.Component<BotsListProps, IState> {
   constructor(props: BotsListProps) {
     super(props);
   }
 
+  componentWillMount() {
+  this.props.rerender();
+  }
+
   render() {
 
-    let bots = this.props.bots;
 
-    let botElements = bots.map((botName: string) =>
-      h(BotElement, {name: botName, removeBot: this.removeBot})
+    let botElements = this.props.bots.map((botName: string) =>
+      h(BotElement, {name: botName, rerender: this.props.rerender})
     );
 
     botElements.push(
@@ -39,21 +42,12 @@ export default class BotsList extends React.Component<any, IState> {
     );
 
     return (
-      h("ul", `.${styles.botslist}`, botElements)
+      h("ul", `.${styles.botslist}`, [botElements])
     );
   }
 
-   removeBot(name: string, evt: any) {
-    evt.preventDefault(); // Stop the Link from being activated
-    let path = `./bots/${ name }.json`;
-    if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
-      fs.unlinkSync(path);
-    }
-    this.props.rerender();
-  }
+
 }
-
-
 
 
 // const BotsList = (props: BotsListProps) => {
