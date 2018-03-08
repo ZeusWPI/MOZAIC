@@ -1,12 +1,12 @@
 import * as fs from 'fs';
 
-import { IGameData, IGameState } from "../../utils/GameModels";
+import { IGameData, IGameState } from "./GameModels";
 
 interface IPlayerData {
   players: string[];
 }
 
-export default class GameAnalyser {
+export class GameAnalyser {
   private gameData: IGameData;
 
   constructor(playerData: IPlayerData, gameLog: IGameState[]) {

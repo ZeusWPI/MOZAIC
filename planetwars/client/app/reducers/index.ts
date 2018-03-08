@@ -7,17 +7,17 @@ import { IGameData } from '../utils/GameModels';
 
 // Global state
 export interface IGState {
-  routing: RouterState;
-  about: IAboutState;
-  bots: IBotsState;
-  navbar: INavbarState;
-  history: IHistoryState;
+  readonly routing: RouterState;
+  readonly about: IAboutState;
+  readonly bots: IBotsState;
+  readonly navbar: INavbarState;
+  readonly history: IHistoryState;
 }
 
-export interface IAboutState { counter: number; }
-export interface IBotsState { bots: IBotConfig[]; }
-export interface INavbarState { toggled: boolean; }
-export interface IHistoryState { games: IGameData[]; }
+export interface IAboutState { readonly counter: number; }
+export interface IBotsState { readonly bots: IBotConfig[]; }
+export interface INavbarState { readonly toggled: boolean; }
+export interface IHistoryState { readonly games: IGameData[]; }
 
 export const initialState: IGState = {
   routing: { location: null },
