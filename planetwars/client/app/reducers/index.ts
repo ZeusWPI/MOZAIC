@@ -3,7 +3,7 @@ import { combineReducers, Reducer } from 'redux';
 
 import * as A from '../actions/actions';
 import { IBotConfig } from '../utils/ConfigModels';
-import { IGameData } from '../utils/GameModels';
+import { IMatchData } from '../utils/GameModels';
 
 // Global state
 export interface IGState {
@@ -17,7 +17,7 @@ export interface IGState {
 export interface IAboutState { readonly counter: number; }
 export interface IBotsState { readonly bots: IBotConfig[]; }
 export interface INavbarState { readonly toggled: boolean; }
-export interface IHistoryState { readonly games: IGameData[]; }
+export interface IHistoryState { readonly games: IMatchData[]; }
 
 export const initialState: IGState = {
   routing: { location: null },

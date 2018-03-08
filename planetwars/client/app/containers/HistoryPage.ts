@@ -5,16 +5,14 @@ import { connect } from 'react-redux';
 import History from '../components/history/History';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import { GameAnalyser } from '../utils/GameAnalyser';
-
-// interface IProps
+import { MatchParser } from '../utils/MatchParser';
 
 const mapStateToProps = (state: IGState) => {
   // TODO: Get this from redux state
   const matchPaths = readGames();
   const matches = matchPaths.map((path, id) => {
-    const analyzer = GameAnalyser.parseGame(p.format(path));
-    return { id, match: analyzer.getData() };
+    const match = MatchParser.parseFileSync(p.format(path));
+    return { id, match };
   });
 
   return {

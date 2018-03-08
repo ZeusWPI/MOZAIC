@@ -1,18 +1,21 @@
 type LogPath = string;
 
-export interface IGameData {
-  players: string[];
-  winner: number;
-  // log: LogPath | IGameLog;
-  log: IGameLog;
-  planetsTaken: number[];
-  shipsSent: number[][];
-  timestamp: number;
+export interface IMatchData {
+  meta: IMatchMetaData;
+  log: IGameState[];
+  stats: IMatchStats;
 }
 
-export interface IGameLog {
+export interface IMatchMetaData {
   players: string[];
-  turns: IGameState[];
+  logPath?: string;
+  timestamp: Date;
+}
+
+export interface IMatchStats {
+  winner: number;
+  planetsTaken: number[];
+  shipsSent: number[][];
 }
 
 export interface IGameState {
@@ -20,6 +23,12 @@ export interface IGameState {
   expeditions: IExpedition[];
 }
 
+export interface ILogFormat {
+  players: string[];
+  turns: IGameState[];
+}
+
+// TODO: Switch to camelCase
 interface IPlanet {
   "ship_count": number;
   "x": number;

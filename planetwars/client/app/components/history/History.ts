@@ -1,11 +1,11 @@
 import * as React from 'react';
 import { div, h, li, ul } from 'react-hyperscript-helpers';
-import { IGameData } from '../../utils/GameModels';
+import { IMatchData } from '../../utils/GameModels';
 
 const styles = require('./History.scss');
 
 // tslint:disable-next-line:interface-over-type-literal
-type AnnotatedMatch = { id: number, match: IGameData };
+type AnnotatedMatch = { id: number, match: IMatchData };
 
 interface IHistoryProps {
   expandedGameId: number;
@@ -32,10 +32,10 @@ interface IMatchEntryProps {
 interface IMatchEntryState { }
 
 // tslint:disable-next-line:variable-name
-const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
-  const { winner, log, players } = props.match.match;
-  const winnerName = players[winner - 1] || "Tie";
+export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
+  const { meta, stats, log } = props.match.match;
+  const winnerName = meta.players[stats.winner - 1] || "Tie";
   return div(`.${styles.matchEntry}`, [
-    `Winner: ${winnerName} | ${log.turns.length - 1} turns`,
+    `Winner: ${winnerName} | ${log.length - 1} turns`,
   ]);
 };
