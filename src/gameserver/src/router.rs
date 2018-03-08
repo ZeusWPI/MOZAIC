@@ -6,7 +6,7 @@ use client_controller::Command as ClientControllerCommand;
 
 pub struct ConnectionRequest {
     pub stream: TcpStream,
-    pub connection_id: u64,
+    pub token: Vec<u8>,
 }
 
 pub enum RouterCommand {
@@ -14,7 +14,7 @@ pub enum RouterCommand {
 }
 
 pub struct Router {
-    connections: HashMap<u64, UnboundedSender<ClientControllerCommand>>,
+    connections: HashMap<Vec<u8>, UnboundedSender<ClientControllerCommand>>,
     ctrl_chan: UnboundedReceiver<RouterCommand>,
 }
 
@@ -22,7 +22,7 @@ impl Router {
     fn handle_command(&mut self, cmd: RouterCommand) {
         match cmd {
             RouterCommand::Connect(request) => {
-                let connection = self.connections.get(&request.connection_id);
+                let connection = self.connections.get(&request.token);
                 if let Some(handle) = connection {
                     let cmd = ClientControllerCommand::Connect(request.stream);
                     handle.unbounded_send(cmd).unwrap();
