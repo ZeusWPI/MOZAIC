@@ -3,6 +3,7 @@ import * as fs from 'fs';
 
 import { RouteComponentProps } from 'react-router';
 import { h } from 'react-hyperscript-helpers';
+import { Config } from '../../utils/Config';
 
 let styles = require("./BotsConfig.scss");
 
@@ -20,46 +21,46 @@ interface BotsConfigState {
 }
 
 export default class BotsConfig extends React.Component<BotsConfigProps, BotsConfigState> {
-  constructor(props:BotsConfigProps) {
+  constructor(props: BotsConfigProps) {
     super(props);
     this.updateState();
   }
   render() {
-    if(this.props.botName != this.state.loadedName) {
+    if (this.props.botName != this.state.loadedName) {
       this.updateState();
     }
     return (
       h("form", {
         onSubmit: () => this.saveBot(),
       }, [
-        "Name: ", h("input", `.${styles.nameField}`, { type: "text", value: this.state.name, onChange: (x:any) => this.setState({ name: x.target.value })}),
-        "Command: ", h("input", `.${styles.cmdField}`, { type: "text", value: this.state.cmd, onChange: (x:any) => this.setState({ cmd: x.target.value })}),
-        "Arguments: ", h(ArgumentFields, {
-          args: this.state.args,
-          addArg: () => this.addArg(),
-          removeArg: (x:number) => this.removeArg(x),
-          handleChange: (value:string, num:number) => this.handleArgumentChange(value, num)
-        }),
-        h("input", { type:"submit", value: "Save"}),
-        h("ul", `.${styles.errorList}`, this.state.errors.map(
-          (error:string, key:number) =>
-            h("li", `.${styles.errorItem}`, { key: key }, [error])
-        ))
+          "Name: ", h("input", `.${styles.nameField}`, { type: "text", value: this.state.name, onChange: (x: any) => this.setState({ name: x.target.value }) }),
+          "Command: ", h("input", `.${styles.cmdField}`, { type: "text", value: this.state.cmd, onChange: (x: any) => this.setState({ cmd: x.target.value }) }),
+          "Arguments: ", h(ArgumentFields, {
+            args: this.state.args,
+            addArg: () => this.addArg(),
+            removeArg: (x: number) => this.removeArg(x),
+            handleChange: (value: string, num: number) => this.handleArgumentChange(value, num)
+          }),
+          h("input", '.button', { type: "submit", value: "Save" }),
+          h("ul", `.${styles.errorList}`, this.state.errors.map(
+            (error: string, key: number) =>
+              h("li", `.${styles.errorItem}`, { key: key }, [error])
+          ))
         ])
-      );
-    }
+    );
+  }
   setDefaultState() {
-        this.setState({ loadedName: this.props.botName, name:"", cmd:"", args: [""], errors: [] })
+    this.setState({ loadedName: this.props.botName, name: "", cmd: "", args: [""], errors: [] })
   }
   saveBot() {
-    if(!this.checkValid()){
+    if (!this.checkValid()) {
       return;
     }
-    let path = `./bots/${ this.state.name }.json`
-    if(!fs.existsSync("./bots")) {
-      fs.mkdirSync("./bots");
+    let path = Config.botPath(this.state.name);
+    if (!fs.existsSync(Config.bots)) {
+      fs.mkdirSync(Config.bots);
     }
-    if (!fs.existsSync(path) || confirm(`Bot ${ this.state.name } already exists, are you sure you want to overwrite it?`) ) {
+    if (!fs.existsSync(path) || confirm(`Bot ${this.state.name} already exists, are you sure you want to overwrite it?`)) {
       fs.writeFileSync(path, JSON.stringify(
         {
           name: this.state.name,
@@ -70,19 +71,19 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
     }
     this.props.rerender();
   }
-  checkValid(){
+  checkValid() {
     let errors = []
-    if(!this.state.name) {
+    if (!this.state.name) {
       errors.push("Name cannot be empty");
     }
-    if(!this.state.cmd) {
+    if (!this.state.cmd) {
       errors.push("Command cannot be empty");
     }
-    if(this.state.args.indexOf("") != -1) {
+    if (this.state.args.indexOf("") != -1) {
       errors.push("Please remove empty arguments");
     }
     this.setState({ errors: errors });
-    if(errors.length == 0) {
+    if (errors.length == 0) {
       return true;
     } else {
       return false;
@@ -93,13 +94,13 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
     args.push("");
     this.setState({ args: args })
   }
-  removeArg(i:number) {
+  removeArg(i: number) {
     let args = this.state.args;
-    args.splice(i,1);
+    args.splice(i, 1);
     this.setState({ args: args })
   }
   updateState() {
-    let path = `./bots/${ this.props.botName }.json`
+    let path = Config.botPath(this.props.botName);
     if (fs.existsSync(path)) {
       var botData = JSON.parse(fs.readFileSync(path, 'utf8'));
       this.state = {
@@ -118,7 +119,7 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
       }
     }
   }
-  handleArgumentChange(value:string, num:number) {
+  handleArgumentChange(value: string, num: number) {
     let args = this.state.args;
     args[num] = value;
     this.setState({ args: args })
@@ -139,19 +140,19 @@ interface ArgumentFieldsState {
 export class ArgumentFields extends React.Component<ArgumentFieldsProps, ArgumentFieldsState> {
   render() {
     return h("div", [
-        this.props.args.map((arg:string, num:number) => h("div", { key: num },[h(ArgumentField, {
-          arg:arg,
-          handleChange: (value:string) => this.props.handleChange(value, num)
-        }),
-        h("button", { onClick: () => this.props.removeArg(num) }, ["-"])
+      this.props.args.map((arg: string, num: number) => h("div", { key: num }, [h(ArgumentField, {
+        arg: arg,
+        handleChange: (value: string) => this.props.handleChange(value, num)
+      }),
+      h("button", '.button', { onClick: () => this.props.removeArg(num) }, ["-"])
       ])),
-      h("button", { onClick: () => this.props.addArg() }, ["+"])
+      h("button", '.button', { onClick: () => this.props.addArg() }, ["+"])
     ]);
   }
 }
 
 // Useful for debugging...
-function abc(x:any) {
+function abc(x: any) {
   console.log(x);
   return x;
 }
@@ -167,6 +168,6 @@ interface ArgumentFieldState {
 
 export class ArgumentField extends React.Component<ArgumentFieldProps, ArgumentFieldState> {
   render() {
-    return h("input", `.${styles.argField}`, { type:"text", value: this.props.arg, onChange: (x:any) => this.props.handleChange(x.target.value) })
+    return h("input", `.${styles.argField}`, { type: "text", value: this.props.arg, onChange: (x: any) => this.props.handleChange(x.target.value) })
   }
 }

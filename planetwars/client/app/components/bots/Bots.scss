@@ -1,0 +1,20 @@
+.botslist {
+  // height: 100%;
+  width: 300px;
+  flex-grow: 1;
+  // background-color: orange;
+}
+
+.botsconfig {
+  height: 100%;
+  flex-grow: 1;
+  // background-color: pink;
+}
+
+.bots {
+  display: flex;
+  // height: 100%;
+  margin: 0;
+  flex-grow: 1;
+  // background-color: purple;
+}

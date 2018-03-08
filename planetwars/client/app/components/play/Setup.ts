@@ -1,10 +1,12 @@
 
-import * as path from 'path'; import * as fs from 'fs'; import * as React from
-'react';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as React from 'react';
 
 import { BotSelector } from "./BotSelector"
-import { MatchConfig, PlayerConfig } from "../../utils/Models"
+import { MatchConfig, BotConfig } from "../../utils/Models"
 import { h } from 'react-hyperscript-helpers';
+import { Config } from '../../utils/Config';
 
 let styles = require('./Setup.scss');
 
@@ -13,9 +15,7 @@ interface SetupState {
   map_path: path.ParsedPath | { name: string }
 }
 
-interface SetupProps {
-
-}
+interface SetupProps { }
 
 export class Setup extends React.Component<SetupProps, SetupState> {
   constructor(props: SetupProps) {
@@ -34,47 +34,47 @@ export class Setup extends React.Component<SetupProps, SetupState> {
 
   render() {
     let maps = this.readMaps();
-    let mapElements = maps.map((mapPath:path.ParsedPath) => h(MapOption, { path: mapPath }))
+    let mapElements = maps.map((mapPath: path.ParsedPath) => h(MapOption, { path: mapPath }))
     mapElements.push(h("option", { value: "", label: "Select Map" }))
     return h("form", `.${styles.setup}`, {
-        onSubmit: () => this.addToQueue()
-      }, [
-      h("div", `.${styles.selectForm}`, [
-        h("div", `.${styles.botSelector}`, [
-          h(BotSelector, { setPlayers: (players:PlayerConfig[]) => this.setPlayers(players) })
+      onSubmit: () => this.addToQueue()
+    }, [
+        h("div", `.${styles.selectForm}`, [
+          h("div", `.${styles.botSelector}`, [
+            h(BotSelector, { setPlayers: (players: BotConfig[]) => this.setPlayers(players) })
+          ]),
+          h("div", [
+            "Map: ",
+            h("select", { onChange: (evt: any) => this.handleMap(evt), value: this.state.map_path.name }, mapElements)
+          ]),
+          h("div", [
+            "Max turns: ",
+            h("input", { type: "number", value: this.state.config.game_config.max_turns, onChange: (evt: any) => this.handleMaxTurns(evt) })
+          ])
         ]),
-        h("div", [
-          "Map: ",
-          h("select", { onChange: (evt:any) => this.handleMap(evt), value: this.state.map_path.name }, mapElements)
-        ]),
-        h("div", [
-          "Max turns: ",
-          h("input", { type:"number", value:this.state.config.game_config.max_turns, onChange: (evt:any) => this.handleMaxTurns(evt)})
+        h("div", `.${styles.playContainer}`, [
+          h("input", { type: "submit", value: "Play" })
         ])
-      ]),
-      h("div", `.${styles.playContainer}`, [
-        h("input", { type: "submit", value:"Play" })
       ])
-    ])
   }
-  setPlayers( players:PlayerConfig[] ) {
+  setPlayers(players: BotConfig[]) {
     let config = this.state.config;
     config.players = players;
     this.setState({ config: config })
   }
-  handleMap(evt:any) {
+  handleMap(evt: any) {
     let config = this.state.config;
     let map_path = undefined;
     if (!evt.target.value || evt.target.value == "Select map") {
       map_path = { name: "" };
       config.game_config.map_file = ""
     } else {
-      map_path = path.parse("./maps/" + evt.target.value + ".json");
-      config.game_config.map_file = "./maps/" + evt.target.value + ".json";
+      map_path = path.parse(Config.mapMath(evt.target.value));
+      config.game_config.map_file = Config.mapMath(evt.target.value);
     }
-    this.setState({ config: config, map_path: map_path})
+    this.setState({ config: config, map_path: map_path })
   }
-  handleMaxTurns(evt:any) {
+  handleMaxTurns(evt: any) {
     let config = this.state.config;
     config.game_config.max_turns = parseInt(evt.target.value);
     if (!config.game_config.max_turns || config.game_config.max_turns < 0) {
@@ -83,7 +83,7 @@ export class Setup extends React.Component<SetupProps, SetupState> {
     this.setState({ config: config })
   }
   readMaps(): path.ParsedPath[] {
-    let dir = "./maps"
+    let dir = Config.maps;
     if (fs.existsSync(dir)) {
       let fileNames = fs.readdirSync(dir);
       fileNames = fileNames.filter((name) => name.substring(name.length - 5) == ".json");
@@ -94,11 +94,11 @@ export class Setup extends React.Component<SetupProps, SetupState> {
   }
   addToQueue(): void {
     // TODO: Probably shouldn't use alert()
-    if(!this.state.config.game_config.map_file) {
+    if (!this.state.config.game_config.map_file) {
       alert("Please select a map");
       return;
     }
-    if(this.state.config.players.length < 2) {
+    if (this.state.config.players.length < 2) {
       alert("Please select two or more bots");
       return;
     }
@@ -116,7 +116,7 @@ interface MapOptionProps {
 }
 
 export class MapOption extends React.Component<MapOptionProps, MapOptionState> {
-  constructor(props:MapOptionProps) {
+  constructor(props: MapOptionProps) {
     super(props);
   }
   render() {

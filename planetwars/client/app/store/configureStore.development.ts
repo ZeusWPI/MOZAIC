@@ -3,7 +3,7 @@ import thunk from 'redux-thunk';
 import { createHashHistory } from 'history';
 import { routerMiddleware, push } from 'react-router-redux';
 import { createLogger } from 'redux-logger';
-import rootReducer from '../reducers';
+import { rootReducer } from '../reducers';
 
 
 declare const window: Window & {
@@ -16,8 +16,8 @@ declare const module: NodeModule & {
   }
 };
 
-const actionCreators = Object.assign({}, 
-  {push}
+const actionCreators = Object.assign({},
+  { push }
 );
 
 const logger = (<any>createLogger)({
