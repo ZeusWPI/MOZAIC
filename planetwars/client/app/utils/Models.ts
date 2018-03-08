@@ -28,7 +28,7 @@ export interface NamedConfig {
 }
 
 export interface MatchConfig {
-  players: PlayerConfig[],
+  players: BotConfig[],
   game_config: GameConfig,
 }
 
@@ -37,10 +37,17 @@ interface GameConfig {
   max_turns: number,
 }
 
-export interface PlayerConfig {
+export interface BotConfig {
   name: string,
-  cmd: string,
+  command: string,
   args: string[],
+}
+
+export function isBotConfig(o: any): o is BotConfig {
+  const c = <BotConfig>o;
+  return (c.command != undefined)
+    && (c.name != undefined)
+    && (c.args != undefined);
 }
 
 // Used in GameData.ts
