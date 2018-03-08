@@ -1,13 +1,10 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
-import { h } from 'react-hyperscript-helpers';
-
-import About from "../components/About"
-import { IState, AboutState } from '../reducers/index';
-import { incrementAbout } from '../actions/actions';
 import { connect } from 'react-redux';
 
-const mapStateToProps = (state: IState) => {
+import About from "../components/About"
+import { IGState, AboutState } from '../reducers/index';
+import { incrementAbout } from '../actions/actions';
+
+const mapStateToProps = (state: IGState) => {
   return {
     counter: state.about.counter
   }

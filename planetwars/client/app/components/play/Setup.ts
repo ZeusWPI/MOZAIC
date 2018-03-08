@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as React from 'react';
 
 import { BotSelector } from "./BotSelector"
-import { MatchConfig, PlayerConfig } from "../../utils/Models"
+import { MatchConfig, BotConfig } from "../../utils/Models"
 import { h } from 'react-hyperscript-helpers';
 import { Config } from '../../utils/Config';
 
@@ -41,7 +41,7 @@ export class Setup extends React.Component<SetupProps, SetupState> {
     }, [
         h("div", `.${styles.selectForm}`, [
           h("div", `.${styles.botSelector}`, [
-            h(BotSelector, { setPlayers: (players: PlayerConfig[]) => this.setPlayers(players) })
+            h(BotSelector, { setPlayers: (players: BotConfig[]) => this.setPlayers(players) })
           ]),
           h("div", [
             "Map: ",
@@ -57,7 +57,7 @@ export class Setup extends React.Component<SetupProps, SetupState> {
         ])
       ])
   }
-  setPlayers(players: PlayerConfig[]) {
+  setPlayers(players: BotConfig[]) {
     let config = this.state.config;
     config.players = players;
     this.setState({ config: config })
