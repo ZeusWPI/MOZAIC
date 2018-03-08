@@ -1,98 +1,112 @@
 
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as React from 'react';
 
-import { BotSelector } from "./BotSelector"
-import { MatchConfig, BotConfig } from "../../utils/Models"
 import { h } from 'react-hyperscript-helpers';
 import { Config } from '../../utils/Config';
+import { IBotConfig, IMatchConfig } from "../../utils/ConfigModels";
+import { BotSelector } from "./BotSelector";
 
-let styles = require('./Setup.scss');
+const styles = require('./Setup.scss');
 
-interface SetupState {
-  config: MatchConfig,
-  map_path: path.ParsedPath | { name: string }
+interface ISetupState {
+  config: IMatchConfig;
+  map_path: path.ParsedPath | { name: string };
 }
 
-interface SetupProps { }
+interface ISetupProps { }
 
-export class Setup extends React.Component<SetupProps, SetupState> {
-  constructor(props: SetupProps) {
+export class Setup extends React.Component<ISetupProps, ISetupState> {
+  constructor(props: ISetupProps) {
     super(props);
     this.state = {
       config: {
         players: [],
         game_config: {
           map_file: "",
-          max_turns: 500
-        }
+          max_turns: 500,
+        },
       },
-      map_path: { name: "" }
-    }
+      map_path: { name: "" },
+    };
   }
 
-  render() {
-    let maps = this.readMaps();
-    let mapElements = maps.map((mapPath: path.ParsedPath) => h(MapOption, { path: mapPath }))
-    mapElements.push(h("option", { value: "", label: "Select Map" }))
-    return h("form", `.${styles.setup}`, {
-      onSubmit: () => this.addToQueue()
-    }, [
+  public render() {
+    const maps = this.readMaps();
+    const mapElements = maps.map((mapPath: path.ParsedPath) => h(MapOption, { path: mapPath }));
+    mapElements.push(h("option", { value: "", label: "Select Map" }));
+    return h("form", `.${styles.setup}`, { onSubmit: () => this.addToQueue() },
+      [
         h("div", `.${styles.selectForm}`, [
           h("div", `.${styles.botSelector}`, [
-            h(BotSelector, { setPlayers: (players: BotConfig[]) => this.setPlayers(players) })
+            h(BotSelector, {
+              setPlayers: (players: IBotConfig[]) => this.setPlayers(players),
+            }),
           ]),
           h("div", [
             "Map: ",
-            h("select", { onChange: (evt: any) => this.handleMap(evt), value: this.state.map_path.name }, mapElements)
+            h("select", {
+              onChange: (evt: any) => this.handleMap(evt),
+              value: this.state.map_path.name,
+            }, mapElements),
           ]),
           h("div", [
             "Max turns: ",
-            h("input", { type: "number", value: this.state.config.game_config.max_turns, onChange: (evt: any) => this.handleMaxTurns(evt) })
-          ])
+            h("input", {
+              type: "number",
+              value: this.state.config.game_config.max_turns,
+              onChange: (evt: any) => this.handleMaxTurns(evt),
+            }),
+          ]),
         ]),
         h("div", `.${styles.playContainer}`, [
-          h("input", { type: "submit", value: "Play" })
-        ])
-      ])
+          h("input", { type: "submit", value: "Play" }),
+        ]),
+      ],
+    );
   }
-  setPlayers(players: BotConfig[]) {
-    let config = this.state.config;
+
+  public setPlayers(players: IBotConfig[]) {
+    const config = this.state.config;
     config.players = players;
-    this.setState({ config: config })
+    this.setState({ config });
   }
-  handleMap(evt: any) {
-    let config = this.state.config;
-    let map_path = undefined;
-    if (!evt.target.value || evt.target.value == "Select map") {
-      map_path = { name: "" };
-      config.game_config.map_file = ""
+
+  public handleMap(evt: any) {
+    const config = this.state.config;
+    let mapPath;
+    if (!evt.target.value || evt.target.value === "Select map") {
+      mapPath = { name: "" };
+      config.game_config.map_file = "";
     } else {
-      map_path = path.parse(Config.mapMath(evt.target.value));
+      mapPath = path.parse(Config.mapMath(evt.target.value));
       config.game_config.map_file = Config.mapMath(evt.target.value);
     }
-    this.setState({ config: config, map_path: map_path })
+    this.setState({ config, map_path: mapPath });
   }
-  handleMaxTurns(evt: any) {
-    let config = this.state.config;
-    config.game_config.max_turns = parseInt(evt.target.value);
+
+  public handleMaxTurns(evt: any) {
+    const config = this.state.config;
+    config.game_config.max_turns = parseInt(evt.target.value, 10);
     if (!config.game_config.max_turns || config.game_config.max_turns < 0) {
-      config.game_config.max_turns = 0
+      config.game_config.max_turns = 0;
     }
-    this.setState({ config: config })
+    this.setState({ config });
   }
-  readMaps(): path.ParsedPath[] {
-    let dir = Config.maps;
+
+  public readMaps(): path.ParsedPath[] {
+    const dir = Config.maps;
     if (fs.existsSync(dir)) {
       let fileNames = fs.readdirSync(dir);
-      fileNames = fileNames.filter((name) => name.substring(name.length - 5) == ".json");
-      let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
+      fileNames = fileNames.filter((name) => name.substring(name.length - 5) === ".json");
+      const paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
       return paths;
     }
     return [];
   }
-  addToQueue(): void {
+
+  public addToQueue(): void {
     // TODO: Probably shouldn't use alert()
     if (!this.state.config.game_config.map_file) {
       alert("Please select a map");
@@ -107,19 +121,19 @@ export class Setup extends React.Component<SetupProps, SetupState> {
   }
 }
 
-interface MapOptionState {
+interface IMapOptionState {
 
 }
 
-interface MapOptionProps {
-  path: path.ParsedPath
+interface IMapOptionProps {
+  path: path.ParsedPath;
 }
 
-export class MapOption extends React.Component<MapOptionProps, MapOptionState> {
-  constructor(props: MapOptionProps) {
+export class MapOption extends React.Component<IMapOptionProps, IMapOptionState> {
+  constructor(props: IMapOptionProps) {
     super(props);
   }
-  render() {
+  public render() {
     return h("option", [this.props.path.name]);
   }
 }

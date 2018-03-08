@@ -1,26 +1,25 @@
-import { GameMetrics } from './Models'
+/* tslint:disable:member-ordering */
 import * as p from 'path';
 
-
 export class Config {
-  static _data = 'data'
-  static _bots = 'bots'
-  static _games = 'games'
-  static _maps = 'maps'
+  private static _data = 'data';
+  private static _bots = 'bots';
+  private static _games = 'games';
+  private static _maps = 'maps';
 
-  static bots = p.resolve(Config._data, Config._bots)
-  static games = p.resolve(Config._data, Config._games)
-  static maps = p.resolve(Config._data, Config._maps)
+  public static bots = p.resolve(Config._data, Config._bots);
+  public static games = p.resolve(Config._data, Config._games);
+  public static maps = p.resolve(Config._data, Config._maps);
 
-  static generateGamesPath(game: GameMetrics): string {
-    return p.resolve(Config.bots, game.timestamp + '.json');
+  // static generateGamesPath(game: IGameMetrics): string {
+  //   return p.resolve(Config.bots, game.timestamp + '.json');
+  // }
+
+  public static botPath(name: string): string {
+    return p.resolve(Config.bots, `${name}.json`);
   }
 
-  static botPath(name: string): string {
-    return p.resolve(Config.bots, `${name}.json`)
-  }
-
-  static mapMath(name: string): string {
-    return p.resolve(Config.maps, `${name}.json`)
+  public static mapMath(name: string): string {
+    return p.resolve(Config.maps, `${name}.json`);
   }
 }

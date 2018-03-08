@@ -1,22 +1,19 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
-import { h } from 'react-hyperscript-helpers';
+import { connect } from 'react-redux';
 
-import History from "../components/History"
+import History from '../components/history/History';
+import { IGState } from '../reducers/index';
 
-interface HistoryPageProps {
+// interface IProps
 
-}
+const mapStateToProps = (state: IGState) => {
+  return {
+    expandedGameId: 1,
+    games: [{}],
+  };
+};
 
-interface HistoryPageState {
+const mapDispatchToProps = (dispatch: any) => {
+  return {};
+};
 
-}
-
-
-export default class HistoryPage extends React.Component<HistoryPageProps, HistoryPageState> {
-  render() {
-    return (
-      h(History)
-    );
-  }
-}
+export default connect(mapStateToProps, mapDispatchToProps)(History);

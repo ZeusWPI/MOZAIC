@@ -1,6 +1,6 @@
-import { actionCreatorVoid, actionCreator } from './helpers';
-import { BotConfig } from '../utils/Models';
+import { IBotConfig } from '../utils/ConfigModels';
+import { actionCreator, actionCreatorVoid } from './helpers';
 
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 export const incrementAbout = actionCreatorVoid('TEST');
-export const loadBot = actionCreator<BotConfig>('LOAD_BOT');
+export const loadBot = actionCreator<IBotConfig>('LOAD_BOT');

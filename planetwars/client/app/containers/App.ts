@@ -1,27 +1,25 @@
-import * as React from 'react';
 import * as Promise from 'bluebird';
-import { connect } from 'react-redux';
+import * as React from 'react';
 import { h } from 'react-hyperscript-helpers';
+import { connect } from 'react-redux';
 
-
-import { ObjectLoader } from '../utils/ObjectLoader';
 import { loadBot } from '../actions/actions';
-import { BotConfig } from '../utils/Models';
+import { IBotConfig } from '../utils/ConfigModels';
+import { ObjectLoader } from '../utils/ObjectLoader';
 
-let styles = require("./App.scss");
+const styles = require("./App.scss");
 
+interface IProps { initApp: () => Promise<void>; }
 
-interface IProps { initApp: () => Promise<void> }
+export class App extends React.Component<IProps, {}> {
 
-export class App extends React.Component<IProps, any> {
-
-  componentDidMount() {
+  public componentDidMount() {
     this.props
       .initApp()
-    // .catch(err => alert(err))
+      .catch((err) => alert(err));
   }
 
-  render() {
+  public render() {
     return (
       h("div", `.${styles.app}`, [this.props.children])
     );
@@ -34,12 +32,11 @@ const mapDispatchToProps = (dispatch: any) => {
       return ObjectLoader
         .initDirs()
         .then(ObjectLoader.loadBots)
-        .map((bot: BotConfig) => dispatch(loadBot(bot)))
+        .map((bot: IBotConfig) => dispatch(loadBot(bot)))
         .all()
         .then(() => Promise.resolve());
     },
   }
 }
 
-export default connect(null, mapDispatchToProps)(App)
-
+export default connect(null, mapDispatchToProps)(App);

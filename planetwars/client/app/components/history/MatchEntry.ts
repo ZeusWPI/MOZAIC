@@ -1,29 +1,28 @@
 import * as React from 'react';
 import { h } from 'react-hyperscript-helpers'
 
-import { GameData } from "./GameData"
+import { IGameData } from "../../utils/GameModels";
 
-let styles = require("./MatchEntry.scss");
+const styles = require("./MatchEntry.scss");
 
-interface MatchEntryProps {
-  gameData:GameData
+interface IMatchEntryProps {
+  gameData: IGameData;
 }
 
-interface MatchEntryState {
+interface IMatchEntryState { }
 
-}
-
-export default class MatchEntry extends React.Component<MatchEntryProps, MatchEntryState>{
-  constructor(props:MatchEntryProps) {
+export default class MatchEntry extends React.Component<IMatchEntryProps, IMatchEntryState> {
+  constructor(props: IMatchEntryProps) {
     super(props);
   }
-  render() {
+
+  public render() {
     let winner = this.props.gameData.players[this.props.gameData.winner - 1]
-    if(!winner) {
-      winner = "Tie"
+    if (!winner) {
+      winner = "Tie";
     }
     return h("div", `.${styles.matchEntry}`, [
-      `Winner: ${winner} | ${this.props.gameData.gameLog.length - 1} turns`
-    ])
+      `Winner: ${winner} | ${this.props.gameData.log.turns.length - 1} turns`,
+    ]);
   }
 }

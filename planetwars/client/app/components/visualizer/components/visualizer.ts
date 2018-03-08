@@ -1,10 +1,11 @@
+import * as d3 from 'd3';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
-import * as d3 from 'd3';
+
+import { IGameState } from '../../../utils/GameModels';
 import Game from './game';
-import Scoreboard from "./scoreboard"
-import { GameState } from "../../history/GameData"
+import Scoreboard from './scoreboard';
 
 const h = require('react-hyperscript');
 const {
@@ -32,7 +33,7 @@ interface PlayerData {
 
 interface VisualizerProps {
   playerData: PlayerData,
-  gameLog?: GameState[]
+  gameLog?: IGameState[]
 }
 
 interface VisualizerState {
@@ -44,8 +45,8 @@ interface VisualizerState {
   game: any
 }
 
-export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
-  timer:any;
+export class Visualizer extends React.Component<VisualizerProps, VisualizerState> {
+  timer: any;
   constructor(props: VisualizerProps) {
     super(props);
     this.state = {
@@ -59,8 +60,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   }
 
   componentDidMount() {
-    if(this.props.gameLog && this.props.playerData)
-    {
+    if (this.props.gameLog && this.props.playerData) {
       this.setLog(this.props.playerData, this.props.gameLog);
       this.setPlaying(true);
     }
@@ -68,10 +68,10 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
-    this.setState({ hide_card: true});
+    this.setState({ hide_card: true });
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
-      if(turnNum > 0) {
+      if (turnNum > 0) {
         this.setState({ hide_card: false });
       }
     }
@@ -87,7 +87,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     });
   }
 
-  setLog(playerData:PlayerData, gameLog:GameState[]) {
+  setLog(playerData: PlayerData, gameLog: IGameState[]) {
     var game = new Game(playerData, gameLog);
     this.setState({
       game: game,
@@ -111,7 +111,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
     if (this.state.playing) {
       var delay = 1000 / this.state.speed;
-      this.timer = d3.interval((t:any) => this.nextTurn(), delay);
+      this.timer = d3.interval((t: any) => this.nextTurn(), delay);
     }
   }
 
@@ -122,14 +122,14 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
         numTurns: this.state.numTurns,
         playing: this.state.playing,
         speed: this.state.speed,
-        setPlaying: (v:boolean) => this.setPlaying(v),
-        setTurn: (t:number) => this.setTurn(t),
-        setSpeed: (s:number) => this.setSpeed(s),
-        setLog: (playerData:PlayerData, gameLog:GameState[]) => this.setLog(playerData, gameLog)
+        setPlaying: (v: boolean) => this.setPlaying(v),
+        setTurn: (t: number) => this.setTurn(t),
+        setSpeed: (s: number) => this.setSpeed(s),
+        setLog: (playerData: PlayerData, gameLog: IGameState[]) => this.setLog(playerData, gameLog)
       })
     ])
 
-    if(!this.state.game){
+    if (!this.state.game) {
       return div(`.${styles.visualizerRootNode}`, [
         controls
       ])
@@ -145,7 +145,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
       turnNum: this.state.turnNum,
       speed: this.state.speed
     });
-    
+
     let endGameCard = h(HideableComponent, {
       hide: this.state.hide_card,
       render: div(`.${styles.endCard}`, [
@@ -157,7 +157,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span({style: {color: this.state.game.winner.color}}, this.state.game.winner.name), ' wins!'])
+        p(['Game over', h('br'), span({ style: { color: this.state.game.winner.color } }, this.state.game.winner.name), ' wins!'])
       ])
     });
 

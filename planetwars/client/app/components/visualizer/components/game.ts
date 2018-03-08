@@ -1,6 +1,6 @@
-import { Player, TurnData } from "./interfaces"
-import Turn from "./turn"
-import { GameState } from "../../history/GameData"
+import { IGameState } from '../../../utils/GameModels';
+import { Player, TurnData } from './interfaces';
+import Turn from './turn';
 
 const d3 = require('d3');
 const Config = require('../util/config');
@@ -17,7 +17,7 @@ export default class Game {
   players: string[];
   turns: Turn[];
 
-  constructor(playerData:MetaData, gameLog:GameState[]) {
+  constructor(playerData: MetaData, gameLog: IGameState[]) {
     this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
     this.planetTypeMap = new Map();
 
@@ -28,22 +28,22 @@ export default class Game {
     this.findWinner();
   }
 
-  playerColor(name:string) {
+  playerColor(name: string) {
     return this.playerColors(name);
   }
 
-  planetType(name:string) {
+  planetType(name: string) {
     if (!this.planetTypeMap.has(name)) {
-      var types:string[] = Config.planet_types;
-      var type:string = types[Math.floor(Math.random() * types.length)];
+      var types: string[] = Config.planet_types;
+      var type: string = types[Math.floor(Math.random() * types.length)];
       this.planetTypeMap.set(name, type);
     }
     return this.planetTypeMap.get(name);
   }
 
   findWinner() {
-    let players:Player[] = this.turns[this.turns.length -1].players;
-    let survivors:Player[] = players.filter(p => p.ship_count > 0);
+    let players: Player[] = this.turns[this.turns.length - 1].players;
+    let survivors: Player[] = players.filter(p => p.ship_count > 0);
     if (survivors.length > 1) {
       // it's a draw
       this.winner = {
