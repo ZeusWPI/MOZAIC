@@ -1,24 +1,38 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
-import { h } from 'react-hyperscript-helpers';
+import { connect } from 'react-redux';
 
-import Bots from "../components/Bots"
 
-interface BotsPageProps {
-  match: any
-}
+import { Bots, IBotsProps } from "../components/bots/Bots";
+import { IGState } from '../reducers/index';
+import { } from '../actions/actions';
 
-interface BotsPageState {
+interface IProps { match: any }
 
-}
-
-export default class BotsPage extends React.Component<BotsPageProps, BotsPageState> {
-  constructor(props: BotsPageProps) {
-    super(props);
-  }
-  render() {
-    return (
-      h(Bots, { bot: this.props.match.params.bot })
-    );
+const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
+  return {
+    // bots: state.bots.bots,
+    bot: ownProps.match.params.bot,
   }
 }
+
+const mapDispatchToProps = (dispatch: any) => {
+  return {}
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Bots);
+
+
+
+// interface BotsPageState {
+
+// }
+
+// export default class BotsPage extends React.Component<BotsPageProps, BotsPageState> {
+//   constructor(props: BotsPageProps) {
+//     super(props);
+//   }
+//   render() {
+//     return (
+//       h(Bots, { bot: this.props.match.params.bot })
+//     );
+//   }
+// }

@@ -7,9 +7,11 @@ const express = require('express');
 const webpack = require('webpack');
 const webpackDevMiddleware = require('webpack-dev-middleware');
 const webpackHotMiddleware = require('webpack-hot-middleware');
-const { spawn } = require('child_process');
+const {
+  spawn
+} = require('child_process');
 
-const config = require('./webpack.config.development');
+const config = require('./webpack/webpack.config.development');
 
 const argv = require('minimist')(process.argv.slice(2));
 
@@ -34,7 +36,11 @@ const server = app.listen(PORT, 'localhost', serverError => {
   }
 
   if (argv['start-hot']) {
-    spawn('npm', ['run', 'start-hot'], { shell: true, env: process.env, stdio: 'inherit' })
+    spawn('npm', ['run', 'start-hot'], {
+        shell: true,
+        env: process.env,
+        stdio: 'inherit'
+      })
       .on('close', code => process.exit(code))
       .on('error', spawnError => console.error(spawnError));
   }

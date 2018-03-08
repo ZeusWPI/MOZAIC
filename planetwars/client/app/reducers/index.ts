@@ -1,85 +1,60 @@
-import {combineReducers, Reducer} from 'redux';
-import {routerReducer as routing, RouterState} from 'react-router-redux';
-import * as path from "path";
-import * as fs from "fs";
+import { combineReducers, Reducer } from 'redux';
+import { routerReducer as routing, RouterState } from 'react-router-redux';
 
+import { BotConfig } from '../utils/Models';
+import * as A from '../actions/actions';
 
-export interface IState {
+// Global state
+export interface IGState {
   routing: RouterState,
   about: AboutState,
-  botpage: BotsState,
+  bots: BotsState,
+  navbar: NavbarState,
 }
 
 export type AboutState = { counter: number; };
-export type BotsState = { bots: string[] };
+export type BotsState = { bots: BotConfig[] };
+export type NavbarState = { toggled: boolean; }
+
+export const initialState: IGState = {
+  routing: { location: null },
+  about: { counter: 0 },
+  bots: { bots: [] },
+  navbar: { toggled: false },
+}
 
 const aboutReducer = combineReducers<AboutState>({
   counter: (state = 0, action) => {
-    switch (action.type) {
-      case 'TEST': {
-        return state + 1;
-      }
-      default:
-        return state;
+    if (A.incrementAbout.test(action)) {
+      return state + 1;
     }
+    return state;
+  }
+});
+
+const navbarReducer = combineReducers<NavbarState>({
+  toggled: (state = false, action) => {
+    if (A.toggleNavMenu.test(action)) {
+      return !state;
+    }
+    return state;
   }
 });
 
 const botsReducer = combineReducers<BotsState>({
-  rerender: (state = [], action) => {
-    switch (action.type) {
-      case 'botsRerender': {
-        return action.bots;
-      }
-      default:
-        return state;
+  bots: (state = [], action) => {
+    if (A.loadBot.test(action)) {
+      let newA = state.slice();
+      newA.push(action.payload);
+      return newA;
     }
-  },
-
-  removeBot: (state = [], action) => {
-    switch (action.type) {
-      case 'removeBot': {
-
-        let index: number = state.indexOf(action.name);
-        if (index > -1) {
-          return state.slice(index, 1)
-        }
-        else {
-          return state
-        }
-      }
-      default:
-        return state;
-    }
+    return state
   }
-});
+})
 
-// function readBots(): string[] {
-//   let dir = "./bots";
-//   if (fs.existsSync(dir)) {
-//     let fileNames = fs.readdirSync(dir);
-//     fileNames = fileNames.filter(file => fs.lstatSync("./bots/" + file).isFile());
-//     let paths = fileNames.map((f) => path.parse(path.resolve(dir, f)));
-//     let rslt: string[] = paths.map((x: path.ParsedPath) => x.name);
-//     console.log(rslt);
-//     return rslt;
-//
-//   }
-//   return [];
-// }
-//
-// function removeBot(name: string, evt: any) {
-//   evt.preventDefault(); // Stop the Link from being activated
-//   let path = `./bots/${ name }.json`;
-//   if (fs.existsSync(path) && confirm(`Are you sure you want to delete ${ name }?`)) {
-//     fs.unlinkSync(path);
-//   }
-// }
-
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
   routing: routing as Reducer<any>,
   about: aboutReducer,
-  botpage: botsReducer
+  bots: botsReducer,
+  navbar: navbarReducer,
 });
-
-export default rootReducer;

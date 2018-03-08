@@ -27,11 +27,12 @@ Your bot is started with it's name as it's first parameter, that way you'll now 
 
 ## Gamestate
 
+**! This information is stale !**
 The gamestate format is non differential, which implies you'll receive the complete (updated) gamestate every turn, with all information visible for everyone.
 
 Examples:
 
-```
+```json
 {
     "players":[
         "player_0",
@@ -74,11 +75,13 @@ Examples:
     ]
 }
 ```
-For a more extensive list of examples see [this directory](./state_examples)
-For a formal description of the format see [this JSON Schema](./gamestateformat.json)
+
+For a more extensive list of examples see [this directory](./examoples/states)
+For a formal description of the format see [this JSON Schema](./examples/gamestateformat.json)
 
 ## Moves
-```
+
+```json
 {
     "moves":[
         {
@@ -95,4 +98,4 @@ For a formal description of the format see [this JSON Schema](./gamestateformat.
 }
 ```
 
-For a formal description of the format see [this JSON Schema](./commandformat.json)
+For a formal description of the format see [this JSON Schema](./examples/commandformat.json)
