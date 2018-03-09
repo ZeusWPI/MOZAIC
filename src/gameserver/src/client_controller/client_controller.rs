@@ -1,12 +1,14 @@
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio::net::TcpStream;
+use tokio_core::reactor;
 use bytes::BytesMut;
 use std::io;
 use std::str;
 use slog;
 
 use protobuf_codec::ProtobufTransport;
+use router::{RouterCommand, RegisterRequest, UnregisterRequest};
 use super::client_connection::ClientConnection;
 
 
@@ -41,6 +43,7 @@ type Transport = ProtobufTransport<TcpStream>;
 
 
 pub struct ClientController {
+    token: Vec<u8>,
     client_id: usize,
     
     connection: ClientConnection<Transport>,
@@ -49,35 +52,55 @@ pub struct ClientController {
     ctrl_handle: UnboundedSender<Command>,
     
     game_handle: UnboundedSender<ClientMessage>,
+    router_handle: UnboundedSender<RouterCommand>,
 
     logger: slog::Logger,
 }
 
 impl ClientController {
     pub fn new(client_id: usize,
-               transport: Transport,
+               token: Vec<u8>,
+               router_handle: UnboundedSender<RouterCommand>,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
                -> Self
     {
         let (snd, rcv) = unbounded();
 
-        let mut connection = ClientConnection::new();
-        connection.set_transport(transport);
-
         ClientController {
-            connection: connection,
+            connection: ClientConnection::new(),
+            token,
 
             ctrl_chan: rcv,
             ctrl_handle: snd,
 
             game_handle,
+            router_handle,
             client_id,
 
             logger: logger.new(
                 o!("client_id" => client_id)
             ),
         }
+    }
+
+    /// Register this ClientController with its router
+    pub fn register(&mut self) {
+        let request = RegisterRequest {
+            token: self.token.clone(),
+            handle: self.handle(),
+        };
+        self.router_handle.unbounded_send(RouterCommand::Register(request))
+            .expect("router handle closed");
+    }
+
+    /// Unregister this ClientController from its router
+    pub fn unregister(&mut self) {
+        let request = UnregisterRequest {
+            token: self.token.clone(),
+        };
+        self.router_handle.unbounded_send(RouterCommand::Unregister(request))
+            .expect("router handle closed");
     }
 
     /// Get a handle to the control channel for this client.
