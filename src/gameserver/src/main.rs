@@ -58,7 +58,7 @@ use protobuf_codec::ProtobufTransport;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
-use router::Router;
+use router::{Router, RouterCommand, ConnectionRequest};
 
 // Load the config and start the game.
 fn main() {
@@ -126,15 +126,20 @@ fn main() {
     let server = listener.incoming().for_each(|socket| {
         println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
         let transport = ProtobufTransport::new(socket);
-        let conn = transport.into_future()
+        transport.into_future()
             .map_err(|(e, _)| e)
-            .and_then(|(item, _)| {
+            .and_then(|(item, transport)| {
                 let bytes = item.unwrap().freeze();
-                let msg = try!(protocol::Connect::decode(bytes));
-                println!("{:?}", msg);
-                Ok(())
-            });
-        return conn;
+                let request = try!(protocol::ConnectRequest::decode(bytes));
+                println!("got {:?}", request);
+                let connection_req = ConnectionRequest {
+                    token: request.token,
+                    stream: transport,
+                };
+                router_handle.unbounded_send(RouterCommand::Connect(connection_req))
+                    .expect("router handle broke");
+                return Ok(());
+            })
     });
 
 

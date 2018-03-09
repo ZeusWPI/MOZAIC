@@ -3,19 +3,20 @@ use futures::{Future, Poll, Stream};
 use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 use tokio::net::TcpStream;
 use client_controller::Command as ClientControllerCommand;
+use protobuf_codec::ProtobufTransport;
 
 pub struct ConnectionRequest {
-    pub stream: TcpStream,
+    pub stream: ProtobufTransport<TcpStream>,
     pub token: Vec<u8>,
 }
 
 pub struct RegisterRequest {
-    token: Vec<u8>,
-    handle: UnboundedSender<ClientControllerCommand>,
+    pub token: Vec<u8>,
+    pub handle: UnboundedSender<ClientControllerCommand>,
 }
 
 pub struct UnregisterRequest {
-    token: Vec<u8>,
+    pub token: Vec<u8>,
 }
 
 pub enum RouterCommand {
@@ -30,6 +31,13 @@ pub struct Router {
 }
 
 impl Router {
+    pub fn new(ctrl_chan: UnboundedReceiver<RouterCommand>) -> Self {
+        Router {
+            ctrl_chan,
+            connections: HashMap::new(),
+        }
+    } 
+
     fn handle_command(&mut self, cmd: RouterCommand) {
         match cmd {
             RouterCommand::Connect(request) => {

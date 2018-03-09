@@ -1,7 +1,6 @@
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio::net::TcpStream;
-use tokio_core::reactor;
 use bytes::BytesMut;
 use std::io;
 use std::str;
@@ -35,7 +34,7 @@ pub enum Message {
 
 pub enum Command {
     Send(Vec<u8>),
-    Connect(TcpStream),
+    Connect(Transport),
 }
 
 // TODO: maybe use a type parameter instead of hardcoding
@@ -133,7 +132,9 @@ impl ClientController {
                     let bytes = BytesMut::from(message);
                     self.connection.queue_send(bytes);
                 },
-                Command::Connect(_sock) => unimplemented!(),
+                Command::Connect(transport) => {
+                    self.connection.set_transport(transport);
+                },
             }
         }
     }
