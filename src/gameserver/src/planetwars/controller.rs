@@ -1,7 +1,11 @@
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
-use client_controller::{ClientMessage, Message};
+use client_controller::{
+    ClientMessage,
+    Message, 
+    Command as ClientControllerCommand
+};
 use planetwars::config::Config;
 use planetwars::step_lock::StepLock;
 use planetwars::pw_controller::PwController;
@@ -23,13 +27,14 @@ pub struct Controller {
 pub struct Client {
     pub id: usize,
     pub player_name: String,
-    pub handle: UnboundedSender<String>,
+    pub handle: UnboundedSender<ClientControllerCommand>,
 }
 
 impl Client {
-    pub fn send_msg(&mut self, msg: String) {
+    pub fn send_msg(&mut self, msg: Vec<u8>) {
+        let cmd = ClientControllerCommand::Send(msg);
         // unbounded channels don't fail
-        self.handle.unbounded_send(msg).unwrap();
+        self.handle.unbounded_send(cmd).unwrap();
     }
 }
 
@@ -63,8 +68,8 @@ impl Controller {
                 // TODO: maybe it would be better to log this in the
                 // client_controller.
                 info!(self.logger, "message received";
-                    "client_id" => client_id,
-                    "content" => &msg,
+                    "client_id" => client_id
+                    // TODO: content is binary now, how do we encode this?
                 );
                 self.step_lock.attach_command(client_id, msg);
             },
@@ -83,10 +88,10 @@ impl Controller {
 }
 
 impl Future for Controller {
-    type Item = Vec<usize>;
+    type Item = ();
     type Error = ();
 
-    fn poll(&mut self) -> Poll<Vec<usize>, ()> {
+    fn poll(&mut self) -> Poll<(), ()> {
         loop {
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
             self.handle_message(msg.client_id, msg.message);
@@ -95,8 +100,9 @@ impl Future for Controller {
                 let msgs = self.step_lock.take_messages();
                 self.pw_controller.step(&mut self.step_lock, msgs);
 
-                if let Some(result) = self.pw_controller.outcome() {
-                    return Ok(Async::Ready(result));
+                // TODO: this could be done better
+                if self.pw_controller.outcome().is_some() {
+                    return Ok(Async::Ready(()));
                 }
             }
         }

@@ -60,7 +60,7 @@ impl PwController {
     /// Advance the game by one turn.
     pub fn step(&mut self,
                 lock: &mut StepLock,
-                messages: HashMap<usize, String>)
+                messages: HashMap<usize, Vec<u8>>)
     {
         self.state.repopulate();
         self.execute_messages(messages);
@@ -110,7 +110,7 @@ impl PwController {
                     let offset = self.state.players.len() - player.id;
 
                     let serialized = serialize_rotated(&self.state, offset);
-                    let repr = serde_json::to_string(&serialized).unwrap();
+                    let repr = serde_json::to_vec(&serialized).unwrap();
                     client.send_msg(repr);
                     lock.wait_for(player.id);
                 }   
@@ -118,15 +118,15 @@ impl PwController {
         }
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<usize, String>) {
+    fn execute_messages(&mut self, mut msgs: HashMap<usize, Vec<u8>>) {
         for (client_id, message) in msgs.drain() {
             self.execute_message(client_id, message);
         }
     }
 
     /// Parse and execute a player message.
-    fn execute_message(&mut self, player_id: usize, msg: String) {
-        match serde_json::from_str(&msg) {
+    fn execute_message(&mut self, player_id: usize, msg: Vec<u8>) {
+        match serde_json::from_slice(&msg) {
             Ok(action) => {
                 self.execute_action(player_id, action);
             },

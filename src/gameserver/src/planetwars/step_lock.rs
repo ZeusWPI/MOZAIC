@@ -4,7 +4,7 @@ use std::mem;
 
 
 pub struct StepLock {
-    client_messages: HashMap<usize, String>,
+    client_messages: HashMap<usize, Vec<u8>>,
     awaiting_clients: HashSet<usize>,
 }
 
@@ -24,12 +24,12 @@ impl StepLock {
         self.awaiting_clients.is_empty()
     }
 
-    pub fn attach_command(&mut self, client_id: usize, msg: String) {
+    pub fn attach_command(&mut self, client_id: usize, msg: Vec<u8>) {
         self.client_messages.insert(client_id, msg);
         self.awaiting_clients.remove(&client_id);
     }
 
-    pub fn take_messages(&mut self) -> HashMap<usize, String> {
+    pub fn take_messages(&mut self) -> HashMap<usize, Vec<u8>> {
         mem::replace(&mut self.client_messages, HashMap::new())
     }
 
