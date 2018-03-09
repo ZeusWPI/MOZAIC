@@ -1,14 +1,14 @@
 import * as React from 'react';
 import { h, div, p, li, ul } from "react-hyperscript-helpers";
 
-import BotsConfig from "./BotsConfig";
+import BotsConfig from "./containers/BotsConfigContainer";
 import BotsList from "./containers/BotsListContainer";
 import { BotConfig } from '../../utils/Models';
 
 let styles = require("./Bots.scss");
 
 export interface IBotsProps {
-  bot: any
+  bot: BotConfig
 }
 
 export class Bots extends React.Component<IBotsProps, {}> {
@@ -19,7 +19,7 @@ export class Bots extends React.Component<IBotsProps, {}> {
     return h("div", `.${styles.bots}`, [
       h("div", `.${styles.botslist}`, [h(BotsList)]),
       h("div", `.${styles.botsconfig}`,
-        [h(BotsConfig, { loadedBot: this.props.bot, refreshBots: () => this.forceUpdate() })])
+        [h(BotsConfig, { loadedBot: this.props.bot})])
     ])
   }
 }

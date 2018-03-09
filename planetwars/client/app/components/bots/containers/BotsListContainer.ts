@@ -9,6 +9,7 @@ import {BotsState} from "../../../reducers";
 import {loadBot} from "../../../actions/actions";
 import {ObjectManager} from "../../../utils/ObjectManager";
 import {BotConfig} from "../../../utils/Models";
+import BotRefresher from "../../../utils/BotRefresher";
 
 
 const mapStateToProps = (state: BotsState) => {
@@ -19,13 +20,8 @@ const mapStateToProps = (state: BotsState) => {
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    refreshBots: () : Promise<void> => {
-      return ObjectManager.loadBots()
-        .map((bot: BotConfig) => dispatch(loadBot(bot)))
-        .all()
-        .then( () => Promise.resolve());
+    refreshBots: BotRefresher.refreshBots(dispatch)
     }
-  }
 
 };
 

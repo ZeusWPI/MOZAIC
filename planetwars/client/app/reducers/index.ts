@@ -13,13 +13,13 @@ export interface IGState {
 }
 
 export type AboutState = { counter: number; };
-export type BotsState = { bots: BotConfig[] };
+export type BotsState = { bots: BotConfig[], selectedBot: BotConfig };
 export type NavbarState = { toggled: boolean; }
 
 export const initialState: IGState = {
   routing: { location: null },
   about: { counter: 0 },
-  bots: { bots: [] },
+  bots: { bots: [], selectedBot: {name: '', args: [], command: ''} },
   navbar: { toggled: false },
 }
 
@@ -55,9 +55,11 @@ const botsReducer = combineReducers<BotsState>({
       newA = newA.filter((value: BotConfig) => (value.name != action.payload));
       return newA;
     }
+
     return state
   }
 });
+
 
 export const rootReducer = combineReducers({
   routing: routing as Reducer<any>,
