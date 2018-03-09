@@ -9,8 +9,19 @@ pub struct ConnectionRequest {
     pub token: Vec<u8>,
 }
 
+pub struct RegisterRequest {
+    token: Vec<u8>,
+    handle: UnboundedSender<ClientControllerCommand>,
+}
+
+pub struct UnregisterRequest {
+    token: Vec<u8>,
+}
+
 pub enum RouterCommand {
     Connect(ConnectionRequest),
+    Register(RegisterRequest),
+    Unregister(UnregisterRequest),
 }
 
 pub struct Router {
@@ -28,6 +39,12 @@ impl Router {
                     handle.unbounded_send(cmd).unwrap();
                 }
             },
+            RouterCommand::Register(request) => {
+                self.connections.insert(request.token, request.handle);
+            },
+            RouterCommand::Unregister(request) => {
+                self.connections.remove(&request.token);
+            }
         }
     }
 }
