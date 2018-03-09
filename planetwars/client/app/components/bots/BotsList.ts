@@ -6,33 +6,32 @@ import {RouteComponentProps} from 'react-router';
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 import BotElement from './containers/BotElementContainer';
-import {IState} from "../../reducers";
+import {BotsState, IGState} from "../../reducers";
+import {BotConfig} from "../../utils/Models";
+import * as Promise from "bluebird";
 
 let styles = require("./BotsList.scss");
 
-interface BotsListProps {
-  rerender: () => void,
-  bots: string[]
+export interface BotsListProps {
+  refreshBots: () => Promise<void>,
+  bots: any
 }
 
-interface BotsListState {
 
-}
+export default class BotsList extends React.Component<BotsListProps, any> {
 
-export default class BotsList extends React.Component<BotsListProps, IState> {
   constructor(props: BotsListProps) {
     super(props);
   }
 
-  componentWillMount() {
-  this.props.rerender();
-  }
 
   render() {
 
 
-    let botElements = this.props.bots.map((botName: string) =>
-      h(BotElement, {name: botName, rerender: this.props.rerender})
+    let botElements: React.Component[] = this.props.bots.bots.map((botConfig: BotConfig) =>
+      (h(BotElement, `.${styles.botlistitem}`,
+          {key: botConfig.name, name: botConfig.name, refreshBots: this.props.refreshBots})
+      )
     );
 
     botElements.push(

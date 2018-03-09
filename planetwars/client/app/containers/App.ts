@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 import { h } from 'react-hyperscript-helpers';
 
 
-import { ObjectLoader } from '../utils/ObjectLoader';
+import { ObjectManager } from '../utils/ObjectManager';
 import { loadBot } from '../actions/actions';
 import { BotConfig } from '../utils/Models';
 
@@ -31,9 +31,9 @@ export class App extends React.Component<IProps, any> {
 const mapDispatchToProps = (dispatch: any) => {
   return {
     initApp: () => {
-      return ObjectLoader
+      return ObjectManager
         .initDirs()
-        .then(ObjectLoader.loadBots)
+        .then(ObjectManager.loadBots)
         .map((bot: BotConfig) => dispatch(loadBot(bot)))
         .all()
         .then(() => Promise.resolve());

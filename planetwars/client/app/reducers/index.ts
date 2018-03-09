@@ -45,12 +45,19 @@ const botsReducer = combineReducers<BotsState>({
   bots: (state = [], action) => {
     if (A.loadBot.test(action)) {
       let newA = state.slice();
-      newA.push(action.payload);
+      if (!newA.some((bot: BotConfig) => bot == action.payload)) {
+        newA.push(action.payload);
+      }
+      return newA;
+    }
+    else if (A.removeBot.test(action)) {
+      let newA = state.slice();
+      newA = newA.filter((value: BotConfig) => (value.name != action.payload));
       return newA;
     }
     return state
   }
-})
+});
 
 export const rootReducer = combineReducers({
   routing: routing as Reducer<any>,

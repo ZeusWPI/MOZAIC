@@ -9,7 +9,8 @@ let styles = require("./BotsConfig.scss");
 
 interface BotsConfigProps {
   botName: string,
-  rerender: Function
+  loadedBot: any,
+  refreshBots: Function
 }
 
 interface BotsConfigState {
@@ -69,7 +70,7 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
         }
       ));
     }
-    this.props.rerender();
+    this.props.refreshBots();
   }
   checkValid() {
     let errors = []

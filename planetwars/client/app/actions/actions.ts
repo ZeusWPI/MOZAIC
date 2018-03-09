@@ -32,16 +32,9 @@ export const botsRerender = (bots: string[]) => {
   }
 }
 
-export const removeBot = (name: string, evt:any) => {
-  return {
-    type: 'removeBot',
-    name: name,
-    evt: evt
-  }
-
-}
 
 
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 export const incrementAbout = actionCreatorVoid('TEST');
 export const loadBot = actionCreator<BotConfig>('LOAD_BOT');
+export const removeBot = actionCreator<string>('REMOVE_BOT');
