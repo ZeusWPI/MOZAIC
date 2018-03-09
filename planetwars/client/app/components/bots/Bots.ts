@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { h, div, p, li, ul } from "react-hyperscript-helpers";
 
-import BotsConfig from "./containers/BotsConfigContainer";
+import BotsConfig from "./BotsConfig";
 import BotsList from "./containers/BotsListContainer";
 import { BotConfig } from '../../utils/Models';
 

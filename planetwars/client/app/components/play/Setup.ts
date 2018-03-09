@@ -13,9 +13,12 @@ let styles = require('./Setup.scss');
 interface SetupState {
   config: MatchConfig,
   map_path: path.ParsedPath | { name: string }
+
 }
 
-interface SetupProps { }
+interface SetupProps {
+  startGame: any
+}
 
 export class Setup extends React.Component<SetupProps, SetupState> {
   constructor(props: SetupProps) {
