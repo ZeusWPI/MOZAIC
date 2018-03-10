@@ -1,7 +1,8 @@
 mod bot_runner;
 mod client_controller;
-mod protobuf_codec;
+mod listener;
 mod planetwars;
+mod protobuf_codec;
 mod router;
 
 pub mod protocol {
@@ -45,18 +46,14 @@ use std::fs::File;
 
 use slog::Drain;
 use std::sync::Mutex;
-use tokio_core::reactor::Core;
-use tokio::net::TcpListener;
 use futures::sync::mpsc;
 use futures::Stream;
-use prost::Message;
 use futures::Future;
-
-use protobuf_codec::ProtobufTransport;
+use tokio::runtime::Runtime;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
-use router::{Router, RouterCommand};
+use router::Router;
 
 // Load the config and start the game.
 fn main() {
@@ -74,8 +71,6 @@ fn main() {
         }
     };
 
-    let mut reactor = Core::new().unwrap();
-
     let log_file = File::create("log.json").unwrap();
 
     let logger = slog::Logger::root( 
@@ -83,6 +78,7 @@ fn main() {
         o!()
     );
 
+    let mut runtime = Runtime::new().unwrap();
 
     let (router_handle, router_chan) = mpsc::unbounded();
     let (controller_handle, controller_chan) = mpsc::unbounded();
@@ -96,7 +92,7 @@ fn main() {
             &logger);
         let ctrl_handle = controller.handle();
         controller.register();
-        reactor.handle().spawn(controller);
+        runtime.spawn(controller);
 
         Client {
             id: num,
@@ -113,33 +109,16 @@ fn main() {
         match_description.game_config,
         logger,
     );
-    reactor.handle().spawn(controller);
+    runtime.spawn(controller);
 
     let router = Router::new(router_chan);
-    reactor.handle().spawn(router);
+    runtime.spawn(router);
 
     let addr = "127.0.0.1:9142".parse().unwrap();
-    let listener = TcpListener::bind(&addr).unwrap();
+    let listener = listener::Listener::new(&addr, router_handle).unwrap();
+    runtime.spawn(listener);
 
-    let server = listener.incoming().for_each(|socket| {
-        println!("accepted socket; addr={:?}", socket.peer_addr().unwrap());
-        let transport = ProtobufTransport::new(socket);
-        transport.into_future()
-            .map_err(|(e, _)| e)
-            .and_then(|(item, stream)| {
-                let bytes = item.unwrap().freeze();
-                let request = try!(protocol::ConnectRequest::decode(bytes));
-                println!("got {:?}", request);
-                router_handle.unbounded_send(RouterCommand::Connect {
-                    token: request.token,
-                    stream: stream,
-                }).expect("router handle broke");
-                return Ok(());
-            })
-    });
-
-
-    reactor.run(server).unwrap();
+    runtime.shutdown_on_idle().wait().unwrap();
 }
 
 #[derive(Serialize, Deserialize)]
