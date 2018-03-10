@@ -8,6 +8,7 @@ const ts = require('gulp-typescript');
 const path = require('path');
 
 const protobuf = require('protobufjs');
+const pbts = require('protobufjs/cli/pbts');
 
 const TS_SOURCES = "src/**/*.ts";
 
@@ -65,9 +66,32 @@ function compile_protobuf() {
     return through.obj(parse_file, gen_output);
 }
 
-function generate_proto() {
+function type_protobuf() {
+    return through.obj(function(file, enc, callback) {
+        if (!file.isBuffer()) {
+            callback(new gutil.PluginError('pbts', 'unsupported'));
+        }
+        pbts.main([file.path], function(err, result) {
+            if (err) {
+                callback(err);
+            } else {
+                file.extname = '.d.ts';
+                file.contents = new Buffer(result)
+                callback(null, file);
+            }
+        });
+    });
+}
+
+function gen_proto() {
     return gulp.src('../proto/*.proto')
         .pipe(compile_protobuf())
+        .pipe(gulp.dest('generated'));
+}
+
+function type_proto() {
+    return gulp.src('./generated/*.js')
+        .pipe(type_protobuf())
         .pipe(gulp.dest('generated'));
 }
 
@@ -85,7 +109,10 @@ function compile_ts() {
 }
 
 
-gulp.task('gen_proto', generate_proto);
+gulp.task('gen_proto', gulp.series(
+    gen_proto,
+    type_proto
+));
 
 gulp.task('compile', gulp.series(
     compile_ts,
