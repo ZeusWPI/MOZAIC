@@ -17,7 +17,6 @@ extern crate tokio;
 extern crate tokio_process;
 #[macro_use]
 extern crate futures;
-extern crate fnv;
 
 extern crate serde;
 extern crate serde_json;
