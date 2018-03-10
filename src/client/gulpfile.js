@@ -66,7 +66,7 @@ function compile_protobuf() {
 }
 
 function generate_proto() {
-    return gulp.src('../client_server.proto')
+    return gulp.src('../proto/*.proto')
         .pipe(compile_protobuf())
         .pipe(gulp.dest('generated'));
 }
