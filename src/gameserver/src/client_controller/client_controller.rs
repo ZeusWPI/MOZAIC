@@ -7,7 +7,7 @@ use std::str;
 use slog;
 
 use protobuf_codec::ProtobufTransport;
-use router::{RouterCommand, RegisterRequest, UnregisterRequest};
+use router::RouterCommand;
 use super::client_connection::ClientConnection;
 
 
@@ -85,21 +85,18 @@ impl ClientController {
 
     /// Register this ClientController with its router
     pub fn register(&mut self) {
-        let request = RegisterRequest {
+        self.router_handle.unbounded_send(RouterCommand::Register {
             token: self.token.clone(),
             handle: self.handle(),
-        };
-        self.router_handle.unbounded_send(RouterCommand::Register(request))
-            .expect("router handle closed");
+        }).expect("router handle closed");
     }
 
     /// Unregister this ClientController from its router
     pub fn unregister(&mut self) {
-        let request = UnregisterRequest {
+
+        self.router_handle.unbounded_send(RouterCommand::Unregister {
             token: self.token.clone(),
-        };
-        self.router_handle.unbounded_send(RouterCommand::Unregister(request))
-            .expect("router handle closed");
+        }).expect("router handle closed");
     }
 
     /// Get a handle to the control channel for this client.

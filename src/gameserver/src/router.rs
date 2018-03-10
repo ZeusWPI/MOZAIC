@@ -5,24 +5,19 @@ use tokio::net::TcpStream;
 use client_controller::Command as ClientControllerCommand;
 use protobuf_codec::ProtobufTransport;
 
-pub struct ConnectionRequest {
-    pub stream: ProtobufTransport<TcpStream>,
-    pub token: Vec<u8>,
-}
-
-pub struct RegisterRequest {
-    pub token: Vec<u8>,
-    pub handle: UnboundedSender<ClientControllerCommand>,
-}
-
-pub struct UnregisterRequest {
-    pub token: Vec<u8>,
-}
 
 pub enum RouterCommand {
-    Connect(ConnectionRequest),
-    Register(RegisterRequest),
-    Unregister(UnregisterRequest),
+    Connect {
+        stream: ProtobufTransport<TcpStream>,
+        token: Vec<u8>,
+    },
+    Register {
+        handle: UnboundedSender<ClientControllerCommand>,
+        token: Vec<u8>,
+    },
+    Unregister {
+        token: Vec<u8>,
+    }
 }
 
 pub struct Router {
@@ -40,18 +35,18 @@ impl Router {
 
     fn handle_command(&mut self, cmd: RouterCommand) {
         match cmd {
-            RouterCommand::Connect(request) => {
-                let connection = self.connections.get(&request.token);
+            RouterCommand::Connect { token, stream } => {
+                let connection = self.connections.get(&token);
                 if let Some(handle) = connection {
-                    let cmd = ClientControllerCommand::Connect(request.stream);
+                    let cmd = ClientControllerCommand::Connect(stream);
                     handle.unbounded_send(cmd).unwrap();
                 }
             },
-            RouterCommand::Register(request) => {
-                self.connections.insert(request.token, request.handle);
+            RouterCommand::Register { token, handle } => {
+                self.connections.insert(token, handle);
             },
-            RouterCommand::Unregister(request) => {
-                self.connections.remove(&request.token);
+            RouterCommand::Unregister { token } => {
+                self.connections.remove(&token);
             }
         }
     }

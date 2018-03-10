@@ -50,7 +50,6 @@ use tokio_core::reactor::Core;
 use tokio::net::TcpListener;
 use futures::sync::mpsc;
 use futures::Stream;
-use tokio_io::{AsyncRead, AsyncWrite};
 use prost::Message;
 use futures::Future;
 
@@ -58,7 +57,7 @@ use protobuf_codec::ProtobufTransport;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
-use router::{Router, RouterCommand, ConnectionRequest};
+use router::{Router, RouterCommand};
 
 // Load the config and start the game.
 fn main() {
@@ -128,16 +127,14 @@ fn main() {
         let transport = ProtobufTransport::new(socket);
         transport.into_future()
             .map_err(|(e, _)| e)
-            .and_then(|(item, transport)| {
+            .and_then(|(item, stream)| {
                 let bytes = item.unwrap().freeze();
                 let request = try!(protocol::ConnectRequest::decode(bytes));
                 println!("got {:?}", request);
-                let connection_req = ConnectionRequest {
+                router_handle.unbounded_send(RouterCommand::Connect {
                     token: request.token,
-                    stream: transport,
-                };
-                router_handle.unbounded_send(RouterCommand::Connect(connection_req))
-                    .expect("router handle broke");
+                    stream: stream,
+                }).expect("router handle broke");
                 return Ok(());
             })
     });
