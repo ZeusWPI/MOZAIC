@@ -10,14 +10,16 @@ const path = require('path');
 const protobuf = require('protobufjs');
 const pbts = require('protobufjs/cli/pbts');
 
-const TS_SOURCES = "src/**/*.ts";
+/******************************************************************************
+ * Helpers
+ ******************************************************************************/
 
 const targets = {
     'static': require('protobufjs/cli/targets/static'),
     'static-module': require('protobufjs/cli/targets/static-module')
 };
 
-function compile_protobuf() {
+function gen_protobuf(out_path) {
     var options = {
         target: "static-module",
         create: true,
@@ -56,7 +58,7 @@ function compile_protobuf() {
                 callback(err);
             } else {
                 callback(null, new Vinyl({
-                    path: 'proto.js',
+                    path: out_path,
                     contents: new Buffer(result)
                 }));
             }
@@ -66,6 +68,9 @@ function compile_protobuf() {
     return through.obj(parse_file, gen_output);
 }
 
+// IMPORTANT: this is a bit of a hack, as this requires the
+// input files to actually be on disk in order to be read by
+// pbts.
 function type_protobuf() {
     return through.obj(function(file, enc, callback) {
         if (!file.isBuffer()) {
@@ -83,49 +88,62 @@ function type_protobuf() {
     });
 }
 
-function gen_proto() {
-    return gulp.src('../proto/*.proto')
-        .pipe(compile_protobuf())
-        .pipe(gulp.dest('generated'));
-}
+/******************************************************************************
+ * Tasks
+ ******************************************************************************/
 
-function type_proto() {
-    return gulp.src('./generated/*.js')
-        .pipe(type_protobuf())
-        .pipe(gulp.dest('generated'));
-}
-
-function copy_generated() {
-    return gulp.src('generated/**/*')
-        .pipe(gulp.dest('dist'));
-}
-
+const TS_SOURCES = "src/**/*.ts";
+const PROTO_SOURCES = "../proto/**/*.proto"
 
 const tsProject = ts.createProject('tsconfig.json');
-function compile_ts() {
+
+function compile_typescript() {
     return gulp.src(TS_SOURCES)
         .pipe(tsProject())
         .pipe(gulp.dest('dist'));
 }
 
+function watch_typescript() {
+    return gulp.watch(TS_SOURCES, compile_typescript);
+}
 
-gulp.task('gen_proto', gulp.series(
+function gen_proto() {
+    return gulp.src(PROTO_SOURCES)
+        .pipe(gen_protobuf('proto.js'))
+        .pipe(gulp.dest('generated'));
+}
+
+function type_proto() {
+    return gulp.src('generated/proto.js')
+        .pipe(type_protobuf())
+        .pipe(gulp.dest('generated'));
+}
+
+const build_protobuf = gulp.series(
     gen_proto,
     type_proto
+);
+
+function watch_protobuf() {
+    return gulp.watch(PROTO_SOURCES, build_protobuf);
+}
+
+function copy_generated_code() {
+    return gulp.src('generated/**/*')
+        .pipe(gulp.dest('dist'));
+}
+
+const build = gulp.series(
+    build_protobuf,
+    compile_typescript,
+    copy_generated_code
+);
+
+gulp.task('build', build);
+
+gulp.task('watch', gulp.parallel(
+    watch_typescript,
+    watch_protobuf
 ));
 
-gulp.task('compile', gulp.series(
-    compile_ts,
-    copy_generated
-));
-
-gulp.task('build', gulp.series(
-    'gen_proto',
-    'compile'
-));
-
-gulp.task('watch', () => {
-    gulp.watch(TS_SOURCES, compile_ts);
-});
-
-gulp.task('default', gulp.series('build'));
+gulp.task('default', build);
