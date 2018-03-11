@@ -38,7 +38,8 @@ impl Timeout {
                     };
                     out.unbounded_send(msg).expect("handle broke in timeout");
                     Ok(())
-                }).map_err(|err| println!("server error {:?}", err)) );
+                }).map_err(|err| println!("server error {:?}", err)) 
+            );
         }
         let timer = Timer::default();
         self.timer = timer.sleep(Duration::from_millis(dur));

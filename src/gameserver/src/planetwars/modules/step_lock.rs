@@ -7,6 +7,7 @@ use std::marker::PhantomData;
 use planetwars::game_controller::GameController;
 use planetwars::lock::Lock;
 
+#[derive(PartialEq)]
 enum GameState {
     Waiting,
     Running,
@@ -43,6 +44,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
                         },
             GameState::Running => self.awaiting_clients = self.game_controller.step(self.client_messages.clone()),
         }
+
         self.client_messages.clear();
         return (self.game_controller.time_out(), self.game_controller.outcome());
     }
@@ -50,7 +52,8 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
     fn is_ready(&self) -> bool {
         match self.running {
             GameState::Waiting => self.connected_clients == self.awaiting_clients,
-            GameState::Running => self.awaiting_clients.intersection(& self.connected_clients).count() == 0
+            GameState::Running => self.awaiting_clients.intersection(& self.connected_clients).count() == 0,
+            // GameState::Stopped => true,
         }
     }
 
