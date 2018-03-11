@@ -4,11 +4,11 @@ import * as p from 'path';
 export class Config {
   private static _data = 'data';
   private static _bots = 'bots';
-  private static _games = 'games';
+  private static _matches = 'matches';
   private static _maps = 'maps';
 
   public static bots = p.resolve(Config._data, Config._bots);
-  public static games = p.resolve(Config._data, Config._games);
+  public static matches = p.resolve(Config._data, Config._matches);
   public static maps = p.resolve(Config._data, Config._maps);
 
   // static generateGamesPath(game: IGameMetrics): string {

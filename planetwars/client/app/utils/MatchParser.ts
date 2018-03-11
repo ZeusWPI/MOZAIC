@@ -1,24 +1,34 @@
-import * as fs from 'fs';
+import * as fs from 'mz/fs';
+import * as Promise from 'bluebird';
 
 import {
-  IGameState, ILogFormat, IMatchData, IMatchMetaData, IMatchStats,
+  IGameState, ILogFormat, IMatchMetaData, IMatchStats,
 } from './GameModels';
 import { MatchAnalyser } from './MatchAnalyser';
 
 export class MatchParser {
 
   // TODO: Add Async parser
+  public static parseFileAsync(logPath: string): Promise<IMatchMetaData> {
+    const native = fs.readFile(logPath, 'utf-8')
+      .then((buffer) => buffer.toString())
+      .then((contents) => MatchParser._logToMeta(logPath, contents));
+    return Promise.resolve(native);
+  }
 
-  public static parseFileSync(logPath: string): IMatchData {
+  public static parseFileSync(logPath: string): IMatchMetaData {
     const contents = fs.readFileSync(logPath, { encoding: 'utf8' });
+    return MatchParser._logToMeta(logPath, contents);
+  }
+
+  private static _logToMeta(logPath: string, contents: string): IMatchMetaData {
     const { players, turns } = MatchParser.parseLog(contents);
     const timestamp = new Date(Date.now()); // TODO: Fix this
 
-    const meta: IMatchMetaData = { players, logPath, timestamp };
     const stats: IMatchStats = MatchAnalyser.analyseSync({ players, turns });
-    const log = turns;
+    const meta: IMatchMetaData = { players, logPath, timestamp, stats };
 
-    return { meta, stats, log };
+    return meta;
   }
 
   private static parseLog(log: string): ILogFormat {

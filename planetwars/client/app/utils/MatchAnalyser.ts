@@ -35,6 +35,6 @@ export class MatchAnalyser {
       winner = lastPlanetOwners.values().next().value;
     }
 
-    return { planetsTaken, winner, shipsSent };
+    return { planetsTaken, winner, shipsSent, turns: turns.length };
   }
 }

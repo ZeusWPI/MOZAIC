@@ -2,11 +2,11 @@ import { connect } from 'react-redux';
 
 import { incrementAbout } from '../actions/actions';
 import About from '../components/About';
-import { IAboutState, IGState } from '../reducers/index';
+import { IAboutPageState, IGState } from '../reducers/index';
 
 const mapStateToProps = (state: IGState) => {
   return {
-    counter: state.about.counter,
+    counter: state.aboutPage.counter,
   };
 };
 

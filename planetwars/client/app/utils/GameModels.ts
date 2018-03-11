@@ -1,14 +1,9 @@
 type LogPath = string;
 
-export interface IMatchData {
-  meta: IMatchMetaData;
-  log: IGameState[];
-  stats: IMatchStats;
-}
-
 export interface IMatchMetaData {
   players: string[];
   logPath?: string;
+  stats: IMatchStats;
   timestamp: Date;
 }
 
@@ -16,6 +11,7 @@ export interface IMatchStats {
   winner: number;
   planetsTaken: number[];
   shipsSent: number[][];
+  turns: number;
 }
 
 export interface IGameState {
