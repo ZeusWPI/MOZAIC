@@ -4,6 +4,7 @@ mod listener;
 mod planetwars;
 mod protobuf_codec;
 mod router;
+mod connection_handler;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
@@ -53,7 +54,7 @@ use tokio::runtime::Runtime;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
-use router::Router;
+use router::RoutingTable;
 
 // Load the config and start the game.
 fn main() {
@@ -111,7 +112,7 @@ fn main() {
     );
     runtime.spawn(controller);
 
-    let router = Router::new(router_chan);
+    let router = RoutingTable::new(router_chan);
     runtime.spawn(router);
 
     let addr = "127.0.0.1:9142".parse().unwrap();

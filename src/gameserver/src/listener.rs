@@ -6,17 +6,18 @@ use tokio::net::{Incoming, TcpListener, TcpStream};
 use std::io;
 use std::net::SocketAddr;
 
+use connection_handler::ConnectionHandler;
 use protobuf_codec::ProtobufTransport;
 use protocol;
-use router::RouterCommand;
+use router;
 
 pub struct Listener {
     incoming: Incoming,
-    router_handle: UnboundedSender<RouterCommand>,
+    router_handle: UnboundedSender<router::TableCommand>,
 }
 
 impl Listener {
-    pub fn new(addr: &SocketAddr, router_handle: UnboundedSender<RouterCommand>)
+    pub fn new(addr: &SocketAddr, router_handle: UnboundedSender<router::TableCommand>)
                -> io::Result<Self>
     {
         TcpListener::bind(addr).map(|tcp_listener| {
@@ -29,23 +30,11 @@ impl Listener {
 
     fn handle_connections(&mut self) -> Poll<(), io::Error> {
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
-            let stream = ProtobufTransport::new(raw_stream);
-            let router_handle = self.router_handle.clone();
-            let process = stream.into_future()
-                .map_err(|(e, _)| e)
-                .and_then(move |(item, stream)| {
-                    let bytes = item.unwrap().freeze();
-                    let request = try!(protocol::ConnectRequest::decode(bytes));
-                    println!("got {:?}", request);
-                    router_handle.unbounded_send(RouterCommand::Connect {
-                        token: request.token,
-                        stream: stream,
-                    }).expect("router handle broke");
-                    return Ok(());
-                })
-                // TODO: gracefully handle this
-                .map_err(|e| panic!("error: {}", e));
-            tokio::spawn(process);
+            let handler = ConnectionHandler::new(
+                self.router_handle.clone(),
+                raw_stream
+            );
+            tokio::spawn(handler);
         }
         return Ok(Async::Ready(()));
     }
