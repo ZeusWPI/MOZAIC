@@ -1,58 +1,58 @@
 use std::collections::HashMap;
 use futures::{Future, Poll, Stream};
 use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use futures::sync::oneshot;
 use tokio::net::TcpStream;
 use client_controller::Command as ClientControllerCommand;
 use protobuf_codec::ProtobufTransport;
 
-
-pub enum RouterCommand {
-    Connect {
-        stream: ProtobufTransport<TcpStream>,
+pub enum TableCommand {
+    Lookup {
         token: Vec<u8>,
+        chan: oneshot::Sender<Option<UnboundedSender<ClientControllerCommand>>>,
     },
-    Register {
-        handle: UnboundedSender<ClientControllerCommand>,
+    Insert {
         token: Vec<u8>,
+        value: UnboundedSender<ClientControllerCommand>,
     },
-    Unregister {
+    Remove {
         token: Vec<u8>,
     }
 }
 
-pub struct Router {
+pub struct RoutingTable {
     connections: HashMap<Vec<u8>, UnboundedSender<ClientControllerCommand>>,
-    ctrl_chan: UnboundedReceiver<RouterCommand>,
+    ctrl_chan: UnboundedReceiver<TableCommand>,
 }
 
-impl Router {
-    pub fn new(ctrl_chan: UnboundedReceiver<RouterCommand>) -> Self {
-        Router {
+impl RoutingTable {
+    pub fn new(ctrl_chan: UnboundedReceiver<TableCommand>) -> Self {
+        RoutingTable {
             ctrl_chan,
             connections: HashMap::new(),
         }
     } 
 
-    fn handle_command(&mut self, cmd: RouterCommand) {
+    fn handle_command(&mut self, cmd: TableCommand) {
         match cmd {
-            RouterCommand::Connect { token, stream } => {
-                let connection = self.connections.get(&token);
-                if let Some(handle) = connection {
-                    let cmd = ClientControllerCommand::Connect(stream);
-                    handle.unbounded_send(cmd).unwrap();
+            TableCommand::Lookup { token, chan } => {
+                let value = self.connections.get(&token).cloned();
+                match chan.send(value) {
+                    Ok(()) => return (),
+                    Err(_) => panic!("oneshot channel closed"),
                 }
             },
-            RouterCommand::Register { token, handle } => {
-                self.connections.insert(token, handle);
+            TableCommand::Insert { token, value } => {
+                self.connections.insert(token, value);
             },
-            RouterCommand::Unregister { token } => {
+            TableCommand::Remove { token } => {
                 self.connections.remove(&token);
             }
         }
     }
 }
 
-impl Future for Router {
+impl Future for RoutingTable {
     type Item = ();
     type Error = ();
 

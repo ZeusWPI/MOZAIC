@@ -7,7 +7,7 @@ use std::str;
 use slog;
 
 use protobuf_codec::ProtobufTransport;
-use router::RouterCommand;
+use router;
 use super::client_connection::ClientConnection;
 
 
@@ -51,7 +51,7 @@ pub struct ClientController {
     ctrl_handle: UnboundedSender<Command>,
     
     game_handle: UnboundedSender<ClientMessage>,
-    router_handle: UnboundedSender<RouterCommand>,
+    router_handle: UnboundedSender<router::TableCommand>,
 
     logger: slog::Logger,
 }
@@ -59,7 +59,7 @@ pub struct ClientController {
 impl ClientController {
     pub fn new(client_id: usize,
                token: Vec<u8>,
-               router_handle: UnboundedSender<RouterCommand>,
+               router_handle: UnboundedSender<router::TableCommand>,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
                -> Self
@@ -85,16 +85,16 @@ impl ClientController {
 
     /// Register this ClientController with its router
     pub fn register(&mut self) {
-        self.router_handle.unbounded_send(RouterCommand::Register {
+        self.router_handle.unbounded_send(router::TableCommand::Insert {
             token: self.token.clone(),
-            handle: self.handle(),
+            value: self.handle(),
         }).expect("router handle closed");
     }
 
     /// Unregister this ClientController from its router
     pub fn unregister(&mut self) {
 
-        self.router_handle.unbounded_send(RouterCommand::Unregister {
+        self.router_handle.unbounded_send(router::TableCommand::Remove {
             token: self.token.clone(),
         }).expect("router handle closed");
     }
