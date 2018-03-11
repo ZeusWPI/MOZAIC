@@ -36,7 +36,7 @@ function gen_protobuf(out_path) {
         "force-long": false,
         "force-number": false,
         "force-enum-string": false,
-        "force-message": false
+        "force-message": true
     };
 
     var root = new protobuf.Root();

@@ -16,5 +16,9 @@
     "plugin-error": "^1.0.1",
     "protobufjs": "^6.8.5",
     "typescript": "^2.7.2"
+  },
+  "dependencies": {
+    "@types/bluebird": "^3.5.20",
+    "bluebird": "^3.5.1"
   }
 }
