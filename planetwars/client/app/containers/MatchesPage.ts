@@ -19,6 +19,7 @@ const mapStateToProps = (state: IGState) => {
   };
 };
 
+// TODO: Copy matchlog
 const mapDispatchToProps = (dispatch: any) => {
   return {
     loadLog: (log: any): void => {

@@ -1,9 +1,11 @@
 import { routerReducer as routing, RouterState } from 'react-router-redux';
 import { combineReducers, Reducer } from 'redux';
 
+import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
+// import { db, SCHEMA } from '../utils/Database';
 
 // Global state
 export interface IGState {
@@ -12,6 +14,7 @@ export interface IGState {
   readonly botsPage: IBotsPageState;
   readonly matchesPage: IMatchesPageState;
   readonly aboutPage: IAboutPageState;
+  readonly globalErrors: any[];
 }
 
 export interface INavbarState { readonly toggled: boolean; }
@@ -28,6 +31,7 @@ export const initialState: IGState = {
   botsPage: { bots: [] },
   matchesPage: { matches: [] },
   aboutPage: { counter: 0 },
+  globalErrors: [],
 };
 
 const navbarReducer = combineReducers<INavbarState>({
@@ -61,14 +65,18 @@ const botsPageReducer = combineReducers<IBotsPageState>({
 
 const matchesPageReducer = combineReducers<IMatchesPageState>({
   matches: (state = [], action) => {
-    if (A.addMatchMeta.test(action)) {
+    if (A.addMatchMeta.test(action) || A.importMatchMeta.test(action)) {
       const newA = state.slice();
       newA.push(action.payload);
-      return newA;
-    }
-    if (A.importMatchMeta.test(action)) {
-      const newA = state.slice();
-      newA.push(action.payload);
+      // db.then((_db) => {
+      //   return _db
+      //     .get(SCHEMA.MATCHES)
+      //     .push(action.payload)
+      //     .write();
+      // }).catch((err) => {
+      //   store.dispatch(A.dbError(err));
+      // });
+
       return newA;
     }
     return state;
@@ -78,8 +86,17 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
       return action.payload;
     }
     return state;
-  }
+  },
 });
+
+const globalErrorReducer = (state: any[] = [], action: any) => {
+  if (A.dbError.test(action)) {
+    const newA = state.slice();
+    newA.push(action.payload);
+    return newA;
+  }
+  return state;
+};
 
 export const rootReducer = combineReducers<IGState>({
   routing: routing as Reducer<any>,
@@ -87,4 +104,5 @@ export const rootReducer = combineReducers<IGState>({
   botsPage: botsPageReducer,
   matchesPage: matchesPageReducer,
   aboutPage: aboutPageReducer,
+  globalErrors: globalErrorReducer,
 });

@@ -1,15 +1,17 @@
 import * as React from 'react';
+import * as Promise from 'bluebird';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import { h } from 'react-hyperscript-helpers';
 
 import Root from './containers/Root';
 import { initialState } from './reducers/index';
-import * as Promise from 'bluebird';
+import { bindToStore } from './utils/Database';
 import './app.global.scss';
 
 const { configureStore, history } = require('./store/configureStore');
-const store = configureStore(initialState);
+export const store = configureStore(initialState);
+bindToStore(store);
 
 // Config the global Bluebird Promise
 // We should still 'import * as Promise from bluebird' everywhere to have it at 
