@@ -1,14 +1,13 @@
 [Unit]
-Description=Battlebots
+Description=Bottlebats
 After=network.target
 
 [Service]
 Environment=ROCKET_ENV=production
 Environment=ROCKET_PORT=6969
-User=bottlebats
-WorkingDirectory=/home/bottlebats/MOZAIC/planetwars/web/
-ExecStartPre=/home/bottlebats/.cargo/bin/cargo build --release
+WorkingDirectory=/home/bottlebats/MOZAIC/planetwars/web
 ExecStart=/home/bottlebats/MOZAIC/planetwars/web/target/release/planetwars-web
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
+
