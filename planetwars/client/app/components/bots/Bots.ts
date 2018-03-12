@@ -1,34 +1,27 @@
 import * as React from 'react';
-import { div, h, li, p, ul } from "react-hyperscript-helpers";
+import { h, div, p, li, ul } from "react-hyperscript-helpers";
 
+import BotsConfig from "./containers/BotsConfigContainer";
+import BotsList from "./containers/BotsListContainer";
 import { IBotConfig } from '../../utils/ConfigModels';
-import BotsConfig from "./BotsConfig";
-import BotsList from "./BotsList";
+
 
 const styles = require("./Bots.scss");
 
 export interface IBotsProps {
-  bot: string;
+  bot: IBotConfig | null
 }
 
 export class Bots extends React.Component<IBotsProps, {}> {
   constructor(props: IBotsProps) {
     super(props);
   }
-  public render() {
+  render() {
     return h("div", `.${styles.bots}`, [
-      h("div", `.${styles.botslist}`, [
-        h(BotsList, {
-          rerender: () => this.forceUpdate(),
-        }),
-      ]),
-      h("div", `.${styles.botsconfig}`, [
-        h(BotsConfig, {
-          botName: this.props.bot,
-          rerender: () => this.forceUpdate(),
-        }),
-      ]),
-    ]);
+      h("div", `.${styles.botslist}`, [h(BotsList)]),
+      h("div", `.${styles.botsconfig}`,
+        [h(BotsConfig, { loadedBot: this.props.bot})])
+    ])
   }
 }
 

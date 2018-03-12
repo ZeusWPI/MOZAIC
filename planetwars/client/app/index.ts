@@ -1,6 +1,5 @@
-import * as React from 'react';
-import * as Promise from 'bluebird';
 import { render } from 'react-dom';
+import * as Promise from 'bluebird';
 import { AppContainer } from 'react-hot-loader';
 import { h } from 'react-hyperscript-helpers';
 
@@ -15,7 +14,7 @@ export const store = configureStore(initialState);
 bindToStore(store);
 
 // Config the global Bluebird Promise
-// We should still 'import * as Promise from bluebird' everywhere to have it at
+// We should still 'import * as Promise from bluebird' everywhere to have it at 
 // runtime tho.
 Promise.config({
   longStackTraces: true,

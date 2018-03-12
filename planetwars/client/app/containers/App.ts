@@ -4,11 +4,14 @@ import { h } from 'react-hyperscript-helpers';
 import { connect } from 'react-redux';
 
 
-import { addBot } from '../actions/actions';
+import { ObjectManager } from '../utils/ObjectManager';
+import { loadBot } from '../actions/actions';
+
+
+
+interface IProps { initApp: () => Promise<void> }
 import { IBotConfig } from '../utils/ConfigModels';
-import { ObjectLoader } from '../utils/ObjectLoader';
 import { IGState } from '../reducers';
-import { IMatchMetaData } from '../utils/GameModels';
 
 const styles = require("./App.scss");
 
@@ -26,8 +29,20 @@ export class App extends React.Component<IProps, {}> {
   }
 }
 
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    initApp: () => {
+      return ObjectManager
+        .initDirs()
+        .then(ObjectManager.loadBots)
+        .map((bot: IBotConfig) => dispatch(loadBot(bot)))
+        .all()
+        .then(() => Promise.resolve());
+    },
+  }
+}
 const mapStateToProps = (state: IGState) => {
   return { globalErrors: state.globalErrors };
 };
 
-export default connect(mapStateToProps, undefined)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);
