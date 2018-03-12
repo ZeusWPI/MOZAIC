@@ -6,6 +6,7 @@ export interface IMatchData {
 }
 
 export interface IMatchMetaData {
+  uuid: string;
   players: string[];
   logPath?: string;
   stats: IMatchStats;

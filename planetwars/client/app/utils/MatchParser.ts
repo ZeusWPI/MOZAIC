@@ -1,11 +1,14 @@
 import * as fs from 'mz/fs';
 import * as Promise from 'bluebird';
+import { v4 as uuidv4 } from 'uuid';
 
 import {
   IGameState, ILogFormat, IMatchMetaData, IMatchStats, IMatchData,
 } from './GameModels';
 import { MatchAnalyser } from './MatchAnalyser';
 
+// TODO: Clean this up, we probably want to make timestamp and
+// uuid more explicit;
 export class MatchParser {
 
   public static parseFileAsync(logPath: string): Promise<IMatchData> {
@@ -26,9 +29,9 @@ export class MatchParser {
   private static _parseMatch(contents: string): IMatchData {
     const { players, turns } = MatchParser._parseLog(contents);
     const timestamp = new Date(Date.now()); // TODO: Fix this
-
+    const uuid = uuidv4();
     const stats: IMatchStats = MatchAnalyser.analyseSync({ players, turns });
-    const meta: IMatchMetaData = { players, /*logPath,*/ timestamp, stats };
+    const meta: IMatchMetaData = { players, uuid, timestamp, stats };
 
     return { meta, log: turns };
   }

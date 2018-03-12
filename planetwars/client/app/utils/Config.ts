@@ -13,7 +13,7 @@ export class Config {
   public static maps = p.resolve(Config._data, Config._maps);
 
   public static generateMatchPath(match: IMatchMetaData): string {
-    return p.resolve(Config.matches, match.timestamp + '.json');
+    return p.resolve(Config.matches, match.uuid + '.json');
   }
 
   public static botPath(name: string): string {

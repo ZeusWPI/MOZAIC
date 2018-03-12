@@ -20,19 +20,29 @@ const mapStateToProps = (state: IGState) => {
   };
 };
 
-// TODO: Move logic to MatchImporter
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    loadLog: (log: any): void => {
-      MatchParser.parseFileAsync(log.path)
-        .then(copyMatchLog)
-        .then(
-          (match) => dispatch(A.importMatchMeta(match.meta)),
-          (err) => dispatch(A.matchImportError(err.message)),
-      );
+    loadLogs: (fileList: FileList): void => {
+      const files = Array.from(fileList); // Fuck FileList;
+      const imports = files.map((logFile) => {
+        const path = (<any> logFile).path;
+        return importLog(path, dispatch);
+      });
+      Promise.all(imports); // TODO: Check error handling
     },
   };
 };
+
+export default connect(mapStateToProps, mapDispatchToProps)(Matches);
+
+function importLog(logPath: string, dispatch: any): Promise<void> {
+  return MatchParser.parseFileAsync(logPath)
+    .then(copyMatchLog)
+    .then(
+      (match) => dispatch(A.importMatchMeta(match.meta)),
+      (err) => dispatch(A.matchImportError(err.message)),
+  );
+}
 
 function copyMatchLog(match: IMatchData): Promise<IMatchData> {
   const path = Config.generateMatchPath(match.meta);
@@ -44,5 +54,3 @@ function copyMatchLog(match: IMatchData): Promise<IMatchData> {
       return match;
     });
 }
-
-export default connect(mapStateToProps, mapDispatchToProps)(Matches);

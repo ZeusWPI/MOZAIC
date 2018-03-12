@@ -36,11 +36,37 @@ export function bindToStore(store: any) {
         console.log("Not adding bot yet", bot);
       });
     })
+    .then(() => initializeListeners)
     .then(() => store.subscribe(changeListener))
     .catch((err) => {
       store.dispatch(A.dbError(err));
       console.log(err);
     });
+}
+
+/*
+ * This gets procced when the state changes and checks whether the specific
+ * listeners need updating, and dispatches action when they require so.
+ */
+function changeListener() {
+  const state: IGState = store.getState();
+  listeners.forEach((listener) => {
+    const oldValue = listener.oldValue;
+    const newValue = listener.select(state);
+    if (oldValue !== newValue) {
+      listener.write(newValue, store.dispatch);
+    }
+  });
+}
+
+/*
+ * Initialize the listeners with the objects just synced from the DB.
+ * This way we precent a certain SYNC_DB event on the first, possible irrelevant,
+ * state change.
+ */
+function initializeListeners() {
+  const state: IGState = store.getState();
+  listeners.forEach((l) => l.select(state));
 }
 
 type Selector<T> = (state: IGState) => T;
@@ -73,25 +99,3 @@ const listeners: TableListener<any>[] = [
     SCHEMA.MATCHES,
   ),
 ];
-
-function changeListener() {
-  const state: IGState = store.getState();
-  listeners.forEach((listener) => {
-    const oldValue = listener.oldValue;
-    const newValue = listener.select(state);
-    if (oldValue !== newValue) {
-      listener.write(newValue, store.dispatch);
-    }
-  });
-}
-
-
-// function syncDB(dispatch: any): Promise<void> {
-//   return Promise.resolve(db)
-//     .then((_db) => _db.get(SCHEMA.MATCHES).value())
-//     .then((matches) => matches.forEach((match: IMatchMetaData) => {
-//       console.log(match);
-//       dispatch(A.addMatchMeta(match));
-//     }))
-//     .then(() => Promise.resolve());
-// }

@@ -68,15 +68,6 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
     if (A.addMatchMeta.test(action) || A.importMatchMeta.test(action)) {
       const newA = state.slice();
       newA.push(action.payload);
-      // db.then((_db) => {
-      //   return _db
-      //     .get(SCHEMA.MATCHES)
-      //     .push(action.payload)
-      //     .write();
-      // }).catch((err) => {
-      //   store.dispatch(A.dbError(err));
-      // });
-
       return newA;
     }
     return state;

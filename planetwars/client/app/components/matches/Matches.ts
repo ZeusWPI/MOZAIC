@@ -6,12 +6,12 @@ const styles = require('./Matches.scss');
 
 // tslint:disable-next-line:interface-over-type-literal
 type AnnotatedMatch = { id: number, match: IMatchMetaData };
-type LogLoader = (path: File) => void;
+type LogLoader = (paths: FileList) => void;
 
 interface IMatchesProps {
   expandedGameId: number;
   matches: AnnotatedMatch[];
-  loadLog: LogLoader;
+  loadLogs: LogLoader;
   importError: string;
 }
 
@@ -19,14 +19,16 @@ interface IState { }
 
 export default class Matches extends React.Component<IMatchesProps, IState> {
   public render() {
-    const { loadLog, importError, matches } = this.props;
+    const { loadLogs, importError, matches } = this.props;
+    // TODO: Error handling sucks, will get overridden on new problem;
     if (importError) { alert(importError); }
-    if (matches.length === 0) { return h(NoMatches, { loadLog }); }
+    if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
 
-    return div(`.{styles.matchesOverview}`, [
-      h(MatchImporter, { loadLog }),
-      div([
+    return div(`.${styles.matchesPage}`, [
+      h(MatchImporter, { loadLogs }),
+      div(`.${styles.matchesOverview}`, [
         h(MatchesList, { matches }),
+        h(MatchDetails, {}),
       ]),
     ]);
   }
@@ -35,11 +37,11 @@ export default class Matches extends React.Component<IMatchesProps, IState> {
 export class MatchesList extends React.Component<{ matches: AnnotatedMatch[] }> {
   public render() {
     const matches = this.props.matches.map((match) =>
-      li(`.${styles.gameElement}`, [
+      li(`.${styles.matchesListItem}`, [
         h(MatchEntry, { match }),
       ]),
     );
-    return ul(matches);
+    return ul(`.${styles.matchesListPane}`, matches);
   }
 }
 
@@ -51,13 +53,19 @@ interface IMatchEntryProps {
 export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
   const { stats, players } = props.match.match;
   const winnerName = players[stats.winner - 1] || "Tie";
-  return div(`.${styles.matchEntry}`, [
+  return div(`.${styles.match}`, [
     `Winner: ${winnerName} | ${stats.turns} turns`,
   ]);
 };
 
+export class MatchDetails extends React.Component<{}, {}> {
+  public render() {
+    return div(`.${styles.matchDetailsPane}`, ['No details yet!']);
+  }
+}
+
 // tslint:disable-next-line:variable-name
-export const NoMatches: React.SFC<{ loadLog: LogLoader }> = (props) => {
+export const NoMatches: React.SFC<{ loadLogs: LogLoader }> = (props) => {
   return div(`.${styles.noMatches}`, [
     h(MatchImporter, props),
     p(['No matches played yet!']),
@@ -65,15 +73,19 @@ export const NoMatches: React.SFC<{ loadLog: LogLoader }> = (props) => {
 };
 
 // TODO: Support loading multiple files
-export class MatchImporter extends React.Component<{ loadLog: LogLoader }> {
+export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
   private fileInput: FileList;
 
   public render() {
     return form(`.${styles.matchImporter}`,
       { onSubmit: (evt: any) => this.handleSubmit(evt) },
       [
-        label(['Import Match']),
-        input({ type: 'file', onChange: (evt: any) => this.handleChange(evt) }),
+        label(['Import Match(es)']),
+        input({
+          type: 'file',
+          multiple: true,
+          onChange: (evt: any) => this.handleChange(evt),
+        }),
         button({ type: 'submit' }, ['Import']),
       ]
     );
@@ -84,7 +96,6 @@ export class MatchImporter extends React.Component<{ loadLog: LogLoader }> {
   }
 
   private handleSubmit(event: any) {
-    this.props.loadLog(this.fileInput[0]);
+    this.props.loadLogs(this.fileInput);
   }
-
 }
