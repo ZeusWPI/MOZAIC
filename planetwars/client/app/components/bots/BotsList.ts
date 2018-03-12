@@ -6,19 +6,18 @@ import {RouteComponentProps} from 'react-router';
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 import BotElement from './containers/BotElementContainer';
-import {BotsState, IGState} from "../../reducers";
-import {BotConfig} from "../../utils/Models";
 import * as Promise from "bluebird";
+import {IBotConfig} from "../../utils/ConfigModels";
 
 let styles = require("./BotsList.scss");
 
 export interface BotsListProps {
   refreshBots: () => Promise<void>,
-  bots: any
+  bots: IBotConfig[]
 }
 
 
-export default class BotsList extends React.Component<any, any> {
+export default class BotsList extends React.Component<BotsListProps, any> {
 
   constructor(props: BotsListProps) {
     super(props);
@@ -28,7 +27,7 @@ export default class BotsList extends React.Component<any, any> {
   render() {
 
 
-    let botElements: React.Component[] = this.props.bots.bots.map((botConfig: BotConfig) =>
+    let botElements: React.Component[] = this.props.bots.map((botConfig: IBotConfig) =>
       (h(BotElement, `.${styles.botlistitem}`,
           {key: botConfig.name, name: botConfig.name, refreshBots: this.props.refreshBots})
       )

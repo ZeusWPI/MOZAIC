@@ -4,7 +4,7 @@ import * as Promise from 'bluebird'
 import {h} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 import BotsPage from "../../containers/BotsPage";
-import {BotsState} from "../../reducers";
+import { IBotsPageState} from "../../reducers";
 
 let styles = require("./BotsList.scss");
 
@@ -13,7 +13,7 @@ interface BotElementProps {
   removeBot: () => Promise<void>
 }
 
-export default class BotElement extends React.Component<any, BotsState> {
+export default class BotElement extends React.Component<any, IBotsPageState> {
   constructor(props: BotElementProps) {
     super(props);
   }

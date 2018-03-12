@@ -4,7 +4,7 @@ import {connect} from 'react-redux';
 import {Bots, IBotsProps} from "../components/bots/Bots";
 import {IGState} from '../reducers/index';
 import {} from '../actions/actions';
-import {BotConfig} from "../utils/Models";
+import {IBotConfig} from "../utils/ConfigModels";
 
 interface IProps {
   match: any
@@ -18,12 +18,12 @@ const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
 
 };
 
-const selectBotByName = (state: IGState, ownProps: IProps): BotConfig | null => {
+const selectBotByName = (state: IGState, ownProps: IProps): IBotConfig | null => {
 
     let botname = ownProps.match.params.bot;
     if (botname) {
 
-      let selectedBot: any = state.bots.bots.find((bot: BotConfig) => bot.name == botname);
+      let selectedBot: any = state.botsPage.bots.find((bot: IBotConfig) => bot.name == botname);
       if (selectedBot) {
         return selectedBot
       }

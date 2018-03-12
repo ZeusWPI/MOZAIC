@@ -1,8 +1,8 @@
 import BotElement from '../BotElement'
 import * as Promise from 'bluebird'
-import {BotsState} from "../../../reducers";
+import { IBotsPageState} from "../../../reducers";
 import {connect} from "react-redux";
-import {botsRerender, removeBot} from "../../../actions/actions";
+import { removeBot} from "../../../actions/actions";
 import {removeBotFileByName} from "../helpers/BotFileManager";
 import {ObjectManager} from "../../../utils/ObjectManager";
 import BotRefresher from "../../../utils/BotRefresher";
@@ -12,7 +12,7 @@ interface BotElementContainerProps {
   refreshBots: () => Promise<void>
 }
 
-const mapStateToProps = (state: BotsState, ownProps: BotElementContainerProps) => {
+const mapStateToProps = (state: IBotsPageState, ownProps: BotElementContainerProps) => {
   return {
     name: ownProps.name
   }

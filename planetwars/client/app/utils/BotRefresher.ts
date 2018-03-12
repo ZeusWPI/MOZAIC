@@ -1,7 +1,7 @@
 import * as Promise from "bluebird";
 import {ObjectManager} from "./ObjectManager";
-import {clearBots, loadBot} from "../actions/actions";
-import {BotConfig} from "./Models";
+import {addBot, clearBots} from "../actions/actions";
+import {IBotConfig} from "./ConfigModels";
 
 export default class BotRefresher {
 
@@ -9,7 +9,7 @@ export default class BotRefresher {
       dispatch(clearBots());
     return () =>
       ObjectManager.loadBots()
-      .map((bot: BotConfig) => dispatch(loadBot(bot)))
+      .map((bot: IBotConfig) => dispatch(addBot(bot)))
       .all()
       .then(() => Promise.resolve());
   }

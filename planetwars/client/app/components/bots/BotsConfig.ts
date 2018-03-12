@@ -5,15 +5,15 @@ import * as fs from 'fs';
 import {RouteComponentProps} from 'react-router';
 import {h} from 'react-hyperscript-helpers';
 import {Config} from '../../utils/Config';
-import {BotConfig} from "../../utils/Models";
+import {IBotConfig} from "../../utils/ConfigModels";
 
 let styles = require("./BotsConfig.scss");
 
 interface BotsConfigProps {
   botName: string,
-  loadedBot: BotConfig | null,
+  loadedBot: IBotConfig | null,
   refreshBots: Function,
-  saveBot: (bot: BotConfig) => Promise<{}>
+  saveBot: (bot: IBotConfig) => Promise<{}>
 }
 
 interface BotsConfigState {

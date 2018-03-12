@@ -55,7 +55,7 @@ const aboutPageReducer = combineReducers<IAboutPageState>({
 const botsPageReducer = combineReducers<IBotsPageState>({
   bots: (state = [], action) => {
     if (A.addBot.test(action)) {
-      const newA = state.slice();
+      let newA = state.slice();
       newA.push(action.payload);
       return newA;
     }

@@ -3,8 +3,8 @@ import * as Promise from 'bluebird';
 import * as util from 'util';
 import * as p from 'path';
 
-import {BotConfig, isBotConfig} from './Models';
-import {Config} from './Config';
+import {IBotConfig, isBotConfig} from "./ConfigModels";
+import {Config} from "./Config";
 
 // TODO: Maybe not make static?
 export class ObjectManager {
@@ -14,7 +14,7 @@ export class ObjectManager {
   });
 
   static initDirs(): Promise<void> {
-    const dirs = [Config.bots, Config.maps, Config.games];
+    const dirs = [Config.bots, Config.maps, Config.matches];
     const mkdirAsync = Promise.promisify(fs.mkdir);
 
     return Promise.resolve(dirs)
@@ -23,12 +23,12 @@ export class ObjectManager {
       .all().then()
   }
 
-  static loadBots(): Promise<BotConfig[]> {
+  static loadBots(): Promise<IBotConfig[]> {
     let dir = Config.bots;
     let readDirAsync = Promise.promisify(fs.readdir);
     let readFileAsync = Promise.promisify(fs.readFile);
 
-    type Parser = (path: string) => Promise<BotConfig>;
+    type Parser = (path: string) => Promise<IBotConfig>;
     let parse: Parser = (path) =>
       readFileAsync(p.resolve(dir, path))
         .then(data => data.toString())
@@ -65,7 +65,7 @@ export class ObjectManager {
         })
   }
 
-  static saveBotFile(bot: BotConfig): Promise<void> {
+  static saveBotFile(bot: IBotConfig): Promise<void> {
 
     let mkdirAsync = Promise.promisify(fs.mkdir);
     let writeFileAsync = Promise.promisify(fs.writeFile);
