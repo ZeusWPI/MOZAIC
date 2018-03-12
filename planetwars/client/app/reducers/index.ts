@@ -55,17 +55,17 @@ const botsReducer = combineReducers<BotsState>({
       return newA;
     }
 
-    else if (A.saveBot.test(action)) {
-      let newA = state.slice();
-      let existingBotIndex = newA.indexOf((bot:BotConfig) => bot == action.payload);
-      if (existingBotIndex == -1){
-        newA.push(action.payload);
-      }
-      else {
-        newA[existingBotIndex] = action.payload
-      }
-      return newA;
-    }
+    // else if (A.saveBot.test(action)) {
+    //   let newA = state.slice();
+    //   let existingBotIndex = newA.indexOf((bot:BotConfig) => bot == action.payload);
+    //   if (existingBotIndex == -1){
+    //     newA.push(action.payload);
+    //   }
+    //   else {
+    //     newA[existingBotIndex] = action.payload
+    //   }
+    //   return newA;
+    // }
 
     else if (A.clearBots.test(action)) {
       return [];

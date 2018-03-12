@@ -7,7 +7,7 @@ import {BotsState} from "../../../reducers";
 import {BotConfig} from "../../../utils/Models";
 import BotRefresher from "../../../utils/BotRefresher";
 import {ObjectManager} from "../../../utils/ObjectManager";
-import {saveBot} from "../../../actions/actions";
+// import {saveBot} from "../../../actions/actions";
 
 interface IBotsConfigContainer {
   loadedBot: BotConfig | null
