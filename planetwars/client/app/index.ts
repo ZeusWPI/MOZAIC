@@ -8,6 +8,7 @@ import Root from './containers/Root';
 import { initialState } from './reducers/index';
 import { bindToStore } from './utils/Database';
 import './app.global.scss';
+import './fontawesome.global.scss';
 
 const { configureStore, history } = require('./store/configureStore');
 export const store = configureStore(initialState);
