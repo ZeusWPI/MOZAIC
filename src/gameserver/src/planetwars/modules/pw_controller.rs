@@ -66,8 +66,8 @@ impl PwController {
     }
 
     fn execute_messages(&mut self, mut msgs:HashMap<PlayerId, String>) {
-        for (client_id, message) in msgs.drain() {
-            self.execute_message(client_id, message);
+        for (player_id, message) in msgs.drain() {
+            self.execute_message(player_id, message);
         }
     }
 
@@ -79,7 +79,7 @@ impl PwController {
             },
             Err(err) => {
                 info!(self.logger, "parse error";
-                    "client_id" => player_id.as_usize(),
+                    "player_id" => player_id.as_usize(),
                     "error" => err.to_string()
                 );
             },
@@ -91,14 +91,14 @@ impl PwController {
             match self.parse_command(player_id, &cmd) {
                 Ok(dispatch) => {
                     info!(self.logger, "dispatch";
-                        "client_id" => player_id.as_usize(),
+                        "player_id" => player_id.as_usize(),
                         cmd);
                     self.state.dispatch(&dispatch);
                 },
                 Err(err) => {
                     // TODO: include actual error
                     info!(self.logger, "illegal command";
-                        "client_id" => player_id.as_usize(),
+                        "player_id" => player_id.as_usize(),
                         cmd,
                         "error" => serde_json::to_string(&err).unwrap());
                 }

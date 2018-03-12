@@ -25,7 +25,7 @@ error_chain! {
 }
 
 pub struct ClientMessage {
-    pub client_id: PlayerId,
+    pub player_id: PlayerId,
     pub message: Message,
 }
 
@@ -46,7 +46,7 @@ enum Connection {
 // TODO: the client controller should also be handed a log handle
 
 pub struct ClientController {
-    client_id: PlayerId,
+    player_id: PlayerId,
     
     sender: BufferedSender<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
@@ -61,7 +61,7 @@ pub struct ClientController {
 }
 
 impl ClientController {
-    pub fn new(client_id: PlayerId,
+    pub fn new(player_id: PlayerId,
                conn: BotHandle,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
@@ -78,10 +78,10 @@ impl ClientController {
             ctrl_handle: snd,
 
             game_handle,
-            client_id,
+            player_id,
 
             logger: logger.new(
-                o!("client_id" => client_id.as_usize())
+                o!("player_id" => player_id.as_usize())
             ),
             connected: Connection::Disconnected,
         };
@@ -96,7 +96,7 @@ impl ClientController {
     /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
         let msg = ClientMessage {
-            client_id: self.client_id.clone(),
+            player_id: self.player_id.clone(),
             message: message,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");

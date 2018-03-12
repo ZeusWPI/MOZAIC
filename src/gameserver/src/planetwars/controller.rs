@@ -162,7 +162,7 @@ impl<G, L, C> Future for Controller<G, L, C>
             }
 
             let msg = try_ready!(self.client_msgs.poll()).unwrap();
-            self.handle_message(msg.client_id, msg.message);
+            self.handle_message(msg.player_id, msg.message);
         }
     }
 }
