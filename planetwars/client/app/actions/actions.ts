@@ -6,4 +6,4 @@ export const incrementAbout = actionCreatorVoid('TEST');
 export const loadBot = actionCreator<BotConfig>('LOAD_BOT');
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
-export const matchCrashed = actionCreatorVoid('MATCH_CHRASHED');
+export const matchCrashed = actionCreator<any>('MATCH_CHRASHED');

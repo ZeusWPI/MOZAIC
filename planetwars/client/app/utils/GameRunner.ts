@@ -1,7 +1,9 @@
 import { store } from "../index"
 import { MatchConfig } from "./Models"
-import { gameStarted, gameFinished, gameCrashed } from '../actions/actions';
-import Config from "./Config"
+import { matchStarted, matchFinished, matchCrashed } from '../actions/actions';
+import { Config } from "./Config"
+import { v4 as uuidv4 }  from "uuid"
+import * as fs from "fs"
 
 const execFile = require('child_process').execFile;
 
@@ -13,13 +15,20 @@ export default class GameRunner {
   }
 
   runBotRunner() {
-    store.dispatch(gameStarted())
-    const child = execFile(Config.binaryLocation, [this.conf], ((error:any, stdout:any, stderr:any) => {
+    store.dispatch(matchStarted())
+    let configFile = this.createConfig(JSON.stringify(this.conf))
+    const child = execFile(Config.matchRunner, [configFile], ((error:any, stdout:any, stderr:any) => {
       if (error) {
-          store.dispatch(gameCrashed())
+          store.dispatch(matchCrashed(error))
       } else {
-          store.dispatch(gameFinished())
+          store.dispatch(matchFinished())
       }
     }));
+  }
+
+  createConfig(json:string) {
+    let path = Config.configPath(uuidv4())
+    fs.writeFileSync(path, json)
+    return path
   }
 }
