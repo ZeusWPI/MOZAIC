@@ -6,16 +6,17 @@ import { Navbar } from '../components/Navbar';
 
 const mapStateToProps = (state: IGState) => {
   return {
-    toggled: state.navbar.toggled
-  }
-}
+    toggled: state.navbar.toggled,
+    notifications: state.navbar.notifications,
+  };
+};
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
     toggle: () => {
-      dispatch(toggleNavMenu())
-    }
-  }
-}
+      dispatch(toggleNavMenu());
+    },
+  };
+};
 
 export default connect(mapStateToProps, mapDispatchToProps)(Navbar);

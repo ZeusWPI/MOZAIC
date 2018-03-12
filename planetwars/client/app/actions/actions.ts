@@ -1,5 +1,6 @@
 import { IBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
+import { INotification } from '../components/Navbar';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 
@@ -24,3 +25,6 @@ export const matchCrashed = actionCreator<any>('MATCH_CHRASHED');
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');
 export const dbSync = actionCreator<any>('DB_SYNC');
+
+// Notifications
+export const addNotification = actionCreator<INotification>('ADD_NOTIFICATION');

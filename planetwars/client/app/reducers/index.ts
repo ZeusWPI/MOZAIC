@@ -5,6 +5,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
+import { INotification } from '../components/Navbar';
 // import { db, SCHEMA } from '../utils/Database';
 
 // Global state
@@ -17,7 +18,7 @@ export interface IGState {
   readonly globalErrors: any[];
 }
 
-export interface INavbarState { readonly toggled: boolean; }
+export interface INavbarState { readonly toggled: boolean; readonly notifications: INotification[]; }
 export interface IBotsPageState { readonly bots: IBotConfig[]; }
 export interface IMatchesPageState {
   readonly matches: IMatchMetaData[];
@@ -27,7 +28,7 @@ export interface IAboutPageState { readonly counter: number; }
 
 export const initialState: IGState = {
   routing: { location: null },
-  navbar: { toggled: false },
+  navbar: { toggled: false, notifications: [] },
   botsPage: { bots: [] },
   matchesPage: { matches: [] },
   aboutPage: { counter: 0 },
@@ -38,6 +39,14 @@ const navbarReducer = combineReducers<INavbarState>({
   toggled: (state = false, action) => {
     if (A.toggleNavMenu.test(action)) {
       return !state;
+    }
+    return state;
+  },
+  notifications: (state = [], action) => {
+    if (A.addNotification.test(action)) {
+      const newState = state.slice();
+      newState.push(action.payload);
+      return newState;
     }
     return state;
   },
