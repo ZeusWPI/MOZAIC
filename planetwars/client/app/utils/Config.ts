@@ -1,9 +1,10 @@
 import { GameMetrics } from "./Models"
 
-export class Config {
+export default class Config {
   static botsLocation = "./bots/"
   static gamesLocation = "./games/"
   static mapsLocation = "./maps/"
+  static binaryLocation = ""
 
   static generateGamesPath(game:GameMetrics)
   {
