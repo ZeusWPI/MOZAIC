@@ -1,0 +1,13 @@
+[Unit]
+Description=Bottlebats
+After=network.target
+
+[Service]
+Environment=ROCKET_ENV=production
+Environment=ROCKET_PORT=6969
+WorkingDirectory=/home/bottlebats/MOZAIC/planetwars/web
+ExecStart=/home/bottlebats/MOZAIC/planetwars/web/target/release/planetwars-web
+
+[Install]
+WantedBy=multi-user.target
+

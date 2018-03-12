@@ -205,12 +205,6 @@ export class ArgumentFields extends React.Component<ArgumentFieldsProps, Argumen
   }
 }
 
-// Useful for debugging...
-function abc(x: any) {
-  console.log(x);
-  return x;
-}
-
 interface ArgumentFieldProps {
   arg: string,
   handleChange: Function

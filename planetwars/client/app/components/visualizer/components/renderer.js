@@ -23,17 +23,13 @@ class Renderer extends React.Component {
 
   componentDidMount() {
     this.loadResources();
-    this.voronoiContainer = d3.select(this.svg).append('g').attr('transform', 'translate(1, -7)');
-    this.container = d3.select(this.svg).append('g')
-      // TODO: There are some bugs with viewboxes and centering
-      .attr('transform', 'translate(1, -7)');
+    this.voronoiContainer = d3.select(this.svg).append('g');
+    this.container = d3.select(this.svg).append('g');
     this.planetRenderer = new PlanetRenderer(this.container);
     this.expeditionRenderer = new ExpeditionRenderer(this.container);
-    //function initVoronoi(turns, color_map, box){
 
     this.turn = this.props.game.turns[0];
     this.calculateViewBox();
-    console.log(this.props.game);
     this.voronoiRenderer = Voronoi.initVoronoi(this.props.game.turns, Config.player_color, [this.min, this.max]);
     this.createZoom();
     if (this.props.game) {

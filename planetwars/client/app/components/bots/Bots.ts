@@ -3,12 +3,13 @@ import { h, div, p, li, ul } from "react-hyperscript-helpers";
 
 import BotsConfig from "./containers/BotsConfigContainer";
 import BotsList from "./containers/BotsListContainer";
-import { BotConfig } from '../../utils/Models';
+import { IBotConfig } from '../../utils/ConfigModels';
 
-let styles = require("./Bots.scss");
+
+const styles = require("./Bots.scss");
 
 export interface IBotsProps {
-  bot: BotConfig | null
+  bot: IBotConfig | null
 }
 
 export class Bots extends React.Component<IBotsProps, {}> {

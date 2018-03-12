@@ -1,27 +1,28 @@
-import * as React from 'react';
 import * as Promise from 'bluebird';
-import { connect } from 'react-redux';
+import * as React from 'react';
 import { h } from 'react-hyperscript-helpers';
+import { connect } from 'react-redux';
 
 
 import { ObjectManager } from '../utils/ObjectManager';
 import { loadBot } from '../actions/actions';
-import { BotConfig } from '../utils/Models';
 
-let styles = require("./App.scss");
 
 
 interface IProps { initApp: () => Promise<void> }
+import { IBotConfig } from '../utils/ConfigModels';
+import { IGState } from '../reducers';
 
-export class App extends React.Component<IProps, any> {
+const styles = require("./App.scss");
 
-  componentDidMount() {
-    this.props
-      .initApp()
-    // .catch(err => alert(err))
-  }
+interface IProps {
+  globalErrors: any[];
+}
 
-  render() {
+export class App extends React.Component<IProps, {}> {
+
+  public render() {
+    this.props.globalErrors.forEach((val) => alert(JSON.stringify(val)));
     return (
       h("div", `.${styles.app}`, [this.props.children])
     );
@@ -34,12 +35,14 @@ const mapDispatchToProps = (dispatch: any) => {
       return ObjectManager
         .initDirs()
         .then(ObjectManager.loadBots)
-        .map((bot: BotConfig) => dispatch(loadBot(bot)))
+        .map((bot: IBotConfig) => dispatch(loadBot(bot)))
         .all()
         .then(() => Promise.resolve());
     },
   }
 }
+const mapStateToProps = (state: IGState) => {
+  return { globalErrors: state.globalErrors };
+};
 
-export default connect(null, mapDispatchToProps)(App)
-
+export default connect(mapStateToProps, mapDispatchToProps)(App);

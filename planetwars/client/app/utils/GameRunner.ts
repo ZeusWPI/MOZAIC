@@ -1,29 +1,34 @@
-import { store } from "../index"
-import { MatchConfig } from "./Models"
-import { gameStarted, gameFinished, gameCrashed } from '../actions/actions';
+import { store } from "../index";
+import { IMatchConfig } from "./ConfigModels";
+import { matchStarted, matchFinished, matchCrashed } from '../actions/actions';
+import { Config } from "./Config"
+import { v4 as uuidv4 } from "uuid"
+import * as fs from "fs"
 
 const execFile = require('child_process').execFile;
 
 export default class GameRunner {
-  conf:MatchConfig;
-  constructor(conf:MatchConfig) {
+  conf: IMatchConfig;
+  constructor(conf: IMatchConfig) {
     this.conf = conf;
     this.runBotRunner();
   }
 
   runBotRunner() {
-    store.dispatch(gameStarted())
-    const child = execFile("./../../../botdriver/target/debug/mozaic_bot_driver.exe", [this.conf], ((error:any, stdout:any, stderr:any) => {
+    store.dispatch(matchStarted())
+    let configFile = this.createConfig(JSON.stringify(this.conf))
+    const child = execFile(Config.matchRunner, [configFile], ((error: any, stdout: any, stderr: any) => {
       if (error) {
-          // console.error(error);
-          // console.log("Botrunner returned: ", stdout);
-          // console.error(stderr);
-          // this.setState({value: "Error, see console for details"});
-          store.dispatch(gameCrashed())
+        store.dispatch(matchCrashed(error))
       } else {
-          // fs.readFile("./gamelog.json", "utf-8", (err:string, data:string) =>  { this.setState({value: "Done executing", gamelog: data}); this.props.gamesetter(data) });
-          store.dispatch(gameFinished())
+        store.dispatch(matchFinished())
       }
     }));
+  }
+
+  createConfig(json: string) {
+    let path = Config.configPath(uuidv4())
+    fs.writeFileSync(path, json)
+    return path
   }
 }
