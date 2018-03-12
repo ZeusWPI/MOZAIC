@@ -11,6 +11,7 @@ use slog;
 
 use bot_runner::BotHandle;
 use buffered_sender::BufferedSender;
+use planetwars::controller::PlayerId;
 
 
 error_chain! {
@@ -24,7 +25,7 @@ error_chain! {
 }
 
 pub struct ClientMessage {
-    pub client_id: usize,
+    pub client_id: PlayerId,
     pub message: Message,
 }
 
@@ -41,10 +42,11 @@ enum Connection {
     Disconnected,
 }
 
+
 // TODO: the client controller should also be handed a log handle
 
 pub struct ClientController {
-    client_id: usize,
+    client_id: PlayerId,
     
     sender: BufferedSender<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
@@ -59,7 +61,7 @@ pub struct ClientController {
 }
 
 impl ClientController {
-    pub fn new(client_id: usize,
+    pub fn new(client_id: PlayerId,
                conn: BotHandle,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
@@ -79,7 +81,7 @@ impl ClientController {
             client_id,
 
             logger: logger.new(
-                o!("client_id" => client_id)
+                o!("client_id" => client_id.as_usize())
             ),
             connected: Connection::Disconnected,
         };
@@ -94,7 +96,7 @@ impl ClientController {
     /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
         let msg = ClientMessage {
-            client_id: self.client_id,
+            client_id: self.client_id.clone(),
             message: message,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");

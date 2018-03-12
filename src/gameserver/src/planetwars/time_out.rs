@@ -8,6 +8,8 @@ use tokio_timer::Sleep;
 use tokio_timer::Timer;
 use std::time::Duration;
 
+use planetwars::controller::PlayerId;
+
 pub struct Timeout{
     game_handle: UnboundedSender<ClientMessage>,
     loop_handle: Handle,
@@ -33,7 +35,7 @@ impl Timeout {
             self.loop_handle.spawn(
                 t.and_then(move |_| {
                     let msg = ClientMessage {
-                        client_id: 666,
+                        client_id: PlayerId::new(666),
                         message: Message::Timeout,
                     };
                     out.unbounded_send(msg).expect("handle broke in timeout");

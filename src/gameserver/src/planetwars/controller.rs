@@ -25,10 +25,27 @@ pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
     timeout: Timeout,
 }
 
+#[derive(PartialEq, Clone, Copy, Eq, Hash, Debug)]
+pub struct PlayerId {
+    id: usize,
+}
+
+impl PlayerId {
+    pub fn new(id: usize) -> PlayerId {
+        PlayerId {
+            id
+        }
+    }
+
+    pub fn as_usize(&self) -> usize {
+        self.id
+    }
+}
+
 
 #[derive(Clone)]
 pub struct Client {
-    pub id: usize,
+    pub id: PlayerId,
     pub player_name: String,
     pub handle: UnboundedSender<String>,
 }
@@ -50,8 +67,8 @@ impl<G, L, C> Controller<G, L, C>
                conf: C, mut timeout: Timeout, logger: slog::Logger,)
                -> Controller<G, L, C>
     {
-        let mut client_ids = HashSet::new();
-        client_ids.extend(clients.iter().map(|c| c.id));
+        let mut player_ids = HashSet::new();
+        player_ids.extend(clients.iter().map(|c| c.id.clone()));
         
         // initial connection timeout starts at 1 minute
         timeout.set_timeout(60000);
@@ -59,7 +76,7 @@ impl<G, L, C> Controller<G, L, C>
         Controller {
             phantom_game_controller: PhantomData,
             phantom_config: PhantomData,
-            lock: Lock::new(GameController::new(conf, clients, logger.clone()), client_ids),
+            lock: Lock::new(GameController::new(conf, clients, logger.clone()), player_ids),
             client_msgs,
             logger,
             timeout,
@@ -67,31 +84,31 @@ impl<G, L, C> Controller<G, L, C>
     }
 
     /// Handle an incoming message.
-    fn handle_message(&mut self, client_id: usize, msg: Message) {
+    fn handle_message(&mut self, player_id: PlayerId, msg: Message) {
         match msg {
             Message::Data(msg) => {
                 // TODO: maybe it would be better to log this in the
                 // client_controller.
                 info!(self.logger, "message received";
-                    "client_id" => client_id,
+                    "player_id" => player_id.as_usize(),
                     "content" => &msg,
                 );
-                self.lock.attach_command(client_id, msg);
+                self.lock.attach_command(player_id, msg);
             },
             Message::Disconnected => {
                 // TODO: should a reason be included here?
                 // It might be more useful to have the client controller log
                 // disconnect reasons.
                 info!(self.logger, "client disconnected";
-                    "client_id" => client_id
+                    "player_id" => player_id.as_usize()
                 );
-                self.lock.disconnect(client_id);
+                self.lock.disconnect(player_id);
             },
             Message::Connected => {
                 info!(self.logger, "client connected";
-                    "client_id" => client_id
+                    "player_id" => player_id.as_usize()
                 );
-                self.lock.connect(client_id);
+                self.lock.connect(player_id);
             },
             Message::Timeout => {
                 if self.timeout.is_expired() {
@@ -109,7 +126,7 @@ impl<G, L, C> Controller<G, L, C>
     }
 
     /// Steps the lock step 1 step, and sets a new timeout
-    fn force_lock_step(&mut self) -> Option<Poll<Vec<usize>, ()>> {
+    fn force_lock_step(&mut self) -> Option<Poll<Vec<PlayerId>, ()>> {
         let (time_out, maybe_result) = self.lock.do_step();
         self.start_time_out(time_out);
 
@@ -121,7 +138,7 @@ impl<G, L, C> Controller<G, L, C>
     }
 
     /// Steps the lock while ready, or until the game finishes
-    fn run_lock(&mut self) -> Option<Poll<Vec<usize>, ()>> {
+    fn run_lock(&mut self) -> Option<Poll<Vec<PlayerId>, ()>> {
         while self.lock.is_ready() {
             if let Some(re) = self.force_lock_step() {
                 return Some(re);
@@ -134,10 +151,10 @@ impl<G, L, C> Controller<G, L, C>
 impl<G, L, C> Future for Controller<G, L, C>
     where G:GameController<C>, L: Lock<G, C>, C: DeserializeOwned
 {
-    type Item = Vec<usize>;
+    type Item = Vec<PlayerId>;
     type Error = ();
 
-    fn poll(&mut self) -> Poll<Vec<usize>, ()> {
+    fn poll(&mut self) -> Poll<Vec<PlayerId>, ()> {
         loop {
             if let Some(result) = self.run_lock() {
                 println!("ended {:?}", result);

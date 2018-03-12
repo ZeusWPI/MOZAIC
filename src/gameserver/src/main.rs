@@ -46,6 +46,7 @@ use planetwars::modules::pw_controller::PwController;
 use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
 use planetwars::time_out::Timeout;
+use planetwars::controller::PlayerId;
 
 type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
 type FullController = SubController<PwController, planetwars::modules::Config>;
@@ -82,6 +83,7 @@ fn main() {
 
 
     let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
+        let num = PlayerId::new(num);
         let bot_handle = bots.remove(&desc.name).unwrap();
         let controller = ClientController::new(
             num,

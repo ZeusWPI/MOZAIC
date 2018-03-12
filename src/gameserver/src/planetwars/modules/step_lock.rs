@@ -6,6 +6,7 @@ use std::marker::PhantomData;
 
 use planetwars::game_controller::GameController;
 use planetwars::lock::Lock;
+use planetwars::controller::PlayerId;
 
 #[derive(PartialEq)]
 enum GameState {
@@ -15,9 +16,9 @@ enum GameState {
 
 pub struct StepLock<G: GameController<C>, C: DeserializeOwned> {
     phantom_config: PhantomData<C>,
-    client_messages: HashMap<usize, String>,
-    awaiting_clients: HashSet<usize>,
-    connected_clients: HashSet<usize>,
+    client_messages: HashMap<PlayerId, String>,
+    awaiting_clients: HashSet<PlayerId>,
+    connected_clients: HashSet<PlayerId>,
     game_controller: G,
     running: GameState,
 }
@@ -25,7 +26,7 @@ pub struct StepLock<G: GameController<C>, C: DeserializeOwned> {
 impl<G, C> Lock<G, C> for StepLock<G, C>
     where G: GameController<C>, C: DeserializeOwned
 {
-    fn new(game_controller: G, awaiting_clients: HashSet<usize>) -> StepLock<G, C> {
+    fn new(game_controller: G, awaiting_clients: HashSet<PlayerId>) -> StepLock<G, C> {
         StepLock {
             phantom_config: PhantomData,
             client_messages: HashMap::new(),
@@ -36,7 +37,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         }
     }
 
-    fn do_step(&mut self) -> (u64, Option<Vec<usize>>) {
+    fn do_step(&mut self) -> (u64, Option<Vec<PlayerId>>) {
         match self.running {
             GameState::Waiting => {
                             self.running = GameState::Running;
@@ -57,20 +58,20 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         }
     }
 
-    fn attach_command(&mut self, client_id: usize, msg: String) {
-        self.client_messages.insert(client_id, msg);
+    fn attach_command(&mut self, client_id: PlayerId, msg: String) {
         self.awaiting_clients.remove(&client_id);
+        self.client_messages.insert(client_id, msg);
     }
 
-    fn connect(&mut self, client_id: usize) {
+    fn connect(&mut self, client_id: PlayerId) {
         self.connected_clients.insert(client_id);
     }
 
-    fn disconnect(&mut self, client_id: usize) {
+    fn disconnect(&mut self, client_id: PlayerId) {
         self.connected_clients.remove(&client_id);
     }
 
-    fn do_time_out(&mut self) -> (u64, Option<Vec<usize>>) {
+    fn do_time_out(&mut self) -> (u64, Option<Vec<PlayerId>>) {
         self.awaiting_clients.clone().iter().for_each(|c| {
                                             self.client_messages.insert(*c, String::new());
                                             }

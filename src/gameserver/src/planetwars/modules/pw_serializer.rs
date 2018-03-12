@@ -1,5 +1,6 @@
 use planetwars::modules::pw_rules::{PlanetWars, Planet, Expedition};
 use planetwars::modules::pw_protocol as proto;
+use planetwars::controller::PlayerId;
 
 /// Serialize given gamestate
 pub fn serialize(state: &PlanetWars) -> proto::State {
@@ -43,9 +44,9 @@ impl<'a> Serializer<'a> {
     /// Gets the player number for given player id.
     /// Player numbers are 1-based (as opposed to player ids), They will also be
     /// rotated based on the number offset for this serializer.
-    fn player_num(&self, player_id: usize) -> u64 {
+    fn player_num(&self, player_id: PlayerId) -> u64 {
         let num_players = self.state.players.len();
-        let rotated_id = (player_id + self.player_num_offset) % num_players;
+        let rotated_id = (player_id.as_usize() + self.player_num_offset) % num_players;
         // protocol player ids start at 1
         return (rotated_id + 1) as u64;
     }

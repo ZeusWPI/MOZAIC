@@ -6,6 +6,7 @@ use serde_json;
 
 use planetwars::modules::pw_protocol;
 use planetwars::modules::pw_rules::*;
+use planetwars::controller::PlayerId;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,7 +18,7 @@ pub struct Config {
 impl Config {
     pub fn create_game(&self, num_players: usize) -> PlanetWars {
         let players = (0..num_players)
-            .map(|id| Player { id, alive: true })
+            .map(|id| Player { id: PlayerId::new(id), alive: true })
             .collect();
         let planets = self.load_map(num_players);
         
@@ -44,7 +45,7 @@ impl Config {
                     let id = num as usize - 1;
                     // ignore players that are not in the game
                     if id < num_players {
-                        Some(id)
+                        Some(PlayerId::new(id))
                     } else { 
                         None
                     }

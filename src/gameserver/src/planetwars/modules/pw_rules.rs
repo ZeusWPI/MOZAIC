@@ -1,3 +1,5 @@
+use planetwars::controller::PlayerId;
+
 /// The planet wars game rules.
 pub struct PlanetWars {
     pub players: Vec<Player>,
@@ -12,13 +14,13 @@ pub struct PlanetWars {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: usize,
+    pub id: PlayerId,
     pub alive: bool,
 }
 
 #[derive(Debug)]
 pub struct Fleet {
-    pub owner: Option<usize>,
+    pub owner: Option<PlayerId>,
     pub ship_count: u64,
 }
 
@@ -110,7 +112,7 @@ impl PlanetWars {
                 exps[i].turns_remaining -= 1;
                 if let Some(owner_id) = exps[i].fleet.owner {
                     // owner has an expedition in progress; this is a sign of life.
-                    self.players[owner_id].alive = true;
+                    self.players[owner_id.as_usize()].alive = true;
                 }
 
                 // proceed to next expedition
@@ -124,7 +126,7 @@ impl PlanetWars {
             planet.resolve_combat();
             if let Some(owner_id) = planet.owner() {
                 // owner owns a planet; this is a sign of life.
-                self.players[owner_id].alive = true;
+                self.players[owner_id.as_usize()].alive = true;
             }
         }
     }
@@ -134,7 +136,7 @@ impl PlanetWars {
         return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
-    pub fn living_players(&self) -> Vec<usize> {
+    pub fn living_players(&self) -> Vec<PlayerId> {
         self.players.iter().filter_map(|p| {
             if p.alive {
                 Some(p.id)
@@ -147,7 +149,7 @@ impl PlanetWars {
 
 
 impl Planet {
-    pub fn owner(&self) -> Option<usize> {
+    pub fn owner(&self) -> Option<PlayerId> {
         self.fleets.first().and_then(|f| f.owner)
     }
 
