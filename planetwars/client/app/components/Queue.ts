@@ -5,7 +5,7 @@ import QueueElement from "./queue/QueueElement";
 
 let styles = require('./Queue.scss');
 
-console.log(styles);
+// console.log(styles);
 
 interface QueueProps {
   runningGames: RunningGame[]
