@@ -15,8 +15,9 @@ export interface IMatchMetaData {
 
 export interface IMatchStats {
   winner: number;
-  planetsTaken: number[];
-  shipsSent: number[][];
+  commandsOrdered: number[]; // Number of commands / player;
+  planetsFlipped: number;
+  shipsSend: number[];
   turns: number;
 }
 
@@ -31,7 +32,7 @@ export interface ILogFormat {
 }
 
 // TODO: Switch to camelCase
-interface IPlanet {
+export interface IPlanet {
   "ship_count": number;
   "x": number;
   "y": number;
@@ -39,7 +40,7 @@ interface IPlanet {
   "name": string;
 }
 
-interface IExpedition {
+export interface IExpedition {
   "id": number;
   "ship_count": number;
   "origin": string;

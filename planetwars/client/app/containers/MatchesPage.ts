@@ -40,10 +40,14 @@ function importLog(logPath: string, dispatch: any): Promise<void> {
     .then(copyMatchLog)
     .then(
       (match) => dispatch(A.importMatchMeta(match.meta)),
-      (err) => dispatch(A.matchImportError(err.message)),
+      (err) => {
+        console.log(err);
+        dispatch(A.matchImportError(err.message));
+      },
   );
 }
 
+// TODO Fix log writing (add players);
 function copyMatchLog(match: IMatchData): Promise<IMatchData> {
   const path = Config.generateMatchPath(match.meta);
   const write = fs.writeFile(path, JSON.stringify(match.log));

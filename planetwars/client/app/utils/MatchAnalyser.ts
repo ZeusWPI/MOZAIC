@@ -1,40 +1,53 @@
-import { ILogFormat, IMatchStats } from './GameModels';
+import { ILogFormat, IMatchStats, IExpedition } from './GameModels';
 
 export class MatchAnalyser {
 
   public static analyseSync(match: ILogFormat): IMatchStats {
     const { players, turns } = match;
 
-    const seenShips = new Set();
-    // TODO Handle players having no initial planets, only expeditions
-    const planetOwners = turns[0].planets.map((planet) => planet.owner);
-    const shipsSent = [[0]];
-    const planetsTaken = new Array(players.length + 1).fill(0);
-    let winner = 0;
-
-    turns.map((turn, turnNum) => {
-      shipsSent[turnNum] = new Array(players.length + 1).fill(0);
-      turn.expeditions.filter((exp) => !seenShips.has(exp.id))
-        .forEach((exp) => {
-          seenShips.add(exp.id);
-          shipsSent[turnNum][exp.owner] += exp.ship_count;
-        });
-      turn.planets.forEach((planet, planetIndex) => {
-        if (planet.owner && turns[Math.max(0, turnNum - 1)].planets[planetIndex].owner !== planet.owner) {
-          planetsTaken[planet.owner] += 1;
+    // The commands send in an object with id as property-name
+    // and in an array with id as index
+    // tslint:disable-next-line:interface-over-type-literal
+    type CommandMap = { [key: string]: IExpedition };
+    const commandMap: CommandMap = turns.reduce((coms, turn) => {
+      turn.expeditions.forEach((exp) => {
+        if (!coms[exp.id]) {
+          coms[exp.id] = exp;
         }
       });
-    });
+      return coms;
+    }, <CommandMap> {});
+    const commands: IExpedition[] = Object.keys(commandMap).map((k) => commandMap[k]);
+    // Amount of commands each player ordered
+    const commandsOrdered: number[] = new Array(players.length + 1).fill(0);
+    commands.forEach((exp) => { commandsOrdered[exp.owner] += 1; });
 
+    // Amount of ships each player send
+    const shipsSend: number[] = new Array(players.length + 1).fill(0);
+    commands.forEach((exp) => { shipsSend[exp.owner] += exp.ship_count; });
+
+    // Amount of times a planet has been flipped
+    const planetsFlipped = turns.reduce((flipped, turn, i) => {
+      const owners = turn.planets.map((p) => p.owner);
+      const previous = turns[i - 1];
+      const pOwners = turn.planets.map((p) => p.owner);
+      const flippedNow = turn.planets.reduce((_flipped, p, ii) => {
+        return (pOwners[ii] !== owners[ii])
+          ? _flipped + 1
+          : _flipped;
+      }, 0);
+      return flipped + flippedNow;
+    }, 0);
+
+    // Winner
     const lastTurn = turns[turns.length - 1];
-    const lastPlanetOwners = new Set(lastTurn.planets.map((p) => p.owner).filter((entry) => entry != null));
-    const lastExpeditionOwners = new Set(lastTurn.expeditions.map((p) => p.owner).filter((entry) => entry != null));
-    if (lastPlanetOwners.size === 1
-      && lastExpeditionOwners.size === 1
-      && lastPlanetOwners.values().next().value === lastExpeditionOwners.values().next().value) {
-      winner = lastPlanetOwners.values().next().value;
-    }
+    const remainingPlayers = new Set();
+    lastTurn.planets.forEach((p) => { remainingPlayers.add(p.owner); });
+    lastTurn.expeditions.forEach((e) => { remainingPlayers.add(e.owner); });
+    const winner: number = (remainingPlayers.size === 1)
+      ? remainingPlayers.values().next().value
+      : undefined;
 
-    return { planetsTaken, winner, shipsSent, turns: turns.length };
+    return { winner, shipsSend, commandsOrdered, planetsFlipped, turns: turns.length };
   }
 }
