@@ -1,5 +1,10 @@
 type LogPath = string;
 
+export interface IMatchData {
+  log: IGameState[];
+  meta: IMatchMetaData;
+}
+
 export interface IMatchMetaData {
   players: string[];
   logPath?: string;

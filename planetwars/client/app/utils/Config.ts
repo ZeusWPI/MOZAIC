@@ -1,5 +1,6 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
+import { IMatchMetaData } from './GameModels';
 
 export class Config {
   private static _data = 'data';
@@ -11,9 +12,9 @@ export class Config {
   public static matches = p.resolve(Config._data, Config._matches);
   public static maps = p.resolve(Config._data, Config._maps);
 
-  // static generateGamesPath(game: IGameMetrics): string {
-  //   return p.resolve(Config.bots, game.timestamp + '.json');
-  // }
+  public static generateMatchPath(match: IMatchMetaData): string {
+    return p.resolve(Config.matches, match.timestamp + '.json');
+  }
 
   public static botPath(name: string): string {
     return p.resolve(Config.bots, `${name}.json`);

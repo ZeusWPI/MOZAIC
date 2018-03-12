@@ -2,37 +2,39 @@ import * as fs from 'mz/fs';
 import * as Promise from 'bluebird';
 
 import {
-  IGameState, ILogFormat, IMatchMetaData, IMatchStats,
+  IGameState, ILogFormat, IMatchMetaData, IMatchStats, IMatchData,
 } from './GameModels';
 import { MatchAnalyser } from './MatchAnalyser';
 
 export class MatchParser {
 
-  // TODO: Add Async parser
-  public static parseFileAsync(logPath: string): Promise<IMatchMetaData> {
-    const native = fs.readFile(logPath, 'utf-8')
+  public static parseFileAsync(logPath: string): Promise<IMatchData> {
+    const read = fs.readFile(logPath, 'utf-8');
+    return Promise.resolve(read)
       .then((buffer) => buffer.toString())
-      .then((contents) => MatchParser._logToMeta(logPath, contents));
-    return Promise.resolve(native);
+      .then((contents) => MatchParser._parseMatch(contents))
+      .tap((match) => { match.meta.logPath = logPath; });
   }
 
-  public static parseFileSync(logPath: string): IMatchMetaData {
+  public static parseFileSync(logPath: string): IMatchData {
     const contents = fs.readFileSync(logPath, { encoding: 'utf8' });
-    return MatchParser._logToMeta(logPath, contents);
+    const match = MatchParser._parseMatch(contents);
+    match.meta.logPath = logPath;
+    return match;
   }
 
-  private static _logToMeta(logPath: string, contents: string): IMatchMetaData {
-    const { players, turns } = MatchParser.parseLog(contents);
+  private static _parseMatch(contents: string): IMatchData {
+    const { players, turns } = MatchParser._parseLog(contents);
     const timestamp = new Date(Date.now()); // TODO: Fix this
 
     const stats: IMatchStats = MatchAnalyser.analyseSync({ players, turns });
-    const meta: IMatchMetaData = { players, logPath, timestamp, stats };
+    const meta: IMatchMetaData = { players, /*logPath,*/ timestamp, stats };
 
-    return meta;
+    return { meta, log: turns };
   }
 
-  private static parseLog(log: string): ILogFormat {
-    const lines: string[] = log.trim().split("\n");
+  private static _parseLog(contents: string): ILogFormat {
+    const lines: string[] = contents.trim().split("\n");
     const objects: any = lines.map((line) => JSON.parse(line));
     const players: string[] = objects[0].players;
     const turns: IGameState[] = objects.slice(1);
