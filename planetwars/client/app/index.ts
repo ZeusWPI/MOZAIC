@@ -9,10 +9,10 @@ import * as Promise from 'bluebird';
 import './app.global.scss';
 
 const { configureStore, history } = require('./store/configureStore');
-const store = configureStore(initialState);
+export const store = configureStore(initialState);
 
 // Config the global Bluebird Promise
-// We should still 'import * as Promise from bluebird' everywhere to have it at 
+// We should still 'import * as Promise from bluebird' everywhere to have it at
 // runtime tho.
 Promise.config({
   longStackTraces: true,

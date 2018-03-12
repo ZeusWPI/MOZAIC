@@ -85,7 +85,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
   setLog(log: string) {
     var game = new Game(log);
-    console.log(game);
+    // console.log(game);
     this.setState({
       game: game,
       numTurns: game.turns.length - 1,
