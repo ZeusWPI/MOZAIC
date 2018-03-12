@@ -2,10 +2,11 @@
 configs/
 log.json
 data/bots/*
-data/games/*
+data/matches/*
 data/configs/*
 !data/maps/
 logs/
+db.json
 *.log
 
 

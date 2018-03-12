@@ -77,15 +77,15 @@ class Controls extends React.Component {
           button(
             `.${styles.button}`, {
               title: 'Go to last turn',
-              onClick: e => this.props.setTurn(this.props.numTurns - 1)
+              onClick: e => this.props.setTurn(this.props.numTurns)
             }, [fa_icon('fast-forward')]
           ),
           p(`.${styles.turnProgress}`, `${this.props.turnNum} / ${this.props.numTurns}`)
         ]),
         div(`.${styles.fileControl}`, [
           h(LogLoaderButton, {
-            handleContents: (log) => {
-              this.props.setLog(log);
+            handleContents: (playerData, gameLog) => {
+              this.props.setLog(playerData, gameLog);
               this.props.setPlaying(true);
             }
           })
@@ -134,7 +134,10 @@ class LogLoaderButton extends React.Component {
     var reader = new FileReader();
     reader.onload = (readEvent) => {
       var log = readEvent.target.result;
-      this.props.handleContents(log);
+
+      let lines = log.trim().split("\n");
+      let gameFile = lines.map((value) => JSON.parse(value));
+      this.props.handleContents(gameFile[0], gameFile.slice(1));
     }
     reader.readAsText(clickEvent.target.files[0]);
   }
@@ -145,7 +148,7 @@ class LogLoaderButton extends React.Component {
     element.click();
   }
 
-  render(){
+  render() {
     return div('', [
       input({
         id: this.state.elementId,
@@ -157,7 +160,7 @@ class LogLoaderButton extends React.Component {
         type: 'button',
         onClick: this.onClick,
         autoFocus: true
-      },["Load game"])
+      }, ["Load game"])
     ])
   }
 }

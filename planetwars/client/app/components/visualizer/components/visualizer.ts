@@ -1,9 +1,11 @@
+import * as d3 from 'd3';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
-import * as d3 from 'd3';
+
+import { IGameState } from '../../../utils/GameModels';
 import Game from './game';
-import Scoreboard from "./scoreboard"
+import Scoreboard from './scoreboard';
 
 const h = require('react-hyperscript');
 const {
@@ -25,8 +27,13 @@ const Renderer = require('./renderer');
 const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
+interface PlayerData {
+  players: string[]
+}
+
 interface VisualizerProps {
-  gamelog?: path.ParsedPath
+  playerData: PlayerData,
+  gameLog?: IGameState[]
 }
 
 interface VisualizerState {
@@ -38,8 +45,8 @@ interface VisualizerState {
   game: any
 }
 
-export class Visualizer extends React.Component<VisualizerProps,VisualizerState> {
-  timer:any;
+export class Visualizer extends React.Component<VisualizerProps, VisualizerState> {
+  timer: any;
   constructor(props: VisualizerProps) {
     super(props);
     this.state = {
@@ -53,21 +60,18 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
   }
 
   componentDidMount() {
-    if(this.props.gamelog)
-    {
-      let p = path.format(this.props.gamelog);
-      let jsonLog = fs.readFileSync(p).toString();
-      this.setLog(jsonLog);
+    if (this.props.gameLog && this.props.playerData) {
+      this.setLog(this.props.playerData, this.props.gameLog);
       this.setPlaying(true);
     }
   }
 
-  // TODO: this might not be the best way to do this
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
+    this.setState({ hide_card: true });
     if (turnNum == this.state.numTurns) {
       this.setPlaying(false);
-      if(turnNum > 0) {
+      if (turnNum > 0) {
         this.setState({ hide_card: false });
       }
     }
@@ -83,11 +87,12 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
     });
   }
 
-  setLog(log: string) {
-    var game = new Game(log);
-    // console.log(game);
+  setLog(playerData: PlayerData, gameLog: IGameState[]) {
+    var game = new Game(playerData, gameLog);
     this.setState({
       game: game,
+      turnNum: 0,
+      hide_card: true,
       numTurns: game.turns.length - 1,
     })
   }
@@ -106,27 +111,25 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
 
     if (this.state.playing) {
       var delay = 1000 / this.state.speed;
-      this.timer = d3.interval((t:any) => this.nextTurn(), delay);
+      this.timer = d3.interval((t: any) => this.nextTurn(), delay);
     }
   }
-  // componentWillReceiveProps(props: VisualizerProps) {
-  //   let p = path.format(props.gamelog);
-  //   let jsonLog = fs.readFileSync(p).toString();
-  //   this.setLog(jsonLog)
-  // }
-  render() {
-    let controls = h(Controls, {
-      turnNum: this.state.turnNum,
-      numTurns: this.state.numTurns,
-      playing: this.state.playing,
-      speed: this.state.speed,
-      setPlaying: (v:boolean) => this.setPlaying(v),
-      setTurn: (t:number) => this.setTurn(t),
-      setSpeed: (s:number) => this.setSpeed(s),
-      setLog: (l:string) => this.setLog(l)
-    });
 
-    if(!this.state.game){
+  render() {
+    let controls = div(`.${styles.control}`, [
+      h(Controls, {
+        turnNum: this.state.turnNum,
+        numTurns: this.state.numTurns,
+        playing: this.state.playing,
+        speed: this.state.speed,
+        setPlaying: (v: boolean) => this.setPlaying(v),
+        setTurn: (t: number) => this.setTurn(t),
+        setSpeed: (s: number) => this.setSpeed(s),
+        setLog: (playerData: PlayerData, gameLog: IGameState[]) => this.setLog(playerData, gameLog)
+      })
+    ])
+
+    if (!this.state.game) {
       return div(`.${styles.visualizerRootNode}`, [
         controls
       ])
@@ -154,7 +157,7 @@ export class Visualizer extends React.Component<VisualizerProps,VisualizerState>
             hide_card: true
           })
         }),
-        p(['Game over', h('br'), span(`${styles.winner}`, this.state.game.winner.name), ' wins!'])
+        p(['Game over', h('br'), span({ style: { color: this.state.game.winner.color } }, this.state.game.winner.name), ' wins!'])
       ])
     });
 
