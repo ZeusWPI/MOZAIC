@@ -7,8 +7,8 @@ Environment=ROCKET_ENV=production
 Environment=ROCKET_PORT=6969
 User=bottlebats
 WorkingDirectory=/home/bottlebats/MOZAIC/planetwars/web/
-ExecStartPre=/home/bottebats/.cargo/bin/cargo build --release
-ExecStart=/home/bottebats/MOZAIC/planetwars/web/target/release/planetwars-web
+ExecStartPre=/home/bottlebats/.cargo/bin/cargo build --release
+ExecStart=/home/bottlebats/MOZAIC/planetwars/web/target/release/planetwars-web
 
 [Install]
 WantedBy=default.target
