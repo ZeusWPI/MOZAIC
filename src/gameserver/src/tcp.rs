@@ -1,15 +1,64 @@
-use tokio::net::TcpStream;
-use futures::{Future, Poll, Async, Stream, Sink, StartSend, AsyncSink};
-use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+use bytes::BytesMut;
+use futures::{Future, Poll, Async, Stream, Sink, AsyncSink};
+use futures::sync::mpsc::UnboundedSender;
 use futures::sync::oneshot;
 use prost::Message;
 use std::io;
-use bytes::BytesMut;
+use std::net::SocketAddr;
+use tokio;
+use tokio::net::{Incoming, TcpListener, TcpStream};
 
-use protobuf_codec::ProtobufTransport;
 use client_controller::Command as ClientControllerCommand;
+use protobuf_codec::ProtobufTransport;
 use protocol;
 use router;
+
+
+
+pub struct Listener {
+    incoming: Incoming,
+    router_handle: UnboundedSender<router::TableCommand>,
+}
+
+impl Listener {
+    pub fn new(addr: &SocketAddr, router_handle: UnboundedSender<router::TableCommand>)
+               -> io::Result<Self>
+    {
+        TcpListener::bind(addr).map(|tcp_listener| {
+            Listener {
+                router_handle,
+                incoming: tcp_listener.incoming(),
+            }
+        })
+    }
+
+    fn handle_connections(&mut self) -> Poll<(), io::Error> {
+        while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
+            let handler = ConnectionHandler::new(
+                self.router_handle.clone(),
+                raw_stream
+            );
+            tokio::spawn(handler);
+        }
+        return Ok(Async::Ready(()));
+    }
+}
+
+impl Future for Listener {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        match self.handle_connections() {
+            Ok(async) => return Ok(async),
+            // TODO: gracefully handle this
+            Err(e) => panic!("error: {}", e),
+        }
+    }
+}
+
+
+
 
 struct Waiting;
 

@@ -1,10 +1,9 @@
 mod bot_runner;
 mod client_controller;
-mod listener;
 mod planetwars;
 mod protobuf_codec;
 mod router;
-mod connection_handler;
+mod tcp;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
@@ -116,7 +115,7 @@ fn main() {
     runtime.spawn(router);
 
     let addr = "127.0.0.1:9142".parse().unwrap();
-    let listener = listener::Listener::new(&addr, router_handle).unwrap();
+    let listener = tcp::Listener::new(&addr, router_handle).unwrap();
     runtime.spawn(listener);
 
     runtime.shutdown_on_idle().wait().unwrap();
