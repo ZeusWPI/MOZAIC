@@ -1,24 +1,9 @@
-export const plusOne = () => {
-  return {
-    type: 'TEST'
-  }
-}
+import { actionCreatorVoid, actionCreator } from './helpers';
+import { BotConfig } from '../utils/Models';
 
-export const gameStarted = () => {
-  return {
-    type: 'gameStarted'
-  }
-}
-
-
-export const gameFinished = () => {
-  return {
-    type: 'gameFinished'
-  }
-}
-
-export const gameCrashed = () => {
-  return {
-    type: 'gameCrashed'
-  }
-}
+export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
+export const incrementAbout = actionCreatorVoid('TEST');
+export const loadBot = actionCreator<BotConfig>('LOAD_BOT');
+export const matchStarted = actionCreatorVoid('MATCH_STARTED');
+export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
+export const matchCrashed = actionCreatorVoid('MATCH_CHRASHED');
