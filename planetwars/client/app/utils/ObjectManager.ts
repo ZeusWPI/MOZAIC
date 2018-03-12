@@ -64,4 +64,36 @@ export class ObjectManager {
           }
         })
   }
+
+  static saveBotFile(bot: BotConfig): Promise<void> {
+
+    let mkdirAsync = Promise.promisify(fs.mkdir);
+    let writeFileAsync = Promise.promisify(fs.writeFile);
+
+    let path = Config.botPath(bot.name);
+    return ObjectManager.existsAsync(Config.bots).then(
+      () => Promise.resolve(),
+      () => mkdirAsync(Config.bots)
+    )
+      .then(
+        () => this.existsAsync(path)
+      )
+      .then(
+        (exists) => {
+          if (exists) {
+            if (!confirm(`Bot ${bot.name} already exists, are you sure you want to overwrite it?`)) {
+              return Promise.reject("cancelled");
+            }
+          }
+
+          return writeFileAsync(path, JSON.stringify(
+            {
+              name: bot.name,
+              command: bot.command,
+              args: bot.args
+            }
+          ))
+        }).then(() => Promise.resolve())
+  }
 }
+

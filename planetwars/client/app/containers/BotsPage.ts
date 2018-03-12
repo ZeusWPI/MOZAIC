@@ -13,27 +13,32 @@ interface IProps {
 const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
   return {
     // bots: state.bots.bots,
-    bot: selectBotByName(state, ownProps.match.params.bot),
-  }
-};
-
-const mapDispatchToProps = (dispatch: any, ownProps: IProps) => {
-
-
-};
-
-const selectBotByName = (state: IGState, botname: string): BotConfig => {
-  let selectedBot: any = state.bots.bots.find((bot: BotConfig) => bot.name == botname);
-  if (selectedBot) {
-    return selectedBot
-  }
-  else {
-    throw new Error('Bot not found');
+    bot: selectBotByName(state, ownProps)
   }
 
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Bots);
+const selectBotByName = (state: IGState, ownProps: IProps): BotConfig | null => {
+
+    let botname = ownProps.match.params.bot;
+    if (botname) {
+
+      let selectedBot: any = state.bots.bots.find((bot: BotConfig) => bot.name == botname);
+      if (selectedBot) {
+        return selectedBot
+      }
+      else {
+        throw new Error('Bot not found');
+      }
+    }
+    else {
+      return null;
+    }
+
+  }
+;
+
+export default connect(mapStateToProps, null)(Bots);
 
 
 // interface BotsPageState {

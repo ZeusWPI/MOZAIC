@@ -18,7 +18,7 @@ export interface BotsListProps {
 }
 
 
-export default class BotsList extends React.Component<BotsListProps, any> {
+export default class BotsList extends React.Component<any, any> {
 
   constructor(props: BotsListProps) {
     super(props);

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Promise from 'bluebird';
 import * as fs from 'fs';
 
 import {RouteComponentProps} from 'react-router';
@@ -10,9 +11,9 @@ let styles = require("./BotsConfig.scss");
 
 interface BotsConfigProps {
   botName: string,
-  loadedBot: BotConfig,
+  loadedBot: BotConfig | null,
   refreshBots: Function,
-  saveBot: Function
+  saveBot: (bot: BotConfig) => Promise<{}>
 }
 
 interface BotsConfigState {
@@ -25,18 +26,45 @@ interface BotsConfigState {
 
 //TODO: convert to show details of loadedbot, write savebot function, figure out formstate-control
 
-export default class BotsConfig extends React.Component<BotsConfigProps, BotsConfigState> {
+export default class BotsConfig extends React.Component<any, BotsConfigState> {
   constructor(props: BotsConfigProps) {
     super(props);
     this.props.refreshBots();
   }
 
+  componentWillMount() {
+    this.setState({name: "", cmd: "", args: [""], errors: []});
+  }
+
+  componentWillReceiveProps(nextProps: BotsConfigProps) {
+
+    if (nextProps.loadedBot) {
+      this.setState({
+        name: nextProps.loadedBot.name,
+        cmd: nextProps.loadedBot.command,
+        args: nextProps.loadedBot.args,
+        errors: []
+      })
+    } else {
+      this.setState({name: "", cmd: "", args: [""], errors: []})
+    }
+  }
+
+
   render() {
 
-    let my_bot: BotConfig = this.props.loadedBot
+
     return (
       h("form", {
-        onSubmit: () => this.props.saveBot(),
+        onSubmit: (evt: any) => {
+          evt.preventDefault();
+          return this.props.saveBot({
+            name: this.state.name,
+            command: this.state.cmd,
+            args: this.state.args
+          })
+
+        },
       }, [
         "Name: ",
         h("input", `.${styles.nameField}`,
@@ -92,70 +120,70 @@ export default class BotsConfig extends React.Component<BotsConfigProps, BotsCon
 //     }
 //     this.props.refreshBots();
 //   }
-//   checkValid() {
-//     let errors = []
-//     if (!this.state.name) {
-//       errors.push("Name cannot be empty");
-//     }
-//     if (!this.state.cmd) {
-//       errors.push("Command cannot be empty");
-//     }
-//     if (this.state.args.indexOf("") != -1) {
-//       errors.push("Please remove empty arguments");
-//     }
-//     this.setState({ errors: errors });
-//     if (errors.length == 0) {
-//       return true;
-//     } else {
-//       return false;
-//     }
-//   }
-//   addArg() {
-//     let args = this.state.args;
-//     args.push("");
-//     this.setState({ args: args })
-//   }
-//   removeArg(i: number) {
-//     let args = this.state.args;
-//     args.splice(i, 1);
-//     this.setState({ args: args })
-//   }
-//   updateState() {
-//     let path = Config.botPath(this.props.botName);
-//     if (fs.existsSync(path)) {
-//       var botData = JSON.parse(fs.readFileSync(path, 'utf8'));
-//       this.state = {
-//         loadedName: botData.name,
-//         name: botData.name,
-//         cmd: botData.command,
-//         args: botData.args,
-//         errors: this.state.errors
-//       }
-//     } else {
-//       this.state = {
-//         name: "",
-//         cmd: "",
-//         args: [""],
-//         errors: []
-//       }
-//     }
-//   }
-//   handleArgumentChange(value: string, num: number) {
-//     let args = this.state.args;
-//     args[num] = value;
-//     this.setState({ args: args })
-//   }
-// }
 
-  export
-  interface
-  ArgumentFieldsProps {
-  args: string[]
-,
-  addArg: Function
-,
-  removeArg: Function
-,
+  // checkValid() {
+  //   let errors = []
+  //   if (!this.state.name) {
+  //     errors.push("Name cannot be empty");
+  //   }
+  //   if (!this.state.cmd) {
+  //     errors.push("Command cannot be empty");
+  //   }
+  //   if (this.state.args.indexOf("") != -1) {
+  //     errors.push("Please remove empty arguments");
+  //   }
+  //   this.setState({errors: errors});
+  //   if (errors.length == 0) {
+  //     return true;
+  //   } else {
+  //     return false;
+  //   }
+  // }
+
+  addArg() {
+    let args = this.state.args;
+    args.push("");
+    this.setState({args: args})
+  }
+
+  removeArg(i: number) {
+    let args = this.state.args;
+    args.splice(i, 1);
+    this.setState({args: args})
+  }
+
+  // updateState() {
+  //   let path = Config.botPath(this.props.botName);
+  //   if (fs.existsSync(path)) {
+  //     var botData = JSON.parse(fs.readFileSync(path, 'utf8'));
+  //     this.state = {
+  //       loadedName: botData.name,
+  //       name: botData.name,
+  //       cmd: botData.command,
+  //       args: botData.args,
+  //       errors: this.state.errors
+  //     }
+  //   } else {
+  //     this.state = {
+  //       name: "",
+  //       cmd: "",
+  //       args: [""],
+  //       errors: []
+  //     }
+  //   }
+  // }
+
+  handleArgumentChange(value: string, num: number) {
+    let args = this.state.args;
+    args[num] = value;
+    this.setState({args: args})
+  }
+}
+
+export interface ArgumentFieldsProps {
+  args: string[],
+  addArg: Function,
+  removeArg: Function,
   handleChange: Function
 }
 

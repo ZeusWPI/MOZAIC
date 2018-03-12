@@ -8,7 +8,7 @@ import { BotConfig } from '../../utils/Models';
 let styles = require("./Bots.scss");
 
 export interface IBotsProps {
-  bot: BotConfig
+  bot: BotConfig | null
 }
 
 export class Bots extends React.Component<IBotsProps, {}> {

@@ -39,3 +39,5 @@ export const incrementAbout = actionCreatorVoid('TEST');
 export const loadBot = actionCreator<BotConfig>('LOAD_BOT');
 export const removeBot = actionCreator<string>('REMOVE_BOT');
 export const selectBot = actionCreator<string>('SELECT_BOT');
+export const saveBot = actionCreator<BotConfig>('SAVE_BOT');
+export const clearBots = actionCreatorVoid('CLEAR_BOTS');

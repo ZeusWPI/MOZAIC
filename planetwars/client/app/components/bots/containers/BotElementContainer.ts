@@ -5,6 +5,7 @@ import {connect} from "react-redux";
 import {botsRerender, removeBot} from "../../../actions/actions";
 import {removeBotFileByName} from "../helpers/BotFileManager";
 import {ObjectManager} from "../../../utils/ObjectManager";
+import BotRefresher from "../../../utils/BotRefresher";
 
 interface BotElementContainerProps {
   name: string
@@ -13,8 +14,7 @@ interface BotElementContainerProps {
 
 const mapStateToProps = (state: BotsState, ownProps: BotElementContainerProps) => {
   return {
-    name: ownProps.name,
-    refreshBots : ownProps.refreshBots
+    name: ownProps.name
   }
 
 };
@@ -28,7 +28,7 @@ const mapDispatchToProps = (dispatch: any) => {
       return ObjectManager.deleteBotByName(name).then(
         () => dispatch(removeBot(name))
       ).then(
-        () => Promise.resolve()
+        () => BotRefresher.refreshBots(dispatch)()
       )
     }
   }

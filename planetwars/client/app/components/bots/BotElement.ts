@@ -11,7 +11,6 @@ let styles = require("./BotsList.scss");
 interface BotElementProps {
   name: string
   removeBot: () => Promise<void>
-  refreshBots: () => Promise<void>
 }
 
 export default class BotElement extends React.Component<any, BotsState> {
@@ -25,9 +24,7 @@ export default class BotElement extends React.Component<any, BotsState> {
         this.props.name,
         h("button", `.${styles.removebot}`, {
           onClick: (evt: any) => {
-            this.props.removeBot(this.props.name, evt).then(
-              () => this.props.refreshBots()
-            );
+            this.props.removeBot(this.props.name, evt);
           }
         }, ["x"])
       ])
