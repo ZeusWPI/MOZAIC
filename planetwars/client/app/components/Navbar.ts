@@ -2,16 +2,12 @@ import { h, nav, div, span, i } from 'react-hyperscript-helpers';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
+import { INotification } from '../utils/UtilModels';
+
 interface INavProps {
   toggled: boolean;
   notifications: INotification[];
   toggle: () => void;
-}
-
-export interface INotification {
-  title: string;
-  body: string;
-  link?: string;
 }
 
 export class Navbar extends React.Component<INavProps, {}> {

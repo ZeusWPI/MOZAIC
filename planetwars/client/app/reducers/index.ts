@@ -5,7 +5,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
-import { INotification } from '../components/Navbar';
+import { INotification } from '../utils/UtilModels';
 // import { db, SCHEMA } from '../utils/Database';
 
 // Global state

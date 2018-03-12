@@ -6,6 +6,7 @@ import { IBotConfig } from './ConfigModels';
 import { IMatchMetaData } from './GameModels';
 import { store } from '../index';
 import { IGState } from '../reducers';
+import { INotification } from '../utils/UtilModels';
 
 const adapter = new FileAsync('db.json');
 const database = low<IDbSchema, typeof adapter>(adapter);
@@ -13,11 +14,13 @@ const database = low<IDbSchema, typeof adapter>(adapter);
 export interface IDbSchema {
   matches: IMatchMetaData[];
   bots: IBotConfig[];
+  notifications: INotification[];
 }
 
 export const SCHEMA = {
   MATCHES: 'matches',
   BOTS: 'bots',
+  NOTIFICATIONS: 'notifications',
 };
 
 /*
@@ -97,5 +100,9 @@ const listeners: TableListener<any>[] = [
   new TableListener<IMatchMetaData[]>(
     (state: IGState) => state.matchesPage.matches,
     SCHEMA.MATCHES,
+  ),
+  new TableListener<INotification[]>(
+    (state: IGState) => state.navbar.notifications,
+    SCHEMA.NOTIFICATIONS,
   ),
 ];

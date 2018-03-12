@@ -1,6 +1,6 @@
 import { IBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
-import { INotification } from '../components/Navbar';
+import { INotification } from '../utils/UtilModels';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 
