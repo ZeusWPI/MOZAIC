@@ -27,10 +27,10 @@ export class MatchAnalyser {
     commands.forEach((exp) => { shipsSend[exp.owner] += exp.ship_count; });
 
     // Amount of times a planet has been flipped
-    const planetsFlipped = turns.reduce((flipped, turn, i) => {
+    const planetsFlipped = turns.slice(1).reduce((flipped, turn, i) => {
       const owners = turn.planets.map((p) => p.owner);
-      const previous = turns[i - 1];
-      const pOwners = turn.planets.map((p) => p.owner);
+      const previous = turns[i];
+      const pOwners = previous.planets.map((p) => p.owner);
       const flippedNow = turn.planets.reduce((_flipped, p, ii) => {
         return (pOwners[ii] !== owners[ii])
           ? _flipped + 1

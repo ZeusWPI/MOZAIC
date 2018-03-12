@@ -24,8 +24,13 @@
       border-radius: 10px;
       margin-right: 10px;
       border: 1px solid $secondary;
+      overflow-y: scroll;
       .matchesListItem {
-        .match {}
+        .match {
+          border: 1px solid $secondary;
+          border-radius: 10px;
+          padding: 10px;
+        }
       }
     }
     .matchDetailsPane {

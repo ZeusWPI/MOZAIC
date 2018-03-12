@@ -54,7 +54,12 @@ export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
   const { stats, players } = props.match.match;
   const winnerName = players[stats.winner - 1] || "Tie";
   return div(`.${styles.match}`, [
-    `Winner: ${winnerName} | ${stats.turns} turns`,
+    p([`Winner: ${winnerName}`]),
+    p([`Players: ${players}`]),
+    p([`${stats.turns} turns`]),
+    p([`${stats.planetsFlipped} planets flipped`]),
+    p([`${stats.commandsOrdered} commands ordered`]),
+    p([`${stats.shipsSend} ships send`]),
   ]);
 };
 
