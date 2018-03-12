@@ -1,18 +1,20 @@
 import * as React from 'react';
 import { h } from 'react-hyperscript-helpers'
 
-import { Visualizer } from './visualizer/index';
+import * as VisualizerComponent from './visualizer';
 
-interface QueueProps {
+let styles = require("./Visualizer.scss");
 
-}
-
-interface QueueState {
+interface VisualizerProps {
 
 }
 
-export default class Queue extends React.Component<QueueProps, QueueState>{
+interface VisualizerState {
+
+}
+
+export default class Visualizer extends React.Component<VisualizerProps, VisualizerState>{
   render() {
-    return h(Visualizer)
+    return h("div", `.${styles.visualizer}`, [ h(VisualizerComponent.Visualizer) ])
   }
 }

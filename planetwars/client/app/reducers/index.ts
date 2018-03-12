@@ -1,60 +1,99 @@
-import { combineReducers, Reducer } from 'redux';
 import { routerReducer as routing, RouterState } from 'react-router-redux';
+import { combineReducers, Reducer } from 'redux';
 
-import { BotConfig } from '../utils/Models';
+import { store } from '../index';
 import * as A from '../actions/actions';
+import { IBotConfig } from '../utils/ConfigModels';
+import { IMatchMetaData } from '../utils/GameModels';
+// import { db, SCHEMA } from '../utils/Database';
 
 // Global state
 export interface IGState {
-  routing: RouterState,
-  about: AboutState,
-  bots: BotsState,
-  navbar: NavbarState,
+  readonly routing: RouterState;
+  readonly navbar: INavbarState;
+  readonly botsPage: IBotsPageState;
+  readonly matchesPage: IMatchesPageState;
+  readonly aboutPage: IAboutPageState;
+  readonly globalErrors: any[];
 }
 
-export type AboutState = { counter: number; };
-export type BotsState = { bots: BotConfig[] };
-export type NavbarState = { toggled: boolean; }
+export interface INavbarState { readonly toggled: boolean; }
+export interface IBotsPageState { readonly bots: IBotConfig[]; }
+export interface IMatchesPageState {
+  readonly matches: IMatchMetaData[];
+  readonly importError?: string;
+}
+export interface IAboutPageState { readonly counter: number; }
 
 export const initialState: IGState = {
   routing: { location: null },
-  about: { counter: 0 },
-  bots: { bots: [] },
   navbar: { toggled: false },
-}
+  botsPage: { bots: [] },
+  matchesPage: { matches: [] },
+  aboutPage: { counter: 0 },
+  globalErrors: [],
+};
 
-const aboutReducer = combineReducers<AboutState>({
-  counter: (state = 0, action) => {
-    if (A.incrementAbout.test(action)) {
-      return state + 1;
-    }
-    return state;
-  }
-});
-
-const navbarReducer = combineReducers<NavbarState>({
+const navbarReducer = combineReducers<INavbarState>({
   toggled: (state = false, action) => {
     if (A.toggleNavMenu.test(action)) {
       return !state;
     }
     return state;
-  }
+  },
 });
 
-const botsReducer = combineReducers<BotsState>({
+const aboutPageReducer = combineReducers<IAboutPageState>({
+  counter: (state = 0, action) => {
+    if (A.incrementAbout.test(action)) {
+      return state + 1;
+    }
+    return state;
+  },
+});
+
+const botsPageReducer = combineReducers<IBotsPageState>({
   bots: (state = [], action) => {
-    if (A.loadBot.test(action)) {
-      let newA = state.slice();
+    if (A.addBot.test(action)) {
+      const newA = state.slice();
       newA.push(action.payload);
       return newA;
     }
-    return state
-  }
-})
+    return state;
+  },
+});
 
-export const rootReducer = combineReducers({
+const matchesPageReducer = combineReducers<IMatchesPageState>({
+  matches: (state = [], action) => {
+    if (A.addMatchMeta.test(action) || A.importMatchMeta.test(action)) {
+      const newA = state.slice();
+      newA.push(action.payload);
+      return newA;
+    }
+    return state;
+  },
+  importError: (state = "", action) => {
+    if (A.matchImportError.test(action)) {
+      return action.payload;
+    }
+    return state;
+  },
+});
+
+const globalErrorReducer = (state: any[] = [], action: any) => {
+  if (A.dbError.test(action)) {
+    const newA = state.slice();
+    newA.push(action.payload);
+    return newA;
+  }
+  return state;
+};
+
+export const rootReducer = combineReducers<IGState>({
   routing: routing as Reducer<any>,
-  about: aboutReducer,
-  bots: botsReducer,
   navbar: navbarReducer,
+  botsPage: botsPageReducer,
+  matchesPage: matchesPageReducer,
+  aboutPage: aboutPageReducer,
+  globalErrors: globalErrorReducer,
 });

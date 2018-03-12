@@ -1,34 +1,34 @@
-import { GameMetrics } from './Models'
+/* tslint:disable:member-ordering */
 import * as p from 'path';
-
+import { IMatchMetaData } from './GameModels';
 
 export class Config {
-  static _data = 'data'
-  static _bin = 'bin'
-  static _bots = 'bots'
-  static _games = 'games'
-  static _maps = 'maps'
-  static _configs = 'configs'
+  private static _data = 'data';
+  private static _bots = 'bots';
+  private static _matches = 'matches';
+  private static _maps = 'maps';
+  private static _bin = 'bin';
+  private static _configs = 'configs';
 
-  static bots = p.resolve(Config._data, Config._bots)
-  static games = p.resolve(Config._data, Config._games)
-  static maps = p.resolve(Config._data, Config._maps)
-  static config = p.resolve(Config._data, Config._configs)
-  static matchRunner = p.resolve(Config._bin, "mozaic_bot_driver")
+  public static bots = p.resolve(Config._data, Config._bots);
+  public static matches = p.resolve(Config._data, Config._matches);
+  public static maps = p.resolve(Config._data, Config._maps);
+  public static config = p.resolve(Config._data, Config._configs);
+  public static matchRunner = p.resolve(Config._bin, "mozaic_bot_driver");
 
-  static generateGamesPath(game: GameMetrics): string {
-    return p.resolve(Config.bots, game.timestamp + '.json');
+  public static generateMatchPath(match: IMatchMetaData): string {
+    return p.resolve(Config.matches, match.uuid + '.json');
   }
 
-  static botPath(name: string): string {
-    return p.resolve(Config.bots, `${name}.json`)
+  public static botPath(name: string): string {
+    return p.resolve(Config.bots, `${name}.json`);
   }
 
-  static configPath(uuid:string): string {
-    return p.resolve(Config.config, `${uuid}.json`)
+  public static mapMath(name: string): string {
+    return p.resolve(Config.maps, `${name}.json`);
   }
 
-  static mapMath(name: string): string {
-    return p.resolve(Config.maps, `${name}.json`)
+  public static configPath(uuid: string): string {
+    return p.resolve(Config.config, `${uuid}.json`);
   }
 }
