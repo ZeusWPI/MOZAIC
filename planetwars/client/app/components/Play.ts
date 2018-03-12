@@ -1,7 +1,8 @@
 import * as path from 'path';
 import * as React from 'react';
 
-import { div, h } from 'react-hyperscript-helpers';
+import GameRunner from "../utils/GameRunner"
+import { h, div } from 'react-hyperscript-helpers';
 
 import { Setup } from './play/Setup';
 
@@ -18,6 +19,10 @@ export default class Play extends React.Component<IProps, IState> {
   }
 
   public render() {
-    return h(Setup);
+    return h(Setup, { startGame: (config: any) => this.startGame(config) })
+  }
+
+  public startGame(config: any) {
+    new GameRunner(config);
   }
 }

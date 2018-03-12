@@ -15,7 +15,9 @@ interface ISetupState {
   map_path: path.ParsedPath | { name: string };
 }
 
-interface ISetupProps { }
+interface ISetupProps {
+  startGame: Function
+}
 
 export class Setup extends React.Component<ISetupProps, ISetupState> {
   constructor(props: ISetupProps) {
@@ -116,8 +118,7 @@ export class Setup extends React.Component<ISetupProps, ISetupState> {
       alert("Please select two or more bots");
       return;
     }
-    // TODO: Send config to Redux to add it to the queue...
-    console.log(this.state.config);
+    this.props.startGame(this.state.config);
   }
 }
 

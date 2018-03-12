@@ -15,7 +15,7 @@ export const store = configureStore(initialState);
 bindToStore(store);
 
 // Config the global Bluebird Promise
-// We should still 'import * as Promise from bluebird' everywhere to have it at 
+// We should still 'import * as Promise from bluebird' everywhere to have it at
 // runtime tho.
 Promise.config({
   longStackTraces: true,
