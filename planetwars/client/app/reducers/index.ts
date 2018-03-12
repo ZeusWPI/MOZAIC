@@ -65,7 +65,7 @@ const botsPageReducer = combineReducers<IBotsPageState>({
 
 const matchesPageReducer = combineReducers<IMatchesPageState>({
   matches: (state = [], action) => {
-    if (A.addMatchMeta.test(action) || A.importMatchMeta.test(action)) {
+    if (A.importMatchFromDB.test(action) || A.importMatch.test(action)) {
       const newA = state.slice();
       newA.push(action.payload);
       return newA;
@@ -73,7 +73,7 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
     return state;
   },
   importError: (state = "", action) => {
-    if (A.matchImportError.test(action)) {
+    if (A.importMatchError.test(action)) {
       return action.payload;
     }
     return state;

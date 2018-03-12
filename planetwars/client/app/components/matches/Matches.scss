@@ -24,7 +24,7 @@
       border-radius: 10px;
       margin-right: 10px;
       border: 1px solid $secondary;
-      overflow-y: scroll;
+      overflow-y: auto;
       .matchesListItem {
         .match {
           border: 1px solid $secondary;

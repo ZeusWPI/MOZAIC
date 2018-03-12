@@ -39,10 +39,10 @@ function importLog(logPath: string, dispatch: any): Promise<void> {
   return MatchParser.parseFileAsync(logPath)
     .then(copyMatchLog)
     .then(
-      (match) => dispatch(A.importMatchMeta(match.meta)),
+      (match) => dispatch(A.importMatch(match.meta)),
       (err) => {
         console.log(err);
-        dispatch(A.matchImportError(err.message));
+        dispatch(A.importMatchError(err.message));
       },
   );
 }

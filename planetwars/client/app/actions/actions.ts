@@ -13,13 +13,13 @@ export const incrementAbout = actionCreatorVoid('TEST');
 export const addBot = actionCreator<IBotConfig>('ADD_BOT');
 
 // Matches
-export const addMatchMeta = actionCreator<IMatchMetaData>('ADD_MATCH_META');
-export const matchImportError = actionCreator<string>('MATCH_IMPORT_ERROR');
-export const importMatchMeta = actionCreator<IMatchMetaData>('IMPORT_MATCH_META');
+export const importMatchFromDB = actionCreator<IMatchMetaData>('IMPORT_MATCH_FROM_DB');
+export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
+export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
 
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
-export const matchCrashed = actionCreator<any>('MATCH_CHRASHED');
+export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');

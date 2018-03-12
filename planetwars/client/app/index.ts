@@ -10,6 +10,7 @@ import { bindToStore } from './utils/Database';
 import './app.global.scss';
 import './fontawesome.global.scss';
 
+// tslint:disable-next-line:no-var-requires
 const { configureStore, history } = require('./store/configureStore');
 export const store = configureStore(initialState);
 bindToStore(store);
@@ -19,32 +20,27 @@ bindToStore(store);
 // runtime tho.
 Promise.config({
   longStackTraces: true,
-  warnings: true
+  warnings: true,
   // cancellation: true,
   // monitoring: true,
 });
 
 render(
   h(AppContainer, [
-    h(Root, {
-      store: store,
-      history: history
-    })
+    h(Root, { store, history }),
   ]),
-  document.getElementById('root')
+  document.getElementById('root'),
 );
 
 if ((module as any).hot) {
   (module as any).hot.accept('./containers/Root', () => {
+    // tslint:disable-next-line:variable-name
     const NextRoot = require('./containers/Root').default;
     render(
       h(AppContainer, [
-        h(Root, {
-          store: store,
-          history: history
-        })
+        h(Root, { store, history }),
       ]),
-      document.getElementById('root')
+      document.getElementById('root'),
     );
   });
 }

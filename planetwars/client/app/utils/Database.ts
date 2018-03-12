@@ -4,7 +4,7 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 import * as A from '../actions/actions';
 import { IBotConfig } from './ConfigModels';
 import { IMatchMetaData } from './GameModels';
-import { store } from '../index';
+import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 
 const adapter = new FileAsync('db.json');
@@ -29,14 +29,14 @@ export function bindToStore(store: any) {
     .then((db) => db.defaults({ matches: [], bots: [] }).write())
     .then((db) => {
       db.matches.forEach((match) => {
-        store.dispatch(A.addMatchMeta(match));
+        store.dispatch(A.importMatchFromDB(match));
       });
 
       db.bots.forEach((bot) => {
         console.log("Not adding bot yet", bot);
       });
     })
-    .then(() => initializeListeners)
+    .then(initializeListeners)
     .then(() => store.subscribe(changeListener))
     .catch((err) => {
       store.dispatch(A.dbError(err));
@@ -49,12 +49,12 @@ export function bindToStore(store: any) {
  * listeners need updating, and dispatches action when they require so.
  */
 function changeListener() {
-  const state: IGState = store.getState();
+  const state: IGState = globalStore.getState();
   listeners.forEach((listener) => {
     const oldValue = listener.oldValue;
     const newValue = listener.select(state);
     if (oldValue !== newValue) {
-      listener.write(newValue, store.dispatch);
+      listener.write(newValue, globalStore.dispatch);
     }
   });
 }
@@ -65,7 +65,7 @@ function changeListener() {
  * state change.
  */
 function initializeListeners() {
-  const state: IGState = store.getState();
+  const state: IGState = globalStore.getState();
   listeners.forEach((l) => l.select(state));
 }
 

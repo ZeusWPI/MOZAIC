@@ -2,6 +2,7 @@ import * as React from 'react';
 import { div, h, li, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import { IMatchMetaData } from '../../utils/GameModels';
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
 // tslint:disable-next-line:interface-over-type-literal
@@ -92,7 +93,7 @@ export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
           onChange: (evt: any) => this.handleChange(evt),
         }),
         button({ type: 'submit' }, ['Import']),
-      ]
+      ],
     );
   }
 
