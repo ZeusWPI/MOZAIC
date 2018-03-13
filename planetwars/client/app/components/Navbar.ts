@@ -74,8 +74,32 @@ interface INotificationModalProps {
   hideModal: () => void;
 }
 
+interface INotificationProps {
+  notification: INotification;
+  key: number;
+}
+
+// tslint:disable-next-line:variable-name
+const NotificationElement: React.SFC<INotificationProps> = (props) => {
+  return div(".card", [
+    header(".card-header", [
+      p(".card-header-title", [props.notification.title]),
+    ]),
+    div(".card-content#notification-body", [
+      div(".content", [props.notification.body]),
+    ]),
+  ]);
+};
+
 class NotificationModal extends React.Component<INotificationModalProps> {
+
   public render() {
+    const notificationElements = this.props.notifications.map((notification: INotification, key: number) => {
+      return h(NotificationElement, {
+        notification,
+        key,
+      });
+    });
     return div(`.modal#modal-notification${ this.props.visible ? ".is-active" : "" }`, [
       div('.modal-background', {
         onClick: this.props.hideModal,
@@ -88,7 +112,7 @@ class NotificationModal extends React.Component<INotificationModalProps> {
             'onClick': this.props.hideModal,
           }),
         ]),
-        section(".modal-card-body", ["Lorem ipsum etc"]),
+        section(".modal-card-body", [notificationElements]),
         footer(".modal-card-foot", ["Hello, World!"]),
       ]),
     ]);

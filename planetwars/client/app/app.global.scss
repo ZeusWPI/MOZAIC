@@ -77,6 +77,10 @@ body {
   }
 }
 
+#notification-body {
+  color: $background;
+}
+
 .button {
   background-color: $background;
   color: $primary;
