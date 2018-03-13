@@ -1,4 +1,4 @@
-import { h, nav, div, span } from 'react-hyperscript-helpers';
+import { h, nav, div, span, i } from 'react-hyperscript-helpers';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
@@ -8,7 +8,14 @@ import * as React from 'react';
  */
 interface INavProps {
   toggled: boolean;
+  notifications: INotification[];
   toggle: () => void;
+}
+
+export interface INotification {
+  title: string;
+  body: string;
+  link?: string;
 }
 
 export class Navbar extends React.Component<INavProps, {}> {
@@ -32,6 +39,14 @@ export class Navbar extends React.Component<INavProps, {}> {
           h(Link, `.navbar-item`, { to: "/history" }, ["Matches"]),
           h(Link, `.navbar-item`, { to: "/about" }, ["About"]),
           h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
+        ]),
+        div(`.navbar-end`, [
+          div(`.navbar-item`, [
+            i('.fa.fa-lg.fa-bell.notificationBell', {
+              'notification-count': this.props.notifications.length,
+              'aria-hidden': true,
+            }),
+          ]),
         ]),
       ]),
     ]);

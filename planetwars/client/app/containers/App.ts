@@ -4,9 +4,7 @@ import { connect } from 'react-redux';
 
 import { addBot } from '../actions/actions';
 import { IBotConfig } from '../utils/ConfigModels';
-import { ObjectLoader } from '../utils/ObjectLoader';
 import { IGState } from '../reducers';
-import { IMatchMetaData } from '../utils/GameModels';
 
 interface IProps {
   globalErrors: any[];
