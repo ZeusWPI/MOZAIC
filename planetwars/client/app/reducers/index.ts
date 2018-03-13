@@ -18,8 +18,14 @@ export interface IGState {
   readonly globalErrors: any[];
 }
 
-export interface INavbarState { readonly toggled: boolean; readonly notifications: INotification[]; }
-export interface IBotsPageState { readonly bots: IBotConfig[]; }
+export interface INavbarState {
+  readonly toggled: boolean;
+  readonly notifications: INotification[];
+}
+export interface IBotsPageState {
+  readonly bots: IBotConfig[];
+  // readonly selectedBot?: IBotConfig;
+}
 export interface IMatchesPageState {
   readonly matches: IMatchMetaData[];
   readonly importError?: string;
@@ -63,26 +69,29 @@ const aboutPageReducer = combineReducers<IAboutPageState>({
 
 const botsPageReducer = combineReducers<IBotsPageState>({
   bots: (state = [], action) => {
-    if (A.addBot.test(action)) {
-      let newA = state.slice();
+    if (A.addBot.test(action) || A.importBotFromDB.test(action)) {
+      const newA = state.slice();
       newA.push(action.payload);
       return newA;
     }
-    else if (A.removeBot.test(action)) {
+
+    if (A.removeBot.test(action)) {
       let newA = state.slice();
-      newA = newA.filter((value: IBotConfig) => (value.name != action.payload));
+      newA = newA.filter((value: IBotConfig) => (value.name !== action.payload));
       return newA;
     }
-    else if (A.clearBots.test(action)) {
+
+    if (A.clearBots.test(action)) {
       return [];
     }
+
     return state;
   },
 });
 
 const matchesPageReducer = combineReducers<IMatchesPageState>({
   matches: (state = [], action) => {
-    if (A.addMatchMeta.test(action) || A.importMatchMeta.test(action)) {
+    if (A.importMatchFromDB.test(action) || A.importMatch.test(action)) {
       const newA = state.slice();
       newA.push(action.payload);
       return newA;
@@ -90,7 +99,7 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
     return state;
   },
   importError: (state = "", action) => {
-    if (A.matchImportError.test(action)) {
+    if (A.importMatchError.test(action)) {
       return action.payload;
     }
     return state;

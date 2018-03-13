@@ -1,13 +1,12 @@
 import * as React from 'react';
 import { Switch, Route } from 'react-router';
-import { Link } from "react-router-dom"
+import { Link } from 'react-router-dom';
 import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
 
 import App from './containers/App';
 import HomePage from './containers/HomePage';
 import PlayPage from './containers/PlayPage';
 import BotsPage from './containers/BotsPage';
-import QueuePage from './containers/QueuePage';
 import MatchesPage from './containers/MatchesPage';
 import AboutPage from './containers/AboutPage';
 import VisualizerPage from './containers/VisualizerPage';
@@ -38,10 +37,6 @@ export default class Routes extends React.Component<any, any> {
           h(Route, {
             path: '/history',
             component: MatchesPage,
-          }),
-          h(Route, {
-            path: '/queue',
-            component: QueuePage,
           }),
           h(Route, {
             path: '/about',

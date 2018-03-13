@@ -1,21 +1,5 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
-import { h } from 'react-hyperscript-helpers';
+import { connect } from 'react-redux';
 
-import Visualizer from "../components/Visualizer"
+import Visualizer from "../components/visualizer/Visualizer";
 
-interface VisualizerPageProps {
-
-}
-
-interface VisualizerPageState {
-
-}
-
-export default class VisualizerPage extends React.Component<VisualizerPageProps, VisualizerPageState> {
-  render() {
-    return (
-      h(Visualizer)
-    );
-  }
-}
+export default connect(() => ({}), undefined)(Visualizer);

@@ -1,4 +1,4 @@
-import { IGameState } from '../../../utils/GameModels';
+import { IGameState } from '../../../../utils/GameModels';
 import { Player, TurnData } from './interfaces';
 import Turn from './turn';
 

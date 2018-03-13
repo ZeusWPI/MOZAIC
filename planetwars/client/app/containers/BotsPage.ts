@@ -1,57 +1,31 @@
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-
-import {Bots, IBotsProps} from "../components/bots/Bots";
-import {IGState} from '../reducers/index';
-import {} from '../actions/actions';
-import {IBotConfig} from "../utils/ConfigModels";
+import { Bots, IBotsProps } from "../components/bots/Bots";
+import { IGState } from '../reducers/index';
+import { addBot, removeBot } from '../actions/actions';
+import { IBotConfig } from "../utils/ConfigModels";
 
 interface IProps {
-  match: any
+  match: any;
 }
 
-const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
-  return {
-    // bots: state.bots.bots,
-    bot: selectBotByName(state, ownProps)
-  }
-
+const mapStateToProps = (state: IGState, ownProps: IProps) => {
+  const { bots } = state.botsPage;
+  const selectedName: string = ownProps.match.params.bot;
+  const empty: IBotConfig = { name: '', args: [], command: '' };
+  const selectedBot = bots.find((bot) => bot.name === selectedName) || empty;
+  return { bots, selectedBot };
 };
 
-const selectBotByName = (state: IGState, ownProps: IProps): IBotConfig | null => {
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    saveBot: (bot: IBotConfig) => {
+      dispatch(addBot(bot));
+    },
+    removeBot: (name: string) => {
+      dispatch(removeBot(name));
+    },
+  };
+};
 
-    let botname = ownProps.match.params.bot;
-    if (botname) {
-
-      let selectedBot: any = state.botsPage.bots.find((bot: IBotConfig) => bot.name == botname);
-      if (selectedBot) {
-        return selectedBot
-      }
-      else {
-        throw new Error('Bot not found');
-      }
-    }
-    else {
-      return null;
-    }
-
-  }
-;
-
-export default connect(mapStateToProps, null)(Bots);
-
-
-// interface BotsPageState {
-
-// }
-
-// export default class BotsPage extends React.Component<BotsPageProps, BotsPageState> {
-//   constructor(props: BotsPageProps) {
-//     super(props);
-//   }
-//   render() {
-//     return (
-//       h(Bots, { bot: this.props.match.params.bot })
-//     );
-//   }
-// }
+export default connect(mapStateToProps, mapDispatchToProps)(Bots);

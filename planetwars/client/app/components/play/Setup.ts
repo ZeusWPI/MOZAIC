@@ -8,6 +8,7 @@ import { Config } from '../../utils/Config';
 import { IBotConfig, IMatchConfig } from "../../utils/ConfigModels";
 import { BotSelector } from "./BotSelector";
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Setup.scss');
 
 interface ISetupState {
