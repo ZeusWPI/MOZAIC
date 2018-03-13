@@ -29,6 +29,7 @@ export const dbSync = actionCreator<any>('DB_SYNC');
 // Notifications
 export const addNotification = actionCreator<INotification>('ADD_NOTIFICATION');
 export const removeNotification = actionCreator<number>('REMOVE_NOTIFICATION');
+export const clearNotifications = actionCreatorVoid('CLEAR_NOTIFICATION')
 export const showNotifications = actionCreatorVoid('NOTIFICATION_SHOW');
 export const hideNotifications = actionCreatorVoid('NOTIFICATION_HIDE');
 export const toggleNotifications = actionCreatorVoid('NOTIFICATION_TOGGLE');

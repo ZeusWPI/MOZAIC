@@ -7,6 +7,7 @@ import {
   hideNotifications,
   toggleNotifications,
   removeNotification,
+  clearNotifications,
 } from '../actions/actions';
 import { Navbar } from '../components/Navbar';
 
@@ -34,6 +35,9 @@ const mapDispatchToProps = (dispatch: any) => {
     },
     removeNotification: (index: number) => {
       dispatch(removeNotification(index));
+    },
+    clearNotifications: () => {
+      dispatch(clearNotifications());
     },
   };
 };

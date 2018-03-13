@@ -55,6 +55,8 @@ const navbarReducer = combineReducers<INavbarState>({
       const newState = state.slice();
       newState.splice(action.payload, 1);
       return newState;
+    } else if (A.clearNotifications.test(action)) {
+      return [];
     }
     return state;
   },

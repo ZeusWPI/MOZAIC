@@ -13,6 +13,7 @@ interface INavProps {
   hideNotifications: () => void;
   showNotifications: () => void;
   removeNotification: (key: number) => void;
+  clearNotifications: () => void;
 }
 
 export class Navbar extends React.Component<INavProps, {}> {
@@ -57,6 +58,7 @@ export class Navbar extends React.Component<INavProps, {}> {
         notifications: this.props.notifications,
         hideModal: () => this.hideModal(),
         removeNotification: (key: number) => this.props.removeNotification(key),
+        clearNotifications: () => this.props.clearNotifications(),
       }),
     ];
   }
@@ -75,6 +77,7 @@ interface INotificationModalProps {
   visible: boolean;
   hideModal: () => void;
   removeNotification: (key: number) => void;
+  clearNotifications: () => void;
 }
 
 interface INotificationElementProps {
@@ -115,7 +118,7 @@ class NotificationModal extends React.Component<INotificationModalProps> {
         onClick: this.props.hideModal,
       }),
       div('.modal-card', [
-        header('.modal-title', [
+        header('.modal-card-head', [
           p('.modal-card-title', ["Notifications"]),
           button('.delete', {
             'aria-label': close,
@@ -123,7 +126,9 @@ class NotificationModal extends React.Component<INotificationModalProps> {
           }),
         ]),
         section(".modal-card-body", [notificationElements]),
-        footer(".modal-card-foot", ["Hello, World!"]),
+        footer(".modal-card-foot", [button(".button", {
+          onClick: () => this.props.clearNotifications(),
+        }, ["Mark all as read"])]),
       ]),
     ]);
   }
