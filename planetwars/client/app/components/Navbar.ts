@@ -12,6 +12,7 @@ interface INavProps {
   toggleNotifications: () => void;
   hideNotifications: () => void;
   showNotifications: () => void;
+  removeNotification: (key: number) => void;
 }
 
 export class Navbar extends React.Component<INavProps, {}> {
@@ -55,6 +56,7 @@ export class Navbar extends React.Component<INavProps, {}> {
         visible: this.props.notificationsVisible,
         notifications: this.props.notifications,
         hideModal: () => this.hideModal(),
+        removeNotification: (key: number) => this.props.removeNotification(key),
       }),
     ];
   }
@@ -72,18 +74,25 @@ interface INotificationModalProps {
   notifications: INotification[];
   visible: boolean;
   hideModal: () => void;
+  removeNotification: (key: number) => void;
 }
 
-interface INotificationProps {
+interface INotificationElementProps {
   notification: INotification;
   key: number;
+  remove: () => void;
 }
 
 // tslint:disable-next-line:variable-name
-const NotificationElement: React.SFC<INotificationProps> = (props) => {
+const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
   return div(".card", [
     header(".card-header", [
       p(".card-header-title", [props.notification.title]),
+      span(".card-header-icon", [
+        button(".delete", {
+          onClick: () => props.remove(),
+        }),
+      ]),
     ]),
     div(".card-content#notification-body", [
       div(".content", [props.notification.body]),
@@ -98,6 +107,7 @@ class NotificationModal extends React.Component<INotificationModalProps> {
       return h(NotificationElement, {
         notification,
         key,
+        remove: () => this.props.removeNotification(key),
       });
     });
     return div(`.modal#modal-notification${ this.props.visible ? ".is-active" : "" }`, [

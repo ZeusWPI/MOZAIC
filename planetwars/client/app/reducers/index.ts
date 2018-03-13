@@ -51,6 +51,10 @@ const navbarReducer = combineReducers<INavbarState>({
       const newState = state.slice();
       newState.push(action.payload);
       return newState;
+    } else if (A.removeNotification.test(action)) {
+      const newState = state.slice();
+      newState.splice(action.payload, 1);
+      return newState;
     }
     return state;
   },
