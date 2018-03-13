@@ -33,7 +33,7 @@ export function bindToStore(store: any) {
       });
 
       db.bots.forEach((bot) => {
-        console.log("Not adding bot yet", bot);
+        store.dispatch(A.importBotFromDB(bot));
       });
     })
     .then(initializeListeners)
@@ -97,5 +97,9 @@ const listeners: TableListener<any>[] = [
   new TableListener<IMatchMetaData[]>(
     (state: IGState) => state.matchesPage.matches,
     SCHEMA.MATCHES,
+  ),
+  new TableListener<IBotConfig[]>(
+    (state: IGState) => state.botsPage.bots,
+    SCHEMA.BOTS,
   ),
 ];

@@ -10,6 +10,7 @@ export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 export const incrementAbout = actionCreatorVoid('TEST');
 
 // Bots
+export const importBotFromDB = actionCreator<IBotConfig>('IMPORT_BOT_FROM_DB');
 export const addBot = actionCreator<IBotConfig>('ADD_BOT');
 export const loadBot = actionCreator<IBotConfig>('LOAD_BOT');
 export const removeBot = actionCreator<string>('REMOVE_BOT');

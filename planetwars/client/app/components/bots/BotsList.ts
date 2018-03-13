@@ -1,72 +1,62 @@
 import * as React from 'react';
 import * as path from 'path';
 import * as fs from 'fs';
-
-import {RouteComponentProps} from 'react-router';
-import {h} from 'react-hyperscript-helpers';
-import {Link} from "react-router-dom";
-import BotElement from './containers/BotElementContainer';
 import * as Promise from "bluebird";
-import {IBotConfig} from "../../utils/ConfigModels";
+import { IBotConfig } from "../../utils/ConfigModels";
 
-let styles = require("./BotsList.scss");
+import { h, ul, li, button, div } from 'react-hyperscript-helpers';
+import { Link } from "react-router-dom";
 
-export interface BotsListProps {
-  refreshBots: () => Promise<void>,
-  bots: IBotConfig[]
+// tslint:disable-next-line:no-var-requires
+const styles = require("./Bots.scss");
+
+export interface IBotsListProps {
+  bots: IBotConfig[];
+  removeBot: (name: string) => void;
 }
 
+export class BotsList extends React.Component<IBotsListProps, any> {
 
-export default class BotsList extends React.Component<BotsListProps, any> {
+  public render() {
+    const { bots, removeBot } = this.props;
+    const botElements: React.Component[] = bots.map((botConfig: IBotConfig) =>
+      h(BotElement, {
+        key: botConfig.name,
+        name: botConfig.name,
+        removeBot: this.props.removeBot,
+      }),
+    );
 
-  constructor(props: BotsListProps) {
-    super(props);
+    return div(`.${styles.botsListPane}`, [
+      h(NewBot),
+      ul([botElements]),
+    ]);
   }
-
-
-  render() {
-
-
-    let botElements: React.Component[] = this.props.bots.map((botConfig: IBotConfig) =>
-      (h(BotElement, `.${styles.botlistitem}`,
-          {key: botConfig.name, name: botConfig.name, refreshBots: this.props.refreshBots})
-      )
-    );
-
-    botElements.push(
-      h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
-        h("li", `.${styles.botlistitem}`, ["New Bot"])
-      ])
-    );
-
-    return (
-      h("ul", `.${styles.botslist}`, [botElements])
-    );
-  }
-
-
 }
 
+// tslint:disable-next-line:variable-name
+export const NewBot: React.SFC<void> = (props) => {
+  return div(`.${styles.newBot}`, [
+    h(Link, { to: "/bots/" }, ["New Bot"]),
+  ]);
+};
 
-// const BotsList = (props: BotsListProps) => {
-//   let bots = props.bots;
-//
-//     let botElements = bots.map((botName: string) =>
-//       h(BotElement, {name: botName, removeBot: removeBot})
-//     );
-//
-//     botElements.push(
-//       h(Link, `.${styles.botsentry}`, {to: "/bots/"}, [
-//         h("li", `.${styles.botlistitem}`, ["New Bot"])
-//       ])
-//     );
-//
-//     return (
-//       h("ul", `.${styles.botslist}`, botElements)
-//     );
-//
-// };
-//
-// export default BotsList
+interface IBotElementProps {
+  name: string;
+  removeBot: (name: string) => void;
+}
 
-
+export class BotElement extends React.Component<IBotElementProps, {}> {
+  public render() {
+    return h(Link, `.${styles.botsElement}`, { to: `/bots/${this.props.name}` }, [
+      li([
+        this.props.name,
+        button(`.${styles.removeBot}`, {
+          onClick: (evt: any) => {
+            this.props.removeBot(this.props.name);
+          },
+        }, ["x"]),
+      ]),
+    ]);
+  }
+}

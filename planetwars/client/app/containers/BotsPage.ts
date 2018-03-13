@@ -2,34 +2,30 @@ import { connect } from 'react-redux';
 
 import { Bots, IBotsProps } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
-import { } from '../actions/actions';
+import { addBot, removeBot } from '../actions/actions';
 import { IBotConfig } from "../utils/ConfigModels";
 
 interface IProps {
   match: any;
 }
 
-const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
+const mapStateToProps = (state: IGState, ownProps: IProps) => {
+  const { bots } = state.botsPage;
+  const selectedName: string = ownProps.match.params.bot;
+  const empty: IBotConfig = { name: '', args: [], command: '' };
+  const selectedBot = bots.find((bot) => bot.name === selectedName) || empty;
+  return { bots, selectedBot };
+};
+
+const mapDispatchToProps = (dispatch: any) => {
   return {
-    // bots: state.bots.bots,
-    bot: selectBotByName(state, ownProps),
+    saveBot: (bot: IBotConfig) => {
+      dispatch(addBot(bot));
+    },
+    removeBot: (name: string) => {
+      dispatch(removeBot(name));
+    },
   };
 };
 
-const selectBotByName = (state: IGState, ownProps: IProps): IBotConfig | null => {
-
-  const botname = ownProps.match.params.bot;
-  if (botname) {
-
-    const selectedBot: any = state.botsPage.bots.find((bot: IBotConfig) => bot.name === botname);
-    if (selectedBot) {
-      return selectedBot;
-    } else {
-      throw new Error('Bot not found');
-    }
-  } else {
-    return null;
-  }
-};
-
-export default connect(mapStateToProps, undefined)(Bots);
+export default connect(mapStateToProps, mapDispatchToProps)(Bots);
