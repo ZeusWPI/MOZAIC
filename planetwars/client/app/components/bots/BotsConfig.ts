@@ -23,8 +23,6 @@ interface IBotsConfigState {
   errors: string[];
 }
 
-// TODO: convert to show details of loadedbot, write savebot function, figure out formstate-control
-
 export class BotsConfig extends React.Component<IBotsConfigProps, IBotsConfigState> {
 
   public componentWillMount() {
@@ -36,7 +34,6 @@ export class BotsConfig extends React.Component<IBotsConfigProps, IBotsConfigSta
       form(`.${styles.botsConfig}`,
         {
           onSubmit: (evt: any) => {
-            // evt.preventDefault();
             console.log("test");
             return this.props.saveBot({
               name: this.state.name,
@@ -115,9 +112,9 @@ export class ArgumentFields extends React.Component<IArgumentFieldsProps, IArgum
           arg,
           handleChange: (value: string) => this.props.handleChange(value, num),
         }),
-        button('.button', { onClick: () => this.props.removeArg(num) }, ["-"]),
+        button('.button', { type: 'button', onClick: () => this.props.removeArg(num) }, ["-"]),
       ])),
-      button('.button', { onClick: () => this.props.addArg() }, ["+"]),
+      button('.button', { type: 'button', onClick: () => this.props.addArg() }, ["+"]),
     ]);
   }
 }
