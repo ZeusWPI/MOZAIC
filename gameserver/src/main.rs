@@ -25,7 +25,6 @@ use std::fs::File;
 use tokio_core::reactor::Core;
 use futures::sync::mpsc;
 
-use std::collections::HashMap;
 use bot_runner::*;
 
 use client_controller::ClientController;
@@ -70,7 +69,8 @@ fn main() {
     let controller = Controller::new(
         handles,
         chan,
-        match_description.game_config
+        match_description.game_config,
+        match_description.log_file
     );
     
     reactor.run(controller).unwrap();
@@ -80,7 +80,7 @@ fn main() {
 pub struct MatchDescription {
     pub players: Vec<PlayerConfig>,
     pub game_config: planetwars::Config,
-    pub log_file: Option<String>
+    pub log_file: String,
 }
 
 // Parse a config passed to the program as an command-line argument.
