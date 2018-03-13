@@ -18,7 +18,11 @@ export interface IGState {
   readonly globalErrors: any[];
 }
 
-export interface INavbarState { readonly toggled: boolean; readonly notifications: INotification[]; }
+export interface INavbarState {
+  readonly toggled: boolean;
+  readonly notifications: INotification[];
+  readonly notificationsVisible: boolean;
+}
 export interface IBotsPageState { readonly bots: IBotConfig[]; }
 export interface IMatchesPageState {
   readonly matches: IMatchMetaData[];
@@ -28,7 +32,7 @@ export interface IAboutPageState { readonly counter: number; }
 
 export const initialState: IGState = {
   routing: { location: null },
-  navbar: { toggled: false, notifications: [] },
+  navbar: { toggled: false, notifications: [], notificationsVisible: false },
   botsPage: { bots: [] },
   matchesPage: { matches: [] },
   aboutPage: { counter: 0 },
@@ -47,6 +51,16 @@ const navbarReducer = combineReducers<INavbarState>({
       const newState = state.slice();
       newState.push(action.payload);
       return newState;
+    }
+    return state;
+  },
+  notificationsVisible: (state = false, action) => {
+    if (A.showNotifications.test(action)) {
+      return true;
+    } else if (A.hideNotifications.test(action)) {
+      return false;
+    } else if (A.toggleNotifications.test(action)) {
+      return !state;
     }
     return state;
   },
