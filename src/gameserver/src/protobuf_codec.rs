@@ -4,7 +4,7 @@ use prost::{Message, EncodeError, DecodeError};
 use prost::encoding;
 use bytes::{BytesMut, Buf, BufMut};
 use std::io::{Result, Error, ErrorKind, Cursor};
-use futures::{Poll, Sink, Stream, StartSend};
+use futures::{Poll, Async, Sink, Stream, StartSend};
 
 use tokio_io::{codec, AsyncRead, AsyncWrite};
 
@@ -19,6 +19,20 @@ impl<T> ProtobufTransport<T>
         ProtobufTransport {
             inner: stream.framed(LengthDelimited::new()),
         }
+    }
+
+    pub fn poll_msg<M>(&mut self) -> Poll<Option<M>, Error>
+        where M: Message + Default
+    {
+        let res = match try_ready!(self.poll()) {
+            None => None,
+            Some(bytes_mut) => {
+                let bytes = bytes_mut.freeze();
+                let msg = try!(M::decode(bytes));
+                Some(msg)
+            },
+        };
+        return Ok(Async::Ready(res));
     }
 }
 

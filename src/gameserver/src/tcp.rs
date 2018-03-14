@@ -65,12 +65,12 @@ struct Waiting;
 impl Waiting {
     fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
     {
-        let bytes  = match try_ready!(data.conn_mut().poll()) {
+        let polled = data.conn_mut().poll_msg();
+        let request: protocol::ConnectRequest = match try_ready!(polled) {
             None => bail!(io::ErrorKind::ConnectionAborted),
-            Some(bytes) => bytes,
+            Some(msg) => msg
         };
 
-        let request = try!(protocol::ConnectRequest::decode(bytes.freeze()));
         // TODO: dont do this here
         // construct a request
         let (sender, receiver) = oneshot::channel();
