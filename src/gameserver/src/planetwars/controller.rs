@@ -25,7 +25,7 @@ pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
     timeout: Timeout,
 }
 
-#[derive(PartialEq, Clone, Copy, Eq, Hash, Debug)]
+#[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
 pub struct PlayerId {
     id: usize,
 }
@@ -39,6 +39,16 @@ impl PlayerId {
 
     pub fn as_usize(&self) -> usize {
         self.id
+    }
+}
+
+impl slog::KV for PlayerId {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_usize("player_id", self.as_usize())
     }
 }
 
@@ -90,7 +100,7 @@ impl<G, L, C> Controller<G, L, C>
                 // TODO: maybe it would be better to log this in the
                 // client_controller.
                 info!(self.logger, "message received";
-                    "player_id" => player_id.as_usize(),
+                    player_id,
                     "content" => &msg,
                 );
                 self.lock.attach_command(player_id, msg);
@@ -100,19 +110,23 @@ impl<G, L, C> Controller<G, L, C>
                 // It might be more useful to have the client controller log
                 // disconnect reasons.
                 info!(self.logger, "client disconnected";
-                    "player_id" => player_id.as_usize()
+                    player_id
                 );
                 self.lock.disconnect(player_id);
             },
             Message::Connected => {
                 info!(self.logger, "client connected";
-                    "player_id" => player_id.as_usize()
+                    player_id
                 );
                 self.lock.connect(player_id);
             },
             Message::Timeout => {
                 if self.timeout.is_expired() {
-                    println!("timeout");
+                    self.lock.get_waiting().into_iter().for_each(|player_id| 
+                        info!(self.logger, "timeout";
+                            player_id
+                        )
+                    );
                     self.force_lock_step();
                     self.run_lock();
                 }

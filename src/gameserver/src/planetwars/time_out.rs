@@ -35,7 +35,7 @@ impl Timeout {
             self.loop_handle.spawn(
                 t.and_then(move |_| {
                     let msg = ClientMessage {
-                        client_id: PlayerId::new(666),
+                        player_id: PlayerId::new(666),
                         message: Message::Timeout,
                     };
                     out.unbounded_send(msg).expect("handle broke in timeout");
@@ -49,8 +49,9 @@ impl Timeout {
     }
 
     /// Returns true if the timeout is really expired
-    /// This is necessary because Futures can not be stopped
+    /// This is necessary because Futures can not be stopped, yet by me
     /// So every timeout message will be send even if it is depricated
+    /// This shouldn't be necessary
     pub fn is_expired(&mut self) -> bool {
         if self.timer.is_expired() && !self.used{
             self.used = true;

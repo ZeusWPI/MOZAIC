@@ -91,14 +91,14 @@ impl PwController {
             match self.parse_command(player_id, &cmd) {
                 Ok(dispatch) => {
                     info!(self.logger, "dispatch";
-                        "player_id" => player_id.as_usize(),
+                        player_id,
                         cmd);
                     self.state.dispatch(&dispatch);
                 },
                 Err(err) => {
                     // TODO: include actual error
                     info!(self.logger, "illegal command";
-                        "player_id" => player_id.as_usize(),
+                        player_id,
                         cmd,
                         "error" => serde_json::to_string(&err).unwrap());
                 }

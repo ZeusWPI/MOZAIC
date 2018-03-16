@@ -78,4 +78,10 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
                                         );
         self.do_step()
     }
+
+    fn get_waiting(& self) -> HashSet<PlayerId> {
+        let mut out = HashSet::new();
+        self.awaiting_clients.intersection(& self.connected_clients).for_each(|id| {out.insert(id.clone());});
+        out
+    }
 }

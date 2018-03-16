@@ -25,4 +25,8 @@ pub trait Lock<G: GameController<C>, C: DeserializeOwned> {
     fn disconnect(&mut self, client_id: PlayerId);
     /// Lock act's, mainly used for timouts
     fn do_time_out(&mut self) -> (u64, Option<Vec<PlayerId>>);
+
+    fn get_waiting(&self) -> HashSet<PlayerId> {
+        HashSet::new()
+    }
 }
