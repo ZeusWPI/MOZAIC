@@ -1,10 +1,10 @@
 import * as Promise from 'bluebird';
-import { Address, connect } from './connection';
+import { Address, Connection } from './connection';
 
 let addr = new Address("127.0.0.1", 9142);
 let sock = Promise.resolve(addr.connect())
     .then(socket => {
-        return connect(socket, Buffer.from("01", "hex"));
+        return Connection.connect(socket, Buffer.from("01", "hex"));
     })
     .catch(e => console.log(`error: ${e}`));
 //console.log(sock);
