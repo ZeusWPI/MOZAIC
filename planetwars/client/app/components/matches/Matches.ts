@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import { IMatchMetaData } from '../../utils/GameModels';
+import * as moment from 'moment';
 
 const styles = require('./Matches.scss');
 
@@ -56,23 +57,24 @@ interface IMatchEntryProps {
 }
 
 // tslint:disable-next-line:variable-name
-export const MatchListEntry: React.SFC<IMatchEntryProps> = (props) => {
-  const { stats, players } = props.match.match;
-  const winnerName = players[stats.winner - 1] || "Tie";
-  return div(`.${styles.matchListEntry}`, [
-    div({ className: styles.content }, [
-      ul({className: styles.playerList}, players.map((p, idx) => {
-        let className;
-        if (stats.winner - 1 == idx) {
-          className = styles.winner;
-        } else {
-          className = styles.loser;
-        }
-        return li({className}, p);
-      }))
-    ])
-  ]);
-};
+export class MatchListEntry extends Component<IMatchEntryProps> {
+  render() {
+    const { stats, players } = this.props.match.match;
+    return div(`.${styles.matchListEntry}`, [
+      div({ className: styles.content }, [
+        ul({ className: styles.playerList }, players.map((p, idx) => {
+          let className;
+          if (stats.winner == idx + 1) {
+            className = styles.winner;
+          } else {
+            className = styles.loser;
+          }
+          return li({ className }, p);
+        }))
+      ])
+    ]);
+  }
+}
 
 export class MatchDetails extends React.Component<{}, {}> {
   public render() {
