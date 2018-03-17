@@ -1,6 +1,8 @@
 # Fuck this thing
 package-lock.json
 
+emails.txt
+
 # Compiled Typescript & Bundled JS/CSS
 dist/
 
