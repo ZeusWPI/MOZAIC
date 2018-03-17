@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { div, h, li, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
+import { Component } from 'react';
+import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import { IMatchMetaData } from '../../utils/GameModels';
 
 const styles = require('./Matches.scss');
@@ -17,31 +18,36 @@ interface IMatchesProps {
 
 interface IState { }
 
-export default class Matches extends React.Component<IMatchesProps, IState> {
+export default class MatchViewer extends React.Component<IMatchesProps, IState> {
   public render() {
     const { loadLogs, importError, matches } = this.props;
     // TODO: Error handling sucks, will get overridden on new problem;
     if (importError) { alert(importError); }
     if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
 
-    return div(`.${styles.matchesPage}`, [
-      h(MatchImporter, { loadLogs }),
-      div(`.${styles.matchesOverview}`, [
-        h(MatchesList, { matches }),
-        h(MatchDetails, {}),
-      ]),
+    return div({ className: styles.matchViewer }, [
+      h(MatchList, { matches }),
+      div("placeholder")
     ]);
   }
 }
 
-export class MatchesList extends React.Component<{ matches: AnnotatedMatch[] }> {
+interface IMatchListProps {
+  matches: AnnotatedMatch[],
+}
+
+interface IMatchListState {
+  selected: number,
+}
+
+export class MatchList extends Component<IMatchListProps, IMatchListState> {
   public render() {
     const matches = this.props.matches.map((match) =>
-      li(`.${styles.matchesListItem}`, [
-        h(MatchEntry, { match }),
+      li({ className: styles.matchlistEntry }, [
+        h(MatchListEntry, { match }),
       ]),
     );
-    return ul(`.${styles.matchesListPane}`, matches);
+    return ul(`.${styles.matchList}`, matches);
   }
 }
 
@@ -50,16 +56,21 @@ interface IMatchEntryProps {
 }
 
 // tslint:disable-next-line:variable-name
-export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
+export const MatchListEntry: React.SFC<IMatchEntryProps> = (props) => {
   const { stats, players } = props.match.match;
   const winnerName = players[stats.winner - 1] || "Tie";
-  return div(`.${styles.match}`, [
-    p([`Winner: ${winnerName}`]),
-    p([`Players: ${players}`]),
-    p([`${stats.turns} turns`]),
-    p([`${stats.planetsFlipped} planets flipped`]),
-    p([`${stats.commandsOrdered} commands ordered`]),
-    p([`${stats.shipsSend} ships send`]),
+  return div(`.${styles.matchListEntry}`, [
+    div({ className: styles.content }, [
+      ul({className: styles.playerList}, players.map((p, idx) => {
+        let className;
+        if (stats.winner - 1 == idx) {
+          className = styles.winner;
+        } else {
+          className = styles.loser;
+        }
+        return li({className}, p);
+      }))
+    ])
   ]);
 };
 

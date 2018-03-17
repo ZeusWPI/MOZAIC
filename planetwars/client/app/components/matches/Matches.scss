@@ -1,5 +1,54 @@
 @import '../../app.global.scss';
 
+$altBackground: lighten($background, 5);
+$red: #DE474C;
+$blue: #4797DE;
+
+.matchViewer {
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+  display: flex;
+}
+
+.matchList {
+  height: 100%;
+  width: 400px;
+  border-right: 1px solid $altBackground;
+}
+
+.matchListEntry {
+  border-bottom: 1px solid $altBackground;
+
+  .content {
+    padding: 10px;
+    font-size: 12px;
+
+    
+  }
+
+  .playerList {
+    margin: 0;
+
+    .winner {
+      color: $blue;
+    }
+
+    .loser {
+      color: $red;
+    }
+
+    li {  
+      list-style: none;
+      font-weight: 700;
+    }
+  }
+
+  :hover {
+    background-color: $altBackground;
+  }
+}
+
 .matchesPage {
   margin: 20px 0px;
   width: 100%;
