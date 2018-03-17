@@ -4,6 +4,8 @@ import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyper
 import { IMatchMetaData } from '../../utils/GameModels';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
+import * as VisualizerComponent from '../visualizer';
+
 
 const styles = require('./Matches.scss');
 
@@ -11,16 +13,28 @@ const styles = require('./Matches.scss');
 type AnnotatedMatch = { id: number, match: IMatchMetaData };
 type LogLoader = (paths: FileList) => void;
 
-interface IMatchesProps {
+interface IMatchViewerProps {
   expandedGameId: number;
   matches: AnnotatedMatch[];
   loadLogs: LogLoader;
   importError: string;
 }
 
-interface IState { }
+interface IMatchViewerState {
+  // use index as id, for now
+  selectedMatch: number,
+}
 
-export default class MatchViewer extends React.Component<IMatchesProps, IState> {
+export default class MatchViewer extends Component<IMatchViewerProps, IMatchViewerState> {
+  constructor(props: IMatchViewerProps) {
+    super(props)
+    this.state = { selectedMatch: 0 };
+  }
+
+  select(idx: number) {
+    this.setState({ selectedMatch: idx });
+  }
+
   public render() {
     const { loadLogs, importError, matches } = this.props;
     // TODO: Error handling sucks, will get overridden on new problem;
@@ -28,7 +42,11 @@ export default class MatchViewer extends React.Component<IMatchesProps, IState> 
     if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
 
     return div({ className: styles.matchViewer }, [
-      h(MatchList, { matches }),
+      h(MatchList, {
+        matches,
+        selected: this.state.selectedMatch,
+        selectFn: this.select.bind(this),
+      }),
       div("placeholder")
     ]);
   }
@@ -36,29 +54,18 @@ export default class MatchViewer extends React.Component<IMatchesProps, IState> 
 
 interface IMatchListProps {
   matches: AnnotatedMatch[],
-}
-
-interface IMatchListState {
   selected: number,
+  selectFn: (index: number) => void,
 }
 
-export class MatchList extends Component<IMatchListProps, IMatchListState> {
-  constructor(props: IMatchListProps) {
-    super(props)
-    this.state = { selected: 0 };
-  }
-
-  select(idx: number) {
-    this.setState({selected: idx});
-  }
-
+export class MatchList extends Component<IMatchListProps> {
   public render() {
     const matches = this.props.matches.map((match, idx) =>
       li([
         h(MatchListEntry, {
           match,
-          selected: idx == this.state.selected,
-          onClick: () => this.select(idx),
+          selected: idx == this.props.selected,
+          onClick: () => this.props.selectFn(idx),
         }),
       ]),
     );
