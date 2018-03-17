@@ -21,13 +21,16 @@ $blue: #4797DE;
   border-bottom: 1px solid $altBackground;
   border-left: 3px solid $background;
 
-  .content {
+  .inner {
     padding: 10px;
     font-size: 10pt;
   }
 
   .playerList {
-    margin: 0;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0.2em;
 
     .winner {
       color: $blue;

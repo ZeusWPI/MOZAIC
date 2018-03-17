@@ -82,26 +82,35 @@ export class MatchListEntry extends Component<IMatchEntryProps> {
     }
   }
 
-  render() {
+  playerList() {
     const { stats, players } = this.props.match.match;
+    return ul({ className: styles.playerList }, players.map((p, idx) => {
+      let className;
+      if (stats.winner == idx + 1) {
+        className = styles.winner;
+      } else {
+        className = styles.loser;
+      }
+      return li({ className }, p);
+    }));
+  }
+
+  mapName() {
+    // placeholder until we have actual map information
+    const mapName = "mycoolmap23"; 
+    return span(mapName);
+  }
+
+  render() {
     let attrs = {
       className: this.className(),
-      onClick: () => {
-        console.log("click");
-        this.props.onClick();
-      },
+      onClick: this.props.onClick,
     };
+
     return div(attrs, [
-      div({ className: styles.content }, [
-        ul({ className: styles.playerList }, players.map((p, idx) => {
-          let className;
-          if (stats.winner == idx + 1) {
-            className = styles.winner;
-          } else {
-            className = styles.loser;
-          }
-          return li({ className }, p);
-        }))
+      div({ className: styles.inner }, [
+        this.playerList(),
+        this.mapName(),
       ])
     ]);
   }
