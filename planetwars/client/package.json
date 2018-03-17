@@ -104,6 +104,7 @@
   "homepage": "https://github.com/ZeusWPI/MOZAIC/",
   "devDependencies": {
     "@types/bluebird": "^3.5.20",
+    "@types/classnames": "^2.2.3",
     "@types/enzyme": "^3.1.1",
     "@types/history": "^4.5.2",
     "@types/jest": "^21.1.1",
@@ -166,6 +167,7 @@
     "@types/react-jsonschema-form": "^0.51.1",
     "bluebird": "^3.5.1",
     "bulma": "^0.6.2",
+    "classnames": "^2.2.5",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
     "eslint-plugin-react": "^7.4.0",
@@ -173,6 +175,7 @@
     "history": "^4.6.1",
     "hyperscript-helpers": "^3.0.3",
     "lowdb": "^1.0.0",
+    "moment": "^2.21.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "react-helpers": "0.0.1",

@@ -3,6 +3,7 @@ import { Component } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import { IMatchMetaData } from '../../utils/GameModels';
 import * as moment from 'moment';
+import * as classnames from 'classnames';
 
 const styles = require('./Matches.scss');
 
@@ -42,10 +43,23 @@ interface IMatchListState {
 }
 
 export class MatchList extends Component<IMatchListProps, IMatchListState> {
+  constructor(props: IMatchListProps) {
+    super(props)
+    this.state = { selected: 0 };
+  }
+
+  select(idx: number) {
+    this.setState({selected: idx});
+  }
+
   public render() {
-    const matches = this.props.matches.map((match) =>
-      li({ className: styles.matchlistEntry }, [
-        h(MatchListEntry, { match }),
+    const matches = this.props.matches.map((match, idx) =>
+      li([
+        h(MatchListEntry, {
+          match,
+          selected: idx == this.state.selected,
+          onClick: () => this.select(idx),
+        }),
       ]),
     );
     return ul(`.${styles.matchList}`, matches);
@@ -53,14 +67,31 @@ export class MatchList extends Component<IMatchListProps, IMatchListState> {
 }
 
 interface IMatchEntryProps {
-  match: AnnotatedMatch;
+  match: AnnotatedMatch,
+  selected: boolean,
+  onClick: () => void,
 }
 
 // tslint:disable-next-line:variable-name
 export class MatchListEntry extends Component<IMatchEntryProps> {
+  className() : string {
+    if (this.props.selected) {
+      return classnames(styles.matchListEntry, styles.selected);
+    } else {
+      return styles.matchListEntry;
+    }
+  }
+
   render() {
     const { stats, players } = this.props.match.match;
-    return div(`.${styles.matchListEntry}`, [
+    let attrs = {
+      className: this.className(),
+      onClick: () => {
+        console.log("click");
+        this.props.onClick();
+      },
+    };
+    return div(attrs, [
       div({ className: styles.content }, [
         ul({ className: styles.playerList }, players.map((p, idx) => {
           let className;

@@ -19,12 +19,11 @@ $blue: #4797DE;
 
 .matchListEntry {
   border-bottom: 1px solid $altBackground;
+  border-left: 3px solid $background;
 
   .content {
     padding: 10px;
-    font-size: 12px;
-
-    
+    font-size: 10pt;
   }
 
   .playerList {
@@ -47,6 +46,11 @@ $blue: #4797DE;
   :hover {
     background-color: $altBackground;
   }
+}
+
+.matchListEntry.selected {
+  border-left: 3px solid $secondary;
+  background-color: $altBackground;
 }
 
 .matchesPage {
