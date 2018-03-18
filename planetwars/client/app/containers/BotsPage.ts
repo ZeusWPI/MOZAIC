@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { Bots, IBotsStateProps, IBotsFuncProps } from "../components/bots/Bots";
+import { Bots, IBotsStateProps, IBotsFuncProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/actions';
 import { IBotConfig, IBotData, BotID } from "../utils/ConfigModels";
@@ -29,6 +29,18 @@ const mapDispatchToProps = (dispatch: any) => {
     },
     editBot: (bot: IBotData) => {
       dispatch(editBot(bot));
+    },
+    validate: (config: IBotConfig) => {
+      const errors: ConfigErrors = {};
+      if (!config.name || config.name.length === 0) {
+        errors.name = 'Name should not be empty';
+      }
+
+      if (!config.command || config.command.length === 0) {
+        errors.command = 'Command should not be empty';
+      }
+
+      return errors;
     },
   };
 };

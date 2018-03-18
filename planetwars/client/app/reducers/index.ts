@@ -102,7 +102,8 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
     const createdAt = new Date(_now);
     const lastUpdatedAt = new Date(_now);
     const uuid = uuidv4();
-    const bot: IBotData = { uuid, config, createdAt, lastUpdatedAt, history: [] };
+    const history = [config];
+    const bot: IBotData = { uuid, config, createdAt, lastUpdatedAt, history };
     return { ...state, [bot.uuid]: bot };
   }
 
@@ -111,7 +112,10 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
   }
 
   if (A.editBot.test(action)) {
-    state[action.payload.uuid] = action.payload;
+    const bot = action.payload;
+    bot.history.push(bot.config);
+    bot.lastUpdatedAt = new Date(Date.now());
+    state[bot.uuid] = bot;
     return { ...state };
   }
 
@@ -129,7 +133,7 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
 const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState => {
   switch (action.type) {
-    case A.importBotFromDB.type:
+    case A.importMatchFromDB.type:
     case A.importMatch.type: {
       const match: IMatchMetaData = action.payload;
       return { ...state, [match.uuid]: match };
