@@ -45,7 +45,7 @@ export function bindToStore(store: any) {
       Object.keys(db.matches).forEach((uuid) => {
         store.dispatch(A.importMatchFromDB(db.matches[uuid]));
       });
-      Object.keys(db.matches).forEach((uuid) => {
+      Object.keys(db.bots).forEach((uuid) => {
         store.dispatch(A.importBotFromDB(db.bots[uuid]));
       });
     })
