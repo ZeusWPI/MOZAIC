@@ -1,10 +1,10 @@
 import * as React from 'react';
 import { Component } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
-import { IMatchMetaData } from '../../utils/GameModels';
+import { IMatchMetaData, IMatchData } from '../../utils/GameModels';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
-import * as VisualizerComponent from '../visualizer';
+import { MatchView } from './MatchView';
 
 
 const styles = require('./Matches.scss');
@@ -47,7 +47,9 @@ export default class MatchViewer extends Component<IMatchViewerProps, IMatchView
         selected: this.state.selectedMatch,
         selectFn: this.select.bind(this),
       }),
-      div("placeholder")
+      h(MatchView, {
+        match: this.props.matches[this.state.selectedMatch].match
+      })
     ]);
   }
 }
