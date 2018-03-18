@@ -2,23 +2,31 @@ import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
-import { IBotConfig } from './ConfigModels';
-import { IMatchMetaData } from './GameModels';
+import { IBotList, IBotConfig } from './ConfigModels';
+import { IMatchMetaData, IMatchList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 
-const adapter = new FileAsync('db.json');
-const database = low<IDbSchema, typeof adapter>(adapter);
-
-export interface IDbSchema {
-  matches: IMatchMetaData[];
-  bots: IBotConfig[];
+export interface IDbSchemaV2 {
+  version: 'v2';
+  matches: IMatchList;
+  bots: IBotList;
 }
 
+// Utility to allow accessing the DB somewhat more safe. You can these string
+// properties as key so that you have some typechecking over typo's.
 export const SCHEMA = {
+  VERSION: 'version',
   MATCHES: 'matches',
   BOTS: 'bots',
 };
+
+// ----------------------------------------------------------------------------
+// Initialisation
+// ----------------------------------------------------------------------------
+
+const adapter = new FileAsync('db.json');
+const database = low<IDbSchemaV2, typeof adapter>(adapter);
 
 /*
  * This function will populate the store initially with the DB info and
@@ -26,14 +34,19 @@ export const SCHEMA = {
  */
 export function bindToStore(store: any) {
   database
-    .then((db) => db.defaults({ matches: [], bots: [] }).write())
+    .then((db) => db.defaults({ version: 'v2', matches: {}, bots: {} }).write())
     .then((db) => {
-      db.matches.forEach((match) => {
-        store.dispatch(A.importMatchFromDB(match));
+      if (db.version !== 'v2') {
+        return migrateOld(db);
+      }
+      return db;
+    })
+    .then((db) => {
+      Object.keys(db.matches).forEach((uuid) => {
+        store.dispatch(A.importMatchFromDB(db.matches[uuid]));
       });
-
-      db.bots.forEach((bot) => {
-        store.dispatch(A.importBotFromDB(bot));
+      Object.keys(db.matches).forEach((uuid) => {
+        store.dispatch(A.importBotFromDB(db.bots[uuid]));
       });
     })
     .then(initializeListeners)
@@ -44,9 +57,14 @@ export function bindToStore(store: any) {
     });
 }
 
+// ----------------------------------------------------------------------------
+// Redux store subscription
+// ----------------------------------------------------------------------------
+
 /*
  * This gets procced when the state changes and checks whether the specific
  * listeners need updating, and dispatches action when they require so.
+ * TODO: Optimize for UUID dicts
  */
 function changeListener() {
   const state: IGState = globalStore.getState();
@@ -61,8 +79,8 @@ function changeListener() {
 
 /*
  * Initialize the listeners with the objects just synced from the DB.
- * This way we precent a certain SYNC_DB event on the first, possible irrelevant,
- * state change.
+ * This way we prevent a guaranteed (and possibly confusing) SYNC_DB event
+ * on the first, possible irrelevant, state change.
  */
 function initializeListeners() {
   const state: IGState = globalStore.getState();
@@ -94,12 +112,34 @@ class TableListener<T> {
 }
 
 const listeners: TableListener<any>[] = [
-  new TableListener<IMatchMetaData[]>(
-    (state: IGState) => state.matchesPage.matches,
+  new TableListener<IMatchList>(
+    (state: IGState) => state.matches,
     SCHEMA.MATCHES,
   ),
-  new TableListener<IBotConfig[]>(
-    (state: IGState) => state.botsPage.bots,
+  new TableListener<IBotList>(
+    (state: IGState) => state.bots,
     SCHEMA.BOTS,
   ),
 ];
+
+// ----------------------------------------------------------------------------
+// Migrations
+// ----------------------------------------------------------------------------
+
+type DbSchema = IDbSchemaV1 | IDbSchemaV2;
+
+interface IDbSchemaV1 {
+  version: string;
+  matches: IMatchMetaData[];
+  bots: IBotConfig[];
+}
+
+// Let's not consider migrating old DB's yet.
+// For now this is only for def purposes.
+function migrateOld(db: DbSchema): IDbSchemaV2 {
+  return {
+    version: 'v2',
+    matches: {},
+    bots: {},
+  };
+}

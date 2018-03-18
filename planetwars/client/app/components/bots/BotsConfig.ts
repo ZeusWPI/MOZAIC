@@ -5,14 +5,15 @@ import * as fs from 'fs';
 import { RouteComponentProps } from 'react-router';
 import { h, form, input, ul, li, div, button } from 'react-hyperscript-helpers';
 import { Config } from '../../utils/Config';
-import { IBotConfig } from "../../utils/ConfigModels";
+import { IBotConfig, IBotData } from "../../utils/ConfigModels";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Bots.scss");
 
 interface IBotsConfigProps {
-  selectedBot?: IBotConfig;
-  saveBot: (bot: IBotConfig) => void;
+  selectedBot?: IBotData;
+  addBot: (bot: IBotConfig) => void;
+  editBot: (bot: IBotData) => void;
 }
 
 interface IBotsConfigState {
@@ -35,7 +36,8 @@ export class BotsConfig extends React.Component<IBotsConfigProps, IBotsConfigSta
         {
           onSubmit: (evt: any) => {
             console.log("test");
-            return this.props.saveBot({
+            // TODO: Use editbot if possible
+            return this.props.addBot({
               name: this.state.name,
               command: this.state.cmd,
               args: this.state.args,

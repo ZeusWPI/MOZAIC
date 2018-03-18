@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as Promise from "bluebird";
-import { IBotConfig } from "../../utils/ConfigModels";
+import { IBotConfig, IBotList } from "../../utils/ConfigModels";
 
 import { h, ul, li, button, div } from 'react-hyperscript-helpers';
 import { Link } from "react-router-dom";
@@ -11,7 +11,7 @@ import { Link } from "react-router-dom";
 const styles = require("./Bots.scss");
 
 export interface IBotsListProps {
-  bots: IBotConfig[];
+  bots: IBotList;
   removeBot: (name: string) => void;
 }
 
@@ -19,13 +19,14 @@ export class BotsList extends React.Component<IBotsListProps, any> {
 
   public render() {
     const { bots, removeBot } = this.props;
-    const botElements: React.Component[] = bots.map((botConfig: IBotConfig) =>
-      h(BotElement, {
-        key: botConfig.name,
-        name: botConfig.name,
-        removeBot: this.props.removeBot,
-      }),
-    );
+    const botElements = Object.keys(bots).map((uuid: string) => {
+      const { config } = bots[uuid];
+      return h(BotElement, {
+        key: uuid,
+        name: config.name,
+        removeBot,
+      });
+    });
 
     return div(`.${styles.botsListPane}`, [
       h(NewBot),
