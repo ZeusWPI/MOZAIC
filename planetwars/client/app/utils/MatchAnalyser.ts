@@ -42,7 +42,11 @@ export class MatchAnalyser {
     // Winner
     const lastTurn = turns[turns.length - 1];
     const remainingPlayers = new Set();
-    lastTurn.planets.forEach((p) => { remainingPlayers.add(p.owner); });
+    lastTurn.planets.forEach((p) => {
+      if (p.owner) {
+        remainingPlayers.add(p.owner);
+      }
+    });
     lastTurn.expeditions.forEach((e) => { remainingPlayers.add(e.owner); });
     const winner: number = (remainingPlayers.size === 1)
       ? remainingPlayers.values().next().value

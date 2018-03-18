@@ -36,8 +36,13 @@ const mapDispatchToProps = (dispatch: any) => {
 export default connect(mapStateToProps, mapDispatchToProps)(Matches);
 
 function importLog(logPath: string, dispatch: any): Promise<void> {
+  // TODO: handle errors properly
   return MatchParser.parseFileAsync(logPath)
-    .then(copyMatchLog)
+    .then(match => {
+      const path = Config.generateMatchPath(match.meta);
+      fs.createReadStream(logPath).pipe(fs.createWriteStream(path));
+      return match;
+    })
     .then(
       (match) => dispatch(A.importMatchMeta(match.meta)),
       (err) => {
