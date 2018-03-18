@@ -3,8 +3,6 @@ import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript
 // tslint:disable-next-line:no-var-requires
 const split = require('split-string');
 
-// import { BotsList } from './BotsList';
-import { BotsConfig } from './BotsConfig';
 import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from 'react-router-dom';
 
