@@ -9,6 +9,7 @@ import { Config } from '../utils/Config';
 import { MatchParser } from '../utils/MatchParser';
 import * as A from '../actions/actions';
 import { IMatchMetaData, IMatchData } from '../utils/GameModels';
+import { PathLike } from 'mz/fs';
 
 const mapStateToProps = (state: IGState) => {
   const matches = state.matchesPage.matches.map((match, id) => ({ id, match }));
@@ -38,11 +39,7 @@ export default connect(mapStateToProps, mapDispatchToProps)(Matches);
 function importLog(logPath: string, dispatch: any): Promise<void> {
   // TODO: handle errors properly
   return MatchParser.parseFileAsync(logPath)
-    .then(match => {
-      const path = Config.generateMatchPath(match.meta);
-      fs.createReadStream(logPath).pipe(fs.createWriteStream(path));
-      return match;
-    })
+    .then(match => copyMatchLog(match, logPath))
     .then(
       (match) => dispatch(A.importMatchMeta(match.meta)),
       (err) => {
@@ -52,14 +49,22 @@ function importLog(logPath: string, dispatch: any): Promise<void> {
   );
 }
 
-// TODO Fix log writing (add players);
-function copyMatchLog(match: IMatchData): Promise<IMatchData> {
+function copyMatchLog(match: IMatchData, srcPath: string): Promise<IMatchData> {
   const path = Config.generateMatchPath(match.meta);
-  const write = fs.writeFile(path, JSON.stringify(match.log));
-  return Promise
-    .resolve(write)
-    .then(() => {
+  let reader = fs.createReadStream(srcPath);
+  let writer = fs.createWriteStream(path)
+  return new Promise((resolve, reject) => {
+    reader.on('error', reject);
+    writer.on('error', reject);
+    writer.on('finish', resolve);
+    reader.pipe(writer);
+  }).then(() => {
       match.meta.logPath = path;
       return match;
-    });
+  }).catch(err => {
+    reader.destroy();
+    writer.end();
+    // TODO: should we throw here?
+    throw err;
+  });
 }
