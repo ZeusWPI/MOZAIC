@@ -3,18 +3,23 @@ import * as p from 'path';
 import * as Promise from 'bluebird';
 import { connect } from 'react-redux';
 
-import Matches from '../components/matches/Matches';
+import Matches, { IMatchesStateProps } from '../components/matches/Matches';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import { MatchParser } from '../utils/MatchParser';
 import * as A from '../actions/actions';
-import { IMatchMetaData, IMatchData } from '../utils/GameModels';
+import { IMatchMetaData, IMatchData, MatchId } from '../utils/GameModels';
 
-const mapStateToProps = (state: IGState) => {
-  const matches = state.matchesPage.matches.map((match, id) => ({ id, match }));
+interface IProps {
+  match: any; // Note: this is a match as in the regex sense (from the url)
+}
+
+const mapStateToProps = (state: IGState, ownProps: any) => {
+  const matches = state.matches;
   const importError = state.matchesPage.importError;
+  const uuid: MatchId | undefined = ownProps.match.params.bot;
   return {
-    expandedGameId: 1,
+    selectedMatch: uuid,
     matches,
     importError,
   };
@@ -33,16 +38,16 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Matches);
+export default connect<IMatchesStateProps>(mapStateToProps, mapDispatchToProps)(Matches);
 
 function importLog(logPath: string, dispatch: any): Promise<void> {
   return MatchParser.parseFileAsync(logPath)
     .then(copyMatchLog)
     .then(
-      (match) => dispatch(A.importMatchMeta(match.meta)),
+      (match) => dispatch(A.importMatch(match.meta)),
       (err) => {
         console.log(err);
-        dispatch(A.matchImportError(err.message));
+        dispatch(A.importMatchError(err.message));
       },
   );
 }

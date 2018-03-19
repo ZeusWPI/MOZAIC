@@ -3,12 +3,13 @@ import * as Promise from 'bluebird';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  IGameState, ILogFormat, IMatchMetaData, IMatchStats, IMatchData,
+  IGameState, ILogFormat, IMatchMetaData, IMatchStats, IMatchData, MatchStatus,
 } from './GameModels';
 import { MatchAnalyser } from './MatchAnalyser';
 
 // TODO: Clean this up, we probably want to make timestamp and
-// uuid more explicit;
+// uuid more explicit, and status;
+// TODO fuck this whole mess
 export class MatchParser {
 
   public static parseFileAsync(logPath: string): Promise<IMatchData> {
@@ -31,7 +32,8 @@ export class MatchParser {
     const timestamp = new Date(Date.now()); // TODO: Fix this
     const uuid = uuidv4();
     const stats: IMatchStats = MatchAnalyser.analyseSync({ players, turns });
-    const meta: IMatchMetaData = { players, uuid, timestamp, stats };
+    const status = MatchStatus.imported; // TODO: Fix this bullshit
+    const meta: IMatchMetaData = { players, uuid, timestamp, stats, status };
 
     return { meta, log: turns };
   }

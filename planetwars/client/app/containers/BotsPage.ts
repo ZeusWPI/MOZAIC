@@ -1,38 +1,48 @@
 import { connect } from 'react-redux';
 
-
-import { Bots, IBotsProps } from "../components/bots/Bots";
+import { Bots, IBotsStateProps, IBotsFuncProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
-import { } from '../actions/actions';
+import { addBot, removeBot, editBot } from '../actions/actions';
+import { IBotConfig, IBotData, BotID } from "../utils/ConfigModels";
 
-interface IProps { match: any }
-
-const mapStateToProps = (state: IGState, ownProps: IProps): IBotsProps => {
-  return {
-    // bots: state.bots.bots,
-    bot: ownProps.match.params.bot,
-  }
+interface IProps {
+  match: any;
 }
+
+const mapStateToProps = (state: IGState, ownProps: IProps) => {
+  const bots = state.bots;
+  const uuid: BotID | undefined = ownProps.match.params.bot;
+  if (uuid) {
+    const selectedBot: IBotData = bots[uuid];
+    return { bots, selectedBot };
+  }
+  return { bots };
+};
 
 const mapDispatchToProps = (dispatch: any) => {
-  return {}
-}
+  return {
+    addBot: (config: IBotConfig) => {
+      dispatch(addBot(config));
+    },
+    removeBot: (uuid: BotID) => {
+      dispatch(removeBot(uuid));
+    },
+    editBot: (bot: IBotData) => {
+      dispatch(editBot(bot));
+    },
+    validate: (config: IBotConfig) => {
+      const errors: ConfigErrors = {};
+      if (!config.name || config.name.length === 0) {
+        errors.name = 'Name should not be empty';
+      }
 
-export default connect(mapStateToProps, mapDispatchToProps)(Bots);
+      if (!config.command || config.command.length === 0) {
+        errors.command = 'Command should not be empty';
+      }
 
+      return errors;
+    },
+  };
+};
 
-
-// interface BotsPageState {
-
-// }
-
-// export default class BotsPage extends React.Component<BotsPageProps, BotsPageState> {
-//   constructor(props: BotsPageProps) {
-//     super(props);
-//   }
-//   render() {
-//     return (
-//       h(Bots, { bot: this.props.match.params.bot })
-//     );
-//   }
-// }
+export default connect<IBotsStateProps, IBotsFuncProps>(mapStateToProps, mapDispatchToProps)(Bots);

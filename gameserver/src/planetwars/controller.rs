@@ -53,12 +53,13 @@ impl Controller {
     // It would be nice to split these.
     pub fn new(clients: Vec<Client>,
                chan: UnboundedReceiver<ClientMessage>,
-               conf: Config,)
+               conf: Config,
+               log_file_path: String)
                -> Self
     {
         let state = conf.create_game(clients.len());
 
-        let mut logger = JsonLogger::new("log.json");
+        let mut logger = JsonLogger::new(&log_file_path);
         
 
         let planet_map = state.planets.iter().map(|planet| {

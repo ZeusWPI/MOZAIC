@@ -1,9 +1,8 @@
-import { IBotConfig } from '../utils/ConfigModels';
+import { IBotConfig, IBotData, isBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
 import { INotification } from '../utils/UtilModels';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
-
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
@@ -11,16 +10,20 @@ export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 export const incrementAbout = actionCreatorVoid('TEST');
 
 // Bots
+export type UUID = string;
+export const importBotFromDB = actionCreator<IBotData>('IMPORT_BOT_FROM_DB');
 export const addBot = actionCreator<IBotConfig>('ADD_BOT');
+export const editBot = actionCreator<IBotData>('EDIT_BOT');
+export const removeBot = actionCreator<UUID>('REMOVE_BOT');
 
 // Matches
-export const addMatchMeta = actionCreator<IMatchMetaData>('ADD_MATCH_META');
-export const matchImportError = actionCreator<string>('MATCH_IMPORT_ERROR');
-export const importMatchMeta = actionCreator<IMatchMetaData>('IMPORT_MATCH_META');
+export const importMatchFromDB = actionCreator<IMatchMetaData>('IMPORT_MATCH_FROM_DB');
+export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
+export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
 
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
-export const matchCrashed = actionCreator<any>('MATCH_CHRASHED');
+export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');

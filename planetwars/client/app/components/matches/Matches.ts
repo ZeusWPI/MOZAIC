@@ -1,28 +1,30 @@
 import * as React from 'react';
 import { div, h, li, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
-import { IMatchMetaData } from '../../utils/GameModels';
+import { IMatchMetaData, MatchId, IMatchList } from '../../utils/GameModels';
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
-// tslint:disable-next-line:interface-over-type-literal
-type AnnotatedMatch = { id: number, match: IMatchMetaData };
 type LogLoader = (paths: FileList) => void;
 
-interface IMatchesProps {
-  expandedGameId: number;
-  matches: AnnotatedMatch[];
-  loadLogs: LogLoader;
-  importError: string;
+export interface IMatchesStateProps {
+  expandedGameId?: MatchId;
+  matches: IMatchList;
+  importError?: string;
 }
 
-interface IState { }
+export interface IMatchesFuncProps {
+  loadLogs: LogLoader;
+}
 
-export default class Matches extends React.Component<IMatchesProps, IState> {
+type IMatchesProps = IMatchesStateProps & IMatchesFuncProps;
+
+export default class Matches extends React.Component<IMatchesProps, {}> {
   public render() {
     const { loadLogs, importError, matches } = this.props;
     // TODO: Error handling sucks, will get overridden on new problem;
     if (importError) { alert(importError); }
-    if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
+    if (Object.keys(matches).length === 0) { return h(NoMatches, { loadLogs }); }
 
     return div(`.${styles.matchesPage}`, [
       h(MatchImporter, { loadLogs }),
@@ -34,11 +36,11 @@ export default class Matches extends React.Component<IMatchesProps, IState> {
   }
 }
 
-export class MatchesList extends React.Component<{ matches: AnnotatedMatch[] }> {
+export class MatchesList extends React.Component<{ matches: IMatchList }> {
   public render() {
-    const matches = this.props.matches.map((match) =>
+    const matches = Object.keys(this.props.matches).map((uuid) =>
       li(`.${styles.matchesListItem}`, [
-        h(MatchEntry, { match }),
+        h(MatchEntry, { match: this.props.matches[uuid] }),
       ]),
     );
     return ul(`.${styles.matchesListPane}`, matches);
@@ -46,12 +48,12 @@ export class MatchesList extends React.Component<{ matches: AnnotatedMatch[] }> 
 }
 
 interface IMatchEntryProps {
-  match: AnnotatedMatch;
+  match: IMatchMetaData;
 }
 
 // tslint:disable-next-line:variable-name
 export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
-  const { stats, players } = props.match.match;
+  const { stats, players } = props.match;
   const winnerName = players[stats.winner - 1] || "Tie";
   return div(`.${styles.match}`, [
     p([`Winner: ${winnerName}`]),
@@ -92,7 +94,7 @@ export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
           onChange: (evt: any) => this.handleChange(evt),
         }),
         button({ type: 'submit' }, ['Import']),
-      ]
+      ],
     );
   }
 

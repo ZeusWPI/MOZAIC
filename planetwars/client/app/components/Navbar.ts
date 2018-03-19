@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import * as React from 'react';
 
 import { INotification } from '../utils/UtilModels';
+/*
+ * CSS for the navbar is found in app.global.scss cause it's pretty unique
+ * and most of it relies on global Bulma anyway.
+ */
 
 interface INavProps {
   toggled: boolean;
@@ -20,36 +24,33 @@ export class Navbar extends React.Component<INavProps, {}> {
 
   public render() {
     const active = this.props.toggled ? '.is-active' : '';
-    return [
-      nav(`.navbar`, [
-        div(`.navbar-burger${active}`,
-          {
-            onClick: () => this.props.toggle(),
+    return nav(`.navbar`, [
+      div(`.navbar-burger${active}`,
+        {
+          onClick: () => this.props.toggle(),
+        }, [
+          span(),
+          span(),
+          span(),
+        ]),
+      div(`.navbar-menu${this.props.toggled ? '.is-active' : ''}`, [
+        div(`.navbar-start`, [
+          h(Link, `.navbar-item`, { to: "/home" }, ["Home"]),
+          h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
+          h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
+          h(Link, `.navbar-item`, { to: "/history" }, ["Matches"]),
+          h(Link, `.navbar-item`, { to: "/about" }, ["About"]),
+          h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
+        ]),
+        div(`.navbar-end`, [
+          a(`.navbar-item.modal-button`, {
+            'onClick': () => this.showModal(),
+            'data-target': 'modal-notification',
           }, [
-            span(),
-            span(),
-            span(),
-          ]),
-        div(`.navbar-menu${this.props.toggled ? '.is-active' : ''}`, [
-          div(`.navbar-start`, [
-            h(Link, `.navbar-item`, { to: '/home' }, ['Home']),
-            h(Link, `.navbar-item`, { to: '/bots' }, ['Bots']),
-            h(Link, `.navbar-item`, { to: '/play' }, ['Play']),
-            h(Link, `.navbar-item`, { to: '/queue' }, ['Queue']),
-            h(Link, `.navbar-item`, { to: '/history' }, ['Game History']),
-            h(Link, `.navbar-item`, { to: '/about' }, ['About']),
-            h(Link, `.navbar-item`, { to: '/visualizer' }, ['Visualizer']),
-          ]),
-          div(`.navbar-end`, [
-            a(`.navbar-item.modal-button`, {
-              'onClick': () => this.showModal(),
-              'data-target': 'modal-notification',
-            }, [
-              i('.fa.fa-lg.fa-bell.notificationBell', {
-                'notification-count': this.props.notifications.length,
-                'aria-hidden': true,
-              }),
-            ]),
+            i('.fa.fa-lg.fa-bell.notificationBell', {
+              'notification-count': this.props.notifications.length,
+              'aria-hidden': true,
+            }),
           ]),
         ]),
       ]),
@@ -60,7 +61,7 @@ export class Navbar extends React.Component<INavProps, {}> {
         removeNotification: (key: number) => this.props.removeNotification(key),
         clearNotifications: () => this.props.clearNotifications(),
       }),
-    ];
+    ]);
   }
 
   protected hideModal() {
