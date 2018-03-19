@@ -1,4 +1,4 @@
-import { IBotConfig, IBotData, isBotConfig } from '../utils/ConfigModels';
+import { IBotConfig, IBotData, isBotConfig, BotID } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
 import { INotification } from '../components/Navbar';
 
@@ -24,6 +24,11 @@ export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
 export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
+
+// PlayPage / Setting up a match
+export const selectBot = actionCreator<BotID>('SELECT_BOT');
+export const unselectBot = actionCreator<BotID>('UNSELECT_BOT');
+export const unselectBotAll = actionCreator<BotID>('UNSELECT_BOT_ALL');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');

@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/actions';
-import { IBotConfig, IBotData, IBotList } from '../utils/ConfigModels';
+import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
 import { IMatchMetaData, IMatchList } from '../utils/GameModels';
 import { INotification } from '../components/Navbar';
 import { IAction } from '../actions/helpers';
@@ -34,6 +34,7 @@ export interface IGState {
 
   readonly matchesPage: IMatchesPageState;
   readonly aboutPage: IAboutPageState;
+  readonly playPage: IPlayPageState;
 
   readonly globalErrors: any[];
 }
@@ -48,6 +49,10 @@ export interface INavbarState {
 export type IBotsState = IBotList;
 export type IMatchesState = IMatchList;
 
+export interface IPlayPageState {
+  selectedBots: BotID[];
+}
+
 export interface IMatchesPageState {
   readonly importError?: string;
 }
@@ -60,6 +65,9 @@ export const initialState: IGState = {
   bots: {},
   matches: {},
 
+  playPage: {
+    selectedBots: [],
+  },
   matchesPage: {},
   aboutPage: { counter: 0 },
   globalErrors: [],
@@ -151,6 +159,27 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
   },
 });
 
+const playPageReducer = combineReducers<IPlayPageState>({
+  selectedBots: (state: BotID[] = [], action) => {
+    if (A.selectBot.test(action)) {
+      return [...state, action.payload];
+    }
+
+    if (A.unselectBot.test(action)) {
+      const i = state.indexOf(action.payload);
+      state.splice(i, 1);
+      return [...state];
+    }
+
+    // Remove all instances from bot from current config
+    if (A.unselectBotAll.test(action)) {
+      const filtered = state.filter((uuid) => uuid !== action.payload);
+      return [...filtered];
+    }
+    return state;
+  },
+});
+
 const globalErrorReducer = (state: any[] = [], action: IAction) => {
   if (A.dbError.test(action)) {
     const newA = state.slice();
@@ -169,6 +198,7 @@ export const rootReducer = combineReducers<IGState>({
 
   matchesPage: matchesPageReducer,
   aboutPage: aboutPageReducer,
+  playPage: playPageReducer,
 
   globalErrors: globalErrorReducer,
 });
