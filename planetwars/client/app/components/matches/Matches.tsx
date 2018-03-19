@@ -87,6 +87,7 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   let playerData = players.map((playerName, idx) => ({
     name: playerName,
     isWinner: idx == stats.winner - 1,
+    score: 100,
   }));
 
   let className = styles.matchListEntry;
@@ -97,7 +98,7 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   return <div className={className} onClick={props.onClick}>
     <div className={styles.matchListEntryContent}>
       <PlayerList players={playerData}/>
-      <MapName name="mycoolmap23"/>
+      <TimeLocation match={props.match}/>
     </div>
   </div>;
 }
@@ -108,6 +109,7 @@ export const FaIcon: SFC<{icon: string}> = ({icon}) =>
 interface PlayerProps {
   isWinner: boolean,
   name: string,
+  score: number,
 }
 
 export const PlayerList: SFC<{players: PlayerProps[]}> = ({players}) => {
@@ -122,18 +124,31 @@ export const PlayerEntry: SFC<PlayerProps> = (player) => {
   if (player.isWinner) {
     icon = <FaIcon icon='trophy'/>;
   }
-  return <div>
+  return <div className={styles.playerEntry}>
     <div className={styles.iconSpan}> {icon} </div>
-    <span> {player.name} </span>
+    <div className={styles.playerName}> {player.name} </div>
+    <div className={styles.playerScore}>
+      <FaIcon icon='rocket'/>
+      {player.score}
+    </div>
   </div>;
 }
 
-export const MapName: SFC<{name: string}> = ({name}) =>
-  <div>
-    <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
-    <span> {name} </span>
-  </div>;
 
+function dateOrHour(time: moment.Moment) {
+  if (moment().startOf('day') < time) {
+    return time.format("HH:mm");
+  } else {
+    return time.format("DD/MM");
+  }
+}
+
+export const TimeLocation: SFC<{match: AnnotatedMatch}> = ({match}) =>
+  <div className={styles.mapNameWrapper}>
+    <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
+    <span className={styles.mapName}> {"mijncoolemap23"} </span>
+    <div className={styles.matchTime}> {dateOrHour(moment())} </div>
+  </div>;
 
 
 export class MatchDetails extends React.Component<{}, {}> {

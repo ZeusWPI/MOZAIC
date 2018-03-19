@@ -24,7 +24,7 @@ $blue: #4797DE;
 
 .matchListEntry {
   border-bottom: 1px solid $altBackground;
-  border-left: 3px solid $background;
+  border-left: 4px solid rbga(0,0,0,0);
 
   .matchListEntryContent {
     padding: 10px;
@@ -36,9 +36,8 @@ $blue: #4797DE;
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0.2em;
-    font-weight: 600;
 
-    li {  
+    li {
       list-style: none;
     }
   }
@@ -49,8 +48,35 @@ $blue: #4797DE;
 }
 
 .matchListEntry.selected {
-  border-left: 3px solid $secondary;
+  border-left: 4px solid $secondary;
   background-color: $altBackground;
+}
+
+.playerEntry {
+  display: flex;
+}
+
+.playerName {
+  flex-grow: 1;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.playerScore {
+  color: $tertiary;
+}
+
+.mapNameWrapper {
+  display: flex;
+}
+
+.mapName {
+  flex-grow: 1;
+  display: inline-block;
+}
+
+.matchTime {
+  display: inline-block;
 }
 
 .matchesPage {
