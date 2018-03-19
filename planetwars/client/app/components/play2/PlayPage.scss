@@ -1,0 +1,30 @@
+@import '../../app.global.scss';
+
+.playPage {
+  display: flex;
+  width: 100%;
+  .botsListPane {
+    flex-grow: 1;
+    width: 100%;
+    ul {
+      li {
+        padding: 20px 20px;
+      }
+    }
+
+    .newBot {
+      text-align: center;
+      background: lighten($background, 5);
+    }
+
+    .botListItem {
+      p {
+        text-overflow: ellipsis;
+      }
+    }
+  }
+  .matchSetupPane {
+    flex-grow: 1.5;
+    width: 100%;
+  }
+}

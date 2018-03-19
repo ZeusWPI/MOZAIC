@@ -17,14 +17,14 @@ export interface IBotsStateProps {
 // tslint:disable-next-line:interface-over-type-literal
 export type ConfigErrors = { name?: string, command?: string };
 
-export interface IBotsFuncProps {
+export interface IBotsDispatchProps {
   addBot: (config: IBotConfig) => void;
   removeBot: (uuid: BotID) => void;
   editBot: (bot: IBotData) => void;
   validate: (config: IBotConfig) => ConfigErrors;
 }
 
-type IBotsProps = IBotsStateProps & IBotsFuncProps;
+type IBotsProps = IBotsStateProps & IBotsDispatchProps;
 
 export class Bots extends React.Component<IBotsProps, {}> {
 
