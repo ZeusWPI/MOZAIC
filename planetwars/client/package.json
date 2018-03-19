@@ -127,7 +127,7 @@
     "css-loader": "^0.28.4",
     "css-modules-require-hook": "^4.0.6",
     "devtron": "^1.4.0",
-    "electron": "1.7.11",
+    "electron": "^1.7.11",
     "electron-builder": "^19.8.0",
     "electron-builder-http": "^19.15.0",
     "electron-devtools-installer": "^2.0.1",
@@ -186,6 +186,7 @@
     "redux": "^3.6.0",
     "redux-thunk": "^2.1.0",
     "source-map-support": "^0.5.0",
+    "string-argv": "0.0.2",
     "uuid": "^3.2.1"
   },
   "devEngines": {

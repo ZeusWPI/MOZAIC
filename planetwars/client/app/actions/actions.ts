@@ -1,4 +1,4 @@
-import { IBotConfig } from '../utils/ConfigModels';
+import { IBotConfig, IBotData, isBotConfig } from '../utils/ConfigModels';
 import { IMatchMetaData } from '../utils/GameModels';
 import { INotification } from '../components/Navbar';
 
@@ -10,11 +10,11 @@ export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 export const incrementAbout = actionCreatorVoid('TEST');
 
 // Bots
-export const importBotFromDB = actionCreator<IBotConfig>('IMPORT_BOT_FROM_DB');
+export type UUID = string;
+export const importBotFromDB = actionCreator<IBotData>('IMPORT_BOT_FROM_DB');
 export const addBot = actionCreator<IBotConfig>('ADD_BOT');
-export const loadBot = actionCreator<IBotConfig>('LOAD_BOT');
-export const removeBot = actionCreator<string>('REMOVE_BOT');
-export const clearBots = actionCreatorVoid('CLEAR_BOTS');
+export const editBot = actionCreator<IBotData>('EDIT_BOT');
+export const removeBot = actionCreator<UUID>('REMOVE_BOT');
 
 // Matches
 export const importMatchFromDB = actionCreator<IMatchMetaData>('IMPORT_MATCH_FROM_DB');
