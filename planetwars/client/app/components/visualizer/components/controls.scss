@@ -38,7 +38,16 @@ $sliderFg: #1f77b4;
                 min-width: 30px;
                 font-size: 1vw;
                 border-width: 0;
+
+                
             }
+            .button:focus {
+                border-width: 0;
+                background-color: $background;
+                color: $primary;
+                box-shadow: none;
+            }
+
             .turnProgress, .speed {
                 width: auto;
                 font-family: 'Tahoma';
