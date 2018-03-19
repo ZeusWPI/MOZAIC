@@ -24,6 +24,7 @@ export default class Play extends React.Component<IProps, IState> {
   }
 
   public startGame(config: any) {
+    config.log_file = 'log.json';
     new GameRunner(config);
   }
 }
