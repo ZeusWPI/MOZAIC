@@ -41,116 +41,100 @@ export default class MatchViewer extends Component<IMatchViewerProps, IMatchView
     if (importError) { alert(importError); }
     if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
 
-    return div({ className: styles.matchViewer }, [
-      h(MatchList, {
-        matches,
-        selected: this.state.selectedMatch,
-        selectFn: this.select.bind(this),
-      }),
-      h(MatchView, {
-        match: this.props.matches[this.state.selectedMatch].match
-      })
-    ]);
+    const selectedMatch = this.props.matches[this.state.selectedMatch].match;
+
+    return <div className={styles.matchViewer}>
+      <MatchList
+        matches={matches}
+        selected={this.state.selectedMatch}
+        selectFn={this.select.bind(this)}
+      />
+      <MatchView match={selectedMatch}/>
+    </div>;
   }
 }
 
-interface IMatchListProps {
+interface MatchListProps {
   matches: AnnotatedMatch[],
   selected: number,
   selectFn: (index: number) => void,
 }
 
-export class MatchList extends Component<IMatchListProps> {
-  public render() {
-    const matches = this.props.matches.map((match, idx) =>
-      li([
-        h(MatchListEntry, {
-          match,
-          selected: idx == this.props.selected,
-          onClick: () => this.props.selectFn(idx),
-        }),
-      ]),
-    );
-    return ul(`.${styles.matchList}`, matches);
-  }
+export const MatchList: SFC<MatchListProps> = (props) => {
+  const listEntries = props.matches.map((match, idx) => {
+    return <li>
+      <MatchListEntry
+        match={match}
+        selected={idx == props.selected}
+        onClick={() => props.selectFn(idx)}
+      />
+    </li>
+  });
+
+  return <ul className={styles.matchList}> {listEntries} </ul>;
 }
 
-interface IMatchEntryProps {
+
+interface MatchEntryProps {
   match: AnnotatedMatch,
   selected: boolean,
   onClick: () => void,
 }
 
-// tslint:disable-next-line:variable-name
-export class MatchListEntry extends Component<IMatchEntryProps> {
-  className() : string {
-    if (this.props.selected) {
-      return classnames(styles.matchListEntry, styles.selected);
-    } else {
-      return styles.matchListEntry;
-    }
+export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
+  const { stats, players } = props.match.match;
+  // TODO: maybe compute this higher up
+  let playerData = players.map((playerName, idx) => ({
+    name: playerName,
+    isWinner: idx == stats.winner - 1,
+  }));
+
+  let className = styles.matchListEntry;
+  if (props.selected) {
+    className = classnames(styles.selected, className);
   }
 
-  playerList() {
-    const { stats, players } = this.props.match.match;
-    return ul({ className: styles.playerList }, players.map((p, idx) => {
-      return li([playerEntry({
-        name: p,
-        isWinner: stats.winner == idx + 1,
-      })]);
-    }));
-  }
-
-  render() {
-    let attrs = {
-      className: this.className(),
-      onClick: this.props.onClick,
-    };
-
-    return div(attrs, [
-      div({ className: styles.inner }, [
-        this.playerList(),
-        // placeholder until we have actual map information
-        mapName("mycoolmap23")
-      ])
-    ]);
-  }
+  return <div className={className} onClick={props.onClick}>
+    <div className={styles.matchListEntryContent}>
+      <PlayerList players={playerData}/>
+      <MapName name="mycoolmap23"/>
+    </div>
+  </div>;
 }
 
-const faIcon: SFC<string> = (iconName) => {
-  return h('i', {
-    className: classnames('fa', 'fa-' + iconName),
-    'aria-hidden': true,
-  });
-};
+export const FaIcon: SFC<{icon: string}> = ({icon}) => 
+  <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true}/>;
 
 interface PlayerProps {
   isWinner: boolean,
   name: string,
 }
 
-const playerEntry: SFC<PlayerProps> = (player) => {
-  let icon = null;
-  if (player.isWinner) {
-    icon = faIcon('trophy');
-  }
-  return div([
-    div({ className: styles.iconSpan }, [
-      span([icon])
-    ]),
-    span(player.name)
-  ]);
+export const PlayerList: SFC<{players: PlayerProps[]}> = ({players}) => {
+  let entries = players.map((player) => 
+    <li><PlayerEntry {...player}/></li>
+  );
+  return <ul className={styles.playerList}> {entries} </ul>;
 }
 
-const mapName: SFC<string> = (mapName) => {
-  return div([
-    div({ className: styles.iconSpan }, [
-      // for some reason this span has to be here?
-      span([faIcon('globe')])
-    ]),
-    span(mapName)
-  ]);
-};
+export const PlayerEntry: SFC<PlayerProps> = (player) => {
+  let icon = null;
+  if (player.isWinner) {
+    icon = <FaIcon icon='trophy'/>;
+  }
+  return <div>
+    <div className={styles.iconSpan}> {icon} </div>
+    <span> {player.name} </span>
+  </div>;
+}
+
+export const MapName: SFC<{name: string}> = ({name}) =>
+  <div>
+    <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
+    <span> {name} </span>
+  </div>;
+
+
 
 export class MatchDetails extends React.Component<{}, {}> {
   public render() {

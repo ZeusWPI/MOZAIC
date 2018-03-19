@@ -26,7 +26,7 @@ $blue: #4797DE;
   border-bottom: 1px solid $altBackground;
   border-left: 3px solid $background;
 
-  .inner {
+  .matchListEntryContent {
     padding: 10px;
     font-size: 10pt;
   }
@@ -36,10 +36,10 @@ $blue: #4797DE;
     margin-left: 0;
     margin-right: 0;
     margin-bottom: 0.2em;
+    font-weight: 600;
 
     li {  
       list-style: none;
-      font-weight: 700;
     }
   }
 
