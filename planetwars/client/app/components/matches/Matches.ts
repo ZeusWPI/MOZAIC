@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Component } from 'react';
+import { Component, SFC } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import { IMatchMetaData, IMatchData } from '../../utils/GameModels';
 import * as moment from 'moment';
@@ -104,12 +104,6 @@ export class MatchListEntry extends Component<IMatchEntryProps> {
     }));
   }
 
-  mapName() {
-    // placeholder until we have actual map information
-    const mapName = "mycoolmap23"; 
-    return span(mapName);
-  }
-
   render() {
     let attrs = {
       className: this.className(),
@@ -119,11 +113,29 @@ export class MatchListEntry extends Component<IMatchEntryProps> {
     return div(attrs, [
       div({ className: styles.inner }, [
         this.playerList(),
-        this.mapName(),
+        // placeholder until we have actual map information
+        mapName("mycoolmap23")
       ])
     ]);
   }
 }
+
+const faIcon: SFC<string> = (iconName) => {
+  return h('i', {
+    className: classnames('fa', 'fa-' + iconName),
+    'aria-hidden': true,
+  });
+};
+
+const mapName: SFC<string> = (mapName) => {
+  return div([
+    div({ className: styles.iconSpan }, [
+      // for some reason this span has to be here?
+      span([faIcon('globe')])
+    ]),
+    span(mapName)
+  ]);
+};
 
 export class MatchDetails extends React.Component<{}, {}> {
   public render() {

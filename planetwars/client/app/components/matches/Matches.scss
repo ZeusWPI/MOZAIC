@@ -17,6 +17,11 @@ $blue: #4797DE;
   border-right: 1px solid $altBackground;
 }
 
+.iconSpan {
+  width: 1.5em;
+  display: inline-block;
+}
+
 .matchListEntry {
   border-bottom: 1px solid $altBackground;
   border-left: 3px solid $background;
