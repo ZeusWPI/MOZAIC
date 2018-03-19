@@ -88,7 +88,16 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
     name: playerName,
     isWinner: idx == stats.winner - 1,
     score: 100,
-  }));
+  })).sort((a, b) => {
+    // sort major on isWinner, minor on score
+    if (a.isWinner && !b.isWinner) {
+      return 0;
+    }
+    if (b.isWinner && !a.isWinner) {
+      return 1;
+    }
+    return b.score - a.score;
+  });
 
   let className = styles.matchListEntry;
   if (props.selected) {
