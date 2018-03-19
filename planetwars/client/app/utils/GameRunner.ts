@@ -23,12 +23,14 @@ export default class GameRunner {
         store.dispatch(addNotification({
           title: "Match has crashed",
           body: "" + error,
+          type: "Error",
         }));
       } else {
         store.dispatch(matchFinished());
         store.dispatch(addNotification({
           title: "Match has finished",
           body: "Click here for more info",
+          type: "Finished",
         }));
       }
     }));

@@ -89,9 +89,26 @@ interface INotificationElementProps {
 
 // tslint:disable-next-line:variable-name
 const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
+  console.log(props.notification.type);
+  let icon = "";
+  let spanClass = "";
+  if (props.notification.type === "Finished") {
+    icon = ".fa.fa-check-square";
+    spanClass = ".icon.has-text-success";
+  } else if (props.notification.type === "Error") {
+    icon = ".fa.fa-exclamation-triangle";
+    spanClass = ".icon.has-text-danger";
+  }
+  console.log(icon);
+
   return div(".card", [
     header(".card-header", [
-      p(".card-header-title", [props.notification.title]),
+      p(".card-header-title", [
+        span(spanClass, [
+          i(icon),
+        ]),
+        props.notification.title,
+      ]),
       span(".card-header-icon", [
         button(".delete", {
           onClick: () => props.remove(),
