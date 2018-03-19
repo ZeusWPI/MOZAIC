@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript-helpers";
 // tslint:disable-next-line:no-var-requires
-const split = require('split-string');
+const stringArgv = require('string-argv');
 
 import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from 'react-router-dom';
@@ -124,6 +124,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
           value: this.state.command,
           onInput: (evt: any) => this.setState({ command: evt.target.value }),
         }),
+        p('.help', [JSON.stringify(stringArgv(this.state.command))]),
       ]),
     ]);
 
@@ -146,7 +147,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
   }
 
   private handleSubmit() {
-    const [command, ...args] = split(this.state.command);
+    const [command, ...args] = stringArgv(this.state.command);
     const { name, selectedBot } = this.state;
     const config = { name, command, args };
     const validation = this.props.validate(config);
@@ -158,7 +159,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     }
 
     if (selectedBot) {
-      this.props.editBot({ config, ...selectedBot });
+      this.props.editBot({ ...selectedBot, config });
     } else {
       this.props.addBot(config);
     }
