@@ -94,13 +94,10 @@ export class MatchListEntry extends Component<IMatchEntryProps> {
   playerList() {
     const { stats, players } = this.props.match.match;
     return ul({ className: styles.playerList }, players.map((p, idx) => {
-      let className;
-      if (stats.winner == idx + 1) {
-        className = styles.winner;
-      } else {
-        className = styles.loser;
-      }
-      return li({ className }, p);
+      return li([playerEntry({
+        name: p,
+        isWinner: stats.winner == idx + 1,
+      })]);
     }));
   }
 
@@ -126,6 +123,24 @@ const faIcon: SFC<string> = (iconName) => {
     'aria-hidden': true,
   });
 };
+
+interface PlayerProps {
+  isWinner: boolean,
+  name: string,
+}
+
+const playerEntry: SFC<PlayerProps> = (player) => {
+  let icon = null;
+  if (player.isWinner) {
+    icon = faIcon('trophy');
+  }
+  return div([
+    div({ className: styles.iconSpan }, [
+      span([icon])
+    ]),
+    span(player.name)
+  ]);
+}
 
 const mapName: SFC<string> = (mapName) => {
   return div([
