@@ -1,11 +1,10 @@
-import { v4 as uuidv4 } from 'uuid';
-import * as fs from 'fs';
+import { store } from "../index";
+import { IMatchConfig } from "./ConfigModels";
+import { matchStarted, matchFinished, matchCrashed, addNotification } from '../actions/actions';
+import { Config } from "./Config";
+import { v4 as uuidv4 } from "uuid";
+import * as fs from "fs";
 import { execFile } from 'child_process';
-
-import { store } from '../index';
-import { IMatchConfig } from './ConfigModels';
-import { matchStarted, matchFinished, matchCrashed } from '../actions/actions';
-import { Config } from './Config';
 
 export default class GameRunner {
   private conf: IMatchConfig;
@@ -21,8 +20,18 @@ export default class GameRunner {
     const child = execFile(Config.matchRunner, [configFile], ((error: any, stdout: any, stderr: any) => {
       if (error) {
         store.dispatch(matchCrashed(error));
+        store.dispatch(addNotification({
+          title: "Match has crashed",
+          body: "" + error,
+          type: "Error",
+        }));
       } else {
         store.dispatch(matchFinished());
+        store.dispatch(addNotification({
+          title: "Match has finished",
+          body: "Click here for more info",
+          type: "Finished",
+        }));
       }
     }));
   }

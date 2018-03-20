@@ -6,6 +6,7 @@ import { IBotList, IBotConfig } from './ConfigModels';
 import { IMatchMetaData, IMatchList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
+import { INotification } from '../utils/UtilModels';
 
 export interface IDbSchemaV2 {
   version: 'v2';
@@ -19,6 +20,7 @@ export const SCHEMA = {
   VERSION: 'version',
   MATCHES: 'matches',
   BOTS: 'bots',
+  NOTIFICATIONS: 'notifications',
 };
 
 // ----------------------------------------------------------------------------
