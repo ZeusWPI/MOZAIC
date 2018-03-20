@@ -47,11 +47,11 @@ export class Navbar extends React.Component<INavProps, {}> {
             'onClick': () => this.showModal(),
             'data-target': 'modal-notification',
           }, [
-            i('.fa.fa-lg.fa-bell.notificationBell', {
-              'notification-count': this.props.notifications.length,
-              'aria-hidden': true,
-            }),
-          ]),
+              i('.fa.fa-lg.fa-bell.notificationBell', {
+                'notification-count': this.props.notifications.length,
+                'aria-hidden': true,
+              }),
+            ]),
         ]),
       ]),
       h(NotificationModal, {
@@ -81,6 +81,57 @@ interface INotificationModalProps {
   clearNotifications: () => void;
 }
 
+export class NotificationModal extends React.Component<INotificationModalProps> {
+
+  public render() {
+    const { notifications } = this.props;
+
+    const notificationElements = notifications.map((notification: INotification, key: number) => {
+      return h(NotificationElement, {
+        notification,
+        key,
+        remove: () => this.props.removeNotification(key),
+      });
+    });
+
+    const content = (notifications.length !== 0)
+      ? notificationElements
+      : h(NoNotifications);
+
+    return div(`.modal#modal-notification${this.props.visible ? ".is-active" : ""}`, [
+      div('.modal-background', {
+        onClick: this.props.hideModal,
+      }),
+      div('.modal-card', [
+        header('.modal-card-head', [
+          p('.modal-card-title', ["Notifications"]),
+          button('.delete', {
+            'aria-label': close,
+            'onClick': this.props.hideModal,
+          }),
+        ]),
+        section(".modal-card-body", [content]),
+        footer(".modal-card-foot", [
+          button(".button", {
+            onClick: () => this.props.clearNotifications(),
+          }, ["Mark all as read"])]),
+      ]),
+    ]);
+  }
+}
+
+// tslint:disable-next-line:variable-name
+export const NoNotifications: React.SFC<void> = (props) => {
+  return div(".card", [
+    header(".card-header", [
+      p(".card-header-title", ['No notifications!']),
+    ]),
+    div(".card-content#notification-body", [
+      div(".content", ['Try playing some games.']),
+    ]),
+  ]);
+};
+
 interface INotificationElementProps {
   notification: INotification;
   key: number;
@@ -88,18 +139,22 @@ interface INotificationElementProps {
 }
 
 // tslint:disable-next-line:variable-name
-const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
-  console.log(props.notification.type);
+export const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
   let icon = "";
   let spanClass = "";
-  if (props.notification.type === "Finished") {
-    icon = ".fa.fa-check-square";
-    spanClass = ".icon.has-text-success";
-  } else if (props.notification.type === "Error") {
-    icon = ".fa.fa-exclamation-triangle";
-    spanClass = ".icon.has-text-danger";
+  switch (props.notification.type) {
+    case 'Finished': {
+      icon = ".fa.fa-check-square";
+      spanClass = ".icon.has-text-success";
+      break;
+    }
+    case 'Error':
+    default: {
+      icon = ".fa.fa-exclamation-triangle";
+      spanClass = ".icon.has-text-danger";
+      break;
+    }
   }
-  console.log(icon);
 
   return div(".card", [
     header(".card-header", [
@@ -120,34 +175,3 @@ const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
     ]),
   ]);
 };
-
-class NotificationModal extends React.Component<INotificationModalProps> {
-
-  public render() {
-    const notificationElements = this.props.notifications.map((notification: INotification, key: number) => {
-      return h(NotificationElement, {
-        notification,
-        key,
-        remove: () => this.props.removeNotification(key),
-      });
-    });
-    return div(`.modal#modal-notification${ this.props.visible ? ".is-active" : "" }`, [
-      div('.modal-background', {
-        onClick: this.props.hideModal,
-      }),
-      div('.modal-card', [
-        header('.modal-card-head', [
-          p('.modal-card-title', ["Notifications"]),
-          button('.delete', {
-            'aria-label': close,
-            'onClick': this.props.hideModal,
-          }),
-        ]),
-        section(".modal-card-body", [notificationElements]),
-        footer(".modal-card-foot", [button(".button", {
-          onClick: () => this.props.clearNotifications(),
-        }, ["Mark all as read"])]),
-      ]),
-    ]);
-  }
-}
