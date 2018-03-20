@@ -3,6 +3,9 @@ import * as React from 'react';
 
 import GameRunner from "../../utils/GameRunner";
 import { h, div } from 'react-hyperscript-helpers';
+import { store } from '../../index';
+import { matchStarted, matchFinished, matchCrashed } from '../../actions/actions';
+
 
 import { Setup } from './Setup';
 
@@ -24,7 +27,10 @@ export default class Play extends React.Component<IProps, IState> {
   }
 
   public startGame(config: any) {
-    config.log_file = 'log.json';
-    new GameRunner(config);
+    let runner = new GameRunner(config);
+    runner.on('matchStarted', () => store.dispatch(matchStarted()));
+    runner.on('matchEnded', () => store.dispatch(matchFinished()));
+    runner.on('error', (err) => store.dispatch(matchCrashed(err)));
+    runner.run();
   }
 }

@@ -1,39 +1,45 @@
-import { store } from "../index";
-import { IMatchConfig } from "./ConfigModels";
-import { matchStarted, matchFinished, matchCrashed, addNotification } from '../actions/actions';
-import { Config } from "./Config";
-import { v4 as uuidv4 } from "uuid";
-import * as fs from "fs";
+import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
+import { EventEmitter } from 'events';
 import { execFile } from 'child_process';
 
-export default class GameRunner {
+import { IMatchConfig } from './ConfigModels';
+import { Config } from './Config';
+
+// TODO: maybe s/game/match/g ?
+declare interface GameRunner {
+  on(event: 'matchStarted', listener: () => void): this;
+  on(event: 'matchEnded', listener: () => void): this;
+  on(event: 'error', listener: (err: Error) => void): this;
+}
+
+class GameRunner extends EventEmitter
+{
   private conf: IMatchConfig;
 
   constructor(conf: IMatchConfig) {
+    super();
     this.conf = conf;
+  }
+
+  public run() {
+    // TODO: maybe make sure this isn't called twice
     this.runBotRunner();
   }
 
   private runBotRunner() {
-    store.dispatch(matchStarted());
     const configFile = this.createConfig(JSON.stringify(this.conf));
-    const child = execFile(Config.matchRunner, [configFile], ((error: any, stdout: any, stderr: any) => {
-      if (error) {
-        store.dispatch(matchCrashed(error));
-        store.dispatch(addNotification({
-          title: "Match has crashed",
-          body: "" + error,
-          type: "Error",
-        }));
-      } else {
-        store.dispatch(matchFinished());
-        store.dispatch(addNotification({
-          title: "Match has finished",
-          body: "Click here for more info",
-          type: "Finished",
-        }));
-      }
-    }));
+    const callback = this.processEnded.bind(this);
+    const child = execFile(Config.matchRunner, [configFile], callback);
+    this.emit('matchStarted');
+  }
+
+  private processEnded(error: Error | null, stdout: string, stderr: string) {
+    if (error) {
+      this.emit('error', error);
+    } else {
+      this.emit('matchEnded');
+    }
   }
 
   private createConfig(json: string) {
@@ -42,3 +48,5 @@ export default class GameRunner {
     return path;
   }
 }
+
+export default GameRunner;
