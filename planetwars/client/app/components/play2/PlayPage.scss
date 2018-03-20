@@ -6,28 +6,43 @@
   .botsListPane {
     flex-grow: 1;
     width: 100%;
-    ul {
-      li {
-        padding: 20px 20px;
-      }
+    max-width: 50%;
+
+    .botsHeader {
+      text-align: center;
+      background: $secondary;
+      font-size: 1.5rem;
     }
 
     .newBot {
-      text-align: center;
-      background: lighten($background, 5);
+      &:hover {
+        background: lighten($background, 10);
+      }
+      padding: 20px 20px;
+      text-align: center; // background: lighten($background, 5);
     }
 
     .botListItem {
-      p {
-        text-overflow: ellipsis;
+      padding: 20px 20px;
+      .name {
+        font-size: 1.5rem;
       }
-    }
-    .botListItem.selected {
-      border-left: solid 2px $secondary;
-      background: lighten($background, 10);
-    }
-    .botListItem:hover {
-      background: lighten($background, 5);
+      .command {
+        color: $tertiary;
+      }
+      p {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        direction: rtl;
+      }
+      &:hover {
+        background: lighten($background, 5);
+      }
+      &.selected {
+        border-left: solid 2px $secondary;
+        background: lighten($background, 10);
+      }
     }
   }
   .matchSetupPane {

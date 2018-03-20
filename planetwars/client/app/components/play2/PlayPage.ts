@@ -56,12 +56,13 @@ export class BotsList extends React.Component<IBotListProps, {}> {
     });
 
     const newBot = div(`.${styles.newBot}`, [
-      h(Link, `.${styles.newBot}`, { to: "/bots/" }, [
+      h(Link, { to: "/bots/" }, [
         li([p(['New Bot'])]),
       ]),
     ]);
 
     return div(`.${styles.botsListPane}`, [
+      p(`.${styles.botsHeader}`, ['Bots']),
       ul([newBot].concat(bots)),
     ]);
   }
@@ -84,12 +85,9 @@ const BotListItem: React.SFC<IBotListItemProps> = (props) => {
     : () => props.selectBot(uuid);
 
   return li(`.${styles.botListItem}${selected}`,
-    {
-      key: uuid,
-      onClick: selector,
-    },
+    { key: uuid, onClick: selector },
     [
-      p([config.name]),
-      p([command]),
+      p(`.${styles.name}`, [config.name]),
+      p(`.${styles.command}`, [command]),
     ]);
 };
