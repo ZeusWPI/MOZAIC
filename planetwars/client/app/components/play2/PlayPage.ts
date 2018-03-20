@@ -1,5 +1,5 @@
 import * as React from "react";
-import { h, div, li, p, ul } from 'react-hyperscript-helpers';
+import { h, div, li, p, ul, form, label, input, button } from 'react-hyperscript-helpers';
 
 import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
@@ -17,11 +17,13 @@ export interface IPlayPageDispatchProps {
   unselectBot: (uuid: string, all: boolean) => void;
 }
 
-export interface IPlayPageState {
-
-}
+export interface IPlayPageState { }
 
 type PlayPageProps = IPlayPageStateProps & IPlayPageDispatchProps;
+
+// ----------------------------------------------------------------------------
+// Page
+// ----------------------------------------------------------------------------
 
 export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
   public render() {
@@ -33,11 +35,71 @@ export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
   }
 }
 
-export class MatchSetup extends React.Component<{}, {}> {
+// ----------------------------------------------------------------------------
+// Config & Playing
+// ----------------------------------------------------------------------------
+
+interface IMatchSetupState {
+  map: string;
+  maxTurns: number;
+}
+
+interface IMatchSetupProps {
+
+}
+
+export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
+  constructor(props: IMatchSetupProps) {
+    super(props);
+    this.state = {
+      map: '',
+      maxTurns: 200,
+    };
+  }
+
   public render() {
-    return div(`.${styles.matchSetupPane}`, ['Setup yo']);
+    const map = div('.field', [
+      label('.label', ['Map']),
+      div('.control', [
+        input('.input', {
+          type: 'text',
+          placeholder: 'TODO',
+          value: this.state.map,
+          onInput: (evt: any) => this.setState({ map: evt.target.value }),
+        }),
+      ]),
+    ]);
+
+    const maxTurns = div('.field', [
+      label('.label', ['Max Turns']),
+      div('.control', [
+        input('.input', {
+          type: 'number',
+          placeholder: '200',
+          value: this.state.maxTurns,
+          onInput: (evt: any) => this.setState({ maxTurns: evt.target.value }),
+        }),
+      ]),
+    ]);
+
+    const playButton = div(`.${styles.playButton}`, [
+      input('.button', { type: 'submit', value: 'Play' }),
+    ]);
+
+    return div(`.${styles.matchSetupPane}`, [
+      p(`.${styles.setupHeader}`, ['Options']),
+      form(`.${styles.options}`, { onSubmit: () => alert('TODO') }, [
+        map,
+        maxTurns,
+        playButton,
+      ]),
+    ]);
   }
 }
+
+// ----------------------------------------------------------------------------
+// Bots
+// ----------------------------------------------------------------------------
 
 interface IBotListProps {
   bots: IBotList;

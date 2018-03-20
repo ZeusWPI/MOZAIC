@@ -3,17 +3,12 @@
 .playPage {
   display: flex;
   width: 100%;
+  flex-direction: column;
   .botsListPane {
-    flex-grow: 1;
     width: 100%;
-    max-width: 50%;
-
     .botsHeader {
-      text-align: center;
-      background: $secondary;
-      font-size: 1.5rem;
+      @extend %header;
     }
-
     .newBot {
       &:hover {
         background: lighten($background, 10);
@@ -46,7 +41,32 @@
     }
   }
   .matchSetupPane {
-    flex-grow: 1.5;
+    padding: 50px 0 0 0;
     width: 100%;
+    .playButton {
+      width: 100%;
+      display: flex;
+      padding: 50px 0;
+      justify-content: center;
+      input {
+        width: 60%;
+        font-size: 4rem;
+        padding: 0;
+        height: 100px;
+        border: 2px solid $secondary;
+      }
+    }
+    .options {
+      padding: 10% 10%;
+    }
+    .setupHeader {
+      @extend %header;
+    }
   }
+}
+
+%header {
+  text-align: center;
+  background: $secondary;
+  font-size: 1.5rem;
 }
