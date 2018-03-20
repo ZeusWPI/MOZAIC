@@ -1,8 +1,8 @@
-import { ILogFormat, IMatchStats, IExpedition } from './GameModels';
+import { ILogFormat, MatchStats, IExpedition } from './GameModels';
 
 export class MatchAnalyser {
 
-  public static analyseSync(match: ILogFormat): IMatchStats {
+  public static analyseSync(match: ILogFormat): MatchStats {
     const { players, turns } = match;
 
     // The commands send in an object with id as property-name

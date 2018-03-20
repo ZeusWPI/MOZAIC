@@ -1,7 +1,9 @@
-import { IMatchMetaData, IMapMeta } from '../utils/GameModels';
+import { Match, IMapMeta } from '../utils/GameModels';
 import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
 import { INotification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
+import { Config } from '../utils/Config';
+import { v4 as uuidv4 } from 'uuid';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { IGState } from '../reducers';
@@ -19,9 +21,9 @@ export const editBot = actionCreator<IBotData>('EDIT_BOT');
 export const removeBot = actionCreator<UUID>('REMOVE_BOT');
 
 // Matches
-export const importMatchFromDB = actionCreator<IMatchMetaData>('IMPORT_MATCH_FROM_DB');
+export const importMatchFromDB = actionCreator<Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
-export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
+export const importMatch = actionCreator<Match>('IMPORT_MATCH');
 
 export interface MatchParams {
     bots: BotID[],
@@ -36,6 +38,7 @@ export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
 export function runMatch(params: MatchParams) {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
+    let matchId = uuidv4();
     let state: IGState = getState();
     const config: IMatchConfig = {
       players: params.bots.map( (botID) => {
@@ -45,6 +48,7 @@ export function runMatch(params: MatchParams) {
         map_file: state.maps[params.map].mapPath,
         max_turns: params.max_turns,
       },
+      log_file: Config.matchLogPath(matchId),
     };
     console.log(config);
     let runner = new GameRunner(config);

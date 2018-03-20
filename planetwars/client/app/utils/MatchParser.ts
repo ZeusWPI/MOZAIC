@@ -3,7 +3,7 @@ import * as Promise from 'bluebird';
 import { v4 as uuidv4 } from 'uuid';
 
 import {
-  IGameState, ILogFormat, IMatchMetaData, IMatchStats, IMatchData, MatchStatus,
+  IGameState, ILogFormat, Match, MatchStats, MatchStatus,
 } from './GameModels';
 import { MatchAnalyser } from './MatchAnalyser';
 
@@ -12,30 +12,36 @@ import { MatchAnalyser } from './MatchAnalyser';
 // TODO fuck this whole mess
 export class MatchParser {
 
-  public static parseFileAsync(logPath: string): Promise<IMatchData> {
+  public static parseFileAsync(logPath: string): Promise<Match> {
     const read = fs.readFile(logPath, 'utf-8');
     return Promise.resolve(read)
       .then((buffer) => buffer.toString())
-      .then((contents) => MatchParser._parseMatch(contents))
-      .tap((match) => { match.meta.logPath = logPath; });
+      .then((contents) => MatchParser._parseMatch(logPath, contents))
+      .tap((match) => { match.logPath = logPath; });
   }
 
-  public static parseFileSync(logPath: string): IMatchData {
+  public static parseFileSync(logPath: string): Match {
     const contents = fs.readFileSync(logPath, { encoding: 'utf8' });
-    const match = MatchParser._parseMatch(contents);
-    match.meta.logPath = logPath;
+    const match = MatchParser._parseMatch(logPath, contents);
+    match.logPath = logPath;
     return match;
   }
 
-  private static _parseMatch(contents: string): IMatchData {
+  private static _parseMatch(path: string, contents: string): Match {
     const { players, turns } = MatchParser._parseLog(contents);
     const timestamp = new Date(Date.now()); // TODO: Fix this
     const uuid = uuidv4();
-    const stats: IMatchStats = MatchAnalyser.analyseSync({ players, turns });
-    const status = MatchStatus.imported; // TODO: Fix this bullshit
-    const meta: IMatchMetaData = { players, uuid, timestamp, stats, status };
+    const stats: MatchStats = MatchAnalyser.analyseSync({ players, turns });
+    const match: Match = {
+      uuid,
+      status: 'finished',
+      players,
+      timestamp,
+      logPath: path,
+      stats,
+    };
 
-    return { meta, log: turns };
+    return match;
   }
 
   private static _parseLog(contents: string): ILogFormat {
