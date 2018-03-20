@@ -6,7 +6,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
 import { IMatchMetaData, IMatchList } from '../utils/GameModels';
-import { INotification } from '../components/Navbar';
+import { INotification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
 // ----------------------------------------------------------------------------
@@ -44,6 +44,7 @@ export interface IGState {
 export interface INavbarState {
   readonly toggled: boolean;
   readonly notifications: INotification[];
+  readonly notificationsVisible: boolean;
 }
 
 export type IBotsState = IBotList;
@@ -61,7 +62,7 @@ export interface IAboutPageState { readonly counter: number; }
 
 export const initialState: IGState = {
   routing: { location: null },
-  navbar: { toggled: false, notifications: [] },
+  navbar: { toggled: false, notifications: [], notificationsVisible: false },
   bots: {},
   matches: {},
 
@@ -89,6 +90,22 @@ const navbarReducer = combineReducers<INavbarState>({
       const newState = state.slice();
       newState.push(action.payload);
       return newState;
+    } else if (A.removeNotification.test(action)) {
+      const newState = state.slice();
+      newState.splice(action.payload, 1);
+      return newState;
+    } else if (A.clearNotifications.test(action)) {
+      return [];
+    }
+    return state;
+  },
+  notificationsVisible: (state = false, action) => {
+    if (A.showNotifications.test(action)) {
+      return true;
+    } else if (A.hideNotifications.test(action)) {
+      return false;
+    } else if (A.toggleNotifications.test(action)) {
+      return !state;
     }
     return state;
   },
