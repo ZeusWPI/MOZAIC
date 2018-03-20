@@ -3,8 +3,13 @@ import { h, div, li, p, ul, form, label, input, button, span, i, select, option 
 
 import { IBotConfig, IBotList, IBotData, BotID, IMatchConfig } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
+<<<<<<< HEAD
 import { text } from "d3";
 import { IMapList } from "../../utils/GameModels";
+=======
+import { MatchParams } from '../../actions/actions';
+
+>>>>>>> hook up runMatch to play page
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -20,6 +25,7 @@ export interface IPlayPageDispatchProps {
   startMatch: (config: IMatchConfig) => void;
   selectBot: (uuid: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
+  runMatch: (params: MatchParams) => void;
 }
 
 export interface IPlayPageState { }
@@ -31,12 +37,23 @@ type PlayPageProps = IPlayPageStateProps & IPlayPageDispatchProps;
 // ----------------------------------------------------------------------------
 
 export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
+
   public render() {
+<<<<<<< HEAD
     const { bots, selectedBots, selectBot,
       unselectBot, importMatch, maps, startMatch } = this.props;
     return div(`.${styles.playPage}`, [
       h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
       h(MatchSetup, { bots, selectedBots, unselectBot, importMatch, maps, startMatch }),
+=======
+    const { bots, selectedBots, selectBot, unselectBot } = this.props;
+    const runMatch = () => this.props.runMatch({
+      bots: this.props.selectedBots,
+    });
+    return div(`.${styles.playPage}`, [
+      h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
+      h(MatchSetup, { bots, selectedBots, unselectBot, runMatch }),
+>>>>>>> hook up runMatch to play page
     ]);
   }
 }
@@ -55,8 +72,12 @@ interface IMatchSetupProps {
   bots: IBotList;
   maps: IMapList;
   unselectBot: (uuid: string, all: boolean) => void;
+<<<<<<< HEAD
   importMatch: (fileList: FileList) => void;
   startMatch: (config: IMatchConfig) => void;
+=======
+  runMatch: () => void;
+>>>>>>> hook up runMatch to play page
 }
 
 export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
@@ -127,7 +148,11 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     return div(`.${styles.matchSetupPane}`, [
       p(`.${styles.setupHeader}`, ['Options']),
       h(SelectedBotsOverview, { bots, selectedBots, unselectBot }),
+<<<<<<< HEAD
       form(`.${styles.options}`, { onSubmit: () => this.play() }, [
+=======
+      form(`.${styles.options}`, { onSubmit: this.props.runMatch }, [
+>>>>>>> hook up runMatch to play page
         map,
         maxTurns,
         playButton,

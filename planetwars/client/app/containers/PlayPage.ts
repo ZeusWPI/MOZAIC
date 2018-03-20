@@ -45,6 +45,9 @@ const mapDispatchToProps = (dispatch: any) => {
       });
       Promise.all(imports); // TODO: Check error handling
     },
+    runMatch(params: A.MatchParams) {
+      dispatch(A.runMatch(params));
+    }
   };
 };
 
