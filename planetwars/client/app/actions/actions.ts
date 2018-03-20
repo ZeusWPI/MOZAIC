@@ -1,8 +1,10 @@
-import { IBotConfig, IBotData, isBotConfig, BotID } from '../utils/ConfigModels';
 import { IMatchMetaData, IMapMeta } from '../utils/GameModels';
+import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
 import { INotification } from '../utils/UtilModels';
+import GameRunner from '../utils/GameRunner';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
+import { IGState } from '../reducers';
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
@@ -21,9 +23,34 @@ export const importMatchFromDB = actionCreator<IMatchMetaData>('IMPORT_MATCH_FRO
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
 export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
 
+export interface MatchParams {
+    bots: BotID[],
+  }
+
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
 export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
+
+export function runMatch(params: MatchParams) {
+  // TODO: properly type this
+  return (dispatch: any, getState: any) => {
+    let state: IGState = getState();
+    const config: IMatchConfig = {
+      players: params.bots.map( (botID) => {
+        return state.bots[botID].config;
+      }),
+      game_config: {
+        map_file: 'hex.json',
+        max_turns: 100,
+      },
+    };
+    let runner = new GameRunner(config);
+    runner.on('matchStarted', () => dispatch(matchStarted()));
+    runner.on('matchEnded', () => dispatch(matchFinished()));
+    runner.on('error', (err) => dispatch(matchCrashed(err)));
+    runner.run();
+  }
+}
 
 // Map
 export const importMapFromDB = actionCreator<IMapMeta>('IMPORT_MAP_FROM_DB');
