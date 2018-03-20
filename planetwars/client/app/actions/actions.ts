@@ -25,6 +25,8 @@ export const importMatch = actionCreator<IMatchMetaData>('IMPORT_MATCH');
 
 export interface MatchParams {
     bots: BotID[],
+    map: string,
+    max_turns: number,
   }
 
 export const matchStarted = actionCreatorVoid('MATCH_STARTED');
@@ -40,11 +42,13 @@ export function runMatch(params: MatchParams) {
         return state.bots[botID].config;
       }),
       game_config: {
-        map_file: 'hex.json',
-        max_turns: 100,
+        map_file: state.maps[params.map].mapPath,
+        max_turns: params.max_turns,
       },
     };
+    console.log(config);
     let runner = new GameRunner(config);
+    // TODO: while this sets the right hooks, this does not work.
     runner.on('matchStarted', () => dispatch(matchStarted()));
     runner.on('matchEnded', () => dispatch(matchFinished()));
     runner.on('error', (err) => dispatch(matchCrashed(err)));

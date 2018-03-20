@@ -33,10 +33,6 @@ const mapDispatchToProps = (dispatch: any) => {
         dispatch(A.unselectBot(uuid));
       }
     },
-    startMatch(config: IMatchConfig) {
-      console.log(config);
-      throw new Error("Not implemented yet.");
-    },
     importMatch(fileList: FileList) {
       const files = Array.from(fileList); // Fuck FileList;
       const imports = files.map((logFile) => {
