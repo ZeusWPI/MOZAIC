@@ -3,9 +3,11 @@
 .playPage {
   display: flex;
   width: 100%;
+  height: 100%;
   flex-direction: column;
   .botsListPane {
     width: 100%;
+    height: 50%;
     .botsHeader {
       @extend %header;
     }
@@ -41,8 +43,26 @@
     }
   }
   .matchSetupPane {
-    padding: 50px 0 0 0;
     width: 100%;
+    height: 50%;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    .selectedBotsOverview {
+      display: flex;
+      width: 100%;
+      justify-content: center;
+      align-items: center;
+      .botTag {
+        padding: 0 20px;
+        span {
+          background: lighten($background, 10);
+          border-radius: 5px;
+          font-size: 1.2rem;
+          padding: 10px 10px;
+        }
+      }
+    }
     .playButton {
       width: 100%;
       display: flex;
@@ -57,11 +77,12 @@
       }
     }
     .options {
-      padding: 10% 10%;
+      padding: 0 10%;
     }
     .setupHeader {
       @extend %header;
     }
+
   }
 }
 

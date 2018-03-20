@@ -1,5 +1,5 @@
 import * as React from "react";
-import { h, div, li, p, ul, form, label, input, button } from 'react-hyperscript-helpers';
+import { h, div, li, p, ul, form, label, input, button, span } from 'react-hyperscript-helpers';
 
 import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
@@ -30,7 +30,7 @@ export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
     const { bots, selectedBots, selectBot, unselectBot } = this.props;
     return div(`.${styles.playPage}`, [
       h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
-      h(MatchSetup, {}),
+      h(MatchSetup, { bots, selectedBots, unselectBot }),
     ]);
   }
 }
@@ -45,7 +45,9 @@ interface IMatchSetupState {
 }
 
 interface IMatchSetupProps {
-
+  selectedBots: BotID[];
+  bots: IBotList;
+  unselectBot: (uuid: string, all: boolean) => void;
 }
 
 export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
@@ -58,6 +60,8 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
   }
 
   public render() {
+    const { bots, selectedBots, unselectBot } = this.props;
+
     const map = div('.field', [
       label('.label', ['Map']),
       div('.control', [
@@ -88,6 +92,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
 
     return div(`.${styles.matchSetupPane}`, [
       p(`.${styles.setupHeader}`, ['Options']),
+      h(SelectedBotsOverview, { bots, selectedBots, unselectBot }),
       form(`.${styles.options}`, { onSubmit: () => alert('TODO') }, [
         map,
         maxTurns,
@@ -96,6 +101,23 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     ]);
   }
 }
+
+interface ISelectedBotsProps {
+  selectedBots: BotID[];
+  bots: IBotList;
+  unselectBot: (uuid: string, all: boolean) => void;
+}
+
+// tslint:disable-next-line:variable-name
+export const SelectedBotsOverview: React.SFC<ISelectedBotsProps> = (props) => {
+  const { selectedBots, bots } = props;
+
+  const tags = selectedBots.map((uuid) => {
+    return div(`.${styles.botTag}`, [span(bots[uuid].config.name)]);
+  });
+
+  return div(`.${styles.selectedBotsOverview}`, tags); // TODO: Add remove all
+};
 
 // ----------------------------------------------------------------------------
 // Bots
