@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
+import * as tmp from 'tmp';
 import { EventEmitter } from 'events';
 import { execFile } from 'child_process';
 
@@ -28,7 +29,8 @@ class GameRunner extends EventEmitter
   }
 
   private runBotRunner() {
-    const configFile = this.createConfig(JSON.stringify(this.conf));
+    const configFile = this.writeConfigFile();
+    console.log(configFile);
     const callback = this.processEnded.bind(this);
     const child = execFile(Config.matchRunner, [configFile], callback);
     this.emit('matchStarted');
@@ -42,10 +44,12 @@ class GameRunner extends EventEmitter
     }
   }
 
-  private createConfig(json: string) {
-    const path = Config.configPath(uuidv4());
-    fs.writeFileSync(path, json);
-    return path;
+  private writeConfigFile() {
+    // TODO: maybe doing this async would be better
+    let file = tmp.fileSync();
+    let json = JSON.stringify(this.conf);
+    fs.writeFileSync(file.fd, json);
+    return file.name;
   }
 }
 
