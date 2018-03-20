@@ -1,18 +1,23 @@
 import * as React from "react";
-import { h, div, li, p, ul, form, label, input, button, span } from 'react-hyperscript-helpers';
+import { h, div, li, p, ul, form, label, input, button, span, i, select, option } from 'react-hyperscript-helpers';
 
-import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
+import { IBotConfig, IBotList, IBotData, BotID, IMatchConfig } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
+import { text } from "d3";
+import { IMapList } from "../../utils/GameModels";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
 export interface IPlayPageStateProps {
   bots: IBotList;
+  maps: IMapList;
   selectedBots: BotID[];
 }
 
 export interface IPlayPageDispatchProps {
+  importMatch: (fileList: FileList) => void;
+  startMatch: (config: IMatchConfig) => void;
   selectBot: (uuid: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
 }
@@ -27,10 +32,11 @@ type PlayPageProps = IPlayPageStateProps & IPlayPageDispatchProps;
 
 export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
   public render() {
-    const { bots, selectedBots, selectBot, unselectBot } = this.props;
+    const { bots, selectedBots, selectBot,
+      unselectBot, importMatch, maps, startMatch } = this.props;
     return div(`.${styles.playPage}`, [
       h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
-      h(MatchSetup, { bots, selectedBots, unselectBot }),
+      h(MatchSetup, { bots, selectedBots, unselectBot, importMatch, maps, startMatch }),
     ]);
   }
 }
@@ -47,7 +53,10 @@ interface IMatchSetupState {
 interface IMatchSetupProps {
   selectedBots: BotID[];
   bots: IBotList;
+  maps: IMapList;
   unselectBot: (uuid: string, all: boolean) => void;
+  importMatch: (fileList: FileList) => void;
+  startMatch: (config: IMatchConfig) => void;
 }
 
 export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
@@ -62,17 +71,42 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
   public render() {
     const { bots, selectedBots, unselectBot } = this.props;
 
-    const map = div('.field', [
+    const maps = Object.keys(this.props.maps).map((uuid) => {
+      const _map = this.props.maps[uuid];
+      return option({ value: _map.uuid, label: _map.name });
+    }).concat(option({ value: '', label: 'Select Map' }));
+
+    const map = [
       label('.label', ['Map']),
-      div('.control', [
-        input('.input', {
-          type: 'text',
-          placeholder: 'TODO',
-          value: this.state.map,
-          onInput: (evt: any) => this.setState({ map: evt.target.value }),
-        }),
+      div('.field.has-addons', [
+        div('.control', [
+          div('.select', [
+            select({
+              type: 'text',
+              placeholder: 'TODO',
+              value: this.state.map,
+              onInput: (evt: any) => this.setState({ map: evt.target.value }),
+            }, maps),
+          ]),
+        ]),
+        // https://bulma.io/documentation/form/file/
+        div('.control', [
+          div('.file', [
+            label('.file-label', [
+              input('.file-input', {
+                type: 'file',
+                name: 'map',
+                onChange: (evt: any) => this.importMatch(evt.target.files),
+              }),
+              span('.file-cta', [
+                span('.file-icon', [i('.fa.fa-upload')]),
+                span('.file-label', [span('.file-label', ['Import'])]),
+              ]),
+            ]),
+          ]),
+        ]),
       ]),
-    ]);
+    ];
 
     const maxTurns = div('.field', [
       label('.label', ['Max Turns']),
@@ -93,12 +127,43 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     return div(`.${styles.matchSetupPane}`, [
       p(`.${styles.setupHeader}`, ['Options']),
       h(SelectedBotsOverview, { bots, selectedBots, unselectBot }),
-      form(`.${styles.options}`, { onSubmit: () => alert('TODO') }, [
+      form(`.${styles.options}`, { onSubmit: () => this.play() }, [
         map,
         maxTurns,
         playButton,
       ]),
     ]);
+  }
+
+  private play(): void {
+    console.log(this.state);
+    if (!this.state.map) {
+      alert('Pleas select a map');
+      return;
+    }
+    const turns = this.state.maxTurns || 200;
+    const map = this.props.maps[this.state.map];
+
+    if (map.slots < this.props.selectedBots.length) {
+      alert('Not enough slots in the map');
+      return;
+    }
+
+    const players = this.props.selectedBots.map(
+      (uuid) => this.props.bots[uuid].config,
+    );
+
+    this.props.startMatch({
+      players,
+      game_config: {
+        map_file: map.mapPath,
+        max_turns: turns,
+      },
+    });
+  }
+
+  private importMatch(fileList: FileList): void {
+    this.props.importMatch(fileList);
   }
 }
 

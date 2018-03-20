@@ -1,5 +1,5 @@
 import { IBotConfig, IBotData, isBotConfig, BotID } from '../utils/ConfigModels';
-import { IMatchMetaData } from '../utils/GameModels';
+import { IMatchMetaData, IMapMeta } from '../utils/GameModels';
 import { INotification } from '../utils/UtilModels';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
@@ -25,6 +25,11 @@ export const matchStarted = actionCreatorVoid('MATCH_STARTED');
 export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
 export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
 
+// Map
+export const importMapFromDB = actionCreator<IMapMeta>('IMPORT_MAP_FROM_DB');
+export const importMap = actionCreator<IMapMeta>('IMPORT_MAP');
+export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
+
 // PlayPage / Setting up a match
 export const selectBot = actionCreator<BotID>('SELECT_BOT');
 export const unselectBot = actionCreator<BotID>('UNSELECT_BOT');
@@ -35,6 +40,7 @@ export const dbError = actionCreator<any>('DB_ERROR');
 export const dbSync = actionCreator<any>('DB_SYNC');
 
 // Notifications
+export const importNotificationFromDB = actionCreator<INotification>('IMPORT_NOTIFICATION_FROM_DB');
 export const addNotification = actionCreator<INotification>('ADD_NOTIFICATION');
 export const removeNotification = actionCreator<number>('REMOVE_NOTIFICATION');
 export const clearNotifications = actionCreatorVoid('CLEAR_NOTIFICATION');

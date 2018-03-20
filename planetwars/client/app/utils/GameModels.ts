@@ -66,3 +66,21 @@ export interface IExpedition {
   "owner": number;
   "turns_remaining": number;
 }
+
+export interface IMapList {
+  [key: string /*MapId*/]: IMapMeta;
+}
+
+export type MapId = string;
+
+export interface IMapMeta {
+  uuid: MapId;
+  name: string;
+  slots: number;
+  mapPath: string;
+  createdAt: Date;
+}
+
+export interface IMap {
+  planets: IPlanet[];
+}

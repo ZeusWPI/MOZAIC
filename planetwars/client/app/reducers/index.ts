@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
-import { IMatchMetaData, IMatchList } from '../utils/GameModels';
+import { IMatchMetaData, IMatchList, IMapList } from '../utils/GameModels';
 import { INotification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
@@ -28,9 +28,12 @@ import { IAction } from '../actions/helpers';
  */
 export interface IGState {
   readonly routing: RouterState;
+
   readonly navbar: INavbarState;
-  readonly bots: IBotsState;
-  readonly matches: IMatchesState;
+  readonly bots: IBotList;
+  readonly matches: IMatchList;
+  readonly notifications: INotification[];
+  readonly maps: IMapList;
 
   readonly matchesPage: IMatchesPageState;
   readonly aboutPage: IAboutPageState;
@@ -43,7 +46,6 @@ export interface IGState {
 // TODO: Make notifications their own root level prop
 export interface INavbarState {
   readonly toggled: boolean;
-  readonly notifications: INotification[];
   readonly notificationsVisible: boolean;
 }
 
@@ -62,9 +64,12 @@ export interface IAboutPageState { readonly counter: number; }
 
 export const initialState: IGState = {
   routing: { location: null },
-  navbar: { toggled: false, notifications: [], notificationsVisible: false },
+
+  navbar: { toggled: false, notificationsVisible: false },
   bots: {},
   matches: {},
+  maps: {},
+  notifications: [],
 
   playPage: {
     selectedBots: [],
@@ -82,20 +87,6 @@ const navbarReducer = combineReducers<INavbarState>({
   toggled: (state = false, action) => {
     if (A.toggleNavMenu.test(action)) {
       return !state;
-    }
-    return state;
-  },
-  notifications: (state = [], action) => {
-    if (A.addNotification.test(action)) {
-      const newState = state.slice();
-      newState.push(action.payload);
-      return newState;
-    } else if (A.removeNotification.test(action)) {
-      const newState = state.slice();
-      newState.splice(action.payload, 1);
-      return newState;
-    } else if (A.clearNotifications.test(action)) {
-      return [];
     }
     return state;
   },
@@ -119,6 +110,31 @@ const aboutPageReducer = combineReducers<IAboutPageState>({
     return state;
   },
 });
+
+const notificationReducer = (state: INotification[] = [], action: any) => {
+  if (A.addNotification.test(action)) {
+    const newState = state.slice();
+    newState.push(action.payload);
+    return newState;
+  } else if (A.removeNotification.test(action)) {
+    const newState = state.slice();
+    newState.splice(action.payload, 1);
+    return newState;
+  } else if (A.clearNotifications.test(action)) {
+    return [];
+  }
+  return state;
+};
+
+const mapsReducer = (state: IMapList = {}, action: any) => {
+  if (A.importMapFromDB.test(action)) {
+    return { ...state, [action.payload.uuid]: action.payload };
+  }
+  if (A.importMap.test(action)) {
+    return { ...state, [action.payload.uuid]: action.payload };
+  }
+  return state;
+};
 
 const botsReducer = (state: IBotsState = {}, action: any) => {
   if (A.addBot.test(action)) {
@@ -203,6 +219,9 @@ const globalErrorReducer = (state: any[] = [], action: IAction) => {
     newA.push(action.payload);
     return newA;
   }
+  if (A.importMapError.test(action)) {
+    return [...state, action.payload];
+  }
   return state;
 };
 
@@ -212,6 +231,8 @@ export const rootReducer = combineReducers<IGState>({
   navbar: navbarReducer,
   bots: botsReducer,
   matches: matchesReducer,
+  maps: mapsReducer,
+  notifications: notificationReducer,
 
   matchesPage: matchesPageReducer,
   aboutPage: aboutPageReducer,

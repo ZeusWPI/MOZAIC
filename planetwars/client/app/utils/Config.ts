@@ -1,6 +1,6 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
-import { IMatchMetaData } from './GameModels';
+import { IMatchMetaData, MapId } from './GameModels';
 
 export class Config {
   private static _data = 'data';
@@ -18,6 +18,10 @@ export class Config {
 
   public static generateMatchPath(match: IMatchMetaData): string {
     return p.resolve(Config.matches, match.uuid + '.json');
+  }
+
+  public static generateMapPath(uuid: MapId): string {
+    return p.resolve(Config.maps, uuid + '.json');
   }
 
   public static botPath(name: string): string {

@@ -3,7 +3,7 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
 import { IBotList, IBotConfig } from './ConfigModels';
-import { IMatchMetaData, IMatchList } from './GameModels';
+import { IMatchMetaData, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { INotification } from '../utils/UtilModels';
@@ -12,6 +12,8 @@ export interface IDbSchemaV2 {
   version: 'v2';
   matches: IMatchList;
   bots: IBotList;
+  maps: IMapList;
+  notifications: INotification[];
 }
 
 // Utility to allow accessing the DB somewhat more safe. You can these string
@@ -21,6 +23,7 @@ export const SCHEMA = {
   MATCHES: 'matches',
   BOTS: 'bots',
   NOTIFICATIONS: 'notifications',
+  MAPS: 'maps',
 };
 
 // ----------------------------------------------------------------------------
@@ -36,7 +39,13 @@ const database = low<IDbSchemaV2, typeof adapter>(adapter);
  */
 export function bindToStore(store: any) {
   database
-    .then((db) => db.defaults({ version: 'v2', matches: {}, bots: {} }).write())
+    .then((db) => db.defaults({
+      version: 'v2',
+      matches: {},
+      bots: {},
+      maps: {},
+      notifications: [],
+    }).write())
     .then((db) => {
       if (db.version !== 'v2') {
         return migrateOld(db);
@@ -49,6 +58,12 @@ export function bindToStore(store: any) {
       });
       Object.keys(db.bots).forEach((uuid) => {
         store.dispatch(A.importBotFromDB(db.bots[uuid]));
+      });
+      Object.keys(db.maps).forEach((uuid) => {
+        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+      });
+      db.notifications.forEach((notification) => {
+        store.dispatch(A.importNotificationFromDB(notification));
       });
     })
     .then(initializeListeners)
@@ -122,6 +137,14 @@ const listeners: TableListener<any>[] = [
     (state: IGState) => state.bots,
     SCHEMA.BOTS,
   ),
+  new TableListener<IMapList>(
+    (state: IGState) => state.maps,
+    SCHEMA.MAPS,
+  ),
+  new TableListener<INotification[]>(
+    (state: IGState) => state.notifications,
+    SCHEMA.NOTIFICATIONS,
+  ),
 ];
 
 // ----------------------------------------------------------------------------
@@ -143,5 +166,7 @@ function migrateOld(db: DbSchema): IDbSchemaV2 {
     version: 'v2',
     matches: {},
     bots: {},
+    maps: {},
+    notifications: [],
   };
 }
