@@ -39,7 +39,16 @@ export function runMatch(params: MatchParams) {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
     let matchId = uuidv4();
+    let match: Match = {
+      status: 'playing',
+      uuid: matchId,
+      players: params.bots,
+      timestamp: new Date(),
+      logPath: Config.matchLogPath(matchId),
+    };
+
     let state: IGState = getState();
+
     const config: IMatchConfig = {
       players: params.bots.map( (botID) => {
         return state.bots[botID].config;
@@ -48,14 +57,15 @@ export function runMatch(params: MatchParams) {
         map_file: state.maps[params.map].mapPath,
         max_turns: params.max_turns,
       },
-      log_file: Config.matchLogPath(matchId),
+      log_file: match.logPath,
     };
     console.log(config);
+
     let runner = new GameRunner(config);
     // TODO: while this sets the right hooks, this does not work.
-    runner.on('matchStarted', () => dispatch(matchStarted()));
-    runner.on('matchEnded', () => dispatch(matchFinished()));
-    runner.on('error', (err) => dispatch(matchCrashed(err)));
+    // runner.on('matchStarted', () => dispatch(matchStarted()));
+    // runner.on('matchEnded', () => dispatch(matchFinished()));
+    // runner.on('error', (err) => dispatch(matchCrashed(err)));
     runner.run();
   }
 }

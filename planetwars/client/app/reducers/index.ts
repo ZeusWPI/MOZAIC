@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
-import { IMatchMetaData, IMatchList, IMapList } from '../utils/GameModels';
+import { Match, IMatchList, IMapList } from '../utils/GameModels';
 import { INotification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
@@ -176,7 +176,7 @@ const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState =
   switch (action.type) {
     case A.importMatchFromDB.type:
     case A.importMatch.type: {
-      const match: IMatchMetaData = action.payload;
+      const match: Match = action.payload;
       return { ...state, [match.uuid]: match };
     }
     default: return state;
