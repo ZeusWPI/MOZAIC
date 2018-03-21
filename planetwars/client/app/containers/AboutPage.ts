@@ -1,21 +1,14 @@
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 
-import { incrementAbout } from '../actions/actions';
-import { IAboutPageState, IGState } from '../reducers/index';
+import {IAboutPageState, IGState} from '../reducers/index';
 import About from '../components/about/About';
 
 const mapStateToProps = (state: IGState) => {
-  return {
-    counter: state.aboutPage.counter,
-  };
+  return {};
 };
 
 const mapDispatchToProps = (dispatch: any) => {
-  return {
-    onIncrement: () => {
-      dispatch(incrementAbout());
-    },
-  };
+  return {};
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(About);

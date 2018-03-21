@@ -13,7 +13,6 @@ import { parseLog } from '../lib/match/log';
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
 // About
-export const incrementAbout = actionCreatorVoid('TEST');
 
 // Bots
 export type UUID = string;
