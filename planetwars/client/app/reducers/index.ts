@@ -53,7 +53,7 @@ export interface IMatchesPageState {
   readonly importError?: string;
 }
 
-export interface IAboutPageState { readonly counter: number; }
+export interface IAboutPageState { }
 
 export const initialState: IGState = {
   routing: { location: null },
@@ -102,14 +102,7 @@ const navbarReducer = combineReducers<INavbarState>({
   },
 });
 
-const aboutPageReducer = combineReducers<IAboutPageState>({
-  counter: (state = 0, action) => {
-    if (A.incrementAbout.test(action)) {
-      return state + 1;
-    }
-    return state;
-  },
-});
+const aboutPageReducer = (state: IAboutPageState) => null;
 
 const botsReducer = (state: IBotsState = {}, action: any) => {
   if (A.addBot.test(action)) {

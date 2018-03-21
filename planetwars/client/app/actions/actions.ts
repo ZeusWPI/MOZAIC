@@ -7,7 +7,6 @@ import { actionCreator, actionCreatorVoid } from './helpers';
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
 // About
-export const incrementAbout = actionCreatorVoid('TEST');
 
 // Bots
 export type UUID = string;
