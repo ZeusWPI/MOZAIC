@@ -1,4 +1,4 @@
-import { Match, IMapMeta } from '../utils/GameModels';
+import { Match, MatchId, IMapMeta } from '../utils/GameModels';
 import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
 import { INotification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
@@ -31,14 +31,16 @@ export interface MatchParams {
     max_turns: number,
   }
 
-export const matchStarted = actionCreatorVoid('MATCH_STARTED');
-export const matchFinished = actionCreatorVoid('MATCH_FINISHED');
-export const matchCrashed = actionCreator<any>('MATCH_CRASHED');
+export const createMatch = actionCreator<Match>('CREATE_MATCH');
+export const matchCompleted = actionCreator<MatchId>('MATCH_COMPLETED');
+export const matchErrored = actionCreator<MatchId>('MATCH_ERROR');
 
 export function runMatch(params: MatchParams) {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
+    // TODO: split this logic
     let matchId = uuidv4();
+    
     let match: Match = {
       status: 'playing',
       uuid: matchId,
@@ -59,13 +61,14 @@ export function runMatch(params: MatchParams) {
       },
       log_file: match.logPath,
     };
-    console.log(config);
-
+    
+    dispatch(createMatch(match));
     let runner = new GameRunner(config);
-    // TODO: while this sets the right hooks, this does not work.
-    // runner.on('matchStarted', () => dispatch(matchStarted()));
-    // runner.on('matchEnded', () => dispatch(matchFinished()));
-    // runner.on('error', (err) => dispatch(matchCrashed(err)));
+
+    runner.on('matchEnded', () => {
+      dispatch(matchCompleted(matchId));
+    });
+    // TODO: handle error
     runner.run();
   }
 }

@@ -174,11 +174,12 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
 const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState => {
   switch (action.type) {
-    case A.importMatchFromDB.type:
-    case A.importMatch.type: {
-      const match: Match = action.payload;
+    case A.createMatch.type:
+      const match = action.payload;
       return { ...state, [match.uuid]: match };
-    }
+    case A.matchCompleted.type:
+      const matchId = action.payload;
+      console.log(`${matchId} completed!`);
     default: return state;
   }
 };
