@@ -1,4 +1,4 @@
-import { Match, MatchId, IMapMeta } from '../utils/GameModels';
+import { Match, PlayingMatch, MatchId, IMapMeta } from '../utils/GameModels';
 import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
 import { INotification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { IGState } from '../reducers';
+import { parseLogFile } from '../utils/MatchParser';
+import { analyzeLog } from '../utils/MatchAnalyser';
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
@@ -31,8 +33,7 @@ export interface MatchParams {
     max_turns: number,
   }
 
-export const createMatch = actionCreator<Match>('CREATE_MATCH');
-export const matchCompleted = actionCreator<MatchId>('MATCH_COMPLETED');
+export const saveMatch = actionCreator<Match>('SAVE_MATCH');
 export const matchErrored = actionCreator<MatchId>('MATCH_ERROR');
 
 export function runMatch(params: MatchParams) {
@@ -49,7 +50,7 @@ export function runMatch(params: MatchParams) {
       logPath: Config.matchLogPath(matchId),
     };
 
-    let state: IGState = getState();
+    const state: IGState = getState();
 
     const config: IMatchConfig = {
       players: params.bots.map( (botID) => {
@@ -62,15 +63,32 @@ export function runMatch(params: MatchParams) {
       log_file: match.logPath,
     };
     
-    dispatch(createMatch(match));
+    dispatch(saveMatch(match));
     let runner = new GameRunner(config);
 
     runner.on('matchEnded', () => {
-      dispatch(matchCompleted(matchId));
+      dispatch(completeMatch(matchId));
     });
     // TODO: handle error
     runner.run();
   }
+}
+
+export function completeMatch(matchId: MatchId) {
+  return (dispatch: any, getState: any) => {
+    const state: IGState = getState();
+    const match = state.matches[matchId];
+    if (match.status == 'playing') {
+      parseLogFile(match.logPath).then((states) => {
+        let stats = analyzeLog(match.players, states);
+        dispatch(saveMatch({
+          ...match,
+          status: 'finished',
+          stats
+        }));
+      });
+    }
+  };
 }
 
 // Map

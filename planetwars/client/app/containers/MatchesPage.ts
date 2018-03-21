@@ -6,7 +6,7 @@ import { connect } from 'react-redux';
 import Matches, { IMatchesStateProps } from '../components/matches/Matches';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import { MatchParser } from '../utils/MatchParser';
+import { parseLogFile } from '../utils/MatchParser';
 import * as A from '../actions/actions';
 import { Match, MatchId } from '../utils/GameModels';
 
@@ -40,16 +40,8 @@ const mapDispatchToProps = (dispatch: any) => {
 
 export default connect<IMatchesStateProps>(mapStateToProps, mapDispatchToProps)(Matches);
 
-function importLog(logPath: string, dispatch: any): Promise<void> {
-  return MatchParser.parseFileAsync(logPath)
-    .then(copyMatchLog)
-    .then(
-      (match) => dispatch(A.importMatch(match)),
-      (err) => {
-        console.log(err);
-        dispatch(A.importMatchError(err.message));
-      },
-  );
+function importLog(logPath: string, dispatch: any) {
+  // OBSOLETE
 }
 
 // TODO Fix log writing (add players);

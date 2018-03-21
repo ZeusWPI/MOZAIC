@@ -9,16 +9,16 @@ interface MatchProperties {
   logPath: string,
 }
 
-type PlayingMatch = MatchProperties & {
+export type PlayingMatch = MatchProperties & {
   status: 'playing',
 }
 
-type FinishedMatch = MatchProperties & {
+export type FinishedMatch = MatchProperties & {
   status: 'finished',
   stats: MatchStats,
 }
 
-type ErroredMatch = MatchProperties & {
+export type ErroredMatch = MatchProperties & {
   status: 'error',
   error: string,
 }
