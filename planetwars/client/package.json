@@ -3,7 +3,7 @@
   "productName": "MOZAICPlanetWarsClient",
   "version": "0.0.1",
   "description": "Electron + React client for the PlanetWars game on the MOZAIC Platform",
-  "main": "main.js",
+  "main": "./app/main.js",
   "scripts": {
     "test": "cross-env NODE_ENV=test node --trace-warnings ./test/runTests.js",
     "test-all": "npm run test && npm run build && npm run test-e2e",
@@ -13,7 +13,7 @@
     "build-main": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.electron.js --progress --profile --colors",
     "build-renderer": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.production.js --progress --profile --colors",
     "build": "npm run build-main && npm run build-renderer",
-    "start": "cross-env NODE_ENV=production electron ./app/",
+    "start": "cross-env NODE_ENV=production electron .",
     "start-hot": "cross-env HOT=1 NODE_ENV=development electron ./app/main.development",
     "postinstall": "npm run build",
     "dev": "npm run hot-server -- --start-hot",
@@ -44,11 +44,10 @@
     ]
   },
   "build": {
-    "productName": "ElectronReactTypescript",
-    "appId": "io.github.irath96.ElectronReactTypescript",
+    "productName": "BottleBats",
+    "appId": "org.zeuswpi.bottlebats",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 410,
           "y": 150,
           "type": "link",
@@ -66,8 +65,7 @@
       "node_modules/",
       "app.html",
       "main.js",
-      "main.js.map",
-      "package.json"
+      "main.js.map"
     ],
     "directories": {
       "buildResources": "resources",
@@ -133,6 +131,7 @@
     "electron-devtools-installer": "^2.0.1",
     "enzyme": "^3.0.0",
     "enzyme-adapter-react-16": "^1.0.0",
+    "eslint-plugin-react": "^7.4.0",
     "express": "^4.14.0",
     "extract-text-webpack-plugin": "^3.0.0",
     "file-loader": "^1.1.5",
@@ -168,7 +167,6 @@
     "bulma": "^0.6.2",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
-    "eslint-plugin-react": "^7.4.0",
     "font-awesome": "^4.7.0",
     "history": "^4.6.1",
     "hyperscript-helpers": "^3.0.3",

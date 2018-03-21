@@ -17,28 +17,48 @@ module.exports = merge(baseConfig, {
   ],
 
   output: {
-    path: path.join(__dirname, 'app/dist'),
+    path: path.join(__dirname, '../app/dist'),
     publicPath: '../dist/'
   },
 
   module: {
     loaders: [
-      // Extract all .global.css to style.css as is
+      // Compile all .global.scss files and pipe it to style.css as is
       {
-        test: /\.(scss|sass)$/,
-        use: ExtractTextPlugin.extract({
-          use: [{
+        test: /\.global\.scss$/,
+        use: [{
+            loader: 'style-loader'
+          },
+          {
             loader: 'css-loader',
             options: {
-              //modules: true,
+              sourceMap: true,
+            },
+          },
+          {
+            loader: 'sass-loader'
+          }
+        ]
+      },
+      // Compile all other .scss files and pipe it to style.css
+      {
+        test: /^((?!\.global).)*\.scss$/,
+        use: [{
+            loader: 'style-loader'
+          },
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              sourceMap: true,
               importLoaders: 1,
               localIdentName: '[name]__[local]__[hash:base64:5]',
             }
           },
           {
             loader: 'sass-loader'
-          }]
-        })
+          }
+        ]
       },
 
       // WOFF Font

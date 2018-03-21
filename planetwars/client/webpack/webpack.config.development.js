@@ -24,13 +24,6 @@ module.exports = merge(baseConfig, {
   },
 
   module: {
-    // preLoaders: [
-    //   {
-    //     test: /\.js$/,
-    //     loader: 'eslint-loader',
-    //     exclude: /node_modules/
-    //   }
-    // ],
     loaders: [{
         test: /\.global\.css$/,
         loaders: [
@@ -47,7 +40,7 @@ module.exports = merge(baseConfig, {
         ]
       },
 
-      // Add SASS support  - compile all .global.scss files and pipe it to style.css
+      // Compile all .global.scss files and pipe it to style.css as is
       {
         test: /\.global\.scss$/,
         use: [{
@@ -64,7 +57,7 @@ module.exports = merge(baseConfig, {
           }
         ]
       },
-      // Add SASS support  - compile all other .scss files and pipe it to style.css
+      // Compile all other .scss files and pipe it to style.css
       {
         test: /^((?!\.global).)*\.scss$/,
         use: [{
