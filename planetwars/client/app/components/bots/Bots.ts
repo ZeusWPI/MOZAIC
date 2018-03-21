@@ -120,12 +120,14 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
       div('.control', [
         input('.input', {
           type: 'text',
-          placeholder: 'The command to execute your bot. Ex: python3 "~/bots/coolbot.py"',
+          placeholder: 'The command to execute your bot.',
           value: this.state.command,
           onInput: (evt: any) => this.setState({ command: evt.target.value }),
         }),
         p('.help', [JSON.stringify(stringArgv(this.state.command))]),
       ]),
+      label('.label', ['Ex: python3 "/home/iK_BEN_DE_BESTE/bots/coolbot.py"']),
+      label('.label', ['USE ABSOLUTE PATHS']),
     ]);
 
     const buttons = div('.control', [
