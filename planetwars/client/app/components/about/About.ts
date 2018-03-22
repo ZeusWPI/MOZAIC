@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {a, div, h, h1, h2, p} from 'react-hyperscript-helpers';
+import {a, div, h, h1, h2, li, p, ul} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 
 // tslint:disable-next-line:no-var-requires
@@ -33,13 +33,19 @@ export default class About extends React.Component<IProps, IState> {
         h(Link, {to: '/Bots'}, ['Bots']),
         ' page, and enter the required details.']),
 
-      p('Name: surprise, the name of your bot. This is the name which will be used in the game logs, ' +
+      ul(`.${styles.argsInfoList}`, [
+        li([
+          p('Name: surprise, the name of your bot. This is the name which will be used in the game logs, ' +
         'and which will be shown on the victory screen, so choose well!'),
+        ]),
 
-      p('Command: This is the command you would normally enter in your terminal to run your script. ' +
+        li([
+          p('Command: This is the command you would normally enter in your terminal to run your script. ' +
         'Make sure all required arguments (such as the filename) are provided here as well. ' +
         'Please use absolute paths as shell expansion is currently not supported. ' +
         'E.g: python3 “/home/YOUR_USERNAME/bots/my_awesome_bot.py”'),
+        ]),
+      ]),
 
       h2(`.${styles.subTitle}`, 'Playing A Game'),
 
