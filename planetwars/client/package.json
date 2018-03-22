@@ -1,13 +1,27 @@
 {
-  "name": "mozaic-planetwars-client",
-  "productName": "MOZAICPlanetWarsClient",
-  "version": "0.0.1",
-  "description": "Electron + React client for the PlanetWars game on the MOZAIC Platform",
+  "name": "bottlebats",
+  "productName": "BottleBats",
+  "version": "0.1.0",
+  "description": "Client for the 2018 edition of the BottleBats AI competition",
+  "keywords": ["BottleBats", "Zeus WPI", "AI", "MOZAIC", "competition", "electron", "react"],
   "main": "app/main.js",
   "author": {
     "name": "Zeus WPI",
     "email": "bottlebats@zeus.ugent.be",
     "url": "https://zeus.ugent.be/"
+  },
+  "homepage": "https://bottlebats.zeuswpi.org/",
+  "bugs": {
+    "url": "https://github.com/ZeusWPI/MOZAIC/issues",
+    "email": "bottlebats@zeus.ugent.be"
+  },
+  "license": "MIT",
+  "bin": {
+    "electron": "./node_modules/.bin/electron"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZeusWPI/MOZAIC.git"
   },
   "scripts": {
     "hot-server": "cross-env NODE_ENV=development node --max_old_space_size=2096 server.js",
@@ -27,8 +41,7 @@
     "productName": "BottleBats",
     "appId": "org.zeuswpi.bottlebats",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 410,
           "y": 150,
           "type": "link",
@@ -62,31 +75,37 @@
       ]
     }
   },
-  "bin": {
-    "electron": "./node_modules/.bin/electron"
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "bulma": "^0.6.2",
+    "d3": "^4.11.0",
+    "electron-debug": "^1.1.0",
+    "font-awesome": "^4.7.0",
+    "history": "^4.6.1",
+    "hyperscript-helpers": "^3.0.3",
+    "lowdb": "^1.0.0",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "react-helpers": "0.0.1",
+    "react-hyperscript": "^3.0.0",
+    "react-hyperscript-helpers": "^1.2.0",
+    "react-jsonschema-form": "^1.0.0",
+    "react-redux": "^5.0.1",
+    "react-router": "^4.1.1",
+    "react-router-dom": "^4.1.1",
+    "react-router-redux": "^5.0.0-alpha.6",
+    "redux": "^3.6.0",
+    "redux-thunk": "^2.1.0",
+    "source-map-support": "^0.5.0",
+    "string-argv": "0.0.2",
+    "uuid": "^3.2.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ZeusWPI/MOZAIC.git"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ZeusWPI/MOZAIC/issues"
-  },
-  "keywords": [
-    "electron",
-    "react",
-    "planet-wars",
-    "MOZAIC",
-    "AI"
-  ],
-  "homepage": "https://github.com/ZeusWPI/MOZAIC/",
   "devDependencies": {
     "@types/bluebird": "^3.5.20",
     "@types/d3": "^4.12.0",
     "@types/history": "^4.5.2",
     "@types/lowdb": "^1.0.0",
-    "@types/mz": "0.0.32",
+    "@types/mz": "^0.0.32",
     "@types/node": "^8.0.2",
     "@types/react": "^16.0.5",
     "@types/react-dom": "16.0.0",
@@ -134,33 +153,8 @@
     "webpack-hot-middleware": "^2.13.2",
     "webpack-merge": "^2.0.0"
   },
-  "dependencies": {
-    "bluebird": "^3.5.1",
-    "bulma": "^0.6.2",
-    "d3": "^4.11.0",
-    "electron-debug": "^1.1.0",
-    "font-awesome": "^4.7.0",
-    "history": "^4.6.1",
-    "hyperscript-helpers": "^3.0.3",
-    "lowdb": "^1.0.0",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "react-helpers": "0.0.1",
-    "react-hyperscript": "^3.0.0",
-    "react-hyperscript-helpers": "^1.2.0",
-    "react-jsonschema-form": "^1.0.0",
-    "react-redux": "^5.0.1",
-    "react-router": "^4.1.1",
-    "react-router-dom": "^4.1.1",
-    "react-router-redux": "^5.0.0-alpha.6",
-    "redux": "^3.6.0",
-    "redux-thunk": "^2.1.0",
-    "source-map-support": "^0.5.0",
-    "string-argv": "0.0.2",
-    "uuid": "^3.2.1"
-  },
   "devEngines": {
-    "node": ">=6.x",
-    "npm": ">=3.x"
+    "node": ">=8.x",
+    "npm": ">=5.x"
   }
 }
