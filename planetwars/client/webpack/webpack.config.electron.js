@@ -14,7 +14,7 @@ module.exports = merge(baseConfig, {
   // 'main.js' in root
   output: {
     path: __dirname,
-    filename: './app/main.js'
+    filename: '../app/main.js'
   },
 
   plugins: [

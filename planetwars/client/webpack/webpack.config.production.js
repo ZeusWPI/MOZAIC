@@ -17,62 +17,49 @@ module.exports = merge(baseConfig, {
   ],
 
   output: {
-    path: path.join(__dirname, 'app/dist'),
-    publicPath: '../dist/'
+    path: path.join(__dirname, '../app/dist'),
+    publicPath: './dist/'
   },
 
   module: {
     loaders: [
-      // Extract all .global.css to style.css as is
+      // Compile all .global.scss files and pipe it to style.css as is
       {
-        test: /\.(scss|sass)$/,
-        use: ExtractTextPlugin.extract({
-          use: [{
+        test: /\.global\.scss$/,
+        use: ['style-loader', 'css-loader?sourceMap', 'sass-loader']
+      },
+      // Compile all other .scss files and pipe it to style.css
+      {
+        test: /^((?!\.global).)*\.scss$/,
+        use: [
+          'style-loader',
+          {
             loader: 'css-loader',
             options: {
-              //modules: true,
+              modules: true,
+              sourceMap: true,
               importLoaders: 1,
               localIdentName: '[name]__[local]__[hash:base64:5]',
             }
           },
-          {
-            loader: 'sass-loader'
-          }]
-        })
+          'sass-loader',
+        ]
       },
 
       // WOFF Font
       {
         test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/font-woff',
-          }
-        },
+        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
       },
       // WOFF2 Font
       {
         test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/font-woff',
-          }
-        }
+        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
       },
       // TTF Font
       {
         test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'application/octet-stream'
-          }
-        }
+        use: ['url-loader?limit=10000&mimetype=application/octet-stream'],
       },
       // EOT Font
       {
@@ -82,13 +69,7 @@ module.exports = merge(baseConfig, {
       // SVG Font
       {
         test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: {
-          loader: 'url-loader',
-          options: {
-            limit: 10000,
-            mimetype: 'image/svg+xml',
-          }
-        }
+        use: ['url-loader?limit=10000&mimetype=image/svg+xml'],
       },
       // Common Image Formats
       {
