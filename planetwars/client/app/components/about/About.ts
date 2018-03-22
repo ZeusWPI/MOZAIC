@@ -2,6 +2,9 @@ import * as React from 'react';
 import {a, div, h, h1, h2, p} from 'react-hyperscript-helpers';
 import {Link} from "react-router-dom";
 
+// tslint:disable-next-line:no-var-requires
+const styles = require('./About.scss');
+
 interface IProps {
 }
 
@@ -10,10 +13,10 @@ interface IState {
 // TODO: either make the link to github open externally or add a way to get back to the about page
 export default class About extends React.Component<IProps, IState> {
   public render() {
-    return div([
-      h1('Welcome to PlanetWars!'),
+    return div(`.${styles.aboutPage}`, [
+      h1(`.${styles.aboutTitle}`, 'Welcome to PlanetWars!'),
 
-      h2('Getting Started'),
+      h2(`.${styles.subTitle}`, 'Getting Started'),
 
       p(['In order to start a game, you will need at least 2 bots. ' +
         'A “bot” is what we call the script you will write which will play the game. ' +
@@ -34,7 +37,7 @@ export default class About extends React.Component<IProps, IState> {
         'Make sure all required arguments (such as the filename) are provided here as well.' +
         'E.g: python3 “~/bots/my_awesome_bot.py”'),
 
-      h2('Playing A Game'),
+      h2(`.${styles.subTitle}`, 'Playing A Game'),
 
       p(['With the bots configured as above, head on over to the ',
         h(Link, {to: '/Play'}, ['Play']),
@@ -43,7 +46,7 @@ export default class About extends React.Component<IProps, IState> {
         'Next, choose the map you would like to play on, or import your own. ' +
         'Set a turn limit, and finally, hit the Play button.']),
 
-      h2('Visualizing a Game'),
+      h2(`.${styles.subTitle}`, 'Visualizing a Game'),
 
       p(['Once the game has finished playing, you can then load up the gamelog in the visualizer ' +
       'in order to fine-tune your strategy for the next match. ' +
