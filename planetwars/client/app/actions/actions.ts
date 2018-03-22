@@ -69,7 +69,9 @@ export function runMatch(params: MatchParams) {
     runner.on('matchEnded', () => {
       dispatch(completeMatch(matchId));
     });
-    // TODO: handle error
+    runner.on('error', (error) => {
+      dispatch(handleMatchError(matchId, error));
+    });
     runner.run();
   }
 }
@@ -85,6 +87,24 @@ export function completeMatch(matchId: MatchId) {
           ...match,
           status: 'finished',
           stats
+        }));
+      });
+    }
+  };
+}
+
+export function handleMatchError(matchId: MatchId, error: Error) {
+  return (dispatch: any, getState: any) => {
+    const state: IGState = getState();
+    const match = state.matches[matchId];
+    if (match.status == 'playing') {
+      parseLogFile(match.logPath).then((states) => {
+        let stats = analyzeLog(match.players, states);
+        dispatch(saveMatch({
+          ...match,
+          status: 'error',
+          // TODO: include more information or something
+          error: error.message,
         }));
       });
     }
