@@ -1,6 +1,6 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
-import { IMatchMetaData, MapId } from './GameModels';
+import { Match, MapId, MatchId } from './GameModels';
 
 export class Config {
   private static _data = 'data';
@@ -16,8 +16,8 @@ export class Config {
   public static config = p.resolve(Config._data, Config._configs);
   public static matchRunner = p.resolve(Config._bin, "mozaic_bot_driver");
 
-  public static generateMatchPath(match: IMatchMetaData): string {
-    return p.resolve(Config.matches, match.uuid + '.json');
+  public static matchLogPath(matchId: MatchId): string {
+    return p.resolve(Config.matches, matchId + '.json');
   }
 
   public static generateMapPath(uuid: MapId): string {

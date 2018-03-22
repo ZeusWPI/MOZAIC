@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { div, h, li, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
-import { IMatchMetaData, MatchId, IMatchList } from '../../utils/GameModels';
+import { Match, MatchId, IMatchList } from '../../utils/GameModels';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -48,21 +48,23 @@ export class MatchesList extends React.Component<{ matches: IMatchList }> {
 }
 
 interface IMatchEntryProps {
-  match: IMatchMetaData;
+  match: Match;
 }
 
 // tslint:disable-next-line:variable-name
 export const MatchEntry: React.SFC<IMatchEntryProps> = (props) => {
-  const { stats, players } = props.match;
-  const winnerName = players[stats.winner - 1] || "Tie";
-  return div(`.${styles.match}`, [
-    p([`Winner: ${winnerName}`]),
-    p([`Players: ${players}`]),
-    p([`${stats.turns} turns`]),
-    p([`${stats.planetsFlipped} planets flipped`]),
-    p([`${stats.commandsOrdered} commands ordered`]),
-    p([`${stats.shipsSend} ships send`]),
-  ]);
+  if (props.match.status == 'finished') {
+    const { stats, players } = props.match;
+    const winnerName = players[stats.winner - 1] || "Tie";
+    return div(`.${styles.match}`, [
+      p([`Winner: ${winnerName}`]),
+      p([`Players: ${players}`]),
+      p([`${stats.turns} turns`]),
+      p([`${stats.planetsFlipped} planets flipped`]),
+      p([`${stats.commandsOrdered} commands ordered`]),
+      p([`${stats.shipsSend} ships send`]),
+    ]);
+  }
 };
 
 export class MatchDetails extends React.Component<{}, {}> {

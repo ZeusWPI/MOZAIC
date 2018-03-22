@@ -3,7 +3,7 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
 import { IBotList, IBotConfig } from './ConfigModels';
-import { IMatchMetaData, IMatchList, IMapList } from './GameModels';
+import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { INotification } from '../utils/UtilModels';
@@ -155,7 +155,7 @@ type DbSchema = IDbSchemaV1 | IDbSchemaV2;
 
 interface IDbSchemaV1 {
   version: string;
-  matches: IMatchMetaData[];
+  matches: Match[];
   bots: IBotConfig[];
 }
 

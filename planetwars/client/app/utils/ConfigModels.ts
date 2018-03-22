@@ -8,8 +8,9 @@ export interface INamedConfig {
 }
 
 export interface IMatchConfig {
-  players: IBotConfig[];
-  game_config: IGameConfig;
+  players: IBotConfig[],
+  game_config: IGameConfig,
+  log_file: string,
 }
 
 interface IGameConfig {

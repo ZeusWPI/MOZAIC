@@ -6,9 +6,9 @@ import { connect } from 'react-redux';
 import Matches, { IMatchesStateProps } from '../components/matches/Matches';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import { MatchParser } from '../utils/MatchParser';
+import { parseLogFile } from '../utils/MatchParser';
 import * as A from '../actions/actions';
-import { IMatchMetaData, IMatchData, MatchId } from '../utils/GameModels';
+import { Match, MatchId } from '../utils/GameModels';
 
 interface IProps {
   match: any; // Note: this is a match as in the regex sense (from the url)
@@ -40,26 +40,18 @@ const mapDispatchToProps = (dispatch: any) => {
 
 export default connect<IMatchesStateProps>(mapStateToProps, mapDispatchToProps)(Matches);
 
-function importLog(logPath: string, dispatch: any): Promise<void> {
-  return MatchParser.parseFileAsync(logPath)
-    .then(copyMatchLog)
-    .then(
-      (match) => dispatch(A.importMatch(match.meta)),
-      (err) => {
-        console.log(err);
-        dispatch(A.importMatchError(err.message));
-      },
-  );
+function importLog(logPath: string, dispatch: any) {
+  // OBSOLETE
 }
 
 // TODO Fix log writing (add players);
-function copyMatchLog(match: IMatchData): Promise<IMatchData> {
-  const path = Config.generateMatchPath(match.meta);
-  const write = fs.writeFile(path, JSON.stringify(match.log));
+function copyMatchLog(match: Match): Promise<Match> {
+  const path = Config.matchLogPath(match.uuid);
+  const write = fs.writeFile(path, JSON.stringify(match.logPath));
   return Promise
     .resolve(write)
     .then(() => {
-      match.meta.logPath = path;
+      match.logPath = path;
       return match;
     });
 }

@@ -5,6 +5,8 @@ import { IBotConfig, IBotList, IBotData, BotID, IMatchConfig } from '../../utils
 import { Link } from "react-router-dom";
 import { text } from "d3";
 import { IMapList } from "../../utils/GameModels";
+import { MatchParams } from '../../actions/actions';
+
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -17,9 +19,9 @@ export interface IPlayPageStateProps {
 
 export interface IPlayPageDispatchProps {
   importMatch: (fileList: FileList) => void;
-  startMatch: (config: IMatchConfig) => void;
   selectBot: (uuid: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
+  runMatch: (params: MatchParams) => void;
 }
 
 export interface IPlayPageState { }
@@ -31,12 +33,13 @@ type PlayPageProps = IPlayPageStateProps & IPlayPageDispatchProps;
 // ----------------------------------------------------------------------------
 
 export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
+
   public render() {
     const { bots, selectedBots, selectBot,
-      unselectBot, importMatch, maps, startMatch } = this.props;
+      unselectBot, importMatch, maps, runMatch } = this.props;
     return div(`.${styles.playPage}`, [
       h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
-      h(MatchSetup, { bots, selectedBots, unselectBot, importMatch, maps, startMatch }),
+      h(MatchSetup, { bots, selectedBots, unselectBot, importMatch, maps, runMatch }),
     ]);
   }
 }
@@ -56,7 +59,7 @@ interface IMatchSetupProps {
   maps: IMapList;
   unselectBot: (uuid: string, all: boolean) => void;
   importMatch: (fileList: FileList) => void;
-  startMatch: (config: IMatchConfig) => void;
+  runMatch: (params: MatchParams) => void;
 }
 
 export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
@@ -138,7 +141,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
   private play(): void {
     console.log(this.state);
     if (!this.state.map) {
-      alert('Pleas select a map');
+      alert('Please select a map');
       return;
     }
     const turns = this.state.maxTurns || 200;
@@ -153,12 +156,10 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
       (uuid) => this.props.bots[uuid].config,
     );
 
-    this.props.startMatch({
-      players,
-      game_config: {
-        map_file: map.mapPath,
-        max_turns: turns,
-      },
+    this.props.runMatch({
+      bots: this.props.selectedBots,
+      map: this.state.map,
+      max_turns: turns,
     });
   }
 
