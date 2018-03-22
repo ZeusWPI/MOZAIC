@@ -122,11 +122,12 @@ impl<G, L, C> Controller<G, L, C>
             },
             Message::Timeout => {
                 if self.timeout.is_expired() {
-                    self.lock.get_waiting().into_iter().for_each(|player_id| 
+                    self.lock.get_waiting().into_iter().for_each(|player_id|
                         info!(self.logger, "timeout";
                             player_id
                         )
                     );
+                    self.lock.do_time_out();
                     self.force_lock_step();
                     self.run_lock();
                 }

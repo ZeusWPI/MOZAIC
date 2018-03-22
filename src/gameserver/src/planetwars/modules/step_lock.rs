@@ -12,6 +12,7 @@ use planetwars::controller::PlayerId;
 enum GameState {
     Waiting,
     Running,
+    Timeout,
 }
 
 pub struct StepLock<G: GameController<C>, C: DeserializeOwned> {
@@ -44,6 +45,11 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
                             self.awaiting_clients = self.game_controller.start();
                         },
             GameState::Running => self.awaiting_clients = self.game_controller.step(self.client_messages.clone()),
+            GameState::Timeout => {
+                let mut out = Vec::new();
+                self.connected_clients.difference(& self.awaiting_clients).for_each(|x| out.push(*x));
+                return (1000, Some(out));
+            },
         }
 
         self.client_messages.clear();
@@ -54,7 +60,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         match self.running {
             GameState::Waiting => self.connected_clients == self.awaiting_clients,
             GameState::Running => self.awaiting_clients.intersection(& self.connected_clients).count() == 0,
-            // GameState::Stopped => true,
+            GameState::Timeout => true,
         }
     }
 
@@ -71,12 +77,12 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         self.connected_clients.remove(&client_id);
     }
 
-    fn do_time_out(&mut self) -> (u64, Option<Vec<PlayerId>>) {
+    fn do_time_out(&mut self) {
         self.awaiting_clients.clone().iter().for_each(|c| {
                                             self.client_messages.insert(*c, String::new());
                                             }
                                         );
-        self.do_step()
+        self.running = GameState::Timeout;
     }
 
     fn get_waiting(& self) -> HashSet<PlayerId> {
