@@ -3,7 +3,12 @@
   "productName": "MOZAICPlanetWarsClient",
   "version": "0.0.1",
   "description": "Electron + React client for the PlanetWars game on the MOZAIC Platform",
-  "main": "./app/main.js",
+  "main": "app/main.js",
+  "author": {
+    "name": "Zeus WPI",
+    "email": "bottlebats@zeus.ugent.be",
+    "url": "https://zeus.ugent.be/"
+  },
   "scripts": {
     "test": "cross-env NODE_ENV=test node --trace-warnings ./test/runTests.js",
     "test-all": "npm run test && npm run build && npm run test-e2e",
@@ -62,11 +67,11 @@
       ]
     },
     "files": [
-      "dist/",
+      "app/dist/",
       "node_modules/",
-      "app.html",
-      "main.js",
-      "main.js.map"
+      "app/app.html",
+      "app/main.js",
+      "app/main.js.map"
     ],
     "directories": {
       "buildResources": "resources",
@@ -120,7 +125,7 @@
     "@types/redux-logger": "^3.0.0",
     "@types/sinon": "^2.3.1",
     "@types/uuid": "^3.4.3",
-    "asar": "^0.13.0",
+    "asar": "^0.13.1",
     "concurrently": "^3.1.0",
     "cross-env": "^5.0.1",
     "css-loader": "^0.28.4",
