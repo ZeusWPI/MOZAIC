@@ -19,6 +19,7 @@ interface IActionCreatorVoid {
   test(action: IAction): action is IAction;
 }
 
+
 export const actionCreator = <T>(type: string): IActionCreator<T> =>
   Object.assign((payload: T): any => ({ type, payload }), {
     type,

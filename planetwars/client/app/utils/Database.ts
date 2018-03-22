@@ -2,23 +2,36 @@ import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
-import { IBotConfig } from './ConfigModels';
-import { IMatchMetaData } from './GameModels';
-import { store } from '../index';
+import { IBotList, IBotConfig } from './ConfigModels';
+import { Match, IMatchList, IMapList } from './GameModels';
+import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
+import { INotification } from '../utils/UtilModels';
 
-const adapter = new FileAsync('db.json');
-const database = low<IDbSchema, typeof adapter>(adapter);
-
-export interface IDbSchema {
-  matches: IMatchMetaData[];
-  bots: IBotConfig[];
+export interface IDbSchemaV2 {
+  version: 'v2';
+  matches: IMatchList;
+  bots: IBotList;
+  maps: IMapList;
+  notifications: INotification[];
 }
 
+// Utility to allow accessing the DB somewhat more safe. You can these string
+// properties as key so that you have some typechecking over typo's.
 export const SCHEMA = {
+  VERSION: 'version',
   MATCHES: 'matches',
   BOTS: 'bots',
+  NOTIFICATIONS: 'notifications',
+  MAPS: 'maps',
 };
+
+// ----------------------------------------------------------------------------
+// Initialisation
+// ----------------------------------------------------------------------------
+
+const adapter = new FileAsync('db.json');
+const database = low<IDbSchemaV2, typeof adapter>(adapter);
 
 /*
  * This function will populate the store initially with the DB info and
@@ -26,17 +39,34 @@ export const SCHEMA = {
  */
 export function bindToStore(store: any) {
   database
-    .then((db) => db.defaults({ matches: [], bots: [] }).write())
+    .then((db) => db.defaults({
+      version: 'v2',
+      matches: {},
+      bots: {},
+      maps: {},
+      notifications: [],
+    }).write())
     .then((db) => {
-      db.matches.forEach((match) => {
-        store.dispatch(A.addMatchMeta(match));
+      if (db.version !== 'v2') {
+        return migrateOld(db);
+      }
+      return db;
+    })
+    .then((db) => {
+      Object.keys(db.matches).forEach((uuid) => {
+        store.dispatch(A.importMatchFromDB(db.matches[uuid]));
       });
-
-      db.bots.forEach((bot) => {
-        console.log("Not adding bot yet", bot);
+      Object.keys(db.bots).forEach((uuid) => {
+        store.dispatch(A.importBotFromDB(db.bots[uuid]));
+      });
+      Object.keys(db.maps).forEach((uuid) => {
+        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+      });
+      db.notifications.forEach((notification) => {
+        store.dispatch(A.importNotificationFromDB(notification));
       });
     })
-    .then(() => initializeListeners)
+    .then(initializeListeners)
     .then(() => store.subscribe(changeListener))
     .catch((err) => {
       store.dispatch(A.dbError(err));
@@ -44,28 +74,33 @@ export function bindToStore(store: any) {
     });
 }
 
+// ----------------------------------------------------------------------------
+// Redux store subscription
+// ----------------------------------------------------------------------------
+
 /*
  * This gets procced when the state changes and checks whether the specific
  * listeners need updating, and dispatches action when they require so.
+ * TODO: Optimize for UUID dicts
  */
 function changeListener() {
-  const state: IGState = store.getState();
+  const state: IGState = globalStore.getState();
   listeners.forEach((listener) => {
     const oldValue = listener.oldValue;
     const newValue = listener.select(state);
     if (oldValue !== newValue) {
-      listener.write(newValue, store.dispatch);
+      listener.write(newValue, globalStore.dispatch);
     }
   });
 }
 
 /*
  * Initialize the listeners with the objects just synced from the DB.
- * This way we precent a certain SYNC_DB event on the first, possible irrelevant,
- * state change.
+ * This way we prevent a guaranteed (and possibly confusing) SYNC_DB event
+ * on the first, possible irrelevant, state change.
  */
 function initializeListeners() {
-  const state: IGState = store.getState();
+  const state: IGState = globalStore.getState();
   listeners.forEach((l) => l.select(state));
 }
 
@@ -94,8 +129,44 @@ class TableListener<T> {
 }
 
 const listeners: TableListener<any>[] = [
-  new TableListener<IMatchMetaData[]>(
-    (state: IGState) => state.matchesPage.matches,
+  new TableListener<IMatchList>(
+    (state: IGState) => state.matches,
     SCHEMA.MATCHES,
   ),
+  new TableListener<IBotList>(
+    (state: IGState) => state.bots,
+    SCHEMA.BOTS,
+  ),
+  new TableListener<IMapList>(
+    (state: IGState) => state.maps,
+    SCHEMA.MAPS,
+  ),
+  new TableListener<INotification[]>(
+    (state: IGState) => state.notifications,
+    SCHEMA.NOTIFICATIONS,
+  ),
 ];
+
+// ----------------------------------------------------------------------------
+// Migrations
+// ----------------------------------------------------------------------------
+
+type DbSchema = IDbSchemaV1 | IDbSchemaV2;
+
+interface IDbSchemaV1 {
+  version: string;
+  matches: Match[];
+  bots: IBotConfig[];
+}
+
+// Let's not consider migrating old DB's yet.
+// For now this is only for def purposes.
+function migrateOld(db: DbSchema): IDbSchemaV2 {
+  return {
+    version: 'v2',
+    matches: {},
+    bots: {},
+    maps: {},
+    notifications: [],
+  };
+}

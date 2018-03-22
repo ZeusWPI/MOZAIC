@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Component, SFC } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
-import { IMatchMetaData, IMatchData } from '../../utils/GameModels';
+import { Match } from '../../utils/GameModels';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
 import { MatchView } from './MatchView';
@@ -10,14 +10,10 @@ import { MatchView } from './MatchView';
 const styles = require('./Matches.scss');
 
 // tslint:disable-next-line:interface-over-type-literal
-type AnnotatedMatch = { id: number, match: IMatchMetaData };
 type LogLoader = (paths: FileList) => void;
 
-interface IMatchViewerProps {
-  expandedGameId: number;
-  matches: AnnotatedMatch[];
-  loadLogs: LogLoader;
-  importError: string;
+export interface IMatchViewerProps {
+  matches: Match[];
 }
 
 interface IMatchViewerState {
@@ -36,12 +32,10 @@ export default class MatchViewer extends Component<IMatchViewerProps, IMatchView
   }
 
   public render() {
-    const { loadLogs, importError, matches } = this.props;
-    // TODO: Error handling sucks, will get overridden on new problem;
-    if (importError) { alert(importError); }
-    if (matches.length === 0) { return h(NoMatches, { loadLogs }); }
+    const { matches } = this.props;
+    if (matches.length === 0) { return <NoMatches />; }
 
-    const selectedMatch = this.props.matches[this.state.selectedMatch].match;
+    const selectedMatch = this.props.matches[this.state.selectedMatch];;
 
     return <div className={styles.matchViewer}>
       <MatchList
@@ -55,7 +49,7 @@ export default class MatchViewer extends Component<IMatchViewerProps, IMatchView
 }
 
 interface MatchListProps {
-  matches: AnnotatedMatch[],
+  matches: Match[],
   selected: number,
   selectFn: (index: number) => void,
 }
@@ -76,17 +70,17 @@ export const MatchList: SFC<MatchListProps> = (props) => {
 
 
 interface MatchEntryProps {
-  match: AnnotatedMatch,
+  match: Match,
   selected: boolean,
   onClick: () => void,
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
-  const { stats, players } = props.match.match;
+  const { players } = props.match;
   // TODO: maybe compute this higher up
   let playerData = players.map((playerName, idx) => ({
     name: playerName,
-    isWinner: idx == stats.winner - 1,
+    isWinner: false, // TODO
     score: 100,
   })).sort((a, b) => {
     // sort major on isWinner, minor on score
@@ -152,7 +146,7 @@ function dateOrHour(time: moment.Moment) {
   }
 }
 
-export const TimeLocation: SFC<{match: AnnotatedMatch}> = ({match}) =>
+export const TimeLocation: SFC<{match: Match}> = ({match}) =>
   <div className={styles.mapNameWrapper}>
     <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
     <span className={styles.mapName}> {"mijncoolemap23"} </span>
@@ -167,9 +161,8 @@ export class MatchDetails extends React.Component<{}, {}> {
 }
 
 // tslint:disable-next-line:variable-name
-export const NoMatches: React.SFC<{ loadLogs: LogLoader }> = (props) => {
+export const NoMatches: React.SFC<{}> = (props) => {
   return div(`.${styles.noMatches}`, [
-    h(MatchImporter, props),
     p(['No matches played yet!']),
   ]);
 };

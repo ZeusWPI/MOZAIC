@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { IGameState } from '../../../utils/GameModels';
+import { IGameState } from '../../../../utils/GameModels';
 import Game from './game';
 import Scoreboard from './scoreboard';
 

@@ -28,7 +28,7 @@ class ResourceLoader {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "./components/visualizer/assets/images/" + name);
+      .attr("xlink:href", "./components/visualizer/lib/assets/images/" + name);
   }
 }
 

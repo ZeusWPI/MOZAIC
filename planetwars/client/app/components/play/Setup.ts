@@ -5,13 +5,20 @@ import * as React from 'react';
 
 import { h } from 'react-hyperscript-helpers';
 import { Config } from '../../utils/Config';
-import { IBotConfig, IMatchConfig } from "../../utils/ConfigModels";
+import { IBotConfig, IMatchConfig, BotID } from "../../utils/ConfigModels";
 import { BotSelector } from "./BotSelector";
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Setup.scss');
 
 interface ISetupState {
-  config: IMatchConfig;
+  config: {
+    players: BotID[],
+    game_config: {
+      map_file: string,
+      max_turns: number,
+    }
+  };
   map_path: path.ParsedPath | { name: string };
 }
 
@@ -43,7 +50,7 @@ export class Setup extends React.Component<ISetupProps, ISetupState> {
         h("div", `.${styles.selectForm}`, [
           h("div", `.${styles.botSelector}`, [
             h(BotSelector, {
-              setPlayers: (players: IBotConfig[]) => this.setPlayers(players),
+              setPlayers: (players: BotID[]) => this.setPlayers(players),
             }),
           ]),
           h("div", [
@@ -69,7 +76,7 @@ export class Setup extends React.Component<ISetupProps, ISetupState> {
     );
   }
 
-  public setPlayers(players: IBotConfig[]) {
+  public setPlayers(players: BotID[]) {
     const config = this.state.config;
     config.players = players;
     this.setState({ config });
