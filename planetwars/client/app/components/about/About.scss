@@ -1,0 +1,19 @@
+@import '../../app.global.scss';
+
+.aboutPage {
+  width: 85%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-direction: column;
+  margin: auto;
+
+  .aboutTitle {
+    font-size: xx-large;
+  }
+
+  .subTitle {
+    font-size: x-large;
+  }
+}
