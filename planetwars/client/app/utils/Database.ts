@@ -34,7 +34,10 @@ export const SCHEMA = {
 // ----------------------------------------------------------------------------
 
 const { app } = remote;
-const adapter = new FileAsync(path.join(app.getPath("userData"), 'db.json'));
+const dbPath = (process.env.NODE_ENV === 'development')
+  ? 'db.json'
+  : path.join(app.getPath('userData'), 'db.json');
+const adapter = new FileAsync(dbPath);
 const database = low<IDbSchemaV2, typeof adapter>(adapter);
 
 /*
