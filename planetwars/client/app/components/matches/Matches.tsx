@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Component, SFC } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
-import { Match } from '../../utils/GameModels';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
 import { MatchView } from './MatchView';
@@ -11,6 +10,24 @@ const styles = require('./Matches.scss');
 
 // tslint:disable-next-line:interface-over-type-literal
 type LogLoader = (paths: FileList) => void;
+
+export interface Match {
+  uuid: string,
+  players: Player[],
+  map: Map,
+  timestamp: Date,
+  logPath: string,
+}
+
+export interface Player {
+  uuid: string,
+  name: string,
+}
+
+export interface Map {
+  uuid: string,
+  name: string,
+}
 
 export interface IMatchViewerProps {
   matches: Match[];
@@ -78,8 +95,8 @@ interface MatchEntryProps {
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   const { players } = props.match;
   // TODO: maybe compute this higher up
-  let playerData = players.map((playerName, idx) => ({
-    name: playerName,
+  let playerData = players.map((player, idx) => ({
+    name: player.name,
     isWinner: false, // TODO
     score: 100,
   })).sort((a, b) => {
@@ -158,7 +175,7 @@ function dateOrHour(date: Date) {
 export const TimeLocation: SFC<{match: Match}> = ({match}) =>
   <div className={styles.mapNameWrapper}>
     <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
-    <span className={styles.mapName}> {match.map} </span>
+    <span className={styles.mapName}> {match.map.name} </span>
     <div className={styles.matchTime}> {dateOrHour(match.timestamp)} </div>
   </div>;
 

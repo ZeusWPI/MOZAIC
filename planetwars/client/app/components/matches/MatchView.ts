@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import Visualizer from '../visualizer/Visualizer';
-import { Match } from '../../utils/GameModels';
+import { Match } from './Matches';
 import { div, h } from 'react-hyperscript-helpers';
 import { parseLogFile } from '../../utils/MatchParser';
 
