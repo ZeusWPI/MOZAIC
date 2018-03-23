@@ -42,6 +42,7 @@ script:
   - cargo build --release
   - cd $TRAVIS_BUILD_DIR
   - cd planetwars/client
+  - npm install
   - npm run package-$OS_TARGET
 
 
