@@ -68,7 +68,9 @@
       "node_modules/",
       "app/app.html",
       "app/main.js",
-      "app/main.js.map"
+      "app/main.js.map",
+      "bin/",
+      "resources/icon.*"
     ],
     "directories": {
       "buildResources": "resources",
