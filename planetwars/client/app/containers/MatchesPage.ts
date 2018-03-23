@@ -33,6 +33,12 @@ const mapStateToProps = (state: IGState, ownProps: any) => {
       map,
     };
   });
+  console.log(matches);
+  // sort descending on time
+  // TODO: should this happen here?
+  matches.sort((a, b) => {
+    return b.timestamp.getTime() - a.timestamp.getTime();
+  });
   return { matches };
 };
 
