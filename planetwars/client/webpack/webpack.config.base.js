@@ -13,7 +13,13 @@ module.exports = {
       test: /\.tsx?$/,
       loaders: ['react-hot-loader/webpack', 'ts-loader'],
       exclude: /node_modules/
-    }, {
+    },
+    {
+        test: /\.tsx?$/,
+        enforce: 'pre',
+        loader: 'tslint-loader',
+    },
+    {
       test: /\.json$/,
       loader: 'json-loader'
     }]
