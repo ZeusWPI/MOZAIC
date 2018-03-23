@@ -174,8 +174,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     return div(`.${styles.visualizerRootNode}`, [
       controls,
       scoreboard,
-      renderer,
-      endGameCard
+      renderer
     ]);
 
   }
