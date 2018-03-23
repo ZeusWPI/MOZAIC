@@ -1,7 +1,7 @@
 {
   "name": "bottlebats",
   "productName": "BottleBats",
-  "version": "0.1.0",
+  "version": "0.1.0-intro",
   "description": "Client for the 2018 edition of the BottleBats AI competition",
   "keywords": [
     "BottleBats",
@@ -43,6 +43,7 @@
     "package": "npm run build && build --publish never",
     "package-win": "npm run build && build --win --x64",
     "package-linux": "npm run build && build --linux",
+    "package-mac": "npm run build && build --mac",
     "package-all": "npm run build && build -mwl"
   },
   "build": {
@@ -68,7 +69,9 @@
       "node_modules/",
       "app/app.html",
       "app/main.js",
-      "app/main.js.map"
+      "app/main.js.map",
+      "bin/",
+      "resources/icon.*"
     ],
     "directories": {
       "buildResources": "resources",
