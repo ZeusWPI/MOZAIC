@@ -60,10 +60,6 @@
       "allow-leading-underscore",
       // without this, react SFC's are just silly
       "allow_pascal_case"
-    ],
-    "naming-convention": [
-      true,
-
     ]
   },
   "rulesDirectory": []
