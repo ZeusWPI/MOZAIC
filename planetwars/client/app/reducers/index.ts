@@ -174,9 +174,14 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
 const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState => {
   switch (action.type) {
-    case A.saveMatch.type:
+    case A.saveMatch.type: {
       const match = action.payload;
       return { ...state, [match.uuid]: match };
+    }
+    case A.importMatchFromDB.type: {
+      const match = action.payload;
+      return { ...state, [match.uuid]: match };
+    }
     default: return state;
   }
 };
