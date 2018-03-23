@@ -13,7 +13,7 @@ export interface MatchViewerProps {
 
 interface MatchViewerState {
   // use index as id, for now
-  selectedMatch: number,
+  selectedMatch: number;
 }
 
 export default class MatchViewer extends Component<MatchViewerProps, MatchViewerState> {
@@ -22,43 +22,46 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
     this.state = { selectedMatch: 0 };
   }
 
-  select(idx: number) {
-    this.setState({ selectedMatch: idx });
-  }
 
   public render() {
     const { matches } = this.props;
     if (matches.length === 0) { return <NoMatches />; }
 
     const selectedMatch = this.props.matches[this.state.selectedMatch];
-
+    const selectFn = (idx: number) => this.select(idx);
     return (
       <div className={styles.matchViewer}>
         <MatchList
           matches={matches}
           selected={this.state.selectedMatch}
-          selectFn={this.select.bind(this)}
+          selectFn={selectFn}
         />
         <MatchView match={selectedMatch} />
       </div>);
   }
+
+  private select(idx: number) {
+    this.setState({ selectedMatch: idx });
+  }
+
 }
 
 interface MatchListProps {
-  matches: Match[],
-  selected: number,
-  selectFn: (index: number) => void,
+  matches: Match[];
+  selected: number;
+  selectFn: (index: number) => void;
 }
 
 export const MatchList: SFC<MatchListProps> = (props) => {
   const listEntries = props.matches.map((match, idx) => {
+    const onClick = () => props.selectFn(idx);
     return (
       <li key={match.uuid}>
         <MatchListEntry
           key={match.uuid}
           match={match}
           selected={idx === props.selected}
-          onClick={() => props.selectFn(idx)}
+          onClick={onClick}
         />
       </li>);
   });
@@ -68,23 +71,23 @@ export const MatchList: SFC<MatchListProps> = (props) => {
 
 
 interface MatchEntryProps {
-  match: Match,
-  selected: boolean,
-  onClick: () => void,
+  match: Match;
+  selected: boolean;
+  onClick: () => void;
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   const { players } = props.match;
   // TODO: maybe compute this higher up
   let winners: number[] = [];
-  if (props.match.status == 'finished') {
+  if (props.match.status === 'finished') {
     winners = [props.match.stats.winner];
   }
 
-  let playerData = players.map((player, idx) => ({
+  const playerData = players.map((player, idx) => ({
     uuid: player.uuid,
     name: player.name,
-    isWinner: winners.some(num => num == idx + 1),
+    isWinner: winners.some((num) => num === idx + 1),
     score: 100,
   })).sort((a, b) => {
     // sort major on isWinner, minor on score
@@ -102,13 +105,15 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
     className = classnames(styles.selected, className);
   }
 
-  return <div className={className} onClick={props.onClick}>
-    <div className={styles.matchListEntryContent}>
-      <PlayerList players={playerData} />
-      <TimeLocation match={props.match} />
-      <MatchStatus match={props.match} />
+  return (
+    <div className={className} onClick={props.onClick}>
+      <div className={styles.matchListEntryContent}>
+        <PlayerList players={playerData} />
+        <TimeLocation match={props.match} />
+        <MatchStatus match={props.match} />
+      </div>
     </div>
-  </div>;
+  );
 }
 
 export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
@@ -122,7 +127,7 @@ interface PlayerProps {
 }
 
 export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
-  let entries = players.map((player) =>
+  const entries = players.map((player) =>
     <PlayerEntry key={player.uuid} player={player} />
   );
   return <ul className={styles.playerList}> {entries} </ul>;
@@ -133,22 +138,25 @@ export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
   if (player.isWinner) {
     icon = <FaIcon icon='trophy' />;
   }
-  let scoreField = null;
-  return <li className={styles.playerEntry}>
-    <div className={styles.iconSpan}> {icon} </div>
-    <div className={styles.playerName}> {player.name} </div>
-    <PlayerScore player={player} />
-  </li>;
+  return (
+    <li className={styles.playerEntry}>
+      <div className={styles.iconSpan}> {icon} </div>
+      <div className={styles.playerName}> {player.name} </div>
+      <PlayerScore player={player} />
+    </li>
+  );
 }
 
 export const PlayerScore: SFC<{ player: PlayerProps }> = ({ player }) => {
   if (!player.score) {
     return null;
   }
-  return <div className={styles.playerScore} title='score'>
-    <FaIcon icon='rocket' />
-    {player.score}
-  </div>;
+  return (
+    <div className={styles.playerScore} title='score'>
+      <FaIcon icon='rocket' />
+      {player.score}
+    </div>
+  );
 };
 
 

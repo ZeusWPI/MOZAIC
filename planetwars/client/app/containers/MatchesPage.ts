@@ -27,7 +27,7 @@ const mapStateToProps = (state: IGState, ownProps: any) => {
       uuid: mapData.uuid,
       name: mapData.name,
     };
-    
+
     return {...matchData,
       players,
       map,
@@ -39,9 +39,6 @@ const mapStateToProps = (state: IGState, ownProps: any) => {
     return b.timestamp.getTime() - a.timestamp.getTime();
   });
   return { matches };
-};
-
-const mapDispatchToProps = (dispatch: any) => {
 };
 
 export default connect<MatchViewerProps>(mapStateToProps)(Matches);
