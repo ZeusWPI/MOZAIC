@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Component, SFC } from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import * as moment from 'moment';
+import { MatchStats } from '../../utils/GameModels';
 import * as classnames from 'classnames';
 import { MatchView } from './MatchView';
 
@@ -11,7 +12,7 @@ const styles = require('./Matches.scss');
 // tslint:disable-next-line:interface-over-type-literal
 type LogLoader = (paths: FileList) => void;
 
-export interface Match {
+export interface MatchProps {
   uuid: string,
   players: Player[],
   map: Map,
@@ -28,6 +29,23 @@ export interface Map {
   uuid: string,
   name: string,
 }
+
+export type PlayingMatch = MatchProps & {
+  status: 'playing',
+};
+
+export type FinishedMatch = MatchProps & {
+  status: 'finished',
+  stats: MatchStats,
+}
+
+export type ErroredMatch = MatchProps & {
+  status: 'error',
+  error: string,
+}
+
+export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
+
 
 export interface IMatchViewerProps {
   matches: Match[];
@@ -95,9 +113,14 @@ interface MatchEntryProps {
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   const { players } = props.match;
   // TODO: maybe compute this higher up
+  let winners: number[] = [];
+  if (props.match.status == 'finished') {
+    winners = [props.match.stats.winner - 1];
+  }
+
   let playerData = players.map((player, idx) => ({
     name: player.name,
-    isWinner: false, // TODO
+    isWinner: winners.some(num => num - 1 == idx),
     score: 100,
   })).sort((a, b) => {
     // sort major on isWinner, minor on score

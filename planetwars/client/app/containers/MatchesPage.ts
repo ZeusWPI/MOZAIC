@@ -12,23 +12,28 @@ import { PathLike } from 'mz/fs';
 
 const mapStateToProps = (state: IGState, ownProps: any) => {
   const matches = Object.keys(state.matches).map((matchId) => {
-    let matchData = state.matches[matchId];
-    let mapData = state.maps[matchData.map];
-    return {
-      uuid: matchId,
-      players: matchData.players.map((botId) => {
-        const bot = state.bots[botId];
-        return {
-          uuid: botId,
-          name: bot.config.name,
-        };
-      }),
-      map: {
-        uuid: mapData.uuid,
-        name: mapData.name,
-      },
-      timestamp: matchData.timestamp,
-      logPath: matchData.logPath,
+    const matchData = state.matches[matchId];
+    const mapData = state.maps[matchData.map];
+
+    const players = matchData.players.map((botId) => {
+      const bot = state.bots[botId];
+      if (bot == undefined) {
+        console.log('wtf');
+      }
+      return {
+        uuid: botId,
+        name: bot.config.name,
+      };
+    });
+
+    const map = {
+      uuid: mapData.uuid,
+      name: mapData.name,
+    };
+    
+    return {...matchData,
+      players,
+      map,
     };
   });
   return { matches };

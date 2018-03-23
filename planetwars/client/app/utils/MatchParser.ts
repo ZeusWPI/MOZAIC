@@ -15,6 +15,11 @@ export function parseLogFile(logPath: string): Promise<IGameState[]> {
   });
 }
 
+export function parseLogFileSync(logPath: string): IGameState[] {
+  const content = fs.readFileSync(logPath, 'utf-8')
+  return parseContent(content);
+}
+
 function parseContent(content: string): IGameState[] {
   const lines: string[] = content.trim().split('\n');
   // TODO: this should be made typesafe
