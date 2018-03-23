@@ -154,17 +154,13 @@ export const TimeLocation: SFC<{match: Match}> = ({match}) =>
   </div>;
 
 
-export class MatchDetails extends React.Component<{}, {}> {
-  public render() {
-    return div(`.${styles.matchDetailsPane}`, ['No details yet!']);
-  }
-}
-
 // tslint:disable-next-line:variable-name
 export const NoMatches: React.SFC<{}> = (props) => {
-  return div(`.${styles.noMatches}`, [
-    p(['No matches played yet!']),
-  ]);
+  return <div className={styles.noMatches}>
+    <p>
+      No matches played yet!
+    </p>
+  </div>;
 };
 
 // TODO: Support loading multiple files
