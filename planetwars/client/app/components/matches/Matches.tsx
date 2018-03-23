@@ -146,7 +146,8 @@ export const PlayerScore: SFC<{player: PlayerProps}> = ({ player }) => {
 };
 
 
-function dateOrHour(time: moment.Moment) {
+function dateOrHour(date: Date) {
+  let time = moment(date);
   if (moment().startOf('day') < time) {
     return time.format("HH:mm");
   } else {
@@ -157,8 +158,8 @@ function dateOrHour(time: moment.Moment) {
 export const TimeLocation: SFC<{match: Match}> = ({match}) =>
   <div className={styles.mapNameWrapper}>
     <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
-    <span className={styles.mapName}> {"mijncoolemap23"} </span>
-    <div className={styles.matchTime}> {dateOrHour(moment())} </div>
+    <span className={styles.mapName}> {match.map} </span>
+    <div className={styles.matchTime}> {dateOrHour(match.timestamp)} </div>
   </div>;
 
 

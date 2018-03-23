@@ -5,6 +5,7 @@ export type MatchId = string;
 interface MatchProperties {
   uuid: MatchId,
   players: string[],
+  map: MapId,
   timestamp: Date,
   logPath: string,
 }

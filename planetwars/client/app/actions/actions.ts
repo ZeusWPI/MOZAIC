@@ -46,6 +46,7 @@ export function runMatch(params: MatchParams) {
       status: 'playing',
       uuid: matchId,
       players: params.bots,
+      map: params.map,
       timestamp: new Date(),
       logPath: Config.matchLogPath(matchId),
     };
