@@ -79,8 +79,8 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
       return option({ value: _map.uuid, label: _map.name });
     }).concat(option({ value: '', label: 'Select Map' }));
 
-    const map = [
-      label('.label', ['Map']),
+    const map = div([
+      label('.label', { key: 'map' }, ['Map']),
       div('.field.has-addons', [
         div('.control', [
           div('.select', [
@@ -109,7 +109,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
           ]),
         ]),
       ]),
-    ];
+    ]);
 
     const maxTurns = div('.field', [
       label('.label', ['Max Turns']),
@@ -119,6 +119,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
           placeholder: '200',
           value: this.state.maxTurns,
           onInput: (evt: any) => this.setState({ maxTurns: evt.target.value }),
+          onChange: (evt: any) => this.setState({ maxTurns: evt.target.value }),
         }),
       ]),
     ]);
@@ -130,15 +131,18 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     return div(`.${styles.matchSetupPane}`, [
       p(`.${styles.setupHeader}`, ['Options']),
       h(SelectedBotsOverview, { bots, selectedBots, unselectBot }),
-      form(`.${styles.options}`, {
-        onSubmit: (evt: Event) => {
-          evt.preventDefault();
-          this.play()
-      }}, [
-        map,
-        maxTurns,
-        playButton,
-      ]),
+      form(`.${styles.options}`,
+        {
+          onSubmit: (evt: Event) => {
+            evt.preventDefault();
+            this.play();
+          },
+        },
+        [
+          map,
+          maxTurns,
+          playButton,
+        ]),
     ]);
   }
 
@@ -183,7 +187,7 @@ export const SelectedBotsOverview: React.SFC<ISelectedBotsProps> = (props) => {
   const { selectedBots, bots } = props;
 
   const tags = selectedBots.map((uuid) => {
-    return div(`.${styles.botTag}`, [span(bots[uuid].config.name)]);
+    return div(`.${styles.botTag}`, { key: uuid }, [span(bots[uuid].config.name)]);
   });
 
   return div(`.${styles.selectedBotsOverview}`, tags); // TODO: Add remove all

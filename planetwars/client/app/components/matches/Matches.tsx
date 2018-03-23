@@ -2,9 +2,8 @@ import * as React from 'react';
 import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
-import { Match, Player, Map} from './types';
+import { Match, Player, Map } from './types';
 import { MatchView } from './MatchView';
-
 
 const styles = require('./Matches.scss');
 
@@ -31,16 +30,17 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
     const { matches } = this.props;
     if (matches.length === 0) { return <NoMatches />; }
 
-    const selectedMatch = this.props.matches[this.state.selectedMatch];;
+    const selectedMatch = this.props.matches[this.state.selectedMatch];
 
-    return <div className={styles.matchViewer}>
-      <MatchList
-        matches={matches}
-        selected={this.state.selectedMatch}
-        selectFn={this.select.bind(this)}
-      />
-      <MatchView match={selectedMatch}/>
-    </div>;
+    return (
+      <div className={styles.matchViewer}>
+        <MatchList
+          matches={matches}
+          selected={this.state.selectedMatch}
+          selectFn={this.select.bind(this)}
+        />
+        <MatchView match={selectedMatch} />
+      </div>);
   }
 }
 
@@ -52,14 +52,15 @@ interface MatchListProps {
 
 export const MatchList: SFC<MatchListProps> = (props) => {
   const listEntries = props.matches.map((match, idx) => {
-    return <li>
-      <MatchListEntry
-        key={match.uuid}
-        match={match}
-        selected={idx == props.selected}
-        onClick={() => props.selectFn(idx)}
-      />
-    </li>
+    return (
+      <li key={match.uuid}>
+        <MatchListEntry
+          key={match.uuid}
+          match={match}
+          selected={idx === props.selected}
+          onClick={() => props.selectFn(idx)}
+        />
+      </li>);
   });
 
   return <ul className={styles.matchList}> {listEntries} </ul>;
@@ -103,15 +104,15 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
 
   return <div className={className} onClick={props.onClick}>
     <div className={styles.matchListEntryContent}>
-      <PlayerList players={playerData}/>
-      <TimeLocation match={props.match}/>
-      <MatchStatus match={props.match}/>
+      <PlayerList players={playerData} />
+      <TimeLocation match={props.match} />
+      <MatchStatus match={props.match} />
     </div>
   </div>;
 }
 
-export const FaIcon: SFC<{icon: string}> = ({icon}) => 
-  <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true}/>;
+export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
+  <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true} />;
 
 interface PlayerProps {
   uuid: string,
@@ -120,32 +121,32 @@ interface PlayerProps {
   score?: number,
 }
 
-export const PlayerList: SFC<{players: PlayerProps[]}> = ({players}) => {
-  let entries = players.map((player) => 
-    <PlayerEntry key={player.uuid} player={player}/>
+export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
+  let entries = players.map((player) =>
+    <PlayerEntry key={player.uuid} player={player} />
   );
   return <ul className={styles.playerList}> {entries} </ul>;
 }
 
-export const PlayerEntry: SFC<{player: PlayerProps}> = ({ player }) => {
+export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
   let icon = null;
   if (player.isWinner) {
-    icon = <FaIcon icon='trophy'/>;
+    icon = <FaIcon icon='trophy' />;
   }
   let scoreField = null;
   return <li className={styles.playerEntry}>
     <div className={styles.iconSpan}> {icon} </div>
     <div className={styles.playerName}> {player.name} </div>
-    <PlayerScore player={player}/>
+    <PlayerScore player={player} />
   </li>;
 }
 
-export const PlayerScore: SFC<{player: PlayerProps}> = ({ player }) => {
+export const PlayerScore: SFC<{ player: PlayerProps }> = ({ player }) => {
   if (!player.score) {
     return null;
   }
   return <div className={styles.playerScore} title='score'>
-    <FaIcon icon='rocket'/>
+    <FaIcon icon='rocket' />
     {player.score}
   </div>;
 };
@@ -160,12 +161,12 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{match: Match}> = ({match}) =>
+export const TimeLocation: SFC<{ match: Match }> = ({ match }) =>
   <div className={styles.timeLocation}>
 
     <div className={styles.mapName} title='map'>
       <div className={styles.iconSpan}>
-        <FaIcon icon='globe'/>
+        <FaIcon icon='globe' />
       </div>
       {match.map.name}
     </div>
@@ -175,7 +176,7 @@ export const TimeLocation: SFC<{match: Match}> = ({match}) =>
     </div>
   </div>;
 
-export const MatchStatus: SFC<{match: Match}> = ({match}) => {
+export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
   switch (match.status) {
     case 'finished': {
       return null;
@@ -183,7 +184,7 @@ export const MatchStatus: SFC<{match: Match}> = ({match}) => {
     case 'playing': {
       return <div className={styles.matchStatus}>
         <div className={styles.iconSpan}>
-          <FaIcon icon='play'/>
+          <FaIcon icon='play' />
         </div>
         in progress
       </div>;
@@ -191,7 +192,7 @@ export const MatchStatus: SFC<{match: Match}> = ({match}) => {
     case 'error': {
       return <div className={styles.matchStatus}>
         <div className={styles.iconSpan}>
-          <FaIcon icon='exclamation-triangle'/>
+          <FaIcon icon='exclamation-triangle' />
         </div>
         failed
       </div>;
