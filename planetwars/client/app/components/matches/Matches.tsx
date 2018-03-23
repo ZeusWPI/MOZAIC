@@ -110,9 +110,9 @@ export const FaIcon: SFC<{icon: string}> = ({icon}) =>
   <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true}/>;
 
 interface PlayerProps {
-  isWinner: boolean,
   name: string,
-  score: number,
+  isWinner: boolean,
+  score?: number,
 }
 
 export const PlayerList: SFC<{players: PlayerProps[]}> = ({players}) => {
@@ -127,15 +127,23 @@ export const PlayerEntry: SFC<PlayerProps> = (player) => {
   if (player.isWinner) {
     icon = <FaIcon icon='trophy'/>;
   }
+  let scoreField = null;
   return <div className={styles.playerEntry}>
     <div className={styles.iconSpan}> {icon} </div>
     <div className={styles.playerName}> {player.name} </div>
-    <div className={styles.playerScore}>
-      <FaIcon icon='rocket'/>
-      {player.score}
-    </div>
+    <PlayerScore player={player}/>
   </div>;
 }
+
+export const PlayerScore: SFC<{player: PlayerProps}> = ({ player }) => {
+  if (!player.score) {
+    return null;
+  }
+  return <div className={styles.playerScore}>
+    <FaIcon icon='rocket'/>
+    {player.score}
+  </div>;
+};
 
 
 function dateOrHour(time: moment.Moment) {
