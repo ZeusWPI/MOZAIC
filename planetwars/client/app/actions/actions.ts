@@ -99,15 +99,12 @@ export function handleMatchError(matchId: MatchId, error: Error) {
     const state: IGState = getState();
     const match = state.matches[matchId];
     if (match.status == 'playing') {
-      parseLogFile(match.logPath).then((states) => {
-        let stats = analyzeLog(match.players, states);
-        dispatch(saveMatch({
-          ...match,
-          status: 'error',
-          // TODO: include more information or something
-          error: error.message,
-        }));
-      });
+      dispatch(saveMatch({
+        ...match,
+        status: 'error',
+        // TODO: include more information or something
+        error: error.message,
+      }));
     }
   };
 }
