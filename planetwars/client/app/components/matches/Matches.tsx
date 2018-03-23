@@ -142,6 +142,7 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
     <div className={styles.matchListEntryContent}>
       <PlayerList players={playerData}/>
       <TimeLocation match={props.match}/>
+      <MatchStatus match={props.match}/>
     </div>
   </div>;
 }
@@ -201,6 +202,30 @@ export const TimeLocation: SFC<{match: Match}> = ({match}) =>
     <span className={styles.mapName}> {match.map.name} </span>
     <div className={styles.matchTime}> {dateOrHour(match.timestamp)} </div>
   </div>;
+
+export const MatchStatus: SFC<{match: Match}> = ({match}) => {
+  switch (match.status) {
+    case 'finished': {
+      return null;
+    }
+    case 'playing': {
+      return <div className={styles.matchStatus}>
+        <div className={styles.iconSpan}>
+          <FaIcon icon='play'/>
+        </div>
+        in progress
+      </div>;
+    }
+    case 'error': {
+      return <div className={styles.matchStatus}>
+        <div className={styles.iconSpan}>
+          <FaIcon icon='exclamation-triangle'/>
+        </div>
+        failed
+      </div>;
+    }
+  }
+}
 
 
 // tslint:disable-next-line:variable-name
