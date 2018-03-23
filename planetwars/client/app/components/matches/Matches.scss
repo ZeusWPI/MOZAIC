@@ -3,6 +3,7 @@
 $altBackground: lighten($background, 5);
 $red: #DE474C;
 $blue: #4797DE;
+$selectedHighlightWidth: 4px;
 
 .matchViewer {
   width: 100%;
@@ -24,7 +25,7 @@ $blue: #4797DE;
 
 .matchListEntry {
   border-bottom: 1px solid $altBackground;
-  border-left: 4px solid rbga(0,0,0,0);
+  border-left: $selectedHighlightWidth solid transparent;
 
   .matchListEntryContent {
     padding: 10px;
@@ -41,14 +42,14 @@ $blue: #4797DE;
       list-style: none;
     }
   }
+}
 
-  :hover {
-    background-color: $altBackground;
-  }
+.matchListEntry:hover {
+  background-color: $altBackground;
 }
 
 .matchListEntry.selected {
-  border-left: 4px solid $secondary;
+  border-left: $selectedHighlightWidth solid $secondary;
   background-color: $altBackground;
 }
 
