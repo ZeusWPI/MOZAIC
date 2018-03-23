@@ -1,3 +1,8 @@
+env:
+  gobal: 
+     - ELECTRON_CACHE=$HOME/.cache/electron
+     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+
 matrix:
   include:
   - os: linux
@@ -5,26 +10,24 @@ matrix:
     rust: nightly
     node_js: '9'
     env: 
-     - NODE_VERSION = "9"
-     - OS_TARGET = 'linux'
+     - OS_TARGET="linux"
   - os: osx
     osx_image: xcode9.2
     language: rust
     node_js: '9'
     rust: nightly
     env:
-      - NODE_VERSION = "9"
-      - OS_TARGET = 'mac'
+      - OS_TARGET="mac"
 
 
 cache:
   directories:
     - gameserver/target/
     - client/planetwars/node_modules
+    - $HOME/.cargo/
     - $HOME/.cache/electron
     - $HOME/.cache/electron-builder
 
-  # - nvm install $NODE_VERSION
 before_install:
   - |
     if [ "$TRAVIS_OS_NAME" == "osx" ]; then
