@@ -115,12 +115,12 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   // TODO: maybe compute this higher up
   let winners: number[] = [];
   if (props.match.status == 'finished') {
-    winners = [props.match.stats.winner - 1];
+    winners = [props.match.stats.winner];
   }
 
   let playerData = players.map((player, idx) => ({
     name: player.name,
-    isWinner: winners.some(num => num - 1 == idx),
+    isWinner: winners.some(num => num == idx + 1),
     score: 100,
   })).sort((a, b) => {
     // sort major on isWinner, minor on score
