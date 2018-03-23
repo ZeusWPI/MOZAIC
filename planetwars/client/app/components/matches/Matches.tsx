@@ -1,63 +1,24 @@
 import * as React from 'react';
 import { Component, SFC } from 'react';
-import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
 import * as moment from 'moment';
-import { MatchStats } from '../../utils/GameModels';
 import * as classnames from 'classnames';
+import { Match, Player, Map} from './types';
 import { MatchView } from './MatchView';
 
 
 const styles = require('./Matches.scss');
 
-// tslint:disable-next-line:interface-over-type-literal
-type LogLoader = (paths: FileList) => void;
-
-export interface MatchProps {
-  uuid: string,
-  players: Player[],
-  map: Map,
-  timestamp: Date,
-  logPath: string,
-}
-
-export interface Player {
-  uuid: string,
-  name: string,
-}
-
-export interface Map {
-  uuid: string,
-  name: string,
-}
-
-export type PlayingMatch = MatchProps & {
-  status: 'playing',
-};
-
-export type FinishedMatch = MatchProps & {
-  status: 'finished',
-  stats: MatchStats,
-}
-
-export type ErroredMatch = MatchProps & {
-  status: 'error',
-  error: string,
-}
-
-export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
-
-
-export interface IMatchViewerProps {
+export interface MatchViewerProps {
   matches: Match[];
 }
 
-interface IMatchViewerState {
+interface MatchViewerState {
   // use index as id, for now
   selectedMatch: number,
 }
 
-export default class MatchViewer extends Component<IMatchViewerProps, IMatchViewerState> {
-  constructor(props: IMatchViewerProps) {
+export default class MatchViewer extends Component<MatchViewerProps, MatchViewerState> {
+  constructor(props: MatchViewerProps) {
     super(props)
     this.state = { selectedMatch: 0 };
   }
@@ -239,31 +200,3 @@ export const NoMatches: React.SFC<{}> = (props) => {
     </p>
   </div>;
 };
-
-// TODO: Support loading multiple files
-export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
-  private fileInput: FileList;
-
-  public render() {
-    return form(`.${styles.matchImporter}`,
-      { onSubmit: (evt: any) => this.handleSubmit(evt) },
-      [
-        label(['Import Match(es)']),
-        input({
-          type: 'file',
-          multiple: true,
-          onChange: (evt: any) => this.handleChange(evt),
-        }),
-        button({ type: 'submit' }, ['Import']),
-      ]
-    );
-  }
-
-  private handleChange(evt: any): void {
-    this.fileInput = evt.target.files;
-  }
-
-  private handleSubmit(event: any) {
-    this.props.loadLogs(this.fileInput);
-  }
-}

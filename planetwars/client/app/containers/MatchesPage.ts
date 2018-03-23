@@ -3,7 +3,7 @@ import * as p from 'path';
 import * as Promise from 'bluebird';
 import { connect } from 'react-redux';
 
-import Matches, { IMatchViewerProps, Match } from '../components/matches/Matches';
+import Matches, { MatchViewerProps } from '../components/matches/Matches';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import { parseLogFile } from '../utils/MatchParser';
@@ -44,4 +44,4 @@ const mapStateToProps = (state: IGState, ownProps: any) => {
 const mapDispatchToProps = (dispatch: any) => {
 };
 
-export default connect<IMatchViewerProps>(mapStateToProps)(Matches);
+export default connect<MatchViewerProps>(mapStateToProps)(Matches);

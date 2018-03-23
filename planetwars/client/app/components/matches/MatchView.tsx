@@ -1,6 +1,6 @@
 import * as React  from 'react';
 import Visualizer from '../visualizer/Visualizer';
-import { Match, FinishedMatch, ErroredMatch } from './Matches';
+import { Match, FinishedMatch, ErroredMatch } from './types';
 import { div, h } from 'react-hyperscript-helpers';
 import { parseLogFileSync } from '../../utils/MatchParser';
 
