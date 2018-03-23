@@ -66,6 +66,16 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     }
   }
 
+
+
+  componentWillReceiveProps(nextProps: VisualizerProps) {
+    if (nextProps.gameLog) {
+      this.setLog(nextProps.playerData, nextProps.gameLog);
+    }
+  }
+
+
+
   setTurn(num: number) {
     let turnNum = Math.min(num, this.state.numTurns);
     this.setState({ hide_card: true });

@@ -17,9 +17,6 @@ const mapStateToProps = (state: IGState, ownProps: any) => {
 
     const players = matchData.players.map((botId) => {
       const bot = state.bots[botId];
-      if (bot == undefined) {
-        console.log('wtf');
-      }
       return {
         uuid: botId,
         name: bot.config.name,
