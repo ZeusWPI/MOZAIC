@@ -170,7 +170,10 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
       </button>
     </div>;
 
-    const onSubmit = (evt: any) => this.handleSubmit();
+    const onSubmit = (evt: React.FormEvent<{}>) => {
+      evt.preventDefault();
+      this.handleSubmit();
+    };
 
     return <form className={styles.botEditor} onSubmit={onSubmit}>
       {name}
