@@ -10,12 +10,21 @@ $selectedHighlightWidth: 4px;
   height: 100%;
   flex-direction: row;
   display: flex;
+  flex: auto;
 }
 
 .matchList {
   height: 100%;
-  width: 400px;
+  flex-basis: 400px;
+  flex-shrink: 1;
+  flex-grow: 0;
   border-right: 1px solid $altBackground;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.matchList::-webkit-scrollbar {
+  display: none;
 }
 
 .iconSpan {
