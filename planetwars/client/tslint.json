@@ -16,6 +16,9 @@
       true,
       "spaces"
     ],
+    // prefixing interfaces with I?
+    // What is this, 1970?
+    "interface-name": [true, "never-prefix"],
     "max-classes-per-file": [
       false
     ],
@@ -25,7 +28,7 @@
         "order": "fields-first"
       }
     ],
-    "no-angle-bracket-type-assertion": false,
+    "no-angle-bracket-type-assertion": true,
     "no-console": false,
     "no-empty-interface": false,
     "no-trailing-whitespace": [
@@ -54,7 +57,13 @@
     "variable-name": [
       true,
       "check-format",
-      "allow-leading-underscore"
+      "allow-leading-underscore",
+      // without this, react SFC's are just silly
+      "allow_pascal_case"
+    ],
+    "naming-convention": [
+      true,
+
     ]
   },
   "rulesDirectory": []
