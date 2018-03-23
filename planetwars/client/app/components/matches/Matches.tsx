@@ -93,6 +93,7 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   const listEntries = props.matches.map((match, idx) => {
     return <li>
       <MatchListEntry
+        key={match.uuid}
         match={match}
         selected={idx == props.selected}
         onClick={() => props.selectFn(idx)}
@@ -119,6 +120,7 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   }
 
   let playerData = players.map((player, idx) => ({
+    uuid: player.uuid,
     name: player.name,
     isWinner: winners.some(num => num == idx + 1),
     score: 100,
@@ -151,6 +153,7 @@ export const FaIcon: SFC<{icon: string}> = ({icon}) =>
   <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true}/>;
 
 interface PlayerProps {
+  uuid: string,
   name: string,
   isWinner: boolean,
   score?: number,
@@ -158,22 +161,22 @@ interface PlayerProps {
 
 export const PlayerList: SFC<{players: PlayerProps[]}> = ({players}) => {
   let entries = players.map((player) => 
-    <li><PlayerEntry {...player}/></li>
+    <PlayerEntry key={player.uuid} player={player}/>
   );
   return <ul className={styles.playerList}> {entries} </ul>;
 }
 
-export const PlayerEntry: SFC<PlayerProps> = (player) => {
+export const PlayerEntry: SFC<{player: PlayerProps}> = ({ player }) => {
   let icon = null;
   if (player.isWinner) {
     icon = <FaIcon icon='trophy'/>;
   }
   let scoreField = null;
-  return <div className={styles.playerEntry}>
+  return <li className={styles.playerEntry}>
     <div className={styles.iconSpan}> {icon} </div>
     <div className={styles.playerName}> {player.name} </div>
     <PlayerScore player={player}/>
-  </div>;
+  </li>;
 }
 
 export const PlayerScore: SFC<{player: PlayerProps}> = ({ player }) => {
