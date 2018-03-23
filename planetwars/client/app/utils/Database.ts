@@ -1,3 +1,6 @@
+import { remote } from 'electron';
+
+import * as path from 'path';
 import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
@@ -30,7 +33,11 @@ export const SCHEMA = {
 // Initialisation
 // ----------------------------------------------------------------------------
 
-const adapter = new FileAsync('db.json');
+const { app } = remote;
+const dbPath = (process.env.NODE_ENV === 'development')
+  ? 'db.json'
+  : path.join(app.getPath('userData'), 'db.json');
+const adapter = new FileAsync(dbPath);
 const database = low<IDbSchemaV2, typeof adapter>(adapter);
 
 /*
