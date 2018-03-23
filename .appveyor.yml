@@ -3,12 +3,11 @@ os: Visual Studio 2017
 platform:
   - x64
 
-environement:
-  matrix:
-    - channel: nightly
-      target: x86_64-pc-windows-msvc
-    - channel: nightly
-      target: i686-pc-windows-msvc
+matrix:
+  - channel: nightly
+    target: x86_64-pc-windows-msvc
+  - channel: nightly
+    target: i686-pc-windows-msvc
 
 cache:
   - gameserver\target
