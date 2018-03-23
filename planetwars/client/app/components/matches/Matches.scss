@@ -92,61 +92,6 @@ $selectedHighlightWidth: 4px;
   display: inline-block;
 }
 
-.matchesPage {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-direction: column;
-  margin: 20px 0px;
-
-  .matchesOverview {
-    height: 100%;
-    width: 95%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0px;
-    .matchesListPane {
-      height: 100%;
-      width: 100%;
-      border-radius: 10px;
-      margin-right: 10px;
-      border: 1px solid $secondary;
-      overflow-y: auto;
-      .matchesListItem {
-        .match {
-          border: 1px solid $secondary;
-          border-radius: 10px;
-          padding: 10px;
-        }
-      }
-    }
-    .matchDetailsPane {
-      border-radius: 10px;
-      margin-left: 10px;
-      height: 100%;
-      width: 100%;
-      border: 1px solid $secondary;
-    }
-  }
-}
-
-
-.matchImporter {
-  border-radius: 10px;
-  width: 95%;
-  min-height: 50px; // background-color: $secondary;
-  border: 1px solid $secondary;
-  display: flex;
-  flex-grow: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-around;
-}
-
 .noMatches {
   width: 100%;
   height: 100%;
