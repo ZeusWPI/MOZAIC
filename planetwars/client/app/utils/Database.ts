@@ -55,18 +55,18 @@ export function bindToStore(store: any) {
     .then((db) => {
       // TODO: these JSON objects should be validated to avoid weird runtime
       // errors elsewhere in the code
+      Object.keys(db.bots).forEach((uuid) => {
+        store.dispatch(A.importBotFromDB(db.bots[uuid]));
+      });
+      Object.keys(db.maps).forEach((uuid) => {
+        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+      });
       Object.keys(db.matches).forEach((uuid) => {
         const matchData = db.matches[uuid];
         store.dispatch(A.importMatchFromDB({
           ...matchData,
           timestamp: new Date(matchData.timestamp),
         }));
-      });
-      Object.keys(db.bots).forEach((uuid) => {
-        store.dispatch(A.importBotFromDB(db.bots[uuid]));
-      });
-      Object.keys(db.maps).forEach((uuid) => {
-        store.dispatch(A.importMapFromDB(db.maps[uuid]));
       });
       db.notifications.forEach((notification) => {
         store.dispatch(A.importNotificationFromDB(notification));
