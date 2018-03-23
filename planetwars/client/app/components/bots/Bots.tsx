@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom';
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Bots.scss");
 
-export interface IBotsStateProps {
+export interface BotsStateProps {
   bots: IBotList;
   selectedBot?: IBotData;
 }
@@ -17,25 +17,31 @@ export interface IBotsStateProps {
 // tslint:disable-next-line:interface-over-type-literal
 export type ConfigErrors = { name?: string, command?: string };
 
-export interface IBotsDispatchProps {
+export interface BotsDispatchProps {
   addBot: (config: IBotConfig) => void;
   removeBot: (uuid: BotID) => void;
   editBot: (bot: IBotData) => void;
   validate: (config: IBotConfig) => ConfigErrors;
 }
 
-type IBotsProps = IBotsStateProps & IBotsDispatchProps;
+type IBotsProps = BotsStateProps & BotsDispatchProps;
 
 export class Bots extends React.Component<IBotsProps, {}> {
 
   public render() {
     const { bots, selectedBot, removeBot, addBot, editBot, validate } = this.props;
-    return div(`.${styles.botPage}`, [
-      div(`.${styles.bots}`, [
-        h(BotsList, { bots }),
-        h(BotEditor, { selectedBot, addBot, editBot, removeBot, validate }),
-      ]),
-    ]);
+    return <div className={styles.botPage}>
+      <div className={styles.bots}>
+        <BotsList bots={bots}/>
+        <BotEditor
+          selectedBot={selectedBot}
+          addBot={addBot}
+          removeBot={removeBot}
+          editBot={editBot}
+          validate={validate}
+        />
+      </div>
+    </div>;
   }
 }
 
@@ -52,25 +58,29 @@ export class BotsList extends React.Component<IBotListProps, {}> {
     const bots = Object.keys(this.props.bots).map((uuid) => {
       return BotListItem(this.props.bots[uuid]);
     });
-    return div(`.${styles.botsListPane}`, [
-      h(NewBot),
-      ul([bots]),
-    ]);
+    return <div className={styles.botsListPane}>
+      <NewBot/>
+      <ul> {bots} </ul>
+    </div>;
   }
 }
 // tslint:disable-next-line:variable-name
-export const NewBot: React.SFC<void> = (props) => {
-  return div(`.${styles.newBot}`, [
-    h(Link, { to: "/bots/" }, ["New Bot"]),
-  ]);
+export const NewBot: React.SFC<{}> = (props) => {
+  return <div className={styles.newBot}>
+    <Link to="/bots/"> New Bot </Link>
+  </div>;
 };
 
 // tslint:disable-next-line:variable-name
 const BotListItem: React.SFC<IBotData> = (props) => {
   const { config, lastUpdatedAt, createdAt, uuid } = props;
-  return h(Link, { to: `/bots/${uuid}`, key: uuid }, [
-    li([p([config.name])]),
-  ]);
+  return <Link to={`/bots/${uuid}`} key={uuid}>
+    <li>
+      <p>
+        {config.name}
+      </p>
+    </li>
+  </Link>;
 };
 
 // ----------------------------------------------------------------------------
@@ -103,7 +113,20 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
   }
 
   public render() {
-    const name = div('.field', [
+    const name = <div className='field'>
+      <label className='label'> Name </label>
+      <div className='control'>
+        <input
+          className='input'
+          type='text'
+          placeholder='AwesomeBot3000'
+          value={this.state.name}
+          onInput={(evt: any) => this.setState({ name: evt.target.value })}
+        />
+      </div>
+    </div>;
+    
+    div('.field', [
       label('.label', ['Name']),
       div('.control', [
         input('.input', {
@@ -115,37 +138,45 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
       ]),
     ]);
 
-    const command = div('.field', [
-      label('.label', ['Command']),
-      div('.control', [
-        input('.input', {
-          type: 'text',
-          placeholder: 'The command to execute your bot.',
-          value: this.state.command,
-          onInput: (evt: any) => this.setState({ command: evt.target.value }),
-        }),
-        p('.help', [JSON.stringify(stringArgv(this.state.command))]),
-      ]),
-      label('.label', ['Ex: python3 "/home/iK_BEN_DE_BESTE/bots/coolbot.py"']),
-      label('.label', ['USE ABSOLUTE PATHS']),
-    ]);
+    const command = <div className='field'>
+      <label className='label'> Command </label>
+      <div className='control'>
+        <input
+          className='input'
+          type='text'
+          placeholder='The command to execute your bot'
+          value={this.state.command}
+          onInput={(evt: any) => this.setState({command: evt.target.value})}
+        />
+        <p className='help'>
+          {JSON.stringify(stringArgv(this.state.command))}
+        </p>
+      </div>
+      <label className='label'>
+        Ex: python3 "/home/iK_BEN_DE_BESTE/bots/coolbot.py
+      </label>
+      <label className='label'>
+        USE ABSOLUTE PATHS
+      </label>
+    </div>;
 
-    const buttons = div('.control', [
-      input('.button', { type: 'submit', value: 'Save' }),
-      button('.button', {
-        type: 'button',
-        onClick: () => this.handleRemove(),
-      }, ['Delete']),
-    ]);
+    const buttons = <div className='control'>
+      <input className='button' type='submit' value='Save'/>
+      <button
+        className='button'
+        type='button'
+        onClick={() => this.handleRemove()}>
+        Delete
+      </button>
+    </div>;
 
-    return form(`.${styles.botEditor}`,
-      {
-        onSubmit: (evt: any) => this.handleSubmit(),
-      }, [
-        name,
-        command,
-        buttons,
-      ]);
+    const onSubmit = (evt: any) => this.handleSubmit();
+
+    return <form className={styles.botEditor} onSubmit={onSubmit}>
+      {name}
+      {command}
+      {buttons}
+    </form>;
   }
 
   private handleSubmit() {

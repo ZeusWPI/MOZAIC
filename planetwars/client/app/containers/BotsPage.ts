@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { Bots, IBotsStateProps, IBotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
+import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/actions';
 import { IBotConfig, IBotData, BotID } from "../utils/ConfigModels";
@@ -45,4 +45,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<IBotsStateProps, IBotsDispatchProps>(mapStateToProps, mapDispatchToProps)(Bots);
+export default connect<BotsStateProps, BotsDispatchProps>(mapStateToProps, mapDispatchToProps)(Bots);
