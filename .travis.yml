@@ -2,8 +2,7 @@ matrix:
   include:
   - os: linux
     language: rust
-    rust:
-      - nightly
+    rust: nightly
 
 cache:
   directories:
