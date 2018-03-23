@@ -144,7 +144,7 @@ export const PlayerScore: SFC<{player: PlayerProps}> = ({ player }) => {
   if (!player.score) {
     return null;
   }
-  return <div className={styles.playerScore}>
+  return <div className={styles.playerScore} title='score'>
     <FaIcon icon='rocket'/>
     {player.score}
   </div>;
@@ -161,10 +161,18 @@ function dateOrHour(date: Date) {
 }
 
 export const TimeLocation: SFC<{match: Match}> = ({match}) =>
-  <div className={styles.mapNameWrapper}>
-    <div className={styles.iconSpan}> <FaIcon icon='globe'/> </div>
-    <span className={styles.mapName}> {match.map.name} </span>
-    <div className={styles.matchTime}> {dateOrHour(match.timestamp)} </div>
+  <div className={styles.timeLocation}>
+
+    <div className={styles.mapName} title='map'>
+      <div className={styles.iconSpan}>
+        <FaIcon icon='globe'/>
+      </div>
+      {match.map.name}
+    </div>
+
+    <div className={styles.matchTime} title='date'>
+      {dateOrHour(match.timestamp)}
+    </div>
   </div>;
 
 export const MatchStatus: SFC<{match: Match}> = ({match}) => {
