@@ -130,7 +130,11 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     return div(`.${styles.matchSetupPane}`, [
       p(`.${styles.setupHeader}`, ['Options']),
       h(SelectedBotsOverview, { bots, selectedBots, unselectBot }),
-      form(`.${styles.options}`, { onSubmit: () => this.play() }, [
+      form(`.${styles.options}`, {
+        onSubmit: (evt: Event) => {
+          evt.preventDefault();
+          this.play()
+      }}, [
         map,
         maxTurns,
         playButton,
