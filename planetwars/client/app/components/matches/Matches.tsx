@@ -79,15 +79,15 @@ interface MatchEntryProps {
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   const { players } = props.match;
   // TODO: maybe compute this higher up
-  let winners: number[] = [];
+  let winners: string[] = [];
   if (props.match.status === 'finished') {
-    winners = [props.match.stats.winner];
+    winners = props.match.stats.winners;
   }
 
-  const playerData = players.map((player, idx) => ({
+  const playerData = players.map((player) => ({
     uuid: player.uuid,
     name: player.name,
-    isWinner: winners.some((num) => num === idx + 1),
+    isWinner: winners.some((id) => id === player.uuid),
     score: 100,
   })).sort((a, b) => {
     // sort major on isWinner, minor on score

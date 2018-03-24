@@ -1,4 +1,5 @@
 import { JsonPlanet } from '../lib/match/types';
+import { BotID } from './ConfigModels';
 type LogPath = string;
 
 export type MatchId = string;
@@ -33,13 +34,13 @@ export enum MatchStatus {
   'error',
 }
 
-
 export interface MatchStats {
-  winner: number;
-  commandsOrdered: number[]; // Number of commands / player;
-  planetsFlipped: number;
-  shipsSend: number[];
-  turns: number;
+  winners: BotID[];
+  score: PlayerMap<number>;
+}
+
+interface PlayerMap<T> {
+  [uuid: string]: T;
 }
 
 // tslint:disable-next-line:variable-name

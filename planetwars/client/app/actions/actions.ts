@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { IGState } from '../reducers';
 import { parseLog } from '../lib/match/log';
-import { analyzeLog } from '../utils/MatchAnalyser';
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
@@ -84,7 +83,7 @@ export function completeMatch(matchId: MatchId) {
     if (match.status === 'playing') {
       const log = parseLog(match.logPath);
         // TODO
-      const stats = analyzeLog(match.players, log.turns);
+      const stats: any = undefined;
       dispatch(saveMatch({
         ...match,
         status: 'finished',
