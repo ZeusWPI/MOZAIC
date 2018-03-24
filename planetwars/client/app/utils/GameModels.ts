@@ -4,29 +4,28 @@ type LogPath = string;
 export type MatchId = string;
 
 interface MatchProperties {
-  uuid: MatchId,
-  players: string[],
-  map: MapId,
-  timestamp: Date,
-  logPath: string,
+  uuid: MatchId;
+  players: string[];
+  map: MapId;
+  timestamp: Date;
+  logPath: string;
 }
 
 export type PlayingMatch = MatchProperties & {
-  status: 'playing',
-}
+  status: 'playing';
+};
 
 export type FinishedMatch = MatchProperties & {
-  status: 'finished',
-  stats: MatchStats,
-}
+  status: 'finished';
+  stats: MatchStats;
+};
 
 export type ErroredMatch = MatchProperties & {
-  status: 'error',
+  status: 'error';
   error: string,
-}
+};
 
 export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
-
 
 export enum MatchStatus {
   'playing',
