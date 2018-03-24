@@ -18,19 +18,3 @@ export function initializeDirs(): Promise<void[]> {
 export function checkDataFilesAgainstDb(): void {
   return;
 }
-
-export function unPackBinaries(): Promise<void[]> {
-  const binaries = Config.binaries;
-  const copyFile: (or: string, dest: string) => void = <any> fs.copyFile;
-  const pBins = Object.keys(binaries).map((binCurr) => {
-    return fs.exists(binCurr)
-      .then((exists) => {
-        if (!exists) { return Promise.reject(`Binary ${binCurr} not found`); }
-        return Promise.resolve();
-      })
-      .then(() => {
-        return fs.copyFile(binCurr, binaries[binCurr], );
-      });
-  });
-  return Promise.all([]);
-}
