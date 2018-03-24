@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {shell} from 'electron';
-import {a, div, h, h1, h2, li, p, pre, span, tr, ul} from 'react-hyperscript-helpers';
+import {a, div, h, h1, h2, li, p, pre, span, ul} from 'react-hyperscript-helpers';
 import {Link, NavLink} from "react-router-dom";
 
 // tslint:disable-next-line:no-var-requires
@@ -51,12 +51,14 @@ export default class About extends React.Component<IProps, IState> {
 
       h2(`.${styles.subTitle}`, 'Playing A Game'),
 
-      p(['With the bots configured as above, head on over to the ',
+      span(['With the bots configured as above, head on over to the ',
         h(Link, {to: '/Play'}, ['Play']),
         ' page. Here you will see all the bots you have registered. ' +
         'Select all the bots you would like to enter into battle. To deselect a bot, just click it again. ' +
         'Next, choose the map you would like to play on, or ',
-        h(MapPanel, {}, ['import your own. ']),
+
+        h(MapPanel, ['import your own. ']),
+
         'Set a turn limit, and finally, hit the Play button.']),
 
       h2(`.${styles.subTitle}`, 'Visualizing a Game'),
@@ -76,6 +78,7 @@ export default class About extends React.Component<IProps, IState> {
 }
 
 interface IMapPanelProps {
+  children: any;
 
 }
 
@@ -97,9 +100,9 @@ class MapPanel extends React.Component<IMapPanelProps, IMapPanelState> {
 
   public render() {
     return span( [
-      a({onClick: this.toggle}, 'import your own'),
+      a({onClick: this.toggle}, this.props.children),
       div(`.${this.state.toggled ? styles.mapToggled : styles.mapHidden}`, [
-        p('Maps are simply JSON files detailing the planet names, their positions, and the initial ship count.' +
+        p('Maps are simply JSON files detailing the planet names, their positions, and the initial ship count. ' +
           'See below for an example structure:' ),
         div(`.${styles.mapCode}`, [
           pre('' +
