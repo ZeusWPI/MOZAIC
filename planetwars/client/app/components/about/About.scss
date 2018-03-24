@@ -20,4 +20,13 @@
   .argsInfoList {
     list-style-type: disc;
   }
+
+  .mapToggeld {
+    visibility: visible;
+  }
+
+  .mapHidden {
+    visibility: hidden;
+    height: 0;
+  }
 }
