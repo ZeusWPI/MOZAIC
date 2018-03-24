@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import Config from '../util/config';
+import { Expedition } from '../../../../lib/match/types';
 const space_math = require('../util/spacemath');
 
 class ExpeditionRenderer {
@@ -17,7 +18,7 @@ class ExpeditionRenderer {
     selector.exit().remove();
     let expeditions = selector.enter().append('g')
       .attr('class', 'expedition')
-      .attr('transform', (d: any) => {
+      .attr('transform', (d: Expedition) => {
         let pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       }).merge(selector);
@@ -25,8 +26,8 @@ class ExpeditionRenderer {
     expeditions.transition()
       .duration(1000 / params.speed)
       .ease(d3.easeLinear)
-      .attr('transform', (d: any) => {
-        let pos = this.expeditionPos(d);
+      .attr('transform', (d: Expedition) => {
+        const pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       });
 
@@ -68,25 +69,25 @@ class ExpeditionRenderer {
       .text((d: any) => Config.playerName(d.owner));
   }
 
-  expeditionPos(expedition: any) {
-    var total_distance = Math.ceil(
+  expeditionPos(expedition: Expedition) {
+    const totalDistance = Math.ceil(
       space_math.euclideanDistance(
         expedition.origin,
         expedition.destination)
     );
-    var mod = expedition.turns_remaining / total_distance;
+    const mod = expedition.turnsRemaining / totalDistance;
 
-    var new_x = expedition.origin.x - expedition.destination.x;
-    new_x *= mod;
-    new_x += expedition.destination.x;
+    let newX = expedition.origin.x - expedition.destination.x;
+    newX *= mod;
+    newX += expedition.destination.x;
 
-    var new_y = expedition.origin.y - expedition.destination.y;
-    new_y *= mod;
-    new_y += expedition.destination.y;
+    let newY = expedition.origin.y - expedition.destination.y;
+    newY *= mod;
+    newY += expedition.destination.y;
 
     return {
-      'x': new_x,
-      'y': new_y
+      x: newX,
+      y: newY,
     };
   }
 

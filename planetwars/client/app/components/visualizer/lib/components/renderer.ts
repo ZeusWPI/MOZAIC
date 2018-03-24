@@ -96,7 +96,7 @@ class Renderer extends React.Component {
       return this.gameState.planets[planetName];
     });
     this.planetRenderer.draw(planets, params);
-    //this.expeditionRenderer.draw(this.gameState.expeditions, params);
+    this.expeditionRenderer.draw(this.gameState.expeditions, params);
   }
 }
 
