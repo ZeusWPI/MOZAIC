@@ -1,35 +1,97 @@
-os: Visual Studio 2017
+env:
+  gobal: 
+     - ELECTRON_CACHE=$HOME/.cache/electron
+     - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
 
-platform:
-  - x64
+matrix:
+  include:
+  - os: linux
+    language: rust
+    rust: nightly
+    node_js: '9'
+    env: 
+     - OS_TARGET="linux"
+  - os: osx
+    osx_image: xcode9.2
+    language: rust
+    node_js: '9'
+    rust: nightly
+    env:
+      - OS_TARGET="mac"
 
-environment:
-  matrix:
-    - channel: nightly
-      target: x86_64-pc-windows-msvc
 
 cache:
-  - gameserver\target
-  - planetwars\client\node_modules
-  - '%USERPROFILE%\.electron'
-  - '%USERPROFILE%\.cargo'
+  directories:
+    - gameserver/target/
+    - client/planetwars/node_modules
+    - $HOME/.cargo/
+    - $HOME/.cache/electron
+    - $HOME/.cache/electron-builder
 
-init:
-  - git config --global core.autocrlf input
+before_install:
+  - |
+    if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+      mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.3.1/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.3.1.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
+      export PATH="/tmp/git-lfs:$PATH"
+    fi
+before_script:
+  - git lfs pull
 
-# Download rust & node
-install:
-  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - rustup-init -yv --default-toolchain %channel% --default-host %target%
-  - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
-  - rustc -vV
-  - cargo -vV
-  - ps: Install-Product node 9 x64
+script:
+  - cd gameserver
+  - cargo build --release
+  - cd $TRAVIS_BUILD_DIR
+  - cd planetwars/client
+  - npm install
+  - npm run package-$OS_TARGET
 
-build_script:
- - cd gameserver
- - cargo build --release
- - cd %APPVEYOR_BUILD_FOLDER%
- - cd planetwars\client
- - npm install
- - npm run package-win
+
+# matrix:
+#   include:
+#     - os: osx
+#       osx_image: xcode9.2
+#       language: node_js
+#       node_js: "9"
+#       env:
+#         - ELECTRON_CACHE=$HOME/.cache/electron
+#         - ELECTRON_BUILDER_CACHE=$HOME/.cache/electron-builder
+
+#     - os: linux
+#       services: docker
+#       language: generic
+
+# cache:
+#   directories:
+#   - client/planetwars/node_modules
+#   - $HOME/.cache/electron
+#   - $HOME/.cache/electron-builder
+
+# before_install:
+#   - |
+#     if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+#       mkdir -p /tmp/git-lfs && curl -L https://github.com/github/git-lfs/releases/download/v2.3.1/git-lfs-$([ "$TRAVIS_OS_NAME" == "linux" ] && echo "linux" || echo "darwin")-amd64-2.3.1.tar.gz | tar -xz -C /tmp/git-lfs --strip-components 1
+#       export PATH="/tmp/git-lfs:$PATH"
+#     fi
+# before_script:
+#   - git lfs pull
+
+# script:
+#   - cd planetwars/client
+#   - |
+#     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+#       docker run --rm \
+#         --env-file <(env | grep -iE 'DEBUG|NODE_|ELECTRON_|YARN_|NPM_|CI|CIRCLE|TRAVIS|APPVEYOR_|CSC_|_TOKEN|_KEY|AWS_|STRIP|BUILD_') \
+#         -v ${PWD}:/project \
+#         -v ~/.cache/electron:/root/.cache/electron \
+#         -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+#         electronuserland/builder:wine \
+#         /bin/bash -c "yarn --link-duplicates --pure-lockfile && yarn release --linux --win"
+#     else
+#       yarn release
+#     fi
+# before_cache:
+#   - rm -rf $HOME/.cache/electron-builder/wine
+
+# branches:
+#   except:
+#     - "/^v\\d+\\.\\d+\\.\\d+$/"
