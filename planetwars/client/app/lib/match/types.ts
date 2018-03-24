@@ -10,6 +10,7 @@ export interface LogFormat {
 
 // TODO
 export interface Player {
+  name: string;
 }
 
 export interface PlanetList {
@@ -20,7 +21,7 @@ export interface Planet {
   name: string;
   x: number;
   y: number;
-  owner: Player;
+  owner?: Player;
   shipCount: number;
 }
 

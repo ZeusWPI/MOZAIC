@@ -82,8 +82,11 @@ export function completeMatch(matchId: MatchId) {
     const match = state.matches[matchId];
     if (match.status === 'playing') {
       const log = parseLog(match.logPath);
+      const stats = {
+        winners: Array.from(log.getWinners()).map((player) => player.name),
         // TODO
-      const stats: any = undefined;
+        score: {},
+      };
       dispatch(saveMatch({
         ...match,
         status: 'finished',
