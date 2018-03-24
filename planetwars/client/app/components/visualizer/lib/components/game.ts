@@ -1,6 +1,4 @@
 import { GameState } from '../../../../lib/match/types';
-import { Player, TurnData } from './interfaces';
-import Turn from './turn';
 import { MatchLog } from '../../../../lib/match/log';
 
 const d3 = require('d3');

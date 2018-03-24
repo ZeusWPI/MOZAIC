@@ -1,6 +1,4 @@
 import Game from "./game";
-import Turn from "./turn";
-import { Player } from "./interfaces";
 import * as React from "react";
 import * as d3 from "d3";
 
@@ -24,7 +22,7 @@ interface ScoreboardState {
 }
 
 interface Score {
-  player: Player,
+  player: string,
   y: number
 }
 
@@ -51,10 +49,10 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
   componentDidUpdate() {
     if (this.props.game) {
       this.scores = this.state.scores;
-      this.scores.forEach((score:Score, i:number) => {
-        score.player.ship_count = this.state.scores[i].player.ship_count;
-        score.player.planet_count = this.state.scores[i].player.planet_count;
-      });
+      // this.scores.forEach((score:Score, i:number) => {
+      //   score.player.ship_count = this.state.scores[i].player.ship_count;
+      //   score.player.planet_count = this.state.scores[i].player.planet_count;
+      // });
     }
   }
 
@@ -64,24 +62,26 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
   }
 
   render() {
-    let rows = this.state.scores.map((x:Score) => {
-      return tr({ style:{ color: x.player.color } }, [
-        td("\u25CF"),
-        td(x.player.name),
-        td(x.player.planet_count + ((x.player.planet_count == 1) ? "Planet" : " Planets")),
-        td(x.player.ship_count + "\u2694")
-      ])
-  });
-    return table(`.${styles.scoreboard}`, {}, tbody(rows));
-  }
-  updateScore(players:Player[]) {
-    let scores:Score[] = [];
-    this.state.scores.forEach((score:Score, i:number) => {
-      scores.push({
-        'player': players[i],
-        'y': score.y
-      });
-    });
-    return scores;
+  //   let rows = this.state.scores.map((x:Score) => {
+  //     return tr({ style:{ color: x.player.color } }, [
+  //       td("\u25CF"),
+  //       td(x.player.name),
+  //       td(x.player.planet_count + ((x.player.planet_count == 1) ? "Planet" : " Planets")),
+  //       td(x.player.ship_count + "\u2694")
+  //     ])
+  // });
+  //   return table(`.${styles.scoreboard}`, {}, tbody(rows));
+  // }
+  // updateScore(players:Player[]) {
+  //   let scores:Score[] = [];
+  //   this.state.scores.forEach((score:Score, i:number) => {
+  //     scores.push({
+  //       'player': players[i],
+  //       'y': score.y
+  //     });
+  //   });
+  //   return scores;
+  // }
+    return null;
   }
 }
