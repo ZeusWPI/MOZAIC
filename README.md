@@ -56,7 +56,7 @@ Try not to mess these up, or things will break.
 ### Publishing and packaging
 
 You can package easily with the `package-<os>` in `package.json`. Publishing is done automatically by Travis and AppVeyor on commit. See the electron-builder [publish docs](https://www.electron.build/configuration/publish) for more info about our flow (it's the GitHub one).
-Note: when packaging an AppImage, make sure the `game_server` binary is an actual binary and not a symlink, or things will break.
+Note: when packaging an make sure the `mozaic_bot_driver` binary is an actual binary and not a symlink, or things will break.
 
 ## Contact
 
