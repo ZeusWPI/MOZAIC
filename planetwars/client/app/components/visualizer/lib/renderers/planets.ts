@@ -1,4 +1,5 @@
 import * as d3 from 'd3';
+import { Planet } from '../../../../lib/match/types';
 import Config from '../util/config';
 
 class PlanetRenderer {
@@ -31,7 +32,7 @@ class PlanetRenderer {
 
     backgrounds.enter().append('circle')
       .attr('class', 'background')
-      .attr('r', Config.planet_size)
+      .attr('r', Config.planetSize)
       .merge(backgrounds)
       .attr('fill', (d: any) => Config.playerColor(d.owner));
   }
@@ -41,7 +42,7 @@ class PlanetRenderer {
 
     models.enter().append('circle')
       .attr('class', 'model')
-      .attr('r', Config.planet_size)
+      .attr('r', Config.planetSize)
       .attr('fill', (d: any) => `url(#${d.type})`);
   }
 
@@ -59,7 +60,7 @@ class PlanetRenderer {
 
     labels.enter().append('text')
       .attr('class', 'name')
-      .attr('y', (d: any) => Config.planet_size + 1.5 * params.scale)
+      .attr('y', (d: any) => Config.planetSize + 1.5 * params.scale)
       .attr("font-family", "sans-serif")
       .attr("font-size", params.scale + "px")
       .style("text-anchor", "middle")
@@ -73,13 +74,13 @@ class PlanetRenderer {
 
     labels.enter().append('text')
       .attr('class', 'ship_count')
-      .attr('y', (d: any) => d.size + 3 * params.scale)
+      .attr('y', (d: Planet) => Config.planetSize + 3 * params.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", Config.planet_size * params.scale + "px")
+      .attr("font-size", Config.planetSize * params.scale + "px")
       .style("text-anchor", "middle")
       .merge(labels)
       .attr('fill', (d: any) => Config.playerColor(d.owner))
-      .text((d: any) => "\u2694 " + d.shipCount);
+      .text((d: Planet) => "\u2694 " + d.shipCount);
   }
 }
 

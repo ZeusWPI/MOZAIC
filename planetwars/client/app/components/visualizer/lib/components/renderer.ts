@@ -52,14 +52,14 @@ class Renderer extends React.Component {
 
   calculateViewBox() {
     // TODO: hook config for this
-    const offset = Config.orbit_size + Config.padding;
+    const offset = Config.orbitSize + Config.padding;
     const ps = Object.keys(this.gameState.planets).map((planetName: string) => {
       return this.gameState.planets[planetName];
     });
-    const xMin = d3.min(ps, (p: any) => p.x - Config.planet_size)! - offset;
-    const xMax = d3.max(ps, (p: any) => p.x + Config.planet_size)! + offset;
-    const yMin = d3.min(ps, (p: any) => p.y - Config.planet_size)! - offset;
-    const yMax = d3.max(ps, (p: any) => p.y + Config.planet_size)! + offset;
+    const xMin = d3.min(ps, (p: any) => p.x - Config.planetSize)! - offset;
+    const xMax = d3.max(ps, (p: any) => p.x + Config.planetSize)! + offset;
+    const yMin = d3.min(ps, (p: any) => p.y - Config.planetSize)! - offset;
+    const yMax = d3.max(ps, (p: any) => p.y + Config.planetSize)! + offset;
     const xWidth = xMax - xMin;
     const yWidth = yMax - yMin;
     const viewBox = `${xMin} ${yMin} ${xWidth} ${yWidth}`;
@@ -76,7 +76,7 @@ class Renderer extends React.Component {
 
   createZoom() {
     var zoom = d3.zoom()
-      .scaleExtent(Config.max_scales)
+      .scaleExtent(Config.maxScales)
       .on('zoom', () => {
         var transform = d3.event.transform;
         transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);

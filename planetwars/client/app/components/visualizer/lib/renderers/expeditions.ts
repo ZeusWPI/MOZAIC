@@ -9,7 +9,7 @@ class ExpeditionRenderer {
     this.container = container;
   }
 
-  bind(data: any) {
+  bind(data: any): d3.Selection<any, Expedition, any, any> {
     return this.container.selectAll('.expedition').data(data, (e: any) => e.id);
   }
 
@@ -56,8 +56,8 @@ class ExpeditionRenderer {
       .attr('x', -1 * params.scale)
       .attr('font-family', 'sans-serif')
       .attr('font-size', 0.8 * params.scale + 'px')
-      .text((exp: any) => "\u2694" + exp.ship_count)
-      .attr('fill', (exp: any) => Config.playerColor(exp.owner));
+      .text((exp: Expedition) => "\u2694" + exp.shipCount)
+      .attr('fill', (exp: Expedition) => Config.playerColor(exp.owner));
   }
 
   drawTitles(expeditions: any) {

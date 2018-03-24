@@ -10,7 +10,7 @@ class ResourceLoader {
   setupPatterns() {
     // Define patterns
     this.svg.append("defs");
-    Config.planet_types.forEach((p) => {
+    Config.planetTypes.forEach((p) => {
       this.setupPattern(p + ".svg", 100, 100, p);
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");

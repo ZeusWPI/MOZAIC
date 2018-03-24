@@ -1,6 +1,6 @@
 // miscellaneous data and general functions
 export default {
-  planet_types: [
+  planetTypes: [
     'earth',
     'jupiter',
     'mars',
@@ -9,11 +9,11 @@ export default {
     'uranus',
     'venus',
   ],
-  planet_size: 1,
-  max_planet_size: 2.5,
-  orbit_size: 1,
+  planetSize: 1,
+  maxPlanetSize: 2.5,
+  orbitSize: 1,
   padding: 5,
-  max_scales: [0.3, 3] as [number, number],
+  maxScales: [0.3, 3] as [number, number],
   // TODO: this is not the best way to do this ...
   playerColor: (player: any) => {
     if (player) {
