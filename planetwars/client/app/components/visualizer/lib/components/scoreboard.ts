@@ -20,7 +20,6 @@ interface ScoreboardProps {
 }
 
 interface ScoreboardState {
-  turn: Turn,
   scores: Score[]
 }
 
@@ -35,20 +34,18 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
 
   constructor(props:ScoreboardProps){
     super(props);
-    let turn:Turn = props.game.turns[props.turnNum];
-    let scores:Array<Score> = [];
-    let startY:number = 50;
-    let size:number = 30;
-    turn.players.forEach((player:Player, index:number) => {
-      scores.push({
-        'player': player,
-        'y': startY + size * index
-      });
-    });
-    this.state = {
-      'turn': turn,
-      'scores': scores
-    }
+    // let scores:Array<Score> = [];
+    // let startY:number = 50;
+    // let size:number = 30;
+    // turn.players.forEach((player:Player, index:number) => {
+    //   scores.push({
+    //     'player': player,
+    //     'y': startY + size * index
+    //   });
+    // });
+    // this.state = {
+    //   scores: scores,
+    // }
   }
 
   componentDidUpdate() {
@@ -62,12 +59,8 @@ export default class Scoreboard extends React.Component<ScoreboardProps, Scorebo
   }
 
   componentWillReceiveProps(nextProps:ScoreboardProps) {
-    let turn:Turn = nextProps.game.turns[nextProps.turnNum];
-    let scores:Score[] = this.updateScore(turn.players);
-    this.setState({
-      'turn': turn,
-      'scores': scores
-    });
+    // let scores:Score[] = this.updateScore(turn.players);
+    // this.setState({ scores });
   }
 
   render() {

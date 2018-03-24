@@ -9,6 +9,7 @@ module.exports = {
     'uranus',
     'venus'
   ],
+  planet_size: 1,
   max_planet_size: 2.5,
   orbit_size: 1,
   max_scales: [0.3, 3],

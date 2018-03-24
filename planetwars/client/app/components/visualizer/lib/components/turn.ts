@@ -2,7 +2,7 @@ import { Player, Planet, PlanetData, Expedition, ExpeditionData, TurnData} from 
 import Game from "./game"
 
 export default class Turn {
-  game:Game;
+  game: Game;
   playerMap:Player[];
   planetMap:Map<string, Planet>;
   players: Player[];
@@ -14,7 +14,7 @@ export default class Turn {
     this.playerMap = [];
     this.planetMap = new Map();
 
-    this.players = this.initPlayers(game.players);
+    //this.players = this.initPlayers(game.players);
     this.planets = this.parsePlanets(turn.planets);
     this.expeditions = this.parseExpeditions(turn.expeditions);
     this.calculateScores();

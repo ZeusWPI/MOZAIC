@@ -29,7 +29,7 @@ class PlanetRenderer {
 
     backgrounds.enter().append('circle')
       .attr('class', 'background')
-      .attr('r', d => d.size)
+      .attr('r', Config.planet_size)
       .merge(backgrounds)
       .attr('fill', d => Config.player_color(d.owner));
   }
@@ -39,7 +39,7 @@ class PlanetRenderer {
 
     models.enter().append('circle')
       .attr('class', 'model')
-      .attr('r', d => d.size)
+      .attr('r', Config.planet_size)
       .attr('fill', d => `url(#${d.type})`);
   }
 
@@ -57,7 +57,7 @@ class PlanetRenderer {
 
     labels.enter().append('text')
       .attr('class', 'name')
-      .attr('y', d => d.size + 1.5 * params.scale)
+      .attr('y', d => Config.planet_size + 1.5 * params.scale)
       .attr("font-family", "sans-serif")
       .attr("font-size", params.scale + "px")
       .style("text-anchor", "middle")
@@ -73,11 +73,11 @@ class PlanetRenderer {
       .attr('class', 'ship_count')
       .attr('y', d => d.size + 3 * params.scale)
       .attr("font-family", "sans-serif")
-      .attr("font-size", 1 * params.scale + "px")
+      .attr("font-size", Config.planet_size * params.scale + "px")
       .style("text-anchor", "middle")
       .merge(labels)
       .attr('fill', d => Config.player_color(d.owner))
-      .text(d => "\u2694 " + d.ship_count);
+      .text(d => "\u2694 " + d.shipCount);
   }
 }
 

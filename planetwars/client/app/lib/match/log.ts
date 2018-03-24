@@ -89,7 +89,7 @@ export class MatchLog {
   }
 }
 
-class GameState {
+export class GameState {
   public planets: PlanetList;
   public expeditions: Expedition[];
 

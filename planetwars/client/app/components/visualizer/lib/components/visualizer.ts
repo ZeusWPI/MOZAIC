@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { GameState } from '../../../../lib/match/types';
+import { MatchLog, GameState } from '../../../../lib/match/log';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
@@ -28,21 +28,20 @@ const VisualsHelper = require('../util/visualsHelper');
 const styles = require('./visualizer.scss');
 
 interface PlayerData {
-  players: string[]
+  players: string[];
 }
 
 interface VisualizerProps {
-  playerData: PlayerData,
-  gameLog?: GameState[]
+  matchLog: MatchLog;
 }
 
 interface VisualizerState {
-  hide_card: boolean,
-  turnNum: number,
-  numTurns: number,
-  speed: number,
-  playing: boolean,
-  game: any
+  hide_card: boolean;
+  turnNum: number;
+  numTurns: number;
+  speed: number;
+  playing: boolean;
+  game: any;
 }
 
 export class Visualizer extends React.Component<VisualizerProps, VisualizerState> {
@@ -60,8 +59,8 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
   }
 
   componentDidMount() {
-    if (this.props.gameLog && this.props.playerData) {
-      this.setLog(this.props.playerData, this.props.gameLog);
+    if (this.props.matchLog) {
+      this.setLog(this.props.matchLog);
       this.setPlaying(true);
     }
   }
@@ -69,8 +68,8 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
 
 
   componentWillReceiveProps(nextProps: VisualizerProps) {
-    if (nextProps.gameLog) {
-      this.setLog(nextProps.playerData, nextProps.gameLog);
+    if (nextProps.matchLog) {
+      this.setLog(nextProps.matchLog);
     }
   }
 
@@ -97,14 +96,14 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     });
   }
 
-  setLog(playerData: PlayerData, gameLog: GameState[]) {
-    var game = new Game(playerData, gameLog);
+  setLog(matchLog: MatchLog) {
+    const game = new Game(matchLog);
     this.setState({
-      game: game,
+      game,
       turnNum: 0,
       hide_card: true,
-      numTurns: game.turns.length - 1,
-    })
+      numTurns: game.matchLog.gameStates.length - 1,
+    });
   }
 
   nextTurn() {
@@ -135,7 +134,6 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
         setPlaying: (v: boolean) => this.setPlaying(v),
         setTurn: (t: number) => this.setTurn(t),
         setSpeed: (s: number) => this.setSpeed(s),
-        setLog: (playerData: PlayerData, gameLog: GameState[]) => this.setLog(playerData, gameLog)
       })
     ])
 
@@ -145,10 +143,10 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       ])
     }
 
-    let scoreboard = h(Scoreboard, {
-      game: this.state.game,
-      turnNum: this.state.turnNum
-    });
+    // let scoreboard = h(Scoreboard, {
+    //   game: this.state.game,
+    //   turnNum: this.state.turnNum
+    // });
 
     let renderer = h(Renderer, {
       game: this.state.game,
@@ -156,24 +154,9 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       speed: this.state.speed
     });
 
-    let endGameCard = h(HideableComponent, {
-      hide: this.state.hide_card,
-      render: div(`.${styles.endCard}`, [
-        h(ControlButton, {
-          selector: `.${styles.hideCard}.${styles.close}`,
-          title: 'Hide end card',
-          icon: 'times',
-          callback: () => this.setState({
-            hide_card: true
-          })
-        }),
-        p(['Game over', h('br'), span({ style: { color: this.state.game.winner.color } }, this.state.game.winner.name), ' wins!'])
-      ])
-    });
-
     return div(`.${styles.visualizerRootNode}`, [
       controls,
-      scoreboard,
+      //scoreboard,
       renderer
     ]);
 
