@@ -18,7 +18,10 @@
     ],
     // prefixing interfaces with I?
     // What is this, 1970?
-    "interface-name": [true, "never-prefix"],
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
     "max-classes-per-file": [
       false
     ],
@@ -59,7 +62,7 @@
       "check-format",
       "allow-leading-underscore",
       // without this, react SFC's are just silly
-      "allow_pascal_case"
+      "allow-pascal-case"
     ]
   },
   "rulesDirectory": []

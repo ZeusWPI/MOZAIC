@@ -12,7 +12,7 @@ export class Config {
   private static _configs = 'configs';
 
   public static base = p.resolve(remote.app.getPath('userData'));
-  public static bin = p.resolve(Config.base, Config._bin);
+  public static bin = p.resolve(Config._bin);
   public static data = p.resolve(Config.base, Config._data);
 
   public static bots = p.resolve(Config.data, Config._bots);

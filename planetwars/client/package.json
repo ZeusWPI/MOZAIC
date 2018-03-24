@@ -50,8 +50,7 @@
     "productName": "BottleBats",
     "appId": "org.zeuswpi.bottlebats",
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 410,
           "y": 150,
           "type": "link",
@@ -97,6 +96,7 @@
     "history": "^4.6.1",
     "hyperscript-helpers": "^3.0.3",
     "lowdb": "^1.0.0",
+    "mkdirp": "^0.5.1",
     "moment": "^2.21.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
@@ -122,6 +122,7 @@
     "@types/enzyme": "^3.1.1",
     "@types/history": "^4.5.2",
     "@types/lowdb": "^1.0.0",
+    "@types/mkdirp": "^0.5.2",
     "@types/mz": "^0.0.32",
     "@types/node": "^8.0.2",
     "@types/react": "^16.0.5",
