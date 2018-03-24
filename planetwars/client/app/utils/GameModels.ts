@@ -1,3 +1,4 @@
+import { JSONPlanet } from '../lib/match/types';
 type LogPath = string;
 
 export type MatchId = string;
@@ -49,34 +50,6 @@ export interface IMatchList {
   [matchId: string]: Match;
 }
 
-export interface IGameState {
-  planets: IPlanet[];
-  expeditions: IExpedition[];
-}
-
-export interface ILogFormat {
-  players: string[];
-  turns: IGameState[];
-}
-
-// TODO: Switch to camelCase
-export interface IPlanet {
-  "ship_count": number;
-  "x": number;
-  "y": number;
-  "owner": number;
-  "name": string;
-}
-
-export interface IExpedition {
-  "id": number;
-  "ship_count": number;
-  "origin": string;
-  "destination": string;
-  "owner": number;
-  "turns_remaining": number;
-}
-
 export interface IMapList {
   [key: string /*MapId*/]: IMapMeta;
 }
@@ -92,5 +65,5 @@ export interface IMapMeta {
 }
 
 export interface IMap {
-  planets: IPlanet[];
+  planets: JSONPlanet[];
 }

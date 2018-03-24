@@ -1,12 +1,13 @@
-import { ILogFormat, MatchStats, IExpedition, IGameState } from './GameModels';
+import { LogFormat, Expedition, GameState } from '../lib/match/types';
+import { MatchStats } from './GameModels';
 import { BotID } from './ConfigModels';
 
-export function analyzeLog(players: BotID[], turns: IGameState[]): MatchStats {
+export function analyzeLog(players: BotID[], turns: GameState[]): MatchStats {
 
   // The commands send in an object with id as property-name
   // and in an array with id as index
   // tslint:disable-next-line:interface-over-type-literal
-  type CommandMap = { [key: string]: IExpedition };
+  type CommandMap = { [key: string]: Expedition };
   const commandMap: CommandMap = turns.reduce((coms, turn) => {
     turn.expeditions.forEach((exp) => {
       if (!coms[exp.id]) {
@@ -15,14 +16,14 @@ export function analyzeLog(players: BotID[], turns: IGameState[]): MatchStats {
     });
     return coms;
   }, <CommandMap> {});
-  const commands: IExpedition[] = Object.keys(commandMap).map((k) => commandMap[k]);
+  const commands: Expedition[] = Object.keys(commandMap).map((k) => commandMap[k]);
   // Amount of commands each player ordered
   const commandsOrdered: number[] = new Array(players.length + 1).fill(0);
   commands.forEach((exp) => { commandsOrdered[exp.owner] += 1; });
 
   // Amount of ships each player send
   const shipsSend: number[] = new Array(players.length + 1).fill(0);
-  commands.forEach((exp) => { shipsSend[exp.owner] += exp.ship_count; });
+  commands.forEach((exp) => { shipsSend[exp.owner] += exp.shipCount; });
 
   // Amount of times a planet has been flipped
   const planetsFlipped = turns.slice(1).reduce((flipped, turn, i) => {

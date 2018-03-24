@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { IGameState } from '../../../../utils/GameModels';
+import { GameState } from '../../../../lib/match/types';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
@@ -33,7 +33,7 @@ interface PlayerData {
 
 interface VisualizerProps {
   playerData: PlayerData,
-  gameLog?: IGameState[]
+  gameLog?: GameState[]
 }
 
 interface VisualizerState {
@@ -97,7 +97,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     });
   }
 
-  setLog(playerData: PlayerData, gameLog: IGameState[]) {
+  setLog(playerData: PlayerData, gameLog: GameState[]) {
     var game = new Game(playerData, gameLog);
     this.setState({
       game: game,
@@ -135,7 +135,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
         setPlaying: (v: boolean) => this.setPlaying(v),
         setTurn: (t: number) => this.setTurn(t),
         setSpeed: (s: number) => this.setSpeed(s),
-        setLog: (playerData: PlayerData, gameLog: IGameState[]) => this.setLog(playerData, gameLog)
+        setLog: (playerData: PlayerData, gameLog: GameState[]) => this.setLog(playerData, gameLog)
       })
     ])
 

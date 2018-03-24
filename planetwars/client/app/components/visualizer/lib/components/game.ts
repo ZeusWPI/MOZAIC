@@ -1,4 +1,4 @@
-import { IGameState } from '../../../../utils/GameModels';
+import { GameState } from '../../../../lib/match/types';
 import { Player, TurnData } from './interfaces';
 import Turn from './turn';
 
@@ -17,13 +17,14 @@ export default class Game {
   players: string[];
   turns: Turn[];
 
-  constructor(playerData: MetaData, gameLog: IGameState[]) {
+  constructor(playerData: MetaData, gameLog: GameState[]) {
     this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
     this.planetTypeMap = new Map();
 
     this.metaData = playerData
     this.players = this.metaData.players;
-    this.turns = gameLog.map((turn) => new Turn(turn, this))
+    // TODO: fix
+    //this.turns = gameLog.map((turn) => new Turn(turn, this))
 
     this.findWinner();
   }
