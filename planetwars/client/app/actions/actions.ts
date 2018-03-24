@@ -81,9 +81,16 @@ export function completeMatch(matchId: MatchId) {
     const state: IGState = getState();
     const match = state.matches[matchId];
     if (match.status === 'playing') {
-      const log = parseLog(match.logPath);
+      const matchPlayers = match.players.map((uuid) => {
+        const botData = state.bots[uuid];
+        return {
+          uuid,
+          name: botData.config.name,
+        };
+      });
+      const log = parseLog(matchPlayers, match.logPath);
       const stats = {
-        winners: Array.from(log.getWinners()).map((player) => player.name),
+        winners: Array.from(log.getWinners()).map((player) => player.uuid),
         // TODO
         score: {},
       };

@@ -9,8 +9,19 @@ import {
 } from './types';
 import * as fs from 'mz/fs';
 
-export function parseLog(path: string) {
-  const parser = new LogParser([]);
+interface PlayerData {
+  uuid: string;
+  name: string;
+}
+
+export function parseLog(players: PlayerData[], path: string) {
+  const matchPlayers = players.map((data) => {
+    return {
+      uuid: data.uuid,
+      name: data.name,
+    };
+  });
+  const parser = new LogParser(matchPlayers);
   const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
   lines.forEach((line: string) => {
     parser.parseMessage(JSON.parse(line));
@@ -68,6 +79,10 @@ class LogParser {
 
 export class MatchLog {
   public gameStates: GameState[];
+
+  constructor() {
+    this.gameStates = [];
+  }
 
   public getWinners(): Set<Player> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();

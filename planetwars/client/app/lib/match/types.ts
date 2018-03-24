@@ -10,6 +10,7 @@ export interface LogFormat {
 
 // TODO
 export interface Player {
+  uuid: string;
   name: string;
 }
 

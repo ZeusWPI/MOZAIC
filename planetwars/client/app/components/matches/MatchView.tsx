@@ -14,7 +14,7 @@ export class MatchView extends React.Component<MatchViewProps> {
     const { match } = this.props;
     switch (match.status) {
       case 'finished': {
-        const log = parseLog(this.props.match.logPath);
+        const log = parseLog(match.players, this.props.match.logPath);
         return (
           <Visualizer
             playerData={{ players: match.players.map((p) => p.name) }}
