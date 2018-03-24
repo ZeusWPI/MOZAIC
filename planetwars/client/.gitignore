@@ -4,7 +4,7 @@ log.json
 data/bots/*
 data/matches/*
 data/configs/*
-!data/maps/
+data/maps/*
 logs/
 db.json
 *.log

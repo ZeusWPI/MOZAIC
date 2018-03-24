@@ -1,9 +1,12 @@
+import { remote } from 'electron';
+
+import * as path from 'path';
 import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
 import { IBotList, IBotConfig } from './ConfigModels';
-import { IMatchMetaData, IMatchList } from './GameModels';
+import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { INotification } from '../utils/UtilModels';
@@ -12,6 +15,8 @@ export interface IDbSchemaV2 {
   version: 'v2';
   matches: IMatchList;
   bots: IBotList;
+  maps: IMapList;
+  notifications: INotification[];
 }
 
 // Utility to allow accessing the DB somewhat more safe. You can these string
@@ -21,13 +26,18 @@ export const SCHEMA = {
   MATCHES: 'matches',
   BOTS: 'bots',
   NOTIFICATIONS: 'notifications',
+  MAPS: 'maps',
 };
 
 // ----------------------------------------------------------------------------
 // Initialisation
 // ----------------------------------------------------------------------------
 
-const adapter = new FileAsync('db.json');
+const { app } = remote;
+const dbPath = (process.env.NODE_ENV === 'development')
+  ? 'db.json'
+  : path.join(app.getPath('userData'), 'db.json');
+const adapter = new FileAsync(dbPath);
 const database = low<IDbSchemaV2, typeof adapter>(adapter);
 
 /*
@@ -36,7 +46,13 @@ const database = low<IDbSchemaV2, typeof adapter>(adapter);
  */
 export function bindToStore(store: any) {
   database
-    .then((db) => db.defaults({ version: 'v2', matches: {}, bots: {} }).write())
+    .then((db) => db.defaults({
+      version: 'v2',
+      matches: {},
+      bots: {},
+      maps: {},
+      notifications: [],
+    }).write())
     .then((db) => {
       if (db.version !== 'v2') {
         return migrateOld(db);
@@ -44,11 +60,23 @@ export function bindToStore(store: any) {
       return db;
     })
     .then((db) => {
-      Object.keys(db.matches).forEach((uuid) => {
-        store.dispatch(A.importMatchFromDB(db.matches[uuid]));
-      });
+      // TODO: these JSON objects should be validated to avoid weird runtime
+      // errors elsewhere in the code
       Object.keys(db.bots).forEach((uuid) => {
         store.dispatch(A.importBotFromDB(db.bots[uuid]));
+      });
+      Object.keys(db.maps).forEach((uuid) => {
+        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+      });
+      Object.keys(db.matches).forEach((uuid) => {
+        const matchData = db.matches[uuid];
+        store.dispatch(A.importMatchFromDB({
+          ...matchData,
+          timestamp: new Date(matchData.timestamp),
+        }));
+      });
+      db.notifications.forEach((notification) => {
+        store.dispatch(A.importNotificationFromDB(notification));
       });
     })
     .then(initializeListeners)
@@ -122,6 +150,14 @@ const listeners: TableListener<any>[] = [
     (state: IGState) => state.bots,
     SCHEMA.BOTS,
   ),
+  new TableListener<IMapList>(
+    (state: IGState) => state.maps,
+    SCHEMA.MAPS,
+  ),
+  new TableListener<INotification[]>(
+    (state: IGState) => state.notifications,
+    SCHEMA.NOTIFICATIONS,
+  ),
 ];
 
 // ----------------------------------------------------------------------------
@@ -132,7 +168,7 @@ type DbSchema = IDbSchemaV1 | IDbSchemaV2;
 
 interface IDbSchemaV1 {
   version: string;
-  matches: IMatchMetaData[];
+  matches: Match[];
   bots: IBotConfig[];
 }
 
@@ -143,5 +179,7 @@ function migrateOld(db: DbSchema): IDbSchemaV2 {
     version: 'v2',
     matches: {},
     bots: {},
+    maps: {},
+    notifications: [],
   };
 }

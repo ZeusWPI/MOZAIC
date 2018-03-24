@@ -1,42 +1,52 @@
 type LogPath = string;
 
-export interface IMatchData {
-  log: IGameState[];
-  meta: IMatchMetaData;
+export type MatchId = string;
+
+interface MatchProperties {
+  uuid: MatchId,
+  players: string[],
+  map: MapId,
+  timestamp: Date,
+  logPath: string,
 }
+
+export type PlayingMatch = MatchProperties & {
+  status: 'playing',
+}
+
+export type FinishedMatch = MatchProperties & {
+  status: 'finished',
+  stats: MatchStats,
+}
+
+export type ErroredMatch = MatchProperties & {
+  status: 'error',
+  error: string,
+}
+
+export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
+
 
 export enum MatchStatus {
   'playing',
   'finished',
-  'erred',
-  'cancelled',
-  'imported',
+  'error',
+}
+
+
+export interface MatchStats {
+  winner: number;
+  commandsOrdered: number[]; // Number of commands / player;
+  planetsFlipped: number;
+  shipsSend: number[];
+  turns: number;
 }
 
 // tslint:disable-next-line:variable-name
 export const MatchStatuses = Object.keys(MatchStatus);
 
 export interface IMatchList {
-  [key: string /* UUID */]: IMatchMetaData;
-}
-
-export type MatchId = string;
-
-export interface IMatchMetaData {
-  status: MatchStatus;
-  uuid: MatchId;
-  players: string[];
-  logPath?: string;
-  stats: IMatchStats;
-  timestamp: Date;
-}
-
-export interface IMatchStats {
-  winner: number;
-  commandsOrdered: number[]; // Number of commands / player;
-  planetsFlipped: number;
-  shipsSend: number[];
-  turns: number;
+  [matchId: string]: Match;
 }
 
 export interface IGameState {
@@ -65,4 +75,22 @@ export interface IExpedition {
   "destination": string;
   "owner": number;
   "turns_remaining": number;
+}
+
+export interface IMapList {
+  [key: string /*MapId*/]: IMapMeta;
+}
+
+export type MapId = string;
+
+export interface IMapMeta {
+  uuid: MapId;
+  name: string;
+  slots: number;
+  mapPath: string;
+  createdAt: Date;
+}
+
+export interface IMap {
+  planets: IPlanet[];
 }

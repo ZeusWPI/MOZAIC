@@ -3,6 +3,8 @@ import * as React from 'react';
 
 import GameRunner from "../../utils/GameRunner";
 import { h, div } from 'react-hyperscript-helpers';
+import { store } from '../../index';
+
 
 import { Setup } from './Setup';
 
@@ -24,7 +26,7 @@ export default class Play extends React.Component<IProps, IState> {
   }
 
   public startGame(config: any) {
-    config.log_file = 'log.json';
-    new GameRunner(config);
+    let runner = new GameRunner(config);
+    runner.run();
   }
 }

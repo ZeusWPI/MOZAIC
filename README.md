@@ -61,4 +61,4 @@ Current and planned features:
 ## Contact
 
 Have any questions, comments, want to contribute or are even remotely interested in this project, please get in touch!
-You can reach us by [e-mail](mailto:bestuur@zeus.ugent.be), [Facebook](https://www.facebook.com/zeus.wpi), or any other way you prefer listed [here](https://zeus.ugent.be/about/).
+You can reach us by [e-mail](mailto:bottlebats@zeus.ugent.be), [Facebook](https://www.facebook.com/zeus.wpi), or any other way you prefer listed [here](https://zeus.ugent.be/about/).

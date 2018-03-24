@@ -14,7 +14,7 @@ import { Navbar } from '../components/Navbar';
 const mapStateToProps = (state: IGState) => {
   return {
     toggled: state.navbar.toggled,
-    notifications: state.navbar.notifications,
+    notifications: state.notifications,
     notificationsVisible: state.navbar.notificationsVisible,
   };
 };

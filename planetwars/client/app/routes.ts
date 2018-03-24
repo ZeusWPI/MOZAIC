@@ -9,7 +9,6 @@ import PlayPage from './containers/PlayPage';
 import BotsPage from './containers/BotsPage';
 import MatchesPage from './containers/MatchesPage';
 import AboutPage from './containers/AboutPage';
-import VisualizerPage from './containers/VisualizerPage';
 import Navbar from './containers/NavbarContainer';
 
 export default class Routes extends React.Component<any, any> {
@@ -41,10 +40,6 @@ export default class Routes extends React.Component<any, any> {
           h(Route, {
             path: '/about',
             component: AboutPage,
-          }),
-          h(Route, {
-            path: '/visualizer',
-            component: VisualizerPage,
           }),
         ]),
       ])

@@ -4,6 +4,7 @@ import * as fs from 'fs';
 
 import { h, li, button, div, ul } from "react-hyperscript-helpers"
 import { Config } from "../../utils/Config";
+import { BotID } from "../../utils/ConfigModels";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./BotSelector.scss');
@@ -14,7 +15,7 @@ interface IBotSelectorState {
 }
 
 interface IBotSelectorProps {
-  setPlayers: Function
+  setPlayers: (ids: BotID[]) => void,
 }
 
 export class BotSelector extends React.Component<IBotSelectorProps, IBotSelectorState> {
