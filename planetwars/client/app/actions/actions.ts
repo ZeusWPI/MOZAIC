@@ -65,7 +65,7 @@ export function runMatch(params: MatchParams) {
     };
 
     dispatch(saveMatch(match));
-    const runner = new GameRunner(config);
+    let runner = new GameRunner(config);
 
     runner.on('matchEnded', () => {
       dispatch(completeMatch(matchId));

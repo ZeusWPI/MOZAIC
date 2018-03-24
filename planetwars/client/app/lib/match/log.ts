@@ -1,4 +1,13 @@
-import { GameState } from './types';
+import {
+  GameState,
+  JsonGameState,
+  Player,
+  Planet,
+  PlanetList,
+  Expedition,
+  JsonPlanet,
+  JsonExpedition,
+} from './types';
 import * as fs from 'mz/fs';
 
 export interface MatchLog {
@@ -6,15 +15,11 @@ export interface MatchLog {
   turns: GameState[];
 }
 
-// TODO
-interface Player {
-}
-
 export function parseLog(path: string) {
   const parser = new LogParser([]);
   const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
   lines.forEach((line: string) => {
-    parser.parseRecord(JSON.parse(line));
+    parser.parseMessage(JSON.parse(line));
   });
   return parser.getLog();
 }
@@ -35,19 +40,54 @@ class LogParser {
     return this.log;
   }
 
-  public parseRecord(record: any) {
-    switch (record['msg']) {
-      case 'step': return this.parseStep(record);
-      default: return this.parseUnknown(record);
+  public parseMessage(message: LogMessage) {
+    switch (message.msg) {
+      case 'step': return this.parseStep(message as StepMessage);
     }
   }
 
-  private parseStep(record: any) {
+  private parseStep(message: StepMessage) {
     // TODO
-    this.log.turns.push(record['state']);
+    const state = this.parseState(message.state);
+    this.log.turns.push(state);
   }
 
-  private parseUnknown(record: object) {
-    this.log.messages.push(record);
+  private parseState(json: JsonGameState): GameState {
+    const state: GameState = {
+      planets: {},
+      expeditions: [],
+    };
+    json.planets.forEach((p) => {
+      state.planets[p.name] = {
+        name: p.name,
+        x: p.x,
+        y: p.y,
+        owner: this.players[p.owner - 1],
+        shipCount: p.ship_count,
+      };
+    });
+
+    json.expeditions.map((e) => {
+      state.expeditions.push({
+        id: e.id,
+        origin: state.planets[e.origin],
+        destination: state.planets[e.destination],
+        owner: this.players[e.owner - 1],
+        shipCount: e.ship_count,
+        turnsRemaining: e.turns_remaining,
+      });
+    });
+    return state;
   }
+}
+
+interface LogMessage {
+  msg: string;
+  ts: string;
+  level: string;
+}
+
+interface StepMessage extends LogMessage {
+  msg: 'step';
+  state: JsonGameState;
 }

@@ -1,4 +1,4 @@
-import { JSONPlanet } from '../lib/match/types';
+import { JsonPlanet } from '../lib/match/types';
 type LogPath = string;
 
 export type MatchId = string;
@@ -64,5 +64,5 @@ export interface IMapMeta {
 }
 
 export interface IMap {
-  planets: JSONPlanet[];
+  planets: JsonPlanet[];
 }

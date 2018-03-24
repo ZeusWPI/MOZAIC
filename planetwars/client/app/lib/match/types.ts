@@ -1,5 +1,5 @@
 export interface GameState {
-  planets: Planet[];
+  planets: PlanetList;
   expeditions: Expedition[];
 }
 
@@ -8,25 +8,38 @@ export interface LogFormat {
   turns: GameState[];
 }
 
+// TODO
+export interface Player {
+}
+
+export interface PlanetList {
+  [name: string]: Planet;
+}
+
 export interface Planet {
   name: string;
   x: number;
   y: number;
-  owner: number;
+  owner: Player;
   shipCount: number;
 }
 
 export interface Expedition {
   id: number;
   origin: Planet;
-  target: Planet;
+  destination: Planet;
+  owner: Player;
   shipCount: number;
-  owner: number;
   turnsRemaining: number;
 }
 
 // TODO: Switch to camelCase
-export interface JSONPlanet {
+export interface JsonGameState {
+  planets: JsonPlanet[];
+  expeditions: JsonExpedition[];
+}
+
+export interface JsonPlanet {
   "ship_count": number;
   "x": number;
   "y": number;
@@ -34,11 +47,11 @@ export interface JSONPlanet {
   "name": string;
 }
 
-export interface JSONExpedition {
+export interface JsonExpedition {
   "id": number;
-  "ship_count": number;
   "origin": string;
   "destination": string;
   "owner": number;
+  "ship_count": number;
   "turns_remaining": number;
 }
