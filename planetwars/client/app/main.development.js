@@ -56,7 +56,7 @@ app.on('ready', () =>
 
     mainWindow.webContents.on('did-finish-load', () => {
       mainWindow.show();
-      mainWindow.focus();
+      // mainWindow.focus();
     });
 
     mainWindow.on('closed', () => {
