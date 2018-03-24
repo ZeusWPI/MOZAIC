@@ -1,15 +1,14 @@
-const d3 = require('d3');
+import * as d3 from 'd3';
 const React = require('react');
 const h = require('react-hyperscript');
 
+import Config from '../util/config';
 const ResourceLoader = require('../util/resourceLoader');
 const spaceMath = require('../util/spacemath')
-const Config = require('../util/config');
 const PlanetRenderer = require('../renderers/planets');
 const ExpeditionRenderer = require('../renderers/expeditions');
 const Voronoi = require('./voronoi.js')
 let styles = require('./renderer.scss');
-
 
 class Renderer extends React.Component {
   componentDidUpdate() {
@@ -45,31 +44,28 @@ class Renderer extends React.Component {
 
   render() {
     return h(`svg.${styles.battlefield}`, {
-      ref: (svg) => {
+      ref: (svg: any) => {
         this.svg = svg;
-      }
+      },
     });
   }
 
   calculateViewBox() {
-    let padding = 5;
     // TODO: hook config for this
-    let orbit_size = 5;
-    let offset = orbit_size + padding;
-    let ps = Object.keys(this.gameState.planets).map((planetName) => {
+    const offset = Config.orbit_size + Config.padding;
+    const ps = Object.keys(this.gameState.planets).map((planetName: string) => {
       return this.gameState.planets[planetName];
     });
-    const size = 1;
-    let x_min = d3.min(ps, p => p.x - size) - offset;
-    let x_max = d3.max(ps, p => p.x + size) + offset;
-    let y_min = d3.min(ps, p => p.y - size) - offset;
-    let y_max = d3.max(ps, p => p.y + size) + offset;
-    let x_width = x_max - x_min;
-    let y_width = y_max - y_min;
-    let viewBox = `${x_min} ${y_min} ${x_width} ${y_width}`;
-    this.scale = (x_max - x_min) / 50;
-    this.min = [x_min, y_min];
-    this.max = [x_max, y_max];
+    const xMin = d3.min(ps, (p: any) => p.x - Config.planet_size)! - offset;
+    const xMax = d3.max(ps, (p: any) => p.x + Config.planet_size)! + offset;
+    const yMin = d3.min(ps, (p: any) => p.y - Config.planet_size)! - offset;
+    const yMax = d3.max(ps, (p: any) => p.y + Config.planet_size)! + offset;
+    const xWidth = xMax - xMin;
+    const yWidth = yMax - yMin;
+    const viewBox = `${xMin} ${yMin} ${xWidth} ${yWidth}`;
+    this.scale = (xMax - xMin) / 50;
+    this.min = [xMin, yMin];
+    this.max = [xMax, yMax];
     d3.select(this.svg).attr('viewBox', viewBox);
   }
 

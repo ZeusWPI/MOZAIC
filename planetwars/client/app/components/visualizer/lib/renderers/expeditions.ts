@@ -1,22 +1,23 @@
-const d3 = require('d3');
-const Config = require('../util/config');
+import * as d3 from 'd3';
+import Config from '../util/config';
 const space_math = require('../util/spacemath');
 
 class ExpeditionRenderer {
-  constructor(container) {
+  public container: any;
+  constructor(container: any) {
     this.container = container;
   }
 
-  bind(data) {
-    return this.container.selectAll('.expedition').data(data, e => e.id);
+  bind(data: any) {
+    return this.container.selectAll('.expedition').data(data, (e: any) => e.id);
   }
 
-  draw(data, params) {
+  draw(data: any, params: any) {
     let selector = this.bind(data);
     selector.exit().remove();
     let expeditions = selector.enter().append('g')
       .attr('class', 'expedition')
-      .attr('transform', d => {
+      .attr('transform', (d: any) => {
         let pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       }).merge(selector);
@@ -24,7 +25,7 @@ class ExpeditionRenderer {
     expeditions.transition()
       .duration(1000 / params.speed)
       .ease(d3.easeLinear)
-      .attr('transform', d => {
+      .attr('transform', (d: any) => {
         let pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       });
@@ -34,40 +35,40 @@ class ExpeditionRenderer {
     this.drawTitles(expeditions);
   }
 
-  drawShips(expeditions, params) {
-    let ships = expeditions.selectAll('.ship').data(d => [d]);
+  drawShips(expeditions: any, params: any) {
+    let ships = expeditions.selectAll('.ship').data((d: any) => [d]);
     ships.enter().append('text')
       .attr('x', 0.5 * params.scale)
       .attr('font-family', 'Trebuchet MS')
       .attr('font-size', 1.1 * params.scale + 'px')
       .style("text-anchor", "middle")
-      .text(exp => "A")
-      .attr('transform', exp => `rotate(${this.expeditionRotation(exp)})`)
-      .attr('fill', exp => Config.player_color(exp.owner));
+      .text((exp: any) => "A")
+      .attr('transform', (exp: any) => `rotate(${this.expeditionRotation(exp)})`)
+      .attr('fill', (exp: any) => Config.playerColor(exp.owner));
   }
 
-  drawShipCounts(expeditions, params) {
-    let counts = expeditions.selectAll('.shipCount').data(d => [d]);
+  drawShipCounts(expeditions: any, params: any) {
+    let counts = expeditions.selectAll('.shipCount').data((d: any) => [d]);
 
     counts.enter().append('text')
       .attr('y', 1.8 * params.scale)
       .attr('x', -1 * params.scale)
       .attr('font-family', 'sans-serif')
       .attr('font-size', 0.8 * params.scale + 'px')
-      .text(exp => "\u2694" + exp.ship_count)
-      .attr('fill', exp => Config.player_color(exp.owner));
+      .text((exp: any) => "\u2694" + exp.ship_count)
+      .attr('fill', (exp: any) => Config.playerColor(exp.owner));
   }
 
-  drawTitles(expeditions) {
-    let titles = expeditions.selectAll('.title').data(d => [d]);
+  drawTitles(expeditions: any) {
+    let titles = expeditions.selectAll('.title').data((d: any) => [d]);
 
     titles.enter().append('title')
       .attr('class', 'title')
       .merge(titles)
-      .text(d => Config.player_name(d.owner));
+      .text((d: any) => Config.playerName(d.owner));
   }
 
-  expeditionPos(expedition) {
+  expeditionPos(expedition: any) {
     var total_distance = Math.ceil(
       space_math.euclideanDistance(
         expedition.origin,
@@ -89,7 +90,7 @@ class ExpeditionRenderer {
     };
   }
 
-  expeditionRotation(expedition) {
+  expeditionRotation(expedition: any) {
     let angle = (180 / Math.PI) * Math.atan2(
       expedition.destination.y - expedition.origin.y,
       expedition.destination.x - expedition.origin.x
@@ -97,6 +98,5 @@ class ExpeditionRenderer {
     return (angle + 90) % 360;
   }
 }
-
 
 module.exports = ExpeditionRenderer;

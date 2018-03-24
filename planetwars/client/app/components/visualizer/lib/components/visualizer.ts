@@ -119,13 +119,13 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     if (this.timer) { this.timer.stop(); }
 
     if (this.state.playing) {
-      var delay = 1000 / this.state.speed;
+      const delay = 1000 / this.state.speed;
       this.timer = d3.interval((t: any) => this.nextTurn(), delay);
     }
   }
 
   render() {
-    let controls = div(`.${styles.control}`, [
+    const controls = div(`.${styles.control}`, [
       h(Controls, {
         turnNum: this.state.turnNum,
         numTurns: this.state.numTurns,
@@ -156,8 +156,8 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
 
     return div(`.${styles.visualizerRootNode}`, [
       controls,
-      //scoreboard,
-      renderer
+      // scoreboard,
+      renderer,
     ]);
 
   }
