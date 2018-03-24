@@ -1,0 +1,66 @@
+{
+  "defaultSeverity": "warning",
+  "extends": [
+    "tslint:recommended",
+    "tslint-eslint-rules",
+    "tslint-react"
+  ],
+  "jsRules": {},
+  "rules": {
+    "array-type": [
+      true,
+      "array"
+    ],
+    "forin": false,
+    "indent": [
+      true,
+      "spaces"
+    ],
+    // prefixing interfaces with I?
+    // What is this, 1970?
+    "interface-name": [true, "never-prefix"],
+    "max-classes-per-file": [
+      false
+    ],
+    "member-ordering": [
+      true,
+      {
+        "order": "fields-first"
+      }
+    ],
+    "no-angle-bracket-type-assertion": true,
+    "no-console": false,
+    "no-empty-interface": false,
+    "no-trailing-whitespace": [
+      true,
+      "ignore-jsdoc"
+    ],
+    "object-literal-sort-keys": false,
+    "ordered-imports": false,
+    "quotemark": false,
+    "ter-indent": [
+      true,
+      2,
+      {
+        "SwitchCase": 1
+      }
+    ],
+    "valid-jsdoc": [
+      false,
+      {
+        "prefer": {
+          "return": "return"
+        },
+        "requireReturn": false
+      }
+    ],
+    "variable-name": [
+      true,
+      "check-format",
+      "allow-leading-underscore",
+      // without this, react SFC's are just silly
+      "allow_pascal_case"
+    ]
+  },
+  "rulesDirectory": []
+}

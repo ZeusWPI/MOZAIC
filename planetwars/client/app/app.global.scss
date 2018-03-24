@@ -1,0 +1,95 @@
+//------------------------------------------------------------------------------
+// Bulma
+//------------------------------------------------------------------------------
+@import '~bulma/sass/utilities/initial-variables';
+
+// Custom Variables
+$background: #201f1d;
+$primary:#FFFFFF;
+$secondary: #DE8D47;
+$tertiary: #868685;
+
+// Bulma variables
+$body-background-color: $background;
+$text: $primary;
+
+$navbar-background-color: $background;
+$navbar-item-hover-background-color: lighten($background, 5);
+$navbar-item-color: $primary;
+
+$link: $secondary;
+$link-active: $secondary;
+$link-hover: $secondary;
+
+$menu-item-hover-color: $secondary;
+$menu-item-active-color: $secondary;
+
+
+@import '~bulma/bulma';
+
+//------------------------------------------------------------------------------
+// Global Sass
+//------------------------------------------------------------------------------
+html,
+body {
+  // Hide scrollbar, scrollbars should be added only on the
+  // the elements that require them.
+  overflow-x: hidden;
+  overflow-y: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+#root {
+  overflow-x: hidden;
+  overflow-y: hidden;
+  width: 100vw;
+  height: 100vh;
+}
+
+.app {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.navbar {
+  border-bottom: 1px solid $tertiary;
+
+  .notificationBell {
+     position: relative;
+  }
+
+  .notificationBell[notification-count]:after {
+    content: attr(notification-count);
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: .6em;
+    font-family: Tahoma;
+    background: $secondary;
+    color: $primary;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 18px;
+    border-radius: 50%;
+    box-shadow: 0 0 1px #333;
+  }
+
+  .notificationBell[notification-count="0"]:after {
+    content: none;
+    display: none;
+  }
+}
+
+#notification-body {
+  color: $background;
+}
+
+.button {
+  background-color: $background;
+  color: $primary;
+  border-color: $primary;
+}

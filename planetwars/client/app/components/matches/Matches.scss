@@ -1,0 +1,113 @@
+@import '../../app.global.scss';
+
+$altBackground: lighten($background, 5);
+$red: #DE474C;
+$blue: #4797DE;
+$selectedHighlightWidth: 4px;
+
+.matchViewer {
+  width: 100%;
+  height: 100%;
+  flex-direction: row;
+  display: flex;
+  flex: auto;
+}
+
+.matchList {
+  height: 100%;
+  flex-basis: 400px;
+  flex-shrink: 1;
+  flex-grow: 0;
+  border-right: 1px solid $altBackground;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
+.matchList::-webkit-scrollbar {
+  display: none;
+}
+
+.iconSpan {
+  width: 1.5em;
+  display: inline-block;
+}
+
+.matchListEntry {
+  border-bottom: 1px solid $altBackground;
+  border-left: $selectedHighlightWidth solid transparent;
+
+  .matchListEntryContent {
+    padding: 10px;
+    font-size: 10pt;
+  }
+
+  .playerList {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0.2em;
+
+    li {
+      list-style: none;
+    }
+  }
+}
+
+.matchListEntry:hover {
+  background-color: $altBackground;
+}
+
+.matchListEntry.selected {
+  border-left: $selectedHighlightWidth solid $secondary;
+  background-color: $altBackground;
+}
+
+.playerEntry {
+  display: flex;
+}
+
+.playerName {
+  flex-grow: 1;
+  font-weight: 600;
+  display: inline-block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.playerScore {
+  color: $tertiary;
+  white-space: nowrap;
+}
+
+.timeLocation {
+  display: flex;
+}
+
+.mapName {
+  flex-grow: 1;
+  display: inline-block;
+}
+
+.matchTime {
+  display: inline-block;
+}
+
+.noMatches {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+  margin: 20px 0px;
+  p {
+    width: 95%;
+    flex-grow: 1;
+    margin: 20px 0;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+  }
+}

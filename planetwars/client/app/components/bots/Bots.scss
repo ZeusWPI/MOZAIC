@@ -1,0 +1,57 @@
+@import '../../app.global.scss';
+
+.botPage {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-direction: column;
+
+  .bots {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+
+    .botsListPane {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      ul {
+        width: 100%;
+        list-style-type: none;
+        li {
+          padding: 20px 20px; // border-top: 1px solid $tertiart
+          border-bottom: 1px solid $tertiary;
+          margin: 0 10px;
+        }
+      }
+      .newBot {
+        width: 100%;
+        min-height: 30px;
+        text-align: center;
+        font-size: 1.5rem; // border-bottom: 1px solid $tertiary; 
+        background: lighten($background, 5);
+        a {
+          width: 100%;
+        }
+      }
+      .newBot:hover {
+        background: lighten($background, 10);
+      }
+      a {
+        color: $primary;
+      }
+    }
+
+    .botEditor {
+      height: 100%;
+      width: 100%;
+      padding: 10% 10%;
+    }
+  }
+}

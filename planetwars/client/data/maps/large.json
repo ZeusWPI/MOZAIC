@@ -1,0 +1,150 @@
+{
+  "players": [
+    "player_1",
+    "player_2",
+    "player_3",
+    "player_4"
+  ],
+  "planets": [
+    {
+      "name": "OJCKCVKJGJ",
+      "owner": 1,
+      "ship_count": 1,
+      "x": 78,
+      "y": 31
+    },
+    {
+      "name": "OTJPKJXLQX",
+      "owner": 2,
+      "ship_count": 1,
+      "x": 30,
+      "y": 74
+    },
+    {
+      "name": "RSSGYXGAIS",
+      "owner": 3,
+      "ship_count": 1,
+      "x": 48,
+      "y": 80
+    },
+    {
+      "name": "LWMVSTXKRV",
+      "owner": 4,
+      "ship_count": 1,
+      "x": 19,
+      "y": 96
+    },
+    {
+      "name": "QUQGQOWETI",
+      "owner": null,
+      "ship_count": 0,
+      "x": 33,
+      "y": 99
+    },
+    {
+      "name": "VNZZPHTSZM",
+      "owner": null,
+      "ship_count": 0,
+      "x": 87,
+      "y": 67
+    },
+    {
+      "name": "OZIYOLKDIR",
+      "owner": null,
+      "ship_count": 0,
+      "x": 11,
+      "y": 25
+    },
+    {
+      "name": "VSLGCPXQUN",
+      "owner": null,
+      "ship_count": 0,
+      "x": 9,
+      "y": 32
+    },
+    {
+      "name": "DLSGAMDSAK",
+      "owner": null,
+      "ship_count": 0,
+      "x": 25,
+      "y": 24
+    },
+    {
+      "name": "JXTLWRHRRP",
+      "owner": null,
+      "ship_count": 0,
+      "x": 21,
+      "y": 53
+    },
+    {
+      "name": "RULUVNQJTY",
+      "owner": null,
+      "ship_count": 0,
+      "x": 31,
+      "y": 52
+    },
+    {
+      "name": "ETCCAQPWNK",
+      "owner": null,
+      "ship_count": 0,
+      "x": 38,
+      "y": 70
+    },
+    {
+      "name": "OVXRCBSXZK",
+      "owner": null,
+      "ship_count": 0,
+      "x": 53,
+      "y": 93
+    },
+    {
+      "name": "HEYBAGEYJB",
+      "owner": null,
+      "ship_count": 0,
+      "x": 98,
+      "y": 56
+    },
+    {
+      "name": "XVJXNQDAQE",
+      "owner": null,
+      "ship_count": 0,
+      "x": 51,
+      "y": 2
+    },
+    {
+      "name": "MJXGGQIJTD",
+      "owner": null,
+      "ship_count": 0,
+      "x": 22,
+      "y": 85
+    },
+    {
+      "name": "KEYMTVEOQP",
+      "owner": null,
+      "ship_count": 0,
+      "x": 92,
+      "y": 78
+    },
+    {
+      "name": "NWMMEHPPYR",
+      "owner": null,
+      "ship_count": 0,
+      "x": 2,
+      "y": 43
+    },
+    {
+      "name": "UUZZZWSZUT",
+      "owner": null,
+      "ship_count": 0,
+      "x": 41,
+      "y": 23
+    },
+    {
+      "name": "KOLNGIUGEX",
+      "owner": null,
+      "ship_count": 0,
+      "x": 4,
+      "y": 90
+    }
+  ]
+}

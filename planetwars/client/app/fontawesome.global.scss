@@ -1,0 +1,6 @@
+//------------------------------------------------------------------------------
+// Font Awesome
+// It's in a seperate file to allow importing the global css for variables.
+//------------------------------------------------------------------------------
+$fa-font-path: "~font-awesome/fonts";
+@import "~font-awesome/scss/font-awesome.scss";
