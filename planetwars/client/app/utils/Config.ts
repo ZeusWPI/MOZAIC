@@ -15,7 +15,7 @@ export class Config {
   public static bin = p.resolve(Config.base, Config._bin);
   public static data = p.resolve(Config.base, Config._data);
 
-  public static bots = p.resolve('/usr/local/bin/test');
+  public static bots = p.resolve(Config.data, Config._bots);
   public static matches = p.resolve(Config.data, Config._matches);
   public static maps = p.resolve(Config.data, Config._maps);
   public static configs = p.resolve(Config.data, Config._configs);
