@@ -1,6 +1,6 @@
 import * as React from 'react';
-import {a, div, h, h1, h2, li, p, ul} from 'react-hyperscript-helpers';
-import {Link} from "react-router-dom";
+import {a, div, h, h1, h2, li, p, pre, span, tr, ul} from 'react-hyperscript-helpers';
+import {Link, NavLink} from "react-router-dom";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./About.scss');
@@ -53,7 +53,8 @@ export default class About extends React.Component<IProps, IState> {
         h(Link, {to: '/Play'}, ['Play']),
         ' page. Here you will see all the bots you have registered. ' +
         'Select all the bots you would like to enter into battle. To deselect a bot, just click it again. ' +
-        'Next, choose the map you would like to play on, or import your own. ' +
+        'Next, choose the map you would like to play on, or ',
+        h(MapPanel, {}, ['import your own. ']),
         'Set a turn limit, and finally, hit the Play button.']),
 
       h2(`.${styles.subTitle}`, 'Visualizing a Game'),
@@ -68,5 +69,60 @@ export default class About extends React.Component<IProps, IState> {
 
     ]);
 
+  }
+}
+
+interface IMapPanelProps {
+
+}
+
+interface IMapPanelState {
+  toggled: boolean;
+}
+
+class MapPanel extends React.Component<IMapPanelProps, IMapPanelState> {
+  constructor(props: any) {
+    super(props);
+    this.toggle = this.toggle.bind(this);
+
+  }
+
+  public componentWillMount() {
+
+    this.setState({toggled: false });
+  }
+
+  public render() {
+    return span( [
+      a({onClick: this.toggle}, 'import your own'),
+      div(`.${this.state.toggled ? styles.mapToggled : styles.mapHidden}`, [
+        p('Maps are simply JSON files detailing the planet names, their positions, and the initial ship count.' +
+          'See below for an example structure:' ),
+        div(`.${styles.mapCode}`, [
+          pre('' +
+            '{\n' +
+            '    "planets": [\n' +
+            '        {\n' +
+            '            "name": "protos",\n' +
+            '            "x": -6,\n' +
+            '            "y": 0,\n' +
+            '            "owner": 1,\n' +
+            '            "ship_count": 6\n' +
+            '        },\n' +
+            '        {\n' +
+            '            "name": "duteros",\n' +
+            '            "x": -3,\n' +
+            '            "y": 5,\n' +
+            '            "ship_count": 6\n' +
+            '        },\n' +
+            '    ]\n' +
+            '}'),
+        ]),
+      ]),
+    ]);
+  }
+
+  public toggle() {
+    this.state.toggled ? this.setState({toggled: false}) : this.setState({toggled: true});
   }
 }
