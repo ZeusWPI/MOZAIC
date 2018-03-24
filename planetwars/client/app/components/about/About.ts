@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {shell} from 'electron';
 import {a, div, h, h1, h2, li, p, pre, span, tr, ul} from 'react-hyperscript-helpers';
 import {Link, NavLink} from "react-router-dom";
 
@@ -10,7 +11,6 @@ interface IProps {
 
 interface IState {
 }
-// TODO: either make the link to github open externally or add a way to get back to the about page
 export default class About extends React.Component<IProps, IState> {
   public render() {
     return div(`.${styles.aboutPage}`, [
@@ -25,7 +25,9 @@ export default class About extends React.Component<IProps, IState> {
         'A “bot” is what we call the script you will write which will play the game. ' +
         'For more details on the the rules of PlanetWars and the scripting API, ' +
         'please refer to ',
-        a({href: 'https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md'}, ['this guide.']),
+        a({onClick: () =>
+            shell.openExternal('https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md')},
+          ['this guide.']),
       ]),
 
       p(['Once you have created your planet-conquering script, you will need to configure it in the client. ' +
@@ -63,7 +65,8 @@ export default class About extends React.Component<IProps, IState> {
       'in order to fine-tune your strategy for the next match. ' +
       'To do this, go to the ',
         h(Link, {to: '/history'}, ['Matches']),
-        ' page. Here you will see an overview of your completed matches. You can then select a match to load it into the ',
+        ' page. Here you will see an overview of your completed matches. ' +
+        'You can then select a match to load it into the ',
         h(Link, {to: '/Visualizer'}, ['visualizer']),
         '. Once the game is loaded, you can control the playback with the buttons at the bottom of the page.']),
 
