@@ -24,8 +24,11 @@ class Renderer extends React.Component {
     this.loadResources();
     this.voronoiContainer = d3.select(this.svg).append('g');
     this.container = d3.select(this.svg).append('g');
-    this.planetRenderer = new PlanetRenderer(this.container);
-    this.expeditionRenderer = new ExpeditionRenderer(this.container);
+    this.planetRenderer = new PlanetRenderer(this.props.game, this.container);
+    this.expeditionRenderer = new ExpeditionRenderer(
+      this.props.game,
+      this.container,
+    );
 
     this.gameState = this.props.game.matchLog.gameStates[0];
     this.calculateViewBox();

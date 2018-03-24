@@ -14,14 +14,14 @@ export default {
   orbitSize: 1,
   padding: 5,
   maxScales: [0.3, 3] as [number, number],
-  // TODO: this is not the best way to do this ...
-  playerColor: (player: any) => {
-    if (player) {
-      return player.color;
-    } else {
-      return '#d3d3d3';
-    }
-  },
+  neutralColor: '#d3d3d3',
+  // Taken from d3's category20
+  playerColors: [
+    '#ff7f0e', // orange
+    '#1f77b4', // blue
+    '#d62728', // red
+    '#9467bd', // purple
+  ],
   playerName: (player: any) => {
     if (player) {
       return player.name;

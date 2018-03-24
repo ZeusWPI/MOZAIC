@@ -1,15 +1,20 @@
 import * as d3 from 'd3';
 import Config from '../util/config';
+import Game from '../components/game';
+
 import { Expedition } from '../../../../lib/match/types';
 const space_math = require('../util/spacemath');
 
 class ExpeditionRenderer {
   public container: any;
-  constructor(container: any) {
+  public game: Game;
+
+  constructor(game: Game, container: any) {
+    this.game = game;
     this.container = container;
   }
 
-  bind(data: any): d3.Selection<any, Expedition, any, any> {
+  bind(data: any) {
     return this.container.selectAll('.expedition').data(data, (e: any) => e.id);
   }
 
@@ -45,7 +50,7 @@ class ExpeditionRenderer {
       .style("text-anchor", "middle")
       .text((exp: any) => "A")
       .attr('transform', (exp: any) => `rotate(${this.expeditionRotation(exp)})`)
-      .attr('fill', (exp: any) => Config.playerColor(exp.owner));
+      .attr('fill', (exp: any) => this.game.playerColor(exp.owner));
   }
 
   drawShipCounts(expeditions: any, params: any) {
@@ -57,7 +62,7 @@ class ExpeditionRenderer {
       .attr('font-family', 'sans-serif')
       .attr('font-size', 0.8 * params.scale + 'px')
       .text((exp: Expedition) => "\u2694" + exp.shipCount)
-      .attr('fill', (exp: Expedition) => Config.playerColor(exp.owner));
+      .attr('fill', (exp: Expedition) => this.game.playerColor(exp.owner));
   }
 
   drawTitles(expeditions: any) {

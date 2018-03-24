@@ -1,16 +1,22 @@
 import * as d3 from 'd3';
+import Game from '../components/game';
 import { Planet } from '../../../../lib/match/types';
 import Config from '../util/config';
 
 class PlanetRenderer {
   container: any;
+  game: Game;
 
-  constructor(container: any) {
+
+  constructor(game: Game, container: any) {
+    this.game = game;
     this.container = container;
   }
 
   bind(data: any) {
-    return this.container.selectAll('.planet').data(data, (p: any) => p.name);
+    return this.container
+    .selectAll('.planet')
+    .data(data, (p: Planet) => p.name);
   }
 
   draw(data: any, params: any) {
@@ -34,7 +40,7 @@ class PlanetRenderer {
       .attr('class', 'background')
       .attr('r', Config.planetSize)
       .merge(backgrounds)
-      .attr('fill', (d: any) => Config.playerColor(d.owner));
+      .attr('fill', (d: any) => this.game.playerColor(d.owner));
   }
 
   drawModels(planets: any) {
@@ -43,7 +49,7 @@ class PlanetRenderer {
     models.enter().append('circle')
       .attr('class', 'model')
       .attr('r', Config.planetSize)
-      .attr('fill', (d: any) => `url(#${d.type})`);
+      .attr('fill', (d: Planet) => `url(#${this.game.planetType(d.name)})`);
   }
 
   drawTitles(planets: any) {
@@ -66,7 +72,7 @@ class PlanetRenderer {
       .style("text-anchor", "middle")
       .text((d: any) => d.name)
       .merge(labels)
-      .attr('fill', (d: any) => Config.playerColor(d.owner));
+      .attr('fill', (d: any) => this.game.playerColor(d.owner));
   }
 
   drawShipCounts(planets: any, params: any) {
@@ -79,7 +85,7 @@ class PlanetRenderer {
       .attr("font-size", Config.planetSize * params.scale + "px")
       .style("text-anchor", "middle")
       .merge(labels)
-      .attr('fill', (d: any) => Config.playerColor(d.owner))
+      .attr('fill', (d: any) => this.game.playerColor(d.owner))
       .text((d: Planet) => "\u2694 " + d.shipCount);
   }
 }

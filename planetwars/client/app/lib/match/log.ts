@@ -35,7 +35,7 @@ class LogParser {
 
   constructor(players: Player[]) {
     this.players = players;
-    this.log = new MatchLog();
+    this.log = new MatchLog(players);
   }
 
 
@@ -78,9 +78,11 @@ class LogParser {
 }
 
 export class MatchLog {
+  public players: Player[];
   public gameStates: GameState[];
 
-  constructor() {
+  constructor(players: Player[]) {
+    this.players = players;
     this.gameStates = [];
   }
 

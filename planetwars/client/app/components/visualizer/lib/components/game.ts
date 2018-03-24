@@ -1,30 +1,36 @@
-import { GameState } from '../../../../lib/match/types';
+import { GameState, Player } from '../../../../lib/match/types';
 import { MatchLog } from '../../../../lib/match/log';
 
-const d3 = require('d3');
-const Config = require('../util/config');
+import Config from '../util/config';
 
 export default class Game {
-  playerColors: any;
+  playerColorMap: Map<string, string>;
   planetTypeMap: Map<string, string>;
   matchLog: MatchLog;
 
   constructor(matchLog: MatchLog) {
-    this.playerColors = d3.scaleOrdinal(d3.schemeCategory10);
-    this.planetTypeMap = new Map();
     this.matchLog = matchLog;
+    this.planetTypeMap = new Map();
+    this.playerColorMap = new Map();
+    matchLog.players.forEach((player, idx) => {
+      this.playerColorMap.set(player.name, Config.playerColors[idx]);
+    });
   }
 
-  playerColor(name: string) {
-    return this.playerColors(name);
+  public playerColor(player?: Player): string {
+    if (player) {
+      return this.playerColorMap.get(player.name)!;
+    }
+    return Config.neutralColor;
   }
 
-  planetType(name: string) {
+  public planetType(name: string): string {
+    console.log(name);
     if (!this.planetTypeMap.has(name)) {
-      var types: string[] = Config.planet_types;
+      var types: string[] = Config.planetTypes;
       var type: string = types[Math.floor(Math.random() * types.length)];
       this.planetTypeMap.set(name, type);
     }
-    return this.planetTypeMap.get(name);
+    return this.planetTypeMap.get(name)!;
   }
 }
