@@ -70,7 +70,7 @@ fn main() {
 
     let mut reactor = Core::new().unwrap();
 
-    let log_file = File::create("log.json").unwrap();
+    let log_file = File::create(match_description.log_file).unwrap();
 
     let logger = slog::Logger::root( 
         Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
