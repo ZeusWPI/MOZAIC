@@ -12,6 +12,7 @@ $tertiary: #868685;
 // Bulma variables
 $body-background-color: $background;
 $text: $primary;
+$dark: $background;
 
 $navbar-background-color: $background;
 $navbar-item-hover-background-color: lighten($background, 5);
@@ -58,7 +59,7 @@ body {
   border-bottom: 1px solid $tertiary;
 
   .notificationBell {
-     position: relative;
+    position: relative;
   }
 
   .notificationBell[notification-count]:after {

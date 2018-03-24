@@ -33,7 +33,7 @@ export class Bots extends React.Component<IBotsProps, {}> {
     return (
       <div className={styles.botPage}>
         <div className={styles.bots}>
-          <BotsList bots={bots}/>
+          <BotsList bots={bots} />
           <BotEditor
             selectedBot={selectedBot}
             addBot={addBot}
@@ -42,8 +42,7 @@ export class Bots extends React.Component<IBotsProps, {}> {
             validate={validate}
           />
         </div>
-      </div>
-    );
+      </div>);
   }
 }
 
@@ -62,7 +61,7 @@ export class BotsList extends React.Component<IBotListProps, {}> {
     });
     return (
       <div className={styles.botsListPane}>
-        <NewBot/>
+        <NewBot />
         <ul> {bots} </ul>
       </div>
     );
@@ -138,7 +137,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     );
 
     const onCommandInput = (evt: any) => {
-      this.setState({command: evt.target.value});
+      this.setState({ command: evt.target.value });
     };
     const command = (
       <div className='field'>
@@ -168,7 +167,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
 
     const buttons = (
       <div className='control'>
-        <input className='button' type='submit' value='Save'/>
+        <input className='button' type='submit' value='Save' />
         <button
           className='button'
           type='button'

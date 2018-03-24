@@ -44,6 +44,7 @@ const installExtensions = () => {
 
 app.on('ready', () =>
   installExtensions()
+  .then()
   .then(() => {
     mainWindow = new BrowserWindow({
       show: false,

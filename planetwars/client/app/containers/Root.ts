@@ -12,7 +12,7 @@ interface IRootType {
   history: History;
 }
 
-export default function Root({ store, history }: IRootType) {
+export default function Root({ store, history }: IRootType): React.SFC {
   return (
     h(Provider, { store }, [
       h(ConnectedRouter, { history }, [
