@@ -6,7 +6,6 @@ import { connect } from 'react-redux';
 import Matches, { MatchViewerProps } from '../components/matches/Matches';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import { parseLogFile } from '../utils/MatchParser';
 import * as A from '../actions/actions';
 import { PathLike } from 'mz/fs';
 

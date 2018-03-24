@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { IGState } from '../reducers';
-import { parseLogFile } from '../utils/MatchParser';
+import { parseLog } from '../lib/match/log';
 import { analyzeLog } from '../utils/MatchAnalyser';
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
@@ -63,9 +63,9 @@ export function runMatch(params: MatchParams) {
       },
       log_file: match.logPath,
     };
-    
+
     dispatch(saveMatch(match));
-    let runner = new GameRunner(config);
+    const runner = new GameRunner(config);
 
     runner.on('matchEnded', () => {
       dispatch(completeMatch(matchId));
@@ -81,15 +81,15 @@ export function completeMatch(matchId: MatchId) {
   return (dispatch: any, getState: any) => {
     const state: IGState = getState();
     const match = state.matches[matchId];
-    if (match.status == 'playing') {
-      parseLogFile(match.logPath).then((states) => {
-        let stats = analyzeLog(match.players, states);
-        dispatch(saveMatch({
-          ...match,
-          status: 'finished',
-          stats
-        }));
-      });
+    if (match.status === 'playing') {
+      const log = parseLog(match.logPath);
+        // TODO
+      const stats = analyzeLog(match.players, log.turns);
+      dispatch(saveMatch({
+        ...match,
+        status: 'finished',
+        stats,
+      }));
     }
   };
 }
@@ -98,7 +98,7 @@ export function handleMatchError(matchId: MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
     const state: IGState = getState();
     const match = state.matches[matchId];
-    if (match.status == 'playing') {
+    if (match.status === 'playing') {
       dispatch(saveMatch({
         ...match,
         status: 'error',

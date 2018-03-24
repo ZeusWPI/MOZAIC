@@ -2,7 +2,7 @@ import * as React from 'react';
 import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
 import { div, h } from 'react-hyperscript-helpers';
-import { parseLogFileSync } from '../../utils/MatchParser';
+import { parseLog } from '../../lib/match/log';
 
 export interface MatchViewProps {
   match: Match;
@@ -14,11 +14,11 @@ export class MatchView extends React.Component<MatchViewProps> {
     const { match } = this.props;
     switch (match.status) {
       case 'finished': {
-        const log = parseLogFileSync(this.props.match.logPath)
+        const log = parseLog(this.props.match.logPath);
         return (
           <Visualizer
             playerData={{ players: match.players.map((p) => p.name) }}
-            gameLog={log}
+            gameLog={undefined} //TODO
           />);
       }
       case 'error': {
