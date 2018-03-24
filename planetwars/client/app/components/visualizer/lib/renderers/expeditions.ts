@@ -28,7 +28,8 @@ class ExpeditionRenderer {
         return `translate(${pos.x}, ${pos.y})`;
       }).merge(selector);
 
-    expeditions.transition()
+    expeditions
+      .transition()
       .duration(1000 / params.speed)
       .ease(d3.easeLinear)
       .attr('transform', (d: Expedition) => {

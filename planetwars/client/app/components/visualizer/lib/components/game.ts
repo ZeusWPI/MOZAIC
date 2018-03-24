@@ -25,7 +25,6 @@ export default class Game {
   }
 
   public planetType(name: string): string {
-    console.log(name);
     if (!this.planetTypeMap.has(name)) {
       var types: string[] = Config.planetTypes;
       var type: string = types[Math.floor(Math.random() * types.length)];

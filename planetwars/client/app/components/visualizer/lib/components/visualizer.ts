@@ -143,10 +143,10 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       ])
     }
 
-    // let scoreboard = h(Scoreboard, {
-    //   game: this.state.game,
-    //   turnNum: this.state.turnNum
-    // });
+    let scoreboard = h(Scoreboard, {
+      game: this.state.game,
+      turnNum: this.state.turnNum
+    });
 
     let renderer = h(Renderer, {
       game: this.state.game,
@@ -156,7 +156,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
 
     return div(`.${styles.visualizerRootNode}`, [
       controls,
-      // scoreboard,
+      scoreboard,
       renderer,
     ]);
 
