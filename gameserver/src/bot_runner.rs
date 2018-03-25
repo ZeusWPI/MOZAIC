@@ -1,4 +1,4 @@
-use std::process::{Command, Stdio};
+use std::process::{exit, Command, Stdio};
 use futures::Poll;
 use tokio_process::{Child, ChildStdin, ChildStdout, CommandExt};
 use tokio_core::reactor::Handle;
@@ -22,12 +22,17 @@ pub fn spawn_bots(handle: &Handle, players: &Vec<PlayerConfig>)
         let mut cmd = Command::new(&config.command);
         cmd.args(&config.args);
 
-        let handle = BotHandle::spawn(cmd, handle)
-            .expect(&format!(
-                "\n[GAMESERVER] Failed to execute process: {} {:?}\n",
-                config.command,
-                config.args
-            ));
+        let handle = match BotHandle::spawn(cmd, handle) {
+            Ok(handle) => handle,
+            Err(error) => {
+                eprintln!("[GAMESERVER] Failed to execute process \"{}\" with argv {:?}",
+                    config.command,
+                    config.args,
+                );
+                eprintln!("[GAMESERVER] Error: {}", error);
+                exit(1);
+            }
+        };
         return (config.name.clone(), handle);
     }).collect()
 }
