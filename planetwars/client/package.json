@@ -133,7 +133,7 @@
     "@types/mkdirp": "^0.5.2",
     "@types/mz": "^0.0.32",
     "@types/node": "^8.0.2",
-    "@types/react": "^16.0.5",
+    "@types/react": "^16.0.40",
     "@types/react-dom": "16.0.0",
     "@types/react-hot-loader": "^3.0.4",
     "@types/react-hyperscript": "^3.0.0",

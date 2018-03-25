@@ -6,7 +6,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
 import { Match, IMatchList, IMapList } from '../utils/GameModels';
-import { INotification } from '../utils/UtilModels';
+import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
 // ----------------------------------------------------------------------------
@@ -32,11 +32,10 @@ export interface IGState {
   readonly navbar: INavbarState;
   readonly bots: IBotList;
   readonly matches: IMatchList;
-  readonly notifications: INotification[];
+  readonly notifications: Notification[];
   readonly maps: IMapList;
 
   readonly matchesPage: IMatchesPageState;
-  readonly aboutPage: IAboutPageState;
   readonly playPage: IPlayPageState;
 
   readonly globalErrors: any[];
@@ -60,7 +59,7 @@ export interface IMatchesPageState {
   readonly importError?: string;
 }
 
-export interface IAboutPageState { readonly counter: number; }
+export interface IAboutPageState { }
 
 export const initialState: IGState = {
   routing: { location: null },
@@ -75,7 +74,6 @@ export const initialState: IGState = {
     selectedBots: [],
   },
   matchesPage: {},
-  aboutPage: { counter: 0 },
   globalErrors: [],
 };
 
@@ -102,16 +100,7 @@ const navbarReducer = combineReducers<INavbarState>({
   },
 });
 
-const aboutPageReducer = combineReducers<IAboutPageState>({
-  counter: (state = 0, action) => {
-    if (A.incrementAbout.test(action)) {
-      return state + 1;
-    }
-    return state;
-  },
-});
-
-const notificationReducer = (state: INotification[] = [], action: any) => {
+const notificationReducer = (state: Notification[] = [], action: any) => {
   if (A.addNotification.test(action)) {
     const newState = state.slice();
     newState.push(action.payload);
@@ -238,7 +227,6 @@ export const rootReducer = combineReducers<IGState>({
   notifications: notificationReducer,
 
   matchesPage: matchesPageReducer,
-  aboutPage: aboutPageReducer,
   playPage: playPageReducer,
 
   globalErrors: globalErrorReducer,
