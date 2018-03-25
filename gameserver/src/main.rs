@@ -87,6 +87,7 @@ fn main() {
         let bot_handle = bots.remove(&desc.name).unwrap();
         let controller = ClientController::new(
             num,
+            desc.name.clone(),
             bot_handle,
             handle.clone(),
             &logger);

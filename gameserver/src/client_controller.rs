@@ -48,6 +48,7 @@ enum Connection {
 
 pub struct ClientController {
     player_id: PlayerId,
+    player_name: String,
     
     sender: BufferedSender<SplitSink<Transport>>,
     client_msgs: SplitStream<Transport>,
@@ -63,6 +64,7 @@ pub struct ClientController {
 
 impl ClientController {
     pub fn new(player_id: PlayerId,
+               player_name: String,
                conn: BotHandle,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
@@ -80,6 +82,7 @@ impl ClientController {
 
             game_handle,
             player_id,
+            player_name,
 
             logger: logger.new(
                 o!("player_id" => player_id.as_usize())
@@ -170,9 +173,9 @@ impl Future for ClientController {
             Ok(Async::Ready(())) => panic!("something bad happened"),
             Ok(Async::NotReady) => Async::NotReady,
             Err(_err) => {
-                eprintln!("[GAMESERVER] Game terminating: failed to communicate with a bot.");
+                eprintln!("[GAMESERVER] Failed to communicate with bot \"{}\".", self.player_name);
                 eprintln!("[GAMESERVER] Hopefully, an error message from the offending bot can be found above.");
-                eprintln!("[GAMESERVER] All other bots will now be killed.");
+                eprintln!("[GAMESERVER] Game terminating; all other bots will now be killed.");
                 // TODO: are some errors recoverable?
                 // should they be handled in this method, or ad-hoc?
                 // TODO: log the actual error

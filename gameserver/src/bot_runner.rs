@@ -24,7 +24,7 @@ pub fn spawn_bots(handle: &Handle, players: &Vec<PlayerConfig>)
 
         let handle = BotHandle::spawn(cmd, handle)
             .expect(&format!(
-                "\n[DRIVER] Failed to execute process: {} {:?}\n",
+                "\n[GAMESERVER] Failed to execute process: {} {:?}\n",
                 config.command,
                 config.args
             ));
