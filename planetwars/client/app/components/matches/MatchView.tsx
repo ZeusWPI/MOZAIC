@@ -6,7 +6,7 @@ import { LogView } from './LogView';
 
 const styles = require('./Matches.scss');
 
-export interface MatchViewProps {
+export interface ContainerProps {
   match?: Match;
 }
 
@@ -14,13 +14,7 @@ interface MatchViewState {
   showLog: boolean;
 }
 
-export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
-  public constructor(props: MatchViewProps) {
-    super(props);
-    this.state = {
-      showLog: false
-    };
-  }
+export class MatchViewContainer extends React.Component<ContainerProps> {
   public render() {
     const match = this.props.match;
     if (!match) {
@@ -29,23 +23,9 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
     switch (match.status) {
       case 'finished': {
         const log = parseLog(match.players, match.logPath);
-        console.log(log);
-        const display = this.state.showLog ? (<LogView matchLog={log}/>) : (<Visualizer matchLog={log}/>);
-        const onClick = () => {
-          this.setState({showLog: false});
-          console.log("setting visualizer");
-        };
         return (
           <div className={styles.matchViewContainer}>
-            <div>
-              <div onClick={onClick}>
-                Visualizer
-              </div>
-              <div onClick={() => this.setState({showLog: true})}>
-                log
-              </div>
-            </div>;
-            {display}
+            <MatchView matchLog={log}/>
           </div>
         );
       }
@@ -71,4 +51,49 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
   }
 }
 
-export default MatchView;
+interface Props {
+  matchLog: MatchLog;
+}
+
+enum ViewState {
+  VISUALIZER,
+  LOG,
+}
+
+interface State {
+  viewState: ViewState;
+}
+
+export class MatchView extends React.Component<Props, State> {
+  public constructor(props: Props) {
+    super(props);
+    this.state = {
+      viewState: ViewState.VISUALIZER,
+    };
+  }
+
+  render() {
+    const { matchLog } = this.props;
+    const { viewState } = this.state;
+
+    return (
+      <MatchDisplay viewState={viewState} matchLog={matchLog}/>
+    );
+  }
+}
+
+interface MatchDisplayProps {
+  viewState: ViewState;
+  matchLog: MatchLog;
+}
+
+const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
+  switch (props.viewState) {
+    case ViewState.VISUALIZER:
+      return <Visualizer matchLog={props.matchLog}/>;
+    case ViewState.LOG:
+      return <LogView matchLog={props.matchLog} />;
+  }
+};
+
+export default MatchViewContainer;
