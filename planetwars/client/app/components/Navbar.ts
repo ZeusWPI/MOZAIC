@@ -38,7 +38,7 @@ export class Navbar extends React.Component<INavProps, {}> {
           h(Link, `.navbar-item`, { to: "/home" }, ["Home"]),
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
-          h(Link, `.navbar-item`, { to: "/history" }, ["Matches"]),
+          h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
           h(Link, `.navbar-item`, { to: "/about" }, ["About"]),
           h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
         ]),

@@ -8,16 +8,19 @@ const styles = require('./Matches.scss');
 
 
 export interface MatchViewProps {
-  match: Match;
+  match?: Match;
 }
 
 export class MatchView extends React.Component<MatchViewProps> {
 
   public render() {
     const { match } = this.props;
+    if (!match) {
+      return null;
+    }
     switch (match.status) {
       case 'finished': {
-        const log = parseLog(match.players, this.props.match.logPath);
+        const log = parseLog(match.players, match.logPath);
         return <Visualizer matchLog={log}/>;
       }
       case 'error': {
