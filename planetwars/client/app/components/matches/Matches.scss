@@ -19,12 +19,7 @@ $selectedHighlightWidth: 4px;
   flex-shrink: 1;
   flex-grow: 0;
   border-right: 1px solid $altBackground;
-  overflow-x: hidden;
-  overflow-y: scroll;
-}
-
-.matchList::-webkit-scrollbar {
-  display: none;
+  overflow-y: auto;
 }
 
 .iconSpan {
