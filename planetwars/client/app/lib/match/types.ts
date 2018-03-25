@@ -8,10 +8,10 @@ export interface LogFormat {
   turns: GameState[];
 }
 
-// TODO
 export interface Player {
   uuid: string;
   name: string;
+  score: number;
 }
 
 export interface PlanetList {

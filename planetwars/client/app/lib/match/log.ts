@@ -19,6 +19,7 @@ export function parseLog(players: PlayerData[], path: string) {
     return {
       uuid: data.uuid,
       name: data.name,
+      score: 0,
     };
   });
   const parser = new LogParser(matchPlayers);
@@ -30,6 +31,7 @@ export function parseLog(players: PlayerData[], path: string) {
 }
 
 class LogParser {
+  // in-order; for mapping player numbers to player objects.
   public players: Player[];
   public log: MatchLog;
 
@@ -48,7 +50,7 @@ class LogParser {
   private parseStep(message: StepMessage) {
     // TODO
     const state = this.parseState(message.state);
-    this.log.gameStates.push(state);
+    this.log.addGameState(state);
   }
 
   private parseState(json: JsonGameState): GameState {
@@ -88,6 +90,16 @@ export class MatchLog {
 
   public getWinners(): Set<Player> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
+  }
+
+  public addGameState(gameState: GameState) {
+    Object.keys(gameState.planets).forEach((planetName) => {
+      const planet = gameState.planets[planetName];
+      if (planet.owner) {
+        planet.owner.score += 1;
+      }
+    });
+    this.gameStates.push(gameState);
   }
 }
 

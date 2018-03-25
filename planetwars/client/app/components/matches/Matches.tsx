@@ -69,6 +69,31 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   return <ul className={styles.matchList}> {listEntries} </ul>;
 }
 
+function calcPlayerData(match: Match): PlayerProps[] {
+  if (match.status === 'finished') {
+    return match.players.map((player) => ({
+      uuid: player.uuid,
+      name: player.name,
+      isWinner: match.stats.winners.some((id) => id === player.uuid),
+      score: match.stats.score[player.uuid],
+    })).sort((a, b) => {
+      // sort major on isWinner, minor on score
+      if (a.isWinner && !b.isWinner) {
+        return 0;
+      }
+      if (b.isWinner && !a.isWinner) {
+        return 1;
+      }
+      return b.score - a.score;
+    });
+  } else {
+    return match.players.map((player) => ({
+      uuid: player.uuid,
+      name: player.name,
+      isWinner: false,
+    }));
+  }
+}
 
 interface MatchEntryProps {
   match: Match;
@@ -77,33 +102,12 @@ interface MatchEntryProps {
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
-  const { players } = props.match;
-  // TODO: maybe compute this higher up
-  let winners: string[] = [];
-  if (props.match.status === 'finished') {
-    winners = props.match.stats.winners;
-  }
-
-  const playerData = players.map((player) => ({
-    uuid: player.uuid,
-    name: player.name,
-    isWinner: winners.some((id) => id === player.uuid),
-    score: 100,
-  })).sort((a, b) => {
-    // sort major on isWinner, minor on score
-    if (a.isWinner && !b.isWinner) {
-      return 0;
-    }
-    if (b.isWinner && !a.isWinner) {
-      return 1;
-    }
-    return b.score - a.score;
-  });
-
   let className = styles.matchListEntry;
   if (props.selected) {
     className = classnames(styles.selected, className);
   }
+
+  const playerData = calcPlayerData(props.match);
 
   return (
     <div className={className} onClick={props.onClick}>
