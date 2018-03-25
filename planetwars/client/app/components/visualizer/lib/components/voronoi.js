@@ -207,7 +207,8 @@ function getAngle(middle, point) {
   return (360 + Math.round(degrees)) % 360;
 }
 
-function initVoronoi(turns, colorFunction, box) {
+function initVoronoi(game, box) {
+  const turns = game.matchLog.gameStates;
   var voronoi = d3.voronoi().extent(box);
   var planets = Object.values(turns[0].planets);
   var posMap = {}; // maps middle coordinate on the planet
@@ -290,7 +291,7 @@ function initVoronoi(turns, colorFunction, box) {
             poly.maybeStart(layer, poly.polygon[si], poly.polygon[sie], poly.owner, target, data, []);
             polygonPoints.push({
               target: target,
-              color: colorFunction(poly.owner)
+              color: game.playerColor(poly.owner),
             });
           }
         }

@@ -43,9 +43,8 @@ class Renderer extends React.Component<any> {
     );
     this.calculateViewBox();
     this.voronoiRenderer = Voronoi.initVoronoi(
-      this.props.game.matchLog.gameStates,
-      (d: any) => this.props.game.playerColor(d),
-      [this.min, this.max]
+      this.props.game,
+      [this.min, this.max],
     );
     this.createZoom();
   }
