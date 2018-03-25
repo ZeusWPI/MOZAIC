@@ -1,14 +1,16 @@
-const Config = require('./config');
+import Config from './config';
 
 class ResourceLoader {
-  constructor(svg) {
+  svg: any;
+
+  constructor(svg: any) {
     this.svg = svg;
   }
 
   setupPatterns() {
     // Define patterns
     this.svg.append("defs");
-    Config.planet_types.forEach(p => {
+    Config.planetTypes.forEach((p) => {
       this.setupPattern(p + ".svg", 100, 100, p);
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");
@@ -16,7 +18,7 @@ class ResourceLoader {
     this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
-  setupPattern(name, width, height, id) {
+  setupPattern(name: any, width: any, height: any, id: any) {
     this.svg.select("defs")
       .append("pattern")
       .attr("id", id)

@@ -1,31 +1,32 @@
+import { JsonPlanet } from '../lib/match/types';
+import { BotID } from './ConfigModels';
 type LogPath = string;
 
 export type MatchId = string;
 
 interface MatchProperties {
-  uuid: MatchId,
-  players: string[],
-  map: MapId,
-  timestamp: Date,
-  logPath: string,
+  uuid: MatchId;
+  players: string[];
+  map: MapId;
+  timestamp: Date;
+  logPath: string;
 }
 
 export type PlayingMatch = MatchProperties & {
-  status: 'playing',
-}
+  status: 'playing';
+};
 
 export type FinishedMatch = MatchProperties & {
-  status: 'finished',
-  stats: MatchStats,
-}
+  status: 'finished';
+  stats: MatchStats;
+};
 
 export type ErroredMatch = MatchProperties & {
-  status: 'error',
+  status: 'error';
   error: string,
-}
+};
 
 export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
-
 
 export enum MatchStatus {
   'playing',
@@ -33,13 +34,13 @@ export enum MatchStatus {
   'error',
 }
 
-
 export interface MatchStats {
-  winner: number;
-  commandsOrdered: number[]; // Number of commands / player;
-  planetsFlipped: number;
-  shipsSend: number[];
-  turns: number;
+  winners: BotID[];
+  score: PlayerMap<number>;
+}
+
+export interface PlayerMap<T> {
+  [uuid: string]: T;
 }
 
 // tslint:disable-next-line:variable-name
@@ -47,34 +48,6 @@ export const MatchStatuses = Object.keys(MatchStatus);
 
 export interface IMatchList {
   [matchId: string]: Match;
-}
-
-export interface IGameState {
-  planets: IPlanet[];
-  expeditions: IExpedition[];
-}
-
-export interface ILogFormat {
-  players: string[];
-  turns: IGameState[];
-}
-
-// TODO: Switch to camelCase
-export interface IPlanet {
-  "ship_count": number;
-  "x": number;
-  "y": number;
-  "owner": number;
-  "name": string;
-}
-
-export interface IExpedition {
-  "id": number;
-  "ship_count": number;
-  "origin": string;
-  "destination": string;
-  "owner": number;
-  "turns_remaining": number;
 }
 
 export interface IMapList {
@@ -92,5 +65,5 @@ export interface IMapMeta {
 }
 
 export interface IMap {
-  planets: IPlanet[];
+  planets: JsonPlanet[];
 }

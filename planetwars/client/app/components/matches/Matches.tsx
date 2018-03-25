@@ -8,35 +8,27 @@ import { MatchView } from './MatchView';
 const styles = require('./Matches.scss');
 
 export interface MatchViewerProps {
+  selectMatch: (matchId: string) => void;
+  selectedMatch?: Match;
   matches: Match[];
 }
 
-interface MatchViewerState {
-  // use index as id, for now
-  selectedMatch: number;
-}
-
-export default class MatchViewer extends Component<MatchViewerProps, MatchViewerState> {
+export default class MatchViewer extends Component<MatchViewerProps> {
   constructor(props: MatchViewerProps) {
-    super(props)
-    this.state = { selectedMatch: 0 };
+    super(props);
   }
-
 
   public render() {
     const { matches } = this.props;
     if (matches.length === 0) { return <NoMatches />; }
-
-    const selectedMatch = this.props.matches[this.state.selectedMatch];
-    const selectFn = (idx: number) => this.select(idx);
     return (
       <div className={styles.matchViewer}>
         <MatchList
           matches={matches}
-          selected={this.state.selectedMatch}
-          selectFn={selectFn}
+          selected={this.props.selectedMatch}
+          selectMatch={this.props.selectMatch}
         />
-        <MatchView match={selectedMatch} />
+        <MatchView match={this.props.selectedMatch} />
       </div>);
   }
 
@@ -48,19 +40,19 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
 
 interface MatchListProps {
   matches: Match[];
-  selected: number;
-  selectFn: (index: number) => void;
+  selected?: Match;
+  selectMatch: (matchId: string) => void;
 }
 
 export const MatchList: SFC<MatchListProps> = (props) => {
-  const listEntries = props.matches.map((match, idx) => {
-    const onClick = () => props.selectFn(idx);
+  const listEntries = props.matches.map((match) => {
+    const onClick = () => props.selectMatch(match.uuid);
     return (
       <li key={match.uuid}>
         <MatchListEntry
           key={match.uuid}
           match={match}
-          selected={idx === props.selected}
+          selected={props.selected && (props.selected.uuid === match.uuid)}
           onClick={onClick}
         />
       </li>);
@@ -69,41 +61,45 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   return <ul className={styles.matchList}> {listEntries} </ul>;
 }
 
+function calcPlayerData(match: Match): PlayerProps[] {
+  if (match.status === 'finished') {
+    return match.players.map((player) => ({
+      uuid: player.uuid,
+      name: player.name,
+      isWinner: match.stats.winners.some((id) => id === player.uuid),
+      score: match.stats.score[player.uuid],
+    })).sort((a, b) => {
+      // sort major on isWinner, minor on score
+      if (a.isWinner && !b.isWinner) {
+        return 0;
+      }
+      if (b.isWinner && !a.isWinner) {
+        return 1;
+      }
+      return b.score - a.score;
+    });
+  } else {
+    return match.players.map((player) => ({
+      uuid: player.uuid,
+      name: player.name,
+      isWinner: false,
+    }));
+  }
+}
 
 interface MatchEntryProps {
   match: Match;
-  selected: boolean;
+  selected?: boolean;
   onClick: () => void;
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
-  const { players } = props.match;
-  // TODO: maybe compute this higher up
-  let winners: number[] = [];
-  if (props.match.status === 'finished') {
-    winners = [props.match.stats.winner];
-  }
-
-  const playerData = players.map((player, idx) => ({
-    uuid: player.uuid,
-    name: player.name,
-    isWinner: winners.some((num) => num === idx + 1),
-    score: 100,
-  })).sort((a, b) => {
-    // sort major on isWinner, minor on score
-    if (a.isWinner && !b.isWinner) {
-      return 0;
-    }
-    if (b.isWinner && !a.isWinner) {
-      return 1;
-    }
-    return b.score - a.score;
-  });
-
   let className = styles.matchListEntry;
   if (props.selected) {
     className = classnames(styles.selected, className);
   }
+
+  const playerData = calcPlayerData(props.match);
 
   return (
     <div className={className} onClick={props.onClick}>

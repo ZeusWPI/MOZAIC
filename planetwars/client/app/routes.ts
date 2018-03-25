@@ -34,7 +34,11 @@ export default class Routes extends React.Component<any, any> {
             component: BotsPage,
           }),
           h(Route, {
-            path: '/history',
+            path: '/matches/:matchId',
+            component: MatchesPage,
+          }),
+          h(Route, {
+            path: '/matches',
             component: MatchesPage,
           }),
           h(Route, {

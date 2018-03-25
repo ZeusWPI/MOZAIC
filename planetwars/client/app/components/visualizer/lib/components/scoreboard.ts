@@ -1,8 +1,9 @@
 import Game from "./game";
-import Turn from "./turn";
-import { Player } from "./interfaces";
 import * as React from "react";
+import { Component } from "react";
 import * as d3 from "d3";
+import { Player } from '../../../../lib/match/types';
+import { GameState } from '../../../../lib/match/log';
 
 const h = require('react-hyperscript');
 const {
@@ -15,80 +16,59 @@ const {
 const styles = require('./scoreboard.scss');
 
 interface ScoreboardProps {
-  game: Game,
-  turnNum: number
+  game: Game;
+  turnNum: number;
 }
 
-interface ScoreboardState {
-  turn: Turn,
-  scores: Score[]
-}
-
-interface Score {
-  player: Player,
-  y: number
-}
-
-export default class Scoreboard extends React.Component<ScoreboardProps, ScoreboardState> {
-  svg:any;
-  scores: Score[];
-
-  constructor(props:ScoreboardProps){
-    super(props);
-    let turn:Turn = props.game.turns[props.turnNum];
-    let scores:Array<Score> = [];
-    let startY:number = 50;
-    let size:number = 30;
-    turn.players.forEach((player:Player, index:number) => {
-      scores.push({
-        'player': player,
-        'y': startY + size * index
-      });
-    });
-    this.state = {
-      'turn': turn,
-      'scores': scores
+function countPlanets(players: Player[], state: GameState) {
+  const counts: any = {};
+  players.forEach((player) => {
+    counts[player.uuid] = 0;
+  });
+  Object.keys(state.planets).forEach((planetName) => {
+    const planet = state.planets[planetName];
+    if (planet.owner) {
+      counts[planet.owner.uuid] += 1;
     }
-  }
+  });
+  return counts;
+}
 
-  componentDidUpdate() {
-    if (this.props.game) {
-      this.scores = this.state.scores;
-      this.scores.forEach((score:Score, i:number) => {
-        score.player.ship_count = this.state.scores[i].player.ship_count;
-        score.player.planet_count = this.state.scores[i].player.planet_count;
-      });
+function countShips(players: Player[], state: GameState) {
+  const counts: any = {};
+  players.forEach((player) => {
+    counts[player.uuid] = 0;
+  });
+  Object.keys(state.planets).forEach((planetName) => {
+    const planet = state.planets[planetName];
+    if (planet.owner) {
+      counts[planet.owner.uuid] += planet.shipCount;
     }
-  }
+  });
+  state.expeditions.forEach((expedition) => {
+    counts[expedition.owner.uuid] += expedition.shipCount;
+  });
+  return counts;
+}
 
-  componentWillReceiveProps(nextProps:ScoreboardProps) {
-    let turn:Turn = nextProps.game.turns[nextProps.turnNum];
-    let scores:Score[] = this.updateScore(turn.players);
-    this.setState({
-      'turn': turn,
-      'scores': scores
-    });
-  }
+export default class Scoreboard extends Component<ScoreboardProps> {
+  svg: any;
 
   render() {
-    let rows = this.state.scores.map((x:Score) => {
-      return tr({ style:{ color: x.player.color } }, [
+    const { game, turnNum } = this.props;
+    const gameState = game.matchLog.gameStates[turnNum];
+    const planetCounts = countPlanets(game.matchLog.players, gameState);
+    const shipCounts = countShips(game.matchLog.players, gameState);
+
+    const rows = game.matchLog.players.map((player) => {
+      const planetCount = planetCounts[player.uuid];
+      return tr({ style: { color: game.playerColor(player) } }, [
         td("\u25CF"),
-        td(x.player.name),
-        td(x.player.planet_count + ((x.player.planet_count == 1) ? "Planet" : " Planets")),
-        td(x.player.ship_count + "\u2694")
-      ])
-  });
-    return table(`.${styles.scoreboard}`, {}, tbody(rows));
-  }
-  updateScore(players:Player[]) {
-    let scores:Score[] = [];
-    this.state.scores.forEach((score:Score, i:number) => {
-      scores.push({
-        'player': players[i],
-        'y': score.y
-      });
+        td(player.name),
+        td(planetCount + ' ' + ((planetCount === 1) ? "Planet" : " Planets")),
+        td(shipCounts[player.uuid] + "\u2694"),
+      ]);
     });
-    return scores;
+    return table(`.${styles.scoreboard}`, {}, tbody(rows));
   }
 }

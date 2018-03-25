@@ -2,36 +2,44 @@ import * as React from 'react';
 import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
 import { div, h } from 'react-hyperscript-helpers';
-import { parseLogFileSync } from '../../utils/MatchParser';
+import { parseLog } from '../../lib/match/log';
+
+const styles = require('./Matches.scss');
+
 
 export interface MatchViewProps {
-  match: Match;
+  match?: Match;
 }
 
 export class MatchView extends React.Component<MatchViewProps> {
 
   public render() {
     const { match } = this.props;
+    if (!match) {
+      return null;
+    }
     switch (match.status) {
       case 'finished': {
-        const log = parseLogFileSync(this.props.match.logPath)
-        return (
-          <Visualizer
-            playerData={{ players: match.players.map((p) => p.name) }}
-            gameLog={log}
-          />);
+        const log = parseLog(match.players, match.logPath);
+        return <Visualizer matchLog={log}/>;
       }
       case 'error': {
         return (
-          <div>
-            {match.error}
-          </div>);
+          <div className={styles.matchViewContainer}>
+            <div className={styles.matchError}>
+              {match.error}
+            </div>
+          </div>
+        );
       }
       case 'playing': {
         return (
-          <div>
-            in progress
-        </div>);
+          <div className={styles.matchViewContainer}>
+            <div className={styles.matchInProgress}>
+              match in progress
+            </div>
+          </div>
+        );
       }
     }
   }

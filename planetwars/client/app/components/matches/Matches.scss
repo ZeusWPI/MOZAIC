@@ -111,3 +111,28 @@ $selectedHighlightWidth: 4px;
     font-size: 3rem;
   }
 }
+
+.matchViewContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.matchError {
+  white-space: pre;
+  font-family: monospace;
+  font-size: 10pt;
+  overflow-y: scroll;
+  margin: 50px 0;
+}
+
+.matchError::-webkit-scrollbar {
+  display: none;
+}
+
+.matchInProgress {
+  font-size: 2rem;
+  margin: 50px 0;
+}

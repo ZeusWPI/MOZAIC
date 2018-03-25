@@ -3,16 +3,16 @@
         {
             "name": "bert",
             "command": "python3",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
+            "args": ["../games/planetwars/bots/simplebot/simple.py"]
         },
         {
             "name": "timp",
             "command": "python3",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
+            "args": ["../games/planetwars/bots/simplebot/imple_time_out.py"]
         }
     ],
     "game_config": {
-        "map_file": "../planetwars/maps/hex.json",
+        "map_file": "../games/planetwars/maps/hex.json",
         "max_turns": 500
     }
 }
