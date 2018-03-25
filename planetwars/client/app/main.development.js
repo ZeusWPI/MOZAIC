@@ -79,42 +79,47 @@ app.on('ready', () =>
         click() {
           mainWindow.inspectElement(x, y);
         },
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Cut',
-        role: 'cut',
-        accelerator: 'CmdOrCtrl+X',
-      }, {
-        label: 'Copy',
-        role: 'copy',
-        accelerator: 'CmdOrCtrl+C',
-      }, {
-        label: 'Paste',
-        role: 'paste',
-        accelerator: 'CmdOrCtrl+V',
-      }, {
-        label: 'Select all',
-        role: 'selectall',
-        accelerator: 'CmdOrCtrl+A'
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Undo',
-        role: 'undo',
-        accelerator: 'CmdOrCtrl+Z',
-      }, {
-        label: 'Redo',
-        role: 'redo',
-        accelerator: 'CmdOrCtrl+Shift+Z'
       }]).popup(mainWindow);
     });
 
-    globalShortcut.register('CmdOrCtrl+Q', () => app.quit());
-    globalShortcut.register('CmdOrCtrl+R', () => mainWindow.webContents.reload());
-    globalShortcut.register('Ctrl+CmdOrCtrl+F', () => mainWindow.setFullScreen(!mainWindow.isFullScreen()));
-    globalShortcut.register('Alt+CtrlOrCmd+I', () => mainWindow.toggleDevTools());
-    globalShortcut.register('Ctrl+W', () => mainWindow.close());
-    globalShortcut.register('F12', () => mainWindow.toggleDevTools());
-    globalShortcut.register('F11', () => mainWindow.setFullScreen(!mainWindow.isFullScreen()));
+    const template = [{
+      accelerator: 'CmdOrCtrl+Q',
+      click() {
+        app.quit()
+      }
+    }, {
+      accelerator: 'CmdOrCtrl+R',
+      click() {
+        mainWindow.webContents.reload()
+      }
+    }, {
+      accelerator: 'Ctrl+CmdOrCtrl+F',
+      click() {
+        mainWindow.setFullScreen(!mainWindow.isFullScreen())
+      }
+    }, {
+      accelerator: 'Alt+CmdOrCtrl+I',
+      click() {
+        mainWindow.toggleDevTools()
+      }
+    }, {
+      accelerator: 'Ctrl+W',
+      click() {
+        mainWindow.close()
+      }
+    }, {
+      accelerator: 'F12',
+      click() {
+        mainWindow.toggleDevTools()
+      }
+    }, {
+      accelerator: 'F11',
+      click() {
+        mainWindow.setFullScreen(!mainWindow.isFullScreen())
+      }
+    }];
+
+    menu = Menu.buildFromTemplate(template);
+    mainWindow.setMenu(menu);
+    mainWindow.setMenuBarVisibility(false);
   }));
