@@ -209,7 +209,7 @@ function getAngle(middle, point) {
 
 function initVoronoi(turns, colorFunction, box) {
   var voronoi = d3.voronoi().extent(box);
-  var planets = turns[0].planets;
+  var planets = Object.values(turns[0].planets);
   var posMap = {}; // maps middle coordinate on the planet
   planets.forEach(p => posMap[[p.x, p.y]] = p);
 
@@ -265,7 +265,7 @@ function initVoronoi(turns, colorFunction, box) {
 
   for (var turn of turns) {
     var changed = false;
-    turn.planets.forEach(p => {
+    Object.values(turn.planets).forEach(p => {
       data.used[p.name] = false;
       if (data.polygonsNameMap[p.name].owner !== p.owner) {
         changed = true;

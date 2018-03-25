@@ -30,7 +30,7 @@ class Renderer extends React.Component<any> {
   setupRenderers() {
     // remove all old elements
     d3.select(this.svg).selectAll('g').remove();
-
+    this.voronoiContainer = d3.select(this.svg).append('g');
     this.container = d3.select(this.svg).append('g');
 
     this.planetRenderer = new PlanetRenderer(
@@ -41,12 +41,12 @@ class Renderer extends React.Component<any> {
       this.props.game,
       this.container,
     );
-    // this.voronoiRenderer = Voronoi.initVoronoi(
-    //   this.props.game.turns,
-    //   Config.player_color,
-    //   [this.min, this.max]
-    // );
     this.calculateViewBox();
+    this.voronoiRenderer = Voronoi.initVoronoi(
+      this.props.game.matchLog.gameStates,
+      (d: any) => this.props.game.playerColor(d),
+      [this.min, this.max]
+    );
     this.createZoom();
   }
 
@@ -107,7 +107,7 @@ class Renderer extends React.Component<any> {
     });
     this.planetRenderer.draw(planets, params);
     this.expeditionRenderer.draw(gameState.expeditions, params);
-    // this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
+    this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
   }
 }
 
