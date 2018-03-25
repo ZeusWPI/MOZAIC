@@ -6,7 +6,12 @@
     right: 0;
     top: 3%;
     padding: 1%;
-    font-family: sans-serif;
-    font-size: 1vw;
+    font-size: 1rem;
+    td {
+      max-width: 100px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
   }
 }
