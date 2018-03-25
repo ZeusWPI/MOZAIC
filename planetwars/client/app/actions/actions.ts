@@ -4,6 +4,7 @@ import { INotification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
 import { v4 as uuidv4 } from 'uuid';
+import { push } from 'react-router-redux';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { IGState } from '../reducers';
@@ -64,6 +65,9 @@ export function runMatch(params: MatchParams) {
     };
 
     dispatch(saveMatch(match));
+    // TODO: ideally we'd have a separate action for this
+    dispatch(push(`/matches/${matchId}`));
+
     let runner = new GameRunner(config);
 
     runner.on('matchEnded', () => {
