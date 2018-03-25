@@ -70,6 +70,7 @@
       "app/main.js",
       "app/main.js.map",
       "bin/",
+      "app/components/visualizer/lib/assets/",
       "resources/icon.*"
     ],
     "directories": {
