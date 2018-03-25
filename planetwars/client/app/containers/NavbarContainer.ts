@@ -38,6 +38,7 @@ const mapDispatchToProps = (dispatch: any) => {
     },
     clearNotifications: () => {
       dispatch(clearNotifications());
+      dispatch(toggleNotifications());
     },
   };
 };

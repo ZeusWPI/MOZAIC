@@ -71,9 +71,17 @@ export function runMatch(params: MatchParams) {
 
     runner.on('matchEnded', () => {
       dispatch(completeMatch(matchId));
+      const title = 'Match ended';
+      const body = `A match on map '${state.maps[params.map].name}' has ended`;
+      const link = `/matches/${matchId}`;
+      dispatch(addNotification({ title, body, link, type: 'Finished' }));
     });
     runner.on('error', (error) => {
       dispatch(handleMatchError(matchId, error));
+      const title = 'Match errored';
+      const body = `A match on map '${state.maps[params.map].name}' has errored`;
+      const link = `/matches/${matchId}`;
+      dispatch(addNotification({ title, body, link, type: 'Error' }));
     });
     runner.run();
   }

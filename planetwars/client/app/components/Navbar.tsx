@@ -113,7 +113,7 @@ export class NotificationModal extends React.Component<NotificationModalProps> {
         footer(".modal-card-foot", [
           button(".button", {
             onClick: () => this.props.clearNotifications(),
-          }, ["Mark all as read"])]),
+          }, ["Mark all as read & close"])]),
       ]),
     ]);
   }
