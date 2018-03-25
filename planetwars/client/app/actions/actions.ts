@@ -1,4 +1,4 @@
-import { Match, PlayingMatch, MatchId, IMapMeta } from '../utils/GameModels';
+import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap } from '../utils/GameModels';
 import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
 import { INotification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
@@ -40,7 +40,7 @@ export function runMatch(params: MatchParams) {
   return (dispatch: any, getState: any) => {
     // TODO: split this logic
     let matchId = uuidv4();
-    
+
     let match: Match = {
       status: 'playing',
       uuid: matchId,
@@ -89,15 +89,23 @@ export function completeMatch(matchId: MatchId) {
         };
       });
       const log = parseLog(matchPlayers, match.logPath);
-      const stats = {
-        winners: Array.from(log.getWinners()).map((player) => player.uuid),
-        // TODO
-        score: {},
-      };
+      // TODO: this should go somewhere else
+      // calc stats
+      const winners = Array.from(log.getWinners()).map((player) => {
+        return player.uuid;
+      });
+      const score: PlayerMap<number> = {};
+      log.players.forEach((player) => {
+        score[player.uuid] = player.score;
+      });
+
       dispatch(saveMatch({
         ...match,
         status: 'finished',
-        stats,
+        stats: {
+          winners,
+          score,
+        },
       }));
     }
   };

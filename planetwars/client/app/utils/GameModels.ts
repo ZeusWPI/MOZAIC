@@ -39,7 +39,7 @@ export interface MatchStats {
   score: PlayerMap<number>;
 }
 
-interface PlayerMap<T> {
+export interface PlayerMap<T> {
   [uuid: string]: T;
 }
 
