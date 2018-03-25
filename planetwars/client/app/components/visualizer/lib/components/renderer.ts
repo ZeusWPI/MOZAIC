@@ -3,6 +3,7 @@ const React = require('react');
 const h = require('react-hyperscript');
 
 import Config from '../util/config';
+import { GameState } from '../../../../lib/match/log';
 const ResourceLoader = require('../util/resourceLoader');
 const spaceMath = require('../util/spacemath')
 const PlanetRenderer = require('../renderers/planets');
@@ -10,39 +11,41 @@ const ExpeditionRenderer = require('../renderers/expeditions');
 const Voronoi = require('./voronoi.js')
 let styles = require('./renderer.scss');
 
-class Renderer extends React.Component {
-  componentDidUpdate() {
-    if (this.props.game) {
-      this.gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
-      this.calculateViewBox();
-      this.draw();
-      //this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
-    }
-  }
-
+class Renderer extends React.Component<any> {
   componentDidMount() {
     this.loadResources();
-    this.voronoiContainer = d3.select(this.svg).append('g');
+    //this.voronoiContainer = d3.select(this.svg).append('g');
+  }
+
+  componentDidUpdate(prevProps: any) {
+    if (this.props.game !== prevProps.game) {
+      this.setupRenderers();
+    }
+    const gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
+    this.draw(gameState);
+  }
+
+  setupRenderers() {
+    // remove all old elements
+    d3.select(this.svg).selectAll('g').remove();
+
     this.container = d3.select(this.svg).append('g');
-    this.planetRenderer = new PlanetRenderer(this.props.game, this.container);
+
+    this.planetRenderer = new PlanetRenderer(
+      this.props.game,
+      this.container,
+    );
     this.expeditionRenderer = new ExpeditionRenderer(
       this.props.game,
       this.container,
     );
-
-    this.gameState = this.props.game.matchLog.gameStates[0];
-    this.calculateViewBox();
     // this.voronoiRenderer = Voronoi.initVoronoi(
     //   this.props.game.turns,
     //   Config.player_color,
     //   [this.min, this.max]
     // );
+    this.calculateViewBox();
     this.createZoom();
-    if (this.props.game) {
-      this.gameState = this.props.game.matchLog.gameStates[this.props.turnNum]
-      this.calculateViewBox();
-      this.draw();
-    }
   }
 
   render() {
@@ -54,10 +57,11 @@ class Renderer extends React.Component {
   }
 
   calculateViewBox() {
-    // TODO: hook config for this
+    const firstState = this.props.game.matchLog.gameStates[0];
+
     const offset = Config.orbitSize + Config.padding;
-    const ps = Object.keys(this.gameState.planets).map((planetName: string) => {
-      return this.gameState.planets[planetName];
+    const ps = Object.keys(firstState.planets).map((planetName: string) => {
+      return firstState.planets[planetName];
     });
     const xMin = d3.min(ps, (p: any) => p.x - Config.planetSize)! - offset;
     const xMax = d3.max(ps, (p: any) => p.x + Config.planetSize)! + offset;
@@ -81,25 +85,26 @@ class Renderer extends React.Component {
     var zoom = d3.zoom()
       .scaleExtent(Config.maxScales)
       .on('zoom', () => {
-        var transform = d3.event.transform;
+        const transform = d3.event.transform;
         transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
         transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
         this.container.attr('transform', transform);
-        this.voronoiContainer.attr('transform', transform);
+        // this.voronoiContainer.attr('transform', transform);
       });
     d3.select(this.svg).call(zoom);
   }
 
-  draw() {
-    let params = {
+  draw(gameState: GameState) {
+    const params = {
       speed: this.props.speed,
-      scale: this.scale
+      scale: this.scale,
     };
-    const planets = Object.keys(this.gameState.planets).map((planetName) => {
-      return this.gameState.planets[planetName];
+    const planets = Object.keys(gameState.planets).map((planetName) => {
+      return gameState.planets[planetName];
     });
     this.planetRenderer.draw(planets, params);
-    this.expeditionRenderer.draw(this.gameState.expeditions, params);
+    this.expeditionRenderer.draw(gameState.expeditions, params);
+    // this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
   }
 }
 

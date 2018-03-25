@@ -36,55 +36,43 @@ interface VisualizerProps {
 }
 
 interface VisualizerState {
-  hide_card: boolean;
   turnNum: number;
-  numTurns: number;
   speed: number;
   playing: boolean;
-  game: any;
 }
 
 export class Visualizer extends React.Component<VisualizerProps, VisualizerState> {
   timer: any;
+  game: Game;
+
   constructor(props: VisualizerProps) {
     super(props);
     this.state = {
-      hide_card: true,
       turnNum: 0,
-      numTurns: 0,
       speed: 1,
       playing: false,
-      game: null
     };
   }
 
   componentDidMount() {
-    if (this.props.matchLog) {
-      this.setLog(this.props.matchLog);
-      this.setPlaying(true);
-    }
+    this.setPlaying(true);
   }
-
 
 
   componentWillReceiveProps(nextProps: VisualizerProps) {
-    if (nextProps.matchLog) {
-      this.setLog(nextProps.matchLog);
+    if (this.props !== nextProps) {
+      this.game = new Game(nextProps.matchLog);
+      this.setTurn(0);
     }
   }
 
-
-
   setTurn(num: number) {
-    let turnNum = Math.min(num, this.state.numTurns);
-    this.setState({ hide_card: true });
-    if (turnNum == this.state.numTurns) {
+    const lastTurn = this.game.matchLog.gameStates.length - 1;
+    const turnNum = Math.min(num, lastTurn);
+    if (turnNum === lastTurn) {
       this.setPlaying(false);
-      if (turnNum > 0) {
-        this.setState({ hide_card: false });
-      }
     }
-    this.setState({ turnNum: turnNum });
+    this.setState({ turnNum });
   }
 
   setSpeed(speed: number) {
@@ -93,16 +81,6 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
         // update timer
         this.setTimer();
       }
-    });
-  }
-
-  setLog(matchLog: MatchLog) {
-    const game = new Game(matchLog);
-    this.setState({
-      game,
-      turnNum: 0,
-      hide_card: true,
-      numTurns: game.matchLog.gameStates.length - 1,
     });
   }
 
@@ -128,7 +106,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     const controls = div(`.${styles.control}`, [
       h(Controls, {
         turnNum: this.state.turnNum,
-        numTurns: this.state.numTurns,
+        numTurns: this.props.matchLog.gameStates.length - 1,
         playing: this.state.playing,
         speed: this.state.speed,
         setPlaying: (v: boolean) => this.setPlaying(v),
@@ -137,19 +115,19 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       })
     ])
 
-    if (!this.state.game) {
+    if (!this.game) {
       return div(`.${styles.visualizerRootNode}`, [
         controls
       ])
     }
 
     let scoreboard = h(Scoreboard, {
-      game: this.state.game,
+      game: this.game,
       turnNum: this.state.turnNum
     });
 
     let renderer = h(Renderer, {
-      game: this.state.game,
+      game: this.game,
       turnNum: this.state.turnNum,
       speed: this.state.speed
     });
