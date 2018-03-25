@@ -31,9 +31,12 @@ export class MatchView extends React.Component<MatchViewProps> {
       }
       case 'playing': {
         return (
-          <div>
-            in progress
-        </div>);
+          <div className={styles.matchViewContainer}>
+            <div className={styles.matchInProgress}>
+              match in progress
+            </div>
+          </div>
+        );
       }
     }
   }

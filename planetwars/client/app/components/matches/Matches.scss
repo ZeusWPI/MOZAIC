@@ -115,6 +115,9 @@ $selectedHighlightWidth: 4px;
 .matchViewContainer {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
 }
 
 .matchError {
@@ -122,9 +125,14 @@ $selectedHighlightWidth: 4px;
   font-family: monospace;
   font-size: 10pt;
   overflow-y: scroll;
-  margin: 25px 50px;
+  margin: 50px 0;
 }
 
 .matchError::-webkit-scrollbar {
   display: none;
+}
+
+.matchInProgress {
+  font-size: 2rem;
+  margin: 50px 0;
 }
