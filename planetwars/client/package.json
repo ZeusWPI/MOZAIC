@@ -49,20 +49,7 @@
   "build": {
     "productName": "BottleBats",
     "appId": "org.zeuswpi.bottlebats",
-    "dmg": {
-      "contents": [{
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ]
-    },
+    "copyright": "Copyright © 2018 Zeus WPI",
     "files": [
       "app/dist/",
       "node_modules/",
@@ -85,6 +72,23 @@
     "linux": {
       "target": [
         "AppImage"
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.games"
+    },
+    "dmg": {
+      "contents": [{
+          "x": 410,
+          "y": 150,
+          "type": "link",
+          "path": "/Applications"
+        },
+        {
+          "x": 130,
+          "y": 150,
+          "type": "file"
+        }
       ]
     }
   },
