@@ -28,7 +28,7 @@ function mapStateToProps(state: IGState, ownProps: any): StateProps {
   });
 
   const selectedId: string | undefined = ownProps.match.params.matchId;
-  if (selectedId) {
+  if (selectedId && state.matches[selectedId]) {
     return {
       matches,
       selectedMatch: getMatchData(state, selectedId),
