@@ -28,7 +28,7 @@ export default class MatchViewer extends Component<MatchViewerProps> {
           selected={this.props.selectedMatch}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={this.props.selectedMatch} />
+        <MatchView match={this.props.selectedMatch}/>
       </div>);
   }
 
