@@ -1,32 +1,42 @@
 @import '../../app.global.scss';
 
-.aboutPage {
-  width: 85%;
-  height: 100%;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  flex-direction: column;
-  margin: auto;
 
-  .aboutTitle {
-    font-size: xx-large;
+.infoPage {
+  padding: 30px 0;
+  overflow-y: auto;
+  p {
+    font-size: 1.2rem;
   }
-
-  .subTitle {
-    font-size: x-large;
-  }
-
-  .argsInfoList {
+  ul {
     list-style-type: disc;
   }
-
-  .mapToggeld {
-    visibility: visible;
-  }
-
-  .mapHidden {
-    visibility: hidden;
-    height: 0;
+  .wallOfText {
+    padding: 10px 0 0 0;
   }
 }
+
+// .aboutPage {
+//   width: 85%;
+//   height: 100%;
+//   display: flex;
+//   justify-content: flex-start;
+//   align-items: center;
+//   flex-direction: column;
+//   margin: auto;
+//   .aboutTitle {
+//     font-size: xx-large;
+//   }
+//   .subTitle {
+//     font-size: x-large;
+//   }
+//   .argsInfoList {
+//     list-style-type: disc;
+//   }
+//   .mapToggeld {
+//     visibility: visible;
+//   }
+//   .mapHidden {
+//     visibility: hidden;
+//     height: 0;
+//   }
+// }
