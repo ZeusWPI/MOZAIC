@@ -90,7 +90,7 @@ class Renderer extends React.Component<any> {
         transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
         transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
         this.container.attr('transform', transform);
-        // this.voronoiContainer.attr('transform', transform);
+        this.voronoiContainer.attr('transform', transform);
       });
     d3.select(this.svg).call(zoom);
   }
