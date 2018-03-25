@@ -69,24 +69,24 @@ class LogParser {
   }
 
   private parsePlayerInput(message: PlayerInputMessage) {
-    const player = this.players[message.player_id - 1];
+    const player = this.players[message.player_id];
     this.log.setInput(player, message.content);
   }
 
   private parseInputError(message: InputErrorMessage) {
-    const player = this.players[message.player_id - 1];
+    const player = this.players[message.player_id];
     this.log.inputError(player, message.error);
   }
 
   private parseDispatch(message: DispatchMessage) {
-    const player = this.players[message.player_id - 1];
+    const player = this.players[message.player_id];
     this.log.addCommand(player, {
       command: message.command,
     });
   }
 
   private parseIllegalCommand(message: IllegalCommandMessage) {
-    const player = this.players[message.player_id - 1];
+    const player = this.players[message.player_id];
     this.log.addCommand(player, {
       command: message.command,
       error: message.error,
