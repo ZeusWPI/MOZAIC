@@ -89,8 +89,8 @@ class Renderer extends React.Component<any> {
         const transform = d3.event.transform;
         // TODO restore scroll constraints, but make them work on maps with
         // arbetrary center points
-        //transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
-        //transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
+        transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
+        transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
         this.container.attr('transform', transform);
         this.voronoiContainer.attr('transform', transform);
       });

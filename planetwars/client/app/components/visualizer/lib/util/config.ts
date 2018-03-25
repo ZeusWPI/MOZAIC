@@ -11,6 +11,7 @@ export default {
   ],
   planetSize: 1,
   maxPlanetSize: 2.5,
+  minPlanetSize: 1,
   orbitSize: 1,
   padding: 5,
   maxScales: [0.3, 3] as [number, number],
