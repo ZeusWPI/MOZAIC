@@ -1,6 +1,6 @@
-const remote = require('electron').remote;
-const path = require('path');
-const Config = require('./config');
+import { remote } from 'electron';
+import * as path from 'path';
+import Config from './config';
 
 const prefix = (process.env.NODE_ENV === 'development') ?
   path.resolve('app') :
@@ -9,14 +9,16 @@ const prefix = (process.env.NODE_ENV === 'development') ?
 const resourcePath = path.resolve(prefix, 'components', 'visualizer', 'lib', 'assets', 'images');
 
 class ResourceLoader {
-  constructor(svg) {
+  public svg: any;
+
+  constructor(svg: any) {
     this.svg = svg;
   }
 
-  setupPatterns() {
+  public setupPatterns() {
     // Define patterns
     this.svg.append("defs");
-    Config.planet_types.forEach(p => {
+    Config.planetTypes.forEach((p) => {
       this.setupPattern(p + ".svg", 100, 100, p);
     });
     this.setupPattern("rocket.svg", 100, 100, "ship");
@@ -24,7 +26,7 @@ class ResourceLoader {
     this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
-  setupPattern(name, width, height, id) {
+  public setupPattern(name: any, width: any, height: any, id: any) {
     this.svg.select("defs")
       .append("pattern")
       .attr("id", id)
@@ -39,7 +41,5 @@ class ResourceLoader {
       .attr("xlink:href", path.resolve(resourcePath, name));
   }
 }
-
-
 
 module.exports = ResourceLoader;

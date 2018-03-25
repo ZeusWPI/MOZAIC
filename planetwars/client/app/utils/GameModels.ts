@@ -1,3 +1,5 @@
+import { JsonPlanet, isJsonPlanet } from '../lib/match/types';
+import { BotID } from './ConfigModels';
 type LogPath = string;
 
 export type MatchId = string;
@@ -20,7 +22,7 @@ export type FinishedMatch = MatchProperties & {
 };
 
 export type ErroredMatch = MatchProperties & {
-  status: 'error',
+  status: 'error';
   error: string,
 };
 
@@ -33,11 +35,12 @@ export enum MatchStatus {
 }
 
 export interface MatchStats {
-  winner: number;
-  commandsOrdered: number[]; // Number of commands / player;
-  planetsFlipped: number;
-  shipsSend: number[];
-  turns: number;
+  winners: BotID[];
+  score: PlayerMap<number>;
+}
+
+export interface PlayerMap<T> {
+  [uuid: string]: T;
 }
 
 // tslint:disable-next-line:variable-name
@@ -45,47 +48,6 @@ export const MatchStatuses = Object.keys(MatchStatus);
 
 export interface IMatchList {
   [matchId: string]: Match;
-}
-
-export interface IGameState {
-  planets: Planet[];
-  expeditions: IExpedition[];
-}
-
-export interface ILogFormat {
-  players: string[];
-  turns: IGameState[];
-}
-
-// TODO: Switch to camelCase
-export interface Planet {
-  "ship_count": number;
-  "x": number;
-  "y": number;
-  "owner": number;
-  "name": string;
-}
-
-export function isPlanet(obj: any): obj is Planet {
-  const planet = obj as Planet;
-  return (
-    (typeof planet.ship_count === 'number') &&
-    (typeof planet.x === 'number') &&
-    (typeof planet.y === 'number') &&
-    (typeof planet.owner === 'number' ||
-      typeof planet.owner === 'undefined' ||
-      planet.owner === null) &&
-    (typeof planet.name === 'string')
-  );
-}
-
-export interface IExpedition {
-  "id": number;
-  "ship_count": number;
-  "origin": string;
-  "destination": string;
-  "owner": number;
-  "turns_remaining": number;
 }
 
 export interface IMapList {
@@ -104,7 +66,7 @@ export interface IMapMeta {
 
 export interface GameMap {
   // name: string;
-  planets: Planet[];
+  planets: JsonPlanet[];
 }
 
 export function isGameMap(obj: any): obj is GameMap {
@@ -112,6 +74,6 @@ export function isGameMap(obj: any): obj is GameMap {
   return (
     // (typeof map.name === 'string') &&
     (Array.isArray(map.planets)) &&
-    (map.planets.every((p) => isPlanet(p)))
+    (map.planets.every((p) => isJsonPlanet(p)))
   );
 }
