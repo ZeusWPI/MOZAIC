@@ -4,6 +4,9 @@ import { Match, FinishedMatch, ErroredMatch } from './types';
 import { div, h } from 'react-hyperscript-helpers';
 import { parseLog } from '../../lib/match/log';
 
+const styles = require('./Matches.scss');
+
+
 export interface MatchViewProps {
   match: Match;
 }
@@ -19,9 +22,12 @@ export class MatchView extends React.Component<MatchViewProps> {
       }
       case 'error': {
         return (
-          <div>
-            {match.error}
-          </div>);
+          <div className={styles.matchViewContainer}>
+            <div className={styles.matchError}>
+              {match.error}
+            </div>
+          </div>
+        );
       }
       case 'playing': {
         return (
