@@ -6,6 +6,7 @@ import {
   Expedition,
   JsonPlanet,
   JsonExpedition,
+  JsonCommand,
 } from '../types';
 import * as fs from 'mz/fs';
 
@@ -89,4 +90,28 @@ interface LogMessage {
 interface StepMessage extends LogMessage {
   msg: 'step';
   state: JsonGameState;
+}
+
+interface PlayerInputMessage extends LogMessage {
+  msg: 'message received';
+  content: string;
+}
+
+interface DispatchMessage extends LogMessage {
+  msg: 'dispatch';
+  player_id: number;
+  dispatch: JsonCommand;
+}
+
+interface InputErrorMessage extends LogMessage {
+  msg: 'parse error';
+  player_id: number;
+  error: string;
+}
+
+interface IllegalCommandMessage extends LogMessage {
+  msg: 'illegal command';
+  player_id: number;
+  command: JsonCommand;
+  error: string;
 }

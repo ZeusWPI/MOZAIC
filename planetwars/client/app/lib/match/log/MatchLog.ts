@@ -6,15 +6,18 @@ import {
   Expedition,
   JsonPlanet,
   JsonExpedition,
+  JsonCommand,
 } from '../types';
 
 export class MatchLog {
   public players: Player[];
   public gameStates: GameState[];
+  public playerInputs: PlayerInputs[];
 
   constructor(players: Player[]) {
     this.players = players;
     this.gameStates = [];
+    this.playerInputs = [];
   }
 
   public getWinners(): Set<Player> {
@@ -54,6 +57,21 @@ export class GameState {
     });
     return livingPlayers;
   }
+}
+
+interface PlayerInputs {
+  [playerId: string]: PlayerInput;
+}
+
+export class PlayerInput {
+  public raw: string;
+  public error?: string;
+  public commands: Command[];
+}
+
+interface Command {
+  command: JsonCommand;
+  error?: string;
 }
 
 export default MatchLog;

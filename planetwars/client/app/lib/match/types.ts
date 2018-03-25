@@ -41,6 +41,12 @@ export interface JsonGameState {
   expeditions: JsonExpedition[];
 }
 
+export interface JsonCommand {
+  "origin": string;
+  "target": string;
+  "num_ships": string;
+}
+
 export interface JsonPlanet {
   "ship_count": number;
   "x": number;
