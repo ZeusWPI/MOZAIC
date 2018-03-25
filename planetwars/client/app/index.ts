@@ -4,7 +4,7 @@ import { AppContainer } from 'react-hot-loader';
 import { h } from 'react-hyperscript-helpers';
 
 import Root from './containers/Root';
-import { FatalError } from './components/FatalError';
+import { FatalErrorView } from './components/FatalError';
 import { initialState } from './reducers/index';
 import { bindToStore } from './utils/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
@@ -25,17 +25,34 @@ Promise.config({
   // monitoring: true,
 });
 
+type BreakType = 'fatal' | 'map' | 'bots';
+class Breaker extends Error {
+  constructor(public type: string, public error: Error) {
+    super();
+  }
+}
+
 initializeDirs()
   .then(() => bindToStore(store))
-  .then(renderApp)
-  .then(
-    populateMaps,
-    (err: any) => alert(`Loading some default maps failed with ${err}`))
-  .then(
-    populateBots,
-    (err: any) => alert(`Loading some default bots failed with ${err}`))
-  .catch((err: any) => renderCustom(h(FatalError, { error: err })))
-  .catch((err: any) => alert(err));
+  .then(renderApp).catch((err) => new Breaker('fatal', err))
+  .then(populateMaps).catch((err) => new Breaker('map', err))
+  .then(populateBots).catch((err) => new Breaker('bots', err))
+  .catch((br: Breaker) => {
+    switch (br.type) {
+      case 'fatal': {
+        renderCustom(h(FatalErrorView, { error: br.error }));
+        break;
+      }
+      case 'map': {
+        alert(`Loading some default maps failed with ${br.error}`);
+        break;
+      }
+      case 'bots': {
+        alert(`Loading some default bots failed with ${br.error}`);
+        break;
+      }
+    }
+  });
 
 function renderApp() {
   render(

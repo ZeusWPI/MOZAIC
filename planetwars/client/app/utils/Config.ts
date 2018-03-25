@@ -37,7 +37,13 @@ export class Config {
   ];
 
   public static staticMaps = p.resolve(Config._resources, 'maps');
-  public static staticBots = p.resolve(Config._resources, 'bots');
+
+  // Yes this sucks, but it's the simplest thing right now
+  private static _staticBots = p.resolve(Config._resources, 'bots');
+  public static staticBots: { [key: string]: string } = {
+    [p.resolve(Config._staticBots, 'simple1.py')]: 'SimpleBot 1',
+    [p.resolve(Config._staticBots, 'simple2.py')]: 'SimpleBot 2',
+  };
 
   public static matchLogPath(matchId: MatchId): string {
     return p.resolve(Config.matches, matchId + '.json');
@@ -45,10 +51,6 @@ export class Config {
 
   public static generateMapPath(uuid: MapId): string {
     return p.resolve(Config.maps, uuid + '.json');
-  }
-
-  public static botPath(name: string): string {
-    return p.resolve(Config.bots, `${name}.json`);
   }
 
   public static mapMath(name: string): string {

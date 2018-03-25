@@ -1,6 +1,7 @@
 import * as fs from 'mz/fs';
 import { v4 as uuidv4 } from 'uuid';
 import * as Promise from 'bluebird';
+import * as p from 'path';
 
 import { Config } from './Config';
 import { IMapMeta, GameMap, isGameMap } from './GameModels';
@@ -15,7 +16,7 @@ export class Importer {
         const uuid = uuidv4();
         const mapPath = Config.generateMapPath(uuid);
         const slots = map.planets.filter((p) => p.owner !== undefined).length;
-        const name = map.name;
+        const name = p.parse(orPath).name;
         const createdAt = new Date(Date.now());
         return Promise
           .resolve(fs.writeFile(mapPath, JSON.stringify(map, undefined, 4)))

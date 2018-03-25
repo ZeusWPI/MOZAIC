@@ -1,11 +1,4 @@
 {
-  "name": "large",
-  "players": [
-    "player_1",
-    "player_2",
-    "player_3",
-    "player_4"
-  ],
   "planets": [{
       "name": "OJCKCVKJGJ",
       "owner": 1,

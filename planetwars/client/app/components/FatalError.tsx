@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-export const FatalError: React.SFC<{ error: any }> = ({ error }) => {
+export const FatalErrorView: React.SFC<{ error: any }> = ({ error }) => {
   const Github = () => (
     <a href="https://github.com/ZeusWPI/MOZAIC/issues/">
       GitHub <span className="fa fa-github" />

@@ -42,5 +42,36 @@ export function populateMaps(): Promise<void[]> {
 }
 
 export function populateBots(): Promise<void[]> {
-  return Promise.resolve([]);
+  const state: IGState = store.getState();
+  if (Object.keys(state.bots).length !== 0) {
+    return Promise.resolve([]);
+  }
+  const pBots = Object.keys(Config.staticBots).map((path) => {
+    const file = p.parse(path).base;
+    const newPath = p.resolve(Config.bots, file);
+    const name = `${Config.staticBots[path]} (check if python is correct before executing)`;
+    const command = 'python3';
+    const args = [newPath];
+    const config = { name, command, args };
+    return Promise
+      .resolve(copyFile(path, newPath))
+      .then(() => store.dispatch(A.addBot(config)));
+  });
+  return Promise.all(pBots);
+}
+
+// https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
+export function copyFile(source: string, target: string) {
+  const rd = fs.createReadStream(source);
+  const wr = fs.createWriteStream(target);
+  return new Promise((resolve, reject) => {
+    rd.on('error', reject);
+    wr.on('error', reject);
+    wr.on('finish', resolve);
+    rd.pipe(wr);
+  }).catch((error) => {
+    rd.destroy();
+    wr.end();
+    throw error;
+  });
 }

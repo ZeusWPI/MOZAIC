@@ -103,14 +103,14 @@ export interface IMapMeta {
 }
 
 export interface GameMap {
-  name: string;
+  // name: string;
   planets: Planet[];
 }
 
 export function isGameMap(obj: any): obj is GameMap {
   const map = obj as GameMap;
   return (
-    (typeof map.name === 'string') &&
+    // (typeof map.name === 'string') &&
     (Array.isArray(map.planets)) &&
     (map.planets.every((p) => isPlanet(p)))
   );
