@@ -14,6 +14,7 @@ export class Config {
   private static _maps = 'maps';
   private static _bin = 'bin';
   private static _configs = 'configs';
+  private static _resources = p.resolve(appPath, 'resources');
 
   public static base = p.resolve(remote.app.getPath('userData'));
   public static bin = p.resolve(appPath, Config._bin);
@@ -24,6 +25,7 @@ export class Config {
   public static maps = p.resolve(Config.data, Config._maps);
   public static configs = p.resolve(Config.data, Config._configs);
   public static matchRunner = p.resolve(Config.bin, 'mozaic_bot_driver');
+  public static isDev = (process.env.NODE_ENV === 'development');
 
   // This used for knowing which dirs need initialisation
   public static dirs = [
@@ -33,6 +35,9 @@ export class Config {
     Config.maps,
     Config.configs,
   ];
+
+  public static staticMaps = p.resolve(Config._resources, 'maps');
+  public static staticBots = p.resolve(Config._resources, 'bots');
 
   public static matchLogPath(matchId: MatchId): string {
     return p.resolve(Config.matches, matchId + '.json');

@@ -3,36 +3,34 @@ type LogPath = string;
 export type MatchId = string;
 
 interface MatchProperties {
-  uuid: MatchId,
-  players: string[],
-  map: MapId,
-  timestamp: Date,
-  logPath: string,
+  uuid: MatchId;
+  players: string[];
+  map: MapId;
+  timestamp: Date;
+  logPath: string;
 }
 
 export type PlayingMatch = MatchProperties & {
   status: 'playing',
-}
+};
 
 export type FinishedMatch = MatchProperties & {
   status: 'finished',
   stats: MatchStats,
-}
+};
 
 export type ErroredMatch = MatchProperties & {
   status: 'error',
   error: string,
-}
+};
 
 export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
-
 
 export enum MatchStatus {
   'playing',
   'finished',
   'error',
 }
-
 
 export interface MatchStats {
   winner: number;
@@ -50,7 +48,7 @@ export interface IMatchList {
 }
 
 export interface IGameState {
-  planets: IPlanet[];
+  planets: Planet[];
   expeditions: IExpedition[];
 }
 
@@ -60,12 +58,25 @@ export interface ILogFormat {
 }
 
 // TODO: Switch to camelCase
-export interface IPlanet {
+export interface Planet {
   "ship_count": number;
   "x": number;
   "y": number;
   "owner": number;
   "name": string;
+}
+
+export function isPlanet(obj: any): obj is Planet {
+  const planet = obj as Planet;
+  return (
+    (typeof planet.ship_count === 'number') &&
+    (typeof planet.x === 'number') &&
+    (typeof planet.y === 'number') &&
+    (typeof planet.owner === 'number' ||
+      typeof planet.owner === 'undefined' ||
+      planet.owner === null) &&
+    (typeof planet.name === 'string')
+  );
 }
 
 export interface IExpedition {
@@ -91,6 +102,16 @@ export interface IMapMeta {
   createdAt: Date;
 }
 
-export interface IMap {
-  planets: IPlanet[];
+export interface GameMap {
+  name: string;
+  planets: Planet[];
+}
+
+export function isGameMap(obj: any): obj is GameMap {
+  const map = obj as GameMap;
+  return (
+    (typeof map.name === 'string') &&
+    (Array.isArray(map.planets)) &&
+    (map.planets.every((p) => isPlanet(p)))
+  );
 }

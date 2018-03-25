@@ -10,8 +10,9 @@ import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { INotification } from '../utils/UtilModels';
+import { Config } from './Config';
 
-export interface IDbSchemaV2 {
+export interface DbSchemaV2 {
   version: 'v2';
   matches: IMatchList;
   bots: IBotList;
@@ -34,18 +35,18 @@ export const SCHEMA = {
 // ----------------------------------------------------------------------------
 
 const { app } = remote;
-const dbPath = (process.env.NODE_ENV === 'development')
+const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
 const adapter = new FileAsync(dbPath);
-const database = low<IDbSchemaV2, typeof adapter>(adapter);
+const database = low<DbSchemaV2, typeof adapter>(adapter);
 
 /*
  * This function will populate the store initially with the DB info and
  * subscribe itself to changes so it can propage the relevant ones to the DB.
  */
-export function bindToStore(store: any) {
-  database
+export function bindToStore(store: any): Promise<void> {
+  return database
     .then((db) => db.defaults({
       version: 'v2',
       matches: {},
@@ -164,7 +165,7 @@ const listeners: TableListener<any>[] = [
 // Migrations
 // ----------------------------------------------------------------------------
 
-type DbSchema = IDbSchemaV1 | IDbSchemaV2;
+type DbSchema = IDbSchemaV1 | DbSchemaV2;
 
 interface IDbSchemaV1 {
   version: string;
@@ -174,7 +175,7 @@ interface IDbSchemaV1 {
 
 // Let's not consider migrating old DB's yet.
 // For now this is only for def purposes.
-function migrateOld(db: DbSchema): IDbSchemaV2 {
+function migrateOld(db: DbSchema): DbSchemaV2 {
   return {
     version: 'v2',
     matches: {},

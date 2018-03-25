@@ -71,7 +71,9 @@
       "app/main.js.map",
       "bin/",
       "app/components/visualizer/lib/assets/",
-      "resources/icon.*"
+      "resources/icon.*",
+      "resources/maps/",
+      "resources/bots/"
     ],
     "directories": {
       "buildResources": "resources",

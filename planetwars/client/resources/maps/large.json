@@ -1,12 +1,12 @@
 {
+  "name": "large",
   "players": [
     "player_1",
     "player_2",
     "player_3",
     "player_4"
   ],
-  "planets": [
-    {
+  "planets": [{
       "name": "OJCKCVKJGJ",
       "owner": 1,
       "ship_count": 1,

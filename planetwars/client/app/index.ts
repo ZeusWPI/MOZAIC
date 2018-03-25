@@ -7,14 +7,13 @@ import Root from './containers/Root';
 import { FatalError } from './components/FatalError';
 import { initialState } from './reducers/index';
 import { bindToStore } from './utils/Database';
-import { initializeDirs } from './utils/Setup';
+import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 import './app.global.scss';
 import './fontawesome.global.scss';
 
 // tslint:disable-next-line:no-var-requires
 const { configureStore, history } = require('./store/configureStore');
 export const store = configureStore(initialState);
-bindToStore(store);
 
 // Config the global Bluebird Promise
 // We should still 'import * as Promise from bluebird' everywhere to have it at
@@ -27,7 +26,14 @@ Promise.config({
 });
 
 initializeDirs()
+  .then(() => bindToStore(store))
   .then(renderApp)
+  .then(
+    populateMaps,
+    (err: any) => alert(`Loading some default maps failed with ${err}`))
+  .then(
+    populateBots,
+    (err: any) => alert(`Loading some default bots failed with ${err}`))
   .catch((err: any) => renderCustom(h(FatalError, { error: err })))
   .catch((err: any) => alert(err));
 
