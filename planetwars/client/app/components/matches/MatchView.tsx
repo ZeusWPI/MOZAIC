@@ -72,13 +72,36 @@ export class MatchView extends React.Component<Props, State> {
     };
   }
 
-  render() {
+  public render() {
     const { matchLog } = this.props;
     const { viewState } = this.state;
 
+    const showVisualizer = () => {
+      this.setState({ viewState: ViewState.VISUALIZER});
+    };
+
+    const showVis = () => this.showVisualizer();
+    const showLog = () => this.showLog();
+
     return (
-      <MatchDisplay viewState={viewState} matchLog={matchLog}/>
+      <div className={styles.matchView}>
+        <div className={styles.matchTitleBar}>
+          <div onClick={showVis}> Visualizer </div>
+          <div onClick={showLog}> Log </div>
+        </div>
+        <div className={styles.displayBox}>
+          <MatchDisplay viewState={viewState} matchLog={matchLog}/>
+        </div>
+      </div>
     );
+  }
+
+  private showVisualizer() {
+    this.setState({ viewState: ViewState.VISUALIZER});
+  }
+
+  private showLog() {
+    this.setState({viewState: ViewState.LOG});
   }
 }
 
