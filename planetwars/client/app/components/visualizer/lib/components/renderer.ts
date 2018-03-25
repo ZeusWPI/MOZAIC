@@ -16,14 +16,15 @@ class Renderer extends React.Component<any> {
     this.loadResources();
     //this.voronoiContainer = d3.select(this.svg).append('g');
     this.setupRenderers();
+    this.draw();
+
   }
 
   componentDidUpdate(prevProps: any) {
     if (this.props.game !== prevProps.game) {
       this.setupRenderers();
     }
-    const gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
-    this.draw(gameState);
+    this.draw();
   }
 
   setupRenderers() {
@@ -95,7 +96,8 @@ class Renderer extends React.Component<any> {
     d3.select(this.svg).call(zoom);
   }
 
-  draw(gameState: GameState) {
+  draw() {
+    const gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
     const params = {
       speed: this.props.speed,
       scale: this.scale,
