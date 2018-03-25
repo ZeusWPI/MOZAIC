@@ -38,10 +38,9 @@ export class Navbar extends React.Component<NavProps, {}> {
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
           h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
-          h(Link, `.navbar-item`, { to: "/info" }, ["Info"]),
-          h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
         ]),
         div(`.navbar-end`, [
+          h(Link, `.navbar-item`, { to: "/info" }, ["Info"]),
           a(`.navbar-item.modal-button`,
             {
               'onClick': () => this.showModal(),
