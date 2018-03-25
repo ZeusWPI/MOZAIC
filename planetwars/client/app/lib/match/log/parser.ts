@@ -10,7 +10,7 @@ import {
 } from '../types';
 import * as fs from 'mz/fs';
 
-import { MatchLog, GameState } from './MatchLog';
+import { MatchLog, GameState, PlayerInputs } from './MatchLog';
 
 interface PlayerData {
   uuid: string;
@@ -45,12 +45,13 @@ class LogParser {
 
   public parseMessage(message: LogMessage) {
     switch (message.msg) {
-      case 'step': return this.parseStep(message as StepMessage);
+      case MessageType.STEP: {
+        return this.parseStep(message as StepMessage);
+      }
     }
   }
 
   private parseStep(message: StepMessage) {
-    // TODO
     const state = this.parseState(message.state);
     this.log.addGameState(state);
   }
@@ -87,30 +88,38 @@ interface LogMessage {
   level: string;
 }
 
+enum MessageType {
+  STEP = 'step',
+  INPUT = 'message received',
+  DISPATCH = 'dispatch',
+  PARSE_ERROR = 'parse error',
+  ILLEGAL_COMMAND = 'illegal command',
+}
+
 interface StepMessage extends LogMessage {
-  msg: 'step';
+  msg: MessageType.STEP;
   state: JsonGameState;
 }
 
 interface PlayerInputMessage extends LogMessage {
-  msg: 'message received';
+  msg: MessageType.INPUT;
   content: string;
 }
 
 interface DispatchMessage extends LogMessage {
-  msg: 'dispatch';
+  msg: MessageType.DISPATCH;
   player_id: number;
   dispatch: JsonCommand;
 }
 
 interface InputErrorMessage extends LogMessage {
-  msg: 'parse error';
+  msg: MessageType.PARSE_ERROR;
   player_id: number;
   error: string;
 }
 
 interface IllegalCommandMessage extends LogMessage {
-  msg: 'illegal command';
+  msg: MessageType.ILLEGAL_COMMAND;
   player_id: number;
   command: JsonCommand;
   error: string;
