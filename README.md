@@ -7,27 +7,22 @@ It aims to provide a flexible platform to host your very own AI competition. Jus
 
 Eventually MOZAIC should be very modular, so that you can provide a custom-tailored experience for your competitors, without having to worry about the heavy lifting.
 
-## Features
+## Downloads
 
-For now MOZAIC is still in its early stages, but at Zeus WPI we're already getting it ready to support our own AI competition. As the platfrom matures, our specific use-case will be factored out and more features will be added.
+We provide easy-to-install packages for every platform, check out the [releases](https://github.com/ZeusWPI/MOZAIC/releases) section for downloads.
 
-Current and planned features:
+For Mac we suggest using the `.dmg`, for windows the `.exe`.
 
-- [ ] Generic over game rules
-  - [ ] implemented in Rust
-  - [ ] ...
-- [ ] Game logging
-- [ ] Visualizers for your game
-- [ ] Uploading bots
-  - [ ] Python or something
-  - [ ] Any language, really
-- [ ] Fancy website
-- [ ] Network play
-- [ ] Flexible and performant game server
-- [ ] Friendly electron client
-  - [ ] handles network play
-  - [ ] "bot management"
-- [ ] Ranking bots
+For linux we provide an [AppImage](https://appimage.org/), which after downloading, you need to make executable (`chmod u+x <file>`).
+**Note**: the AppImage does not need to be installed, and you can simply run the file. However, running it will unpack some files, so we suggest putting it in it's own folder.
+
+Most of the data will be save to user-data directories which are:
+
+* `%APPDATA%\BottleBats` on Windows
+* `$XDG_CONFIG_HOME/BottleBats` or `~/.config/BottleBats` on Linux
+* `~/Library/Application Support/BottleBats` on macOS
+
+Try not to mess these up, or things will break.
 
 ## Setup
 
@@ -57,6 +52,11 @@ Current and planned features:
     * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
 1. Go back the `client` dir and run `npm run dev`.
 1. An electron client should be at your disposal!
+
+### Publishing and packaging
+
+You can package easily with the `package-<os>` in `package.json`. Publishing is done automatically by Travis and AppVeyor on commit. See the electron-builder [publish docs](https://www.electron.build/configuration/publish) for more info about our flow (it's the GitHub one).
+Note: when packaging an make sure the `mozaic_bot_driver` binary is an actual binary and not a symlink, or things will break.
 
 ## Contact
 

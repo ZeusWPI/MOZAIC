@@ -1,13 +1,10 @@
-mod protocol;
-mod rules;
-mod logger;
-mod config;
-mod controller;
-mod serializer;
+pub mod controller;
+mod game_controller;
+mod lock;
+pub mod time_out;
+
+pub mod modules;
 
 //pub use self::planet_wars::Match;
-pub use self::rules::PlanetWars;
-pub use self::protocol::Map;
-pub use self::config::Config;
 
-pub use self::controller::{Controller, Client};
+pub use self::controller::{Controller, Client, PlayerId};

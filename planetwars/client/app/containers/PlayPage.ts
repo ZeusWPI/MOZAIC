@@ -7,12 +7,11 @@ import { connect } from 'react-redux';
 import { fs } from 'mz';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 import { BotID, IMatchConfig } from '../utils/ConfigModels';
 import { unselectBot } from '../actions/actions';
-import { Config } from '../utils/Config';
-import { IMap, IMapMeta } from '../utils/GameModels';
 
 const mapStateToProps = (state: IGState) => {
   const bots = state.bots;
@@ -36,40 +35,18 @@ const mapDispatchToProps = (dispatch: any) => {
     importMatch(fileList: FileList) {
       const files = Array.from(fileList); // Fuck FileList;
       const imports = files.map((logFile) => {
-        const path = (<any> logFile).path;
-        return _importMatch(path, dispatch);
+        const path = (logFile as any).path;
+        return Importer
+          .importMapFromFile(path)
+          .then((map) => dispatch(A.importMapFromDB(map)))
+          .catch((err) => dispatch(A.importMapError(err)));
       });
       Promise.all(imports); // TODO: Check error handling
     },
     runMatch(params: A.MatchParams) {
       dispatch(A.runMatch(params));
-    }
+    },
   };
 };
 
 export default connect<IPlayPageStateProps, IPlayPageDispatchProps>(mapStateToProps, mapDispatchToProps)(PlayPage);
-
-function _importMatch(path: string, dispatch: any): Promise<void> {
-  return Promise.resolve(fs.readFile(path))
-    .then((buffer) => buffer.toString())
-    .then((contents) => JSON.parse(contents))
-    // Copy the log
-    .then((map: IMap) => {
-      const uuid = uuidv4();
-      const mapPath = Config.generateMapPath(uuid);
-      const slots = map.planets.filter((p) => p.owner !== undefined).length;
-      return Promise
-        .resolve(fs.writeFile(mapPath, JSON.stringify(map, undefined, 4)))
-        .return({
-          uuid,
-          name: uuid.slice(0, 5),
-          slots,
-          mapPath,
-          createdAt: new Date(Date.now()),
-        });
-    })
-    .then(
-      (map: IMapMeta) => dispatch(A.importMapFromDB(map)),
-      (err: any) => dispatch(A.importMapError(err)),
-  );
-}

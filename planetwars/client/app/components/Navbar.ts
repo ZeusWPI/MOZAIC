@@ -38,15 +38,16 @@ export class Navbar extends React.Component<INavProps, {}> {
           h(Link, `.navbar-item`, { to: "/home" }, ["Home"]),
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
-          h(Link, `.navbar-item`, { to: "/history" }, ["Matches"]),
+          h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
           h(Link, `.navbar-item`, { to: "/about" }, ["About"]),
           h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
         ]),
         div(`.navbar-end`, [
-          a(`.navbar-item.modal-button`, {
-            'onClick': () => this.showModal(),
-            'data-target': 'modal-notification',
-          }, [
+          a(`.navbar-item.modal-button`,
+            {
+              'onClick': () => this.showModal(),
+              'data-target': 'modal-notification',
+            }, [
               i('.fa.fa-lg.fa-bell.notificationBell', {
                 'notification-count': this.props.notifications.length,
                 'aria-hidden': true,
