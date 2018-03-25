@@ -1,12 +1,10 @@
 import * as React from 'react';
 import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
-import { div, h } from 'react-hyperscript-helpers';
-import { parseLog } from '../../lib/match/log';
-import { LogView } from '../logView/LogView'
+import { parseLog, MatchLog } from '../../lib/match/log';
+import { LogView } from './LogView';
 
 const styles = require('./Matches.scss');
-
 
 export interface MatchViewProps {
   match?: Match;
@@ -31,20 +29,22 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
     switch (match.status) {
       case 'finished': {
         const log = parseLog(match.players, match.logPath);
+        console.log(log);
         const display = this.state.showLog ? (<LogView matchLog={log}/>) : (<Visualizer matchLog={log}/>);
+        const onClick = () => {
+          this.setState({showLog: false});
+          console.log("setting visualizer");
+        };
         return (
           <div className={styles.matchViewContainer}>
             <div>
-              <div onClick={() => {
-                                this.setState({showLog: false});
-                                console.log("setting visualizer");
-                            }}>
+              <div onClick={onClick}>
                 Visualizer
               </div>
               <div onClick={() => this.setState({showLog: true})}>
                 log
               </div>
-            </div>
+            </div>;
             {display}
           </div>
         );
@@ -70,7 +70,5 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
     }
   }
 }
-
-
 
 export default MatchView;
