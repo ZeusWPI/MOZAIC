@@ -8,6 +8,7 @@ import {
   JsonExpedition,
   JsonCommand,
 } from '../types';
+import { connect } from 'net';
 
 export class MatchLog {
   public players: Player[];
@@ -32,6 +33,25 @@ export class MatchLog {
       }
     });
     this.gameStates.push(gameState);
+    this.playerInputs.push({});
+  }
+
+  public setInput(player: Player, content: string) {
+    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    playerInputs[player.uuid] = {
+      raw: content,
+      commands: [],
+    };
+  }
+
+  public inputError(player: Player, error: string) {
+    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    playerInputs[player.uuid].error = error;
+  }
+
+  public addCommand(player: Player, command: Command) {
+    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    playerInputs[player.uuid].commands.push(command);
   }
 }
 
@@ -59,14 +79,14 @@ export class GameState {
   }
 }
 
-interface PlayerInputs {
+export interface PlayerInputs {
   [playerId: string]: PlayerInput;
 }
 
-export class PlayerInput {
-  public raw: string;
-  public error?: string;
-  public commands: Command[];
+export interface PlayerInput {
+  raw: string;
+  error?: string;
+  commands: Command[];
 }
 
 interface Command {

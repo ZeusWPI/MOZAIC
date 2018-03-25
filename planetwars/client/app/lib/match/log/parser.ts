@@ -48,12 +48,49 @@ class LogParser {
       case MessageType.STEP: {
         return this.parseStep(message as StepMessage);
       }
+      case MessageType.INPUT: {
+        return this.parsePlayerInput(message as PlayerInputMessage);
+      }
+      case MessageType.PARSE_ERROR: {
+        return this.parseInputError(message as InputErrorMessage);
+      }
+      case MessageType.DISPATCH: {
+        return this.parseDispatch(message as DispatchMessage);
+      }
+      case MessageType.ILLEGAL_COMMAND: {
+        return this.parseIllegalCommand(message as IllegalCommandMessage);
+      }
     }
   }
 
   private parseStep(message: StepMessage) {
     const state = this.parseState(message.state);
     this.log.addGameState(state);
+  }
+
+  private parsePlayerInput(message: PlayerInputMessage) {
+    const player = this.players[message.player_id - 1];
+    this.log.setInput(player, message.content);
+  }
+
+  private parseInputError(message: InputErrorMessage) {
+    const player = this.players[message.player_id - 1];
+    this.log.inputError(player, message.error);
+  }
+
+  private parseDispatch(message: DispatchMessage) {
+    const player = this.players[message.player_id - 1];
+    this.log.addCommand(player, {
+      command: message.command,
+    });
+  }
+
+  private parseIllegalCommand(message: IllegalCommandMessage) {
+    const player = this.players[message.player_id - 1];
+    this.log.addCommand(player, {
+      command: message.command,
+      error: message.error,
+    });
   }
 
   private parseState(json: JsonGameState): GameState {
@@ -103,13 +140,14 @@ interface StepMessage extends LogMessage {
 
 interface PlayerInputMessage extends LogMessage {
   msg: MessageType.INPUT;
+  player_id: number;
   content: string;
 }
 
 interface DispatchMessage extends LogMessage {
   msg: MessageType.DISPATCH;
   player_id: number;
-  dispatch: JsonCommand;
+  command: JsonCommand;
 }
 
 interface InputErrorMessage extends LogMessage {
