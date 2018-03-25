@@ -63,6 +63,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     if (this.props !== nextProps) {
       this.game = new Game(nextProps.matchLog);
       this.setTurn(0);
+      this.setPlaying(true);
     }
   }
 
