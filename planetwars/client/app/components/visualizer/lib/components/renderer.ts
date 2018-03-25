@@ -15,6 +15,7 @@ class Renderer extends React.Component<any> {
   componentDidMount() {
     this.loadResources();
     //this.voronoiContainer = d3.select(this.svg).append('g');
+    this.setupRenderers();
   }
 
   componentDidUpdate(prevProps: any) {

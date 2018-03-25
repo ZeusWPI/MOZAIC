@@ -55,16 +55,24 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
   }
 
   componentDidMount() {
-    this.setPlaying(true);
+    this.setGame(this.props.matchLog);
+  }
+
+  componentWillUnmount() {
+    this.setPlaying(false);
   }
 
 
   componentWillReceiveProps(nextProps: VisualizerProps) {
-    if (this.props !== nextProps) {
-      this.game = new Game(nextProps.matchLog);
-      this.setTurn(0);
-      this.setPlaying(true);
+    if (this.props.matchLog !== nextProps.matchLog) {
+      this.setGame(nextProps.matchLog);
     }
+  }
+
+  setGame(matchLog: MatchLog) {
+    this.game = new Game(matchLog);
+    this.setTurn(0);
+    this.setPlaying(true);
   }
 
   setTurn(num: number) {
