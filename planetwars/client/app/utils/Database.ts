@@ -9,7 +9,7 @@ import { IBotList, IBotConfig } from './ConfigModels';
 import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
-import { INotification } from '../utils/UtilModels';
+import { Notification } from '../utils/UtilModels';
 import { Config } from './Config';
 
 export interface DbSchemaV2 {
@@ -17,7 +17,7 @@ export interface DbSchemaV2 {
   matches: IMatchList;
   bots: IBotList;
   maps: IMapList;
-  notifications: INotification[];
+  notifications: Notification[];
 }
 
 // Utility to allow accessing the DB somewhat more safe. You can these string
@@ -155,7 +155,7 @@ const listeners: TableListener<any>[] = [
     (state: IGState) => state.maps,
     SCHEMA.MAPS,
   ),
-  new TableListener<INotification[]>(
+  new TableListener<Notification[]>(
     (state: IGState) => state.notifications,
     SCHEMA.NOTIFICATIONS,
   ),

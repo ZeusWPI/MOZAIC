@@ -2,15 +2,15 @@ import { h, nav, div, span, i, header, p, button, a, section, footer } from 'rea
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
-import { INotification } from '../utils/UtilModels';
+import { Notification } from '../utils/UtilModels';
 /*
  * CSS for the navbar is found in app.global.scss cause it's pretty unique
  * and most of it relies on global Bulma anyway.
  */
 
-interface INavProps {
+interface NavProps {
   toggled: boolean;
-  notifications: INotification[];
+  notifications: Notification[];
   toggle: () => void;
   notificationsVisible: boolean;
   toggleNotifications: () => void;
@@ -20,7 +20,7 @@ interface INavProps {
   clearNotifications: () => void;
 }
 
-export class Navbar extends React.Component<INavProps, {}> {
+export class Navbar extends React.Component<NavProps, {}> {
 
   public render() {
     const active = this.props.toggled ? '.is-active' : '';
@@ -35,11 +35,10 @@ export class Navbar extends React.Component<INavProps, {}> {
         ]),
       div(`.navbar-menu${this.props.toggled ? '.is-active' : ''}`, [
         div(`.navbar-start`, [
-          h(Link, `.navbar-item`, { to: "/home" }, ["Home"]),
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
           h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
-          h(Link, `.navbar-item`, { to: "/about" }, ["About"]),
+          h(Link, `.navbar-item`, { to: "/info" }, ["Info"]),
           h(Link, `.navbar-item`, { to: "/visualizer" }, ["Visualizer"]),
         ]),
         div(`.navbar-end`, [
@@ -74,20 +73,20 @@ export class Navbar extends React.Component<INavProps, {}> {
   }
 }
 
-interface INotificationModalProps {
-  notifications: INotification[];
+interface NotificationModalProps {
+  notifications: Notification[];
   visible: boolean;
   hideModal: () => void;
   removeNotification: (key: number) => void;
   clearNotifications: () => void;
 }
 
-export class NotificationModal extends React.Component<INotificationModalProps> {
+export class NotificationModal extends React.Component<NotificationModalProps> {
 
   public render() {
     const { notifications } = this.props;
 
-    const notificationElements = notifications.map((notification: INotification, key: number) => {
+    const notificationElements = notifications.map((notification: Notification, key: number) => {
       return h(NotificationElement, {
         notification,
         key,
@@ -134,7 +133,7 @@ export const NoNotifications: React.SFC<void> = (props) => {
 };
 
 interface INotificationElementProps {
-  notification: INotification;
+  notification: Notification;
   key: number;
   remove: () => void;
 }

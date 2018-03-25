@@ -1,6 +1,6 @@
 import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap } from '../utils/GameModels';
 import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
-import { INotification } from '../utils/UtilModels';
+import { Notification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
 import { v4 as uuidv4 } from 'uuid';
@@ -144,8 +144,8 @@ export const dbError = actionCreator<any>('DB_ERROR');
 export const dbSync = actionCreator<any>('DB_SYNC');
 
 // Notifications
-export const importNotificationFromDB = actionCreator<INotification>('IMPORT_NOTIFICATION_FROM_DB');
-export const addNotification = actionCreator<INotification>('ADD_NOTIFICATION');
+export const importNotificationFromDB = actionCreator<Notification>('IMPORT_NOTIFICATION_FROM_DB');
+export const addNotification = actionCreator<Notification>('ADD_NOTIFICATION');
 export const removeNotification = actionCreator<number>('REMOVE_NOTIFICATION');
 export const clearNotifications = actionCreatorVoid('CLEAR_NOTIFICATION');
 export const showNotifications = actionCreatorVoid('NOTIFICATION_SHOW');
