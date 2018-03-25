@@ -3,7 +3,7 @@ import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
 import { div, h } from 'react-hyperscript-helpers';
 import { parseLog } from '../../lib/match/log';
-import { LogView } from '../logView/logView'
+import { LogView } from '../logView/LogView'
 
 const styles = require('./Matches.scss');
 
@@ -20,7 +20,7 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
   public constructor(props: MatchViewProps) {
     super(props);
     this.state = {
-      showLog: true
+      showLog: false
     };
   }
   public render() {
