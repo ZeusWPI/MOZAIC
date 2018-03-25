@@ -49,6 +49,34 @@
   "build": {
     "productName": "BottleBats",
     "appId": "org.zeuswpi.bottlebats",
+    "copyright": "Copyright © 2018 Zeus WPI",
+    "files": [
+      "app/dist/",
+      "node_modules/",
+      "app/app.html",
+      "app/main.js",
+      "app/main.js.map",
+      "bin/",
+      "app/components/visualizer/lib/assets/",
+      "resources/icon.*",
+      "resources/maps/",
+      "resources/bots/"
+    ],
+    "directories": {
+      "buildResources": "resources",
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ]
+    },
+    "mac": {
+      "category": "public.app-category.games"
+    },
     "dmg": {
       "contents": [
         {
@@ -63,28 +91,6 @@
           "type": "file"
         }
       ]
-    },
-    "files": [
-      "app/dist/",
-      "node_modules/",
-      "app/app.html",
-      "app/main.js",
-      "app/main.js.map",
-      "bin/",
-      "resources/icon.*"
-    ],
-    "directories": {
-      "buildResources": "resources",
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis"
-    },
-    "linux": {
-      "target": [
-        "deb",
-        "AppImage"
-      ]
     }
   },
   "dependencies": {
@@ -93,10 +99,12 @@
     "classnames": "^2.2.5",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
+    "electron-updater": "^2.21.3",
     "font-awesome": "^4.7.0",
     "history": "^4.6.1",
     "hyperscript-helpers": "^3.0.3",
     "lowdb": "^1.0.0",
+    "mkdirp": "^0.5.1",
     "moment": "^2.21.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
@@ -122,6 +130,7 @@
     "@types/enzyme": "^3.1.1",
     "@types/history": "^4.5.2",
     "@types/lowdb": "^1.0.0",
+    "@types/mkdirp": "^0.5.2",
     "@types/mz": "^0.0.32",
     "@types/node": "^8.0.2",
     "@types/react": "^16.0.5",

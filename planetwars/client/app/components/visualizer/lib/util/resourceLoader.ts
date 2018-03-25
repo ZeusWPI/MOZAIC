@@ -1,13 +1,21 @@
+import { remote } from 'electron';
+import * as path from 'path';
 import Config from './config';
 
+const prefix = (process.env.NODE_ENV === 'development') ?
+  path.resolve('app') :
+  path.resolve(remote.app.getAppPath(), 'app');
+
+const resourcePath = path.resolve(prefix, 'components', 'visualizer', 'lib', 'assets', 'images');
+
 class ResourceLoader {
-  svg: any;
+  public svg: any;
 
   constructor(svg: any) {
     this.svg = svg;
   }
 
-  setupPatterns() {
+  public setupPatterns() {
     // Define patterns
     this.svg.append("defs");
     Config.planetTypes.forEach((p) => {
@@ -18,7 +26,7 @@ class ResourceLoader {
     this.setupPattern("jigglypoef.svg", 100, 100, "jigglyplanet");
   }
 
-  setupPattern(name: any, width: any, height: any, id: any) {
+  public setupPattern(name: any, width: any, height: any, id: any) {
     this.svg.select("defs")
       .append("pattern")
       .attr("id", id)
@@ -30,7 +38,7 @@ class ResourceLoader {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "./components/visualizer/lib/assets/images/" + name);
+      .attr("xlink:href", path.resolve(resourcePath, name));
   }
 }
 

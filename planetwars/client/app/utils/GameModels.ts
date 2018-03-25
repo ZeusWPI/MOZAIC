@@ -1,4 +1,4 @@
-import { JsonPlanet } from '../lib/match/types';
+import { JsonPlanet, isJsonPlanet } from '../lib/match/types';
 import { BotID } from './ConfigModels';
 type LogPath = string;
 
@@ -13,12 +13,12 @@ interface MatchProperties {
 }
 
 export type PlayingMatch = MatchProperties & {
-  status: 'playing';
+  status: 'playing',
 };
 
 export type FinishedMatch = MatchProperties & {
-  status: 'finished';
-  stats: MatchStats;
+  status: 'finished',
+  stats: MatchStats,
 };
 
 export type ErroredMatch = MatchProperties & {
@@ -64,6 +64,16 @@ export interface IMapMeta {
   createdAt: Date;
 }
 
-export interface IMap {
+export interface GameMap {
+  // name: string;
   planets: JsonPlanet[];
+}
+
+export function isGameMap(obj: any): obj is GameMap {
+  const map = obj as GameMap;
+  return (
+    // (typeof map.name === 'string') &&
+    (Array.isArray(map.planets)) &&
+    (map.planets.every((p) => isJsonPlanet(p)))
+  );
 }

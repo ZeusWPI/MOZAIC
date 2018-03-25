@@ -40,7 +40,6 @@ class LogParser {
     this.log = new MatchLog(players);
   }
 
-
   public parseMessage(message: LogMessage) {
     switch (message.msg) {
       case 'step': return this.parseStep(message as StepMessage);

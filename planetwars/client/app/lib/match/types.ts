@@ -49,6 +49,19 @@ export interface JsonPlanet {
   "name": string;
 }
 
+export function isJsonPlanet(obj: any): obj is JsonPlanet {
+  const planet = obj as JsonPlanet;
+  return (
+    (typeof planet.ship_count === 'number') &&
+    (typeof planet.x === 'number') &&
+    (typeof planet.y === 'number') &&
+    (typeof planet.owner === 'number' ||
+      typeof planet.owner === 'undefined' ||
+      planet.owner === null) &&
+    (typeof planet.name === 'string')
+  );
+}
+
 export interface JsonExpedition {
   "id": number;
   "origin": string;

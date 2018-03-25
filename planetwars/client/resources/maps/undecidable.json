@@ -1,10 +1,5 @@
 {
-  "players": [
-    "player_1",
-    "player_2"
-  ],
-  "planets": [
-    {
+  "planets": [{
       "name": "unmoveable object",
       "x": -5,
       "y": 0,

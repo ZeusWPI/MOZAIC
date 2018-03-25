@@ -28,10 +28,10 @@ export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
 export const importMatch = actionCreator<Match>('IMPORT_MATCH');
 
 export interface MatchParams {
-    bots: BotID[],
-    map: string,
-    max_turns: number,
-  }
+  bots: BotID[];
+  map: string;
+  max_turns: number;
+}
 
 export const saveMatch = actionCreator<Match>('SAVE_MATCH');
 export const matchErrored = actionCreator<MatchId>('MATCH_ERROR');
@@ -54,7 +54,7 @@ export function runMatch(params: MatchParams) {
     const state: IGState = getState();
 
     const config: IMatchConfig = {
-      players: params.bots.map( (botID) => {
+      players: params.bots.map((botID) => {
         return state.bots[botID].config;
       }),
       game_config: {

@@ -32,7 +32,6 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        direction: rtl;
       }
       &:hover {
         background: lighten($background, 5);

@@ -11,9 +11,34 @@ export interface MatchViewProps {
   match?: Match;
 }
 
-export class MatchView extends React.Component<MatchViewProps> {
+export interface MatchViewState {
+  error?: {
+    error: any;
+    info: any;
+  };
+}
+
+export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
+
+  public constructor(props: MatchViewProps) {
+    super(props);
+    this.state = {};
+  }
+
+  // Catch the visualizer throwing errors so your whole app isn't broken
+  public componentDidCatch(error: any, info: any) {
+    this.setState({ error: { error, info } });
+  }
 
   public render() {
+    if (this.state.error) {
+      return (
+        <div>
+          <p>{this.state.error.error.toString()}</p>
+          <p>{JSON.stringify(this.state.error.info)}</p>
+        </div>
+      );
+    }
     const { match } = this.props;
     if (!match) {
       return null;
