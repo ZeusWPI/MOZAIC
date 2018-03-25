@@ -7,6 +7,7 @@ use tokio_io::codec::{Encoder, Decoder};
 use bytes::{BytesMut, BufMut};
 use std::io;
 use std::str;
+use std::process;
 use slog;
 
 use bot_runner::BotHandle;
@@ -169,15 +170,18 @@ impl Future for ClientController {
             Ok(Async::Ready(())) => panic!("something bad happened"),
             Ok(Async::NotReady) => Async::NotReady,
             Err(_err) => {
+                eprintln!("[GAMESERVER] Game terminating: failed to communicate with a bot.");
+                eprintln!("[GAMESERVER] Hopefully, an error message from the offending bot can be found above.");
+                eprintln!("[GAMESERVER] All other bots will now be killed.");
                 // TODO: are some errors recoverable?
                 // should they be handled in this method, or ad-hoc?
                 // TODO: log the actual error
                 // Let the game know this client failed.
-                self.send_message(Message::Disconnected);
+                // self.send_message(Message::Disconnected);
                 // TODO: what do when this fails?
-                self.write_messages().expect("could not write messages");
-                // terminate the task
-                Async::Ready(())
+                // self.write_messages().expect("could not write messages");
+                // terminate the program
+                process::exit(1);
             }
         })
     }
