@@ -6,6 +6,7 @@ const {
   globalShortcut
 } = require('electron');
 let log = require('electron-log');
+log.transports.file.level = 'info';
 log.info('[STARTUP] Main process started');
 
 let menu;
