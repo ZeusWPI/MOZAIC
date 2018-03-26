@@ -14,7 +14,7 @@ export default class Home extends React.Component<{}, {}> {
   render() {
     return [
       h(Navbar),
-      h(Hero, '.push', { isColor: 'primary'}, [
+      h(Hero, '.push', { isColor: 'primary' }, [
         h(HeroBody, [
           h(Container, '#home-hero-body', { hasTextAlign: 'centered' }, [
             h(Teaser),
@@ -32,7 +32,7 @@ export default class Home extends React.Component<{}, {}> {
 
 const Logo: React.SFC<{}> = (props) => {
   return img({
-    src:'./static/small_logo_trans.png',
+    src: './static/small_logo_trans.png',
     alt: 'BottleBats 2018 AI Competition',
   });
 }
@@ -54,9 +54,9 @@ const Teaser: React.SFC<{}> = (props) => {
 
 const CodePlayWin: React.SFC<{}> = (props) => {
   return div('#code-play-win', [
-    h(CPWItem, { name: 'code', text: 'Code'} ),
-    h(CPWItem, { name: 'rocket', text: 'Play'}),
-    h(CPWItem, { name: 'trophy', text: 'Win'})
+    h(CPWItem, { name: 'code', text: 'Code' }),
+    h(CPWItem, { name: 'rocket', text: 'Play' }),
+    h(CPWItem, { name: 'trophy', text: 'Win' })
   ]);
 }
 
@@ -64,15 +64,15 @@ interface ICPWItemProps { name: string, text: string }
 const CPWItem: React.SFC<ICPWItemProps> = (props) => {
   return div('.cpw-item.grow', [
     // TS complains about the size type while it shouldn't
-    h(FA, <any> {name: props.name, fixedWidth: true }),
+    h(FA, { name: props.name, fixedWidth: true } as any),
     p([props.text]),
   ]);
 }
 
 const GetStartedButton: React.SFC<{}> = (props) => {
-  return h(Link, 
-    '.button.is-inverted.is-large.is-link.is-outlined.is-primary', 
-    {to: '/info',},
-    ['Learn more!']
-  );
+  return (<Link
+    to='/info'
+    className='button is-inverted is-large is-link is-outlined is-primary' >
+    Learn
+  </Link>)
 }
