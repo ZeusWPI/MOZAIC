@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
@@ -8,6 +8,7 @@ use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
 use planetwars::time_out::Timeout;
 use std::marker::PhantomData;
+use std::process;
 
 use serde::de::DeserializeOwned;
 
@@ -23,6 +24,7 @@ pub struct Controller<G: GameController<C>, L: Lock<G, C>, C: DeserializeOwned>
     client_msgs: UnboundedReceiver<ClientMessage>,
     logger: slog::Logger,
     timeout: Timeout,
+    player_names: HashMap<PlayerId, String>,
 }
 
 #[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
@@ -84,6 +86,7 @@ impl<G, L, C> Controller<G, L, C>
         timeout.set_timeout(60000);
         
         Controller {
+            player_names: clients.iter().map(|c| (c.id, c.player_name.clone())).collect(),
             phantom_game_controller: PhantomData,
             phantom_config: PhantomData,
             lock: Lock::new(GameController::new(conf, clients, logger.clone()), player_ids),
@@ -122,14 +125,15 @@ impl<G, L, C> Controller<G, L, C>
             },
             Message::Timeout => {
                 if self.timeout.is_expired() {
-                    self.lock.get_waiting().into_iter().for_each(|player_id|
-                        info!(self.logger, "timeout";
-                            player_id
-                        )
-                    );
-                    self.lock.do_time_out();
-                    self.force_lock_step();
-                    self.run_lock();
+                    if let Some(player_id) = self.lock.get_waiting().into_iter().next() {
+                        eprintln!("[GAMESERVER] bot \"{}\" timed out.", self.player_names[&player_id]);
+                        eprintln!("[GAMESERVER] Game terminating; all other bots will now be killed.");
+                        process::exit(1);
+                    }
+
+                    // self.lock.do_time_out();
+                    // self.force_lock_step();
+                    // self.run_lock();
                 }
             }
         }

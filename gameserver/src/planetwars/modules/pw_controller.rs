@@ -162,7 +162,7 @@ impl GameController<Config> for PwController {
     }
 
     fn time_out(&self) -> u64 {
-        200
+        1000
     }
 
     fn start(&mut self) -> HashSet<PlayerId>{
