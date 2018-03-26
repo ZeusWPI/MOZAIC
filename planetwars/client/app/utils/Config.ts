@@ -3,6 +3,10 @@ import * as p from 'path';
 import { remote } from 'electron';
 import { Match, MapId, MatchId } from './GameModels';
 
+const appPath = (process.env.NODE_ENV === 'development') ?
+  p.resolve('.') :
+  p.resolve(remote.app.getAppPath());
+
 export class Config {
   private static _data = 'data';
   private static _bots = 'bots';
@@ -12,7 +16,7 @@ export class Config {
   private static _configs = 'configs';
 
   public static base = p.resolve(remote.app.getPath('userData'));
-  public static bin = p.resolve(Config._bin);
+  public static bin = p.resolve(appPath, Config._bin);
   public static data = p.resolve(Config.base, Config._data);
 
   public static bots = p.resolve(Config.data, Config._bots);
@@ -24,7 +28,6 @@ export class Config {
   // This used for knowing which dirs need initialisation
   public static dirs = [
     Config.data,
-    Config.bin,
     Config.bots,
     Config.matches,
     Config.maps,

@@ -1,4 +1,12 @@
 import Config from './config';
+const remote = require('electron').remote;
+const path = require('path');
+
+const prefix = (process.env.NODE_ENV === 'development') ?
+  path.resolve('app') :
+  path.resolve(remote.app.getAppPath(), 'app');
+
+const resourcePath = path.resolve(prefix, 'components', 'visualizer', 'lib', 'assets', 'images');
 
 class ResourceLoader {
   svg: any;
@@ -30,7 +38,7 @@ class ResourceLoader {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", "./components/visualizer/lib/assets/images/" + name);
+      .attr("xlink:href", path.resolve(resourcePath, name));
   }
 }
 
