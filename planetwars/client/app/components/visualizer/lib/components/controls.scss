@@ -38,8 +38,6 @@ $sliderFg: #1f77b4;
                 min-width: 30px;
                 font-size: 1vw;
                 border-width: 0;
-
-                
             }
             .button:focus {
                 border-width: 0;
@@ -47,10 +45,12 @@ $sliderFg: #1f77b4;
                 color: $primary;
                 box-shadow: none;
             }
+            .speed {
+              padding-right: 10px;
+            }
 
             .turnProgress, .speed {
-                width: auto;
-                font-family: 'Tahoma';
+                line-height: 40px;
             }
         }
     }

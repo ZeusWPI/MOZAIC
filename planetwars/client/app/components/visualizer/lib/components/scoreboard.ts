@@ -63,10 +63,18 @@ export default class Scoreboard extends Component<ScoreboardProps> {
     const rows = game.matchLog.players.map((player) => {
       const planetCount = planetCounts[player.uuid];
       return tr({ style: { color: game.playerColor(player) } }, [
-        td("\u25CF"),
+        h('i.fa.fa-cogs', {
+          'aria-hidden': true
+        }),
         td(player.name),
-        td(planetCount + ' ' + ((planetCount === 1) ? "Planet" : " Planets")),
-        td(shipCounts[player.uuid] + "\u2694"),
+        td(planetCount),
+        h('i.fa.fa-globe', {
+          'aria-hidden': true
+        }),
+        td(shipCounts[player.uuid]),
+        h('i.fa.fa-rocket', {
+          'aria-hidden': true
+        })
       ]);
     });
     return table(`.${styles.scoreboard}`, {}, tbody(rows));

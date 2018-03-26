@@ -44,13 +44,12 @@ class ExpeditionRenderer {
 
   drawShips(expeditions: any, params: any) {
     let ships = expeditions.selectAll('.ship').data((d: any) => [d]);
-    ships.enter().append('text')
-      .attr('x', 0.5 * params.scale)
-      .attr('font-family', 'Trebuchet MS')
-      .attr('font-size', 1.1 * params.scale + 'px')
-      .style("text-anchor", "middle")
-      .text((exp: any) => "A")
+    ships.enter().append('path')
+      .classed('ship', true)
+      .attr('d', d3.symbol().size(params.scale * 0.5).type(d3.symbolTriangle))
       .attr('transform', (exp: any) => `rotate(${this.expeditionRotation(exp)})`)
+      .attr('stroke', 'black')
+      .attr('stroke-width', 0.1 * params.scale)
       .attr('fill', (exp: any) => this.game.playerColor(exp.owner));
   }
 
@@ -58,6 +57,7 @@ class ExpeditionRenderer {
     let counts = expeditions.selectAll('.shipCount').data((d: any) => [d]);
 
     counts.enter().append('text')
+      .classed('shipCount', true)
       .attr('y', 1.8 * params.scale)
       .attr('x', -1 * params.scale)
       .attr('font-family', 'sans-serif')
