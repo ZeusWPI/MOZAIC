@@ -9,7 +9,8 @@ export {
   Expedition,
   JsonPlanet,
   JsonExpedition,
+  JsonCommand,
 } from '../types';
 
 export { parseLog } from './parser';
-export { MatchLog, GameState } from './MatchLog';
+export { MatchLog, GameState, PlayerInputs, PlayerInput, Command } from './MatchLog';

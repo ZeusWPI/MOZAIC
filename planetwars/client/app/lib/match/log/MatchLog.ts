@@ -89,7 +89,7 @@ export interface PlayerInput {
   commands: Command[];
 }
 
-interface Command {
+export interface Command {
   command: JsonCommand;
   error?: string;
 }

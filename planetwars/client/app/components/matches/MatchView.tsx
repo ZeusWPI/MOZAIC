@@ -86,8 +86,8 @@ export class MatchView extends React.Component<Props, State> {
     return (
       <div className={styles.matchView}>
         <div className={styles.matchTitleBar}>
-          <div onClick={showVis}> Visualizer </div>
-          <div onClick={showLog}> Log </div>
+          <div onClick={showVis} className={styles.matchTitleBarElement}> Visualizer </div>
+          <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
         </div>
         <div className={styles.displayBox}>
           <MatchDisplay viewState={viewState} matchLog={matchLog}/>

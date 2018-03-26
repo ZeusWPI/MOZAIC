@@ -43,8 +43,8 @@ export interface JsonGameState {
 
 export interface JsonCommand {
   "origin": string;
-  "target": string;
-  "num_ships": string;
+  "destination": string;
+  "ship_count": string;
 }
 
 export interface JsonPlanet {
