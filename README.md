@@ -26,7 +26,7 @@ Try not to mess these up, or things will break.
 
 Important resources:
  - [Demo Bots](https://github.com/ZeusWPI/MOZAIC/tree/development/planetwars/bots)
- - [Competitor Bots](https://github.com/ZeusWPI/MOZAIC/blob/development/CompetitorBots.md)
+ - [Competitor Bots](https://hackmd.io/h4vmgyBDS-yQxrztywfxCQ#)
 
 ## Setup
 
