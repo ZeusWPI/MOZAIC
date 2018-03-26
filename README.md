@@ -14,7 +14,7 @@ We provide easy-to-install packages for every platform, check out the [releases]
 For Mac we suggest using the `.dmg`, for windows the `.exe`.
 
 For linux we provide an [AppImage](https://appimage.org/), which after downloading, you need to make executable (`chmod u+x <file>`).
-**Note**: the AppImage does not need to be installed, and you can simply run the file. However, running it will unpack some files, so we suggest putting it in it's own folder.
+**Note**: the AppImage does not need to be installed, and you can simply run the file.
 
 Most of the data will be save to user-data directories which are:
 
@@ -23,6 +23,9 @@ Most of the data will be save to user-data directories which are:
 * `~/Library/Application Support/BottleBats` on macOS
 
 Try not to mess these up, or things will break.
+
+Important resources:
+ - [Demo Bots](https://github.com/ZeusWPI/MOZAIC/tree/development/planetwars/bots)
 
 ## Setup
 
