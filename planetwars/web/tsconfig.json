@@ -10,7 +10,6 @@
       "dom.iterable",
       "scripthost"
     ],
-
     "alwaysStrict": true,
     "strictNullChecks": true,
     "noImplicitAny": true,
@@ -18,12 +17,9 @@
     "noImplicitThis": true,
     // "noUnusedLocals": true,
     "allowJs": true,
-    
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-
     "sourceMap": true,
-
     "outDir": "dist"
   },
   "files": [
@@ -31,7 +27,9 @@
   ],
   "include": [
     "frontend/**/*.ts",
+    "frontend/**/*.tsx",
     "types/**/*.ts",
+    "types/**/*.tx",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [
