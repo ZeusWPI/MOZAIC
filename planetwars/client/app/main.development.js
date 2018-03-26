@@ -1,3 +1,7 @@
+let log = require('electron-log');
+log.transports.file.level = 'info';
+log.info('[STARTUP] Main process started');
+
 const {
   app,
   BrowserWindow,
@@ -5,9 +9,7 @@ const {
   shell,
   globalShortcut
 } = require('electron');
-let log = require('electron-log');
-log.transports.file.level = 'info';
-log.info('[STARTUP] Main process started');
+let Promise = require('bluebird');
 
 let menu;
 let template;
@@ -26,30 +28,23 @@ if (process.env.NODE_ENV === 'development') {
   require('module').globalPaths.push(p); // eslint-disable-line
 }
 
-log.info('[STARTUP] Modules lodaded');
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-  log.info('[SHUTDOWN] Window all closed');
-});
-
-
 const installExtensions = () => {
   const installer = require('electron-devtools-installer'); // eslint-disable-line global-require
-
+  
   const extensions = [
     'REACT_DEVELOPER_TOOLS',
     'REDUX_DEVTOOLS'
   ];
   const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
   return Promise.all(extensions.map(name => installer.default(installer[name], forceDownload)));
-
-  return Promise.resolve([]);
 };
 
-app.on('ready', () =>
-  Promise.resolve(() => log.info('[STARTUP] App ready'))
-  .then(() => installExtensions())
+log.info('[STARTUP] Modules loaded');
+
+app.on('ready', () => {
+  log.info('[STARTUP] App ready');
+  return installExtensions()
+  .catch((err) => log.error(`[STARTUP] Error installing extensions ${err.toString()}`))
   .then()
   .then(() => log.info('[STARTUP] Extensions installed'))
   .then(() => {
@@ -58,26 +53,26 @@ app.on('ready', () =>
       width: 1024,
       height: 728,
     });
-
+    
     mainWindow.loadURL(`file://${__dirname}/app.html`);
-
+    
     mainWindow.webContents.on('did-finish-load', () => {
       mainWindow.show();
       // mainWindow.focus();
     });
-
+    
     mainWindow.on('closed', () => {
       mainWindow = null;
     });
-
+    
     // mainWindow.openDevTools();
-
+    
     mainWindow.webContents.on('context-menu', (e, props) => {
       const {
         x,
         y
       } = props;
-
+      
       Menu.buildFromTemplate([{
         label: 'Inspect element',
         click() {
@@ -85,7 +80,7 @@ app.on('ready', () =>
         },
       }]).popup(mainWindow);
     });
-
+    
     const template = [{
       accelerator: 'CmdOrCtrl+Q',
       click() {
@@ -122,9 +117,35 @@ app.on('ready', () =>
         mainWindow.setFullScreen(!mainWindow.isFullScreen())
       }
     }];
-
+    
     menu = Menu.buildFromTemplate(template);
     mainWindow.setMenu(menu);
     mainWindow.setMenuBarVisibility(false);
   })
-  .then('[STARTUP] Browser window created'));
+  .then(() => log.info('[STARTUP] Browser window created'))
+  .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`))
+});
+  
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') app.quit();
+  log.info('[SHUTDOWN] Window all closed');
+});
+
+app.on('error', (err) => {
+  log.error(`Unexpected error occured: ${err.toString()} ${err.stack}`);
+});
+
+app.on('certificate-error', (ev, wc, url) => {
+  log.error(`Certificate error for ${url}`);
+});
+
+app.on('quit', () => {
+  log.info('[SHUTDOWN] App is quitting');
+});
+
+
+app.on('will-quit', () => {
+  log.info('[SHUTDOWN] App will quit');
+});
+
+log.info('[STARTUP] App listeners bound');
