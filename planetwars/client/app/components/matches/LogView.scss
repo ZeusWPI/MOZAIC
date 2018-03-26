@@ -1,0 +1,37 @@
+:local {
+    .logRootNode {
+        position: relative;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        overflow-y: scroll;
+    }
+
+    .turn {
+        padding: 5px 0;
+    }
+
+    .error {
+        color: #DE474C;
+    }
+
+    .command {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .tab {
+        padding-left:3em;
+    }
+
+    .playerName {
+        color: #4797DE;
+    }
+
+    .header {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        padding: 0 1em;
+    }
+}

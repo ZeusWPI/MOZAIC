@@ -3,7 +3,7 @@ import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
 import { Match, Player, Map } from './types';
-import { MatchView } from './MatchView';
+import MatchView from './MatchView';
 
 const styles = require('./Matches.scss');
 
@@ -28,7 +28,7 @@ export default class MatchViewer extends Component<MatchViewerProps> {
           selected={this.props.selectedMatch}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={this.props.selectedMatch} />
+        <MatchView match={this.props.selectedMatch}/>
       </div>);
   }
 
