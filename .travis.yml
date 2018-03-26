@@ -41,8 +41,7 @@ script:
   - cd gameserver
   - cargo build --release
   - cd $TRAVIS_BUILD_DIR
+  - mv gameserver/target/release/mozaic_bot_driver planetwars/client/bin/mozaic_bot_driver
   - cd planetwars/client
   - npm install
   - npm run package-$OS_TARGET
-  - cd $TRAVIS_BUILD_DIR
-  - mv gameserver/target/release/mozaic_bot_driver planetwars/client/bin/mozaic_bot_driver

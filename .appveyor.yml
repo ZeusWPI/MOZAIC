@@ -30,8 +30,7 @@ build_script:
  - cd gameserver
  - cargo build --release
  - cd %APPVEYOR_BUILD_FOLDER%
+ - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver.exe
  - cd planetwars\client
  - npm install
  - npm run package-win
- - cd %APPVEYOR_BUILD_FOLDER%
- - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver.exe
