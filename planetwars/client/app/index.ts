@@ -29,6 +29,7 @@ type BreakType = 'fatal' | 'map' | 'bots';
 class Breaker extends Error {
   constructor(public type: string, public error: Error) {
     super();
+    console.log(error);
   }
 }
 
@@ -49,6 +50,10 @@ initializeDirs()
       }
       case 'bots': {
         alert(`Loading some default bots failed with ${br.error}`);
+        break;
+      }
+      default: {
+        alert(`Unexpected error: ${br}`);
         break;
       }
     }

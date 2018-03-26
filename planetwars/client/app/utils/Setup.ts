@@ -2,6 +2,7 @@ import * as Promise from 'bluebird';
 import * as fs from 'mz/fs';
 import * as mkdirp from 'mkdirp';
 import * as p from 'path';
+import { remote } from 'electron';
 
 import { Importer } from './Importer';
 import { Config } from './Config';
@@ -22,8 +23,6 @@ export function checkDataFilesAgainstDb(): void {
 }
 
 export function populateMaps(): Promise<void[]> {
-  // The correct type definition is missing for this function
-  const copyFile: (or: string, dest: string) => Promise<void> = fs.copyFile as any;
   const state: IGState = store.getState();
   if (Object.keys(state.maps).length !== 0) {
     return Promise.resolve([]);

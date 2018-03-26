@@ -8,7 +8,7 @@ import { IMapMeta, GameMap, isGameMap } from './GameModels';
 
 export class Importer {
   public static importMapFromFile(orPath: string): Promise<IMapMeta> {
-    return Promise.resolve(fs.readFile(orPath))
+    return Promise.resolve(fs.readFile(orPath, {}))
       .then((buffer) => buffer.toString())
       .then((contents) => JSON.parse(contents))
       .then((map: GameMap) => {

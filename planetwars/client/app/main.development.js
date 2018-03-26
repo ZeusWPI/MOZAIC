@@ -5,9 +5,6 @@ const {
   shell,
   globalShortcut
 } = require('electron');
-const {
-  autoUpdater
-} = require('electron-updater');
 
 let menu;
 let template;
@@ -58,7 +55,6 @@ app.on('ready', () =>
 
     mainWindow.webContents.on('did-finish-load', () => {
       mainWindow.show();
-      autoUpdater.checkForUpdatesAndNotify()
       // mainWindow.focus();
     });
 
