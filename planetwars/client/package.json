@@ -99,6 +99,7 @@
     "classnames": "^2.2.5",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
+    "electron-log": "^2.2.14",
     "electron-updater": "^2.21.3",
     "font-awesome": "^4.7.0",
     "history": "^4.6.1",

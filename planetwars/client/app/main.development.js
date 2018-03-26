@@ -5,6 +5,8 @@ const {
   shell,
   globalShortcut
 } = require('electron');
+let log = require('electron-log');
+log.info('[STARTUP] Main process started');
 
 let menu;
 let template;
@@ -23,8 +25,11 @@ if (process.env.NODE_ENV === 'development') {
   require('module').globalPaths.push(p); // eslint-disable-line
 }
 
+log.info('[STARTUP] Modules lodaded');
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+  log.info('[SHUTDOWN] Window all closed');
 });
 
 
@@ -42,8 +47,10 @@ const installExtensions = () => {
 };
 
 app.on('ready', () =>
-  installExtensions()
+  Promise.resolve(() => log.info('[STARTUP] App ready'))
+  .then(() => installExtensions())
   .then()
+  .then(() => log.info('[STARTUP] Extensions installed'))
   .then(() => {
     mainWindow = new BrowserWindow({
       show: false,
@@ -118,4 +125,5 @@ app.on('ready', () =>
     menu = Menu.buildFromTemplate(template);
     mainWindow.setMenu(menu);
     mainWindow.setMenuBarVisibility(false);
-  }));
+  })
+  .then('[STARTUP] Browser window created'));
