@@ -1,3 +1,5 @@
+@import '../../app.global.scss';
+
 :local {
     .logRootNode {
         position: relative;
@@ -8,7 +10,7 @@
     }
 
     .turn {
-        padding: 5px 0;
+        padding: 0px 0;
     }
 
     .error {
@@ -33,5 +35,17 @@
         flex-direction: row;
         justify-content: space-between;
         padding: 0 1em;
+        width: 900px;
+    }
+
+    .turns {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+    }
+
+    .turnNum {
+        font-weight: bold;
+        color: $secondary;
     }
 }

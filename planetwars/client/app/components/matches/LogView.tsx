@@ -14,7 +14,6 @@ export class LogView extends React.Component<LogViewProps> {
   public render() {
     const { matchLog } = this.props;
     let turn = -1;
-    console.log(matchLog);
     const entries = matchLog.playerInputs.map((playerInput, idx) => {
       if (!playerInput) {
         return null;
@@ -22,8 +21,11 @@ export class LogView extends React.Component<LogViewProps> {
       turn += 1;
       return (
         <div key={idx}>
-          <TurnNumView turnNum={turn} />
-          <TurnView players={matchLog.players} inputs={playerInput} />
+          <hr/>
+          <div className={styles.turns}>
+            <TurnNumView turnNum={turn} />
+            <TurnView players={matchLog.players} inputs={playerInput} />
+          </div>
         </div>
       );
     });
@@ -112,9 +114,6 @@ interface TurnNumProps {
 
 const TurnNumView: React.SFC<TurnNumProps> = (props) => {
   return (
-    <div>
-      <hr/>
-      <div> Turn: {props.turnNum} </div>
-    </div>
+      <div className={styles.turnNum}> Turn: {props.turnNum} </div>
   );
 };

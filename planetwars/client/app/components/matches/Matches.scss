@@ -146,17 +146,16 @@ $selectedHighlightWidth: 4px;
   height: 50px !important;
   padding: 20px 0px;
   width: 100%;
-  justify-content: center;
 }
 
 .matchTitleBarElement {
-  color: $blue;
-  width: 20vw;
+  color: $primary;
+  width: 10vw;
   text-align: center;
 }
 
 .matchTitleBarElement:hover {
-  color: $red;
+  color: $secondary;
 }
 
 .displayBox {
