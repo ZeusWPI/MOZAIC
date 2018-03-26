@@ -15,10 +15,20 @@ export class LogView extends React.Component<LogViewProps> {
       const subentries = matchLog.players.map((player) => {
         const input = playerInput[player.uuid];
         if (input) {
+          const commands = input.commands.map((command, idx) => {
+            const status = input.error || 'dispatched';
+            return (
+              <div key={idx}>
+                {status}
+                {JSON.stringify(command.command)}
+              </div>
+            );
+          });
           return (
             <div key={player.uuid}>
               {player.name}
               {input.raw}
+              {commands}
             </div>
           );
         } else {
