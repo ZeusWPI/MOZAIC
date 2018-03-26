@@ -11,12 +11,13 @@ interface LogViewProps {
 export class LogView extends React.Component<LogViewProps> {
   public render() {
     const { matchLog } = this.props;
+    console.log(matchLog);
     const entries = matchLog.playerInputs.map((playerInput, idx) => {
       const subentries = matchLog.players.map((player) => {
         const input = playerInput[player.uuid];
         if (input) {
           const commands = input.commands.map((command, idx) => {
-            const status = input.error || 'dispatched';
+            const status = command.error || 'dispatched';
             return (
               <div key={idx}>
                 {status}
