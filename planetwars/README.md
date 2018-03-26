@@ -27,24 +27,19 @@ Your bot is started with it's name as it's first parameter, that way you'll now 
 
 ## Gamestate
 
-**! This information is stale !**
 The gamestate format is non differential, which implies you'll receive the complete (updated) gamestate every turn, with all information visible for everyone.
 
 Examples:
 
 ```json
 {
-    "players":[
-        "player_0",
-        "player_1"
-    ],
     "planets":[
         {
             "planet":{
                 "x":0,
                 "y":0,
                 "ship_count":4,
-                "owner":"player_0",
+                "owner":1,
                 "name":"planet_0"
             }
         },
@@ -53,7 +48,7 @@ Examples:
                 "x":10,
                 "y":10,
                 "ship_count":2,
-                "owner":"player_1",
+                "owner":2,
                 "name":"planet_1"
             }
         }
@@ -63,21 +58,18 @@ Examples:
             "ship_count":5,
             "origin":"planet_1",
             "destination":"planet_0",
-            "owner":"player_1",
+            "owner":2,
             "turns_remaining":3
         }, {
             "ship_count":7,
             "origin":"planet_0",
             "destination":"planet_1",
-            "owner":"player_0",
+            "owner":1,
             "turns_remaining":1
         }
     ]
 }
 ```
-
-For a more extensive list of examples see [this directory](./examoples/states)
-For a formal description of the format see [this JSON Schema](./examples/gamestateformat.json)
 
 ## Moves
 
@@ -97,5 +89,3 @@ For a formal description of the format see [this JSON Schema](./examples/gamesta
     ]
 }
 ```
-
-For a formal description of the format see [this JSON Schema](./examples/commandformat.json)
