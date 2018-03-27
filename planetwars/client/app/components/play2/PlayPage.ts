@@ -236,7 +236,7 @@ interface IBotListItemProps {
 // tslint:disable-next-line:variable-name
 const BotListItem: React.SFC<IBotListItemProps> = (props) => {
   const { config, lastUpdatedAt, createdAt, uuid } = props.bot;
-  const command = [config.command].concat(config.args).join(' ');
+  const command = config.command;
   const selected = (props.selected) ? `.${styles.selected}` : '';
   const selector = (selected)
     ? () => props.unselectBot(uuid, true)

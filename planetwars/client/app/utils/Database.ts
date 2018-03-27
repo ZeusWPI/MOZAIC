@@ -5,7 +5,7 @@ import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
-import { IBotList, IBotConfig } from './ConfigModels';
+import { IBotList, IBotConfig, IBotListv2 } from './ConfigModels';
 import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
@@ -14,6 +14,14 @@ import { Config } from './Config';
 
 export interface DbSchemaV2 {
   version: 'v2';
+  matches: IMatchList;
+  bots: IBotListv2;
+  maps: IMapList;
+  notifications: Notification[];
+}
+
+export interface DbSchemaV3 {
+  version: 'v3';
   matches: IMatchList;
   bots: IBotList;
   maps: IMapList;
@@ -48,15 +56,15 @@ const database = low<DbSchemaV2, typeof adapter>(adapter);
 export function bindToStore(store: any): Promise<void> {
   return database
     .then((db) => db.defaults({
-      version: 'v2',
+      version: 'v3',
       matches: {},
       bots: {},
       maps: {},
       notifications: [],
     }).write())
     .then((db) => {
-      if (db.version !== 'v2') {
-        return migrateOld(db);
+      if (db.version as string !== 'v3') {
+        return db.add(migrateOld(db));
       }
       return db;
     })
@@ -165,22 +173,33 @@ const listeners: TableListener<any>[] = [
 // Migrations
 // ----------------------------------------------------------------------------
 
-type DbSchema = IDbSchemaV1 | DbSchemaV2;
+type DbSchema = DbSchemaV2 | DbSchemaV3;
 
-interface IDbSchemaV1 {
-  version: string;
-  matches: Match[];
-  bots: IBotConfig[];
-}
+// interface IDbSchemaV1 {
+//   version: string;
+//   matches: Match[];
+//   bots: IBotConfig[];
+// }
 
 // Let's not consider migrating old DB's yet.
-// For now this is only for def purposes.
-function migrateOld(db: DbSchema): DbSchemaV2 {
-  return {
-    version: 'v2',
-    matches: {},
-    bots: {},
-    maps: {},
-    notifications: [],
-  };
+// For now this is only for dev purposes.
+function migrateOld(db: DbSchema): DbSchemaV3 {
+  if (db.version as string === 'v2') {
+    const bots = db.bots;
+    return {
+      version: 'v3',
+      matches: db.matches,
+      bots: bots,
+      maps: db.maps,
+      notifications: db.notifications,
+    };
+  } else {
+    return {
+      version: 'v3',
+      matches: {},
+      bots: {},
+      maps: {},
+      notifications: [],
+    };
+  }
 }

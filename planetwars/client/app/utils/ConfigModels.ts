@@ -20,6 +20,24 @@ interface IGameConfig {
 
 export type BotID = string;
 
+export interface IBotListv2 {
+  [key: string /* UUID */]: IBotDatav2;
+}
+
+export interface IBotDatav2 {
+  uuid: BotID;
+  config: IBotConfig;
+  lastUpdatedAt: Date;
+  createdAt: Date;
+  history: IBotConfig[];
+}
+
+export interface IBotConfigv2 {
+  name: string;
+  command: string;
+  args: string;
+}
+
 export interface IBotList {
   [key: string /* UUID */]: IBotData;
 }
@@ -35,12 +53,10 @@ export interface IBotData {
 export interface IBotConfig {
   name: string;
   command: string;
-  args: string[];
 }
 
 export function isBotConfig(o: any): o is IBotConfig {
   const c = <IBotConfig> o;
   return (c.command !== undefined)
-    && (c.name !== undefined)
-    && (c.args !== undefined);
+    && (c.name !== undefined);
 }

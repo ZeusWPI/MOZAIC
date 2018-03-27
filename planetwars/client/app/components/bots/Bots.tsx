@@ -193,9 +193,9 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
   }
 
   private handleSubmit() {
-    const [command, ...args] = stringArgv(this.state.command);
+    const command = this.state.command;
     const { name, selectedBot } = this.state;
-    const config = { name, command, args };
+    const config = { name, command };
     const validation = this.props.validate(config);
 
     if (Object.keys(validation).length !== 0) {
@@ -223,8 +223,8 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     if (!selectedBot) {
       return { selectedBot: undefined, name: '', command: '', errors: {} };
     }
-    const { uuid, config: { name, command, args } } = selectedBot;
-    const cmd = [command, ...args].join(' ');
+    const { uuid, config: { name, command } } = selectedBot;
+    const cmd = command;
     return { selectedBot, name, command: cmd, errors: {} };
   }
 }
