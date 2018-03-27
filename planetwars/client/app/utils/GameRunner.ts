@@ -3,7 +3,10 @@ import * as tmp from 'tmp';
 import { EventEmitter } from 'events';
 import { execFile } from 'child_process';
 
-import { IMatchConfig } from './ConfigModels';
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
+
+import { IMatchConfig, IBotListv2, IBotList, IBotConfig, IBotData, IBotConfigv2 } from './ConfigModels';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?
@@ -13,13 +16,27 @@ declare interface GameRunner {
   on(event: 'error', listener: (err: Error) => void): this;
 }
 
-class GameRunner extends EventEmitter
-{
+class GameRunner extends EventEmitter {
   private conf: IMatchConfig;
 
   constructor(conf: IMatchConfig) {
     super();
-    this.conf = conf;
+
+    const newPlayers: IBotConfigv2[] = conf.players.map( (bot: IBotConfig) => {
+      const commandSplit = stringArgv(bot.command);
+      const ret: IBotConfigv2 = {
+        name: bot.name,
+        command: commandSplit[0],
+        args: commandSplit.slice(1),
+      };
+      return ret;
+    });
+
+    this.conf = {
+      players: newPlayers,
+      game_config: conf.game_config,
+      log_file: conf.log_file,
+    };
   }
 
   public run() {
@@ -45,8 +62,8 @@ class GameRunner extends EventEmitter
 
   private writeConfigFile() {
     // TODO: maybe doing this async would be better
-    let file = tmp.fileSync();
-    let json = JSON.stringify(this.conf);
+    const file = tmp.fileSync();
+    const json = JSON.stringify(this.conf);
     fs.writeFileSync(file.fd, json);
     return file.name;
   }

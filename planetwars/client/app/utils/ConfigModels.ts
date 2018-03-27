@@ -8,7 +8,7 @@ export interface INamedConfig {
 }
 
 export interface IMatchConfig {
-  players: IBotConfig[],
+  players: (IBotConfig | IBotConfigv2)[],
   game_config: IGameConfig,
   log_file: string,
 }
@@ -26,7 +26,7 @@ export interface IBotListv2 {
 
 export interface IBotDatav2 {
   uuid: BotID;
-  config: IBotConfig;
+  config: IBotConfigv2;
   lastUpdatedAt: Date;
   createdAt: Date;
   history: IBotConfig[];
@@ -35,7 +35,7 @@ export interface IBotDatav2 {
 export interface IBotConfigv2 {
   name: string;
   command: string;
-  args: string;
+  args: string[];
 }
 
 export interface IBotList {

@@ -5,7 +5,7 @@ import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions/actions';
-import { IBotList, IBotConfig, IBotListv2 } from './ConfigModels';
+import { IBotList, IBotConfig, IBotListv2, IBotDatav2 } from './ConfigModels';
 import { Match, IMatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
@@ -174,7 +174,7 @@ const listeners: TableListener<any>[] = [
 // ----------------------------------------------------------------------------
 
 type DbSchema = DbSchemaV2 | DbSchemaV3;
-
+type OldDbSchema = DbSchemaV2; // | DbSchemaV1
 // interface IDbSchemaV1 {
 //   version: string;
 //   matches: Match[];
@@ -183,13 +183,26 @@ type DbSchema = DbSchemaV2 | DbSchemaV3;
 
 // Let's not consider migrating old DB's yet.
 // For now this is only for dev purposes.
-function migrateOld(db: DbSchema): DbSchemaV3 {
+function migrateOld(db: OldDbSchema): DbSchemaV3 {
   if (db.version as string === 'v2') {
-    const bots = db.bots;
+    const bots: IBotListv2 = db.bots;
+    const newBots: IBotList = {};
+    Object.keys(bots).forEach((uuid) => {
+      newBots[uuid] = {
+        uuid,
+        config: {
+          name: bots[uuid].config.name,
+          command: [bots[uuid].config.command].concat(bots[uuid].config.args).join(" "),
+        },
+        lastUpdatedAt: bots[uuid].lastUpdatedAt,
+        createdAt: bots[uuid].createdAt,
+        history: bots[uuid].history,
+      };
+    });
     return {
       version: 'v3',
       matches: db.matches,
-      bots: bots,
+      bots: newBots,
       maps: db.maps,
       notifications: db.notifications,
     };
