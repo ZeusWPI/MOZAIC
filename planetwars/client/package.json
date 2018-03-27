@@ -94,7 +94,6 @@
     }
   },
   "dependencies": {
-    "@types/opn": "^5.1.0",
     "bluebird": "^3.5.1",
     "bulma": "^0.6.2",
     "classnames": "^2.2.5",
@@ -107,7 +106,6 @@
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.21.0",
-    "opn": "^5.3.0",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
     "react-helpers": "0.0.1",

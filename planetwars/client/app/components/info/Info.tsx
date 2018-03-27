@@ -6,14 +6,11 @@ import { Link, NavLink } from "react-router-dom";
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Info.scss');
 
-// tslint:disable-next-line:no-var-requires
-const opn = require('opn');
-
 export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   public state = { mapToggled: false };
 
   public lauchReadme() {
-    opn('https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md');
+    shell.openExternal('https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md');
   }
 
   public render() {
