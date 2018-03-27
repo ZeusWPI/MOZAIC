@@ -64,7 +64,7 @@ export function bindToStore(store: any): Promise<void> {
     }).write())
     .then((db) => {
       if (db.version as string !== 'v3') {
-        return db.add(migrateOld(db));
+        return migrateOld(db);
       }
       return db;
     })
