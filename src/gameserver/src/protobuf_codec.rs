@@ -5,8 +5,34 @@ use prost::encoding;
 use bytes::{BytesMut, Buf, BufMut};
 use std::io::{Result, Error, ErrorKind, Cursor};
 use futures::{Poll, Async, Sink, Stream, StartSend};
+use std::marker::PhantomData;
 
 use tokio_io::{codec, AsyncRead, AsyncWrite};
+
+pub struct MessageStream<T, M> {
+    inner: ProtobufTransport<T>,
+    phantom_m: PhantomData<M>,
+}
+
+impl<T, M> Stream for MessageStream<T, M>
+    where T: AsyncRead,
+          M: Message + Default
+{
+    type Item = M;
+    type Error = Error;
+
+    fn poll(&mut self) -> Poll<Option<M>, Error> {
+        let res = match try_ready!(self.inner.poll()) {
+            None => None,
+            Some(bytes_mut) => {
+                let bytes = bytes_mut.freeze();
+                let msg = try!(M::decode(bytes));
+                Some(msg)
+            }
+        };
+        return Ok(Async::Ready(res));
+    }
+}
 
 pub struct ProtobufTransport<T> {
     inner: codec::Framed<T, LengthDelimited>,
