@@ -35,22 +35,19 @@ Examples:
 {
     "planets":[
         {
-            "planet":{
-                "x":0,
-                "y":0,
-                "ship_count":4,
-                "owner":1,
-                "name":"planet_0"
-            }
+            "x":0,
+            "y":0,
+            "ship_count":4,
+            "owner":1,
+            "name":"planet_0"
         },
         {
-            "planet":{
-                "x":10,
-                "y":10,
-                "ship_count":2,
-                "owner":2,
-                "name":"planet_1"
-            }
+
+            "x":10,
+            "y":10,
+            "ship_count":2,
+            "owner":2,
+            "name":"planet_1"
         }
     ],
     "expeditions":[
