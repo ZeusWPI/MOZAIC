@@ -54,7 +54,7 @@ export function bindToStore(store: any): Promise<void> {
       maps: {},
       notifications: [],
     }).write())
-    .then((db) => {
+    .then((db: DbSchemaV2) => {
       if (db.version !== 'v2') {
         return migrateOld(db);
       }
