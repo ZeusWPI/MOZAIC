@@ -11,7 +11,7 @@ And every turn, you return the [moves](#moves) you want to make.
 
 ### The map
 
-The map is an arbitrary collection of planets on *fixed* positions. They all have an initial amount of ships present (`ship_count`) and can have a neutral owner. Interpret this as an owner who is not a player, and will not make moves, but who's ships you'll have to defeat if you want to take over the planet.
+The map is an arbitrary collection of planets on *fixed* positions. They all have an initial amount of ships present (`ship_count`) and can have a neutral owner. Interpret this as an owner who is not a player, and will not make moves, but whose ships you'll have to defeat if you want to take over the planet.
 
 ### Combat
 
@@ -23,7 +23,7 @@ Every turn, all player owned planets create one extra ship. This is done before 
 
 ### Communication
 
-Your bot is started with it's name as it's first parameter, that way you'll now which player you are in the input you receive. You'll receive that information in newline-separated JSON, and we expect it back the same way.
+Your bot is started with its name as its first parameter, that way you'll know which player you are in the input you receive. You'll receive that information in newline-separated JSON, and we expect it back the same way.
 
 ## Gamestate
 
