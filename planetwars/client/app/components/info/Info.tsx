@@ -9,9 +9,13 @@ const styles = require('./Info.scss');
 export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   public state = { mapToggled: false };
 
+  public lauchReadme() {
+    shell.openExternal('https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md');
+  }
+
   public render() {
     const Readme = () => (
-      <a href="https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md">
+      <a onClick={this.lauchReadme}>
         README
       </a>);
     const toggle = (evt: any) => this.setState({ mapToggled: !this.state.mapToggled });

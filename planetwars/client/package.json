@@ -1,7 +1,7 @@
 {
   "name": "bottlebats",
   "productName": "BottleBats",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Client for the 2018 edition of the BottleBats AI competition",
   "keywords": [
     "BottleBats",
@@ -99,6 +99,7 @@
     "classnames": "^2.2.5",
     "d3": "^4.11.0",
     "electron-debug": "^1.1.0",
+    "electron-log": "^2.2.14",
     "electron-updater": "^2.21.3",
     "font-awesome": "^4.7.0",
     "history": "^4.6.1",
@@ -174,7 +175,7 @@
     "tslint-eslint-rules": "^5.1.0",
     "tslint-loader": "^3.6.0",
     "tslint-react": "^3.5.1",
-    "typescript": "^2.4.1",
+    "typescript": "^2.8.1",
     "url-loader": "^0.6.1",
     "webpack": "^3.3.0",
     "webpack-dev-middleware": "^1.9.0",

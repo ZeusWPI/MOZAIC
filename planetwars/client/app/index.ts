@@ -1,3 +1,5 @@
+import log from 'electron-log';
+log.info('[STARTUP] Renderer process started');
 import { render } from 'react-dom';
 import * as Promise from 'bluebird';
 import { AppContainer } from 'react-hot-loader';
@@ -11,9 +13,13 @@ import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 import './app.global.scss';
 import './fontawesome.global.scss';
 
+log.info('[STARTUP] Rendere modules loaded');
+
 // tslint:disable-next-line:no-var-requires
 const { configureStore, history } = require('./store/configureStore');
 export const store = configureStore(initialState);
+
+log.info('[STARTUP] Store configured');
 
 // Config the global Bluebird Promise
 // We should still 'import * as Promise from bluebird' everywhere to have it at
@@ -25,6 +31,8 @@ Promise.config({
   // monitoring: true,
 });
 
+log.info('[STARTUP] Promise configured');
+
 type BreakType = 'fatal' | 'map' | 'bots';
 class Breaker extends Error {
   constructor(public type: string, public error: Error) {
@@ -33,9 +41,14 @@ class Breaker extends Error {
   }
 }
 
+log.info('[STARTUP] Init app render');
+
 initializeDirs()
+  .then(() => log.info('[STARTUP] Initalized dirs'))
   .then(() => bindToStore(store))
+  .then(() => log.info('[STARTUP] Bound to store'))
   .then(renderApp).catch((err) => new Breaker('fatal', err))
+  .then(() => log.info('[STARTUP] Finished rendering app'))
   .then(populateMaps).catch((err) => new Breaker('map', err))
   .then(populateBots).catch((err) => new Breaker('bots', err))
   .catch((br: Breaker) => {
