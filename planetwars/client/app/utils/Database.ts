@@ -181,38 +181,41 @@ type OldDbSchema = DbSchemaV2; // | DbSchemaV1
 //   bots: IBotConfig[];
 // }
 
-// Let's not consider migrating old DB's yet.
-// For now this is only for dev purposes.
-function migrateOld(db: OldDbSchema): DbSchemaV3 {
-  if (db.version as string === 'v2') {
-    const bots: IBotListv2 = db.bots;
-    const newBots: IBotList = {};
-    Object.keys(bots).forEach((uuid) => {
-      newBots[uuid] = {
-        uuid,
-        config: {
-          name: bots[uuid].config.name,
-          command: [bots[uuid].config.command].concat(bots[uuid].config.args).join(" "),
-        },
-        lastUpdatedAt: bots[uuid].lastUpdatedAt,
-        createdAt: bots[uuid].createdAt,
-        history: bots[uuid].history,
+function migrateOld(db: DbSchema): DbSchema {
+  let newdb: DbSchema;
+  switch (db.version as string) {
+    case "v2":
+      const bots: IBotListv2 = (db as DbSchemaV2).bots;
+      const newBots: IBotList = {};
+      Object.keys(bots).forEach((uuid) => {
+        newBots[uuid] = {
+          uuid,
+          config: {
+            name: bots[uuid].config.name,
+            command: [bots[uuid].config.command].concat(bots[uuid].config.args).join(" "),
+          },
+          lastUpdatedAt: bots[uuid].lastUpdatedAt,
+          createdAt: bots[uuid].createdAt,
+          history: bots[uuid].history,
+        };
+      });
+      newdb = {
+        version: 'v3',
+        matches: db.matches,
+        bots: newBots,
+        maps: db.maps,
+        notifications: db.notifications,
       };
-    });
-    return {
-      version: 'v3',
-      matches: db.matches,
-      bots: newBots,
-      maps: db.maps,
-      notifications: db.notifications,
-    };
-  } else {
-    return {
-      version: 'v3',
-      matches: {},
-      bots: {},
-      maps: {},
-      notifications: [],
-    };
+      return migrateOld(newdb);
+    case "v3":
+      return db;
+    default:
+      return {
+        version: 'v3',
+        matches: {},
+        bots: {},
+        maps: {},
+        notifications: [],
+      } as DbSchemaV3;
   }
 }
