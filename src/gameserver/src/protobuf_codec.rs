@@ -1,16 +1,17 @@
 // Code adapted from tokio_io::length_delimited and prost.
 
-use prost::{Message, EncodeError, DecodeError};
+use prost::Message;
 use prost::encoding;
-use bytes::{BytesMut, Buf, BufMut};
+use bytes::BytesMut;
 use std::io::{Result, Error, ErrorKind, Cursor};
-use futures::{Poll, Async, Sink, Stream, StartSend};
+use futures::{Poll, Async, Sink, Stream, StartSend, AsyncSink};
 use std::marker::PhantomData;
 
 use tokio_io::{codec, AsyncRead, AsyncWrite};
 
 pub struct MessageStream<T, M> {
     inner: ProtobufTransport<T>,
+    buffered: Option<BytesMut>,
     phantom_m: PhantomData<M>,
 }
 
@@ -31,6 +32,49 @@ impl<T, M> Stream for MessageStream<T, M>
             }
         };
         return Ok(Async::Ready(res));
+    }
+}
+
+impl<T, M> MessageStream<T, M>
+    where T: AsyncWrite,
+          M: Message
+{
+    fn poll_send(&mut self) -> Poll<(), Error> {
+        if let Some(bytes) = self.buffered.take() {
+            match try!(self.inner.start_send(bytes)) {
+                AsyncSink::Ready => (),
+                AsyncSink::NotReady(bytes) => {
+                    self.buffered = Some(bytes);
+                    return Ok(Async::NotReady);
+                }
+            }
+        }
+        return Ok(Async::Ready(()));
+    }
+}
+
+impl<T, M> Sink for MessageStream<T, M>
+    where T: AsyncWrite,
+          M: Message
+{
+    type SinkItem = M;
+    type SinkError = Error;
+
+    fn start_send(&mut self, item: M) -> StartSend<M, Error> {
+        match try!(self.poll_send()) {
+            Async::NotReady => Ok(AsyncSink::NotReady(item)),
+            Async::Ready(()) => {
+                // buffer is empty
+                // TODO: start_send
+                Ok(AsyncSink::Ready)
+            }
+        }
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), Error> {
+        let res = try!(self.poll_send());
+        try_ready!(self.inner.poll_complete());
+        return Ok(res);
     }
 }
 
