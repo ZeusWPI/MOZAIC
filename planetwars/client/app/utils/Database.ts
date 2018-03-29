@@ -47,7 +47,7 @@ const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
 const adapter = new FileAsync(dbPath);
-const database = low<DbSchemaV2, typeof adapter>(adapter);
+const database = low<DbSchemaV3, typeof adapter>(adapter);
 
 /*
  * This function will populate the store initially with the DB info and
@@ -64,7 +64,7 @@ export function bindToStore(store: any): Promise<void> {
     }).write())
     .then((db) => {
       if (db.version as string !== 'v3') {
-        return migrateOld(db);
+        return db.update(migrateOld(db));
       }
       return db;
     })
@@ -84,7 +84,7 @@ export function bindToStore(store: any): Promise<void> {
           timestamp: new Date(matchData.timestamp),
         }));
       });
-      db.notifications.forEach((notification) => {
+      db.notifications.forEach((notification: Notification) => {
         store.dispatch(A.importNotificationFromDB(notification));
       });
     })
