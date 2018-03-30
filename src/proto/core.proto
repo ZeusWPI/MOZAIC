@@ -2,22 +2,13 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
-
-message CreateMatch {
-    int64 player_count = 1;
-    bytes match_data = 2;
-}
-
-message CreateMatchResponse {
-    oneof response {
-        MatchCreated created = 1;
-        string error = 2;
+message Packet {
+    oneof payload {
+        ConnectRequest connect_request = 1;
+        ConnectResponse connect_response = 2;
+        GameData data = 3;
+        Disconnect disconnect = 4;
     }
-}
-
-message MatchCreated {
-    bytes game_token = 1;
-    repeated bytes player_tokens = 2;
 }
 
 message ConnectRequest {
