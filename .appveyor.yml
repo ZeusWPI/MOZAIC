@@ -1,5 +1,9 @@
 os: Visual Studio 2017
 
+branches:
+  only: 
+    - development
+    - /^build-.*$/
 platform:
   - x64
 
