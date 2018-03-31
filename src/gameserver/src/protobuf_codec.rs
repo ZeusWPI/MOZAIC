@@ -36,9 +36,17 @@ impl<T, M> Stream for MessageStream<T, M>
 }
 
 impl<T, M> MessageStream<T, M>
-    where T: AsyncWrite,
+    where T: AsyncRead + AsyncWrite,
           M: Message
 {
+    pub fn new(transport: ProtobufTransport<T>) -> Self {
+        MessageStream {
+            inner: transport,
+            buffered: None,
+            phantom_m: PhantomData,
+        }
+    }
+
     fn poll_send(&mut self) -> Poll<(), Error> {
         if let Some(bytes) = self.buffered.take() {
             match try!(self.inner.start_send(bytes)) {
@@ -54,7 +62,7 @@ impl<T, M> MessageStream<T, M>
 }
 
 impl<T, M> Sink for MessageStream<T, M>
-    where T: AsyncWrite,
+    where T: AsyncRead + AsyncWrite,
           M: Message
 {
     type SinkItem = M;

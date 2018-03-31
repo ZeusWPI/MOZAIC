@@ -6,9 +6,10 @@ use std::io;
 use std::str;
 use slog;
 
-use protobuf_codec::ProtobufTransport;
+use protobuf_codec::{ProtobufTransport, MessageStream};
 use router;
 use super::client_connection::ClientConnection;
+use protocol;
 
 
 
@@ -34,11 +35,11 @@ pub enum Message {
 
 pub enum Command {
     Send(Vec<u8>),
-    Connect(Transport),
+    Connect(ProtobufTransport<TcpStream>),
 }
 
 // TODO: maybe use a type parameter instead of hardcoding
-type Transport = ProtobufTransport<TcpStream>;
+type Transport = MessageStream<TcpStream, protocol::ClientMessage>;
 
 
 pub struct ClientController {
@@ -126,11 +127,22 @@ impl ClientController {
         while let Async::Ready(command) = self.poll_ctrl_chan() {
             match command {
                 Command::Send(message) => {
-                    let bytes = BytesMut::from(message);
-                    self.connection.queue_send(bytes);
+                    // TODO: jesus.
+                    let msg = protocol::ClientMessage {
+                        message: Some(
+                            protocol::client_message::Message::GameData(
+                                protocol::GameData {
+                                    data: message,
+                                }
+                            )
+                        )
+                    };
+                    self.connection.queue_send(msg);
                 },
                 Command::Connect(transport) => {
-                    self.connection.set_transport(transport);
+                    self.connection.set_transport(
+                        MessageStream::new(transport)
+                    );
                 },
             }
         }
@@ -139,8 +151,18 @@ impl ClientController {
     fn poll_client_connection(&mut self) -> Poll<(), io::Error> {
         try!(self.connection.flush());
         loop {
-            let bytes = try_ready!(self.connection.poll());
-            self.handle_client_message(bytes.freeze().to_vec());
+            let client_message = try_ready!(self.connection.poll());
+            if let Some(msg) = client_message.message {
+                match msg {
+                    protocol::client_message::Message::GameData(game_data) => {
+                        self.handle_client_message(game_data.data);
+                    }
+                    protocol::client_message::Message::Disconnect(_disconnect) => {
+                        panic!("disconnect not implemented yet");
+                    }
+                }
+            }
+            
         }
     }
  
