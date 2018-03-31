@@ -28,31 +28,44 @@ export class Address {
     }
 }
 
+enum ConnectionState {
+    CONNECTING,
+    CONNECTED,
+    CLOSED,
+};
 
-export class Connection {
+
+export class Connection extends stream.Readable {
+    private token: Buffer;
+    private state: ConnectionState;
     private socket: net.Socket;
     
-    constructor(socket: net.Socket) {
+    public constructor(socket: net.Socket, token: Buffer) {
+        super();
+        this.token = token;
         this.socket = socket;
+        this.state = ConnectionState.CONNECTING;
+        socket.on('data', (buf) => this.onData(buf));
+        this.connect();
     }
 
-    public static connect(socket: net.Socket, token: Buffer) 
-            :Promise<Connection>
-    {
-        return new Promise((resolve, reject) => {
-            let request = proto.ConnectRequest.create({ token: token });
-            let bytes = proto.ConnectRequest.encodeDelimited(request).finish();
-            socket.write(bytes);
-            socket.on('error', e => reject(e));
-            socket.on('data', buf => {
+    private connect() {
+        this.state = ConnectionState.CONNECTING;
+        let request = proto.ConnectRequest.create({ token: this.token });
+        let bytes = proto.ConnectRequest.encodeDelimited(request).finish();
+        this.socket.write(bytes);
+    }
+
+    private onData(buf: Buffer) {
+        console.log(buf);
+        switch (this.state) {
+            case ConnectionState.CONNECTING:
                 let response = proto.ConnectResponse.decodeDelimited(buf);
-                if (response.error) {
-                    // TODO: should this be wrapped or something?
-                    reject(response.error);
-                } else {
-                    resolve(new Connection(socket));
-                }
-            });
-        });
+                console.log(response);
+                this.state = ConnectionState.CONNECTED;
+                break;
+            default:
+                console.log('default');
+        }
     }
 }

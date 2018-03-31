@@ -156,13 +156,13 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
+        self.handle_commands();
         let res = self.poll_client_connection();
         if let Err(_err) = res {
             // TODO: log
             self.connection.drop_transport();
         }
         
-        self.handle_commands();
         // TODO: proper exit
         Ok(Async::NotReady)
     }
