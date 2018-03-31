@@ -72,8 +72,12 @@ impl<T, M> Sink for MessageStream<T, M>
         match try!(self.poll_send()) {
             Async::NotReady => Ok(AsyncSink::NotReady(item)),
             Async::Ready(()) => {
-                // buffer is empty
-                // TODO: start_send
+                let mut bytes = BytesMut::with_capacity(item.encoded_len());
+                // encoding can only fail because the buffer does not have
+                // enough space allocated, but we just allocated the required
+                // space.
+                item.encode(&mut bytes).unwrap();
+                self.buffered = Some(bytes);
                 Ok(AsyncSink::Ready)
             }
         }
