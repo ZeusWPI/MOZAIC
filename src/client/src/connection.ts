@@ -1,8 +1,10 @@
 import * as protocol_root from './proto';
 const proto = protocol_root.mozaic.protocol;
 import * as net from 'net';
+import * as protobufjs from 'protobufjs/minimal';
 import * as stream from 'stream';
 import * as Promise from 'bluebird';
+import { EventEmitter } from 'events';
 
 
 
@@ -35,7 +37,7 @@ enum ConnectionState {
 };
 
 
-export class Connection extends stream.Readable {
+export class Connection extends EventEmitter {
     private token: Buffer;
     private state: ConnectionState;
     private socket: net.Socket;
@@ -56,16 +58,35 @@ export class Connection extends stream.Readable {
         this.socket.write(bytes);
     }
 
+    private readMessage(reader: protobufjs.BufferReader) {
+        switch (this.state) {
+            case ConnectionState.CONNECTING: {
+                let response = proto.ConnectResponse.decodeDelimited(reader);
+                this.state = ConnectionState.CONNECTED;
+                this.emit('connected');
+                break;
+            }
+            case ConnectionState.CONNECTED: {
+                let packet = proto.ClientMessage.decodeDelimited(reader);
+                if (packet.gameData) {
+                    this.emit('message', packet.gameData.data);
+                }
+                break;
+            }
+            case ConnectionState.CLOSED: {
+                // TODO
+                break;
+            }
+        }
+    }
+
     private onData(buf: Buffer) {
         console.log(buf);
-        switch (this.state) {
-            case ConnectionState.CONNECTING:
-                let response = proto.ConnectResponse.decodeDelimited(buf);
-                console.log(response);
-                this.state = ConnectionState.CONNECTED;
-                break;
-            default:
-                console.log('default');
+        let reader = new protobufjs.BufferReader(buf);
+        while (reader.pos < reader.len) {
+            console.log(`${reader.pos} of ${reader.len}`);
+            this.readMessage(reader);
         }
+        console.log(`${reader.pos} of ${reader.len}`);
     }
 }
