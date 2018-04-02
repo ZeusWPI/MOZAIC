@@ -59,8 +59,12 @@ export class Connection extends EventEmitter {
     private connect() {
         this.state = ConnectionState.CONNECTING;
         let request = proto.ConnectRequest.create({ token: this.token });
-        let bytes = proto.ConnectRequest.encodeDelimited(request).finish();
-        this.socket.write(bytes);
+        this.writeMessage(proto.ConnectRequest.encode(request));
+    }
+
+    private writeMessage(write: BufferWriter) {
+        let buf = write.ldelim().finish();
+        this.socket.write(buf);
     }
 
     private readMessage(buf: Buffer) {
