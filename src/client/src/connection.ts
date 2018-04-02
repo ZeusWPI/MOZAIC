@@ -34,6 +34,7 @@ export class Address {
 
 
 enum ConnectionState {
+    DISCONNECTED,
     CONNECTING,
     CONNECTED,
     CLOSED,
@@ -42,29 +43,37 @@ enum ConnectionState {
 export class Connection extends EventEmitter {
     private token: Buffer;
     private state: ConnectionState;
-    private socket: net.Socket;
+    private socket?: net.Socket;
 
     private recvBuffer: Buffer;
     
-    public constructor(socket: net.Socket, token: Buffer) {
+    public constructor(token: Buffer) {
         super();
         this.token = token;
         this.recvBuffer = new Buffer(0);
-        this.socket = socket;
-        this.state = ConnectionState.CONNECTING;
-        socket.on('data', (buf: Buffer) => this.readMessages(buf));
-        this.connect();
+        this.state = ConnectionState.DISCONNECTED;
     }
 
-    private connect() {
+    public connect(socket: net.Socket) {
+        this.socket = socket;
+        // drop old receive buffer
+        this.recvBuffer = new Buffer(0);
+
+        // set callbacks
+        // TODO: handle errors and such
+        socket.on('data', (buf: Buffer) => this.readMessages(buf));
+
+        // initiate handshake
         this.state = ConnectionState.CONNECTING;
         let request = proto.ConnectRequest.create({ token: this.token });
         this.writeMessage(proto.ConnectRequest.encode(request));
     }
 
+    // write a write-op to the underlying socket.
+    // it is illegal to call this when not connected.
     private writeMessage(write: BufferWriter) {
         let buf = write.ldelim().finish();
-        this.socket.write(buf);
+        this.socket!.write(buf);
     }
 
     private readMessage(buf: Buffer) {
@@ -82,9 +91,15 @@ export class Connection extends EventEmitter {
                 }
                 break;
             }
+            case ConnectionState.DISCONNECTED: {
+                throw new Error(
+                    "tried reading from a disconnected connection"
+                );
+            }
             case ConnectionState.CLOSED: {
-                // TODO
-                break;
+                throw new Error(
+                    "tried reading from a closed connection"
+                );
             }
         }
     }
