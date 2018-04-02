@@ -5,6 +5,8 @@ import * as protobufjs from 'protobufjs/minimal';
 import * as stream from 'stream';
 import * as Promise from 'bluebird';
 import { EventEmitter } from 'events';
+import { BufferWriter, BufferReader } from 'protobufjs/minimal';
+import { read } from 'fs';
 
 
 
@@ -30,24 +32,27 @@ export class Address {
     }
 }
 
+
 enum ConnectionState {
     CONNECTING,
     CONNECTED,
     CLOSED,
 };
 
-
 export class Connection extends EventEmitter {
     private token: Buffer;
     private state: ConnectionState;
     private socket: net.Socket;
+
+    private recvBuffer: Buffer;
     
     public constructor(socket: net.Socket, token: Buffer) {
         super();
         this.token = token;
+        this.recvBuffer = new Buffer(0);
         this.socket = socket;
         this.state = ConnectionState.CONNECTING;
-        socket.on('data', (buf) => this.onData(buf));
+        socket.on('data', (buf: Buffer) => this.readMessages(buf));
         this.connect();
     }
 
@@ -58,16 +63,16 @@ export class Connection extends EventEmitter {
         this.socket.write(bytes);
     }
 
-    private readMessage(reader: protobufjs.BufferReader) {
-        switch (this.state) {
+    private readMessage(buf: Buffer) {
+        switch (this.state) {   
             case ConnectionState.CONNECTING: {
-                let response = proto.ConnectResponse.decodeDelimited(reader);
+                let response = proto.ConnectResponse.decode(buf);
                 this.state = ConnectionState.CONNECTED;
                 this.emit('connected');
                 break;
             }
             case ConnectionState.CONNECTED: {
-                let packet = proto.ClientMessage.decodeDelimited(reader);
+                let packet = proto.ClientMessage.decode(buf);
                 if (packet.gameData) {
                     this.emit('message', packet.gameData.data);
                 }
@@ -80,13 +85,44 @@ export class Connection extends EventEmitter {
         }
     }
 
-    private onData(buf: Buffer) {
-        console.log(buf);
-        let reader = new protobufjs.BufferReader(buf);
-        while (reader.pos < reader.len) {
-            console.log(`${reader.pos} of ${reader.len}`);
-            this.readMessage(reader);
+    private readMessages(bytes: Buffer) {
+        // Buffer.concat returns a new buffer, so the bytes are copied over
+        // from recvBuffer, so that the old value becomes garbage.
+        this.recvBuffer = Buffer.concat([this.recvBuffer, bytes]);
+
+        let pos = 0;
+        let reader = new BufferReader(this.recvBuffer);
+
+        while (pos < this.recvBuffer.length) {
+            let end: number;
+            try {
+                // try reading segment length at pos
+                reader.pos = pos;
+                let len = reader.uint32();
+                end = reader.pos + len;
+            } catch(err) {
+                if (err instanceof RangeError) {
+                    // range errors are due to incomplete data
+                    break;
+                } else {
+                    // other errors are not supposed to happen
+                    throw(err);
+                }
+            }
+
+            if (end > this.recvBuffer.length) {
+                // not enough data
+                break;
+            }
+
+            // reader.pos is now at the first byte after the segment length
+            let bytes = this.recvBuffer.slice(reader.pos, end);
+            this.readMessage(bytes);
+            // advance position
+            pos = end;
         }
-        console.log(`${reader.pos} of ${reader.len}`);
+
+        // set recvBuffer to a view of the current value to avoid realloc
+        this.recvBuffer = this.recvBuffer.slice(pos);
     }
 }
