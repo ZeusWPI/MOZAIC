@@ -1,7 +1,6 @@
 import * as protocol_root from './proto';
 const proto = protocol_root.mozaic.protocol;
 import * as net from 'net';
-import * as protobufjs from 'protobufjs/minimal';
 import * as stream from 'stream';
 import * as Promise from 'bluebird';
 import { EventEmitter } from 'events';
@@ -69,6 +68,12 @@ export class Connection extends EventEmitter {
         this.writeMessage(proto.ConnectRequest.encode(request));
     }
 
+    public send(data: Buffer) {
+        let gameData = proto.GameData.create({ data });
+        let msg = proto.ClientMessage.create({ gameData });
+        this.writeMessage(proto.ClientMessage.encode(msg));
+    }
+
     // write a write-op to the underlying socket.
     // it is illegal to call this when not connected.
     private writeMessage(write: BufferWriter) {
@@ -77,7 +82,7 @@ export class Connection extends EventEmitter {
     }
 
     private readMessage(buf: Buffer) {
-        switch (this.state) {   
+        switch (this.state) {
             case ConnectionState.CONNECTING: {
                 let response = proto.ConnectResponse.decode(buf);
                 this.state = ConnectionState.CONNECTED;
