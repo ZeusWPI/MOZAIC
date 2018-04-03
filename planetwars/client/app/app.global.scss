@@ -5,6 +5,7 @@
 
 // Custom Variables
 $background: #201f1d;
+$altBackground: lighten($background, 5);
 $primary:#FFFFFF;
 $secondary: #DE8D47;
 $tertiary: #868685;
@@ -62,7 +63,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: lighten($background, 5);
+  background: lighten($background, 10);
   border-radius: 500px;
 }
 

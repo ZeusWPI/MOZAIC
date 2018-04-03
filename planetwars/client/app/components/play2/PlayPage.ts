@@ -116,7 +116,6 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
       div('.control', [
         input('.input', {
           type: 'number',
-          placeholder: '200',
           value: this.state.maxTurns,
           onInput: (evt: any) => this.setState({ maxTurns: parseInt(evt.target.value, 10) }),
           onChange: (evt: any) => this.setState({ maxTurns: parseInt(evt.target.value, 10) }),
