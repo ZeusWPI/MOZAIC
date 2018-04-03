@@ -1,4 +1,6 @@
-import { h, nav, div, span, i, header, p, button, a, section, footer } from 'react-hyperscript-helpers';
+import {
+  h, nav, div, span, i, header, p, button, a, section, footer,
+} from 'react-hyperscript-helpers';
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
