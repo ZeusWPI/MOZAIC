@@ -45,7 +45,7 @@ use std::path::Path;
 use std::fs::File;
 
 use slog::Drain;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use futures::sync::mpsc;
 use futures::Stream;
 use futures::Future;
@@ -80,14 +80,15 @@ fn main() {
 
     let mut runtime = Runtime::new().unwrap();
 
-    let (router_handle, router_chan) = mpsc::unbounded();
+    let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
+
     let (controller_handle, controller_chan) = mpsc::unbounded();
 
     let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
         let mut controller = ClientController::new(
             num,
             desc.token.clone(),
-            router_handle.clone(),
+            routing_table.clone(),
             controller_handle.clone(),
             &logger);
         let ctrl_handle = controller.handle();
@@ -111,11 +112,8 @@ fn main() {
     );
     runtime.spawn(controller);
 
-    let router = RoutingTable::new(router_chan);
-    runtime.spawn(router);
-
     let addr = "127.0.0.1:9142".parse().unwrap();
-    let listener = tcp::Listener::new(&addr, router_handle).unwrap();
+    let listener = tcp::Listener::new(&addr, routing_table.clone()).unwrap();
     runtime.spawn(listener);
 
     runtime.shutdown_on_idle().wait().unwrap();

@@ -5,11 +5,14 @@ use futures::sync::oneshot;
 use prost::Message;
 use std::io;
 use std::net::SocketAddr;
+use std::sync::{Arc, Mutex};
+use router::RoutingTable;
 use tokio;
+use tokio_io::{AsyncRead, AsyncWrite};
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
 use client_controller::Command as ClientControllerCommand;
-use protobuf_codec::ProtobufTransport;
+use protobuf_codec::{MessageStream, ProtobufTransport};
 use protocol;
 use router;
 
@@ -17,16 +20,16 @@ use router;
 
 pub struct Listener {
     incoming: Incoming,
-    router_handle: UnboundedSender<router::TableCommand>,
+    routing_table: Arc<Mutex<RoutingTable>>,
 }
 
 impl Listener {
-    pub fn new(addr: &SocketAddr, router_handle: UnboundedSender<router::TableCommand>)
+    pub fn new(addr: &SocketAddr, routing_table: Arc<Mutex<RoutingTable>>)
                -> io::Result<Self>
     {
         TcpListener::bind(addr).map(|tcp_listener| {
             Listener {
-                router_handle,
+                routing_table,
                 incoming: tcp_listener.incoming(),
             }
         })
@@ -35,7 +38,7 @@ impl Listener {
     fn handle_connections(&mut self) -> Poll<(), io::Error> {
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
             let handler = ConnectionHandler::new(
-                self.router_handle.clone(),
+                self.routing_table.clone(),
                 raw_stream
             );
             tokio::spawn(handler);
@@ -58,62 +61,34 @@ impl Future for Listener {
 }
 
 
-
-
 struct Waiting;
 
 impl Waiting {
     fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
     {
-        let polled = data.conn_mut().poll_msg();
-        let request: protocol::ConnectionRequest = match try_ready!(polled) {
+        let bytes = match try_ready!(data.conn_mut().poll()) {
             None => bail!(io::ErrorKind::ConnectionAborted),
-            Some(msg) => msg
+            Some(bytes) => bytes.freeze(),
         };
 
-        // TODO: dont do this here
-        // construct a request
-        let (sender, receiver) = oneshot::channel();
-        let table_cmd = router::TableCommand::Lookup {
-            token: request.token,
-            chan: sender
-        };
-        data.router_handle.unbounded_send(table_cmd).unwrap();
-        let lookup = Lookup { receiver };
-        return Ok(Async::Ready(HandlerState::Lookup(lookup)));
-    }
-}
+        let request = try!(protocol::ConnectionRequest::decode(bytes));
 
-struct Lookup {
-    // TODO: eww.
-    receiver: oneshot::Receiver<
-        Option<UnboundedSender<ClientControllerCommand>>
-    >,
-}
-
-impl Lookup {
-    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
-    {
-        // TOOD: ideally this would not happen here
-        let value = match self.receiver.poll() {
-            Err(cancelled) => panic!("lookup cancelled"),
-            Ok(Async::NotReady) => return Ok(Async::NotReady),
-            Ok(Async::Ready(value)) => value,
-        };
-        let handle = match value {
+        let mut table = data.routing_table.lock().unwrap();
+        let handle = match table.get(&request.token) {
             None => panic!("invalid token"),
-            Some(handle) => handle, 
+            Some(handle) => handle,
         };
-        // TODO: this is not nice
+        
         let response = protocol::ConnectionResponse {
             response: Some(
                 protocol::connection_response::Response::Success(
-                    protocol::ConnectionSuccess::default()
+                    protocol::ConnectionSuccess {}
                 )
             )
         };
         let mut buf = BytesMut::new();
         try!(response.encode(&mut buf));
+
         let accepting = Accepting {
             send: SendRef::new(buf),
             handle,
@@ -168,7 +143,6 @@ impl Accepting {
 
 enum HandlerState {
     Waiting(Waiting),
-    Lookup(Lookup),
     Accepting(Accepting),
     Done,
 }
@@ -178,7 +152,6 @@ impl HandlerState {
     {
         match *self {
             HandlerState::Waiting(ref mut waiting) => waiting.poll(data),
-            HandlerState::Lookup(ref mut lookup) => lookup.poll(data),
             HandlerState::Accepting(ref mut accepting) => accepting.poll(data),
             HandlerState::Done => panic!("polling Done"),
         }
@@ -187,7 +160,7 @@ impl HandlerState {
 
 struct HandlerData {
     transport: Option<ProtobufTransport<TcpStream>>,
-    router_handle: UnboundedSender<router::TableCommand>,
+    routing_table: Arc<Mutex<RoutingTable>>,
 }
 
 impl HandlerData {
@@ -206,7 +179,7 @@ pub struct ConnectionHandler {
 }
 
 impl ConnectionHandler {
-    pub fn new(router_handle: UnboundedSender<router::TableCommand>,
+    pub fn new(routing_table: Arc<Mutex<RoutingTable>>,
                stream: TcpStream) -> Self
     {
         let transport = ProtobufTransport::new(stream);
@@ -214,7 +187,7 @@ impl ConnectionHandler {
             state: HandlerState::Waiting(Waiting),
             data: HandlerData {
                 transport: Some(transport),
-                router_handle,
+                routing_table,
             }
         }
     }

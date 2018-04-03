@@ -3,10 +3,11 @@ use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio::net::TcpStream;
 use std::io;
 use std::str;
+use std::sync::{Arc, Mutex};
 use slog;
 
 use protobuf_codec::{ProtobufTransport, MessageStream};
-use router;
+use router::RoutingTable;
 use super::client_connection::ClientConnection;
 use protocol;
 
@@ -51,7 +52,7 @@ pub struct ClientController {
     ctrl_handle: UnboundedSender<Command>,
     
     game_handle: UnboundedSender<ClientMessage>,
-    router_handle: UnboundedSender<router::TableCommand>,
+    routing_table: Arc<Mutex<RoutingTable>>,
 
     logger: slog::Logger,
 }
@@ -59,7 +60,7 @@ pub struct ClientController {
 impl ClientController {
     pub fn new(client_id: usize,
                token: Vec<u8>,
-               router_handle: UnboundedSender<router::TableCommand>,
+               routing_table: Arc<Mutex<RoutingTable>>,
                game_handle: UnboundedSender<ClientMessage>,
                logger: &slog::Logger)
                -> Self
@@ -74,7 +75,7 @@ impl ClientController {
             ctrl_handle: snd,
 
             game_handle,
-            router_handle,
+            routing_table,
             client_id,
 
             logger: logger.new(
@@ -85,18 +86,14 @@ impl ClientController {
 
     /// Register this ClientController with its router
     pub fn register(&mut self) {
-        self.router_handle.unbounded_send(router::TableCommand::Insert {
-            token: self.token.clone(),
-            value: self.handle(),
-        }).expect("router handle closed");
+        let mut table = self.routing_table.lock().unwrap();
+        table.insert(self.token.clone(), &self.ctrl_handle);
     }
 
     /// Unregister this ClientController from its router
     pub fn unregister(&mut self) {
-
-        self.router_handle.unbounded_send(router::TableCommand::Remove {
-            token: self.token.clone(),
-        }).expect("router handle closed");
+        let mut table = self.routing_table.lock().unwrap();
+        table.remove(&self.token);
     }
 
     /// Get a handle to the control channel for this client.
