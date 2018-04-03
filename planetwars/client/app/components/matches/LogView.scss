@@ -1,51 +1,85 @@
 @import '../../app.global.scss';
 
+$red: #DE474C;
+
 :local {
-    .logRootNode {
-        position: relative;
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        overflow-y: scroll;
-    }
-
-    .turn {
-        padding: 0px 0;
-    }
-
-    .error {
-        color: #DE474C;
-    }
-
-    .command {
-        display: flex;
-        flex-direction: row;
-    }
-
-    .tab {
-        padding-left:3em;
-    }
-
-    .playerName {
-        color: #4797DE;
-    }
-
-    .header {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-        padding: 0 1em;
-        width: 900px;
-    }
+  .logRootNode {
+    width: 100%;
+    height: 100%;
 
     .turns {
-        display: flex;
-        flex-direction: row;
-        align-items: stretch;
-    }
+      height: 100%;
+      overflow-y: auto;
 
-    .turnNum {
-        font-weight: bold;
-        color: $secondary;
+      .turn {
+        display: flex;
+        flex-direction: row; // border-bottom: 1px solid $tertiary;
+        border-left: 4px solid transparent;
+        margin: 10px 0;
+        &.error {
+          border-left: 4px solid $red;
+        }
+        &.warning {
+          border-left: 4px solid $secondary;
+        }
+
+        .turnNumber {
+          color: $secondary;
+          min-width: 50px;
+          margin-top: -2px;
+          display: flex;
+          font-size: 1.3rem;
+          font-weight: bold;
+          justify-content: center;
+          align-items: flex-start;
+        }
+
+        .turnOutput {
+          display: flex;
+          flex-direction: column;
+
+          .player {
+            padding-bottom: 10px;
+            padding-left: 5px;
+            &.error {
+              border-left: 2px solid $red;
+            }
+            .playerName {
+              padding-left: 6px;
+              color: $primary;
+            }
+            .playerOutput {
+              padding-left: 4px;
+              border-left: 2px solid transparent;
+              color: $tertiary;
+              &.warning {
+                border-left: 2px solid $secondary;
+              }
+              .fat {
+                font-weight: bold;
+              }
+            }
+          }
+
+          .error {
+            color: $red;
+          }
+
+          .warning {
+            color: $secondary;
+          }
+
+          .dispatch {
+            color: $tertiary;
+          }
+
+        }
+
+        .gameEnd {
+          font-size: 1.3rem;
+          font-weight: bold;
+        }
+      }
     }
+  }
 }

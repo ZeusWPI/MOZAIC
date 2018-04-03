@@ -13,12 +13,12 @@ import { connect } from 'net';
 export class MatchLog {
   public players: Player[];
   public gameStates: GameState[];
-  public playerInputs: PlayerInputs[];
+  public playerOutputs: PlayerOutputs[];
 
   constructor(players: Player[]) {
     this.players = players;
     this.gameStates = [];
-    this.playerInputs = [];
+    this.playerOutputs = [];
   }
 
   public getWinners(): Set<Player> {
@@ -33,11 +33,11 @@ export class MatchLog {
       }
     });
     this.gameStates.push(gameState);
-    this.playerInputs.push({});
+    this.playerOutputs.push({});
   }
 
   public setInput(player: Player, content: string) {
-    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    const playerInputs = this.playerOutputs[this.playerOutputs.length - 1];
     playerInputs[player.uuid] = {
       raw: content,
       commands: [],
@@ -45,12 +45,12 @@ export class MatchLog {
   }
 
   public inputError(player: Player, error: string) {
-    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    const playerInputs = this.playerOutputs[this.playerOutputs.length - 1];
     playerInputs[player.uuid].error = error;
   }
 
   public addCommand(player: Player, command: Command) {
-    const playerInputs = this.playerInputs[this.playerInputs.length - 1];
+    const playerInputs = this.playerOutputs[this.playerOutputs.length - 1];
     playerInputs[player.uuid].commands.push(command);
   }
 }
@@ -79,11 +79,11 @@ export class GameState {
   }
 }
 
-export interface PlayerInputs {
-  [playerId: string]: PlayerInput;
+export interface PlayerOutputs {
+  [playerId: string]: PlayerOutput;
 }
 
-export interface PlayerInput {
+export interface PlayerOutput {
   raw: string;
   error?: string;
   commands: Command[];

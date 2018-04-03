@@ -10,7 +10,7 @@ import {
 } from '../types';
 import * as fs from 'mz/fs';
 
-import { MatchLog, GameState, PlayerInputs } from './MatchLog';
+import { MatchLog, GameState, PlayerOutputs } from './MatchLog';
 
 interface PlayerData {
   uuid: string;

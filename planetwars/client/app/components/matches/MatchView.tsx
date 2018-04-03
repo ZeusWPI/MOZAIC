@@ -47,7 +47,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
         const log = parseLog(match.players, match.logPath);
         return (
           <div className={styles.matchViewContainer}>
-            <MatchViewer matchLog={log}/>
+            <MatchViewer matchLog={log} />
           </div>
         );
       }
@@ -99,7 +99,7 @@ export class MatchViewer extends React.Component<Props, State> {
     const { viewState } = this.state;
 
     const showVisualizer = () => {
-      this.setState({ viewState: ViewState.VISUALIZER});
+      this.setState({ viewState: ViewState.VISUALIZER });
     };
 
     const showVis = () => this.showVisualizer();
@@ -112,18 +112,18 @@ export class MatchViewer extends React.Component<Props, State> {
           <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
         </div>
         <div className={styles.displayBox}>
-          <MatchDisplay viewState={viewState} matchLog={matchLog}/>
+          <MatchDisplay viewState={viewState} matchLog={matchLog} />
         </div>
       </div>
     );
   }
 
   private showVisualizer() {
-    this.setState({ viewState: ViewState.VISUALIZER});
+    this.setState({ viewState: ViewState.VISUALIZER });
   }
 
   private showLog() {
-    this.setState({viewState: ViewState.LOG});
+    this.setState({ viewState: ViewState.LOG });
   }
 }
 
@@ -135,7 +135,7 @@ interface MatchDisplayProps {
 const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
   switch (props.viewState) {
     case ViewState.VISUALIZER:
-      return <Visualizer matchLog={props.matchLog}/>;
+      return <Visualizer matchLog={props.matchLog} />;
     case ViewState.LOG:
       return <LogView matchLog={props.matchLog} />;
   }

@@ -13,4 +13,4 @@ export {
 } from '../types';
 
 export { parseLog } from './parser';
-export { MatchLog, GameState, PlayerInputs, PlayerInput, Command } from './MatchLog';
+export { MatchLog, GameState, PlayerOutputs, PlayerOutput, Command } from './MatchLog';

@@ -28,7 +28,7 @@ export default class MatchViewer extends Component<MatchViewerProps> {
           selected={this.props.selectedMatch}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={this.props.selectedMatch}/>
+        <MatchView match={this.props.selectedMatch} />
       </div>);
   }
 
@@ -165,9 +165,8 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{ match: Match }> = ({ match }) =>
+export const TimeLocation: SFC<{ match: Match }> = ({ match }) => (
   <div className={styles.timeLocation}>
-
     <div className={styles.mapName} title='map'>
       <div className={styles.iconSpan}>
         <FaIcon icon='globe' />
@@ -178,7 +177,7 @@ export const TimeLocation: SFC<{ match: Match }> = ({ match }) =>
     <div className={styles.matchTime} title='date'>
       {dateOrHour(match.timestamp)}
     </div>
-  </div>;
+  </div>);
 
 export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
   switch (match.status) {

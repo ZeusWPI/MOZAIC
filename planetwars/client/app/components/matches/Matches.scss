@@ -1,6 +1,5 @@
 @import '../../app.global.scss';
 
-$altBackground: lighten($background, 5);
 $red: #DE474C;
 $blue: #4797DE;
 $selectedHighlightWidth: 4px;
@@ -145,9 +144,10 @@ $selectedHighlightWidth: 4px;
 .matchTitleBar {
   display: flex;
   flex-direction: row;
-  height: 50px !important;
-  padding: 20px 0px;
+  align-items: center;
+  min-height: 50px;
   width: 100%;
+  border-bottom: 1px solid $tertiary;
 }
 
 .matchTitleBarElement {
@@ -162,4 +162,5 @@ $selectedHighlightWidth: 4px;
 
 .displayBox {
   display: flex;
+  height: 100%;
 }
