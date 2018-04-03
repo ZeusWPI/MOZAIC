@@ -1,3 +1,8 @@
+branches:
+  only: 
+    - development
+    - /^build-.*$/
+
 env:
   gobal: 
      - ELECTRON_CACHE=$HOME/.cache/electron
