@@ -121,7 +121,8 @@ function type_proto() {
 
 const build_protobuf = gulp.series(
     gen_proto,
-    type_proto
+    type_proto,
+    copy_generated_code
 );
 
 function watch_protobuf() {
@@ -135,8 +136,7 @@ function copy_generated_code() {
 
 const build = gulp.series(
     build_protobuf,
-    compile_typescript,
-    copy_generated_code
+    compile_typescript
 );
 
 gulp.task('build', build);
