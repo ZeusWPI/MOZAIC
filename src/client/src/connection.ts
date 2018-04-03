@@ -1,5 +1,5 @@
 import * as protocol_root from './proto';
-const proto = protocol_root.mozaic.protocol;
+import proto = protocol_root.mozaic.protocol;
 import * as net from 'net';
 import * as stream from 'stream';
 import * as Promise from 'bluebird';
@@ -64,14 +64,15 @@ export class Connection extends EventEmitter {
 
         // initiate handshake
         this.state = ConnectionState.CONNECTING;
-        let request = proto.ConnectRequest.create({ token: this.token });
-        this.writeMessage(proto.ConnectRequest.encode(request));
+        let request = proto.ConnectionRequest.create({ token: this.token });
+
+        this.writeMessage(proto.ConnectionRequest.encode(request));
     }
 
-    public send(data: Buffer) {
-        let gameData = proto.GameData.create({ data });
-        let msg = proto.ClientMessage.create({ gameData });
-        this.writeMessage(proto.ClientMessage.encode(msg));
+    public sendMessage(data: Buffer) {
+        let message = proto.Message.create({ data });
+        let packet = proto.Packet.create({ message });
+        this.writeMessage(proto.Packet.encode(packet));
     }
 
     // write a write-op to the underlying socket.
@@ -84,15 +85,15 @@ export class Connection extends EventEmitter {
     private readMessage(buf: Buffer) {
         switch (this.state) {
             case ConnectionState.CONNECTING: {
-                let response = proto.ConnectResponse.decode(buf);
+                let response = proto.ConnectionResponse.decode(buf);
                 this.state = ConnectionState.CONNECTED;
                 this.emit('connected');
                 break;
             }
             case ConnectionState.CONNECTED: {
-                let packet = proto.ClientMessage.decode(buf);
-                if (packet.gameData) {
-                    this.emit('message', packet.gameData.data);
+                let packet = proto.Packet.decode(buf);
+                if (packet.message) {
+                    this.emit('message', packet.message.data);
                 }
                 break;
             }

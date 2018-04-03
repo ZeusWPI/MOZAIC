@@ -66,7 +66,7 @@ impl Waiting {
     fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
     {
         let polled = data.conn_mut().poll_msg();
-        let request: protocol::ConnectRequest = match try_ready!(polled) {
+        let request: protocol::ConnectionRequest = match try_ready!(polled) {
             None => bail!(io::ErrorKind::ConnectionAborted),
             Some(msg) => msg
         };
@@ -105,10 +105,10 @@ impl Lookup {
             Some(handle) => handle, 
         };
         // TODO: this is not nice
-        let response = protocol::ConnectResponse {
+        let response = protocol::ConnectionResponse {
             response: Some(
-                protocol::connect_response::Response::Connected(
-                    protocol::Connected::default()
+                protocol::connection_response::Response::Success(
+                    protocol::ConnectionSuccess::default()
                 )
             )
         };

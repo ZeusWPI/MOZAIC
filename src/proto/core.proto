@@ -2,38 +2,37 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
-message Packet {
-    oneof payload {
-        ConnectRequest connect_request = 1;
-        ConnectResponse connect_response = 2;
-        GameData data = 3;
-        Disconnect disconnect = 4;
-    }
-}
-
-message ConnectRequest {
+message ConnectionRequest {
     bytes token = 1;
 }
 
-message ConnectResponse {
+message ConnectionResponse {
     oneof response {
-        Connected connected = 1;
-        string error = 2;
+        ConnectionSuccess success = 1;
+        ConnectionError error = 2;
     }
 }
 
-message Connected {}
+message ConnectionSuccess {
+    // for future use
+}
+
+message ConnectionError {
+    string message = 1;
+}
 
 
-message ClientMessage {
-    oneof message {
-        GameData game_data = 1;
-        Disconnect disconnect = 3;
+message Packet {
+    oneof payload {
+        Message message = 1;
+        CloseConnection close_connection = 2;
     }
 }
 
-message GameData {
+message Message {
     bytes data = 1;
 }
 
-message Disconnect {}
+message CloseConnection {
+    // for future use
+}

@@ -1,7 +1,6 @@
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio::net::TcpStream;
-use bytes::BytesMut;
 use std::io;
 use std::str;
 use slog;
@@ -39,7 +38,7 @@ pub enum Command {
 }
 
 // TODO: maybe use a type parameter instead of hardcoding
-type Transport = MessageStream<TcpStream, protocol::ClientMessage>;
+type Transport = MessageStream<TcpStream, protocol::Packet>;
 
 
 pub struct ClientController {
@@ -128,10 +127,10 @@ impl ClientController {
             match command {
                 Command::Send(message) => {
                     // TODO: jesus.
-                    let msg = protocol::ClientMessage {
-                        message: Some(
-                            protocol::client_message::Message::GameData(
-                                protocol::GameData {
+                    let msg = protocol::Packet {
+                        payload: Some(
+                            protocol::packet::Payload::Message(
+                                protocol::Message {
                                     data: message,
                                 }
                             )
@@ -152,12 +151,12 @@ impl ClientController {
         try!(self.connection.flush());
         loop {
             let client_message = try_ready!(self.connection.poll());
-            if let Some(msg) = client_message.message {
-                match msg {
-                    protocol::client_message::Message::GameData(game_data) => {
-                        self.handle_client_message(game_data.data);
+            if let Some(payload) = client_message.payload {
+                match payload {
+                    protocol::packet::Payload::Message(message) => {
+                        self.handle_client_message(message.data);
                     }
-                    protocol::client_message::Message::Disconnect(_disconnect) => {
+                    protocol::packet::Payload::CloseConnection(_close) => {
                         panic!("disconnect not implemented yet");
                     }
                 }

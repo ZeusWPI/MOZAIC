@@ -14,7 +14,7 @@ for (let i = 1; i <= 2; i++) {
 
     let botRunner = new BotRunner(simpleBot);
     botRunner.on('message', (message: string) => {
-        conn.send(Buffer.from(message, 'utf-8'));
+        conn.sendMessage(Buffer.from(message, 'utf-8'));
     })
     botRunner.run();
     
