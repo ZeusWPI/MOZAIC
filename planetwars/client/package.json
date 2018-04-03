@@ -1,7 +1,7 @@
 {
   "name": "bottlebats",
   "productName": "BottleBats",
-  "version": "0.4.0",
+  "version": "0.3.1",
   "description": "Client for the 2018 edition of the BottleBats AI competition",
   "keywords": [
     "BottleBats",
@@ -78,8 +78,7 @@
       "category": "public.app-category.games"
     },
     "dmg": {
-      "contents": [
-        {
+      "contents": [{
           "x": 410,
           "y": 150,
           "type": "link",
