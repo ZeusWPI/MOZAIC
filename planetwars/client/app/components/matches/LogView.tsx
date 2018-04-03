@@ -1,5 +1,14 @@
 import * as React from 'react';
-import { JsonCommand, Player, MatchLog, GameState, PlayerOutputs, PlayerOutput, Command } from '../../lib/match/log/';
+import { Component, SFC } from 'react';
+import {
+  JsonCommand,
+  Player,
+  MatchLog,
+  GameState,
+  PlayerOutputs,
+  PlayerOutput,
+  Command,
+} from '../../lib/match/log/';
 
 import * as classNames from 'classnames';
 
@@ -10,7 +19,7 @@ interface LogViewProps {
   matchLog: MatchLog;
 }
 
-export class LogView extends React.Component<LogViewProps> {
+export class LogView extends Component<LogViewProps> {
   public render() {
     const { matchLog: { playerOutputs, players } } = this.props;
 
@@ -43,7 +52,7 @@ interface TurnProps {
   outputs: PlayerOutputs;
 }
 
-export const TurnView: React.SFC<TurnProps> = (props) => {
+export const TurnView: SFC<TurnProps> = (props) => {
   // The last turn has no outputs for the players
   if (Object.keys(props.outputs).length === 0) {
     return <GameEnd />;
@@ -60,7 +69,7 @@ export const TurnView: React.SFC<TurnProps> = (props) => {
 };
 
 interface PlayerViewProps { player: Player; output: PlayerOutput; }
-export const PlayerView: React.SFC<PlayerViewProps> = ({ player, output }) => {
+export const PlayerView: SFC<PlayerViewProps> = ({ player, output }) => {
   const isError = { [styles.error]: !!output.error };
   return (
     <li className={classNames(styles.player, isError)} key={player.uuid}>
@@ -72,31 +81,23 @@ export const PlayerView: React.SFC<PlayerViewProps> = ({ player, output }) => {
   );
 };
 
-export const PlayerOutputView: React.SFC<{ output: PlayerOutput }> = ({ output }) => {
+export const PlayerOutputView: SFC<{ output: PlayerOutput }> = ({ output }) => {
   if (output.error) { return <ErrorView output={output} />; }
 
-  const commands = output.commands.map((com, idx) => {
-    const { ship_count, origin, destination } = com.command;
+  const commands = output.commands.map((cmd, idx) => {
+
     const Fat = (props: any) => <span className={styles.fat}>{props.children}</span>;
-    const Warning = () => (com.error)
+    const Warning = () => (cmd.error)
       ? (
         <p>
-          <span className={styles.warning}> [WARNING] </span> {com.error}
+          <span className={styles.warning}> [WARNING] </span> {cmd.error}
         </p>)
       : null;
-    const Dispatch = () => (
-      <p className={styles.dispatch}>
-        [DISPATCH]{' '}
-        <FaIcon icon='globe' />{' '}{origin}{' '}
-        <FaIcon icon='rocket' />{''}{ship_count}{' '}
-        <FaIcon icon='globe' />{' '}{destination}
-      </p>
-    );
-    const isWarning = { [styles.warning]: !!com.error };
+    const isWarning = { [styles.warning]: !!cmd.error };
     return (
       <li className={classNames(styles.playerOutput, isWarning)} key={idx}>
         <Warning />
-        <Dispatch />
+        <DispatchView cmd={cmd.command} />
       </li>
     );
   });
@@ -104,10 +105,27 @@ export const PlayerOutputView: React.SFC<{ output: PlayerOutput }> = ({ output }
   return <ul> {commands} </ul>;
 };
 
-export const FaIcon: React.SFC<{ icon: string }> = ({ icon }) =>
+export const DispatchView: SFC<{ cmd: JsonCommand }> = ({ cmd }) => {
+  const { ship_count, origin, destination } = cmd;
+  return (
+    <div className={styles.dispatch}>
+      <p>
+        <FaIcon icon='globe' /> {origin}
+      </p>
+      <p>
+        <FaIcon icon='rocket' /> {ship_count}
+      </p>
+      <p>
+        {destination} <FaIcon icon='globe' />
+      </p>
+    </div>
+  );
+};
+
+export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
   <i className={classNames('fa', 'fa-' + icon)} aria-hidden={true} />;
 
-export const ErrorView: React.SFC<{ output: PlayerOutput }> = ({ output }) => {
+export const ErrorView: SFC<{ output: PlayerOutput }> = ({ output }) => {
   return (
     <div className={styles.playerOutput}>
       <p>
@@ -120,7 +138,7 @@ export const ErrorView: React.SFC<{ output: PlayerOutput }> = ({ output }) => {
   );
 };
 
-export const TurnNumView: React.SFC<{ turn: number }> = ({ turn }) => {
+export const TurnNumView: SFC<{ turn: number }> = ({ turn }) => {
   return (
     <div className={styles.turnNumber}>
       <p>
@@ -130,7 +148,7 @@ export const TurnNumView: React.SFC<{ turn: number }> = ({ turn }) => {
   );
 };
 
-export const GameEnd: React.SFC = () => {
+export const GameEnd: SFC = () => {
   return (
     <div className={styles.gameEnd}>
       <p> Game end. </p>

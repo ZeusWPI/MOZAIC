@@ -36,6 +36,7 @@ $red: #DE474C;
 
         .turnOutput {
           display: flex;
+          width: 100%;
           flex-direction: column;
 
           .player {
@@ -58,6 +59,24 @@ $red: #DE474C;
               .fat {
                 font-weight: bold;
               }
+              .dispatch {
+                color: $tertiary;
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                p:first-child {
+                  width: 40%;
+                  max-width: 150px;
+                }
+                p:not(:first-child):not(:last-child) {
+                  margin-right: 15px;
+                }
+                p:last-child {
+                  text-align: right;
+                  max-width: 150px;
+                  width: 40%;
+                }
+              }
             }
           }
 
@@ -67,10 +86,6 @@ $red: #DE474C;
 
           .warning {
             color: $secondary;
-          }
-
-          .dispatch {
-            color: $tertiary;
           }
 
         }
