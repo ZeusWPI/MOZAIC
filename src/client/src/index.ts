@@ -1,17 +1,29 @@
 import * as Promise from 'bluebird';
 import { Address, Connection } from './connection';
+import { BotRunner, BotConfig } from './BotRunner';
 
 let addr = new Address("127.0.0.1", 9142);
 
+const simpleBot: BotConfig = {
+    command: "python3",
+    args: ["../games/planetwars/bots/simplebot/simple.py"],
+}
+
 for (let i = 1; i <= 2; i++) {
     let conn = new Connection(Buffer.from([i]));
+
+    let botRunner = new BotRunner(simpleBot);
+    botRunner.on('message', (message: string) => {
+        conn.send(Buffer.from(message, 'utf-8'));
+    })
+    botRunner.run();
     
     conn.on('connected', () => {
         console.log(`${i} connected`);
     });
+
     conn.on('message', (msg: Buffer) => {
-        console.log(msg.toString('utf-8'));
-        conn.send(Buffer.from('{"moves": []}', 'utf-8'));
+        botRunner.sendMessage(msg);
     });
     
     Promise.resolve(addr.connect())
