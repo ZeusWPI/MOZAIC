@@ -113,10 +113,10 @@ export const DispatchView: SFC<{ cmd: JsonCommand }> = ({ cmd }) => {
         <FaIcon icon='globe' /> {origin}
       </p>
       <p>
-        <FaIcon icon='rocket' /> {ship_count}
+        <FaIcon icon='globe' /> {destination}
       </p>
       <p>
-        {destination} <FaIcon icon='globe' />
+        <FaIcon icon='rocket' /> {ship_count}
       </p>
     </div>
   );

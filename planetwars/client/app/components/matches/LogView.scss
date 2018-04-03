@@ -68,11 +68,8 @@ $red: #DE474C;
                   width: 40%;
                   max-width: 150px;
                 }
-                p:not(:first-child):not(:last-child) {
-                  margin-right: 15px;
-                }
-                p:last-child {
-                  text-align: right;
+                p:nth-child(2) {
+                  // text-align: right;
                   max-width: 150px;
                   width: 40%;
                 }
@@ -97,4 +94,5 @@ $red: #DE474C;
       }
     }
   }
+
 }
