@@ -10,7 +10,7 @@ const simpleBot: BotConfig = {
 }
 
 for (let i = 1; i <= 2; i++) {
-    let conn = new Connection(Buffer.from([i]));
+    let conn = new Connection(Buffer.from([i+1]));
 
     let botRunner = new BotRunner(simpleBot);
     botRunner.on('message', (message: string) => {

@@ -15,6 +15,7 @@ use client_controller::Command as ClientControllerCommand;
 use protobuf_codec::{MessageStream, ProtobufTransport};
 use protocol;
 use router;
+use connection::utils::Sender;
 
 
 
@@ -90,43 +91,16 @@ impl Waiting {
         try!(response.encode(&mut buf));
 
         let accepting = Accepting {
-            send: SendRef::new(buf),
+            send: Sender::new(buf),
             handle,
         };
         return Ok(Async::Ready(HandlerState::Accepting(accepting)));
     }
 }
 
-struct SendRef<T> {
-    item: Option<T>,
-}
-
-impl<T> SendRef<T> {
-    pub fn new(item: T) -> Self {
-        SendRef {
-            item: Some(item),
-        }
-    }
-
-    pub fn poll_send<S>(&mut self, sink: &mut S) -> Poll<(), S::SinkError>
-        where S: Sink<SinkItem = T>
-    {
-        if let Some(item) = self.item.take() {
-            match try!(sink.start_send(item)) {
-                AsyncSink::NotReady(item) => {
-                    self.item = Some(item);
-                    return Ok(Async::NotReady);
-                },
-                AsyncSink::Ready => (),
-            }
-        }
-
-        return sink.poll_complete();
-    }
-}
 
 struct Accepting {
-    send: SendRef<BytesMut>,
+    send: Sender<BytesMut>,
     handle: UnboundedSender<ClientControllerCommand>,
 }
 

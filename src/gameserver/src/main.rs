@@ -1,5 +1,5 @@
-mod bot_runner;
 mod client_controller;
+mod connection;
 mod planetwars;
 mod protobuf_codec;
 mod router;
