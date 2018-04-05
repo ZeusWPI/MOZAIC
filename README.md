@@ -7,9 +7,19 @@ It aims to provide a flexible platform to host your very own AI competition. Jus
 
 Eventually MOZAIC should be very modular, so that you can provide a custom-tailored experience for your competitors, without having to worry about the heavy lifting.
 
-## Downloads
+## BottleBats 2.018
+BottleBats 2.018 is the second edition of the Zeus WPI AI competition. The simple concept remains the same, but this time it is build on top of the MOZAIC platform for reliable cross-platform en networked (Soon TM) play. 
 
-We provide easy-to-install packages for every platform, check out the [releases](https://github.com/ZeusWPI/MOZAIC/releases) section for downloads.
+### Concept & Game
+Write a bot and compete with your friends. Accept game-states trough stdin and write your actions through stdout, everything is handled by us. 
+
+See the [intro-slides](https://drive.google.com/open?id=1ZwFlXGm7WZ4urTFxXdyoEz7n19PjwkO4Z-iVYLWCDmg) for more info.
+
+### Client & Downloads
+
+<p align="center"><img src="/resources/clientv0.3.png" alt="MOZAIC"/></p>
+
+We provide easy-to-setup packages clients for all platforms, check out the [releases](https://github.com/ZeusWPI/MOZAIC/releases) section for downloads.
 
 For Mac we suggest using the `.dmg`, for windows the `.exe`.
 
