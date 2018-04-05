@@ -11,6 +11,13 @@ impl<T> Sender<T> {
         }
     }
 
+    pub fn queue(&mut self, item: T) {
+        if self.item.is_some() {
+            panic!("called queue on sender that was not ready");
+        }
+        self.item = Some(item);
+    }
+
     pub fn poll_send<S>(&mut self, sink: &mut S) -> Poll<(), S::SinkError>
         where S: Sink<SinkItem = T>
     {

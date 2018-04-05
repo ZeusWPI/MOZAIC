@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 mod client_controller;
 mod connection;
 mod planetwars;
