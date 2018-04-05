@@ -108,9 +108,10 @@ impl Accepting {
     fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
     {
         try_ready!(self.send.poll_send(data.conn_mut()));
-        self.handle.unbounded_send(ClientControllerCommand::Connect(
-            data.transport.take().unwrap()
-        )).unwrap();
+        // TODO
+        // self.handle.unbounded_send(ClientControllerCommand::Connect(
+        //     data.transport.take().unwrap()
+        // )).unwrap();
         return Ok(Async::Ready(HandlerState::Done));
     }
 }

@@ -90,10 +90,8 @@ fn main() {
             num,
             desc.token.clone(),
             routing_table.clone(),
-            controller_handle.clone(),
-            &logger);
+            controller_handle.clone());
         let ctrl_handle = controller.handle();
-        controller.register();
         runtime.spawn(controller);
 
         Client {
