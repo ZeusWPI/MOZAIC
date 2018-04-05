@@ -1,10 +1,8 @@
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
-use tokio::net::TcpStream;
 use std::io;
 use std::str;
 use std::sync::{Arc, Mutex};
-use slog;
 
 use router::RoutingTable;
 use connection::connection::Connection;
@@ -37,14 +35,12 @@ pub enum Command {
 pub struct ClientController {
     client_id: usize,
     
-    connection: Connection<TcpStream>,
+    connection: Connection,
 
     ctrl_chan: UnboundedReceiver<Command>,
     ctrl_handle: UnboundedSender<Command>,
     
     game_handle: UnboundedSender<ClientMessage>,
-    routing_table: Arc<Mutex<RoutingTable>>,
-
 }
 
 impl ClientController {
@@ -57,13 +53,12 @@ impl ClientController {
         let (snd, rcv) = unbounded();
 
         ClientController {
-            connection: Connection::new(token),
+            connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
             ctrl_handle: snd,
 
             game_handle,
-            routing_table,
             client_id,
         }
     }

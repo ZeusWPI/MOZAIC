@@ -6,7 +6,6 @@ use prost::Message;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use router::RoutingTable;
 use tokio;
 use tokio_io::{AsyncRead, AsyncWrite};
 use tokio::net::{Incoming, TcpListener, TcpStream};
@@ -14,7 +13,7 @@ use tokio::net::{Incoming, TcpListener, TcpStream};
 use client_controller::Command as ClientControllerCommand;
 use protobuf_codec::{MessageStream, ProtobufTransport};
 use protocol;
-use router;
+use router::{RoutingTable, RoutingMessage};
 use connection::utils::Sender;
 
 
@@ -101,17 +100,16 @@ impl Waiting {
 
 struct Accepting {
     send: Sender<BytesMut>,
-    handle: UnboundedSender<ClientControllerCommand>,
+    handle: UnboundedSender<RoutingMessage>,
 }
 
 impl Accepting {
     fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
     {
         try_ready!(self.send.poll_send(data.conn_mut()));
-        // TODO
-        // self.handle.unbounded_send(ClientControllerCommand::Connect(
-        //     data.transport.take().unwrap()
-        // )).unwrap();
+        self.handle.unbounded_send(RoutingMessage::Connecting {
+            stream: MessageStream::new(data.transport.take().unwrap())
+        }).unwrap();
         return Ok(Async::Ready(HandlerState::Done));
     }
 }

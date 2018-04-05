@@ -3,29 +3,55 @@ use std::sync::{Arc, Mutex};
 use futures::{Future, Stream, Sink, Poll, Async, AsyncSink};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio_io::{AsyncRead, AsyncWrite};
+use tokio::net::TcpStream;
 
 
-use router::RoutingTable;
+use router::{RoutingTable, RoutingMessage};
 use protobuf_codec::MessageStream;
 use protocol::{Packet, Message, CloseConnection};
 use protocol::packet::Payload;
 
 
-type PacketStream<T> = MessageStream<T, Packet>;
+type PacketStream = MessageStream<TcpStream, Packet>;
 
-struct StreamHandler<T> {
-    state: ConnectionState<T>,
+
+struct StreamHandler {
+    state: ConnectionState,
+    routing_chan: UnboundedReceiver<RoutingMessage>,
 }
 
-impl <T> StreamHandler<T> {
-    fn new() -> Self {
+impl StreamHandler {
+    fn new(routing_chan: UnboundedReceiver<RoutingMessage>) -> Self {
         StreamHandler {
             state: ConnectionState::Disconnected,
+            routing_chan,
         }
     }
 
-    fn poll_stream<'a>(&'a mut self) -> Poll<&'a mut PacketStream<T>, io::Error>
-    {
+    // TODO: maybe move this
+    // TODO: can we handle these cases gracefully?
+    fn poll_routing_chan(&mut self) -> Poll<RoutingMessage, io::Error> {
+        let res = match self.routing_chan.poll() {
+            Ok(Async::Ready(Some(msg))) => Async::Ready(msg),
+            Ok(Async::Ready(None)) => panic!("router channel dropped"),
+            Ok(Async::NotReady) => Async::NotReady,
+            Err(_) => panic!("something really bad happened"),
+        };
+        return Ok(res);
+    }
+
+    fn perform_routing(&mut self) -> Poll<(), io::Error> {
+        loop {
+            match try_ready!(self.poll_routing_chan()) {
+                RoutingMessage::Connecting { stream } => {
+                    self.state = ConnectionState::Connected(stream);
+                }
+            }
+        }
+    }
+
+    fn poll_stream<'a>(&'a mut self) -> Poll<&'a mut PacketStream, io::Error> {
+        try!(self.perform_routing());
         let res = match self.state {
             ConnectionState::Disconnected => Async::NotReady,
             ConnectionState::Connected(ref mut stream) => Async::Ready(stream)
@@ -34,29 +60,27 @@ impl <T> StreamHandler<T> {
     }
 }
 
-pub enum ConnectionCommand {
-    Connect()
-}
 
-pub enum ConnectionState<T> {
+pub enum ConnectionState {
     Disconnected,
-    Connected(PacketStream<T>),
+    Connected(PacketStream),
 }
 
-pub struct Connection<T> {
+pub struct Connection {
     /// The token that identifies this connection
     token: Vec<u8>,
-    stream_handler: StreamHandler<T>,
+    stream_handler: StreamHandler,
     buffer: Vec<Vec<u8>>,
 }
 
-impl<T> Connection<T>
-    where T: AsyncRead + AsyncWrite
-{
-    pub fn new(token: Vec<u8>) -> Self {
+impl Connection {
+    pub fn new(token: Vec<u8>, routing_table: Arc<Mutex<RoutingTable>>) -> Self
+    {
+        let mut router = routing_table.lock().unwrap();
+        let routing_chan = router.register(&token);
         Connection {
             token,
-            stream_handler: StreamHandler::new(),
+            stream_handler: StreamHandler::new(routing_chan),
             buffer: Vec::new(),
         }
     }

@@ -92,7 +92,10 @@ fn main() {
             routing_table.clone(),
             controller_handle.clone());
         let ctrl_handle = controller.handle();
-        runtime.spawn(controller);
+        runtime.spawn(controller.map(|_| {
+            println!("done");
+            std::process::exit(0);
+        }));
 
         Client {
             id: num,
