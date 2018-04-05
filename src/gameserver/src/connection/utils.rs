@@ -1,4 +1,4 @@
-use futures::{Stream, Sink, Poll, Async, AsyncSink};
+use futures::{Sink, Poll, Async, AsyncSink};
 
 pub struct Sender<T> {
     item: Option<T>,

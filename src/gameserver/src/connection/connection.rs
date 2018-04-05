@@ -1,12 +1,11 @@
 use std::io;
 use std::sync::{Arc, Mutex};
-use futures::{Future, Stream, Sink, Poll, Async, AsyncSink};
-use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
-use tokio_io::{AsyncRead, AsyncWrite};
+use futures::{Stream, Sink, Poll, Async};
+use futures::sync::mpsc::{UnboundedReceiver};
 use tokio::net::TcpStream;
 
 
-use router::{RoutingTable, RoutingMessage};
+use super::router::{RoutingTable, RoutingMessage};
 use protobuf_codec::MessageStream;
 use protocol::{Packet, Message, CloseConnection};
 use protocol::packet::Payload;

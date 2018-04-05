@@ -3,8 +3,6 @@ mod client_controller;
 mod connection;
 mod planetwars;
 mod protobuf_codec;
-mod router;
-mod tcp;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
@@ -48,13 +46,12 @@ use std::fs::File;
 use slog::Drain;
 use std::sync::{Arc, Mutex};
 use futures::sync::mpsc;
-use futures::Stream;
 use futures::Future;
 use tokio::runtime::Runtime;
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
-use router::RoutingTable;
+use connection::router::RoutingTable;
 
 // Load the config and start the game.
 fn main() {
@@ -86,7 +83,7 @@ fn main() {
     let (controller_handle, controller_chan) = mpsc::unbounded();
 
     let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
-        let mut controller = ClientController::new(
+        let controller = ClientController::new(
             num,
             desc.token.clone(),
             routing_table.clone(),
@@ -115,7 +112,7 @@ fn main() {
     runtime.spawn(controller);
 
     let addr = "127.0.0.1:9142".parse().unwrap();
-    let listener = tcp::Listener::new(&addr, routing_table.clone()).unwrap();
+    let listener = connection::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
     runtime.spawn(listener);
 
     runtime.shutdown_on_idle().wait().unwrap();

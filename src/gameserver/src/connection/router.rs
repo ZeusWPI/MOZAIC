@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-use futures::{Future, Poll, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
-use client_controller::Command as ClientControllerCommand;
 use tokio::net::TcpStream;
 
 use protobuf_codec::MessageStream;

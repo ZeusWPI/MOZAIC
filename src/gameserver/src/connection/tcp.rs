@@ -1,19 +1,16 @@
 use bytes::BytesMut;
-use futures::{Future, Poll, Async, Stream, Sink, AsyncSink};
+use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::UnboundedSender;
-use futures::sync::oneshot;
 use prost::Message;
 use std::io;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio;
-use tokio_io::{AsyncRead, AsyncWrite};
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
-use client_controller::Command as ClientControllerCommand;
 use protobuf_codec::{MessageStream, ProtobufTransport};
 use protocol;
-use router::{RoutingTable, RoutingMessage};
+use super::router::{RoutingTable, RoutingMessage};
 use connection::utils::Sender;
 
 

@@ -4,7 +4,7 @@ use std::io;
 use std::str;
 use std::sync::{Arc, Mutex};
 
-use router::RoutingTable;
+use connection::router::RoutingTable;
 use connection::connection::Connection;
 
 
