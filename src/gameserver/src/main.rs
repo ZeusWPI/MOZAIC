@@ -13,8 +13,8 @@ extern crate bytes;
 
 extern crate tokio_core;
 extern crate tokio_io;
-extern crate tokio;
 extern crate tokio_process;
+extern crate tokio;
 #[macro_use]
 extern crate futures;
 
@@ -42,12 +42,15 @@ use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;
+use std::time::{Duration, Instant};
 
 use slog::Drain;
 use std::sync::{Arc, Mutex};
 use futures::sync::mpsc;
 use futures::Future;
 use tokio::runtime::Runtime;
+use tokio::timer::Delay;
+
 
 use client_controller::ClientController;
 use planetwars::{Controller, Client};
@@ -89,10 +92,7 @@ fn main() {
             routing_table.clone(),
             controller_handle.clone());
         let ctrl_handle = controller.handle();
-        runtime.spawn(controller.map(|_| {
-            println!("done");
-            std::process::exit(0);
-        }));
+        runtime.spawn(controller);
 
         Client {
             id: num,
@@ -109,7 +109,14 @@ fn main() {
         match_description.game_config,
         logger,
     );
-    runtime.spawn(controller);
+    runtime.spawn(controller.and_then(|_| {
+        println!("done");
+        // wait a second for graceful exit
+        let end = Instant::now() + Duration::from_secs(1);
+        Delay::new(end).map_err(|e| panic!("delay errored; err={:?}", e))
+    }).map(|_| {
+        std::process::exit(0);
+    }));
 
     let addr = "127.0.0.1:9142".parse().unwrap();
     let listener = connection::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
