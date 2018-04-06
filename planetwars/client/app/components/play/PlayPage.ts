@@ -149,25 +149,28 @@ export class MatchSetup extends React.Component<MatchSetupProps, MatchSetupState
   }
 
   private play(): void {
-    console.log(this.state);
+    const { maps, selectedBots, bots } = this.props;
     if (!this.state.map) {
       alert('Please select a map');
       return;
     }
     const turns = this.state.maxTurns || 200;
-    const map = this.props.maps[this.state.map];
+    const map = maps[this.state.map];
 
     if (map.slots < this.props.selectedBots.length) {
       alert('Not enough slots in the map');
       return;
     }
 
-    const players = this.props.selectedBots.map(
-      (uuid) => this.props.bots[uuid].config,
-    );
+    if (selectedBots.length < 2) {
+      alert('Playing a game with less than 2? Kinda lonely.');
+      return;
+    }
+
+    const players = selectedBots.map((uuid) => bots[uuid].config);
 
     this.props.runMatch({
-      bots: this.props.selectedBots,
+      bots: selectedBots,
       map: this.state.map,
       maxTurns: turns,
     });
