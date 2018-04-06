@@ -4,41 +4,40 @@ import { h, div, li, p, ul, form, label, input, button, span, i, select, option 
 import { BotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
 import { text } from "d3";
-import { IMapList } from "../../utils/GameModels";
+import { IMapList, MapId } from "../../utils/GameModels";
 import { MatchParams } from '../../actions/actions';
-
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
-export interface IPlayPageStateProps {
+export interface PlayPageStateProps {
   bots: IBotList;
   maps: IMapList;
   selectedBots: BotID[];
 }
 
-export interface IPlayPageDispatchProps {
+export interface PlayPageDispatchProps {
   importMatch: (fileList: FileList) => void;
   selectBot: (uuid: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: MatchParams) => void;
 }
 
-export interface IPlayPageState { }
+export interface PlayPageState { }
 
-type PlayPageProps = IPlayPageStateProps & IPlayPageDispatchProps;
+type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 // ----------------------------------------------------------------------------
 // Page
 // ----------------------------------------------------------------------------
 
-export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
+export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
 
   public render() {
     const { bots, selectedBots, selectBot,
       unselectBot, importMatch, maps, runMatch } = this.props;
     return div(`.${styles.playPage}`, [
-      h(BotsList, { bots, selectedBots, selectBot, unselectBot }),
+      h(BotsListView, { bots, selectedBots, selectBot, unselectBot }),
       h(MatchSetup, { bots, selectedBots, unselectBot, importMatch, maps, runMatch }),
     ]);
   }
@@ -48,27 +47,28 @@ export class PlayPage extends React.Component<PlayPageProps, IPlayPageState> {
 // Config & Playing
 // ----------------------------------------------------------------------------
 
-interface IMatchSetupState {
-  map: string;
+interface MatchSetupState {
+  map: MapId;
   maxTurns: number;
 }
 
-interface IMatchSetupProps {
+interface MatchSetupProps {
   selectedBots: BotID[];
   bots: IBotList;
   maps: IMapList;
-  unselectBot: (uuid: string, all: boolean) => void;
+  unselectBot: (uuid: BotID, all: boolean) => void;
   importMatch: (fileList: FileList) => void;
   runMatch: (params: MatchParams) => void;
 }
 
-export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupState> {
-  constructor(props: IMatchSetupProps) {
+export class MatchSetup extends React.Component<MatchSetupProps, MatchSetupState> {
+  constructor(props: MatchSetupProps) {
     super(props);
-    this.state = {
-      map: '',
-      maxTurns: 200,
-    };
+    const map = (Object.keys(props.maps).length === 0)
+      ? ' '
+      : Object.keys(props.maps)[0];
+
+    this.state = { map, maxTurns: 200 };
   }
 
   public render() {
@@ -77,8 +77,10 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     const maps = Object.keys(this.props.maps).map((uuid) => {
       const _map = this.props.maps[uuid];
       return option({ value: _map.uuid, label: _map.name });
-    }).concat(option({ value: '', label: 'Select Map' }));
-
+    });
+    if (maps.length === 0) {
+      maps.concat(option({ value: '', label: 'Select Map' }));
+    }
     const map = div([
       label('.label', { key: 'map' }, ['Map']),
       div('.field.has-addons', [
@@ -89,6 +91,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
               placeholder: 'TODO',
               value: this.state.map,
               onInput: (evt: any) => this.setState({ map: evt.target.value }),
+              onChange: (evt: any) => this.setState({ map: evt.target.value }),
             }, maps),
           ]),
         ]),
@@ -175,14 +178,14 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
   }
 }
 
-interface ISelectedBotsProps {
+interface SelectedBotsProps {
   selectedBots: BotID[];
   bots: IBotList;
   unselectBot: (uuid: string, all: boolean) => void;
 }
 
 // tslint:disable-next-line:variable-name
-export const SelectedBotsOverview: React.SFC<ISelectedBotsProps> = (props) => {
+export const SelectedBotsOverview: React.SFC<SelectedBotsProps> = (props) => {
   const { selectedBots, bots } = props;
 
   const tags = selectedBots.map((uuid) => {
@@ -196,14 +199,14 @@ export const SelectedBotsOverview: React.SFC<ISelectedBotsProps> = (props) => {
 // Bots
 // ----------------------------------------------------------------------------
 
-interface IBotListProps {
+interface BotListProps {
   bots: IBotList;
   selectedBots: BotID[];
   selectBot: (uuid: BotID) => void;
   unselectBot: (uuid: string, all: boolean) => void;
 }
 
-export class BotsList extends React.Component<IBotListProps, {}> {
+export class BotsListView extends React.Component<BotListProps, {}> {
   public render() {
     const bots = Object.keys(this.props.bots).map((uuid) => {
       const selected = this.props.selectedBots.indexOf(uuid) >= 0;
@@ -225,7 +228,7 @@ export class BotsList extends React.Component<IBotListProps, {}> {
   }
 }
 
-interface IBotListItemProps {
+interface BotListItemProps {
   selected: boolean;
   bot: IBotData;
   selectBot: (uuid: BotID) => void;
@@ -233,7 +236,7 @@ interface IBotListItemProps {
 }
 
 // tslint:disable-next-line:variable-name
-const BotListItem: React.SFC<IBotListItemProps> = (props) => {
+const BotListItem: React.SFC<BotListItemProps> = (props) => {
   const { config, lastUpdatedAt, createdAt, uuid } = props.bot;
   const command = config.command;
   const selected = (props.selected) ? `.${styles.selected}` : '';

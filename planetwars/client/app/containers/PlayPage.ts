@@ -1,17 +1,11 @@
-import * as React from 'react';
-import { RouteComponentProps } from 'react-router';
 import * as Promise from 'bluebird';
-import { h } from 'react-hyperscript-helpers';
-import { PlayPage, IPlayPageStateProps, IPlayPageDispatchProps } from '../components/play2/PlayPage';
 import { connect } from 'react-redux';
-import { fs } from 'mz';
-import { v4 as uuidv4 } from 'uuid';
 
+import { PlayPage, PlayPageStateProps, PlayPageDispatchProps } from '../components/play/PlayPage';
 import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 import { BotID } from '../utils/ConfigModels';
-import { unselectBot } from '../actions/actions';
 
 const mapStateToProps = (state: IGState) => {
   const bots = state.bots;
@@ -49,4 +43,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<IPlayPageStateProps, IPlayPageDispatchProps>(mapStateToProps, mapDispatchToProps)(PlayPage);
+export default connect<PlayPageStateProps, PlayPageDispatchProps>(mapStateToProps, mapDispatchToProps)(PlayPage);
