@@ -7,7 +7,6 @@ const {
   BrowserWindow,
   Menu,
   shell,
-  globalShortcut
 } = require('electron');
 let Promise = require('bluebird');
 
@@ -30,7 +29,7 @@ if (process.env.NODE_ENV === 'development') {
 
 const installExtensions = () => {
   const installer = require('electron-devtools-installer'); // eslint-disable-line global-require
-  
+
   const extensions = [
     'REACT_DEVELOPER_TOOLS',
     'REDUX_DEVTOOLS'
@@ -44,88 +43,93 @@ log.info('[STARTUP] Modules loaded');
 app.on('ready', () => {
   log.info('[STARTUP] App ready');
   return installExtensions()
-  .catch((err) => log.error(`[STARTUP] Error installing extensions ${err.toString()}`))
-  .then()
-  .then(() => log.info('[STARTUP] Extensions installed'))
-  .then(() => {
-    mainWindow = new BrowserWindow({
-      show: false,
-      width: 1024,
-      height: 728,
-    });
-    
-    mainWindow.loadURL(`file://${__dirname}/app.html`);
-    
-    mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.show();
-      // mainWindow.focus();
-    });
-    
-    mainWindow.on('closed', () => {
-      mainWindow = null;
-    });
-    
-    // mainWindow.openDevTools();
-    
-    mainWindow.webContents.on('context-menu', (e, props) => {
-      const {
-        x,
-        y
-      } = props;
-      
-      Menu.buildFromTemplate([{
-        label: 'Inspect element',
+    .catch((err) => log.error(`[STARTUP] Error installing extensions ${err.toString()}`))
+    .then()
+    .then(() => log.info('[STARTUP] Extensions installed'))
+    .then(() => {
+      mainWindow = new BrowserWindow({
+        show: false,
+        width: 1024,
+        height: 728,
+      });
+
+      mainWindow.loadURL(`file://${__dirname}/app.html`);
+
+      mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.show();
+        mainWindow.focus();
+      });
+
+      mainWindow.on('closed', () => {
+        mainWindow = null;
+      });
+
+      // mainWindow.openDevTools();
+
+      mainWindow.webContents.on('context-menu', (e, props) => {
+        const {
+          x,
+          y
+        } = props;
+
+        Menu.buildFromTemplate([{
+          label: 'Inspect element',
+          click() {
+            mainWindow.inspectElement(x, y);
+          },
+        }]).popup(mainWindow);
+      });
+
+      const template = [{
+        accelerator: 'CmdOrCtrl+Q',
         click() {
-          mainWindow.inspectElement(x, y);
-        },
-      }]).popup(mainWindow);
-    });
-    
-    const template = [{
-      accelerator: 'CmdOrCtrl+Q',
-      click() {
-        app.quit()
-      }
-    }, {
-      accelerator: 'CmdOrCtrl+R',
-      click() {
-        mainWindow.webContents.reload()
-      }
-    }, {
-      accelerator: 'Ctrl+CmdOrCtrl+F',
-      click() {
-        mainWindow.setFullScreen(!mainWindow.isFullScreen())
-      }
-    }, {
-      accelerator: 'Alt+CmdOrCtrl+I',
-      click() {
-        mainWindow.toggleDevTools()
-      }
-    }, {
-      accelerator: 'Ctrl+W',
-      click() {
-        mainWindow.close()
-      }
-    }, {
-      accelerator: 'F12',
-      click() {
-        mainWindow.toggleDevTools()
-      }
-    }, {
-      accelerator: 'F11',
-      click() {
-        mainWindow.setFullScreen(!mainWindow.isFullScreen())
-      }
-    }];
-    
-    menu = Menu.buildFromTemplate(template);
-    mainWindow.setMenu(menu);
-    mainWindow.setMenuBarVisibility(false);
-  })
-  .then(() => log.info('[STARTUP] Browser window created'))
-  .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`))
+          app.quit()
+        }
+      }, {
+        accelerator: 'CmdOrCtrl+R',
+        click() {
+          mainWindow.webContents.reload()
+        }
+      }, {
+        accelerator: 'Ctrl+CmdOrCtrl+F',
+        click() {
+          mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        }
+      }, {
+        accelerator: 'Alt+CmdOrCtrl+I',
+        click() {
+          mainWindow.toggleDevTools()
+        }
+      }, {
+        accelerator: 'Ctrl+W',
+        click() {
+          mainWindow.close()
+        }
+      }, {
+        accelerator: 'F5',
+        click() {
+          mainWindow.webContents.reload()
+        }
+      }, {
+        accelerator: 'F12',
+        click() {
+          mainWindow.toggleDevTools()
+        }
+      }, {
+        accelerator: 'F11',
+        click() {
+          mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        }
+      }];
+
+      menu = Menu.buildFromTemplate(template);
+      mainWindow.setMenu(menu);
+      mainWindow.setMenuBarVisibility(false);
+    })
+    .then(() => log.info('[STARTUP] Browser window created'))
+    .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`))
 });
-  
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
   log.info('[SHUTDOWN] Window all closed');
