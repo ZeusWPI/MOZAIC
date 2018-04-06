@@ -1,4 +1,5 @@
 import { remote } from 'electron';
+import * as Promise from 'bluebird';
 import * as path from 'path';
 import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
@@ -12,6 +13,10 @@ import { IGState } from '../reducers';
 import { Notification } from '../utils/UtilModels';
 import { Config } from './Config';
 
+// ----------------------------------------------------------------------------
+// Schema
+// ----------------------------------------------------------------------------
+
 export interface DbSchemaV3 {
   version: 'v3';
   matches: IMatchList;
@@ -19,6 +24,14 @@ export interface DbSchemaV3 {
   maps: IMapList;
   notifications: Notification[];
 }
+
+const defaults: DbSchemaV3 = {
+  version: 'v3',
+  matches: {},
+  bots: {},
+  maps: {},
+  notifications: [],
+};
 
 // Utility to allow accessing the DB somewhat more safe. You can these string
 // properties as key so that you have some typechecking over typo's.
@@ -39,7 +52,8 @@ const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
 const adapter = new FileAsync(dbPath);
-const database = low<DbSchemaV3, typeof adapter>(adapter);
+const database = Promise.resolve(low<DbSchemaV3, typeof adapter>(adapter));
+type dbType = low.Lowdb<DbSchemaV3, typeof adapter>;
 
 /*
  * This function will populate the store initially with the DB info and
@@ -47,46 +61,35 @@ const database = low<DbSchemaV3, typeof adapter>(adapter);
  */
 export function bindToStore(store: any): Promise<void> {
   return database
-    .then((db) => {
-      console.log(db);
+    .tap((db: dbType) => db.defaults(defaults).write())
+    .tap((db: dbType) => {
+      if (db.get(SCHEMA.VERSION, 'v1').value() !== 'v3') {
+        db.setState(migrate(db.value())).write();
+      }
     })
-    // .then((db) => db.defaults({
-    //   version: 'v3',
-    //   matches: {},
-    //   bots: {},
-    //   maps: {},
-    //   notifications: [],
-    // }).write().then(() => db))
-    // .then((db) => {
-    //   console.log(db);
-    //   if (db.version !== 'v3') {
-    //     return db.update(migrateOld(db));
-    //   }
-    //   return db;
-    // })
-    // .then((db) => {
-    //   console.log(db.object);
-    //   // TODO: these JSON objects should be validated to avoid weird runtime
-    //   // errors elsewhere in the code
-    //   Object.keys(db.bots).forEach((uuid) => {
-    //     store.dispatch(A.importBotFromDB(db.bots[uuid]));
-    //   });
-    //   Object.keys(db.maps).forEach((uuid) => {
-    //     store.dispatch(A.importMapFromDB(db.maps[uuid]));
-    //   });
-    //   Object.keys(db.matches).forEach((uuid) => {
-    //     const matchData = db.matches[uuid];
-    //     store.dispatch(A.importMatchFromDB({
-    //       ...matchData,
-    //       timestamp: new Date(matchData.timestamp),
-    //     }));
-    //   });
-    //   db.notifications.forEach((notification: Notification) => {
-    //     store.dispatch(A.importNotificationFromDB(notification));
-    //   });
-    // })
-    // .then(initializeListeners)
-    // .then(() => store.subscribe(changeListener))
+    .then((db: dbType) => db.getState())
+    .then((db: DbSchemaV3) => {
+      // TODO: these JSON objects should be validated to avoid weird runtime
+      // errors elsewhere in the code
+      Object.keys(db.bots).forEach((uuid) => {
+        store.dispatch(A.importBotFromDB(db.bots[uuid]));
+      });
+      Object.keys(db.maps).forEach((uuid) => {
+        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+      });
+      Object.keys(db.matches).forEach((uuid) => {
+        const matchData = db.matches[uuid];
+        store.dispatch(A.importMatchFromDB({
+          ...matchData,
+          timestamp: new Date(matchData.timestamp),
+        }));
+      });
+      db.notifications.forEach((notification: Notification) => {
+        store.dispatch(A.importNotificationFromDB(notification));
+      });
+    })
+    .then(initializeListeners)
+    .then(() => store.subscribe(changeListener))
     .catch((err) => {
       console.log(err);
       store.dispatch(A.dbError(err));
@@ -172,14 +175,17 @@ const listeners: TableListener<any>[] = [
 
 type DbSchema = DbSchemaV1 | DbSchemaV2 | DbSchemaV3;
 
-function migrateOld(oldDb: DbSchema): DbSchemaV3 {
+function migrate(oldDb: DbSchema): DbSchemaV3 {
   let db = oldDb;
+  log.info('[DB] Starting migration');
   while (db.version !== 'v3') {
     switch (db.version) {
       case 'v1':
+        log.info('[DB] Upgrading from V1 to V2.');
         db = upgradeV1(db as DbSchemaV1);
         break;
       case 'v2':
+        log.info('[DB] Upgrading from V2 to V3.');
         db = upgradeV2(db as DbSchemaV2);
         break;
       default:
