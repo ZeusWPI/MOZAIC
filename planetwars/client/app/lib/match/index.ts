@@ -1,1 +1,1 @@
-export { MatchLog } from './log';
+export { MatchLog } from './log/';

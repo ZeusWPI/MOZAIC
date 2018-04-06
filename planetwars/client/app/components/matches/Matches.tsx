@@ -3,7 +3,7 @@ import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
 import { Match, Player, Map } from './types';
-import { MatchView } from './MatchView';
+import MatchView from './MatchView';
 
 const styles = require('./Matches.scss');
 
@@ -165,9 +165,8 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{ match: Match }> = ({ match }) =>
+export const TimeLocation: SFC<{ match: Match }> = ({ match }) => (
   <div className={styles.timeLocation}>
-
     <div className={styles.mapName} title='map'>
       <div className={styles.iconSpan}>
         <FaIcon icon='globe' />
@@ -178,7 +177,7 @@ export const TimeLocation: SFC<{ match: Match }> = ({ match }) =>
     <div className={styles.matchTime} title='date'>
       {dateOrHour(match.timestamp)}
     </div>
-  </div>;
+  </div>);
 
 export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
   switch (match.status) {
