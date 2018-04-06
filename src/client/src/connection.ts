@@ -86,8 +86,15 @@ export class Connection extends EventEmitter {
         switch (this.state) {
             case ConnectionState.CONNECTING: {
                 let response = proto.ConnectionResponse.decode(buf);
-                this.state = ConnectionState.CONNECTED;
-                this.emit('connected');
+                if (response.success) {
+                    this.state = ConnectionState.CONNECTED;
+                    this.emit('connected');
+                }
+                if (response.error) {
+                    // TODO: should there be a special error state?
+                    this.state = ConnectionState.CLOSED;;
+                    this.emit('error', response.error.message);
+                }
                 break;
             }
             case ConnectionState.CONNECTED: {

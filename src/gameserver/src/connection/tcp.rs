@@ -70,27 +70,44 @@ impl Waiting {
 
         let request = try!(protocol::ConnectionRequest::decode(bytes));
 
-        let mut table = data.routing_table.lock().unwrap();
-        let handle = match table.get(&request.token) {
-            None => panic!("invalid token"),
-            Some(handle) => handle,
-        };
-        
-        let response = protocol::ConnectionResponse {
-            response: Some(
-                protocol::connection_response::Response::Success(
-                    protocol::ConnectionSuccess {}
-                )
-            )
-        };
-        let mut buf = BytesMut::new();
-        try!(response.encode(&mut buf));
+        let mut table = data.routing_table.lock().unwrap(); 
+        match table.get(&request.token) {
+            None => {
+                let response = protocol::ConnectionResponse {
+                    response: Some(
+                        protocol::connection_response::Response::Error(
+                            protocol::ConnectionError {
+                                message: "invalid token".to_string(),
+                            }
+                        )
+                    )
+                };
+                let mut buf = BytesMut::new();
+                try!(response.encode(&mut buf));
 
-        let accepting = Accepting {
-            send: Sender::new(buf),
-            handle,
+                let refusing = Refusing {
+                    send: Sender::new(buf),
+                };
+                return Ok(Async::Ready(HandlerState::Refusing(refusing)));
+            },
+            Some(handle) => {
+                let response = protocol::ConnectionResponse {
+                    response: Some(
+                        protocol::connection_response::Response::Success(
+                            protocol::ConnectionSuccess {}
+                        )
+                    )
+                };
+                let mut buf = BytesMut::new();
+                try!(response.encode(&mut buf));
+
+                let accepting = Accepting {
+                    send: Sender::new(buf),
+                    handle,
+                };
+                return Ok(Async::Ready(HandlerState::Accepting(accepting)));
+            },
         };
-        return Ok(Async::Ready(HandlerState::Accepting(accepting)));
     }
 }
 
@@ -111,9 +128,22 @@ impl Accepting {
     }
 }
 
+struct Refusing {
+    send: Sender<BytesMut>,
+}
+
+impl Refusing {
+    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
+    {
+        try_ready!(self.send.poll_send(data.conn_mut()));
+        return Ok(Async::Ready(HandlerState::Done));
+    }
+}
+
 enum HandlerState {
     Waiting(Waiting),
     Accepting(Accepting),
+    Refusing(Refusing),
     Done,
 }
 
@@ -123,6 +153,7 @@ impl HandlerState {
         match *self {
             HandlerState::Waiting(ref mut waiting) => waiting.poll(data),
             HandlerState::Accepting(ref mut accepting) => accepting.poll(data),
+            HandlerState::Refusing(ref mut refusing) => refusing.poll(data),
             HandlerState::Done => panic!("polling Done"),
         }
     }
