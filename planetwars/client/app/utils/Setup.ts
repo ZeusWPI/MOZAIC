@@ -10,6 +10,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 
+// TODO: Move all this shit do database
 export function initializeDirs(): Promise<void[]> {
   const dirs = Config.dirs;
   const pDirs = dirs.map((dir) => {

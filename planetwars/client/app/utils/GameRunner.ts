@@ -6,7 +6,7 @@ import { execFile } from 'child_process';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { IMatchConfig, IBotListv2, IBotList, IBotConfig, IBotData, IBotConfigv2 } from './ConfigModels';
+import { BotConfig, MatchConfig } from './ConfigModels';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?
@@ -17,31 +17,25 @@ declare interface GameRunner {
 }
 
 class GameRunner extends EventEmitter {
-  private conf: IMatchConfig;
+  private conf: ExternalMatchConfig;
 
-  constructor(conf: IMatchConfig) {
+  constructor(conf: MatchConfig) {
     super();
-
-    const newPlayers: IBotConfigv2[] = conf.players.map( (bot: IBotConfig) => {
-      const commandSplit = stringArgv(bot.command);
-      const ret: IBotConfigv2 = {
-        name: bot.name,
-        command: commandSplit[0],
-        args: commandSplit.slice(1),
-      };
-      return ret;
-    });
-
-    this.conf = {
-      players: newPlayers,
-      game_config: conf.game_config,
-      log_file: conf.log_file,
-    };
+    const { gameConfig: { maxTurns, mapFile }, logFile } = conf;
+    const players = conf.players.map(this.convertBotConfig);
+    // tslint:disable-next-line:variable-name
+    const game_config = { max_turns: maxTurns, map_file: mapFile };
+    this.conf = { players, game_config, log_file: logFile };
   }
 
   public run() {
     // TODO: maybe make sure this isn't called twice
     this.runBotRunner();
+  }
+
+  private convertBotConfig(bot: BotConfig): ExternalBotConfig {
+    const [command, ...args] = stringArgv(bot.command);
+    return { name: bot.name, command, args };
   }
 
   private runBotRunner() {
@@ -67,6 +61,26 @@ class GameRunner extends EventEmitter {
     fs.writeFileSync(file.fd, json);
     return file.name;
   }
+}
+
+// External Configs -----------------------------------------------------------
+// How the game server expects them
+
+export interface ExternalMatchConfig {
+  players: ExternalBotConfig[];
+  game_config: ExternalGameConfig;
+  log_file: string;
+}
+
+export interface ExternalBotConfig {
+  name: string;
+  command: string;
+  args: string[];
+}
+
+interface ExternalGameConfig {
+  map_file: string;
+  max_turns: number;
 }
 
 export default GameRunner;

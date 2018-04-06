@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
-import { BotID, IMatchConfig } from '../utils/ConfigModels';
+import { BotID } from '../utils/ConfigModels';
 import { unselectBot } from '../actions/actions';
 
 const mapStateToProps = (state: IGState) => {

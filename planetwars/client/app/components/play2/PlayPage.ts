@@ -1,7 +1,7 @@
 import * as React from "react";
 import { h, div, li, p, ul, form, label, input, button, span, i, select, option } from 'react-hyperscript-helpers';
 
-import { IBotConfig, IBotList, IBotData, BotID, IMatchConfig } from '../../utils/ConfigModels';
+import { BotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from "react-router-dom";
 import { text } from "d3";
 import { IMapList } from "../../utils/GameModels";
@@ -166,7 +166,7 @@ export class MatchSetup extends React.Component<IMatchSetupProps, IMatchSetupSta
     this.props.runMatch({
       bots: this.props.selectedBots,
       map: this.state.map,
-      max_turns: turns,
+      maxTurns: turns,
     });
   }
 

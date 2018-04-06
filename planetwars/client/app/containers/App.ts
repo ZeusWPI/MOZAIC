@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { h, div } from 'react-hyperscript-helpers';
 import { connect } from 'react-redux';
+import log from 'electron-log';
 
 import { addBot } from '../actions/actions';
-import { IBotConfig } from '../utils/ConfigModels';
+import { BotConfig } from '../utils/ConfigModels';
 import { IGState } from '../reducers';
 
 interface IProps {
@@ -13,7 +14,10 @@ interface IProps {
 export class App extends React.Component<IProps, {}> {
 
   public render() {
-    this.props.globalErrors.forEach((val) => alert(JSON.stringify(val)));
+    this.props.globalErrors.forEach((val) => {
+      log.error(`[GLOBAL] ${val} ${val.stack}`);
+      alert(`Unexpected Error ${val}`);
+    });
     return (
       div(`.app`, [this.props.children])
     );

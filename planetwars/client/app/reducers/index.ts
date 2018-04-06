@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/actions';
-import { IBotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
+import { BotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
 import { Match, IMatchList, IMapList } from '../utils/GameModels';
 import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
@@ -127,7 +127,7 @@ const mapsReducer = (state: IMapList = {}, action: any) => {
 
 const botsReducer = (state: IBotsState = {}, action: any) => {
   if (A.addBot.test(action)) {
-    const config: IBotConfig = action.payload;
+    const config: BotConfig = action.payload;
     const _now = Date.now();
     const createdAt = new Date(_now);
     const lastUpdatedAt = new Date(_now);
@@ -207,9 +207,7 @@ const playPageReducer = combineReducers<IPlayPageState>({
 
 const globalErrorReducer = (state: any[] = [], action: IAction) => {
   if (A.dbError.test(action)) {
-    const newA = state.slice();
-    newA.push(action.payload);
-    return newA;
+    return [...state, action.payload];
   }
   if (A.importMapError.test(action)) {
     return [...state, action.payload];
