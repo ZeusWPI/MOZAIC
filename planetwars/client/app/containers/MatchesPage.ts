@@ -12,6 +12,8 @@ import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import * as A from '../actions/actions';
 import { PathLike } from 'mz/fs';
+import { BotID } from '../utils/ConfigModels';
+import { MatchId } from '../utils/GameModels';
 
 interface StateProps {
   selectedMatch?: Match;
@@ -50,11 +52,12 @@ function mapDispatchToProps(dispatch: any): DispatchProps {
   };
 }
 
-const getMatchData = (state: IGState, matchId: string) => {
+const getMatchData = (state: IGState, matchId: MatchId) => {
   const matchData = state.matches[matchId];
   const mapData = state.maps[matchData.map];
 
-  return {...matchData,
+  return {
+    ...matchData,
     players: matchData.players.map((botId) => getBotData(state, botId)),
     map: {
       uuid: mapData.uuid,
@@ -63,7 +66,7 @@ const getMatchData = (state: IGState, matchId: string) => {
   };
 };
 
-const getBotData = (state: IGState, botId: string) => {
+const getBotData = (state: IGState, botId: BotID) => {
   const bot = state.bots[botId];
   return {
     uuid: botId,

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/actions';
-import { IBotConfig, IBotData, BotID } from "../utils/ConfigModels";
+import { BotConfig, IBotData, BotID } from "../utils/ConfigModels";
 
 interface IProps {
   match: any;
@@ -21,7 +21,7 @@ const mapStateToProps = (state: IGState, ownProps: IProps) => {
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    addBot: (config: IBotConfig) => {
+    addBot: (config: BotConfig) => {
       dispatch(addBot(config));
     },
     removeBot: (uuid: BotID) => {
@@ -30,7 +30,7 @@ const mapDispatchToProps = (dispatch: any) => {
     editBot: (bot: IBotData) => {
       dispatch(editBot(bot));
     },
-    validate: (config: IBotConfig) => {
+    validate: (config: BotConfig) => {
       const errors: ConfigErrors = {};
       if (!config.name || config.name.length === 0) {
         errors.name = 'Name should not be empty';

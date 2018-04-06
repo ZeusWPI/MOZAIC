@@ -1,5 +1,5 @@
-import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap } from '../utils/GameModels';
-import { IBotConfig, IBotData, isBotConfig, BotID, IMatchConfig } from '../utils/ConfigModels';
+import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap, MapId } from '../utils/GameModels';
+import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig } from '../utils/ConfigModels';
 import { Notification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
@@ -17,7 +17,7 @@ export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 // Bots
 export type UUID = string;
 export const importBotFromDB = actionCreator<IBotData>('IMPORT_BOT_FROM_DB');
-export const addBot = actionCreator<IBotConfig>('ADD_BOT');
+export const addBot = actionCreator<BotConfig>('ADD_BOT');
 export const editBot = actionCreator<IBotData>('EDIT_BOT');
 export const removeBot = actionCreator<UUID>('REMOVE_BOT');
 
@@ -28,8 +28,8 @@ export const importMatch = actionCreator<Match>('IMPORT_MATCH');
 
 export interface MatchParams {
   bots: BotID[];
-  map: string;
-  max_turns: number;
+  map: MapId;
+  maxTurns: number;
 }
 
 export const saveMatch = actionCreator<Match>('SAVE_MATCH');
@@ -39,35 +39,28 @@ export function runMatch(params: MatchParams) {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
     // TODO: split this logic
-    let matchId = uuidv4();
+    const matchId = uuidv4();
+    const { map, bots, maxTurns } = params;
+    const state: IGState = getState();
 
-    let match: Match = {
+    const match: Match = {
       status: 'playing',
       uuid: matchId,
       players: params.bots,
-      map: params.map,
+      map,
       timestamp: new Date(),
       logPath: Config.matchLogPath(matchId),
     };
 
-    const state: IGState = getState();
-
-    const config: IMatchConfig = {
-      players: params.bots.map((botID) => {
-        return state.bots[botID].config;
-      }),
-      game_config: {
-        map_file: state.maps[params.map].mapPath,
-        max_turns: params.max_turns,
-      },
-      log_file: match.logPath,
-    };
+    const players = bots.map((botID) => state.bots[botID].config);
+    const gameConfig = { maxTurns, mapFile: state.maps[map].mapPath };
+    const config: MatchConfig = { players, gameConfig, logFile: match.logPath };
 
     dispatch(saveMatch(match));
     // TODO: ideally we'd have a separate action for this
     dispatch(push(`/matches/${matchId}`));
 
-    let runner = new GameRunner(config);
+    const runner = new GameRunner(config);
 
     runner.on('matchEnded', () => {
       dispatch(completeMatch(matchId));
@@ -84,7 +77,7 @@ export function runMatch(params: MatchParams) {
       dispatch(addNotification({ title, body, link, type: 'Error' }));
     });
     runner.run();
-  }
+  };
 }
 
 export function completeMatch(matchId: MatchId) {

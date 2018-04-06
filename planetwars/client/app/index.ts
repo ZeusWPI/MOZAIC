@@ -47,25 +47,29 @@ initializeDirs()
   .then(() => log.info('[STARTUP] Initalized dirs'))
   .then(() => bindToStore(store))
   .then(() => log.info('[STARTUP] Bound to store'))
-  .then(renderApp).catch((err) => new Breaker('fatal', err))
+  .then(renderApp).catch((err) => { throw new Breaker('fatal', err); })
   .then(() => log.info('[STARTUP] Finished rendering app'))
-  .then(populateMaps).catch((err) => new Breaker('map', err))
-  .then(populateBots).catch((err) => new Breaker('bots', err))
+  .then(populateMaps).catch((err) => { throw new Breaker('map', err); })
+  .then(populateBots).catch((err) => { throw new Breaker('bots', err); })
   .catch((br: Breaker) => {
     switch (br.type) {
       case 'fatal': {
+        log.error(`[FATAL] ${br.error} ${br.stack}`);
         renderCustom(h(FatalErrorView, { error: br.error }));
         break;
       }
       case 'map': {
-        alert(`Loading some default maps failed with ${br.error}`);
+        log.error(br.error, br.stack);
+        alert(`[POPULATE] Loading some default maps failed with ${br.error}`);
         break;
       }
       case 'bots': {
-        alert(`Loading some default bots failed with ${br.error}`);
+        log.error(br.error, br.stack);
+        alert(`[POPULATE] Loading some default bots failed with ${br.error}`);
         break;
       }
       default: {
+        log.error(br, br.stack);
         alert(`Unexpected error: ${br}`);
         break;
       }

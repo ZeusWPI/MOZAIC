@@ -2,20 +2,15 @@
 // Rust uses snake_case, but TS uses camelCase, this will cause errors down the
 // road.
 
-export interface INamedConfig {
-  configName: string;
-  config: IMatchConfig;
+export interface MatchConfig {
+  players: BotConfig[];
+  gameConfig: GameConfig;
+  logFile: string;
 }
 
-export interface IMatchConfig {
-  players: IBotConfig[],
-  game_config: IGameConfig,
-  log_file: string,
-}
-
-interface IGameConfig {
-  map_file: string;
-  max_turns: number;
+export interface GameConfig {
+  mapFile: string;
+  maxTurns: number;
 }
 
 export type BotID = string;
@@ -26,21 +21,19 @@ export interface IBotList {
 
 export interface IBotData {
   uuid: BotID;
-  config: IBotConfig;
+  config: BotConfig;
   lastUpdatedAt: Date;
   createdAt: Date;
-  history: IBotConfig[];
+  history: BotConfig[];
 }
 
-export interface IBotConfig {
+export interface BotConfig {
   name: string;
   command: string;
-  args: string[];
 }
 
-export function isBotConfig(o: any): o is IBotConfig {
-  const c = <IBotConfig> o;
-  return (c.command !== undefined)
-    && (c.name !== undefined)
-    && (c.args !== undefined);
+export function isBotConfig(o: any): o is BotConfig {
+  const c = o as BotConfig;
+  return (typeof c.command === 'string')
+    && (typeof c.name === 'string');
 }

@@ -10,6 +10,7 @@ import { store } from '../index';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 
+// TODO: Move all this shit do database
 export function initializeDirs(): Promise<void[]> {
   const dirs = Config.dirs;
   const pDirs = dirs.map((dir) => {
@@ -49,9 +50,8 @@ export function populateBots(): Promise<void[]> {
     const file = p.parse(path).base;
     const newPath = p.resolve(Config.bots, file);
     const name = `${Config.staticBots[path]} (check if python is correct before executing)`;
-    const command = 'python3';
-    const args = [newPath];
-    const config = { name, command, args };
+    const command = 'python3 ' + newPath;
+    const config = { name, command };
     return Promise
       .resolve(copyFile(path, newPath))
       .then(() => store.dispatch(A.addBot(config)));

@@ -3,7 +3,7 @@ import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { IBotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
+import { BotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from 'react-router-dom';
 
 // tslint:disable-next-line:no-var-requires
@@ -18,10 +18,10 @@ export interface BotsStateProps {
 export type ConfigErrors = { name?: string, command?: string };
 
 export interface BotsDispatchProps {
-  addBot: (config: IBotConfig) => void;
+  addBot: (config: BotConfig) => void;
   removeBot: (uuid: BotID) => void;
   editBot: (bot: IBotData) => void;
-  validate: (config: IBotConfig) => ConfigErrors;
+  validate: (config: BotConfig) => ConfigErrors;
 }
 
 type IBotsProps = BotsStateProps & BotsDispatchProps;
@@ -96,10 +96,10 @@ const BotListItem: React.SFC<IBotData> = (props) => {
 
 interface IBotEditorProps {
   selectedBot?: IBotData;
-  addBot: (bot: IBotConfig) => void;
+  addBot: (bot: BotConfig) => void;
   removeBot: (uuid: BotID) => void;
   editBot: (bot: IBotData) => void;
-  validate: (config: IBotConfig) => ConfigErrors;
+  validate: (config: BotConfig) => ConfigErrors;
 }
 
 interface IBotEditorState {
@@ -193,9 +193,9 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
   }
 
   private handleSubmit() {
-    const [command, ...args] = stringArgv(this.state.command);
+    const command = this.state.command;
     const { name, selectedBot } = this.state;
-    const config = { name, command, args };
+    const config = { name, command };
     const validation = this.props.validate(config);
 
     if (Object.keys(validation).length !== 0) {
@@ -223,8 +223,8 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     if (!selectedBot) {
       return { selectedBot: undefined, name: '', command: '', errors: {} };
     }
-    const { uuid, config: { name, command, args } } = selectedBot;
-    const cmd = [command, ...args].join(' ');
+    const { uuid, config: { name, command } } = selectedBot;
+    const cmd = command;
     return { selectedBot, name, command: cmd, errors: {} };
   }
 }
