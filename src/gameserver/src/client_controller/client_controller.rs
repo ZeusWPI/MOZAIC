@@ -30,6 +30,7 @@ pub enum Message {
 
 pub enum Command {
     Send(Vec<u8>),
+    Disconnect,
 }
 
 pub struct ClientController {
@@ -78,20 +79,23 @@ impl ClientController {
     }
 
 
-    fn poll_ctrl_chan(&mut self) -> Async<Command> {
+    fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
         // we hold a handle to this channel, so it can never close.
         // this means errors can not happen.
         let value = self.ctrl_chan.poll().unwrap();
-        return value.map(|item| item.unwrap());
+        return Ok(value.map(|item| item.unwrap()));
     }
 
     /// Pull commands from the control channel and execute them.
-    fn handle_commands(&mut self) {
-        while let Async::Ready(command) = self.poll_ctrl_chan() {
-            match command {
+    fn handle_commands(&mut self) -> Poll<(), ()> {
+        loop {
+            match try_ready!(self.poll_ctrl_chan()) {
                 Command::Send(message) => {
                    self.connection.send(message);
                 },
+                Command::Disconnect => {
+                    return Ok(Async::Ready(()));
+                }
             }
         }
     }
@@ -117,7 +121,11 @@ impl Future for ClientController {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        self.handle_commands();
+        match try!(self.handle_commands()) {
+            // ignore the client for now, close the connection when we are done
+            Async::Ready(()) => return Ok(Async::Ready(())),
+            Async::NotReady => (),
+        };
         let res = self.poll_client_connection();
         if let Err(_err) = res {
             // TODO: well

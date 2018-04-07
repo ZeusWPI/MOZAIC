@@ -19,6 +19,7 @@ pub struct Controller {
     pw_controller: PwController,
 
     client_msgs: UnboundedReceiver<ClientMessage>,
+    clients: Vec<Client>,
     logger: slog::Logger,
 }
 
@@ -47,9 +48,10 @@ impl Controller {
                -> Self
     {
         let mut c = Controller {
-            pw_controller: PwController::new(conf, clients, logger.clone()),
+            pw_controller: PwController::new(conf, clients.clone(), logger.clone()),
             step_lock: StepLock::new(),
             client_msgs,
+            clients,
             logger,
         };
         c.init();
@@ -102,6 +104,11 @@ impl Future for Controller {
 
                 // TODO: this could be done better
                 if self.pw_controller.outcome().is_some() {
+                    for client in self.clients.iter_mut() {
+                        client.handle.unbounded_send(
+                            ClientControllerCommand::Disconnect
+                        ).unwrap();
+                    }
                     return Ok(Async::Ready(()));
                 }
             }
