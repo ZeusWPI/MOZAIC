@@ -61,6 +61,9 @@ export class Connection extends EventEmitter {
         // set callbacks
         // TODO: handle errors and such
         socket.on('data', (buf: Buffer) => this.readMessages(buf));
+        socket.on('close', () => {
+            this.emit('close');
+        }); 
 
         // initiate handshake
         this.state = ConnectionState.CONNECTING;

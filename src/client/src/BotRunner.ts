@@ -43,6 +43,12 @@ export class BotRunner extends EventEmitter {
         }
     }
 
+    public killBot() {
+        if (this.bot) {
+            this.bot.process.kill();
+        }
+    }
+
     /**
      * Set the process this BotRunner manages and attach listeners.
      * @param process The process to monitor

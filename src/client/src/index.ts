@@ -10,7 +10,7 @@ const simpleBot: BotConfig = {
 }
 
 for (let i = 1; i <= 2; i++) {
-    let conn = new Connection(Buffer.from([i+1]));
+    let conn = new Connection(Buffer.from([i]));
 
     let botRunner = new BotRunner(simpleBot);
     botRunner.on('message', (message: string) => {
@@ -23,8 +23,13 @@ for (let i = 1; i <= 2; i++) {
     });
 
     conn.on('message', (msg: Buffer) => {
+        conn.sendMessage(Buffer.from('{"moves": []"}', 'utf-8'));
         botRunner.sendMessage(msg);
     });
+
+    conn.on('close', () => {
+        botRunner.killBot();
+    })
     
     Promise.resolve(addr.connect())
         .then(socket => conn.connect(socket))
