@@ -34,8 +34,8 @@ export class Client {
         this.botRunner.run();
     }
 
-    public handleBotMessage(message: string) {
-        this.connection.sendMessage(Buffer.from(message, 'utf-8'));
+    public handleBotMessage(message: Buffer) {
+        this.connection.sendMessage(message);
     }
 
     public handleServerMessage(message: Buffer) {
@@ -43,7 +43,7 @@ export class Client {
     }
 
     private initHandlers() {
-        this.botRunner.on('message', (message: string) => {
+        this.botRunner.on('message', (message: Buffer) => {
             this.handleBotMessage(message);
         });
 

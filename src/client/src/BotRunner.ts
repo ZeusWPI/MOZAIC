@@ -56,7 +56,10 @@ export class BotRunner extends EventEmitter {
     private setProcess(process: ChildProcess) {
         const output = process.stdout.pipe(split2());
 
-        output.on('data', (data: string) => this.onData(data));
+        output.on('data', (line: string) => {
+            let data = Buffer.from(line, 'utf-8');
+            this.onData(data);
+        });
 
         this.bot = {
             process,
@@ -64,7 +67,7 @@ export class BotRunner extends EventEmitter {
         };
     }
 
-    private onData(message: string) {
-        this.emit('message', message);
+    private onData(data: Buffer) {
+        this.emit('message', data);
     }
 }
