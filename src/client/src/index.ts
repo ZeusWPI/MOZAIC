@@ -1,9 +1,12 @@
 import * as Promise from 'bluebird';
-import { Address, Connection } from './connection';
+import { Connection } from './connection';
 import { BotRunner, BotConfig } from './BotRunner';
-import { Client } from './Client';
+import { Client, Address } from './Client';
 
-let addr = new Address("127.0.0.1", 9142);
+let addr: Address = {
+    host: "127.0.0.1",
+    port: 9142
+};
 
 const simpleBot: BotConfig = {
     command: "python3",

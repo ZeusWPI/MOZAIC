@@ -1,9 +1,15 @@
 import { BotRunner, BotConfig } from "./BotRunner";
-import { Connection, Address } from "./connection";
+import { Connection } from "./connection";
+import { Socket } from 'net';
 
 export interface ConnectionData {
     token: Buffer,
     address: Address,
+}
+
+export interface Address {
+    host: string;
+    port: number;
 }
 
 export class Client {
@@ -19,13 +25,13 @@ export class Client {
         this.initHandlers();
     }
 
-    public run() {      
-        Promise.resolve(this.address.connect())
-            .then(socket => {
-                this.connection.connect(socket);
-                this.botRunner.run();
-            })
-            .catch(e => console.log(`error: ${e}`));
+    public run() {
+        let socket = new Socket();
+        socket.once('connect', () => {
+            this.connection.connect(socket);
+        });
+        socket.connect(this.address.port, this.address.host);
+        this.botRunner.run();
     }
 
     public handleBotMessage(message: string) {

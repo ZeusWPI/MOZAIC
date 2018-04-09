@@ -2,35 +2,9 @@ import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
 import * as net from 'net';
 import * as stream from 'stream';
-import * as Promise from 'bluebird';
 import { EventEmitter } from 'events';
 import { BufferWriter, BufferReader } from 'protobufjs/minimal';
 import { read } from 'fs';
-
-
-
-export class Address {
-    readonly host: string;
-    readonly port: number;
-
-    public constructor(host: string, port: number) {
-        this.host = host;
-        this.port = port;
-    }
-
-    public connect() : Promise<net.Socket> {
-        return new Promise((resolve, reject) => {
-            let socket = net.connect({
-                host: this.host,
-                port: this.port,
-            });
-
-            socket.on('connect', () => resolve(socket));
-            socket.on('error', e => reject(e));
-        });
-    }
-}
-
 
 enum ConnectionState {
     DISCONNECTED,
