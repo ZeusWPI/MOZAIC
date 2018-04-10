@@ -1,8 +1,10 @@
 use bytes::BytesMut;
 use futures::{Future, Poll, Async, Stream};
+use futures::sink::{Sink, Send};
 use futures::sync::mpsc::UnboundedSender;
 use prost::Message;
 use std::io;
+use std::mem;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use tokio;
@@ -11,8 +13,6 @@ use tokio::net::{Incoming, TcpListener, TcpStream};
 use protobuf_codec::{MessageStream, ProtobufTransport};
 use protocol;
 use super::router::{RoutingTable, RoutingMessage};
-use connection::utils::Sender;
-
 
 
 pub struct Listener {
@@ -58,39 +58,41 @@ impl Future for Listener {
 }
 
 
-struct Waiting;
+struct Waiting {
+    transport: ProtobufTransport<TcpStream>,
+    routing_table: Arc<Mutex<RoutingTable>>,
+}
+
+enum Action {
+    Accept {
+        handle: UnboundedSender<RoutingMessage>,
+    },
+    Refuse {
+        reason: String,
+    }
+}
 
 impl Waiting {
-    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
+    fn poll(&mut self) -> Poll<Action, io::Error>
     {
-        let bytes = match try_ready!(data.conn_mut().poll()) {
+        let bytes = match try_ready!(self.transport.poll()) {
             None => bail!(io::ErrorKind::ConnectionAborted),
             Some(bytes) => bytes.freeze(),
         };
 
         let request = try!(protocol::ConnectionRequest::decode(bytes));
 
-        let mut table = data.routing_table.lock().unwrap(); 
-        match table.get(&request.token) {
-            None => {
-                let response = protocol::ConnectionResponse {
-                    response: Some(
-                        protocol::connection_response::Response::Error(
-                            protocol::ConnectionError {
-                                message: "invalid token".to_string(),
-                            }
-                        )
-                    )
-                };
-                let mut buf = BytesMut::new();
-                try!(response.encode(&mut buf));
+        let mut table = self.routing_table.lock().unwrap(); 
+        let action = match table.get(&request.token) {
+            None => Action::Refuse { reason: "invalid token".to_string() },
+            Some(handle) => Action::Accept { handle },
+        };
+        return Ok(Async::Ready(action));
+    }
 
-                let refusing = Refusing {
-                    send: Sender::new(buf),
-                };
-                return Ok(Async::Ready(HandlerState::Refusing(refusing)));
-            },
-            Some(handle) => {
+    fn step(self, action: Action) -> Result<HandlerState, io::Error> {
+        match action {
+            Action::Accept { handle } => {
                 let response = protocol::ConnectionResponse {
                     response: Some(
                         protocol::connection_response::Response::Success(
@@ -102,41 +104,64 @@ impl Waiting {
                 try!(response.encode(&mut buf));
 
                 let accepting = Accepting {
-                    send: Sender::new(buf),
+                    send: self.transport.send(buf),
                     handle,
                 };
-                return Ok(Async::Ready(HandlerState::Accepting(accepting)));
+                return Ok(HandlerState::Accepting(accepting));
             },
-        };
+            Action::Refuse { reason } => {
+                let response = protocol::ConnectionResponse {
+                    response: Some(
+                        protocol::connection_response::Response::Error(
+                            protocol::ConnectionError {
+                                message: reason,
+                            }
+                        )
+                    )
+                };
+                let mut buf = BytesMut::new();
+                try!(response.encode(&mut buf));
+
+                let refusing = Refusing {
+                    send: self.transport.send(buf),
+                };
+                return Ok(HandlerState::Refusing(refusing));
+            }
+        }
     }
 }
 
 
 struct Accepting {
-    send: Sender<BytesMut>,
+    send: Send<ProtobufTransport<TcpStream>>,
     handle: UnboundedSender<RoutingMessage>,
 }
 
 impl Accepting {
-    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
-    {
-        try_ready!(self.send.poll_send(data.conn_mut()));
-        self.handle.unbounded_send(RoutingMessage::Connecting {
-            stream: MessageStream::new(data.transport.take().unwrap())
+    fn poll(&mut self) -> Poll<ProtobufTransport<TcpStream>, io::Error> {
+        self.send.poll()
+    }
+
+    fn step(self, transport: ProtobufTransport<TcpStream>) -> HandlerState {
+         self.handle.unbounded_send(RoutingMessage::Connecting {
+            stream: MessageStream::new(transport)
         }).unwrap();
-        return Ok(Async::Ready(HandlerState::Done));
+        return HandlerState::Done;
     }
 }
 
 struct Refusing {
-    send: Sender<BytesMut>,
+    send: Send<ProtobufTransport<TcpStream>>,
 }
 
 impl Refusing {
-    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
-    {
-        try_ready!(self.send.poll_send(data.conn_mut()));
-        return Ok(Async::Ready(HandlerState::Done));
+    fn poll(&mut self) -> Poll<(), io::Error> {
+        try_ready!(self.send.poll());
+        return Ok(Async::Ready(()));
+    }
+
+    fn step(self) -> HandlerState {
+        return HandlerState::Done;
     }
 }
 
@@ -147,36 +172,8 @@ enum HandlerState {
     Done,
 }
 
-impl HandlerState {
-    fn poll(&mut self, data: &mut HandlerData) -> Poll<HandlerState, io::Error>
-    {
-        match *self {
-            HandlerState::Waiting(ref mut waiting) => waiting.poll(data),
-            HandlerState::Accepting(ref mut accepting) => accepting.poll(data),
-            HandlerState::Refusing(ref mut refusing) => refusing.poll(data),
-            HandlerState::Done => panic!("polling Done"),
-        }
-    }
-}
-
-struct HandlerData {
-    transport: Option<ProtobufTransport<TcpStream>>,
-    routing_table: Arc<Mutex<RoutingTable>>,
-}
-
-impl HandlerData {
-    // TODO: this might not be the ideal solution ...
-    fn conn_mut<'a>(&'a mut self) -> &'a mut ProtobufTransport<TcpStream> {
-        match self.transport.as_mut() {
-            Some(conn) => conn,
-            None => panic!("Connection moved"),
-        }
-    }
-}
-
 pub struct ConnectionHandler {
     state: HandlerState,
-    data: HandlerData,
 }
 
 impl ConnectionHandler {
@@ -185,10 +182,56 @@ impl ConnectionHandler {
     {
         let transport = ProtobufTransport::new(stream);
         ConnectionHandler {
-            state: HandlerState::Waiting(Waiting),
-            data: HandlerData {
-                transport: Some(transport),
+            state: HandlerState::Waiting(Waiting {
+                transport,
                 routing_table,
+            }),
+        }
+    }
+}
+
+impl ConnectionHandler {
+    // TODO: can we get rid of this boilerplate?
+    fn step(&mut self) -> Poll<(), io::Error> {
+        loop {
+            let state = mem::replace(&mut self.state, HandlerState::Done);
+            match state {
+                HandlerState::Waiting(mut waiting) => {
+                    match try!(waiting.poll()) {
+                        Async::NotReady => {
+                            self.state = HandlerState::Waiting(waiting);
+                            return Ok(Async::NotReady);
+                        }
+                        Async::Ready(action) => {
+                            self.state = try!(waiting.step(action));
+                        }
+                    }
+                }
+                HandlerState::Accepting(mut accepting) => {
+                    match try!(accepting.poll()) {
+                        Async::NotReady => {
+                            self.state = HandlerState::Accepting(accepting);
+                            return Ok(Async::NotReady);
+                        }
+                        Async::Ready(transport) => {
+                            self.state = accepting.step(transport);
+                        }
+                    }
+                }
+                HandlerState::Refusing(mut refusing) => {
+                    match try!(refusing.poll()) {
+                        Async::NotReady => {
+                            self.state = HandlerState::Refusing(refusing);
+                            return Ok(Async::NotReady);
+                        }
+                        Async::Ready(()) => {
+                            self.state = refusing.step();
+                        }
+                    }
+                }
+                HandlerState::Done => {
+                    return Ok(Async::Ready(()));
+                }
             }
         }
     }
@@ -199,19 +242,10 @@ impl Future for ConnectionHandler {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        let data = &mut self.data;
-        loop {
-            match self.state.poll(data) {
-                // TODO: handle this case gracefully
-                Err(err) => panic!("error: {}", err),
-                Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Ok(Async::Ready(state)) => {
-                    match state {
-                        HandlerState::Done => return Ok(Async::Ready(())),
-                        new_state => self.state = new_state,
-                    }
-                }
-            }
+        match self.step() {
+            // TODO: handle this case gracefully
+            Err(err) => panic!("error: {}", err),
+            Ok(poll) => Ok(poll),
         }
     }
 }
