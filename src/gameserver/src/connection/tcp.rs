@@ -90,7 +90,7 @@ impl Waiting {
         return Ok(Async::Ready(action));
     }
 
-    fn step(self, action: Action) -> Result<HandlerState, io::Error> {
+    fn step(self, action: Action) -> HandlerState {
         match action {
             Action::Accept { handle } => {
                 let response = protocol::ConnectionResponse {
@@ -100,14 +100,12 @@ impl Waiting {
                         )
                     )
                 };
-                let mut buf = BytesMut::new();
-                try!(response.encode(&mut buf));
 
                 let accepting = Accepting {
-                    send: self.transport.send(buf),
+                    send: self.transport.send_msg(response),
                     handle,
                 };
-                return Ok(HandlerState::Accepting(accepting));
+                return HandlerState::Accepting(accepting);
             },
             Action::Refuse { reason } => {
                 let response = protocol::ConnectionResponse {
@@ -119,13 +117,11 @@ impl Waiting {
                         )
                     )
                 };
-                let mut buf = BytesMut::new();
-                try!(response.encode(&mut buf));
 
                 let refusing = Refusing {
-                    send: self.transport.send(buf),
+                    send: self.transport.send_msg(response),
                 };
-                return Ok(HandlerState::Refusing(refusing));
+                return HandlerState::Refusing(refusing);
             }
         }
     }
@@ -203,7 +199,7 @@ impl ConnectionHandler {
                             return Ok(Async::NotReady);
                         }
                         Async::Ready(action) => {
-                            self.state = try!(waiting.step(action));
+                            self.state = waiting.step(action);
                         }
                     }
                 }

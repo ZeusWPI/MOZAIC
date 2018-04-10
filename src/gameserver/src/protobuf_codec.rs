@@ -4,7 +4,8 @@ use prost::Message;
 use prost::encoding;
 use bytes::BytesMut;
 use std::io::{Result, Error, ErrorKind, Cursor};
-use futures::{Poll, Async, Sink, Stream, StartSend, AsyncSink};
+use futures::{Poll, Async, Stream, StartSend, AsyncSink};
+use futures::sink::{Sink, Send};
 use std::marker::PhantomData;
 
 use tokio_io::{codec, AsyncRead, AsyncWrite};
@@ -101,6 +102,17 @@ impl<T> ProtobufTransport<T>
         ProtobufTransport {
             inner: stream.framed(LengthDelimited::new()),
         }
+    }
+
+    pub fn send_msg<M>(self, msg: M) -> Send<Self>
+        where M: Message
+    {
+        let mut bytes = BytesMut::with_capacity(msg.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        msg.encode(&mut bytes).unwrap();
+        return self.send(bytes);
     }
 
     pub fn poll_msg<M>(&mut self) -> Poll<Option<M>, Error>
