@@ -11,8 +11,9 @@ use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
 use protobuf_codec::{MessageStream, ProtobufTransport};
-use protocol;
 use super::router::{RoutingTable, RoutingMessage};
+use protocol as proto;
+
 
 
 pub struct Listener {
@@ -57,6 +58,27 @@ impl Future for Listener {
     }
 }
 
+fn connection_success() -> proto::ConnectionResponse {
+   proto::ConnectionResponse {
+        response: Some(
+            proto::connection_response::Response::Success(
+                proto::ConnectionSuccess {}
+            )
+        )
+    }
+}
+
+fn connection_error(msg: String) -> proto::ConnectionResponse {
+    proto::ConnectionResponse {
+        response: Some(
+            proto::connection_response::Response::Error(
+                proto::ConnectionError {
+                    message: msg,
+                }
+            )
+        )
+    }
+}
 
 struct Waiting {
     transport: ProtobufTransport<TcpStream>,
@@ -80,7 +102,7 @@ impl Waiting {
             Some(bytes) => bytes.freeze(),
         };
 
-        let request = try!(protocol::ConnectionRequest::decode(bytes));
+        let request = try!(proto::ConnectionRequest::decode(bytes));
 
         let mut table = self.routing_table.lock().unwrap(); 
         let action = match table.get(&request.token) {
@@ -93,14 +115,7 @@ impl Waiting {
     fn step(self, action: Action) -> HandlerState {
         match action {
             Action::Accept { handle } => {
-                let response = protocol::ConnectionResponse {
-                    response: Some(
-                        protocol::connection_response::Response::Success(
-                            protocol::ConnectionSuccess {}
-                        )
-                    )
-                };
-
+                let response = connection_success();
                 let accepting = Accepting {
                     send: self.transport.send_msg(response),
                     handle,
@@ -108,15 +123,7 @@ impl Waiting {
                 return HandlerState::Accepting(accepting);
             },
             Action::Refuse { reason } => {
-                let response = protocol::ConnectionResponse {
-                    response: Some(
-                        protocol::connection_response::Response::Error(
-                            protocol::ConnectionError {
-                                message: reason,
-                            }
-                        )
-                    )
-                };
+                let response = connection_error(reason);
 
                 let refusing = Refusing {
                     send: self.transport.send_msg(response),
