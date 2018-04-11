@@ -3,9 +3,19 @@
  */
 
 const path = require('path');
+const child_process = require('child_process');
+const webpack = require('webpack');
 const {
   dependencies: externals
 } = require('../package.json');
+
+function cmdOutput(cmdString) {
+  let output = child_process
+    .execSync(cmdString)
+    .toString()
+    .trim();
+  return JSON.stringify(output);
+}
 
 module.exports = {
   module: {
@@ -42,7 +52,12 @@ module.exports = {
     ]
   },
 
-  plugins: [],
+  plugins: [
+    new webpack.DefinePlugin({
+      __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD'),
+      __BRANCHNAME__: cmdOutput('git rev-parse --abbrev-ref HEAD')
+    })
+  ],
 
   externals: Object.keys(externals || {})
 };
