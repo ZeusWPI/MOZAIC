@@ -15,6 +15,10 @@ module.exports = {
     ]
   },
 
+  watchOptions: {
+    poll: true
+  },
+
   module: {
     loaders: [
       {
