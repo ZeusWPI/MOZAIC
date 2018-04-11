@@ -119,6 +119,21 @@ $footer-background-color: $primary;
   }
 }
 
+.event {
+  max-width: 20vw !important;
+  width: 80%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.event-date {
+  font-size: 3vw;
+}
+.event-title {
+  color: $secondary;
+}
+
 .navbar {
   border-bottom: 1px solid $color4;
   min-height: 85px;
