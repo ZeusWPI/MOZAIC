@@ -92,7 +92,7 @@ impl ClientController {
         loop {
             match try_ready!(self.poll_ctrl_chan()) {
                 Command::Send(message) => {
-                   self.connection.send(message);
+                   self.connection.send(message).unwrap();
                 },
                 Command::Disconnect => {
                     return Ok(Async::Ready(()));
