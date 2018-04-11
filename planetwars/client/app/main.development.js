@@ -1,10 +1,21 @@
-const { app, BrowserWindow, Menu, shell } = require('electron');
+let log = require('electron-log');
+log.transports.file.level = 'info';
+log.info('[STARTUP] Main process started');
+
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  shell,
+} = require('electron');
+let Promise = require('bluebird');
 
 let menu;
 let template;
 let mainWindow = null;
 
 if (process.env.NODE_ENV === 'production') {
+  require('electron-debug')();
   const sourceMapSupport = require('source-map-support'); // eslint-disable-line
   sourceMapSupport.install();
 }
@@ -16,257 +27,129 @@ if (process.env.NODE_ENV === 'development') {
   require('module').globalPaths.push(p); // eslint-disable-line
 }
 
+const installExtensions = () => {
+  const installer = require('electron-devtools-installer'); // eslint-disable-line global-require
+
+  const extensions = [
+    'REACT_DEVELOPER_TOOLS',
+    'REDUX_DEVTOOLS'
+  ];
+  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
+  return Promise.all(extensions.map(name => installer.default(installer[name], forceDownload)));
+};
+
+log.info('[STARTUP] Modules loaded');
+
+app.on('ready', () => {
+  log.info('[STARTUP] App ready');
+  return installExtensions()
+    .catch((err) => log.error(`[STARTUP] Error installing extensions ${err.toString()}`))
+    .then()
+    .then(() => log.info('[STARTUP] Extensions installed'))
+    .then(() => {
+      mainWindow = new BrowserWindow({
+        show: false,
+        width: 1024,
+        height: 728,
+      });
+
+      mainWindow.loadURL(`file://${__dirname}/app.html`);
+
+      mainWindow.webContents.on('did-finish-load', () => {
+        mainWindow.show();
+        mainWindow.focus();
+      });
+
+      mainWindow.on('closed', () => {
+        mainWindow = null;
+      });
+
+      // mainWindow.openDevTools();
+
+      mainWindow.webContents.on('context-menu', (e, props) => {
+        const {
+          x,
+          y
+        } = props;
+
+        Menu.buildFromTemplate([{
+          label: 'Inspect element',
+          click() {
+            mainWindow.inspectElement(x, y);
+          },
+        }]).popup(mainWindow);
+      });
+
+      const template = [{
+        accelerator: 'CmdOrCtrl+Q',
+        click() {
+          app.quit()
+        }
+      }, {
+        accelerator: 'CmdOrCtrl+R',
+        click() {
+          mainWindow.webContents.reload()
+        }
+      }, {
+        accelerator: 'Ctrl+CmdOrCtrl+F',
+        click() {
+          mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        }
+      }, {
+        accelerator: 'Alt+CmdOrCtrl+I',
+        click() {
+          mainWindow.toggleDevTools()
+        }
+      }, {
+        accelerator: 'Ctrl+W',
+        click() {
+          mainWindow.close()
+        }
+      }, {
+        accelerator: 'F5',
+        click() {
+          mainWindow.webContents.reload()
+        }
+      }, {
+        accelerator: 'F12',
+        click() {
+          mainWindow.toggleDevTools()
+        }
+      }, {
+        accelerator: 'F11',
+        click() {
+          mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        }
+      }];
+
+      menu = Menu.buildFromTemplate(template);
+      mainWindow.setMenu(menu);
+      mainWindow.setMenuBarVisibility(false);
+    })
+    .then(() => log.info('[STARTUP] Browser window created'))
+    .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`))
+});
+
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
+  log.info('[SHUTDOWN] Window all closed');
+});
+
+app.on('error', (err) => {
+  log.error(`Unexpected error occured: ${err.toString()} ${err.stack}`);
+});
+
+app.on('certificate-error', (ev, wc, url) => {
+  log.error(`Certificate error for ${url}`);
+});
+
+app.on('quit', () => {
+  log.info('[SHUTDOWN] App is quitting');
 });
 
 
-const installExtensions = () => {
-  if (process.env.NODE_ENV === 'development') {
-    const installer = require('electron-devtools-installer'); // eslint-disable-line global-require
+app.on('will-quit', () => {
+  log.info('[SHUTDOWN] App will quit');
+});
 
-    const extensions = [
-      'REACT_DEVELOPER_TOOLS',
-      'REDUX_DEVTOOLS'
-    ];
-    const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-    return Promise.all(extensions.map(name => installer.default(installer[name], forceDownload)));
-  }
-
-  return Promise.resolve([]);
-};
-
-app.on('ready', () =>
-  installExtensions()
-  .then(() => {
-  mainWindow = new BrowserWindow({
-    show: false,
-    width: 1024,
-    height: 728
-  });
-
-  mainWindow.loadURL(`file://${__dirname}/app.html`);
-
-  mainWindow.webContents.on('did-finish-load', () => {
-    mainWindow.show();
-    mainWindow.focus();
-  });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-
-  if (process.env.NODE_ENV === 'development') {
-    mainWindow.openDevTools();
-    mainWindow.webContents.on('context-menu', (e, props) => {
-      const { x, y } = props;
-
-      Menu.buildFromTemplate([{
-        label: 'Inspect element',
-        click() {
-          mainWindow.inspectElement(x, y);
-        }
-      }]).popup(mainWindow);
-    });
-  }
-
-  if (process.platform === 'darwin') {
-    template = [{
-      label: 'Electron',
-      submenu: [{
-        label: 'About ElectronReact',
-        selector: 'orderFrontStandardAboutPanel:'
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Services',
-        submenu: []
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Hide ElectronReact',
-        accelerator: 'Command+H',
-        selector: 'hide:'
-      }, {
-        label: 'Hide Others',
-        accelerator: 'Command+Shift+H',
-        selector: 'hideOtherApplications:'
-      }, {
-        label: 'Show All',
-        selector: 'unhideAllApplications:'
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Quit',
-        accelerator: 'Command+Q',
-        click() {
-          app.quit();
-        }
-      }]
-    }, {
-      label: 'Edit',
-      submenu: [{
-        label: 'Undo',
-        accelerator: 'Command+Z',
-        selector: 'undo:'
-      }, {
-        label: 'Redo',
-        accelerator: 'Shift+Command+Z',
-        selector: 'redo:'
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Cut',
-        accelerator: 'Command+X',
-        selector: 'cut:'
-      }, {
-        label: 'Copy',
-        accelerator: 'Command+C',
-        selector: 'copy:'
-      }, {
-        label: 'Paste',
-        accelerator: 'Command+V',
-        selector: 'paste:'
-      }, {
-        label: 'Select All',
-        accelerator: 'Command+A',
-        selector: 'selectAll:'
-      }]
-    }, {
-      label: 'View',
-      submenu: (process.env.NODE_ENV === 'development') ? [{
-        label: 'Reload',
-        accelerator: 'Command+R',
-        click() {
-          mainWindow.webContents.reload();
-        }
-      }, {
-        label: 'Toggle Full Screen',
-        accelerator: 'Ctrl+Command+F',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen());
-        }
-      }, {
-        label: 'Toggle Developer Tools',
-        accelerator: 'Alt+Command+I',
-        click() {
-          mainWindow.toggleDevTools();
-        }
-      }] : [{
-        label: 'Toggle Full Screen',
-        accelerator: 'Ctrl+Command+F',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen());
-        }
-      }]
-    }, {
-      label: 'Window',
-      submenu: [{
-        label: 'Minimize',
-        accelerator: 'Command+M',
-        selector: 'performMiniaturize:'
-      }, {
-        label: 'Close',
-        accelerator: 'Command+W',
-        selector: 'performClose:'
-      }, {
-        type: 'separator'
-      }, {
-        label: 'Bring All to Front',
-        selector: 'arrangeInFront:'
-      }]
-    }, {
-      label: 'Help',
-      submenu: [{
-        label: 'Learn More',
-        click() {
-          shell.openExternal('http://electron.atom.io');
-        }
-      }, {
-        label: 'Documentation',
-        click() {
-          shell.openExternal('https://github.com/atom/electron/tree/master/docs#readme');
-        }
-      }, {
-        label: 'Community Discussions',
-        click() {
-          shell.openExternal('https://discuss.atom.io/c/electron');
-        }
-      }, {
-        label: 'Search Issues',
-        click() {
-          shell.openExternal('https://github.com/atom/electron/issues');
-        }
-      }]
-    }];
-
-    menu = Menu.buildFromTemplate(template);
-    Menu.setApplicationMenu(menu);
-  } else {
-    template = [{
-      label: '&File',
-      submenu: [{
-        label: '&Open',
-        accelerator: 'Ctrl+O'
-      }, {
-        label: '&Close',
-        accelerator: 'Ctrl+W',
-        click() {
-          mainWindow.close();
-        }
-      }]
-    }, {
-      label: '&View',
-      submenu: (process.env.NODE_ENV === 'development') ? [{
-        label: '&Reload',
-        accelerator: 'Ctrl+R',
-        click() {
-          mainWindow.webContents.reload();
-        }
-      }, {
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen());
-        }
-      }, {
-        label: 'Toggle &Developer Tools',
-        accelerator: 'Alt+Ctrl+I',
-        click() {
-          mainWindow.toggleDevTools();
-        }
-      }] : [{
-        label: 'Toggle &Full Screen',
-        accelerator: 'F11',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen());
-        }
-      }]
-    }, {
-      label: 'Help',
-      submenu: [{
-        label: 'Learn More',
-        click() {
-          shell.openExternal('http://electron.atom.io');
-        }
-      }, {
-        label: 'Documentation',
-        click() {
-          shell.openExternal('https://github.com/atom/electron/tree/master/docs#readme');
-        }
-      }, {
-        label: 'Community Discussions',
-        click() {
-          shell.openExternal('https://discuss.atom.io/c/electron');
-        }
-      }, {
-        label: 'Search Issues',
-        click() {
-          shell.openExternal('https://github.com/atom/electron/issues');
-        }
-      }]
-    }];
-    menu = Menu.buildFromTemplate(template);
-    mainWindow.setMenu(menu);
-  }
-}));
+log.info('[STARTUP] App listeners bound');

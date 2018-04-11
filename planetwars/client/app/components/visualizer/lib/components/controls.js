@@ -12,11 +12,6 @@ const {
 } = require('hyperscript-helpers')(h);
 let styles = require('./controls.scss');
 
-const ReactUtils = require('../util/react_utils');
-const HideableComponent = ReactUtils.HideableComponent;
-const ToggleButton = ReactUtils.ToggleButton;
-const ControlButton = ReactUtils.ControlButton;
-
 function fa_icon(name) {
   return h('i.fa.fa-' + name, {
     'aria-hidden': true
@@ -82,14 +77,6 @@ class Controls extends React.Component {
           ),
           p(`.${styles.turnProgress}`, `${this.props.turnNum} / ${this.props.numTurns}`)
         ]),
-        div(`.${styles.fileControl}`, [
-          h(LogLoaderButton, {
-            handleContents: (playerData, gameLog) => {
-              this.props.setLog(playerData, gameLog);
-              this.props.setPlaying(true);
-            }
-          })
-        ]),
         div(`.${styles.speedControls}`, [
           p(`.${styles.speed}`, `Speed x${this.props.speed}`),
           button(
@@ -107,61 +94,6 @@ class Controls extends React.Component {
         ])
       ]),
     ]);
-  }
-}
-
-
-class LogLoaderButton extends React.Component {
-
-  constructor(props) {
-    super(props);
-    this.state = {
-      elementId: this.props.elementId || uuidv4()
-    }
-
-    this.hide = {
-      width: '0px',
-      opacity: '0',
-      position: 'fixed',
-    }
-
-    // WTF React
-    this.handleFile = this.handleFile.bind(this);
-    this.onClick = this.onClick.bind(this);
-  }
-
-  handleFile(clickEvent) {
-    var reader = new FileReader();
-    reader.onload = (readEvent) => {
-      var log = readEvent.target.result;
-
-      let lines = log.trim().split("\n");
-      let gameFile = lines.map((value) => JSON.parse(value));
-      this.props.handleContents(gameFile[0], gameFile.slice(1));
-    }
-    reader.readAsText(clickEvent.target.files[0]);
-  }
-
-  onClick() {
-    let element = document.getElementById(this.state.elementId);
-    element.value = '';
-    element.click();
-  }
-
-  render() {
-    return div('', [
-      input({
-        id: this.state.elementId,
-        type: 'file',
-        style: this.hide,
-        onChange: this.handleFile
-      }),
-      button({
-        type: 'button',
-        onClick: this.onClick,
-        autoFocus: true
-      }, ["Load game"])
-    ])
   }
 }
 

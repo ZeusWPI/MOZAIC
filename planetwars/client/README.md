@@ -33,12 +33,8 @@ and running the NPM commands from there. All tools seem to be supported very wel
 Might help to install electron and cross-env globally with NPM with
 `npm install -g electron` and `npm install -g cross-dev` respectively.
 
-## TODO
+### Publishing
 
-- Add info about tech stack
-- Check need for `concurrently`
-- Check need for `css-loader-require-hook`
-- Check package.json scripts
-- TSX to Hyperscript
-- Check package.json build
-- Check need for `asar`
+If you want to package and publish new versions of the client, check out [electron-builder](https://www.electron.build/multi-platform-build) for more info. You will only be able to build for macOS on macOS. Windows can work with Wine.
+
+This section will still be updated.

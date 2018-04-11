@@ -11,7 +11,7 @@ And every turn, you return the [moves](#moves) you want to make.
 
 ### The map
 
-The map is an arbitrary collection of planets on *fixed* positions. They all have an initial amount of ships present (`ship_count`) and can have a neutral owner. Interpret this as an owner who is not a player, and will not make moves, but who's ships you'll have to defeat if you want to take over the planet.
+The map is an arbitrary collection of planets on *fixed* positions. They all have an initial amount of ships present (`ship_count`) and can have a neutral owner. Interpret this as an owner who is not a player, and will not make moves, but whose ships you'll have to defeat if you want to take over the planet.
 
 ### Combat
 
@@ -23,39 +23,31 @@ Every turn, all player owned planets create one extra ship. This is done before 
 
 ### Communication
 
-Your bot is started with it's name as it's first parameter, that way you'll now which player you are in the input you receive. You'll receive that information in newline-separated JSON, and we expect it back the same way.
+Your bot is started with its name as its first parameter, that way you'll know which player you are in the input you receive. You'll receive that information in newline-separated JSON, and we expect it back the same way.
 
 ## Gamestate
 
-**! This information is stale !**
 The gamestate format is non differential, which implies you'll receive the complete (updated) gamestate every turn, with all information visible for everyone.
 
 Examples:
 
 ```json
 {
-    "players":[
-        "player_0",
-        "player_1"
-    ],
     "planets":[
         {
-            "planet":{
-                "x":0,
-                "y":0,
-                "ship_count":4,
-                "owner":"player_0",
-                "name":"planet_0"
-            }
+            "x":0,
+            "y":0,
+            "ship_count":4,
+            "owner":1,
+            "name":"planet_0"
         },
         {
-            "planet":{
-                "x":10,
-                "y":10,
-                "ship_count":2,
-                "owner":"player_1",
-                "name":"planet_1"
-            }
+
+            "x":10,
+            "y":10,
+            "ship_count":2,
+            "owner":2,
+            "name":"planet_1"
         }
     ],
     "expeditions":[
@@ -63,21 +55,18 @@ Examples:
             "ship_count":5,
             "origin":"planet_1",
             "destination":"planet_0",
-            "owner":"player_1",
+            "owner":2,
             "turns_remaining":3
         }, {
             "ship_count":7,
             "origin":"planet_0",
             "destination":"planet_1",
-            "owner":"player_0",
+            "owner":1,
             "turns_remaining":1
         }
     ]
 }
 ```
-
-For a more extensive list of examples see [this directory](./examoples/states)
-For a formal description of the format see [this JSON Schema](./examples/gamestateformat.json)
 
 ## Moves
 
@@ -97,5 +86,3 @@ For a formal description of the format see [this JSON Schema](./examples/gamesta
     ]
 }
 ```
-
-For a formal description of the format see [this JSON Schema](./examples/commandformat.json)

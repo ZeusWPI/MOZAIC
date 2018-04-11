@@ -5,6 +5,7 @@
 
 // Custom Variables
 $background: #201f1d;
+$altBackground: lighten($background, 5);
 $primary:#FFFFFF;
 $secondary: #DE8D47;
 $tertiary: #868685;
@@ -12,6 +13,7 @@ $tertiary: #868685;
 // Bulma variables
 $body-background-color: $background;
 $text: $primary;
+$dark: $background;
 
 $navbar-background-color: $background;
 $navbar-item-hover-background-color: lighten($background, 5);
@@ -54,11 +56,22 @@ body {
   flex-direction: column;
 }
 
+::-webkit-scrollbar {
+  background: transparent;
+  width: 10px;
+  height: 40px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: lighten($background, 10);
+  border-radius: 500px;
+}
+
 .navbar {
   border-bottom: 1px solid $tertiary;
 
   .notificationBell {
-     position: relative;
+    position: relative;
   }
 
   .notificationBell[notification-count]:after {
@@ -82,6 +95,10 @@ body {
     content: none;
     display: none;
   }
+}
+
+#notification-body {
+  color: $background;
 }
 
 .button {

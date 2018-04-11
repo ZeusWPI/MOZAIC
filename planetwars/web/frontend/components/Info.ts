@@ -53,7 +53,7 @@ const How: React.SFC<{}> = (props) => {
           'Every turn your bot will receive the JSON-encoded game state from us trough stdin, ',
           'and every turn your bot should answer with it\'s JSON-encoded commands. ',
           'Your output is sent to the server, just like those of your adversaries, and the game advances a turn.',
-          'You\'ll be able to do interesting strategic analysis with the visuals and metrics we provide afterwards, and we\'ll keep a raking of the best participating bots.'
+          'You\'ll be able to do interesting strategic analysis with the visuals and metrics we provide afterwards, and we\'ll keep a ranking of the best participating bots.'
         ]),
       ])
     ]),
@@ -68,7 +68,7 @@ const WhereWhen: React.SFC<{}> = (props) => {
         p('.is-size-5-widescreen', [
           'On the internet! From the comfort of your own. ',
           'But we\'ll also do live tournaments and theory-crafting sessions in the Zeus kelder, or other yet to specify locations. ',
-          'When? No fixed dates yet. Assume end februari, begin march.'
+          'When? Intro session March 26 2018 18:00  @PC-Lokaal Zuse'
         ]),
       ])
     ]),

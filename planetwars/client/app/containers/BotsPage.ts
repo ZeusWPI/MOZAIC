@@ -1,31 +1,48 @@
 import { connect } from 'react-redux';
 
-import { Bots, IBotsProps } from "../components/bots/Bots";
+import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
-import { addBot, removeBot } from '../actions/actions';
-import { IBotConfig } from "../utils/ConfigModels";
+import { addBot, removeBot, editBot } from '../actions/actions';
+import { BotConfig, IBotData, BotID } from "../utils/ConfigModels";
 
 interface IProps {
   match: any;
 }
 
 const mapStateToProps = (state: IGState, ownProps: IProps) => {
-  const { bots } = state.botsPage;
-  const selectedName: string = ownProps.match.params.bot;
-  const empty: IBotConfig = { name: '', args: [], command: '' };
-  const selectedBot = bots.find((bot) => bot.name === selectedName) || empty;
-  return { bots, selectedBot };
+  const bots = state.bots;
+  const uuid: BotID | undefined = ownProps.match.params.bot;
+  if (uuid) {
+    const selectedBot: IBotData = bots[uuid];
+    return { bots, selectedBot };
+  }
+  return { bots };
 };
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    saveBot: (bot: IBotConfig) => {
-      dispatch(addBot(bot));
+    addBot: (config: BotConfig) => {
+      dispatch(addBot(config));
     },
-    removeBot: (name: string) => {
-      dispatch(removeBot(name));
+    removeBot: (uuid: BotID) => {
+      dispatch(removeBot(uuid));
+    },
+    editBot: (bot: IBotData) => {
+      dispatch(editBot(bot));
+    },
+    validate: (config: BotConfig) => {
+      const errors: ConfigErrors = {};
+      if (!config.name || config.name.length === 0) {
+        errors.name = 'Name should not be empty';
+      }
+
+      if (!config.command || config.command.length === 0) {
+        errors.command = 'Command should not be empty';
+      }
+
+      return errors;
     },
   };
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(Bots);
+export default connect<BotsStateProps, BotsDispatchProps>(mapStateToProps, mapDispatchToProps)(Bots);

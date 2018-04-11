@@ -7,52 +7,51 @@
   justify-content: space-between;
   align-items: center;
   flex-direction: column;
-  margin: 20px 0px;
 
   .bots {
     display: flex;
-    width: 95%;
+    width: 100%;
     height: 100%;
     align-items: center;
 
     .botsListPane {
       width: 100%;
       height: 100%;
-      border: 1px solid $secondary;
-      border-radius: 10px;
-      margin-right: 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
       ul {
         width: 100%;
-        border: 1px solid $secondary;
-        border-radius: 10px;
         list-style-type: none;
+        li {
+          padding: 20px 20px; // border-top: 1px solid $tertiart
+          border-bottom: 1px solid $tertiary;
+          margin: 0 10px;
+        }
       }
       .newBot {
         width: 100%;
-        border: 1px solid $secondary;
-        border-radius: 10px;
         min-height: 30px;
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 1.5rem; // border-bottom: 1px solid $tertiary; 
+        background: lighten($background, 5);
+        a {
+          width: 100%;
+        }
       }
       .newBot:hover {
-        background: lighten($background, 5);
+        background: lighten($background, 10);
       }
       a {
         color: $primary;
       }
     }
 
-    .botsConfig {
-      margin-left: 10px;
+    .botEditor {
       height: 100%;
       width: 100%;
-      border: 1px solid $secondary;
-      border-radius: 10px;
+      padding: 10% 10%;
     }
   }
 }

@@ -8,8 +8,7 @@ import HomePage from './containers/HomePage';
 import PlayPage from './containers/PlayPage';
 import BotsPage from './containers/BotsPage';
 import MatchesPage from './containers/MatchesPage';
-import AboutPage from './containers/AboutPage';
-import VisualizerPage from './containers/VisualizerPage';
+import InfoPage from './containers/InfoPage';
 import Navbar from './containers/NavbarContainer';
 
 export default class Routes extends React.Component<any, any> {
@@ -35,16 +34,16 @@ export default class Routes extends React.Component<any, any> {
             component: BotsPage,
           }),
           h(Route, {
-            path: '/history',
+            path: '/matches/:matchId',
             component: MatchesPage,
           }),
           h(Route, {
-            path: '/about',
-            component: AboutPage,
+            path: '/matches',
+            component: MatchesPage,
           }),
           h(Route, {
-            path: '/visualizer',
-            component: VisualizerPage,
+            path: '/info',
+            component: InfoPage,
           }),
         ]),
       ])

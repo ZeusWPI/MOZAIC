@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="javasimplebot:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/javasimplebot_jar</output-path>
+    <root id="archive" name="javasimplebot.jar">
+      <element id="module-output" name="javasimplebot" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/../../../../../Software/java/lib/java-json.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

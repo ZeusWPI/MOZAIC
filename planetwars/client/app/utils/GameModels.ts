@@ -1,50 +1,79 @@
+import { JsonPlanet, isJsonPlanet } from '../lib/match/types';
+import { BotID } from './ConfigModels';
 type LogPath = string;
 
-export interface IMatchData {
-  log: IGameState[];
-  meta: IMatchMetaData;
-}
+export type MatchId = string;
 
-export interface IMatchMetaData {
-  uuid: string;
-  players: string[];
-  logPath?: string;
-  stats: IMatchStats;
+interface MatchProperties {
+  uuid: MatchId;
+  players: BotID[];
+  map: MapId;
   timestamp: Date;
+  logPath: string;
 }
 
-export interface IMatchStats {
-  winner: number;
-  commandsOrdered: number[]; // Number of commands / player;
-  planetsFlipped: number;
-  shipsSend: number[];
-  turns: number;
+export type PlayingMatch = MatchProperties & {
+  status: 'playing',
+};
+
+export type FinishedMatch = MatchProperties & {
+  status: 'finished',
+  stats: MatchStats,
+};
+
+export type ErroredMatch = MatchProperties & {
+  status: 'error';
+  error: string,
+};
+
+export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
+
+export enum MatchStatus {
+  'playing',
+  'finished',
+  'error',
 }
 
-export interface IGameState {
-  planets: IPlanet[];
-  expeditions: IExpedition[];
+export interface MatchStats {
+  winners: BotID[];
+  score: PlayerMap<number>;
 }
 
-export interface ILogFormat {
-  players: string[];
-  turns: IGameState[];
+export interface PlayerMap<T> {
+  [uuid: string]: T;
 }
 
-// TODO: Switch to camelCase
-export interface IPlanet {
-  "ship_count": number;
-  "x": number;
-  "y": number;
-  "owner": number;
-  "name": string;
+// tslint:disable-next-line:variable-name
+export const MatchStatuses = Object.keys(MatchStatus);
+
+export interface IMatchList {
+  [matchId: string]: Match;
 }
 
-export interface IExpedition {
-  "id": number;
-  "ship_count": number;
-  "origin": string;
-  "destination": string;
-  "owner": number;
-  "turns_remaining": number;
+export interface IMapList {
+  [key: string /*MapId*/]: IMapMeta;
+}
+
+export type MapId = string;
+
+export interface IMapMeta {
+  uuid: MapId;
+  name: string;
+  slots: number;
+  mapPath: string;
+  createdAt: Date;
+}
+
+export interface GameMap {
+  // name: string;
+  planets: JsonPlanet[];
+}
+
+export function isGameMap(obj: any): obj is GameMap {
+  const map = obj as GameMap;
+  return (
+    // (typeof map.name === 'string') &&
+    (Array.isArray(map.planets)) &&
+    (map.planets.every((p) => isJsonPlanet(p)))
+  );
 }

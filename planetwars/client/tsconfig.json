@@ -31,6 +31,7 @@
   ],
   "include": [
     "app/**/*.ts",
+    "app/**/*.tsx",
     "test/**/*.ts",
     "types/**/*.ts",
     "node_modules/@types/**/*.d.ts"

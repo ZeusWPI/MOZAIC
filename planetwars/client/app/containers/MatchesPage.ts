@@ -1,60 +1,77 @@
 import * as fs from 'mz/fs';
 import * as p from 'path';
 import * as Promise from 'bluebird';
-import { connect } from 'react-redux';
+import { connect, Dispatch } from 'react-redux';
+import { push } from 'react-router-redux';
 
-import Matches from '../components/matches/Matches';
+import Matches, {
+  MatchViewerProps,
+} from '../components/matches/Matches';
+import { Match } from '../components/matches/types';
 import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import { MatchParser } from '../utils/MatchParser';
 import * as A from '../actions/actions';
-import { IMatchMetaData, IMatchData } from '../utils/GameModels';
+import { PathLike } from 'mz/fs';
+import { BotID } from '../utils/ConfigModels';
+import { MatchId } from '../utils/GameModels';
 
-const mapStateToProps = (state: IGState) => {
-  const matches = state.matchesPage.matches.map((match, id) => ({ id, match }));
-  const importError = state.matchesPage.importError;
+interface StateProps {
+  selectedMatch?: Match;
+  matches: Match[];
+}
+
+function mapStateToProps(state: IGState, ownProps: any): StateProps {
+  const matches = Object.keys(state.matches).map((matchId) => {
+    return getMatchData(state, matchId);
+  });
+  // sort descending on time
+  matches.sort((a, b) => {
+    return b.timestamp.getTime() - a.timestamp.getTime();
+  });
+
+  const selectedId: string | undefined = ownProps.match.params.matchId;
+  if (selectedId && state.matches[selectedId]) {
+    return {
+      matches,
+      selectedMatch: getMatchData(state, selectedId),
+    };
+  } else {
+    return { matches };
+  }
+}
+
+interface DispatchProps {
+  selectMatch: (matchId: string) => void;
+}
+
+function mapDispatchToProps(dispatch: any): DispatchProps {
   return {
-    expandedGameId: 1,
-    matches,
-    importError,
+    selectMatch: (matchId: string) => {
+      dispatch(push(`/matches/${matchId}`));
+    },
   };
-};
+}
 
-const mapDispatchToProps = (dispatch: any) => {
+const getMatchData = (state: IGState, matchId: MatchId) => {
+  const matchData = state.matches[matchId];
+  const mapData = state.maps[matchData.map];
+
   return {
-    loadLogs: (fileList: FileList): void => {
-      const files = Array.from(fileList); // Fuck FileList;
-      const imports = files.map((logFile) => {
-        const path = (<any> logFile).path;
-        return importLog(path, dispatch);
-      });
-      Promise.all(imports); // TODO: Check error handling
+    ...matchData,
+    players: matchData.players.map((botId) => getBotData(state, botId)),
+    map: {
+      uuid: mapData.uuid,
+      name: mapData.name,
     },
   };
 };
 
+const getBotData = (state: IGState, botId: BotID) => {
+  const bot = state.bots[botId];
+  return {
+    uuid: botId,
+    name: bot.config.name,
+  };
+};
+
 export default connect(mapStateToProps, mapDispatchToProps)(Matches);
-
-function importLog(logPath: string, dispatch: any): Promise<void> {
-  return MatchParser.parseFileAsync(logPath)
-    .then(copyMatchLog)
-    .then(
-      (match) => dispatch(A.importMatch(match.meta)),
-      (err) => {
-        console.log(err);
-        dispatch(A.importMatchError(err.message));
-      },
-  );
-}
-
-// TODO Fix log writing (add players);
-function copyMatchLog(match: IMatchData): Promise<IMatchData> {
-  const path = Config.generateMatchPath(match.meta);
-  const write = fs.writeFile(path, JSON.stringify(match.log));
-  return Promise
-    .resolve(write)
-    .then(() => {
-      match.meta.logPath = path;
-      return match;
-    });
-}

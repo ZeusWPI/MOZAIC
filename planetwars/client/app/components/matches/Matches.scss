@@ -1,58 +1,91 @@
 @import '../../app.global.scss';
 
-.matchesPage {
+$red: #DE474C;
+$blue: #4797DE;
+$selectedHighlightWidth: 4px;
+
+.matchViewer {
   width: 100%;
   height: 100%;
+  min-width: 650px;
+  flex-direction: row;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-direction: column;
-  margin: 20px 0px;
+  flex: auto;
+}
 
-  .matchesOverview {
-    height: 100%;
-    width: 95%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin: 20px 0px;
-    .matchesListPane {
-      height: 100%;
-      width: 100%;
-      border-radius: 10px;
-      margin-right: 10px;
-      border: 1px solid $secondary;
-      overflow-y: auto;
-      .matchesListItem {
-        .match {
-          border: 1px solid $secondary;
-          border-radius: 10px;
-          padding: 10px;
-        }
-      }
-    }
-    .matchDetailsPane {
-      border-radius: 10px;
-      margin-left: 10px;
-      height: 100%;
-      width: 100%;
-      border: 1px solid $secondary;
+.matchList {
+  height: 100%;
+  flex-basis: 400px;
+  flex-shrink: 1;
+  flex-grow: 0;
+  border-right: 1px solid $altBackground;
+  overflow-y: auto;
+}
+
+.iconSpan {
+  width: 1.5em;
+  display: inline-block;
+}
+
+.matchListEntry {
+  border-bottom: 1px solid $altBackground;
+  border-left: $selectedHighlightWidth solid transparent;
+  min-width: 250px;
+
+  .matchListEntryContent {
+    padding: 10px;
+    font-size: 10pt;
+  }
+
+  .playerList {
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 0.2em;
+
+    li {
+      list-style: none;
     }
   }
 }
 
+.matchListEntry:hover {
+  background-color: $altBackground;
+}
 
-.matchImporter {
-  border-radius: 10px;
-  width: 95%;
-  min-height: 50px; // background-color: $secondary;
-  border: 1px solid $secondary;
+.matchListEntry.selected {
+  border-left: $selectedHighlightWidth solid $secondary;
+  background-color: $altBackground;
+}
+
+.playerEntry {
   display: flex;
-  flex-grow: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-around;
+}
+
+.playerName {
+  flex-grow: 1;
+  font-weight: 600;
+  display: inline-block;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.playerScore {
+  color: $tertiary;
+  white-space: nowrap;
+}
+
+.timeLocation {
+  display: flex;
+}
+
+.mapName {
+  flex-grow: 1;
+  display: inline-block;
+}
+
+.matchTime {
+  display: inline-block;
 }
 
 .noMatches {
@@ -66,8 +99,6 @@
   p {
     width: 95%;
     flex-grow: 1;
-    border: 1px solid $secondary;
-    border-radius: 10px;
     margin: 20px 0;
     text-align: center;
     display: flex;
@@ -75,4 +106,61 @@
     justify-content: center;
     font-size: 3rem;
   }
+}
+
+.matchViewContainer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+
+.matchError {
+  white-space: pre;
+  font-family: monospace;
+  font-size: 10pt;
+  overflow-y: scroll;
+  margin: 50px 0;
+}
+
+.matchError::-webkit-scrollbar {
+  display: none;
+}
+
+.matchInProgress {
+  font-size: 2rem;
+  margin: 50px 0;
+}
+
+.matchView {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2 0;
+}
+
+.matchTitleBar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 50px;
+  width: 100%;
+  border-bottom: 1px solid $tertiary;
+}
+
+.matchTitleBarElement {
+  color: $primary;
+  width: 10vw;
+  text-align: center;
+}
+
+.matchTitleBarElement:hover {
+  color: $secondary;
+}
+
+.displayBox {
+  display: flex;
+  height: 100%;
 }

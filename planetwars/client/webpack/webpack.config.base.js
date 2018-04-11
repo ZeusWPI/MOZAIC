@@ -5,7 +5,7 @@
 const path = require('path');
 const {
   dependencies: externals
-} = require('../app/package.json');
+} = require('../package.json');
 
 module.exports = {
   module: {
@@ -13,7 +13,13 @@ module.exports = {
       test: /\.tsx?$/,
       loaders: ['react-hot-loader/webpack', 'ts-loader'],
       exclude: /node_modules/
-    }, {
+    },
+    {
+        test: /\.tsx?$/,
+        enforce: 'pre',
+        loader: 'tslint-loader',
+    },
+    {
       test: /\.json$/,
       loader: 'json-loader'
     }]
