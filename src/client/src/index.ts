@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import { Connection } from './connection';
 import { BotRunner, BotConfig } from './BotRunner';
 import { Client, Address } from './Client';
