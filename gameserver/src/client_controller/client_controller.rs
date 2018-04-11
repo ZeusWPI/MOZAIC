@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use connection::router::RoutingTable;
 use connection::connection::Connection;
 
+use planetwars::controller::PlayerId;
 
 error_chain! {
     errors {
@@ -19,12 +20,13 @@ error_chain! {
 }
 
 pub struct ClientMessage {
-    pub client_id: usize,
+    pub player_id: PlayerId,
     pub message: Message,
 }
 
 pub enum Message {
     Data(Vec<u8>),
+    Connected,
     Disconnected,
     Timeout,
 }
@@ -35,7 +37,7 @@ pub enum Command {
 }
 
 pub struct ClientController {
-    client_id: usize,
+    player_id: PlayerId,
     
     connection: Connection,
 
@@ -46,7 +48,7 @@ pub struct ClientController {
 }
 
 impl ClientController {
-    pub fn new(client_id: usize,
+    pub fn new(player_id: PlayerId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
                game_handle: UnboundedSender<ClientMessage>)
@@ -61,7 +63,7 @@ impl ClientController {
             ctrl_handle: snd,
 
             game_handle,
-            client_id,
+            player_id,
         }
     }
 
@@ -73,12 +75,11 @@ impl ClientController {
     /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
         let msg = ClientMessage {
-            client_id: self.client_id,
+            player_id: self.player_id,
             message: message,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
-
 
     fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
         // we hold a handle to this channel, so it can never close.
