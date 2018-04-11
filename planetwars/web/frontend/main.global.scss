@@ -80,8 +80,9 @@ $footer-background-color: $primary;
       }
     }
   }
-  button > a {
+  a {
     border: none;
+    text-underline: none;
   }
   #intro-text {
     max-width: 700px;
