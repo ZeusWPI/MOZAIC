@@ -55,7 +55,8 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD'),
-      __BRANCHNAME__: cmdOutput('git rev-parse --abbrev-ref HEAD')
+      __BRANCHNAME__: cmdOutput('git rev-parse --abbrev-ref HEAD'),
+      __TAG__: cmdOutput('git tag --points-at HEAD')
     })
   ],
 

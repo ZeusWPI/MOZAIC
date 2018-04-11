@@ -8,6 +8,7 @@ const styles = require('./Info.scss');
 
 declare const __COMMIT_HASH__: string;
 declare const __BRANCHNAME__: string;
+declare const __TAG__: string;
 
 export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   public state = { mapToggled: false };
@@ -25,7 +26,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
 
     return (
       <div className={styles.infoPage}>
-        {__BRANCHNAME__}@{__COMMIT_HASH__}
+        {__TAG__} {__BRANCHNAME__}@{__COMMIT_HASH__}
         <MapPanel toggled={this.state.mapToggled} toggle={toggle} />
         <div className='container'>
           <div>
