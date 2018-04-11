@@ -6,6 +6,10 @@ import { Link, NavLink } from "react-router-dom";
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Info.scss');
 
+declare const __COMMIT_HASH__: string;
+declare const __BRANCHNAME__: string;
+declare const __TAG__: string;
+
 export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   public state = { mapToggled: false };
 
@@ -19,9 +23,9 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
         README
       </a>);
     const toggle = (evt: any) => this.setState({ mapToggled: !this.state.mapToggled });
-
     return (
       <div className={styles.infoPage}>
+        <Version />
         <MapPanel toggled={this.state.mapToggled} toggle={toggle} />
         <div className='container'>
           <div>
@@ -88,6 +92,18 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
     );
   }
 }
+
+export const Version: React.SFC<{}> = (props) => {
+  let version = __BRANCHNAME__ + "@" + __COMMIT_HASH__;
+  if (__TAG__ !== "") {
+    version = __TAG__;
+  }
+  return (
+    <div className={styles.version}>
+      Build: {version}
+    </div>
+  );
+};
 
 export class MapPanel extends React.Component<{ toggled: boolean, toggle: (evt: any) => void }, {}> {
   public render() {
