@@ -56,7 +56,7 @@ impl ClientController {
     {
         let (snd, rcv) = unbounded();
 
-        ClientController {
+        let mut controller = ClientController {
             connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
@@ -64,7 +64,9 @@ impl ClientController {
 
             game_handle,
             player_id,
-        }
+        };
+        controller.send_message(Message::Connected);
+        return controller;
     }
 
     /// Get a handle to the control channel for this client.

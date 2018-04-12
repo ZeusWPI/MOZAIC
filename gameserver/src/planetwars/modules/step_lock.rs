@@ -31,7 +31,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         StepLock {
             phantom_config: PhantomData,
             client_messages: HashMap::new(),
-            awaiting_clients: HashSet::new(),
+            awaiting_clients: awaiting_clients,
             connected_clients: HashSet::new(),
             game_controller,
             running: GameState::Waiting,
