@@ -54,6 +54,9 @@ deploy() {
     echo -e "\n=== Stopping the Rocket server"
     systemctl --user stop bottlebats
 
+    echo -e "\n=== Merging with FETCH_HEAD"
+    git merge FETCH_HEAD
+
     echo -e "\n=== Building"
     build
 
