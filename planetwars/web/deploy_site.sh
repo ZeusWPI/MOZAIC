@@ -44,7 +44,7 @@ build() {
 }
 
 deploy() {
-    echo -e "\n=== Performing sanity checks & cd'ing to directory\n"
+    echo -e "\n=== Performing sanity checks & cd'ing to directory"
     check_user
     change_directory
 
@@ -61,7 +61,9 @@ deploy() {
     systemctl --user start bottlebats
 
     echo -e "\n=== All clear! Repository is now at:"
-    git --no-pager show
+    git --no-pager --quiet show
+
+    echo -e "\n\e[1m\e[32m=== Deploy successful!\e[0"
 }
 
 deploy
