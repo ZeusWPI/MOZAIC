@@ -61,7 +61,7 @@ deploy() {
     systemctl --user start bottlebats
 
     echo -e "\n=== All clear! Repository is now at:"
-    git --no-pager --quiet show
+    git --no-pager show --quiet
 
     echo -e "\n\e[1m\e[32m=== Deploy successful!\e[0"
 }
