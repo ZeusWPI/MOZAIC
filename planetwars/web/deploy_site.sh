@@ -7,19 +7,19 @@ branch="development"
 directory="$HOME/MOZAIC/planetwars/web/"
 
 abort () {
-    echo "$@"
+    echo -e "\e[91m$@"
     exit 1
 }
 
 check_user() {
-    local actual_user=$(id -un)
-    if [[ "$user" != "$actual" ]]; then
+    local actual_user="$(id -un)"
+    if [[ "$user" != "$actual_user" ]]; then
         abort "Expected user '$user' but actually is '$actual_user'."
     fi
 }
 
 fetch_and_check_git() {
-    local actual_branch=$(git rev-parse --abbrev-ref HEAD)
+    local actual_branch="$(git rev-parse --abbrev-ref HEAD)"
     if [[ "$branch" != "$actual_branch" ]]; then
         abort "Expected branch '$branch' bot actually was '$actual_branch'."
     fi
@@ -44,28 +44,24 @@ build() {
 }
 
 deploy() {
-    local saved_dir=$(pwd)
-
-    echo "=== Performing sanity checks & cd'ing to directory"
+    echo -e "\n=== Performing sanity checks & cd'ing to directory\n"
     check_user
     change_directory
 
-    echo "=== Pulling from remote"
+    echo -e "\n=== Pulling from remote"
     fetch_and_check_git
 
-    echo "=== Stopping the Rocket server"
-    systemctl --user stop battlebots
+    echo -e "\n=== Stopping the Rocket server"
+    systemctl --user stop bottlebats
 
-    echo "=== Building"
+    echo -e "\n=== Building"
     build
 
-    echo "=== Starting the Rocket server"
-    systemctl --user start battlebots
+    echo -e "\n=== Starting the Rocket server"
+    systemctl --user start bottlebats
 
-    echo "=== All clear! Repository is now at:"
-    git show --no-pager
-
-    cd "$saved_dir"
+    echo -e "\n=== All clear! Repository is now at:"
+    git --no-pager show
 }
 
 deploy
