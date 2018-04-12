@@ -7,7 +7,7 @@ branch="development"
 directory="$HOME/MOZAIC/planetwars/web/"
 
 abort () {
-    echo -e "\e[91m$@"
+    echo -e "\e[91m$@\e[0m"
     exit 1
 }
 
@@ -63,7 +63,7 @@ deploy() {
     echo -e "\n=== All clear! Repository is now at:"
     git --no-pager show --quiet
 
-    echo -e "\n\e[1m\e[32m=== Deploy successful!\e[0"
+    echo -e "\n\e[1m\e[32m=== Deploy successful!\e[0m"
 }
 
 deploy
