@@ -38,7 +38,7 @@ export class Navbar extends React.Component<NavProps, {}> {
       div(`.navbar-menu${this.props.toggled ? '.is-active' : ''}`, [
         div(`.navbar-start`, [
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
-          h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
+          h(Link, `.navbar-item`, { to: "/host" }, ["Host"]),
           h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
         ]),
         div(`.navbar-end`, [

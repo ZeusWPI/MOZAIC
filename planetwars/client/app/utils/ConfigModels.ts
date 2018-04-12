@@ -14,6 +14,13 @@ export interface GameConfig {
 }
 
 export type BotID = string;
+export type Token = string; // not sure if this is a string...
+
+export interface BotSlot {
+  id?: BotID; // undefined if it is an external bot
+  name: string;
+  token: Token;
+}
 
 export interface IBotList {
   [key: string /* UUID */]: IBotData;

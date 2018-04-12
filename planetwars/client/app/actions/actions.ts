@@ -1,5 +1,5 @@
 import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap, MapId } from '../utils/GameModels';
-import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig } from '../utils/ConfigModels';
+import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig, BotSlot } from '../utils/ConfigModels';
 import { Notification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
@@ -136,7 +136,7 @@ export const importMap = actionCreator<IMapMeta>('IMPORT_MAP');
 export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 
 // PlayPage / Setting up a match
-export const selectBot = actionCreator<BotID>('SELECT_BOT');
+export const selectBot = actionCreator<BotSlot>('SELECT_BOT');
 export const unselectBot = actionCreator<BotID>('UNSELECT_BOT');
 export const unselectBotAll = actionCreator<BotID>('UNSELECT_BOT_ALL');
 

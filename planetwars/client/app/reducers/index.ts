@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/actions';
-import { BotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
+import { BotConfig, IBotData, IBotList, BotID, BotSlot } from '../utils/ConfigModels';
 import { Match, IMatchList, IMapList } from '../utils/GameModels';
 import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
@@ -52,7 +52,7 @@ export type IBotsState = IBotList;
 export type IMatchesState = IMatchList;
 
 export interface IPlayPageState {
-  selectedBots: BotID[];
+  selectedBots: BotSlot[];
 }
 
 export interface IMatchesPageState {

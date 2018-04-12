@@ -5,7 +5,7 @@ import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
 
 import App from './containers/App';
 import HomePage from './containers/HomePage';
-import PlayPage from './containers/PlayPage';
+import HostPage from './containers/HostPage';
 import BotsPage from './containers/BotsPage';
 import MatchesPage from './containers/MatchesPage';
 import InfoPage from './containers/InfoPage';
@@ -22,8 +22,8 @@ export default class Routes extends React.Component<any, any> {
             component: HomePage,
           }),
           h(Route, {
-            path: '/play',
-            component: PlayPage,
+            path: '/host',
+            component: HostPage,
           }),
           h(Route, {
             path: '/bots/:bot',
