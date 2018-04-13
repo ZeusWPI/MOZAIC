@@ -5,6 +5,7 @@ import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 import { BotID, BotSlot } from '../utils/ConfigModels';
+import { v4 as uuidv4 } from 'uuid';
 
 const mapStateToProps = (state: IGState) => {
   const bots = state.bots;
@@ -18,13 +19,13 @@ const mapDispatchToProps = (dispatch: any) => {
     selectBotInternal(name: string, id: BotID) {
       dispatch(A.selectBot({
         id: id,
-        token: "TODO",
+        token: generateToken(),
         name: name,
       }));
     },
     selectBotExternal(name: string) {
       dispatch(A.selectBot({
-        token: "TODO",
+        token: generateToken(),
         name: name,
       }));
     },
@@ -40,5 +41,9 @@ const mapDispatchToProps = (dispatch: any) => {
     },
   };
 };
+
+function generateToken() {
+  return uuidv4();
+}
 
 export default connect<HostStateProps, HostDispatchProps>(mapStateToProps, mapDispatchToProps)(Host);

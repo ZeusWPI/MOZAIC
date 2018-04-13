@@ -65,7 +65,7 @@ export const Slot: React.SFC<{bot: BotSlot, allBots: IBotList}> = (props) => {
     const options = Object.keys(props.allBots).map((uuid, key) => {
       return <option key={key}> {props.allBots[uuid].config.name} </option>;
     });
-    extra = <select>{options}</select>;
+    extra = <div><select>{options}</select>(token: {props.bot.token})</div>;
   } else {
     extra = <div>token: {props.bot.token}</div>;
   }
