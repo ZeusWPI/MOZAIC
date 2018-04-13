@@ -33,7 +33,7 @@ export class Host extends React.Component<HostProps, HostState> {
           <button onClick={() => this.addExternal()}>+ Add an external bot</button>
         </div>
         <div>
-          <BotSlots bots={this.props.selectedBots}/>
+          <BotSlots selectedBots={this.props.selectedBots} allBots={this.props.bots}/>
         </div>
       </div>
     );
@@ -48,20 +48,29 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 }
 
-interface BotSlotsProps {
-  bots: BotSlot[];
-}
-
-export const BotSlots: React.SFC<BotSlotsProps> = (props: BotSlotsProps) => {
-  const bots = props.bots.map((bot, key) => <Slot key={key} bot={bot} />);
-  return <ul> {bots} </ul>;
+export const BotSlots: React.SFC<{ selectedBots: BotSlot[], allBots: IBotList }> = (props) => {
+  const slots = props.selectedBots.map((bot, key) => {
+    return <Slot key={key} bot={bot} allBots={props.allBots} />;
+  });
+  return (
+    <ul>
+      {slots}
+    </ul>
+  );
 };
 
-export const Slot: React.SFC<{bot: BotSlot}> = (props) => {
+export const Slot: React.SFC<{bot: BotSlot, allBots: IBotList}> = (props) => {
+  let extra;
+  if (props.bot.id) {
+    const options = Object.keys(props.allBots).map((uuid, key) => {
+      return <option key={key}> {props.allBots[uuid].config.name} </option>;
+    });
+    extra = <select>{options}</select>;
+  } else {
+    extra = <div>token: {props.bot.token}</div>;
+  }
   return (
     <li>
-      name: {props.bot.name}
-      uuid: {props.bot.id}
-      key: {props.bot.token}
+      Name: <input type="text" value={props.bot.name}/> {extra}
     </li>);
 };
