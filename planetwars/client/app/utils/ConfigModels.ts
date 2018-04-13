@@ -19,7 +19,10 @@ export type Token = string; // not sure if this is a string...
 export interface BotSlot {
   id?: BotID; // undefined if it is an external bot
   name: string;
-  token: Token;
+}
+
+export interface BotSlotList {
+  [key: string]: BotSlot;
 }
 
 export interface IBotList {

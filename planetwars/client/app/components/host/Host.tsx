@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { Link, NavLink } from "react-router-dom";
-import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token } from '../../utils/ConfigModels';
+import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token, BotSlotList } from '../../utils/ConfigModels';
 import { IMapList } from "../../utils/GameModels";
 
 interface MatchParams { } // Don't know the parameters yet...
@@ -9,7 +9,7 @@ interface MatchParams { } // Don't know the parameters yet...
 export interface HostStateProps {
   bots: IBotList;
   maps: IMapList;
-  selectedBots: BotSlot[];
+  selectedBots: BotSlotList;
 }
 
 export interface HostDispatchProps {
@@ -17,6 +17,7 @@ export interface HostDispatchProps {
   selectBotExternal: (name: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: MatchParams) => void;
+  changeLocalBot: (token: Token, id: BotID) => void;
 }
 
 export interface HostState { }
@@ -33,24 +34,42 @@ export class Host extends React.Component<HostProps, HostState> {
           <button onClick={() => this.addExternal()}>+ Add an external bot</button>
         </div>
         <div>
-          <BotSlots selectedBots={this.props.selectedBots} allBots={this.props.bots}/>
+          <BotSlots
+            selectedBots={this.props.selectedBots}
+            allBots={this.props.bots}
+            changeLocalBot={this.props.changeLocalBot}
+          />
         </div>
       </div>
     );
   }
 
   public addInternal() {
-    this.props.selectBotInternal("internal", "abc");
+    this.props.selectBotInternal("My Bot", "");
   }
 
   public addExternal() {
-    this.props.selectBotExternal("external");
+    this.props.selectBotExternal("My Enemy's Bot");
   }
 }
 
-export const BotSlots: React.SFC<{ selectedBots: BotSlot[], allBots: IBotList }> = (props) => {
-  const slots = props.selectedBots.map((bot, key) => {
-    return <Slot key={key} bot={bot} allBots={props.allBots} />;
+interface BotSlotsProps {
+  selectedBots: BotSlotList;
+  allBots: IBotList;
+  changeLocalBot: (token: Token, id: BotID) => void;
+}
+
+export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
+  const slots = Object.keys(props.selectedBots).map((token, idx) => {
+    return (
+      <Slot
+        key={idx}
+        bot={props.selectedBots[token]}
+        allBots={props.allBots}
+        token={token}
+        changeLocalBot={props.changeLocalBot}
+      />
+    );
   });
   return (
     <ul>
@@ -59,18 +78,32 @@ export const BotSlots: React.SFC<{ selectedBots: BotSlot[], allBots: IBotList }>
   );
 };
 
-export const Slot: React.SFC<{bot: BotSlot, allBots: IBotList}> = (props) => {
+interface SlotProps {
+  bot: BotSlot;
+  allBots: IBotList;
+  token: Token;
+  changeLocalBot: (token: Token, id: BotID) => void;
+}
+
+export const Slot: React.SFC<SlotProps> = (props) => {
   let extra;
-  if (props.bot.id) {
-    const options = Object.keys(props.allBots).map((uuid, key) => {
-      return <option key={key}> {props.allBots[uuid].config.name} </option>;
+  if (props.bot.id !== undefined) {
+    const options = Object.keys(props.allBots).map((uuid, i) => {
+      return <option value={uuid} key={i}> {props.allBots[uuid].config.name} </option>;
     });
-    extra = <div><select>{options}</select>(token: {props.bot.token})</div>;
+    extra = (
+      <div>
+        <select value={props.bot.id} onChange={(evt) => { props.changeLocalBot(props.token, evt.target.value) }}>
+          {options}
+        </select>
+        (token: {props.token})
+      </div>
+    );
   } else {
-    extra = <div>token: {props.bot.token}</div>;
+    extra = <div>token: {props.token}</div>;
   }
   return (
     <li>
-      Name: <input type="text" value={props.bot.name}/> {extra}
+      Name: <input type="text" defaultValue={props.bot.name}/> {extra}
     </li>);
 };

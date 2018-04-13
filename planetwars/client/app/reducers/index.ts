@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/actions';
-import { BotConfig, IBotData, IBotList, BotID, BotSlot } from '../utils/ConfigModels';
+import { BotConfig, IBotData, IBotList, BotID, BotSlot, BotSlotList } from '../utils/ConfigModels';
 import { Match, IMatchList, IMapList } from '../utils/GameModels';
 import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
@@ -52,7 +52,7 @@ export type IBotsState = IBotList;
 export type IMatchesState = IMatchList;
 
 export interface IPlayPageState {
-  selectedBots: BotSlot[];
+  selectedBots: BotSlotList;
 }
 
 export interface IMatchesPageState {
@@ -71,7 +71,7 @@ export const initialState: IGState = {
   notifications: [],
 
   playPage: {
-    selectedBots: [],
+    selectedBots: {},
   },
   matchesPage: {},
   globalErrors: [],
@@ -185,21 +185,25 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
 });
 
 const playPageReducer = combineReducers<IPlayPageState>({
-  selectedBots: (state: BotID[] = [], action) => {
+  selectedBots: (state: BotSlotList = {}, action) => {
     if (A.selectBot.test(action)) {
-      return [...state, action.payload];
+      const slot: BotSlot = { name: action.payload.name, id: action.payload.id };
+      return { ...state, [action.payload.token]: slot };
     }
 
     if (A.unselectBot.test(action)) {
-      const i = state.indexOf(action.payload);
-      state.splice(i, 1);
-      return [...state];
+      const filteredState: BotSlotList = Object.keys(state)
+        .filter((key) => key !== action.payload)
+        .reduce((obj: BotSlotList, key) => {
+          obj[key] = state[key];
+          return obj;
+        }, {});
+      return filteredState;
     }
 
-    // Remove all instances from bot from current config
-    if (A.unselectBotAll.test(action)) {
-      const filtered = state.filter((uuid) => uuid !== action.payload);
-      return [...filtered];
+    if (A.changeLocalBot.test(action)) {
+      state[action.payload.token].id = action.payload.id;
+      return {...state};
     }
     return state;
   },
