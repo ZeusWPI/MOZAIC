@@ -13,44 +13,27 @@ use protocol::packet::Payload;
 
 type PacketStream = MessageStream<TcpStream, Packet>;
 
+pub enum StreamState {
+    Disconnected,
+    Connected(PacketStream),
+}
 
 struct StreamHandler {
     state: StreamState,
-    routing_chan: UnboundedReceiver<RoutingMessage>,
 }
 
 impl StreamHandler {
-    fn new(routing_chan: UnboundedReceiver<RoutingMessage>) -> Self {
+    fn new() -> Self {
         StreamHandler {
             state: StreamState::Disconnected,
-            routing_chan,
         }
     }
 
-    // TODO: maybe move this
-    // TODO: can we handle these cases gracefully?
-    fn poll_routing_chan(&mut self) -> Poll<RoutingMessage, io::Error> {
-        let res = match self.routing_chan.poll() {
-            Ok(Async::Ready(Some(msg))) => Async::Ready(msg),
-            Ok(Async::Ready(None)) => panic!("router channel dropped"),
-            Ok(Async::NotReady) => Async::NotReady,
-            Err(_) => panic!("something really bad happened"),
-        };
-        return Ok(res);
-    }
-
-    fn perform_routing(&mut self) -> Poll<(), io::Error> {
-        loop {
-            match try_ready!(self.poll_routing_chan()) {
-                RoutingMessage::Connecting { stream } => {
-                    self.state = StreamState::Connected(stream);
-                }
-            }
-        }
+    fn connect(&mut self, stream: PacketStream) {
+        self.state = StreamState::Connected(stream);
     }
 
     fn poll_stream<'a>(&'a mut self) -> Poll<&'a mut PacketStream, io::Error> {
-        try!(self.perform_routing());
         let res = match self.state {
             StreamState::Disconnected => Async::NotReady,
             StreamState::Connected(ref mut stream) => Async::Ready(stream)
@@ -60,16 +43,14 @@ impl StreamHandler {
 }
 
 
-pub enum StreamState {
-    Disconnected,
-    Connected(PacketStream),
-}
 
 pub struct Connection {
     /// The token that identifies this connection
     token: Vec<u8>,
     stream_handler: StreamHandler,
     buffer: Vec<Vec<u8>>,
+    routing_chan: UnboundedReceiver<RoutingMessage>,
+
 }
 
 impl Connection {
@@ -79,8 +60,9 @@ impl Connection {
         let routing_chan = router.register(&token);
         Connection {
             token,
-            stream_handler: StreamHandler::new(routing_chan),
+            stream_handler: StreamHandler::new(),
             buffer: Vec::new(),
+            routing_chan,
         }
     }
 
@@ -90,6 +72,7 @@ impl Connection {
     }
 
     pub fn flush_buffer(&mut self) -> Poll<(), io::Error> {
+        self.perform_routing();
         let stream = try_ready!(self.stream_handler.poll_stream());
         while !self.buffer.is_empty() {
             try_ready!(stream.poll_complete());
@@ -111,6 +94,7 @@ impl Connection {
     }
 
     pub fn poll_message(&mut self) -> Poll<Option<Vec<u8>>, io::Error> {
+        self.perform_routing();
         let stream = try_ready!(self.stream_handler.poll_stream());
         loop {
             let packet = match try_ready!(stream.poll()) {
@@ -130,5 +114,21 @@ impl Connection {
                 }
             }
         };
+    }
+
+    fn perform_routing(&mut self) {
+        loop {
+            // unwrapping is fine because unbounded channels cannot error
+            let msg = match self.routing_chan.poll().unwrap() {
+                Async::Ready(Some(msg)) => msg,
+                Async::Ready(None) => panic!("router channel closed"),
+                Async::NotReady => return,
+            };
+            match msg {
+                RoutingMessage::Connecting { stream } => {
+                    self.stream_handler.connect(stream);
+                }
+            }
+        }
     }
 }
