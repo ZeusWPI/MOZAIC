@@ -15,14 +15,14 @@ type PacketStream = MessageStream<TcpStream, Packet>;
 
 
 struct StreamHandler {
-    state: ConnectionState,
+    state: StreamState,
     routing_chan: UnboundedReceiver<RoutingMessage>,
 }
 
 impl StreamHandler {
     fn new(routing_chan: UnboundedReceiver<RoutingMessage>) -> Self {
         StreamHandler {
-            state: ConnectionState::Disconnected,
+            state: StreamState::Disconnected,
             routing_chan,
         }
     }
@@ -43,7 +43,7 @@ impl StreamHandler {
         loop {
             match try_ready!(self.poll_routing_chan()) {
                 RoutingMessage::Connecting { stream } => {
-                    self.state = ConnectionState::Connected(stream);
+                    self.state = StreamState::Connected(stream);
                 }
             }
         }
@@ -52,15 +52,15 @@ impl StreamHandler {
     fn poll_stream<'a>(&'a mut self) -> Poll<&'a mut PacketStream, io::Error> {
         try!(self.perform_routing());
         let res = match self.state {
-            ConnectionState::Disconnected => Async::NotReady,
-            ConnectionState::Connected(ref mut stream) => Async::Ready(stream)
+            StreamState::Disconnected => Async::NotReady,
+            StreamState::Connected(ref mut stream) => Async::Ready(stream)
         };
         return Ok(res);
     }
 }
 
 
-pub enum ConnectionState {
+pub enum StreamState {
     Disconnected,
     Connected(PacketStream),
 }
