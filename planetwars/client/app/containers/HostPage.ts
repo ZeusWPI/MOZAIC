@@ -35,8 +35,8 @@ const mapDispatchToProps = (dispatch: any) => {
     runMatch(params: A.MatchParams) {
       dispatch(A.runMatch(params));
     },
-    changeLocalBot(token: Token, id: BotID) {
-      dispatch(A.changeLocalBot({token, id}));
+    changeLocalBot(token: Token, slot: BotSlot) {
+      dispatch(A.changeLocalBot({token, slot}));
     },
   };
 };

@@ -202,7 +202,7 @@ const playPageReducer = combineReducers<IPlayPageState>({
     }
 
     if (A.changeLocalBot.test(action)) {
-      state[action.payload.token].id = action.payload.id;
+      state[action.payload.token] = action.payload.slot;
       return {...state};
     }
     return state;

@@ -17,7 +17,7 @@ export interface HostDispatchProps {
   selectBotExternal: (name: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: MatchParams) => void;
-  changeLocalBot: (token: Token, id: BotID) => void;
+  changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
 export interface HostState { }
@@ -56,7 +56,7 @@ export class Host extends React.Component<HostProps, HostState> {
 interface BotSlotsProps {
   selectedBots: BotSlotList;
   allBots: IBotList;
-  changeLocalBot: (token: Token, id: BotID) => void;
+  changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
@@ -82,28 +82,36 @@ interface SlotProps {
   bot: BotSlot;
   allBots: IBotList;
   token: Token;
-  changeLocalBot: (token: Token, id: BotID) => void;
+  changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
-export const Slot: React.SFC<SlotProps> = (props) => {
-  let extra;
-  if (props.bot.id !== undefined) {
-    const options = Object.keys(props.allBots).map((uuid, i) => {
-      return <option value={uuid} key={i}> {props.allBots[uuid].config.name} </option>;
-    });
-    extra = (
-      <div>
-        <select value={props.bot.id} onChange={(evt) => { props.changeLocalBot(props.token, evt.target.value) }}>
-          {options}
-        </select>
-        (token: {props.token})
-      </div>
-    );
-  } else {
-    extra = <div>token: {props.token}</div>;
+export class Slot extends React.Component<SlotProps> {
+  public render() {
+    let extra;
+    if (this.props.bot.id !== undefined) {
+      const options = Object.keys(this.props.allBots).map((uuid, i) => {
+        return <option value={uuid} key={i}> {this.props.allBots[uuid].config.name} </option>;
+      });
+      extra = (
+        <div>
+            <select value={this.props.bot.id} onChange={(evt) => {this.changeBotID(evt.target.value)}}>
+            {options}
+          </select>
+          (token: {this.props.token})
+        </div>
+      );
+    } else {
+      extra = <div>token: {this.props.token}</div>;
+    }
+    return (
+      <li>
+        Name: <input type="text" defaultValue={this.props.bot.name}/> {extra}
+      </li>);
   }
-  return (
-    <li>
-      Name: <input type="text" defaultValue={props.bot.name}/> {extra}
-    </li>);
-};
+
+  private changeBotID(id: BotID) {
+    const newBot = this.props.bot;
+    newBot.id = id;
+    this.props.changeLocalBot(this.props.token, newBot);
+  }
+}
