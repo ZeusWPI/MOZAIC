@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package mozaic.protocol;
+
+message ConnectionRequest {
+    bytes token = 1;
+}
+
+message ConnectionResponse {
+    oneof response {
+        ConnectionSuccess success = 1;
+        ConnectionError error = 2;
+    }
+}
+
+message ConnectionSuccess {
+    // for future use
+}
+
+message ConnectionError {
+    string message = 1;
+}
+
+
+message Packet {
+    oneof payload {
+        Message message = 1;
+        CloseConnection close_connection = 2;
+    }
+}
+
+message Message {
+    bytes data = 1;
+}
+
+message CloseConnection {
+    // for future use
+}

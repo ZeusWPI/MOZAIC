@@ -10,8 +10,6 @@ use std::str;
 use std::process;
 use slog;
 
-use bot_runner::BotHandle;
-use buffered_sender::BufferedSender;
 use planetwars::controller::PlayerId;
 
 
@@ -31,7 +29,7 @@ pub struct ClientMessage {
 }
 
 pub enum Message {
-    Data(String),
+    Data(Vec<u8>),
     Connected,
     Disconnected,
     Timeout,
@@ -132,7 +130,7 @@ impl ClientController {
             self.sender.send(command);
         }
         // Since we entirely control this channel, it should not fail.
-        // If it does, something is very wrong and we should find out what
+        // If it does, something kis very wrong and we should find out what
         // to do about that.
         panic!("Command handle broke");
     }

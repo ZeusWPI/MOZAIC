@@ -5,6 +5,7 @@ use planetwars::modules::Config;
 use planetwars::modules::pw_rules::{PlanetWars, Dispatch};
 use planetwars::modules::pw_serializer::{serialize, serialize_rotated};
 use planetwars::modules::pw_protocol as proto;
+use planetwars::modules::step_lock::StepLock;
 use planetwars::controller::{PlayerId, Client};
 use planetwars::game_controller::GameController;
 
@@ -29,10 +30,65 @@ pub enum CommandError {
 }
 
 impl PwController {
+    pub fn new(conf: Config,
+               clients: Vec<Client>,
+               logger: slog::Logger)
+               -> Self
+    {
+        let state = conf.create_game(clients.len());
+
+        let planet_map = state.planets.iter().map(|planet| {
+            (planet.name.clone(), planet.id)
+        }).collect();
+
+        let client_map = clients.into_iter().map(|c| {
+            (c.id, c)
+        }).collect();
+
+        PwController {
+            state,
+            planet_map,
+            client_map,
+            logger,
+        }
+    }
+
+    pub fn init(&mut self){
+        self.log_info();
+        self.log_state();
+        self.prompt_players();
+    }
+
+    /// Advance the game by one turn.
+    pub fn step(&mut self,
+                messages: HashMap<PlayerId, Vec<u8>>)
+    {
+        self.state.repopulate();
+        self.execute_messages(messages);
+        self.state.step();
+
+        self.log_state();
+
+        if !self.state.is_finished() {
+            self.prompt_players();
+        }
+    }
+
+    pub fn outcome(&self) -> Option<Vec<PlayerId>> {
+        if self.state.is_finished() {
+            Some(self.state.living_players())
+        } else {
+            None
+        }
+    }
+
+    pub fn handle_disconnect(&mut self, player_id: PlayerId) {
+        self.client_map.remove(&player_id);
+    }
+
     fn log_state(&self) {
         // TODO: add turn number
-        info!(self.logger, "step";
-            "state" => serialize(&self.state));
+        info!(self.logger, "step"; serialize(&self.state));
     }
 
     fn log_info(&self) {
@@ -55,7 +111,7 @@ impl PwController {
                     let offset = self.state.players.len() - player.id.as_usize();
 
                     let serialized = serialize_rotated(&self.state, offset);
-                    let repr = serde_json::to_string(&serialized).unwrap();
+                    let repr = serde_json::to_vec(&serialized).unwrap();
                     client.send_msg(repr);
 
                     players.insert(player.id.clone());
@@ -65,15 +121,15 @@ impl PwController {
         return players;
     }
 
-    fn execute_messages(&mut self, mut msgs:HashMap<PlayerId, String>) {
-        for (player_id, message) in msgs.drain() {
-            self.execute_message(player_id, message);
+    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, Vec<u8>>) {
+        for (client_id, message) in msgs.drain() {
+            self.execute_message(client_id, message);
         }
     }
 
     /// Parse and execute a player message.
-    fn execute_message(&mut self, player_id: PlayerId, msg: String) {
-        match serde_json::from_str(&msg) {
+    fn execute_message(&mut self, player_id: PlayerId, msg: Vec<u8>) {
+        match serde_json::from_slice(&msg) {
             Ok(action) => {
                 self.execute_action(player_id, action);
             },
@@ -162,7 +218,7 @@ impl GameController<Config> for PwController {
     }
 
     fn time_out(&self) -> u64 {
-        1000
+        100000
     }
 
     fn start(&mut self) -> HashSet<PlayerId>{
@@ -174,7 +230,7 @@ impl GameController<Config> for PwController {
 
     /// Advance the game by one turn.
     fn step(&mut self,
-                msgs: HashMap<PlayerId, String>,
+                msgs: HashMap<PlayerId, Vec<u8>>,
         ) -> HashSet<PlayerId>
     {
         self.state.repopulate();

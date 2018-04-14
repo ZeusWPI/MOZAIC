@@ -1,0 +1,17 @@
+{
+    "players": [
+        {
+            "name": "bert",
+            "token": [1]
+        },
+        {
+            "name": "timp",
+            "token": [2]
+        }
+    ],
+    "game_config": {
+        "map_file": "../planetwars/maps/hex.json",
+        "max_turns": 500
+    },
+    "log_file": "log.json"
+}

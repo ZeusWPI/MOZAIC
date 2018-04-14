@@ -15,7 +15,7 @@ pub trait Lock<G: GameController<C>, C: DeserializeOwned> {
     /// That he is waiting for
     fn is_ready(&self) -> bool;
     /// Push a command from a client to the lock
-    fn attach_command(&mut self, client_id: PlayerId, msg: String);
+    fn attach_command(&mut self, client_id: PlayerId, msg: Vec<u8>);
 
     /// A client has connected whether it's an initial connect
     /// or a reconnect

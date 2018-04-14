@@ -6,23 +6,23 @@ use tokio_core::reactor::Handle;
 use tokio_core::reactor::Timeout as to;
 use tokio_timer::Sleep;
 use tokio_timer::Timer;
-use std::time::Duration;
+use tokio::timer::Delay;
+use tokio;
+use std::time::{Duration, Instant};
 
 use planetwars::controller::PlayerId;
 
 pub struct Timeout{
     game_handle: UnboundedSender<ClientMessage>,
-    loop_handle: Handle,
     used: bool,
     timer: Sleep,
 }
 
 impl Timeout {
-    pub fn new(game_handle: UnboundedSender<ClientMessage>, loop_handle: Handle) -> Timeout {
+    pub fn new(game_handle: UnboundedSender<ClientMessage>) -> Timeout {
         let timer = Timer::default();
         Timeout {
             game_handle,
-            loop_handle,
             used: true,
             timer: timer.sleep(Duration::from_millis(60000)),
         }
@@ -30,19 +30,19 @@ impl Timeout {
 
     /// Sends a Message::Timeout after dur micro seconds
     pub fn set_timeout(&mut self, dur: u64) {
-        let out = self.game_handle.clone();
-        if let Ok(t) = to::new(Duration::from_millis(dur + 5), &self.loop_handle) {
-            self.loop_handle.spawn(
-                t.and_then(move |_| {
+        let handle = self.game_handle.clone();
+        let end = Instant::now() + Duration::from_millis(dur+5);
+        tokio::spawn(
+            Delay::new(end).map_err(|e| panic!("delay errored; err={:?}", e))
+                .map(move |_| {
                     let msg = ClientMessage {
                         player_id: PlayerId::new(666),
                         message: Message::Timeout,
                     };
-                    out.unbounded_send(msg).expect("handle broke in timeout");
-                    Ok(())
-                }).map_err(|err| println!("server error {:?}", err)) 
-            );
-        }
+                    handle.unbounded_send(msg);
+                }
+            )
+        );
         let timer = Timer::default();
         self.timer = timer.sleep(Duration::from_millis(dur));
         self.used = false;

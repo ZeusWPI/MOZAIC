@@ -23,7 +23,7 @@ pub trait GameController<C: DeserializeOwned> {
     /// Msgs can have more commands then wanted
     /// Returns client_id's that are wanted for the next turn
     /// Empty HashSet implies noone is waited for, just send commands trough
-    fn step(&mut self, msgs: HashMap<PlayerId, String>) -> HashSet<PlayerId>;
+    fn step(&mut self, msgs: HashMap<PlayerId, Vec<u8>>) -> HashSet<PlayerId>;
 
     /// Returns the player id of the winner(s) or None if the game is still going
     fn outcome(& self) -> Option<Vec<PlayerId>>;

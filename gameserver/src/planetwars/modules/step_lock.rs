@@ -17,7 +17,7 @@ enum GameState {
 
 pub struct StepLock<G: GameController<C>, C: DeserializeOwned> {
     phantom_config: PhantomData<C>,
-    client_messages: HashMap<PlayerId, String>,
+    client_messages: HashMap<PlayerId, Vec<u8>>,
     awaiting_clients: HashSet<PlayerId>,
     connected_clients: HashSet<PlayerId>,
     game_controller: G,
@@ -31,7 +31,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         StepLock {
             phantom_config: PhantomData,
             client_messages: HashMap::new(),
-            awaiting_clients,
+            awaiting_clients: awaiting_clients,
             connected_clients: HashSet::new(),
             game_controller,
             running: GameState::Waiting,
@@ -64,7 +64,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
         }
     }
 
-    fn attach_command(&mut self, client_id: PlayerId, msg: String) {
+    fn attach_command(&mut self, client_id: PlayerId, msg: Vec<u8>) {
         self.awaiting_clients.remove(&client_id);
         self.client_messages.insert(client_id, msg);
     }
@@ -79,7 +79,7 @@ impl<G, C> Lock<G, C> for StepLock<G, C>
 
     fn do_time_out(&mut self) {
         self.awaiting_clients.clone().iter().for_each(|c| {
-                                            self.client_messages.insert(*c, String::new());
+                                            self.client_messages.insert(*c, Vec::new());
                                             }
                                         );
         self.running = GameState::Timeout;

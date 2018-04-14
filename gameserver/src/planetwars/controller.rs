@@ -6,6 +6,7 @@ use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 use client_controller::{ClientMessage, Message};
 use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
+use client_controller::Command;
 use planetwars::time_out::Timeout;
 use std::marker::PhantomData;
 use std::process;
@@ -59,13 +60,13 @@ impl slog::KV for PlayerId {
 pub struct Client {
     pub id: PlayerId,
     pub player_name: String,
-    pub handle: UnboundedSender<String>,
+    pub handle: UnboundedSender<Command>,
 }
 
 impl Client {
-    pub fn send_msg(&mut self, msg: String) {
+    pub fn send_msg(&mut self, msg: Vec<u8>) {
         // unbounded channels don't fail
-        self.handle.unbounded_send(msg).unwrap();
+        self.handle.unbounded_send(Command::Send(msg)).unwrap();
     }
 }
 
@@ -83,7 +84,7 @@ impl<G, L, C> Controller<G, L, C>
         player_ids.extend(clients.iter().map(|c| c.id.clone()));
         
         // initial connection timeout starts at 1 minute
-        timeout.set_timeout(60000);
+        //timeout.set_timeout(60000);
         
         Controller {
             player_names: clients.iter().map(|c| (c.id, c.player_name.clone())).collect(),
@@ -104,7 +105,8 @@ impl<G, L, C> Controller<G, L, C>
                 // client_controller.
                 info!(self.logger, "message received";
                     player_id,
-                    "content" => &msg,
+                    //TODO fix me
+                    "content" => "NOT IMPLEMENTED FIX ME",
                 );
                 self.lock.attach_command(player_id, msg);
             },

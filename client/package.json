@@ -1,0 +1,24 @@
+{
+  "name": "mozaic-client",
+  "version": "0.0.0",
+  "description": "Client code for MOZAIC framework",
+  "scripts": {
+    "build": "gulp build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^9.4.6",
+    "@types/split2": "^2.1.6",
+    "gulp": "^4.0.0",
+    "gulp-protobufjs": "^1.3.0",
+    "gulp-typescript": "^4.0.1",
+    "plugin-error": "^1.0.1",
+    "protobufjs": "^6.8.5",
+    "typescript": "^2.7.2"
+  },
+  "dependencies": {
+    "split2": "^2.2.0"
+  }
+}

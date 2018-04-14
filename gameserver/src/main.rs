@@ -1,13 +1,20 @@
-mod bot_runner;
+#![allow(dead_code)]
 mod client_controller;
-mod buffered_sender;
+mod connection;
 mod planetwars;
+mod protobuf_codec;
+
+pub mod protocol {
+    include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
+}
+
 
 extern crate bytes;
 
 extern crate tokio_core;
 extern crate tokio_io;
 extern crate tokio_process;
+extern crate tokio;
 extern crate tokio_timer;
 #[macro_use]
 extern crate futures;
@@ -26,25 +33,33 @@ extern crate serde_derive;
 extern crate slog;
 extern crate slog_json;
 
+extern crate prost;
+#[macro_use]
+extern crate prost_derive;
+
+
 use std::error::Error;
 use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;
+use std::time::{Duration, Instant};
 
 use slog::Drain;
-use std::sync::Mutex;
-use tokio_core::reactor::Core;
+use std::sync::{Arc, Mutex};
 use futures::sync::mpsc;
+use futures::Future;
+use tokio::runtime::Runtime;
+use tokio::timer::Delay;
+use tokio_core::reactor::Core;
 
 use serde::de::DeserializeOwned;
-
-use bot_runner::*;
 
 use client_controller::ClientController;
 use planetwars::modules::pw_controller::PwController;
 use planetwars::modules::step_lock::StepLock;
 use planetwars::{Controller, Client};
+use connection::router::RoutingTable;
 use planetwars::time_out::Timeout;
 use planetwars::controller::PlayerId;
 
@@ -68,8 +83,6 @@ fn main() {
         }
     };
 
-    let mut reactor = Core::new().unwrap();
-
     let log_file = File::create(match_description.log_file).unwrap();
 
     let logger = slog::Logger::root( 
@@ -77,40 +90,51 @@ fn main() {
         o!()
     );
 
-    let mut bots = spawn_bots(&reactor.handle(), &match_description.players);
+    let mut runtime = Runtime::new().unwrap();
 
-    let (handle, chan) = mpsc::unbounded();
+    let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
 
+    let (controller_handle, controller_chan) = mpsc::unbounded();
 
     let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
         let num = PlayerId::new(num);
-        let bot_handle = bots.remove(&desc.name).unwrap();
         let controller = ClientController::new(
             num,
-            desc.name.clone(),
-            bot_handle,
-            handle.clone(),
-            &logger);
+            desc.token.clone(),
+            routing_table.clone(),
+            controller_handle.clone());
         let ctrl_handle = controller.handle();
-        reactor.handle().spawn(controller);
+        runtime.spawn(controller);
 
         Client {
             id: num,
             player_name: desc.name.clone(),
+            // TODO
             handle: ctrl_handle,
         }
     }).collect();
 
     let controller: FullController = Controller::new(
         handles,
-        chan,
+        controller_chan,
         match_description.game_config,
-        Timeout::new(handle.clone(), reactor.handle().clone()),
+        Timeout::new(controller_handle.clone()),
         logger,
     );
+    runtime.spawn(controller.and_then(|_| {
+        println!("done");
+        // wait a second for graceful exit
+        let end = Instant::now() + Duration::from_secs(1);
+        Delay::new(end).map_err(|e| panic!("delay errored; err={:?}", e))
+    }).map(|_| {
+        std::process::exit(0);
+    }));
 
-    println!("starting loop");
-    reactor.run(controller).unwrap();
+    let addr = "127.0.0.1:9142".parse().unwrap();
+    let listener = connection::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
+    runtime.spawn(listener);
+
+    runtime.shutdown_on_idle().wait().unwrap();
 }
 
 #[serde(bound(deserialize = ""))]
@@ -120,6 +144,13 @@ pub struct MatchDescription<T: DeserializeOwned> {
     pub log_file: String,
     pub game_config: T,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct PlayerConfig {
+    pub name: String,
+    pub token: Vec<u8>,
+}
+
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
