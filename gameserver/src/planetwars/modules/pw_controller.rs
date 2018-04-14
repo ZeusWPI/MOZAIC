@@ -1,11 +1,15 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 
+use futures::{Future, Poll, Async};
+use futures::sync::mpsc::UnboundedReceiver;
+use client_controller::ClientMessage;
+
 use planetwars::modules::Config;
 use planetwars::modules::pw_rules::{PlanetWars, Dispatch};
 use planetwars::modules::pw_serializer::{serialize, serialize_rotated};
 use planetwars::modules::pw_protocol as proto;
-use planetwars::modules::step_lock::StepLock;
+use planetwars::player_lock::PlayerLock;
 use planetwars::controller::{PlayerId, Client};
 use planetwars::game_controller::GameController;
 
@@ -14,9 +18,9 @@ use serde_json;
 
 
 pub struct PwController {
+    lock: PlayerLock,
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    client_map: HashMap<PlayerId, Client>,
     logger: slog::Logger,
 }
 
@@ -32,6 +36,7 @@ pub enum CommandError {
 impl PwController {
     pub fn new(conf: Config,
                clients: Vec<Client>,
+               client_msgs: UnboundedReceiver<ClientMessage>,
                logger: slog::Logger)
                -> Self
     {
@@ -41,14 +46,15 @@ impl PwController {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        let client_map = clients.into_iter().map(|c| {
-            (c.id, c)
+        let players = clients.into_iter().map(|client| {
+            (client.id, client.handle)
         }).collect();
 
+
         PwController {
+            lock: PlayerLock::new(players, client_msgs),
             state,
             planet_map,
-            client_map,
             logger,
         }
     }
@@ -83,7 +89,7 @@ impl PwController {
     }
 
     pub fn handle_disconnect(&mut self, player_id: PlayerId) {
-        self.client_map.remove(&player_id);
+        // TODO
     }
 
     fn log_state(&self) {
@@ -92,30 +98,27 @@ impl PwController {
     }
 
     fn log_info(&self) {
-        let info = proto::GameInfo {
-            players: self.client_map.values().map(|c| {
-                c.player_name.clone()
-            }).collect(),
-        };
-        info!(self.logger, "game info";
-            "info" => info);
+        // TODO: is this still required?
+        // let info = proto::GameInfo {
+        //     players: self.client_map.values().map(|c| {
+        //         c.player_name.clone()
+        //     }).collect(),
+        // };
+        // info!(self.logger, "game info";
+        //     "info" => info);
     }
 
     fn prompt_players(&mut self) -> HashSet<PlayerId> {
         let mut players = HashSet::new();
         for player in self.state.players.iter() {
             if player.alive {
-                if let Some(client) = self.client_map.get_mut(&player.id) {
-                    // how much we need to rotate for this player to become
-                    // player 0 in his state dump
-                    let offset = self.state.players.len() - player.id.as_usize();
+                let offset = self.state.players.len() - player.id.as_usize();
 
-                    let serialized = serialize_rotated(&self.state, offset);
-                    let repr = serde_json::to_vec(&serialized).unwrap();
-                    client.send_msg(repr);
+                let serialized = serialize_rotated(&self.state, offset);
+                let repr = serde_json::to_vec(&serialized).unwrap();
+                self.lock.request(player.id, repr);
 
-                    players.insert(player.id.clone());
-                }
+                players.insert(player.id.clone());
             }
         }
         return players;
@@ -193,28 +196,38 @@ impl PwController {
     }
 }
 
+impl Future for PwController {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        loop {
+            let input = try_ready!(self.lock.poll());
+            self.step(input);
+            if self.state.is_finished() {
+                return Ok(Async::Ready(()));
+            }
+        }
+    }
+}
+
 impl GameController<Config> for PwController {
     fn new(conf: Config,
                clients: Vec<Client>,
                logger: slog::Logger)
                -> Self
     {
-        let state = conf.create_game(clients.len());
+        // let state = conf.create_game(clients.len());
 
-        let planet_map = state.planets.iter().map(|planet| {
-            (planet.name.clone(), planet.id)
-        }).collect();
+        // let planet_map = state.planets.iter().map(|planet| {
+        //     (planet.name.clone(), planet.id)
+        // }).collect();
 
-        let client_map = clients.into_iter().map(|c| {
-            (c.id, c)
-        }).collect();
+        // let client_map = clients.into_iter().map(|c| {
+        //     (c.id, c)
+        // }).collect();
 
-        PwController {
-            state,
-            planet_map,
-            client_map,
-            logger,
-        }
+        unimplemented!()
     }
 
     fn time_out(&self) -> u64 {
