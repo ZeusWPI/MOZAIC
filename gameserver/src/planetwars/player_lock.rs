@@ -11,14 +11,32 @@ use client_controller::{ClientMessage, Message, Command};
 use super::controller::PlayerId;
 
 
-
+/// A basic util for sending requests to clients which have to be answered
+/// before a specified deadline.
+/// The `request` method can be used to add a request to the lock.
+/// The lock will then resolve once all requests are resolved, and yield the
+/// results.
 pub struct PlayerLock {
+
+    /// Message channels to all connected clients.
     players: HashMap<PlayerId, UnboundedSender<Command>>,
+
+    /// A message channel that carries client responses.
     player_msgs: UnboundedReceiver<ClientMessage>,
+
+    /// Maps unresolved requests to the player that has to answer them.
     requests: HashMap<usize, PlayerId>,
-    responses: HashMap<PlayerId, RequestResult>,
+
+    /// The results that have already been received.
+    results: HashMap<PlayerId, RequestResult>,
+
+    /// A queue containing the timeouts for the currently running requests.
     deadlines: BinaryHeap<Deadline>,
+
+    /// For generating unique request identifiers.
     request_counter: usize,
+
+    /// A Delay future that will be ready on the soonest request deadline.
     delay: Delay,
 }
 
@@ -44,6 +62,7 @@ impl PartialOrd for Deadline {
 }
 
 impl PlayerLock {
+    /// Construct a lock for given player handles and message channel.
     pub fn new(
             players: HashMap<PlayerId, UnboundedSender<Command>>,
             player_msgs: UnboundedReceiver<ClientMessage>
@@ -53,19 +72,19 @@ impl PlayerLock {
             players,
             player_msgs,
             requests: HashMap::new(),
-            responses: HashMap::new(),
+            results: HashMap::new(),
             deadlines: BinaryHeap::new(),
             request_counter: 0,
             delay: Delay::new(Instant::now()),
         }
     }
 
-    pub fn request(
-        &mut self,
-        player_id: PlayerId,
-        data: Vec<u8>,
-        deadline: Instant
-    ) {
+    /// Send a request to the specified player and add it to the lock.
+    pub fn request(&mut self,
+                   player_id: PlayerId,
+                   data: Vec<u8>,
+                   deadline: Instant)
+    {
         let request_id = self.request_counter;
         self.request_counter += 1;
 
@@ -83,7 +102,7 @@ impl PlayerLock {
             None => panic!("got unsolicited response"),
             Some(data) => data,
         };
-        self.responses.insert(player_id, Ok(response.data));
+        self.results.insert(player_id, Ok(response.data));
     }
 
     /// Adds a deadline to the deadline queue, updating the delay future if
@@ -96,7 +115,8 @@ impl PlayerLock {
         self.deadlines.push(deadline);
     }
 
-    fn poll_responses(&mut self) -> Poll<HashMap<PlayerId, RequestResult>, ()>
+    /// Receive messages from the connected clients.
+    fn poll_messages(&mut self) -> Poll<HashMap<PlayerId, RequestResult>, ()>
     {
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
@@ -110,7 +130,7 @@ impl PlayerLock {
                 _ => ()
             };
         }
-        let responses = mem::replace(&mut self.responses, HashMap::new());
+        let responses = mem::replace(&mut self.results, HashMap::new());
         return Ok(Async::Ready(responses));
     }
 
@@ -128,7 +148,7 @@ impl PlayerLock {
             } else {
                 // This deadline has passed, time-out its request ...
                 if let Some(player_id) = self.requests.remove(&request_id) {
-                    self.responses.insert(player_id, Err(Timeout));
+                    self.results.insert(player_id, Err(Timeout));
                 }
                 // ... and remove it from the queue.
                 self.deadlines.pop();
@@ -136,6 +156,7 @@ impl PlayerLock {
         }  
     }
 
+    /// Poll timer and expire requests if neccesary.
     fn poll_delay(&mut self) -> Poll<(), ()> {
         match self.delay.poll() {
             Ok(Async::Ready(())) => {
@@ -154,11 +175,13 @@ impl Future for PlayerLock {
 
     fn poll(&mut self) -> Poll<Self::Item, ()> {
         loop {
-            match try!(self.poll_responses()) {
+            // first try resolving requests by handling incoming messages
+            match try!(self.poll_messages()) {
                 Async::Ready(responses) => return Ok(Async::Ready(responses)),
                 Async::NotReady => {},
             };
 
+            // then check for time-outs.
             try_ready!(self.poll_delay());
         }
     }
