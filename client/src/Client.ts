@@ -12,16 +12,23 @@ export interface Address {
     port: number;
 }
 
+export interface Request {
+    requestId: number;
+    data: Buffer;
+}
+
 export class Client {
     readonly connection: Connection;
     // TODO: get rid of this
     readonly address: Address;
     readonly botRunner: BotRunner;
+    readonly requestQueue: number[];
 
     constructor(connData: ConnectionData, botConfig: BotConfig) {
         this.connection = new Connection(connData.token);
         this.botRunner = new BotRunner(botConfig);
         this.address = connData.address;
+        this.requestQueue = [];
         this.initHandlers();
     }
 
@@ -35,11 +42,15 @@ export class Client {
     }
 
     public handleBotMessage(message: Buffer) {
-        this.connection.sendMessage(message);
+        let requestId = this.requestQueue.shift();
+        if (requestId) {
+            this.connection.respond(requestId, message);
+        }
     }
 
-    public handleServerMessage(message: Buffer) {
-        this.botRunner.sendMessage(message);
+    public handleRequest(request: Request) {
+        this.requestQueue.push(request.requestId);
+        this.botRunner.sendMessage(request.data);
     }
 
     private initHandlers() {
@@ -47,8 +58,8 @@ export class Client {
             this.handleBotMessage(message);
         });
 
-        this.connection.on('message', (message: Buffer) => {
-            this.handleServerMessage(message);
+        this.connection.on('request', (request: Request) => {
+            this.handleRequest(request);
         });
 
         this.connection.on('close', () => {

@@ -46,9 +46,9 @@ export class Connection extends EventEmitter {
         this.writeMessage(proto.ConnectionRequest.encode(request));
     }
 
-    public sendMessage(data: Buffer) {
-        let message = proto.Message.create({ data });
-        let packet = proto.Packet.create({ message });
+    public respond(requestId: number, data: Buffer) {
+        let response = proto.Response.create({ requestId, data });
+        let packet = proto.Packet.create({ response });
         this.writeMessage(proto.Packet.encode(packet));
     }
 
@@ -76,8 +76,8 @@ export class Connection extends EventEmitter {
             }
             case ConnectionState.CONNECTED: {
                 let packet = proto.Packet.decode(buf);
-                if (packet.message) {
-                    this.emit('message', packet.message.data);
+                if (packet.request) {
+                    this.emit('request', packet.request);
                 }
                 break;
             }
