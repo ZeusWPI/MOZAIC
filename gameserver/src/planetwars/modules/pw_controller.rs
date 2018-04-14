@@ -62,7 +62,6 @@ impl PwController {
     }
 
     pub fn init(&mut self){
-        self.log_info();
         self.log_state();
         self.prompt_players();
     }
@@ -90,28 +89,12 @@ impl PwController {
         }
     }
 
-    pub fn handle_disconnect(&mut self, player_id: PlayerId) {
-        // TODO
-    }
-
     fn log_state(&self) {
         // TODO: add turn number
         info!(self.logger, "step"; serialize(&self.state));
     }
 
-    fn log_info(&self) {
-        // TODO: is this still required?
-        // let info = proto::GameInfo {
-        //     players: self.client_map.values().map(|c| {
-        //         c.player_name.clone()
-        //     }).collect(),
-        // };
-        // info!(self.logger, "game info";
-        //     "info" => info);
-    }
-
-    fn prompt_players(&mut self) -> HashSet<PlayerId> {
-        let mut players = HashSet::new();
+    fn prompt_players(&mut self) {
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
@@ -119,11 +102,8 @@ impl PwController {
                 let serialized = serialize_rotated(&self.state, offset);
                 let repr = serde_json::to_vec(&serialized).unwrap();
                 self.lock.request(player.id, repr);
-
-                players.insert(player.id.clone());
             }
         }
-        return players;
     }
 
     fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, Vec<u8>>) {
@@ -157,7 +137,6 @@ impl PwController {
                     self.state.dispatch(&dispatch);
                 },
                 Err(err) => {
-                    // TODO: include actual error
                     info!(self.logger, "illegal command";
                         player_id,
                         cmd,
@@ -209,62 +188,6 @@ impl Future for PwController {
             if self.state.is_finished() {
                 return Ok(Async::Ready(()));
             }
-        }
-    }
-}
-
-impl GameController<Config> for PwController {
-    fn new(conf: Config,
-               clients: Vec<Client>,
-               logger: slog::Logger)
-               -> Self
-    {
-        // let state = conf.create_game(clients.len());
-
-        // let planet_map = state.planets.iter().map(|planet| {
-        //     (planet.name.clone(), planet.id)
-        // }).collect();
-
-        // let client_map = clients.into_iter().map(|c| {
-        //     (c.id, c)
-        // }).collect();
-
-        unimplemented!()
-    }
-
-    fn time_out(&self) -> u64 {
-        100000
-    }
-
-    fn start(&mut self) -> HashSet<PlayerId>{
-        self.log_info();
-        self.log_state();
-
-        self.prompt_players()
-    }
-
-    /// Advance the game by one turn.
-    fn step(&mut self,
-                msgs: HashMap<PlayerId, Vec<u8>>,
-        ) -> HashSet<PlayerId>
-    {
-        self.state.repopulate();
-        self.execute_messages(msgs);
-        self.state.step();
-
-        self.log_state();
-
-        if !self.state.is_finished() {
-            return self.prompt_players();
-        }
-        return HashSet::new();
-    }
-
-    fn outcome(&self) -> Option<Vec<PlayerId>> {
-        if self.state.is_finished() {
-            Some(self.state.living_players())
-        } else {
-            None
         }
     }
 }
