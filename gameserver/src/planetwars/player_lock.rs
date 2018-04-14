@@ -11,17 +11,21 @@ use client_controller::{ClientMessage, Message, Command};
 use super::controller::PlayerId;
 
 
-/// A basic util for sending requests to clients which have to be answered
-/// before a specified deadline.
+/// A basic util for sending requests to multiple players which have to be
+/// answered before a specified deadline. It is limited to one request per
+/// player. TODO: what would an ergonomic interface look like that lifts this
+/// restriction?
+/// All requests are uniquely numbered to avoid that delayed messages end up in
+/// the next round of requests.
 /// The `request` method can be used to add a request to the lock.
 /// The lock will then resolve once all requests are resolved, and yield the
 /// results.
 pub struct PlayerLock {
 
-    /// Message channels to all connected clients.
+    /// Message channels to all connected players.
     players: HashMap<PlayerId, UnboundedSender<Command>>,
 
-    /// A message channel that carries client responses.
+    /// A message channel that carries player responses.
     player_msgs: UnboundedReceiver<ClientMessage>,
 
     /// Maps unresolved requests to the player that has to answer them.
@@ -40,9 +44,11 @@ pub struct PlayerLock {
     delay: Delay,
 }
 
+/// Timeout marker type
 pub struct Timeout;
 pub type RequestResult = Result<Vec<u8>, Timeout>;
 
+/// Marks when a request should expire.
 #[derive(Copy, Clone, Eq, PartialEq)]
 struct Deadline {
     request_id: usize,
@@ -62,6 +68,7 @@ impl PartialOrd for Deadline {
 }
 
 impl PlayerLock {
+
     /// Construct a lock for given player handles and message channel.
     pub fn new(
             players: HashMap<PlayerId, UnboundedSender<Command>>,
@@ -96,13 +103,22 @@ impl PlayerLock {
         })).unwrap();
     }
 
+    /// Check whether a response is valid, and if so, resolve its request.
     fn accept_response(&mut self, player_id: PlayerId, response: Response) {
-        let request_data = match self.requests.remove(&response.request_id) {
-            // TODO: panic is for debugging reasons, remove me when everything works
+        // If the request id is not in the hashmap of unresolved requests,
+        // someone sent a rogue response.
+        let request_player = match self.requests.get(&response.request_id) {
+            // TODO: panic is for debugging reasons,
+            //       remove me when everything works
+            // TODO: it should be logged though
             None => panic!("got unsolicited response"),
-            Some(data) => data,
+            Some(&player_id) => player_id,
         };
-        self.results.insert(player_id, Ok(response.data));
+        // Check whether the sender is authorized to answer this request.
+        if player_id == request_player {
+            self.requests.remove(&response.request_id);
+            self.results.insert(player_id, Ok(response.data));
+        }
     }
 
     /// Adds a deadline to the deadline queue, updating the delay future if
