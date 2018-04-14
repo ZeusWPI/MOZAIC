@@ -7,11 +7,26 @@ use tokio::net::TcpStream;
 
 use super::router::{RoutingTable, RoutingMessage};
 use protobuf_codec::MessageStream;
-use protocol::{Packet, Message, CloseConnection};
+use protocol as proto;
 use protocol::packet::Payload;
 
+// TODO: move these structs somewhere else
+pub struct Request {
+    request_id: usize,
+    data: Vec<u8>,
+}
 
-type PacketStream = MessageStream<TcpStream, Packet>;
+pub struct Response {
+    request_id: usize,
+    data: Vec<u8>,
+}
+
+pub enum Message {
+    Request(Request),
+    Response(Response),
+}
+
+type PacketStream = MessageStream<TcpStream, proto::Packet>;
 
 pub enum StreamState {
     Disconnected,
@@ -42,13 +57,11 @@ impl StreamHandler {
     }
 }
 
-
-
 pub struct Connection {
     /// The token that identifies this connection
     token: Vec<u8>,
     stream_handler: StreamHandler,
-    buffer: Vec<Vec<u8>>,
+    buffer: Vec<Payload>,
     routing_chan: UnboundedReceiver<RoutingMessage>,
 
 }
@@ -66,9 +79,22 @@ impl Connection {
         }
     }
 
-    pub fn send(&mut self, message: Vec<u8>) -> Poll<(), io::Error> {
-        self.buffer.push(message);
-        return self.flush_buffer();
+    pub fn send(&mut self, message: Message) {
+        let payload = match message {
+            Message::Request(request) => {
+                Payload::Request(proto::Request {
+                    request_id: request.request_id as u64,
+                    data: request.data,
+                })
+            },
+            Message::Response(response) => {
+                Payload::Response(proto::Response {
+                    request_id: response.request_id as u64,
+                    data: response.data,
+                })
+            }
+        };
+        self.buffer.push(payload);
     }
 
     pub fn flush_buffer(&mut self) -> Poll<(), io::Error> {
@@ -76,16 +102,9 @@ impl Connection {
         let stream = try_ready!(self.stream_handler.poll_stream());
         while !self.buffer.is_empty() {
             try_ready!(stream.poll_complete());
-            let message = self.buffer.remove(0);
-            // toDO: put this somewhere else
-            let packet = Packet {
-                payload: Some(
-                    Payload::Message(
-                        Message {
-                            data: message,
-                        }
-                    )
-                )
+            let payload = self.buffer.remove(0);
+            let packet = proto::Packet {
+                payload: Some(payload),
             };
             let res = try!(stream.start_send(packet));
             assert!(res.is_ready(), "writing to PacketStream blocked");
@@ -93,7 +112,7 @@ impl Connection {
         return stream.poll_complete();
     }
 
-    pub fn poll_message(&mut self) -> Poll<Option<Vec<u8>>, io::Error> {
+    pub fn poll_message(&mut self) -> Poll<Option<Message>, io::Error> {
         self.perform_routing();
         let stream = try_ready!(self.stream_handler.poll_stream());
         loop {
@@ -104,8 +123,22 @@ impl Connection {
 
             if let Some(payload) = packet.payload {
                 match payload {
-                    Payload::Message(message) => {
-                        return Ok(Async::Ready(Some(message.data)));
+                    Payload::Request(request) => {
+                        let r = Request {
+                            request_id: request.request_id as usize,
+                            data: request.data,
+                        };
+                        let message = Message::Request(r);
+                        return Ok(Async::Ready(Some(message)));
+                    },
+                    Payload::Response(response) => {
+                        // TODO: this can be done way nicer
+                        let r = Response {
+                            request_id: response.request_id as usize,
+                            data: response.data,
+                        };
+                        let message = Message::Response(r);
+                        return Ok(Async::Ready(Some(message)));
                     },
                     Payload::CloseConnection(_) => {
                         // TODO

@@ -5,7 +5,8 @@ use std::str;
 use std::sync::{Arc, Mutex};
 
 use connection::router::RoutingTable;
-use connection::connection::Connection;
+use connection::connection::{Connection, Request, Response};
+use connection::connection::Message as ConnectionMessage;
 
 use planetwars::controller::PlayerId;
 
@@ -25,14 +26,14 @@ pub struct ClientMessage {
 }
 
 pub enum Message {
-    Data(Vec<u8>),
+    Response(Response),
     Connected,
     Disconnected,
     Timeout,
 }
 
 pub enum Command {
-    Send(Vec<u8>),
+    Request(Request),
     Disconnect,
 }
 
@@ -94,8 +95,8 @@ impl ClientController {
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.poll_ctrl_chan()) {
-                Command::Send(message) => {
-                   self.connection.send(message);
+                Command::Request(request) => {
+                   self.connection.send(ConnectionMessage::Request(request))
                 },
                 Command::Disconnect => {
                     return Ok(Async::Ready(()));
@@ -114,9 +115,17 @@ impl ClientController {
         }
     }
  
-    fn handle_client_message(&mut self, bytes: Vec<u8>) {
-        let data = Message::Data(bytes);
-        self.send_message(data);
+    // TODO: this naming sucks because ClientMessage is also an enum
+    // that does the exact opposite
+    fn handle_client_message(&mut self, msg: ConnectionMessage) {
+        match msg {
+            ConnectionMessage::Request(request) => {
+                panic!("unexpected request");
+            },
+            ConnectionMessage::Response(response) => {
+                self.send_message(Message::Response(response));
+            },
+        };
     }
 }
 
