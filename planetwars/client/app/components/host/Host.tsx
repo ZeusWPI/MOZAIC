@@ -97,7 +97,8 @@ export class Slot extends React.Component<SlotProps> {
       extra = (
         <div>
             <select value={this.props.bot.id} onChange={(evt) => {this.changeBotID(evt.target.value)}}>
-            {options}
+              <option value="">Select Bot</option>
+              {options}
           </select>
           (token: {this.props.token})
         </div>
@@ -138,6 +139,7 @@ export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
   const mapElements = Object.keys(props.maps).map(
     (key, idx) => <option value={key} key={idx}>{props.maps[key].name}</option>,
   );
+  mapElements.unshift(<option value="">Select Map</option>);
   return (
     <select value={props.selectedMap} onChange={(evt) => props.selectMap(evt.target.value)}>
       {mapElements}
