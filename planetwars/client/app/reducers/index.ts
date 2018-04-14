@@ -53,6 +53,7 @@ export type IMatchesState = IMatchList;
 
 export interface IPlayPageState {
   selectedBots: BotSlotList;
+  selectedMap: string;
 }
 
 export interface IMatchesPageState {
@@ -72,6 +73,7 @@ export const initialState: IGState = {
 
   playPage: {
     selectedBots: {},
+    selectedMap: "",
   },
   matchesPage: {},
   globalErrors: [],
@@ -204,6 +206,12 @@ const playPageReducer = combineReducers<IPlayPageState>({
     if (A.changeLocalBot.test(action)) {
       state[action.payload.token] = action.payload.slot;
       return {...state};
+    }
+    return state;
+  },
+  selectedMap: (state: string = "", action) => {
+    if (A.selectMap.test(action)) {
+      return action.payload;
     }
     return state;
   },

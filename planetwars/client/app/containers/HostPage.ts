@@ -11,7 +11,8 @@ const mapStateToProps = (state: IGState) => {
   const bots = state.bots;
   const selectedBots = state.playPage.selectedBots;
   const maps = state.maps;
-  return { bots, selectedBots, maps };
+  const selectedMap = state.playPage.selectedMap;
+  return { bots, selectedBots, maps, selectedMap };
 };
 
 const mapDispatchToProps = (dispatch: any) => {
@@ -37,6 +38,9 @@ const mapDispatchToProps = (dispatch: any) => {
     },
     changeLocalBot(token: Token, slot: BotSlot) {
       dispatch(A.changeLocalBot({token, slot}));
+    },
+    selectMap(id: string) {
+      dispatch(A.selectMap(id));
     },
   };
 };

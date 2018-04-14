@@ -140,6 +140,7 @@ export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 export const selectBot = actionCreator<BotSlot & {token: Token}>('SELECT_BOT');
 export const unselectBot = actionCreator<BotID>('UNSELECT_BOT');
 export const changeLocalBot = actionCreator<{token: Token, slot: BotSlot}>('CHANGE_LOCAL_BOT');
+export const selectMap = actionCreator<string>('SELECT_MAP');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');

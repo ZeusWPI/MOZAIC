@@ -9,6 +9,7 @@ export interface HostStateProps {
   bots: IBotList;
   maps: IMapList;
   selectedBots: BotSlotList;
+  selectedMap: string;
 }
 
 export interface HostDispatchProps {
@@ -17,6 +18,7 @@ export interface HostDispatchProps {
   unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: MatchParams) => void;
   changeLocalBot: (token: Token, slot: BotSlot) => void;
+  selectMap: (id: string) => void;
 }
 
 export interface HostState { }
@@ -39,6 +41,7 @@ export class Host extends React.Component<HostProps, HostState> {
             changeLocalBot={this.props.changeLocalBot}
           />
         </div>
+        <MapSelector maps={this.props.maps} selectMap={this.props.selectMap} selectedMap={this.props.selectedMap}/>
       </div>
     );
   }
@@ -104,7 +107,11 @@ export class Slot extends React.Component<SlotProps> {
     }
     return (
       <li>
-        Name: <input type="text" defaultValue={this.props.bot.name} onBlur={(evt) => this.changeBotName(evt.target.value)}/> {extra}
+        Name: <input
+          type="text"
+          defaultValue={this.props.bot.name}
+          onBlur={(evt) => this.changeBotName(evt.target.value)}/>
+        {extra}
       </li>);
   }
 
@@ -120,3 +127,20 @@ export class Slot extends React.Component<SlotProps> {
     this.props.changeLocalBot(this.props.token, newBot);
   }
 }
+
+interface MapSelectorProps {
+  maps: IMapList;
+  selectMap: (id: string) => void;
+  selectedMap: string;
+}
+
+export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
+  const mapElements = Object.keys(props.maps).map(
+    (key, idx) => <option value={key} key={idx}>{props.maps[key].name}</option>,
+  );
+  return (
+    <select value={props.selectedMap} onChange={(evt) => props.selectMap(evt.target.value)}>
+      {mapElements}
+    </select>
+  );
+};
