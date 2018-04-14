@@ -10,6 +10,7 @@ pub mod protocol {
 
 
 extern crate bytes;
+extern crate hex;
 
 extern crate tokio_core;
 extern crate tokio_io;
@@ -51,9 +52,9 @@ use futures::sync::mpsc;
 use futures::Future;
 use tokio::runtime::Runtime;
 use tokio::timer::Delay;
-use tokio_core::reactor::Core;
 
-use serde::de::DeserializeOwned;
+use serde::de::{Deserialize, Deserializer, DeserializeOwned};
+use serde::de::Error as DeserializationError;
 
 use client_controller::ClientController;
 use planetwars::modules::pw_controller::PwController;
@@ -148,7 +149,15 @@ pub struct MatchDescription<T: DeserializeOwned> {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
     pub name: String,
+    #[serde(deserialize_with="from_hex")]
     pub token: Vec<u8>,
+}
+
+fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
+    where D: Deserializer<'de>
+{
+    let s: &str = try!(Deserialize::deserialize(deserializer));
+    return hex::decode(s).map_err(D::Error::custom);
 }
 
 
