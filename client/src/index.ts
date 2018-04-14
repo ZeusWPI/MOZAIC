@@ -2,7 +2,9 @@ import { Connection } from './connection';
 import { BotRunner, BotConfig } from './BotRunner';
 import { Client, Address } from './Client';
 
-let addr: Address = {
+const tokens = ["aaaa", "bbbb"];
+
+const addr: Address = {
     host: "127.0.0.1",
     port: 9142
 };
@@ -12,9 +14,9 @@ const simpleBot: BotConfig = {
     args: ["../planetwars/bots/simplebot/simple.py"],
 }
 
-for (let i = 1; i <= 2; i++) {
+for (let i = 0; i < 2; i++) {
     let connData = {
-        token: Buffer.from([i]),
+        token: Buffer.from(tokens[i], 'hex'),
         address: addr,
     };
     let client = new Client(connData, simpleBot);

@@ -2,19 +2,16 @@
     "players": [
         {
             "name": "bert",
-            "command": "python3",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
+            "token": "aaaa"
         },
         {
             "name": "timp",
-            "command": "python3",
-            "args": ["../planetwars/bots/simplebot/simple.py"]
+            "token": "bbbb"
         }
     ],
     "game_config": {
         "map_file": "../planetwars/maps/hex.json",
         "max_turns": 500
     },
-
-    "log_file": "./log.json"
+    "log_file": "log.json"
 }
