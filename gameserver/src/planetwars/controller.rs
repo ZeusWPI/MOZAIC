@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
-
+use connection::connection::Request;
 use client_controller::{ClientMessage, Message};
 use planetwars::lock::Lock;
 use planetwars::game_controller::GameController;
@@ -66,7 +66,10 @@ pub struct Client {
 impl Client {
     pub fn send_msg(&mut self, msg: Vec<u8>) {
         // unbounded channels don't fail
-        self.handle.unbounded_send(Command::Send(msg)).unwrap();
+        self.handle.unbounded_send(Command::Request(Request {
+            request_id: 0,
+            data: msg,
+        })).unwrap();
     }
 }
 
@@ -100,7 +103,7 @@ impl<G, L, C> Controller<G, L, C>
     /// Handle an incoming message.
     fn handle_message(&mut self, player_id: PlayerId, msg: Message) {
         match msg {
-            Message::Data(msg) => {
+            Message::Response(msg) => {
                 // TODO: maybe it would be better to log this in the
                 // client_controller.
                 info!(self.logger, "message received";
@@ -108,7 +111,7 @@ impl<G, L, C> Controller<G, L, C>
                     //TODO fix me
                     "content" => "NOT IMPLEMENTED FIX ME",
                 );
-                self.lock.attach_command(player_id, msg);
+                self.lock.attach_command(player_id, msg.data);
             },
             Message::Disconnected => {
                 // TODO: should a reason be included here?

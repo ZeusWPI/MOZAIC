@@ -12,13 +12,13 @@ use protocol::packet::Payload;
 
 // TODO: move these structs somewhere else
 pub struct Request {
-    request_id: usize,
-    data: Vec<u8>,
+    pub request_id: usize,
+    pub data: Vec<u8>,
 }
 
 pub struct Response {
-    request_id: usize,
-    data: Vec<u8>,
+    pub request_id: usize,
+    pub data: Vec<u8>,
 }
 
 pub enum Message {
