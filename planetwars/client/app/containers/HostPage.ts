@@ -5,7 +5,7 @@ import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
 import { BotID, BotSlot, BotSlotList, Token } from '../utils/ConfigModels';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 const mapStateToProps = (state: IGState) => {
   const bots = state.bots;
@@ -46,7 +46,8 @@ const mapDispatchToProps = (dispatch: any) => {
 };
 
 function generateToken() {
-  return uuidv4();
+  const token = crypto.randomBytes(32).toString('hex');
+  return token;
 }
 
 export default connect<HostStateProps, HostDispatchProps>(mapStateToProps, mapDispatchToProps)(Host);
