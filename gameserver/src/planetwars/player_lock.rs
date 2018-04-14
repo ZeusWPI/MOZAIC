@@ -15,17 +15,11 @@ use super::controller::PlayerId;
 pub struct PlayerLock {
     players: HashMap<PlayerId, UnboundedSender<Command>>,
     player_msgs: UnboundedReceiver<ClientMessage>,
-    requests: HashMap<usize, RequestData>,
+    requests: HashMap<usize, PlayerId>,
     responses: HashMap<PlayerId, RequestResult>,
     deadlines: BinaryHeap<Deadline>,
     request_counter: usize,
     delay: Delay,
-}
-
-struct RequestData {
-    player_id: PlayerId,
-    request_id: usize,
-    deadline: Instant,
 }
 
 pub struct Timeout;
@@ -76,13 +70,7 @@ impl PlayerLock {
         self.request_counter += 1;
 
         self.enqueue_deadline(request_id, deadline);
-
-        self.requests.insert(request_id, RequestData {
-            player_id,
-            request_id,
-            deadline,
-        });
-
+        self.requests.insert(request_id, player_id);
         self.players[&player_id].unbounded_send(Command::Request(Request {
             request_id,
             data,
@@ -139,8 +127,8 @@ impl PlayerLock {
                 return;
             } else {
                 // This deadline has passed, time-out its request ...
-                if let Some(request) = self.requests.remove(&request_id) {
-                    self.responses.insert(request.player_id, Err(Timeout));
+                if let Some(player_id) = self.requests.remove(&request_id) {
+                    self.responses.insert(player_id, Err(Timeout));
                 }
                 // ... and remove it from the queue.
                 self.deadlines.pop();
