@@ -59,13 +59,13 @@ use serde::de::Error as DeserializationError;
 use client_controller::ClientController;
 use planetwars::modules::pw_controller::PwController;
 use planetwars::modules::step_lock::StepLock;
-use planetwars::{Controller, Client};
+use planetwars::Client;
 use connection::router::RoutingTable;
 use planetwars::time_out::Timeout;
 use planetwars::controller::PlayerId;
 
-type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
-type FullController = SubController<PwController, planetwars::modules::Config>;
+//type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
+//type FullController = SubController<PwController, planetwars::modules::Config>;
 type FullMatchDescription = MatchDescription<planetwars::modules::Config>;
 
 // Load the config and start the game.
@@ -97,7 +97,7 @@ fn main() {
 
     let (controller_handle, controller_chan) = mpsc::unbounded();
 
-    let handles = match_description.players.iter().enumerate().map(|(num, desc)| {
+    let clients = match_description.players.iter().enumerate().map(|(num, desc)| {
         let num = PlayerId::new(num);
         let controller = ClientController::new(
             num,
@@ -115,11 +115,10 @@ fn main() {
         }
     }).collect();
 
-    let controller: FullController = Controller::new(
-        handles,
-        controller_chan,
+    let controller = PwController::new(
         match_description.game_config,
-        Timeout::new(controller_handle.clone()),
+        clients,
+        controller_chan,
         logger,
     );
     runtime.spawn(controller.and_then(|_| {
