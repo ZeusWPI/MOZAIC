@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import { Link, NavLink } from "react-router-dom";
 import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token, BotSlotList } from '../../utils/ConfigModels';
 import { IMapList } from "../../utils/GameModels";
 
@@ -105,13 +104,19 @@ export class Slot extends React.Component<SlotProps> {
     }
     return (
       <li>
-        Name: <input type="text" defaultValue={this.props.bot.name}/> {extra}
+        Name: <input type="text" defaultValue={this.props.bot.name} onBlur={(evt) => this.changeBotName(evt.target.value)}/> {extra}
       </li>);
   }
 
   private changeBotID(id: BotID) {
     const newBot = this.props.bot;
     newBot.id = id;
+    this.props.changeLocalBot(this.props.token, newBot);
+  }
+
+  private changeBotName(name: string) {
+    const newBot = this.props.bot;
+    newBot.name = name;
     this.props.changeLocalBot(this.props.token, newBot);
   }
 }
