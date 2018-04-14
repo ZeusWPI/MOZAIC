@@ -47,7 +47,7 @@ impl PlayerLock {
         self.players[&player_id].unbounded_send(Command::Request(Request {
             request_id,
             data,
-        }));
+        })).unwrap();
     }
 
     fn accept_response(&mut self, player_id: PlayerId, response: Response) {
@@ -65,23 +65,22 @@ impl Future for PlayerLock {
     type Error = ();
 
     fn poll(&mut self) -> Poll<Self::Item, ()> {
-        let client_message = try_ready!(self.player_msgs.poll());
-        let ClientMessage { player_id, message } = client_message.unwrap();
-        match message {
-            Message::Response(response) => {
-                self.accept_response(player_id, response);
-            },
-            // ignore other cases for now
-            _ => ()
-        };
+        loop {
+            let client_message = try_ready!(self.player_msgs.poll());
+            let ClientMessage { player_id, message } = client_message.unwrap();
+            match message {
+                Message::Response(response) => {
+                    self.accept_response(player_id, response);
+                },
+                // ignore other cases for now
+                _ => ()
+            };
 
-        if self.requests.is_empty() {
-            // all requests have been answered
-            let responses = mem::replace(&mut self.responses, HashMap::new());
-            return Ok(Async::Ready(responses));
-        } else {
-            return Ok(Async::NotReady);
+            if self.requests.is_empty() {
+                // all requests have been answered
+                let responses = mem::replace(&mut self.responses, HashMap::new());
+                return Ok(Async::Ready(responses));
+            }
         }
-        
     }
 }

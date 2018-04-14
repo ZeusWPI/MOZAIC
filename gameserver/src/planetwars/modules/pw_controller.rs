@@ -51,12 +51,14 @@ impl PwController {
         }).collect();
 
 
-        PwController {
+        let mut controller = PwController {
             lock: PlayerLock::new(players, client_msgs),
             state,
             planet_map,
             logger,
-        }
+        };
+        controller.init();
+        return controller;
     }
 
     pub fn init(&mut self){
