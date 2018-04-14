@@ -1,17 +1,16 @@
 use std::collections::HashMap;
-use std::collections::HashSet;
 
 use futures::{Future, Poll, Async};
 use futures::sync::mpsc::UnboundedReceiver;
 use client_controller::ClientMessage;
+use std::time::{Duration, Instant};
 
 use planetwars::modules::Config;
 use planetwars::modules::pw_rules::{PlanetWars, Dispatch};
 use planetwars::modules::pw_serializer::{serialize, serialize_rotated};
 use planetwars::modules::pw_protocol as proto;
-use planetwars::player_lock::PlayerLock;
+use planetwars::player_lock::{PlayerLock, RequestResult};
 use planetwars::controller::{PlayerId, Client};
-use planetwars::game_controller::GameController;
 
 use slog;
 use serde_json;
@@ -67,9 +66,7 @@ impl PwController {
     }
 
     /// Advance the game by one turn.
-    pub fn step(&mut self,
-                messages: HashMap<PlayerId, Vec<u8>>)
-    {
+    pub fn step(&mut self, messages: HashMap<PlayerId, RequestResult>) {
         self.state.repopulate();
         self.execute_messages(messages);
         self.state.step();
@@ -95,20 +92,25 @@ impl PwController {
     }
 
     fn prompt_players(&mut self) {
+        let deadline = Instant::now() + Duration::from_millis(100);
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
 
                 let serialized = serialize_rotated(&self.state, offset);
-                let repr = serde_json::to_vec(&serialized).unwrap();
-                self.lock.request(player.id, repr);
+                let request = serde_json::to_vec(&serialized).unwrap();
+                self.lock.request(player.id, request, deadline);
             }
         }
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, Vec<u8>>) {
-        for (client_id, message) in msgs.drain() {
-            self.execute_message(client_id, message);
+    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, RequestResult>) {
+        for (player_id, result) in msgs.drain() {
+            if let Ok(message) = result {
+                self.execute_message(player_id, message);
+            } else {
+                // TODO: log
+            }
         }
     }
 
