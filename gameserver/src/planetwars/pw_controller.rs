@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use futures::{Future, Poll, Async};
 use futures::sync::mpsc::UnboundedReceiver;
 
-use players::{PlayerId, Client, PlayerMessage};
+use players::{PlayerId, Client, PlayerMessage, PlayerHandler};
 use utils::{PlayerLock, RequestResult};
 
 use super::Config;
@@ -51,7 +51,7 @@ impl PwController {
 
 
         let mut controller = PwController {
-            lock: PlayerLock::new(players, client_msgs),
+            lock: PlayerLock::new(PlayerHandler::new(players, client_msgs)),
             state,
             planet_map,
             logger,

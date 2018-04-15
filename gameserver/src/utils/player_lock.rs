@@ -1,11 +1,10 @@
-use futures::{Future, Poll, Async, Stream};
-use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use futures::{Future, Poll, Async};
 use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{HashMap, BinaryHeap};
 use std::mem;
 use std::time::Instant;
 
-use players::{PlayerId, PlayerCommand, PlayerMessage, Message};
+use players::{PlayerId, PlayerHandler, PlayerMessage, Message};
 use connection::connection::{Request, Response};
 use tokio::timer::Delay;
 
@@ -20,12 +19,8 @@ use tokio::timer::Delay;
 /// The lock will then resolve once all requests are resolved, and yield the
 /// results.
 pub struct PlayerLock {
-
-    /// Message channels to all connected players.
-    players: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
-
-    /// A message channel that carries player responses.
-    player_msgs: UnboundedReceiver<PlayerMessage>,
+    /// The PlayerHandler operated by this lock.
+    player_handler: PlayerHandler,
 
     /// Maps unresolved requests to the player that has to answer them.
     requests: HashMap<usize, PlayerId>,
@@ -69,14 +64,9 @@ impl PartialOrd for Deadline {
 impl PlayerLock {
 
     /// Construct a lock for given player handles and message channel.
-    pub fn new(
-            players: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
-            player_msgs: UnboundedReceiver<PlayerMessage>
-        ) -> Self
-    {
+    pub fn new(player_handler: PlayerHandler) -> Self {
         PlayerLock {
-            players,
-            player_msgs,
+            player_handler,
             requests: HashMap::new(),
             results: HashMap::new(),
             deadlines: BinaryHeap::new(),
@@ -96,10 +86,10 @@ impl PlayerLock {
 
         self.enqueue_deadline(request_id, deadline);
         self.requests.insert(request_id, player_id);
-        self.players[&player_id].unbounded_send(PlayerCommand::Request(Request {
+        self.player_handler.request(player_id, Request {
             request_id,
             data,
-        })).unwrap();
+        });
     }
 
     /// Check whether a response is valid, and if so, resolve its request.
@@ -135,8 +125,8 @@ impl PlayerLock {
     {
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
-            let client_message = try_ready!(self.player_msgs.poll());
-            let PlayerMessage { player_id, message } = client_message.unwrap();
+            let client_message = try_ready!(self.player_handler.poll_message());
+            let PlayerMessage { player_id, message } = client_message;
             match message {
                 Message::Response(response) => {
                     self.accept_response(player_id, response);
