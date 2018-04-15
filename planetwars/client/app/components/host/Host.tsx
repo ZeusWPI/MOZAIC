@@ -1,9 +1,8 @@
 import * as React from "react";
 
-import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token, BotSlotList } from '../../utils/ConfigModels';
+import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token, BotSlotList, MatchConfig } from '../../utils/ConfigModels';
 import { IMapList } from "../../utils/GameModels";
-
-interface MatchParams { } // Don't know the parameters yet...
+import { MatchParams } from '../../actions/actions';
 
 export interface HostStateProps {
   bots: IBotList;
@@ -42,15 +41,26 @@ export class Host extends React.Component<HostProps, HostState> {
           />
         </div>
         <MapSelector maps={this.props.maps} selectMap={this.props.selectMap} selectedMap={this.props.selectedMap}/>
+        <button onClick={() => this.startServer()}>Play!</button>
       </div>
     );
   }
 
-  public addInternal() {
+  private startServer() {
+    const config: MatchParams = {
+      bots: this.props.selectedBots,
+      map: this.props.selectedMap,
+      maxTurns: 500,
+    };
+    console.log(config);
+    this.props.runMatch(config);
+  }
+
+  private addInternal() {
     this.props.selectBotInternal("My Bot", "");
   }
 
-  public addExternal() {
+  private addExternal() {
     this.props.selectBotExternal("My Enemy's Bot");
   }
 }

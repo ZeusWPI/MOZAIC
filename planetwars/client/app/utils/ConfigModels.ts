@@ -3,7 +3,7 @@
 // road.
 
 export interface MatchConfig {
-  players: BotConfig[];
+  players: BotSlotList;
   gameConfig: GameConfig;
   logFile: string;
 }

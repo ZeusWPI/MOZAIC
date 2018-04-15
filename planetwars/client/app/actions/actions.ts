@@ -1,6 +1,6 @@
 import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap, MapId } from '../utils/GameModels';
-import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig, BotSlot, Token
- } from '../utils/ConfigModels';
+import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig, BotSlot, Token,
+ BotSlotList } from '../utils/ConfigModels';
 import { Notification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
@@ -28,7 +28,7 @@ export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
 export const importMatch = actionCreator<Match>('IMPORT_MATCH');
 
 export interface MatchParams {
-  bots: BotID[];
+  bots: BotSlotList;
   map: MapId;
   maxTurns: number;
 }
@@ -43,23 +43,24 @@ export function runMatch(params: MatchParams) {
     const matchId = uuidv4();
     const { map, bots, maxTurns } = params;
     const state: IGState = getState();
+    const botNames = Object.keys(params.bots).map((token) => params.bots[token].name);
 
     const match: Match = {
       status: 'playing',
       uuid: matchId,
-      players: params.bots,
+      players: botNames,
       map,
       timestamp: new Date(),
       logPath: Config.matchLogPath(matchId),
     };
 
-    const players = bots.map((botID) => state.bots[botID].config);
+    const players: BotSlotList = params.bots;
     const gameConfig = { maxTurns, mapFile: state.maps[map].mapPath };
     const config: MatchConfig = { players, gameConfig, logFile: match.logPath };
 
     dispatch(saveMatch(match));
     // TODO: ideally we'd have a separate action for this
-    dispatch(push(`/matches/${matchId}`));
+    // dispatch(push(`/matches/${matchId}`));
 
     const runner = new GameRunner(config);
 

@@ -6,7 +6,7 @@ import { execFile } from 'child_process';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { BotConfig, MatchConfig } from './ConfigModels';
+import { BotConfig, MatchConfig, Token, BotSlot } from './ConfigModels';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?
@@ -22,7 +22,7 @@ class GameRunner extends EventEmitter {
   constructor(conf: MatchConfig) {
     super();
     const { gameConfig: { maxTurns, mapFile }, logFile } = conf;
-    const players = conf.players.map(this.convertBotConfig);
+    const players = Object.keys(conf.players).map((token) => this.convertBotConfig(token, conf.players[token]));
     // tslint:disable-next-line:variable-name
     const game_config = { max_turns: maxTurns, map_file: mapFile };
     this.conf = { players, game_config, log_file: logFile };
@@ -33,9 +33,8 @@ class GameRunner extends EventEmitter {
     this.runBotRunner();
   }
 
-  private convertBotConfig(bot: BotConfig): ExternalBotConfig {
-    const [command, ...args] = stringArgv(bot.command);
-    return { name: bot.name, command, args };
+  private convertBotConfig(token: Token, bot: BotSlot): ExternalBotConfig {
+    return { token, name: bot.name };
   }
 
   private runBotRunner() {
@@ -74,8 +73,7 @@ export interface ExternalMatchConfig {
 
 export interface ExternalBotConfig {
   name: string;
-  command: string;
-  args: string[];
+  token: Token;
 }
 
 interface ExternalGameConfig {
