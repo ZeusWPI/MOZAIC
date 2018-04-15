@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use futures::{Future, Poll, Async};
 use futures::sync::mpsc::UnboundedReceiver;
 
-use client_controller::{PlayerId, Client, ClientMessage};
+use players::{PlayerId, Client, ClientMessage};
 use utils::{PlayerLock, RequestResult};
 
 use super::Config;

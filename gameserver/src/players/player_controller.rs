@@ -63,7 +63,10 @@ pub enum Command {
     Disconnect,
 }
 
-pub struct ClientController {
+/// The PlayerController is in charge of handling a player connection.
+/// It bridges between the game controller and the network connection
+/// to the actual client.
+pub struct PlayerController {
     player_id: PlayerId,
     
     connection: Connection,
@@ -74,7 +77,7 @@ pub struct ClientController {
     game_handle: UnboundedSender<ClientMessage>,
 }
 
-impl ClientController {
+impl PlayerController {
     pub fn new(player_id: PlayerId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
@@ -83,7 +86,7 @@ impl ClientController {
     {
         let (snd, rcv) = unbounded();
 
-        return ClientController {
+        return PlayerController {
             connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
@@ -153,7 +156,7 @@ impl ClientController {
     }
 }
 
-impl Future for ClientController {
+impl Future for PlayerController {
     type Item = ();
     type Error = ();
 

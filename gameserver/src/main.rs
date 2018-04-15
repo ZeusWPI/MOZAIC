@@ -1,7 +1,7 @@
 #![allow(dead_code)]
-mod client_controller;
 mod connection;
 mod planetwars;
+mod players;
 mod protobuf_codec;
 mod utils;
 
@@ -57,9 +57,8 @@ use tokio::timer::Delay;
 use serde::de::{Deserialize, Deserializer, DeserializeOwned};
 use serde::de::Error as DeserializationError;
 
-use client_controller::ClientController;
+use players::{PlayerId, PlayerController, Client};
 use planetwars::PwController;
-use client_controller::{Client, PlayerId};
 use connection::router::RoutingTable;
 
 type FullMatchDescription = MatchDescription<planetwars::Config>;
@@ -95,7 +94,7 @@ fn main() {
 
     let clients = match_description.players.iter().enumerate().map(|(num, desc)| {
         let num = PlayerId::new(num);
-        let controller = ClientController::new(
+        let controller = PlayerController::new(
             num,
             desc.token.clone(),
             routing_table.clone(),

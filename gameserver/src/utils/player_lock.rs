@@ -5,7 +5,7 @@ use std::collections::{HashMap, BinaryHeap};
 use std::mem;
 use std::time::Instant;
 
-use client_controller::{ClientMessage, Message, Command, PlayerId};
+use players::{PlayerId, ClientMessage, Message, Command};
 use connection::connection::{Request, Response};
 use tokio::timer::Delay;
 
