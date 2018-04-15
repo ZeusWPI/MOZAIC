@@ -3,6 +3,7 @@ mod client_controller;
 mod connection;
 mod planetwars;
 mod protobuf_codec;
+mod utils;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
@@ -57,16 +58,11 @@ use serde::de::{Deserialize, Deserializer, DeserializeOwned};
 use serde::de::Error as DeserializationError;
 
 use client_controller::ClientController;
-use planetwars::modules::pw_controller::PwController;
-use planetwars::modules::step_lock::StepLock;
-use planetwars::Client;
+use planetwars::PwController;
+use client_controller::{Client, PlayerId};
 use connection::router::RoutingTable;
-use planetwars::time_out::Timeout;
-use planetwars::controller::PlayerId;
 
-//type SubController<G, C> = Controller<G, StepLock<G, C>, C>;
-//type FullController = SubController<PwController, planetwars::modules::Config>;
-type FullMatchDescription = MatchDescription<planetwars::modules::Config>;
+type FullMatchDescription = MatchDescription<planetwars::Config>;
 
 // Load the config and start the game.
 fn main() {
@@ -162,7 +158,9 @@ fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config<C: DeserializeOwned>(path: &Path) -> Result<MatchDescription<C>, Box<Error>> {
+pub fn parse_config<C: DeserializeOwned>(path: &Path)
+    -> Result<MatchDescription<C>, Box<Error>>
+{
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
 

@@ -3,21 +3,47 @@ use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use std::io;
 use std::str;
 use std::sync::{Arc, Mutex};
+use slog;
 
 use connection::router::RoutingTable;
 use connection::connection::{Connection, Request, Response};
 use connection::connection::Message as ConnectionMessage;
 
-use planetwars::controller::PlayerId;
+// TODO: find a better place for this
+#[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct PlayerId {
+    id: usize,
+}
 
-error_chain! {
-    errors {
-        ConnectionClosed
+impl PlayerId {
+    pub fn new(id: usize) -> PlayerId {
+        PlayerId {
+            id
+        }
     }
 
-    foreign_links {
-        Io(io::Error);
+    pub fn as_usize(&self) -> usize {
+        self.id
     }
+}
+
+impl slog::KV for PlayerId {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_usize("player_id", self.as_usize())
+    }
+}
+
+
+// TODO: find a better place for this
+#[derive(Clone)]
+pub struct Client {
+    pub id: PlayerId,
+    pub player_name: String,
+    pub handle: UnboundedSender<Command>,
 }
 
 pub struct ClientMessage {
@@ -57,7 +83,7 @@ impl ClientController {
     {
         let (snd, rcv) = unbounded();
 
-        let mut controller = ClientController {
+        return ClientController {
             connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
@@ -66,8 +92,6 @@ impl ClientController {
             game_handle,
             player_id,
         };
-        controller.send_message(Message::Connected);
-        return controller;
     }
 
     /// Get a handle to the control channel for this client.
@@ -119,7 +143,7 @@ impl ClientController {
     // that does the exact opposite
     fn handle_client_message(&mut self, msg: ConnectionMessage) {
         match msg {
-            ConnectionMessage::Request(request) => {
+            ConnectionMessage::Request(_request) => {
                 panic!("unexpected request");
             },
             ConnectionMessage::Response(response) => {

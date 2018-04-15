@@ -1,4 +1,4 @@
-use planetwars::controller::PlayerId;
+use client_controller::PlayerId;
 
 /// The planet wars game rules.
 pub struct PlanetWars {

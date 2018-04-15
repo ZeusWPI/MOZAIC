@@ -4,8 +4,9 @@ use std::io;
 
 use serde_json;
 
-use planetwars::protocol;
-use planetwars::rules::*;
+use client_controller::PlayerId;
+use super::pw_protocol as proto;
+use super::pw_rules::*;
 
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -17,7 +18,7 @@ pub struct Config {
 impl Config {
     pub fn create_game(&self, num_players: usize) -> PlanetWars {
         let players = (0..num_players)
-            .map(|id| Player { id, alive: true })
+            .map(|id| Player { id: PlayerId::new(id), alive: true })
             .collect();
         let planets = self.load_map(num_players);
         
@@ -44,7 +45,7 @@ impl Config {
                     let id = num as usize - 1;
                     // ignore players that are not in the game
                     if id < num_players {
-                        Some(id)
+                        Some(PlayerId::new(id))
                     } else { 
                         None
                     }
@@ -65,7 +66,7 @@ impl Config {
         }).collect();
     }
 
-    fn read_map(&self) -> io::Result<protocol::Map> {
+    fn read_map(&self) -> io::Result<proto::Map> {
         let mut file = File::open(&self.map_file)?;
         let mut buf = String::new();
         file.read_to_string(&mut buf)?;

@@ -1,16 +1,16 @@
 use std::collections::HashMap;
 
+use std::time::{Duration, Instant};
 use futures::{Future, Poll, Async};
 use futures::sync::mpsc::UnboundedReceiver;
-use client_controller::ClientMessage;
-use std::time::{Duration, Instant};
 
-use planetwars::modules::Config;
-use planetwars::modules::pw_rules::{PlanetWars, Dispatch};
-use planetwars::modules::pw_serializer::{serialize, serialize_rotated};
-use planetwars::modules::pw_protocol as proto;
-use planetwars::player_lock::{PlayerLock, RequestResult};
-use planetwars::controller::{PlayerId, Client};
+use client_controller::{PlayerId, Client, ClientMessage};
+use utils::{PlayerLock, RequestResult};
+
+use super::Config;
+use super::pw_rules::{PlanetWars, Dispatch};
+use super::pw_serializer::{serialize, serialize_rotated};
+use super::pw_protocol as proto;
 
 use slog;
 use serde_json;
@@ -106,6 +106,9 @@ impl PwController {
 
     fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, RequestResult>) {
         for (player_id, result) in msgs.drain() {
+            // TODO: log received message.
+            // TODO: this should probably happen in the lock as well, so that
+            //       we have a correct timestamp.
             if let Ok(message) = result {
                 self.execute_message(player_id, message);
             } else {

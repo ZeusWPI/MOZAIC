@@ -1,4 +1,6 @@
 
+// TODO: do we need this trait?
+
 use std::collections::HashSet;
 use planetwars::game_controller::GameController;
 use planetwars::controller::PlayerId;

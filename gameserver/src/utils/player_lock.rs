@@ -1,14 +1,13 @@
+use futures::{Future, Poll, Async, Stream};
+use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use std::cmp::{Ord, Ordering, PartialOrd};
 use std::collections::{HashMap, BinaryHeap};
 use std::mem;
 use std::time::Instant;
-use std::cmp::{Ord, Ordering, PartialOrd};
 
-use futures::{Future, Poll, Async, Stream};
-use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
-use tokio::timer::Delay;
+use client_controller::{ClientMessage, Message, Command, PlayerId};
 use connection::connection::{Request, Response};
-use client_controller::{ClientMessage, Message, Command};
-use super::controller::PlayerId;
+use tokio::timer::Delay;
 
 
 /// A basic util for sending requests to multiple players which have to be
