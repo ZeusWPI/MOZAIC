@@ -6,6 +6,10 @@ use futures::sync::mpsc::{UnboundedReceiver, UnboundedSender};
 
 use super::{PlayerId, PlayerMessage, PlayerCommand};
 
+/// The PlayerHandler is the key part in communicating with players. It
+/// manages a PlayerController for each player it handles, aggregating the
+/// events they produce into one event stream, which can be accessed by
+/// using `poll_message`.
 pub struct PlayerHandler {
     /// Handle to the player message channel.
     // TODO: actually keep this
@@ -19,6 +23,10 @@ pub struct PlayerHandler {
 }
 
 impl PlayerHandler {
+    // TODO: for now we'll pass in the connected players, but the PlayerHandler
+    // is supposed to create the PlayerControllers. This way, it can be entirely
+    // in charge of its message channel, and the PlayerControllers would be its
+    // 'slaves'.
     pub fn new(players: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
                player_messages: UnboundedReceiver<PlayerMessage>
                ) -> Self
