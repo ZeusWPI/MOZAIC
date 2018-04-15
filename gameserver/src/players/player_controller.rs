@@ -43,10 +43,10 @@ impl slog::KV for PlayerId {
 pub struct Client {
     pub id: PlayerId,
     pub player_name: String,
-    pub handle: UnboundedSender<Command>,
+    pub handle: UnboundedSender<PlayerCommand>,
 }
 
-pub struct ClientMessage {
+pub struct PlayerMessage {
     pub player_id: PlayerId,
     pub message: Message,
 }
@@ -58,7 +58,7 @@ pub enum Message {
     Timeout,
 }
 
-pub enum Command {
+pub enum PlayerCommand {
     Request(Request),
     Disconnect,
 }
@@ -71,17 +71,17 @@ pub struct PlayerController {
     
     connection: Connection,
 
-    ctrl_chan: UnboundedReceiver<Command>,
-    ctrl_handle: UnboundedSender<Command>,
+    ctrl_chan: UnboundedReceiver<PlayerCommand>,
+    ctrl_handle: UnboundedSender<PlayerCommand>,
     
-    game_handle: UnboundedSender<ClientMessage>,
+    game_handle: UnboundedSender<PlayerMessage>,
 }
 
 impl PlayerController {
     pub fn new(player_id: PlayerId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
-               game_handle: UnboundedSender<ClientMessage>)
+               game_handle: UnboundedSender<PlayerMessage>)
                -> Self
     {
         let (snd, rcv) = unbounded();
@@ -98,20 +98,20 @@ impl PlayerController {
     }
 
     /// Get a handle to the control channel for this client.
-    pub fn handle(&self) -> UnboundedSender<Command> {
+    pub fn handle(&self) -> UnboundedSender<PlayerCommand> {
         self.ctrl_handle.clone()
     }
 
     /// Send a message to the game this controller serves.
     fn send_message(&mut self, message: Message) {
-        let msg = ClientMessage {
+        let msg = PlayerMessage {
             player_id: self.player_id,
             message: message,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
 
-    fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
+    fn poll_ctrl_chan(&mut self) -> Poll<PlayerCommand, ()> {
         // we hold a handle to this channel, so it can never close.
         // this means errors can not happen.
         let value = self.ctrl_chan.poll().unwrap();
@@ -122,10 +122,10 @@ impl PlayerController {
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.poll_ctrl_chan()) {
-                Command::Request(request) => {
+                PlayerCommand::Request(request) => {
                    self.connection.send(ConnectionMessage::Request(request))
                 },
-                Command::Disconnect => {
+                PlayerCommand::Disconnect => {
                     return Ok(Async::Ready(()));
                 }
             }

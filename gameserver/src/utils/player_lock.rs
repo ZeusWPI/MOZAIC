@@ -5,7 +5,7 @@ use std::collections::{HashMap, BinaryHeap};
 use std::mem;
 use std::time::Instant;
 
-use players::{PlayerId, ClientMessage, Message, Command};
+use players::{PlayerId, PlayerCommand, PlayerMessage, Message};
 use connection::connection::{Request, Response};
 use tokio::timer::Delay;
 
@@ -22,10 +22,10 @@ use tokio::timer::Delay;
 pub struct PlayerLock {
 
     /// Message channels to all connected players.
-    players: HashMap<PlayerId, UnboundedSender<Command>>,
+    players: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
 
     /// A message channel that carries player responses.
-    player_msgs: UnboundedReceiver<ClientMessage>,
+    player_msgs: UnboundedReceiver<PlayerMessage>,
 
     /// Maps unresolved requests to the player that has to answer them.
     requests: HashMap<usize, PlayerId>,
@@ -70,8 +70,8 @@ impl PlayerLock {
 
     /// Construct a lock for given player handles and message channel.
     pub fn new(
-            players: HashMap<PlayerId, UnboundedSender<Command>>,
-            player_msgs: UnboundedReceiver<ClientMessage>
+            players: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
+            player_msgs: UnboundedReceiver<PlayerMessage>
         ) -> Self
     {
         PlayerLock {
@@ -96,7 +96,7 @@ impl PlayerLock {
 
         self.enqueue_deadline(request_id, deadline);
         self.requests.insert(request_id, player_id);
-        self.players[&player_id].unbounded_send(Command::Request(Request {
+        self.players[&player_id].unbounded_send(PlayerCommand::Request(Request {
             request_id,
             data,
         })).unwrap();
@@ -136,7 +136,7 @@ impl PlayerLock {
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
             let client_message = try_ready!(self.player_msgs.poll());
-            let ClientMessage { player_id, message } = client_message.unwrap();
+            let PlayerMessage { player_id, message } = client_message.unwrap();
             match message {
                 Message::Response(response) => {
                     self.accept_response(player_id, response);

@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use futures::{Future, Poll, Async};
 use futures::sync::mpsc::UnboundedReceiver;
 
-use players::{PlayerId, Client, ClientMessage};
+use players::{PlayerId, Client, PlayerMessage};
 use utils::{PlayerLock, RequestResult};
 
 use super::Config;
@@ -35,7 +35,7 @@ pub enum CommandError {
 impl PwController {
     pub fn new(conf: Config,
                clients: Vec<Client>,
-               client_msgs: UnboundedReceiver<ClientMessage>,
+               client_msgs: UnboundedReceiver<PlayerMessage>,
                logger: slog::Logger)
                -> Self
     {
