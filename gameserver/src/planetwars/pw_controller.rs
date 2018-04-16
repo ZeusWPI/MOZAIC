@@ -92,7 +92,7 @@ impl PwController {
     }
 
     fn prompt_players(&mut self) {
-        let deadline = Instant::now() + Duration::from_millis(100);
+        let deadline = Instant::now() + Duration::from_secs(10);
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();

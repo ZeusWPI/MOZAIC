@@ -9,7 +9,7 @@ use super::pw_protocol as proto;
 use super::pw_rules::*;
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Config {
     pub map_file: String,
     pub max_turns: u64,
