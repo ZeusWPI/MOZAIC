@@ -17,18 +17,27 @@ export interface Request {
     data: Buffer;
 }
 
+// TODO: expand this
+enum ClientState {
+    CONNECTING,
+    CONNECTED,
+};
+
+
 export class Client {
     readonly connection: Connection;
     // TODO: get rid of this
     readonly address: Address;
     readonly botRunner: BotRunner;
     readonly requestQueue: number[];
+    private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig) {
         this.connection = new Connection(connData.token);
         this.botRunner = new BotRunner(botConfig);
         this.address = connData.address;
         this.requestQueue = [];
+        this.state = ClientState.CONNECTING;
         this.initHandlers();
     }
 
@@ -49,8 +58,19 @@ export class Client {
     }
 
     public handleRequest(request: Request) {
-        this.requestQueue.push(request.requestId);
-        this.botRunner.sendMessage(request.data);
+        switch (this.state) {
+            case ClientState.CONNECTING: {
+                let hello = Buffer.from("hello", 'utf-8');
+                this.connection.respond(request.requestId, hello);
+                this.state = ClientState.CONNECTED;
+                break;
+            }
+            case ClientState.CONNECTED: {
+                this.requestQueue.push(request.requestId);
+                this.botRunner.sendMessage(request.data);
+                break;
+            }
+        }
     }
 
     private initHandlers() {

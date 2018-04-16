@@ -19,9 +19,20 @@ use serde_json;
 
 pub struct PwController {
     lock: PlayerLock,
+    game_state: GameState,
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
+}
+
+
+enum GameState {
+    /// Waiting for players to connect
+    Connecting,
+    /// Game is in progress
+    Playing,
+    /// Game has terminated
+    Finished,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -54,33 +65,63 @@ impl PwController {
 
         let mut controller = PwController {
             lock: PlayerLock::new(player_handler),
+            game_state: GameState::Connecting,
             state,
             planet_map,
             logger,
         };
-        controller.init();
+
+        // TODO: put this somewhere else
+        // Send hello's to all players. Once they reply, we know they have
+        // connected and the game can begin.
+        let deadline = Instant::now() + Duration::from_secs(60);
+        for player in controller.state.players.iter() {
+            let msg = "hello".to_string().into_bytes();
+            controller.lock.request(player.id, msg, deadline);
+        }
+
         return controller;
     }
 
-    pub fn init(&mut self){
+    /// Check whether all players have succesfully connected.
+    fn connect(&mut self, messages: HashMap<PlayerId, RequestResult>) {
+        // TODO: proper logging
+        for (player_id, response) in messages.into_iter() {
+            match response {
+                Err(_) => {
+                    println!("player {} did not connect", player_id.as_usize());
+                    self.game_state = GameState::Finished;
+                    return;
+                },
+                Ok(_) => {}
+            }
+        }
+        // All players have connected; we can start the game.
+        self.start_game();
+    }
+
+    fn start_game(&mut self) {
+        self.game_state = GameState::Playing;
         self.log_state();
         self.prompt_players();
     }
 
     /// Advance the game by one turn.
-    pub fn step(&mut self, messages: HashMap<PlayerId, RequestResult>) {
+    fn step(&mut self, messages: HashMap<PlayerId, RequestResult>) {
         self.state.repopulate();
         self.execute_messages(messages);
         self.state.step();
 
         self.log_state();
 
-        if !self.state.is_finished() {
+        if self.state.is_finished() {
+            self.game_state = GameState::Finished;
+        } else {
             self.prompt_players();
         }
     }
 
-    pub fn outcome(&self) -> Option<Vec<PlayerId>> {
+    fn outcome(&self) -> Option<Vec<PlayerId>> {
         if self.state.is_finished() {
             Some(self.state.living_players())
         } else {
@@ -94,7 +135,7 @@ impl PwController {
     }
 
     fn prompt_players(&mut self) {
-        let deadline = Instant::now() + Duration::from_secs(10);
+        let deadline = Instant::now() + Duration::from_secs(1);
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
@@ -190,10 +231,19 @@ impl Future for PwController {
 
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
-            let input = try_ready!(self.lock.poll());
-            self.step(input);
-            if self.state.is_finished() {
-                return Ok(Async::Ready(()));
+            match self.game_state {
+                GameState::Connecting => {
+                    // once all players gave a sign of life, the game can start.
+                    let responses = try_ready!(self.lock.poll());
+                    self.connect(responses);
+                },
+                GameState::Playing => {
+                    let responses = try_ready!(self.lock.poll());
+                    self.step(responses);
+                },
+                GameState::Finished => {
+                    return Ok(Async::Ready(()));
+                }
             }
         }
     }
