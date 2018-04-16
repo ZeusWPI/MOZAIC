@@ -3,7 +3,6 @@ use std::fs::File;
 use std::time::{Duration, Instant};
 
 use futures::{Future, Poll, Async};
-use futures::sync::mpsc;
 use hex;
 use serde::de::{Deserialize, Deserializer, DeserializeOwned};
 use serde::de::Error as DeserializationError;
@@ -16,8 +15,6 @@ use tokio::timer::Delay;
 use connection;
 use connection::router::RoutingTable;
 use planetwars::{PwController, Config as PwConfig};
-use players::{PlayerController, Client, PlayerId};
-
 
 #[serde(bound(deserialize = ""))]
 #[derive(Serialize, Deserialize)]
@@ -60,6 +57,9 @@ impl Future for OneshotServer {
     type Item = ();
     type Error = ();
 
+    // This is some rather temporary code, don't mind its dirty intrinsics
+    // too much. We don't want oneshot servers, we want a gameserver that can
+    // run multiple games in parallel.
     fn poll(&mut self) -> Poll<(), ()> {
         let log_file = File::create(&self.config.log_file).unwrap();
 
@@ -70,31 +70,14 @@ impl Future for OneshotServer {
 
         let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
 
-        let (controller_handle, controller_chan) = mpsc::unbounded();
-
-        let clients = self.config.players.iter().enumerate().map(|(num, desc)| {
-            let num = PlayerId::new(num);
-            let controller = PlayerController::new(
-                num,
-                desc.token.clone(),
-                routing_table.clone(),
-                controller_handle.clone());
-            let ctrl_handle = controller.handle();
-
-            tokio::spawn(controller);
-
-            Client {
-                id: num,
-                player_name: desc.name.clone(),
-                // TODO
-                handle: ctrl_handle,
-            }
+        let client_tokens = self.config.players.iter().map(|player_desc| {
+            player_desc.token.clone()
         }).collect();
 
         let controller = PwController::new(
             self.config.game_config.clone(),
-            clients,
-            controller_chan,
+            client_tokens,
+            routing_table.clone(),
             logger,
         );
         tokio::spawn(controller.and_then(|_| {

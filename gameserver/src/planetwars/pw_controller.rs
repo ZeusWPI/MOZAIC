@@ -1,11 +1,12 @@
 use std::collections::HashMap;
-
 use std::time::{Duration, Instant};
-use futures::{Future, Poll, Async};
-use futures::sync::mpsc::UnboundedReceiver;
+use std::sync::{Arc, Mutex};
 
-use players::{PlayerId, Client, PlayerMessage, PlayerHandler};
+use futures::{Future, Poll, Async};
+
+use players::{PlayerId, PlayerHandler};
 use utils::{PlayerLock, RequestResult};
+use connection::router::RoutingTable;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
@@ -34,24 +35,25 @@ pub enum CommandError {
 
 impl PwController {
     pub fn new(conf: Config,
-               clients: Vec<Client>,
-               client_msgs: UnboundedReceiver<PlayerMessage>,
+               client_tokens: Vec<Vec<u8>>,
+               routing_table: Arc<Mutex<RoutingTable>>,
                logger: slog::Logger)
                -> Self
     {
-        let state = conf.create_game(clients.len());
+        let state = conf.create_game(client_tokens.len());
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        let players = clients.into_iter().map(|client| {
-            (client.id, client.handle)
-        }).collect();
-
+        let mut player_handler = PlayerHandler::new(routing_table);
+        for (player_num, token) in client_tokens.into_iter().enumerate() {
+            let player_id = PlayerId::new(player_num);
+            player_handler.add_player(player_id, token);
+        }
 
         let mut controller = PwController {
-            lock: PlayerLock::new(PlayerHandler::new(players, client_msgs)),
+            lock: PlayerLock::new(player_handler),
             state,
             planet_map,
             logger,
