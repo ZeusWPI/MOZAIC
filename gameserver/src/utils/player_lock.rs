@@ -5,7 +5,7 @@ use std::mem;
 use std::time::Instant;
 
 use players::{PlayerId, PlayerHandler, PlayerMessage, Message};
-use connection::connection::{Request, Response};
+use network::connection::{Request, Response};
 use tokio::timer::Delay;
 
 

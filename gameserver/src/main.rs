@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-mod connection;
+mod network;
 mod oneshot_server;
 mod planetwars;
 mod players;

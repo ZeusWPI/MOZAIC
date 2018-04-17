@@ -5,9 +5,9 @@ use std::str;
 use std::sync::{Arc, Mutex};
 use slog;
 
-use connection::router::RoutingTable;
-use connection::connection::{Connection, Request, Response};
-use connection::connection::Message as ConnectionMessage;
+use network::router::RoutingTable;
+use network::connection::{Connection, Request, Response};
+use network::connection::Message as ConnectionMessage;
 
 // TODO: find a better place for this
 #[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]

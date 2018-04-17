@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::timer::Delay;
 
-use connection;
-use connection::router::RoutingTable;
+use network;
+use network::router::RoutingTable;
 use planetwars::{PwController, Config as PwConfig};
 
 #[serde(bound(deserialize = ""))]
@@ -90,7 +90,7 @@ impl Future for OneshotServer {
         }));
 
         let addr = "127.0.0.1:9142".parse().unwrap();
-        let listener = connection::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
+        let listener = network::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
         tokio::spawn(listener);
 
         return Ok(Async::Ready(()));

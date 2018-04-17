@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use connection::connection::Request;
-use connection::router::RoutingTable;
+use network::connection::Request;
+use network::router::RoutingTable;
 use futures::{Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio;

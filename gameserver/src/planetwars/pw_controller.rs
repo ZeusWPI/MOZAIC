@@ -6,7 +6,7 @@ use futures::{Future, Poll, Async};
 
 use players::{PlayerId, PlayerHandler};
 use utils::{PlayerLock, RequestResult};
-use connection::router::RoutingTable;
+use network::router::RoutingTable;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
