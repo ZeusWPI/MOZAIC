@@ -24,10 +24,13 @@ message ConnectionError {
 
 message Packet {
     oneof payload {
-        Request request = 1;
-        Response response = 2;
-        CloseConnection close_connection = 3;
+        Message message = 1;
+        CloseConnection close_connection = 2;
     }
+}
+
+message Message {
+    bytes data = 1;
 }
 
 message Request {
