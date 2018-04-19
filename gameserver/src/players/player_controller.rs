@@ -6,8 +6,7 @@ use std::sync::{Arc, Mutex};
 use slog;
 
 use network::router::RoutingTable;
-use network::connection::{Connection, Request, Response};
-use network::connection::Message as ConnectionMessage;
+use network::connection::Connection;
 
 // TODO: find a better place for this
 #[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
@@ -48,18 +47,16 @@ pub struct Client {
 
 pub struct PlayerMessage {
     pub player_id: PlayerId,
-    pub message: Message,
+    pub content: MessageContent,
 }
 
-pub enum Message {
-    Response(Response),
-    Connected,
+pub enum MessageContent {
+    Data(Vec<u8>),
     Disconnected,
-    Timeout,
 }
 
 pub enum PlayerCommand {
-    Request(Request),
+    Send(Vec<u8>),
     Disconnect,
 }
 
@@ -103,10 +100,10 @@ impl PlayerController {
     }
 
     /// Send a message to the game this controller serves.
-    fn send_message(&mut self, message: Message) {
+    fn send_message(&mut self, content: MessageContent) {
         let msg = PlayerMessage {
             player_id: self.player_id,
-            message: message,
+            content,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
@@ -122,8 +119,8 @@ impl PlayerController {
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.poll_ctrl_chan()) {
-                PlayerCommand::Request(request) => {
-                   self.connection.send(ConnectionMessage::Request(request))
+                PlayerCommand::Send(data) => {
+                   self.connection.send(data);
                 },
                 PlayerCommand::Disconnect => {
                     return Ok(Async::Ready(()));
@@ -142,17 +139,8 @@ impl PlayerController {
         }
     }
  
-    // TODO: this naming sucks because ClientMessage is also an enum
-    // that does the exact opposite
-    fn handle_client_message(&mut self, msg: ConnectionMessage) {
-        match msg {
-            ConnectionMessage::Request(_request) => {
-                panic!("unexpected request");
-            },
-            ConnectionMessage::Response(response) => {
-                self.send_message(Message::Response(response));
-            },
-        };
+    fn handle_client_message(&mut self, msg: Vec<u8>) {
+        self.send_message(MessageContent::Data(msg));
     }
 }
 

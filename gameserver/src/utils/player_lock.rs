@@ -4,8 +4,7 @@ use std::collections::{HashMap, BinaryHeap};
 use std::mem;
 use std::time::Instant;
 
-use players::{PlayerId, PlayerHandler, PlayerMessage, Message};
-use network::connection::{Request, Response};
+use players::{PlayerId, PlayerHandler, PlayerMessage};
 use tokio::timer::Delay;
 
 
@@ -86,28 +85,30 @@ impl PlayerLock {
 
         self.enqueue_deadline(request_id, deadline);
         self.requests.insert(request_id, player_id);
-        self.player_handler.request(player_id, Request {
-            request_id,
-            data,
-        });
+        // TODO
+        // self.player_handler.request(player_id, Request {
+        //     request_id,
+        //     data,
+        // });
     }
 
     /// Check whether a response is valid, and if so, resolve its request.
-    fn accept_response(&mut self, player_id: PlayerId, response: Response) {
+    fn accept_response(&mut self, player_id: PlayerId, response: ()) {
+        // TODO
         // If the request id is not in the hashmap of unresolved requests,
         // someone sent a rogue response.
-        let request_player = match self.requests.get(&response.request_id) {
-            // TODO: panic is for debugging reasons,
-            //       remove me when everything works
-            // TODO: it should be logged though
-            None => panic!("got unsolicited response"),
-            Some(&player_id) => player_id,
-        };
-        // Check whether the sender is authorized to answer this request.
-        if player_id == request_player {
-            self.requests.remove(&response.request_id);
-            self.results.insert(player_id, Ok(response.data));
-        }
+        // let request_player = match self.requests.get(&response.request_id) {
+        //     // TODO: panic is for debugging reasons,
+        //     //       remove me when everything works
+        //     // TODO: it should be logged though
+        //     None => panic!("got unsolicited response"),
+        //     Some(&player_id) => player_id,
+        // };
+        // // Check whether the sender is authorized to answer this request.
+        // if player_id == request_player {
+        //     self.requests.remove(&response.request_id);
+        //     self.results.insert(player_id, Ok(response.data));
+        // }
     }
 
     /// Adds a deadline to the deadline queue, updating the delay future if
@@ -126,14 +127,8 @@ impl PlayerLock {
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
             let client_message = try_ready!(self.player_handler.poll_message());
-            let PlayerMessage { player_id, message } = client_message;
-            match message {
-                Message::Response(response) => {
-                    self.accept_response(player_id, response);
-                },
-                // ignore other cases for now
-                _ => ()
-            };
+            let PlayerMessage { player_id, content } = client_message;
+            unimplemented!();
         }
         let responses = mem::replace(&mut self.results, HashMap::new());
         return Ok(Async::Ready(responses));
