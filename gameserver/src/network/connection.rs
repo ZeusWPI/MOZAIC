@@ -10,22 +10,6 @@ use protobuf_codec::MessageStream;
 use protocol as proto;
 use protocol::packet::Payload;
 
-// TODO: move these structs somewhere else
-pub struct Request {
-    pub request_id: usize,
-    pub data: Vec<u8>,
-}
-
-pub struct Response {
-    pub request_id: usize,
-    pub data: Vec<u8>,
-}
-
-pub enum Message {
-    Request(Request),
-    Response(Response),
-}
-
 type PacketStream = MessageStream<TcpStream, proto::Packet>;
 
 pub enum StreamState {
@@ -79,21 +63,8 @@ impl Connection {
         }
     }
 
-    pub fn send(&mut self, message: Message) {
-        let payload = match message {
-            Message::Request(request) => {
-                Payload::Request(proto::Request {
-                    request_id: request.request_id as u64,
-                    data: request.data,
-                })
-            },
-            Message::Response(response) => {
-                Payload::Response(proto::Response {
-                    request_id: response.request_id as u64,
-                    data: response.data,
-                })
-            }
-        };
+    pub fn send(&mut self, data: Vec<u8>) {
+        let payload = Payload::Message(proto::Message { data });
         self.buffer.push(payload);
     }
 
@@ -112,7 +83,7 @@ impl Connection {
         return stream.poll_complete();
     }
 
-    pub fn poll_message(&mut self) -> Poll<Option<Message>, io::Error> {
+    pub fn poll_message(&mut self) -> Poll<Option<Vec<u8>>, io::Error> {
         self.perform_routing();
         let stream = try_ready!(self.stream_handler.poll_stream());
         loop {
@@ -123,22 +94,8 @@ impl Connection {
 
             if let Some(payload) = packet.payload {
                 match payload {
-                    Payload::Request(request) => {
-                        let r = Request {
-                            request_id: request.request_id as usize,
-                            data: request.data,
-                        };
-                        let message = Message::Request(r);
-                        return Ok(Async::Ready(Some(message)));
-                    },
-                    Payload::Response(response) => {
-                        // TODO: this can be done way nicer
-                        let r = Response {
-                            request_id: response.request_id as usize,
-                            data: response.data,
-                        };
-                        let message = Message::Response(r);
-                        return Ok(Async::Ready(Some(message)));
+                    Payload::Message(message) => {
+                        return Ok(Async::Ready(Some(message.data)))
                     },
                     Payload::CloseConnection(_) => {
                         // TODO

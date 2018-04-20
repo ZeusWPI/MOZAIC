@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use network::connection::Request;
 use network::router::RoutingTable;
 use futures::{Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
@@ -52,13 +51,13 @@ impl PlayerHandler {
         tokio::spawn(player_controller);
     }
 
-    /// Dispatch a request to a player.
-    pub fn request(&mut self, player_id: PlayerId, request: Request) {
+    /// Dispatch a message to a player
+    pub fn send(&mut self, player_id: PlayerId, data: Vec<u8>) {
         let handle = match self.player_handles.get_mut(&player_id) {
             None => panic!("invalid PlayerId"),
             Some(handle) => handle,
         };
-        handle.unbounded_send(PlayerCommand::Request(request)).unwrap();
+        handle.unbounded_send(PlayerCommand::Send(data)).unwrap();
     }
 
     /// Poll for a PlayerMessage.
