@@ -5,9 +5,7 @@ use std::time::Instant;
 
 use players::{PlayerId, PlayerHandler};
 
-use super::request_handler::{RequestHandler, RequestResult};
-pub use super::request_handler::ResultType;
-
+use super::message_resolver::{MessageResolver, MessageId, PlayerMessage, MessageContent, ResponseValue};
 
 /// A basic util for sending requests to multiple players which have to be
 /// answered before a specified deadline. It is limited to one request per
@@ -18,14 +16,14 @@ pub use super::request_handler::ResultType;
 /// The lock will then resolve once all requests are resolved, and yield the
 /// results.
 pub struct PlayerLock {
-    /// The PlayerHandler operated by this lock.
-    request_handler: RequestHandler,
+    /// The MessageResolver operated by this lock.
+    message_resolver: MessageResolver,
 
     /// Maps unresolved requests to the player that has to answer them.
-    requests: HashMap<u64, PlayerId>,
+    requests: HashMap<MessageId, PlayerId>,
 
     /// The results that have already been received.
-    results: HashMap<PlayerId, ResultType>,
+    results: HashMap<PlayerId, ResponseValue>,
 }
 
 
@@ -34,7 +32,7 @@ impl PlayerLock {
     /// Construct a lock for given player handles and message channel.
     pub fn new(player_handler: PlayerHandler) -> Self {
         PlayerLock {
-            request_handler: RequestHandler::new(player_handler),
+            message_resolver: MessageResolver::new(player_handler),
             requests: HashMap::new(),
             results: HashMap::new(),
         }
@@ -46,7 +44,7 @@ impl PlayerLock {
                    data: Vec<u8>,
                    deadline: Instant)
     {
-        let request_id = self.request_handler.request(
+        let request_id = self.message_resolver.request(
             player_id,
             data,
             deadline
@@ -54,16 +52,27 @@ impl PlayerLock {
         self.requests.insert(request_id, player_id);
     }
 
-    pub fn poll(&mut self) -> Poll<HashMap<PlayerId, ResultType>, ()> {
+    pub fn poll(&mut self) -> Poll<HashMap<PlayerId, Result<Vec<u8>, ()>>, ()> {
 
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
-            let rr = try_ready!(self.request_handler.poll());
-            let RequestResult { request_id, result } = rr;
-            let player_id = self.requests.remove(&request_id).unwrap();
-            self.results.insert(player_id, result);
+            let message = try_ready!(self.message_resolver.poll_message());
+            self.handle_message(message);
         }
         let results = mem::replace(&mut self.results, HashMap::new());
         return Ok(Async::Ready(results));
+    }
+
+    fn handle_message(&mut self, message: PlayerMessage) {
+        match message.content {
+            MessageContent::Message { .. } => {
+                // ignore
+                // TODO: log
+            },
+            MessageContent::Response { message_id, value } => {
+                let player_id = self.requests.remove(&message_id).unwrap();
+                self.results.insert(player_id, value);
+            }
+        }
     }
 }

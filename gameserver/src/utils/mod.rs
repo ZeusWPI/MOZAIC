@@ -1,4 +1,5 @@
 mod player_lock;
-mod request_handler;
+mod message_resolver;
 
-pub use self::player_lock::{PlayerLock, ResultType};
+pub use self::message_resolver::{MessageResolver, ResponseValue};
+pub use self::player_lock::{PlayerLock};

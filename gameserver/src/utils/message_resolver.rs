@@ -39,8 +39,8 @@ impl MessageId {
 }
 
 pub struct PlayerMessage {
-    player_id: PlayerId,
-    content: MessageContent,
+    pub player_id: PlayerId,
+    pub content: MessageContent,
 }
 
 // TODO: name me 
@@ -52,10 +52,12 @@ pub enum MessageContent {
     Response {
         message_id: MessageId,
         // TODO: this might not be the nicest name
-        value: Result<Vec<u8>, ()>,
+        value: ResponseValue,
     },
     // TODO: disconnect, ...
 }
+
+pub type ResponseValue = Result<Vec<u8>, ()>;
 
 pub struct RequestResult {
     pub request_id: u64,
