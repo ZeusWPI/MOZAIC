@@ -215,12 +215,8 @@ impl MessageResolver {
 
     fn poll_timeout(&mut self) -> Poll<PlayerMessage, ()> {
         loop {
-            try_ready!(self.poll_delay());
-            // delay has passed, so the soonest deadline has expired
-            let message_id = match self.deadlines.pop() {
-                None => return Ok(Async::NotReady),
-                Some(deadline) => deadline.message_id,
-            };
+            let deadline = try_ready!(self.poll_deadline());
+            let message_id = deadline.message_id;
 
             // set delay for next deadline
             if let Some(next_deadline) = self.deadlines.peek() {
@@ -228,12 +224,35 @@ impl MessageResolver {
             }
 
             if let Some(player_id) = self.requests.remove(&message_id) {
+                println!("removed {}", message_id.as_u64());
                 let value = Err(());
                 let content = MessageContent::Response { message_id, value };
                 let message = PlayerMessage { player_id, content };
                 return Ok(Async::Ready(message));
             }
         }
+    }
+
+    // poll for a message with an elapsed deadline
+    fn poll_deadline(&mut self) -> Poll<Deadline, ()> {
+        // TODO: comment this.
+
+        try_ready!(self.poll_delay());
+
+        // TODO: especially this frankenstein
+        {
+            let deadline = match self.deadlines.peek() {
+                None => return Ok(Async::NotReady),
+                Some(deadline) => deadline,
+            };
+
+            if Instant::now() < deadline.instant {
+                return Ok(Async::NotReady);
+            }
+        }
+
+        let deadline = self.deadlines.pop().unwrap();
+        return Ok(Async::Ready(deadline));
     }
 
     /// Poll timer and expire requests if neccesary.
