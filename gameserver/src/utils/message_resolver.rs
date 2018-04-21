@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use prost::Message as ProtobufMessage;
 use bytes::BytesMut;
-use players::{self, PlayerId, PlayerHandler};
+use players::{PlayerId, PlayerHandler, PlayerEvent, EventContent};
 use tokio::timer::Delay;
 use protocol::{self as proto, message};
 
@@ -134,9 +134,9 @@ impl MessageResolver {
         // therefore ignored)
         loop {
             let player_event = try_ready!(self.player_handler.poll_message());
-            let players::PlayerMessage { player_id, content } = player_event;
+            let PlayerEvent { player_id, content } = player_event;
             match content {
-                players::MessageContent::Data(data) => {
+                EventContent::Data(data) => {
                     match self.get_message_content(player_id, data) {
                         Ok(content) => {
                             let message = PlayerMessage { player_id, content };

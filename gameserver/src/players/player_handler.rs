@@ -6,7 +6,7 @@ use futures::{Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio;
 
-use super::{PlayerId, PlayerMessage, PlayerCommand, PlayerController};
+use super::{PlayerId, PlayerEvent, PlayerCommand, PlayerController};
 
 /// The PlayerHandler is the key part in communicating with players. It
 /// manages a PlayerController for each player it handles, aggregating the
@@ -14,10 +14,10 @@ use super::{PlayerId, PlayerMessage, PlayerCommand, PlayerController};
 /// using `poll_message`.
 pub struct PlayerHandler {
     /// Handle to the player message channel.
-    handle: UnboundedSender<PlayerMessage>,
+    handle: UnboundedSender<PlayerEvent>,
 
     /// Receiver for the player message channel.
-    player_messages: UnboundedReceiver<PlayerMessage>,
+    player_messages: UnboundedReceiver<PlayerEvent>,
 
     /// Handles to all registered players.
     player_handles: HashMap<PlayerId, UnboundedSender<PlayerCommand>>,
@@ -61,7 +61,7 @@ impl PlayerHandler {
     }
 
     /// Poll for a PlayerMessage.
-    pub fn poll_message(&mut self) -> Poll<PlayerMessage, ()> {
+    pub fn poll_message(&mut self) -> Poll<PlayerEvent, ()> {
         match self.player_messages.poll() {
             Ok(Async::Ready(Some(message))) => Ok(Async::Ready(message)),
             // Unbounded channels only stop when all senders are dropped.

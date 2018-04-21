@@ -45,12 +45,12 @@ pub struct Client {
     pub handle: UnboundedSender<PlayerCommand>,
 }
 
-pub struct PlayerMessage {
+pub struct PlayerEvent {
     pub player_id: PlayerId,
-    pub content: MessageContent,
+    pub content: EventContent,
 }
 
-pub enum MessageContent {
+pub enum EventContent {
     Data(Vec<u8>),
     Disconnected,
 }
@@ -71,14 +71,14 @@ pub struct PlayerController {
     ctrl_chan: UnboundedReceiver<PlayerCommand>,
     ctrl_handle: UnboundedSender<PlayerCommand>,
     
-    game_handle: UnboundedSender<PlayerMessage>,
+    game_handle: UnboundedSender<PlayerEvent>,
 }
 
 impl PlayerController {
     pub fn new(player_id: PlayerId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
-               game_handle: UnboundedSender<PlayerMessage>)
+               game_handle: UnboundedSender<PlayerEvent>)
                -> Self
     {
         let (snd, rcv) = unbounded();
@@ -100,8 +100,8 @@ impl PlayerController {
     }
 
     /// Send a message to the game this controller serves.
-    fn send_message(&mut self, content: MessageContent) {
-        let msg = PlayerMessage {
+    fn send_message(&mut self, content: EventContent) {
+        let msg = PlayerEvent {
             player_id: self.player_id,
             content,
         };
@@ -140,7 +140,7 @@ impl PlayerController {
     }
  
     fn handle_client_message(&mut self, msg: Vec<u8>) {
-        self.send_message(MessageContent::Data(msg));
+        self.send_message(EventContent::Data(msg));
     }
 }
 
