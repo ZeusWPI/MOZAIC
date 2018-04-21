@@ -35,7 +35,7 @@ export class BotRunner extends EventEmitter {
      * Send a message to the running bot
      * @param message the message to send
      */
-    public sendMessage(message: Buffer | string) {
+    public sendMessage(message: Uint8Array | string) {
         if (this.bot) {
             this.bot.process.stdin.write(message + '\n');
         } else {

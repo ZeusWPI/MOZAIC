@@ -1,5 +1,6 @@
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
+import Packet = proto.Packet;
 import * as net from 'net';
 import * as stream from 'stream';
 import { EventEmitter } from 'events';
@@ -46,10 +47,10 @@ export class Connection extends EventEmitter {
         this.writeMessage(proto.ConnectionRequest.encode(request));
     }
 
-    public respond(requestId: number, data: Buffer) {
-        let response = proto.Response.create({ requestId, data });
-        let packet = proto.Packet.create({ response });
-        this.writeMessage(proto.Packet.encode(packet));
+    public send(data: Uint8Array) {
+        let message = Packet.Message.create({ data });
+        let packet = Packet.create({ message });
+        this.writeMessage(Packet.encode(packet));
     }
 
     // write a write-op to the underlying socket.
@@ -75,9 +76,9 @@ export class Connection extends EventEmitter {
                 break;
             }
             case ConnectionState.CONNECTED: {
-                let packet = proto.Packet.decode(buf);
-                if (packet.request) {
-                    this.emit('request', packet.request);
+                let packet = Packet.decode(buf);
+                if (packet.message) {
+                    this.emit('message', packet.message.data!);
                 }
                 break;
             }

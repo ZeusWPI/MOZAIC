@@ -1,6 +1,9 @@
+import * as protocol_root from './proto';
+import Message = protocol_root.mozaic.protocol.Message;
 import { BotRunner, BotConfig } from "./BotRunner";
 import { Connection } from "./connection";
 import { Socket } from 'net';
+import { BufferWriter } from 'protobufjs';
 
 export interface ConnectionData {
     token: Buffer,
@@ -29,7 +32,7 @@ export class Client {
     // TODO: get rid of this
     readonly address: Address;
     readonly botRunner: BotRunner;
-    readonly requestQueue: number[];
+    readonly requestQueue: (number | Long)[];
     private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig) {
@@ -50,36 +53,59 @@ export class Client {
         this.botRunner.run();
     }
 
-    public handleBotMessage(message: Buffer) {
+    public handleBotMessage(message: Uint8Array) {
         let requestId = this.requestQueue.shift();
         if (requestId) {
-            this.connection.respond(requestId, message);
+            this.sendResponse(requestId, message);
         }
     }
 
-    public handleRequest(request: Request) {
+    public handleServerMessage(data: Uint8Array) {
+        let message = Message.decode(data);
+        switch (message.payload) {
+            case 'message': {
+                let msg = message.message!;
+                let messageId = msg.messageId! as number;
+                this.onServerMessage(messageId, msg.data!);
+                break;
+            }
+            case 'response': {
+                // TODO
+                break;
+            }
+        }
+    }
+
+    public onServerMessage(messageId: number | Long, data: Uint8Array) {
         switch (this.state) {
             case ClientState.CONNECTING: {
                 let hello = Buffer.from("hello", 'utf-8');
-                this.connection.respond(request.requestId, hello);
+                this.sendResponse(messageId, hello);
                 this.state = ClientState.CONNECTED;
                 break;
             }
             case ClientState.CONNECTED: {
-                this.requestQueue.push(request.requestId);
-                this.botRunner.sendMessage(request.data);
+                this.requestQueue.push(messageId);
+                this.botRunner.sendMessage(data);
                 break;
             }
         }
     }
 
+    public sendResponse(messageId: number | Long, data: Uint8Array) {
+        let response = Message.Response.create({ messageId, data });
+        let message = Message.create({ response });
+        let buffer = Message.encode(message).finish();
+        this.connection.send(buffer);
+    }
+
     private initHandlers() {
-        this.botRunner.on('message', (message: Buffer) => {
+        this.botRunner.on('message', (message: Uint8Array) => {
             this.handleBotMessage(message);
         });
 
-        this.connection.on('request', (request: Request) => {
-            this.handleRequest(request);
+        this.connection.on('message', (message: Uint8Array) => {
+            this.handleServerMessage(message);
         });
 
         this.connection.on('close', () => {
