@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use futures::{Future, Poll, Async};
 
 use players::{PlayerId, PlayerHandler};
-use utils::{PlayerLock, RequestResult};
+use utils::{PlayerLock, ResultType};
 use network::router::RoutingTable;
 
 use super::Config;
@@ -84,16 +84,16 @@ impl PwController {
     }
 
     /// Check whether all players have succesfully connected.
-    fn connect(&mut self, messages: HashMap<PlayerId, RequestResult>) {
+    fn connect(&mut self, messages: HashMap<PlayerId, ResultType>) {
         // TODO: proper logging
         for (player_id, response) in messages.into_iter() {
             match response {
-                Err(_) => {
+                ResultType::Timeout => {
                     println!("player {} did not connect", player_id.as_usize());
                     self.game_state = GameState::Finished;
                     return;
                 },
-                Ok(_) => {}
+                ResultType::Response(_) => {}
             }
         }
         // All players have connected; we can start the game.
@@ -107,7 +107,7 @@ impl PwController {
     }
 
     /// Advance the game by one turn.
-    fn step(&mut self, messages: HashMap<PlayerId, RequestResult>) {
+    fn step(&mut self, messages: HashMap<PlayerId, ResultType>) {
         self.state.repopulate();
         self.execute_messages(messages);
         self.state.step();
@@ -147,12 +147,12 @@ impl PwController {
         }
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, RequestResult>) {
+    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, ResultType>) {
         for (player_id, result) in msgs.drain() {
             // TODO: log received message.
             // TODO: this should probably happen in the lock as well, so that
             //       we have a correct timestamp.
-            if let Ok(message) = result {
+            if let ResultType::Response(message) = result {
                 self.execute_message(player_id, message);
             } else {
                 // TODO: log

@@ -39,12 +39,9 @@ pub struct RequestHandler {
     delay: Delay,
 }
 
-/// Timeout marker type
-pub struct Timeout;
-
 pub struct RequestResult {
-    request_id: u64,
-    result: ResultType,
+    pub request_id: u64,
+    pub result: ResultType,
 }
 
 pub enum ResultType {
@@ -90,6 +87,7 @@ impl RequestHandler {
                    player_id: PlayerId,
                    data: Vec<u8>,
                    deadline: Instant)
+                   -> u64
     {
         let request_id = self.request_counter;
         self.request_counter += 1;
@@ -108,6 +106,8 @@ impl RequestHandler {
         request.encode(&mut bytes).unwrap();
 
         self.player_handler.send(player_id, bytes.to_vec());
+
+        return request_id;
     }
 
     /// Check whether a response is valid, and if so, resolve its request.
