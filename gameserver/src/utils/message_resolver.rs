@@ -13,6 +13,12 @@ use protocol::{self as proto, message};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MessageId(u64);
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct ForeignMessageId {
+    player_id: PlayerId,
+    message_id: u64,
+}
+
 impl MessageId {
     fn as_u64(&self) -> u64 {
         let MessageId(num) = *self;
@@ -28,7 +34,7 @@ pub struct PlayerMessage {
 // TODO: name me 
 pub enum MessageContent {
     Message {
-        message_id: MessageId,
+        message_id: ForeignMessageId,
         data: Vec<u8>,
     },
     Response {
@@ -164,8 +170,10 @@ impl MessageResolver {
         };
         let content = match message.payload.unwrap() {
             message::Payload::Message(message)=> {
-                // TODO: this is not okay.
-                let message_id = MessageId(message.message_id);
+                let message_id = ForeignMessageId {
+                    player_id: player_id,
+                    message_id: message.message_id,
+                };
                 let data = message.data;
                 MessageContent::Message { message_id, data }
             }
