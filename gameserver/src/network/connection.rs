@@ -7,10 +7,9 @@ use tokio::net::TcpStream;
 
 use super::router::{RoutingTable, RoutingMessage};
 use protobuf_codec::MessageStream;
-use protocol as proto;
-use protocol::packet::Payload;
+use protocol::{Packet, packet};
 
-type PacketStream = MessageStream<TcpStream, proto::Packet>;
+type PacketStream = MessageStream<TcpStream, Packet>;
 
 pub enum StreamState {
     Disconnected,
@@ -45,7 +44,7 @@ pub struct Connection {
     /// The token that identifies this connection
     token: Vec<u8>,
     stream_handler: StreamHandler,
-    buffer: Vec<Payload>,
+    buffer: Vec<packet::Payload>,
     routing_chan: UnboundedReceiver<RoutingMessage>,
 
 }
@@ -64,7 +63,7 @@ impl Connection {
     }
 
     pub fn send(&mut self, data: Vec<u8>) {
-        let payload = Payload::Message(proto::Message { data });
+        let payload = packet::Payload::Message(packet::Message { data });
         self.buffer.push(payload);
     }
 
@@ -74,7 +73,7 @@ impl Connection {
         while !self.buffer.is_empty() {
             try_ready!(stream.poll_complete());
             let payload = self.buffer.remove(0);
-            let packet = proto::Packet {
+            let packet = Packet {
                 payload: Some(payload),
             };
             let res = try!(stream.start_send(packet));
@@ -94,10 +93,10 @@ impl Connection {
 
             if let Some(payload) = packet.payload {
                 match payload {
-                    Payload::Message(message) => {
+                    packet::Payload::Message(message) => {
                         return Ok(Async::Ready(Some(message.data)))
                     },
-                    Payload::CloseConnection(_) => {
+                    packet::Payload::CloseConnection(_) => {
                         // TODO
                         println!("connection with token {:?} closed", self.token);
                     }
