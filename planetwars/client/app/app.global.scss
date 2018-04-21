@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 // Bulma
 //------------------------------------------------------------------------------
-@import '~bulma/sass/utilities/initial-variables';
+@import "~bulma/sass/utilities/initial-variables";
 
 // Custom Variables
 $background: #201f1d;
 $altBackground: lighten($background, 5);
-$primary:#FFFFFF;
-$secondary: #DE8D47;
+$primary: #ffffff;
+$secondary: #de8d47;
 $tertiary: #868685;
 
 // Bulma variables
@@ -26,8 +26,7 @@ $link-hover: $secondary;
 $menu-item-hover-color: $secondary;
 $menu-item-active-color: $secondary;
 
-
-@import '~bulma/bulma';
+@import "~bulma/bulma";
 
 //------------------------------------------------------------------------------
 // Global Sass
@@ -79,7 +78,7 @@ body {
     position: absolute;
     top: -10px;
     right: -10px;
-    font-size: .6em;
+    font-size: 0.6em;
     font-family: Tahoma;
     background: $secondary;
     color: $primary;

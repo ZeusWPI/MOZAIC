@@ -1,9 +1,20 @@
 import * as React from "react";
 
-import { BotConfig, IBotList, IBotData, BotID, BotSlot, Token, BotSlotList,
-  MatchConfig } from '../../utils/ConfigModels';
+import {
+  BotConfig,
+  IBotList,
+  IBotData,
+  BotID,
+  BotSlot,
+  Token,
+  BotSlotList,
+  MatchConfig
+} from "../../utils/ConfigModels";
 import { IMapList } from "../../utils/GameModels";
-import { MatchParams } from '../../actions/actions';
+import { MatchParams } from "../../actions/actions";
+
+// tslint:disable-next-line:no-var-requires
+const styles = require("./Host.scss");
 
 export interface HostStateProps {
   bots: IBotList;
@@ -21,7 +32,7 @@ export interface HostDispatchProps {
   selectMap: (id: string) => void;
 }
 
-export interface HostState { }
+export interface HostState {}
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
@@ -29,20 +40,75 @@ export class Host extends React.Component<HostProps, HostState> {
   public render() {
     const toggle = (evt: any) => this.setState({ mapToggled: true });
     return (
-      <div>
-        <div>
-          <button onClick={this.addInternal}>+ Add one of your own bots</button>
-          <button onClick={this.addExternal}>+ Add an external bot</button>
+      <div id={styles.host}>
+        <div className={styles.header}>
+          <h1 className="title is-1">> Set up Host Game_ </h1>
         </div>
-        <div>
+        <div id={styles.addBotButtons}>
+          <h2 className="title is-5 ">
+            <span className="tag is-info is-small is-rounded">1</span>
+            <span className={styles.tagInfoText}> Add one or more bots</span>
+          </h2>
+          <button
+            className="button is-success is-outlined"
+            onClick={this.addInternal}
+          >
+            <span className="icon is-small">
+              <i className="fa fa-hand-spock-o" />
+            </span>
+            <span>My Bot</span>
+          </button>
+
+          <p> Add one of your own bots to the game </p>
+
+          <button
+            className="button is-success is-outlined"
+            onClick={this.addExternal}
+          >
+            <span className="icon is-small">
+              <i className="fa fa-hand-scissors-o" />
+            </span>
+            <span>External Bot</span>
+          </button>
+          <p> Add an external bots to the game </p>
+        </div>
+        <div id={styles.botList}>
+          <h2 className="title is-5">
+            <span className="tag is-info is-small is-rounded">2</span>
+            <span className={styles.tagInfoText}> Config selected bots</span>
+          </h2>
+
           <BotSlots
             selectedBots={this.props.selectedBots}
             allBots={this.props.bots}
             changeLocalBot={this.props.changeLocalBot}
           />
         </div>
-        <MapSelector maps={this.props.maps} selectMap={this.props.selectMap} selectedMap={this.props.selectedMap}/>
-        <button onClick={this.startServer}>Play!</button>
+        <div id={styles.mapSelector}>
+          <h2 className="title is-5">
+            <span className="tag is-info is-small is-rounded">3</span>
+            <span className={styles.tagInfoText}> Pick a Map</span>
+          </h2>
+
+          <MapSelector
+            maps={this.props.maps}
+            selectMap={this.props.selectMap}
+            selectedMap={this.props.selectedMap}
+          />
+          <div className={styles.mapPreview}>
+            <figure className="image is-128x128">
+              <img src="https://bulma.io/images/placeholders/128x128.png" />
+            </figure>
+          </div>
+          <h2 className="title is-5">
+            <span className="tag is-info is-small is-rounded">4</span>
+            <span className={styles.tagInfoText}> Play!</span>
+          </h2>
+
+          <button className="button" onClick={this.startServer}>
+            Play!
+          </button>
+        </div>
       </div>
     );
   }
@@ -51,19 +117,19 @@ export class Host extends React.Component<HostProps, HostState> {
     const config: MatchParams = {
       bots: this.props.selectedBots,
       map: this.props.selectedMap,
-      maxTurns: 500,
+      maxTurns: 500
     };
     console.log(config);
     this.props.runMatch(config);
-  }
+  };
 
   private addInternal = () => {
     this.props.selectBotInternal("My Bot", "");
-  }
+  };
 
   private addExternal = () => {
     this.props.selectBotExternal("My Enemy's Bot");
-  }
+  };
 }
 
 interface BotSlotsProps {
@@ -72,7 +138,7 @@ interface BotSlotsProps {
   changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
-export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
+export const BotSlots: React.SFC<BotSlotsProps> = props => {
   const slots = Object.keys(props.selectedBots).map((token, idx) => {
     return (
       <Slot
@@ -84,11 +150,7 @@ export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
       />
     );
   });
-  return (
-    <ul>
-      {slots}
-    </ul>
-  );
+  return <ul>{slots}</ul>;
 };
 
 interface SlotProps {
@@ -103,13 +165,18 @@ export class Slot extends React.Component<SlotProps> {
     let extra;
     if (this.props.bot.id !== undefined) {
       const options = Object.keys(this.props.allBots).map((uuid, i) => {
-        return <option value={uuid} key={i}> {this.props.allBots[uuid].config.name} </option>;
+        return (
+          <option value={uuid} key={i}>
+            {" "}
+            {this.props.allBots[uuid].config.name}{" "}
+          </option>
+        );
       });
       extra = (
         <div>
-            <select value={this.props.bot.id} onChange={this.changeBotID}>
-              <option value="">Select Bot</option>
-              {options}
+          <select value={this.props.bot.id} onChange={this.changeBotID}>
+            <option value="">Select Bot</option>
+            {options}
           </select>
           (token: {this.props.token})
         </div>
@@ -119,13 +186,15 @@ export class Slot extends React.Component<SlotProps> {
     }
     return (
       <li>
-        Name: <input
+        Name:{" "}
+        <input
           type="text"
           defaultValue={this.props.bot.name}
           onBlur={this.changeBotName}
         />
         {extra}
-      </li>);
+      </li>
+    );
   }
 
   private changeBotID = (evt: React.ChangeEvent<HTMLSelectElement>) => {
@@ -133,7 +202,7 @@ export class Slot extends React.Component<SlotProps> {
     const newBot = this.props.bot;
     newBot.id = id;
     this.props.changeLocalBot(this.props.token, newBot);
-  }
+  };
 
   private changeBotName(evt: any) {
     const name: string = evt.target.value;
@@ -149,14 +218,20 @@ interface MapSelectorProps {
   selectedMap: string;
 }
 
-export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
-  const mapElements = Object.keys(props.maps).map(
-    (key, idx) => <option value={key} key={idx}>{props.maps[key].name}</option>,
-  );
+export const MapSelector: React.SFC<MapSelectorProps> = props => {
+  const mapElements = Object.keys(props.maps).map((key, idx) => (
+    <option value={key} key={idx}>
+      {props.maps[key].name}
+    </option>
+  ));
   const handleChange = (evt: any) => props.selectMap(evt.target.value);
   mapElements.unshift(<option value="">Select Map</option>);
   return (
-    <select value={props.selectedMap} onChange={handleChange}>
+    <select
+      id={styles.mapSelector}
+      value={props.selectedMap}
+      onChange={handleChange}
+    >
       {mapElements}
     </select>
   );
