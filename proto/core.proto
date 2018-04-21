@@ -37,13 +37,20 @@ message Packet {
     }
 }
 
+// TODO: this naming might be really stupid.
+message Message {
+    message Message {
+        uint64 message_id = 1;
+        bytes data = 2;
+    }
+    
+    message Response {
+        uint64 message_id = 1;
+        bytes data = 2;
+    }
 
-message Request {
-    uint64 request_id = 1;
-    bytes data = 2;
-}
-
-message Response {
-    uint64 request_id = 1;
-    bytes data = 2;
+    oneof payload {
+        Message message = 1;
+        Response response = 2;
+    }
 }
