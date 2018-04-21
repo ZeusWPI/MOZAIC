@@ -10,24 +10,6 @@ use tokio::timer::Delay;
 use protocol::{self as proto, message};
 
 
-
-pub struct MessageResolver {
-    /// The PlayerHandler this message resolver acts upon.
-    player_handler: PlayerHandler,
-
-    /// Maps unresolved requests to the player that has to answer them.
-    requests: HashMap<MessageId, PlayerId>,
-
-    /// A queue containing the timeouts for the currently running requests.
-    deadlines: BinaryHeap<Deadline>,
-
-    /// For generating message identifiers.
-    message_counter: u64,
-
-    /// A Delay future that will be ready on the soonest deadline.
-    delay: Delay,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MessageId(u64);
 
@@ -59,33 +41,22 @@ pub enum MessageContent {
 
 pub type ResponseValue = Result<Vec<u8>, ()>;
 
-pub struct RequestResult {
-    pub request_id: u64,
-    pub result: ResultType,
-}
 
-pub enum ResultType {
-    Response(Vec<u8>),
-    Timeout,
-}
+pub struct MessageResolver {
+    /// The PlayerHandler this message resolver acts upon.
+    player_handler: PlayerHandler,
 
-/// Marks when a request should expire.
-#[derive(Clone, Copy, Eq, PartialEq)]
-struct Deadline {
-    message_id: MessageId,
-    instant: Instant,
-}
+    /// Maps unresolved requests to the player that has to answer them.
+    requests: HashMap<MessageId, PlayerId>,
 
-impl Ord for Deadline {
-    fn cmp(&self, other: &Deadline) -> Ordering {
-        self.instant.cmp(&other.instant)
-    }
-}
+    /// A queue containing the timeouts for the currently running requests.
+    deadlines: BinaryHeap<Deadline>,
 
-impl PartialOrd for Deadline {
-    fn partial_cmp(&self, other: &Deadline) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+    /// For generating message identifiers.
+    message_counter: u64,
+
+    /// A Delay future that will be ready on the soonest deadline.
+    delay: Delay,
 }
 
 impl MessageResolver {
@@ -268,5 +239,24 @@ impl MessageResolver {
     fn get_message_id(&mut self) -> MessageId {
         self.message_counter += 1;
         return MessageId(self.message_counter);
+    }
+}
+
+/// Marks when a request should expire.
+#[derive(Clone, Copy, Eq, PartialEq)]
+struct Deadline {
+    message_id: MessageId,
+    instant: Instant,
+}
+
+impl Ord for Deadline {
+    fn cmp(&self, other: &Deadline) -> Ordering {
+        self.instant.cmp(&other.instant)
+    }
+}
+
+impl PartialOrd for Deadline {
+    fn partial_cmp(&self, other: &Deadline) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
