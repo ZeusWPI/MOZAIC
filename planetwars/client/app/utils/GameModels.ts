@@ -1,3 +1,7 @@
+/**
+ * Note: If you change these things, be sure to add migrations for them.
+ */
+
 import { JsonPlanet, isJsonPlanet } from '../lib/match/types';
 import { BotID } from './ConfigModels';
 type LogPath = string;
@@ -46,7 +50,7 @@ export interface PlayerMap<T> {
 // tslint:disable-next-line:variable-name
 export const MatchStatuses = Object.keys(MatchStatus);
 
-export interface IMatchList {
+export interface MatchList {
   [matchId: string]: Match;
 }
 

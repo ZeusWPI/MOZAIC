@@ -1,6 +1,6 @@
-// TODO: Differentiate between internal and external representations
-// Rust uses snake_case, but TS uses camelCase, this will cause errors down the
-// road.
+/**
+ * Note: If you change these things, be sure to add migrations for them.
+ */
 
 export interface MatchConfig {
   players: BotSlotList;

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { store } from '../index';
 import * as A from '../actions/actions';
 import { BotConfig, IBotData, IBotList, BotID, BotSlot, BotSlotList } from '../utils/ConfigModels';
-import { Match, IMatchList, IMapList } from '../utils/GameModels';
+import { Match, MatchList, IMapList } from '../utils/GameModels';
 import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
@@ -31,7 +31,7 @@ export interface IGState {
 
   readonly navbar: INavbarState;
   readonly bots: IBotList;
-  readonly matches: IMatchList;
+  readonly matches: MatchList;
   readonly notifications: Notification[];
   readonly maps: IMapList;
 
@@ -49,7 +49,7 @@ export interface INavbarState {
 }
 
 export type IBotsState = IBotList;
-export type IMatchesState = IMatchList;
+export type IMatchesState = MatchList;
 
 export interface IPlayPageState {
   selectedBots: BotSlotList;
@@ -205,7 +205,7 @@ const playPageReducer = combineReducers<IPlayPageState>({
 
     if (A.changeLocalBot.test(action)) {
       state[action.payload.token] = action.payload.slot;
-      return {...state};
+      return { ...state };
     }
     return state;
   },

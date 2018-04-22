@@ -7,31 +7,20 @@ import log from 'electron-log';
 
 import * as A from '../actions/actions';
 import { IBotList, BotConfig, BotID } from './ConfigModels';
-import { Match, IMatchList, IMapList } from './GameModels';
+import { Match, MatchList, IMapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { Notification } from '../utils/UtilModels';
 import { Config } from './Config';
+import { migrate } from './database/migrate';
 
 // ----------------------------------------------------------------------------
 // Schema
 // ----------------------------------------------------------------------------
 
-export interface DbSchemaV3 {
-  version: 'v3';
-  matches: IMatchList;
-  bots: IBotList;
-  maps: IMapList;
-  notifications: Notification[];
-}
-
-const defaults: DbSchemaV3 = {
-  version: 'v3',
-  matches: {},
-  bots: {},
-  maps: {},
-  notifications: [],
-};
+import * as V4 from './database/migrationV4';
+type DbSchema = V4.DbSchema;
+const latestVersion = V4.defaults.version;
 
 // Utility to allow accessing the DB somewhat more safe. You can these string
 // properties as key so that you have some typechecking over typo's.
@@ -52,8 +41,8 @@ const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
 const adapter = new FileAsync(dbPath);
-const database = Promise.resolve(low<DbSchemaV3, typeof adapter>(adapter));
-type dbType = low.Lowdb<DbSchemaV3, typeof adapter>;
+const database = Promise.resolve(low<DbSchema, typeof adapter>(adapter));
+type dbType = low.Lowdb<DbSchema, typeof adapter>;
 
 /*
  * This function will populate the store initially with the DB info and
@@ -61,14 +50,14 @@ type dbType = low.Lowdb<DbSchemaV3, typeof adapter>;
  */
 export function bindToStore(store: any): Promise<void> {
   return database
-    .tap((db: dbType) => db.defaults(defaults).write())
+    .tap((db: dbType) => db.defaults(V4.defaults).write())
     .tap((db: dbType) => {
-      if (db.get(SCHEMA.VERSION, 'v1').value() !== 'v3') {
+      if (db.get(SCHEMA.VERSION, 'v1').value() !== latestVersion) {
         db.setState(migrate(db.value())).write();
       }
     })
     .then((db: dbType) => db.getState())
-    .then((db: DbSchemaV3) => {
+    .then((db: DbSchema) => {
       // TODO: these JSON objects should be validated to avoid weird runtime
       // errors elsewhere in the code
       Object.keys(db.bots).forEach((uuid) => {
@@ -151,7 +140,7 @@ class TableListener<T> {
 }
 
 const listeners: TableListener<any>[] = [
-  new TableListener<IMatchList>(
+  new TableListener<MatchList>(
     (state: IGState) => state.matches,
     SCHEMA.MATCHES,
   ),
@@ -168,96 +157,3 @@ const listeners: TableListener<any>[] = [
     SCHEMA.NOTIFICATIONS,
   ),
 ];
-
-// ----------------------------------------------------------------------------
-// Migrations
-// ----------------------------------------------------------------------------
-
-type DbSchema = DbSchemaV1 | DbSchemaV2 | DbSchemaV3;
-
-function migrate(oldDb: DbSchema): DbSchemaV3 {
-  let db = oldDb;
-  log.info('[DB] Starting migration');
-  while (db.version !== 'v3') {
-    switch (db.version) {
-      case 'v1':
-        log.info('[DB] Upgrading from V1 to V2.');
-        db = upgradeV1(db as DbSchemaV1);
-        break;
-      case 'v2':
-        log.info('[DB] Upgrading from V2 to V3.');
-        db = upgradeV2(db as DbSchemaV2);
-        break;
-      default:
-        log.error(`[DB] Unknown database version. ${db}`);
-        throw new Error(`[DB] Unknown database version. ${db}`);
-    }
-  }
-  return db;
-}
-
-function upgradeV1(db: DbSchemaV1): DbSchemaV2 {
-  log.warn('[DB] Somebody is messing with db-versions (v1 was never used)!');
-  return {
-    version: 'v2',
-    matches: {},
-    bots: {},
-    maps: {},
-    notifications: [],
-  };
-}
-
-function upgradeV2(db: DbSchemaV2): DbSchemaV3 {
-  const bots: BotListV2 = (db as DbSchemaV2).bots;
-  const newBots: IBotList = {};
-
-  const migrateConfig = (config: BotConfigV2): BotConfig => {
-    const { name, command, args } = config;
-    return { name, command: [command].concat(args).join(' ') };
-  };
-
-  Object.keys(bots).forEach((uuid) => {
-    const bot = bots[uuid];
-    const config = migrateConfig(bot.config);
-    const history = bot.history.map(migrateConfig);
-    newBots[uuid] = { ...bot, config, history };
-  });
-
-  return { ...db, version: 'v3', bots: newBots };
-}
-
-
-
-// Schema V1 ------------------------------------------------------------------
-// Never used in production
-
-interface DbSchemaV1 { version: 'v1'; }
-
-// Schema V2 ------------------------------------------------------------------
-// Used from Intro-event till mid-paasvakantie
-
-export interface DbSchemaV2 {
-  version: 'v2';
-  matches: IMatchList;
-  bots: BotListV2;
-  maps: IMapList;
-  notifications: Notification[];
-}
-
-export interface BotListV2 {
-  [key: string /* UUID */]: BotDataV2;
-}
-
-export interface BotDataV2 {
-  uuid: BotID;
-  config: BotConfigV2;
-  lastUpdatedAt: Date;
-  createdAt: Date;
-  history: BotConfigV2[];
-}
-
-export interface BotConfigV2 {
-  name: string;
-  command: string;
-  args: string[];
-}
