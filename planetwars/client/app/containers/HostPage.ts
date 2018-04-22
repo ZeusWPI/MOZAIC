@@ -4,7 +4,7 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
-import { BotID, BotSlot, BotSlotList, Token } from '../utils/ConfigModels';
+import { BotId, BotSlot, BotSlotList, Token } from '../utils/ConfigModels';
 import * as crypto from 'crypto';
 
 const mapStateToProps = (state: IGState) => {
@@ -17,7 +17,7 @@ const mapStateToProps = (state: IGState) => {
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    selectBotInternal(name: string, id: BotID) {
+    selectBotInternal(name: string, id: BotId) {
       dispatch(A.selectBot({
         id,
         token: generateToken(),
@@ -30,14 +30,14 @@ const mapDispatchToProps = (dispatch: any) => {
         name,
       }));
     },
-    unselectBot(uuid: BotID) {
+    unselectBot(uuid: BotId) {
       dispatch(A.unselectBot(uuid));
     },
     runMatch(params: A.MatchParams) {
       dispatch(A.runMatch(params));
     },
     changeLocalBot(token: Token, slot: BotSlot) {
-      dispatch(A.changeLocalBot({token, slot}));
+      dispatch(A.changeLocalBot({ token, slot }));
     },
     selectMap(id: string) {
       dispatch(A.selectMap(id));

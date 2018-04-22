@@ -3,14 +3,14 @@
  */
 
 import { JsonPlanet, isJsonPlanet } from '../lib/match/types';
-import { BotID } from './ConfigModels';
+import { BotId } from './ConfigModels';
 type LogPath = string;
 
 export type MatchId = string;
 
 interface MatchProperties {
   uuid: MatchId;
-  players: BotID[];
+  players: BotId[];
   map: MapId;
   timestamp: Date;
   logPath: string;
@@ -39,7 +39,7 @@ export enum MatchStatus {
 }
 
 export interface MatchStats {
-  winners: BotID[];
+  winners: BotId[];
   score: PlayerMap<number>;
 }
 
@@ -54,13 +54,13 @@ export interface MatchList {
   [matchId: string]: Match;
 }
 
-export interface IMapList {
-  [key: string /*MapId*/]: IMapMeta;
+export interface MapList {
+  [key: string /*MapId*/]: MapMeta;
 }
 
 export type MapId = string;
 
-export interface IMapMeta {
+export interface MapMeta {
   uuid: MapId;
   name: string;
   slots: number;

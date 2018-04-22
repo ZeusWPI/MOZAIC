@@ -3,15 +3,15 @@ import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { BotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
+import { BotConfig, BotList, BotData, BotId } from '../../utils/ConfigModels';
 import { Link } from 'react-router-dom';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Bots.scss");
 
 export interface BotsStateProps {
-  bots: IBotList;
-  selectedBot?: IBotData;
+  bots: BotList;
+  selectedBot?: BotData;
 }
 
 // tslint:disable-next-line:interface-over-type-literal
@@ -19,8 +19,8 @@ export type ConfigErrors = { name?: string, command?: string };
 
 export interface BotsDispatchProps {
   addBot: (config: BotConfig) => void;
-  removeBot: (uuid: BotID) => void;
-  editBot: (bot: IBotData) => void;
+  removeBot: (uuid: BotId) => void;
+  editBot: (bot: BotData) => void;
   validate: (config: BotConfig) => ConfigErrors;
 }
 
@@ -51,7 +51,7 @@ export class Bots extends React.Component<IBotsProps, {}> {
 // ----------------------------------------------------------------------------
 
 interface IBotListProps {
-  bots: IBotList;
+  bots: BotList;
 }
 
 export class BotsList extends React.Component<IBotListProps, {}> {
@@ -77,7 +77,7 @@ export const NewBot: React.SFC<{}> = (props) => {
 };
 
 // tslint:disable-next-line:variable-name
-const BotListItem: React.SFC<IBotData> = (props) => {
+const BotListItem: React.SFC<BotData> = (props) => {
   const { config, lastUpdatedAt, createdAt, uuid } = props;
   return (
     <Link to={`/bots/${uuid}`} key={uuid}>
@@ -95,16 +95,16 @@ const BotListItem: React.SFC<IBotData> = (props) => {
 // ----------------------------------------------------------------------------
 
 interface IBotEditorProps {
-  selectedBot?: IBotData;
+  selectedBot?: BotData;
   addBot: (bot: BotConfig) => void;
-  removeBot: (uuid: BotID) => void;
-  editBot: (bot: IBotData) => void;
+  removeBot: (uuid: BotId) => void;
+  editBot: (bot: BotData) => void;
   validate: (config: BotConfig) => ConfigErrors;
 }
 
 interface IBotEditorState {
   errors: any;
-  selectedBot?: IBotData;
+  selectedBot?: BotData;
   command: string;
   name: string;
 }
@@ -219,7 +219,7 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     }
   }
 
-  private fromSelectedBot(selectedBot?: IBotData) {
+  private fromSelectedBot(selectedBot?: BotData) {
     if (!selectedBot) {
       return { selectedBot: undefined, name: '', command: '', errors: {} };
     }

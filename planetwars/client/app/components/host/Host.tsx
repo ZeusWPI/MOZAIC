@@ -2,29 +2,29 @@ import * as React from "react";
 
 import {
   BotConfig,
-  IBotList,
-  IBotData,
-  BotID,
+  BotList,
+  BotData,
+  BotId,
   BotSlot,
   Token,
   BotSlotList,
   MatchConfig,
 } from "../../utils/ConfigModels";
-import { IMapList } from "../../utils/GameModels";
+import { MapList } from "../../utils/GameModels";
 import { MatchParams } from "../../actions/actions";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
 
 export interface HostStateProps {
-  bots: IBotList;
-  maps: IMapList;
+  bots: BotList;
+  maps: MapList;
   selectedBots: BotSlotList;
   selectedMap: string;
 }
 
 export interface HostDispatchProps {
-  selectBotInternal: (name: string, id: BotID) => void;
+  selectBotInternal: (name: string, id: BotId) => void;
   selectBotExternal: (name: string) => void;
   unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: MatchParams) => void;
@@ -134,7 +134,7 @@ export class Host extends React.Component<HostProps, HostState> {
 
 interface BotSlotsProps {
   selectedBots: BotSlotList;
-  allBots: IBotList;
+  allBots: BotList;
   changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
@@ -155,7 +155,7 @@ export const BotSlots: React.SFC<BotSlotsProps> = props => {
 
 interface SlotProps {
   bot: BotSlot;
-  allBots: IBotList;
+  allBots: BotList;
   token: Token;
   changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
@@ -198,7 +198,7 @@ export class Slot extends React.Component<SlotProps> {
   }
 
   private changeBotID = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-    const id: BotID = evt.target.value;
+    const id: BotId = evt.target.value;
     const newBot = this.props.bot;
     newBot.id = id;
     this.props.changeLocalBot(this.props.token, newBot);
@@ -213,7 +213,7 @@ export class Slot extends React.Component<SlotProps> {
 }
 
 interface MapSelectorProps {
-  maps: IMapList;
+  maps: MapList;
   selectMap: (id: string) => void;
   selectedMap: string;
 }

@@ -6,8 +6,8 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 import log from 'electron-log';
 
 import * as A from '../actions/actions';
-import { IBotList, BotConfig, BotID } from './ConfigModels';
-import { Match, MatchList, IMapList } from './GameModels';
+import { BotList, BotConfig, BotId } from './ConfigModels';
+import { Match, MatchList, MapList } from './GameModels';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
 import { Notification } from '../utils/UtilModels';
@@ -144,11 +144,11 @@ const listeners: TableListener<any>[] = [
     (state: IGState) => state.matches,
     SCHEMA.MATCHES,
   ),
-  new TableListener<IBotList>(
+  new TableListener<BotList>(
     (state: IGState) => state.bots,
     SCHEMA.BOTS,
   ),
-  new TableListener<IMapList>(
+  new TableListener<MapList>(
     (state: IGState) => state.maps,
     SCHEMA.MAPS,
   ),

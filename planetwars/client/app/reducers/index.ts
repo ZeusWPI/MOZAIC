@@ -4,8 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/actions';
-import { BotConfig, IBotData, IBotList, BotID, BotSlot, BotSlotList } from '../utils/ConfigModels';
-import { Match, MatchList, IMapList } from '../utils/GameModels';
+import { BotConfig, BotData, BotList, BotId, BotSlot, BotSlotList } from '../utils/ConfigModels';
+import { Match, MatchList, MapList } from '../utils/GameModels';
 import { Notification } from '../utils/UtilModels';
 import { IAction } from '../actions/helpers';
 
@@ -30,10 +30,10 @@ export interface IGState {
   readonly routing: RouterState;
 
   readonly navbar: INavbarState;
-  readonly bots: IBotList;
+  readonly bots: BotList;
   readonly matches: MatchList;
   readonly notifications: Notification[];
-  readonly maps: IMapList;
+  readonly maps: MapList;
 
   readonly matchesPage: IMatchesPageState;
   readonly playPage: IPlayPageState;
@@ -48,7 +48,7 @@ export interface INavbarState {
   readonly notificationsVisible: boolean;
 }
 
-export type IBotsState = IBotList;
+export type IBotsState = BotList;
 export type IMatchesState = MatchList;
 
 export interface IPlayPageState {
@@ -117,7 +117,7 @@ const notificationReducer = (state: Notification[] = [], action: any) => {
   return state;
 };
 
-const mapsReducer = (state: IMapList = {}, action: any) => {
+const mapsReducer = (state: MapList = {}, action: any) => {
   if (A.importMapFromDB.test(action)) {
     return { ...state, [action.payload.uuid]: action.payload };
   }
@@ -135,7 +135,7 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
     const lastUpdatedAt = new Date(_now);
     const uuid = uuidv4();
     const history = [config];
-    const bot: IBotData = { uuid, config, createdAt, lastUpdatedAt, history };
+    const bot: BotData = { uuid, config, createdAt, lastUpdatedAt, history };
     return { ...state, [bot.uuid]: bot };
   }
 

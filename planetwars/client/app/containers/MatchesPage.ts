@@ -12,7 +12,7 @@ import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import * as A from '../actions/actions';
 import { PathLike } from 'mz/fs';
-import { BotID } from '../utils/ConfigModels';
+import { BotId } from '../utils/ConfigModels';
 import { MatchId } from '../utils/GameModels';
 
 interface StateProps {
@@ -66,7 +66,7 @@ const getMatchData = (state: IGState, matchId: MatchId) => {
   };
 };
 
-const getBotData = (state: IGState, botId: BotID) => {
+const getBotData = (state: IGState, botId: BotId) => {
   const bot = state.bots[botId];
   console.log(botId, state);
   return {

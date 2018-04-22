@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { IGState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/actions';
-import { BotConfig, IBotData, BotID } from "../utils/ConfigModels";
+import { BotConfig, BotData, BotId } from "../utils/ConfigModels";
 
 interface IProps {
   match: any;
@@ -11,9 +11,9 @@ interface IProps {
 
 const mapStateToProps = (state: IGState, ownProps: IProps) => {
   const bots = state.bots;
-  const uuid: BotID | undefined = ownProps.match.params.bot;
+  const uuid: BotId | undefined = ownProps.match.params.bot;
   if (uuid) {
-    const selectedBot: IBotData = bots[uuid];
+    const selectedBot: BotData = bots[uuid];
     return { bots, selectedBot };
   }
   return { bots };
@@ -24,10 +24,10 @@ const mapDispatchToProps = (dispatch: any) => {
     addBot: (config: BotConfig) => {
       dispatch(addBot(config));
     },
-    removeBot: (uuid: BotID) => {
+    removeBot: (uuid: BotId) => {
       dispatch(removeBot(uuid));
     },
-    editBot: (bot: IBotData) => {
+    editBot: (bot: BotData) => {
       dispatch(editBot(bot));
     },
     validate: (config: BotConfig) => {

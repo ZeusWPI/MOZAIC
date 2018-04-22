@@ -4,10 +4,10 @@ import * as Promise from 'bluebird';
 import * as p from 'path';
 
 import { Config } from './Config';
-import { IMapMeta, GameMap, isGameMap } from './GameModels';
+import { MapMeta, GameMap, isGameMap } from './GameModels';
 
 export class Importer {
-  public static importMapFromFile(orPath: string): Promise<IMapMeta> {
+  public static importMapFromFile(orPath: string): Promise<MapMeta> {
     return Promise.resolve(fs.readFile(orPath, {}))
       .then((buffer) => buffer.toString())
       .then((contents) => JSON.parse(contents))

@@ -1,6 +1,8 @@
-import { Match, PlayingMatch, MatchId, IMapMeta, PlayerMap, MapId } from '../utils/GameModels';
-import { BotConfig, IBotData, isBotConfig, BotID, MatchConfig, BotSlot, Token,
- BotSlotList } from '../utils/ConfigModels';
+import { Match, PlayingMatch, MatchId, MapMeta, PlayerMap, MapId } from '../utils/GameModels';
+import {
+  BotConfig, BotData, isBotConfig, BotId, MatchConfig, BotSlot, Token,
+  BotSlotList
+} from '../utils/ConfigModels';
 import { Notification } from '../utils/UtilModels';
 import GameRunner from '../utils/GameRunner';
 import { Config } from '../utils/Config';
@@ -17,9 +19,9 @@ export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
 // Bots
 export type UUID = string;
-export const importBotFromDB = actionCreator<IBotData>('IMPORT_BOT_FROM_DB');
+export const importBotFromDB = actionCreator<BotData>('IMPORT_BOT_FROM_DB');
 export const addBot = actionCreator<BotConfig>('ADD_BOT');
-export const editBot = actionCreator<IBotData>('EDIT_BOT');
+export const editBot = actionCreator<BotData>('EDIT_BOT');
 export const removeBot = actionCreator<UUID>('REMOVE_BOT');
 
 // Matches
@@ -133,14 +135,14 @@ export function handleMatchError(matchId: MatchId, error: Error) {
 }
 
 // Map
-export const importMapFromDB = actionCreator<IMapMeta>('IMPORT_MAP_FROM_DB');
-export const importMap = actionCreator<IMapMeta>('IMPORT_MAP');
+export const importMapFromDB = actionCreator<MapMeta>('IMPORT_MAP_FROM_DB');
+export const importMap = actionCreator<MapMeta>('IMPORT_MAP');
 export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 
 // Host
-export const selectBot = actionCreator<BotSlot & {token: Token}>('SELECT_BOT');
-export const unselectBot = actionCreator<BotID>('UNSELECT_BOT');
-export const changeLocalBot = actionCreator<{token: Token, slot: BotSlot}>('CHANGE_LOCAL_BOT');
+export const selectBot = actionCreator<BotSlot & { token: Token }>('SELECT_BOT');
+export const unselectBot = actionCreator<BotId>('UNSELECT_BOT');
+export const changeLocalBot = actionCreator<{ token: Token, slot: BotSlot }>('CHANGE_LOCAL_BOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
 
 // DB

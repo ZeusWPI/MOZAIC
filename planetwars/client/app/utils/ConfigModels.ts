@@ -13,11 +13,11 @@ export interface GameConfig {
   maxTurns: number;
 }
 
-export type BotID = string;
+export type BotId = string;
 export type Token = string; // not sure if this is a string...
 
 export interface BotSlot {
-  id?: BotID; // undefined if it is an external bot
+  id?: BotId; // undefined if it is an external bot
   name: string;
 }
 
@@ -25,12 +25,12 @@ export interface BotSlotList {
   [key: string /*Token*/]: BotSlot;
 }
 
-export interface IBotList {
-  [key: string /* UUID */]: IBotData;
+export interface BotList {
+  [key: string /* UUID */]: BotData;
 }
 
-export interface IBotData {
-  uuid: BotID;
+export interface BotData {
+  uuid: BotId;
   config: BotConfig;
   lastUpdatedAt: Date;
   createdAt: Date;
