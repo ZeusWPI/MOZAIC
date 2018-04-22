@@ -22,7 +22,7 @@ export interface BotSlot {
 }
 
 export interface BotSlotList {
-  [key: string]: BotSlot;
+  [key: string /*Token*/]: BotSlot;
 }
 
 export interface IBotList {

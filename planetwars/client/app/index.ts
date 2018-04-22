@@ -47,10 +47,10 @@ initializeDirs()
   .then(() => log.info('[STARTUP] Initalized dirs'))
   .then(() => bindToStore(store))
   .then(() => log.info('[STARTUP] Bound to store'))
-  .then(renderApp).catch((err) => { throw new Breaker('fatal', err); })
+  .then(renderApp).catch((err) => Promise.reject(new Breaker('fatal', err)))
   .then(() => log.info('[STARTUP] Finished rendering app'))
-  .then(populateMaps).catch((err) => { throw new Breaker('map', err); })
-  .then(populateBots).catch((err) => { throw new Breaker('bots', err); })
+  .then(populateMaps).catch((err) => Promise.reject(new Breaker('map', err)))
+  .then(populateBots).catch((err) => Promise.reject(new Breaker('bots', err)))
   .catch((br: Breaker) => {
     switch (br.type) {
       case 'fatal': {

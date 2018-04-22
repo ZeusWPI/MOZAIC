@@ -15,7 +15,6 @@ export default class Routes extends React.Component<any, any> {
   public render() {
     return (
       h(App, [
-        h(Navbar),
         h(Switch, `.container`, [
           h(Route, {
             path: '/home',

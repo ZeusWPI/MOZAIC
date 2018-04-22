@@ -68,6 +68,7 @@ const getMatchData = (state: IGState, matchId: MatchId) => {
 
 const getBotData = (state: IGState, botId: BotID) => {
   const bot = state.bots[botId];
+  console.log(botId, state);
   return {
     uuid: botId,
     name: bot.config.name,

@@ -8,7 +8,7 @@ import {
   BotSlot,
   Token,
   BotSlotList,
-  MatchConfig
+  MatchConfig,
 } from "../../utils/ConfigModels";
 import { IMapList } from "../../utils/GameModels";
 import { MatchParams } from "../../actions/actions";
@@ -32,7 +32,7 @@ export interface HostDispatchProps {
   selectMap: (id: string) => void;
 }
 
-export interface HostState {}
+export interface HostState { }
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
@@ -117,19 +117,19 @@ export class Host extends React.Component<HostProps, HostState> {
     const config: MatchParams = {
       bots: this.props.selectedBots,
       map: this.props.selectedMap,
-      maxTurns: 500
+      maxTurns: 500,
     };
     console.log(config);
     this.props.runMatch(config);
-  };
+  }
 
   private addInternal = () => {
     this.props.selectBotInternal("My Bot", "");
-  };
+  }
 
   private addExternal = () => {
     this.props.selectBotExternal("My Enemy's Bot");
-  };
+  }
 }
 
 interface BotSlotsProps {

@@ -226,6 +226,8 @@ function upgradeV2(db: DbSchemaV2): DbSchemaV3 {
   return { ...db, version: 'v3', bots: newBots };
 }
 
+
+
 // Schema V1 ------------------------------------------------------------------
 // Never used in production
 
