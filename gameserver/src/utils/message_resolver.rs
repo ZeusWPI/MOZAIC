@@ -122,6 +122,24 @@ impl MessageResolver {
         return self.poll_timeout();
     }
 
+    pub fn respond(&mut self, foreign_id: ForeignMessageId, data: Vec<u8>) {
+        let ForeignMessageId { player_id, message_id } = foreign_id;
+        // TODO: provide an util for this
+        let message = proto::Message {
+            payload: Some(message::Payload::Response(message::Response {
+                message_id: message_id,
+                data,
+            }))
+        };
+
+        let mut bytes = BytesMut::with_capacity(message.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        message.encode(&mut bytes).unwrap();
+        self.player_handler.send(player_id, bytes.to_vec());
+    }
+
 
     /// Adds a deadline to the deadline queue, updating the delay future if
     /// neccesary.
