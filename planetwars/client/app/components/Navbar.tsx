@@ -4,7 +4,7 @@ import {
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
-import { Notification } from '../utils/UtilModels';
+import { Notification } from '../utils/database/models';
 /*
  * CSS for the navbar is found in app.global.scss cause it's pretty unique
  * and most of it relies on global Bulma anyway.
@@ -133,14 +133,14 @@ export const NoNotifications: React.SFC<void> = (props) => {
   ]);
 };
 
-interface INotificationElementProps {
+interface NotificationElementProps {
   notification: Notification;
   key: number;
   remove: () => void;
 }
 
 // tslint:disable-next-line:variable-name
-export const NotificationElement: React.SFC<INotificationElementProps> = (props) => {
+export const NotificationElement: React.SFC<NotificationElementProps> = (props) => {
   let icon = "";
   let spanClass = "";
   switch (props.notification.type) {

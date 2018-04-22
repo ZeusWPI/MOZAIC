@@ -1,7 +1,7 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
 import { remote } from 'electron';
-import { Match, MapId, MatchId } from './GameModels';
+import { Match, MapId, MatchId } from './database/models';
 
 const appPath = (process.env.NODE_ENV === 'development') ?
   p.resolve('.') :

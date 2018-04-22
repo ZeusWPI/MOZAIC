@@ -45,6 +45,8 @@ export type MapMeta = V1.MapMeta;
 
 export type GameMap = V1.GameMap;
 
+export const isGameMap = V1.isGameMap;
+
 export type JsonPlanet = V1.JsonPlanet;
 
 // Config Models --------------------------------------------------------------

@@ -9,8 +9,8 @@ import {
   Token,
   BotSlotList,
   MatchConfig,
-} from "../../utils/ConfigModels";
-import { MapList } from "../../utils/GameModels";
+  MapList,
+} from '../../utils/database/models';
 import { MatchParams } from "../../actions/actions";
 
 // tslint:disable-next-line:no-var-requires

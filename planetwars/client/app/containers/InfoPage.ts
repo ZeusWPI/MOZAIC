@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IAboutPageState, IGState } from '../reducers/index';
+import { AboutPageState, IGState } from '../reducers/index';
 import Info from '../components/info/Info';
 
 const mapStateToProps = (state: IGState) => {

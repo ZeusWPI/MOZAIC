@@ -6,7 +6,7 @@ import { execFile } from 'child_process';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { BotConfig, MatchConfig, Token, BotSlot } from './ConfigModels';
+import { BotConfig, MatchConfig, Token, BotSlot } from './database/models';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?

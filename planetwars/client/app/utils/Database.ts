@@ -6,11 +6,9 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 import log from 'electron-log';
 
 import * as A from '../actions/actions';
-import { BotList, BotConfig, BotId } from './ConfigModels';
-import { Match, MatchList, MapList } from './GameModels';
+import * as M from './database/models';
 import { store as globalStore } from '../index';
 import { IGState } from '../reducers';
-import { Notification } from '../utils/UtilModels';
 import { Config } from './Config';
 import { migrate } from './database/migrate';
 
@@ -73,7 +71,7 @@ export function bindToStore(store: any): Promise<void> {
           timestamp: new Date(matchData.timestamp),
         }));
       });
-      db.notifications.forEach((notification: Notification) => {
+      db.notifications.forEach((notification: M.Notification) => {
         store.dispatch(A.importNotificationFromDB(notification));
       });
     })
@@ -140,19 +138,19 @@ class TableListener<T> {
 }
 
 const listeners: TableListener<any>[] = [
-  new TableListener<MatchList>(
+  new TableListener<M.MatchList>(
     (state: IGState) => state.matches,
     SCHEMA.MATCHES,
   ),
-  new TableListener<BotList>(
+  new TableListener<M.BotList>(
     (state: IGState) => state.bots,
     SCHEMA.BOTS,
   ),
-  new TableListener<MapList>(
+  new TableListener<M.MapList>(
     (state: IGState) => state.maps,
     SCHEMA.MAPS,
   ),
-  new TableListener<Notification[]>(
+  new TableListener<M.Notification[]>(
     (state: IGState) => state.notifications,
     SCHEMA.NOTIFICATIONS,
   ),

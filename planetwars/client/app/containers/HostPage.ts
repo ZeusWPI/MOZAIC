@@ -4,7 +4,7 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
 import { IGState } from '../reducers';
-import { BotId, BotSlot, BotSlotList, Token } from '../utils/ConfigModels';
+import { BotId, BotSlot, BotSlotList, Token } from '../utils/database/models';
 import * as crypto from 'crypto';
 
 const mapStateToProps = (state: IGState) => {

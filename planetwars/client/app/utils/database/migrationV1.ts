@@ -72,12 +72,35 @@ export interface GameMap {
   planets: JsonPlanet[];
 }
 
+export function isGameMap(o: any): o is GameMap {
+  const map = o as GameMap;
+  return (
+    (typeof map === 'object') &&
+    (Array.isArray(o.planets)) &&
+    (map.planets.every(isJsonPlanet))
+  );
+}
+
 export interface JsonPlanet {
   "ship_count": number;
   "x": number;
   "y": number;
   "owner": number;
   "name": string;
+}
+
+export function isJsonPlanet(obj: any): obj is JsonPlanet {
+  const planet = obj as JsonPlanet;
+  return (
+    (typeof planet === 'object') &&
+    (typeof planet.ship_count === 'number') &&
+    (typeof planet.x === 'number') &&
+    (typeof planet.y === 'number') &&
+    (typeof planet.owner === 'number' ||
+      typeof planet.owner === 'undefined' ||
+      planet.owner === null) &&
+    (typeof planet.name === 'string')
+  );
 }
 
 // Config Models --------------------------------------------------------------

@@ -35,7 +35,7 @@ export type Match = V1.Match;
 
 export type MatchStatus = V1.MatchStatus;
 
-export type MatchStats = V1.MatchStatus;
+export type MatchStats = V1.MatchStats;
 
 export type PlayerMap<T> = V1.PlayerMap<T>;
 
@@ -52,6 +52,8 @@ export type MapMeta = V1.MapMeta;
 
 export type GameMap = V1.GameMap;
 
+export const isGameMap = V1.isGameMap;
+
 export type JsonPlanet = V1.JsonPlanet;
 
 // Config Models --------------------------------------------------------------
@@ -62,17 +64,18 @@ export interface MatchConfig {
   logFile: string;
 }
 
-export type GameConfig = V1.GameConfig;
+export type GameConfig = V3.GameConfig;
 
 export type BotId = V1.BotId;
 
 export type Token = string;
 
 export interface BotSlot {
-  uuid?: BotId; // undefined if it is an external bot
+  id?: BotId; // undefined if it is an external bot
   name: string;
 }
 
+// TODO: Make this an array
 export interface BotSlotList {
   [key: string /*Token*/]: BotSlot;
 }

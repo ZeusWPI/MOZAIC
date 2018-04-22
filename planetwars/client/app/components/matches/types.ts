@@ -1,4 +1,4 @@
-import { MatchStats } from '../../utils/GameModels';
+import { MatchStats } from '../../utils/database/models';
 
 export interface MatchProps {
   uuid: string;
@@ -25,7 +25,7 @@ export type PlayingMatch = MatchProps & {
 export type FinishedMatch = MatchProps & {
   status: 'finished',
   stats: MatchStats,
-}
+};
 
 export type ErroredMatch = MatchProps & {
   status: 'error',

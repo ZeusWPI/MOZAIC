@@ -12,8 +12,7 @@ import { IGState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import * as A from '../actions/actions';
 import { PathLike } from 'mz/fs';
-import { BotId } from '../utils/ConfigModels';
-import { MatchId } from '../utils/GameModels';
+import { BotId, MatchId } from '../utils/database/models';
 
 interface StateProps {
   selectedMatch?: Match;

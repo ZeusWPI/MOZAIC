@@ -4,7 +4,7 @@ import * as Promise from 'bluebird';
 import * as p from 'path';
 
 import { Config } from './Config';
-import { MapMeta, GameMap, isGameMap } from './GameModels';
+import { MapMeta, GameMap, isGameMap } from './database/models';
 
 export class Importer {
   public static importMapFromFile(orPath: string): Promise<MapMeta> {

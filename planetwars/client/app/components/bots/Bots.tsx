@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript-helpers";
 // tslint:disable-next-line:no-var-requires
+// TODO import decently
 const stringArgv = require('string-argv');
 
-import { BotConfig, BotList, BotData, BotId } from '../../utils/ConfigModels';
+import { BotConfig, BotList, BotData, BotId } from '../../utils/database/models';
 import { Link } from 'react-router-dom';
 
 // tslint:disable-next-line:no-var-requires

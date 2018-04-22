@@ -44,13 +44,18 @@ export type MapMeta = V1.MapMeta;
 
 export type GameMap = V1.GameMap;
 
+export const isGameMap = V1.isGameMap;
+
 export type JsonPlanet = V1.JsonPlanet;
 
 // Config Models --------------------------------------------------------------
 
 export type MatchConfig = V1.MatchConfig;
 
-export type GameConfig = V1.GameConfig;
+export interface GameConfig {
+  mapFile: string;
+  maxTurns: number;
+}
 
 export type BotId = V1.BotId;
 
