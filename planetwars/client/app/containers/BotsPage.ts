@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
-import { IGState } from '../reducers/index';
+import { GState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/actions';
 import { BotConfig, BotData, BotId } from "../utils/database/models";
 
@@ -9,7 +9,7 @@ interface Props {
   match: any;
 }
 
-const mapStateToProps = (state: IGState, ownProps: Props) => {
+const mapStateToProps = (state: GState, ownProps: Props) => {
   const bots = state.bots;
   const uuid: BotId | undefined = ownProps.match.params.bot;
   if (uuid) {

@@ -13,7 +13,7 @@ import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 import './app.global.scss';
 import './fontawesome.global.scss';
 
-log.info('[STARTUP] Rendere modules loaded');
+log.info('[STARTUP] Renderer modules loaded');
 
 // tslint:disable-next-line:no-var-requires
 const { configureStore, history } = require('./store/configureStore');
@@ -44,7 +44,7 @@ class Breaker extends Error {
 log.info('[STARTUP] Init app render');
 
 initializeDirs()
-  .then(() => log.info('[STARTUP] Initalized dirs'))
+  .then(() => log.info('[STARTUP] Initialized dirs'))
   .then(() => bindToStore(store))
   .then(() => log.info('[STARTUP] Bound to store'))
   .then(renderApp).catch((err) => Promise.reject(new Breaker('fatal', err)))

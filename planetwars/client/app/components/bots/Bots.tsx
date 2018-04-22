@@ -1,12 +1,11 @@
 import * as React from 'react';
-import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript-helpers";
-// tslint:disable-next-line:no-var-requires
-// TODO import decently
-const stringArgv = require('string-argv');
-
-import { BotConfig, BotList, BotData, BotId } from '../../utils/database/models';
 import { Link } from 'react-router-dom';
 
+import { BotConfig, BotList, BotData, BotId } from '../../utils/database/models';
+
+// TODO import decently
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Bots.scss");
 
@@ -51,11 +50,11 @@ export class Bots extends React.Component<IBotsProps, {}> {
 // List of Bots
 // ----------------------------------------------------------------------------
 
-interface IBotListProps {
+interface BotListProps {
   bots: BotList;
 }
 
-export class BotsList extends React.Component<IBotListProps, {}> {
+export class BotsList extends React.Component<BotListProps, {}> {
   public render() {
     const bots = Object.keys(this.props.bots).map((uuid) => {
       return BotListItem(this.props.bots[uuid]);
@@ -95,7 +94,7 @@ const BotListItem: React.SFC<BotData> = (props) => {
 // Bot details
 // ----------------------------------------------------------------------------
 
-interface IBotEditorProps {
+interface BotEditorProps {
   selectedBot?: BotData;
   addBot: (bot: BotConfig) => void;
   removeBot: (uuid: BotId) => void;
@@ -103,20 +102,20 @@ interface IBotEditorProps {
   validate: (config: BotConfig) => ConfigErrors;
 }
 
-interface IBotEditorState {
+interface BotEditorState {
   errors: any;
   selectedBot?: BotData;
   command: string;
   name: string;
 }
 
-export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState> {
-  constructor(props: IBotEditorProps) {
+export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
+  constructor(props: BotEditorProps) {
     super(props);
     this.state = this.fromSelectedBot(props.selectedBot);
   }
 
-  public componentWillReceiveProps(nextProps: IBotEditorProps) {
+  public componentWillReceiveProps(nextProps: BotEditorProps) {
     this.setState(this.fromSelectedBot(nextProps.selectedBot));
   }
 

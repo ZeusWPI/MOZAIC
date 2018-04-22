@@ -4,6 +4,7 @@ import { Match, FinishedMatch, ErroredMatch } from './types';
 import { parseLog, MatchLog } from '../../lib/match/log';
 import { LogView } from './LogView';
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
 export interface ContainerProps {

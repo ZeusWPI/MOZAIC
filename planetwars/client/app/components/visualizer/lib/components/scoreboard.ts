@@ -5,14 +5,17 @@ import * as d3 from "d3";
 import { Player } from '../../../../lib/match/types';
 import { GameState } from '../../../../lib/match/log';
 
-const h = require('react-hyperscript');
+import * as h from 'react-hyperscript';
+
 const {
   table,
   tr,
   td,
-  tbody
+  tbody,
+  // tslint:disable-next-line:no-var-requires
 } = require('hyperscript-helpers')(h);
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./scoreboard.scss');
 
 interface ScoreboardProps {
@@ -52,9 +55,9 @@ function countShips(players: Player[], state: GameState) {
 }
 
 export default class Scoreboard extends Component<ScoreboardProps> {
-  svg: any;
+  private svg: any;
 
-  render() {
+  public render() {
     const { game, turnNum } = this.props;
     const gameState = game.matchLog.gameStates[turnNum];
     const planetCounts = countPlanets(game.matchLog.players, gameState);
@@ -64,17 +67,17 @@ export default class Scoreboard extends Component<ScoreboardProps> {
       const planetCount = planetCounts[player.uuid];
       return tr({ style: { color: game.playerColor(player) } }, [
         h('i.fa.fa-cogs', {
-          'aria-hidden': true
+          'aria-hidden': true,
         }),
         td(player.name),
         td(planetCount),
         h('i.fa.fa-globe', {
-          'aria-hidden': true
+          'aria-hidden': true,
         }),
         td(shipCounts[player.uuid]),
         h('i.fa.fa-rocket', {
-          'aria-hidden': true
-        })
+          'aria-hidden': true,
+        }),
       ]);
     });
     return table(`.${styles.scoreboard}`, {}, tbody(rows));

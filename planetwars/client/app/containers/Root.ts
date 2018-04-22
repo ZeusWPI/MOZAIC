@@ -7,12 +7,12 @@ import { h } from 'react-hyperscript-helpers';
 
 import Routes from '../routes';
 
-interface IRootType {
+interface RootType {
   store: Redux.Store<any>;
   history: History;
 }
 
-export default function Root({ store, history }: IRootType): React.SFC {
+export default function Root({ store, history }: RootType): React.SFC {
   return (
     h(Provider, { store }, [
       h(ConnectedRouter, { history }, [

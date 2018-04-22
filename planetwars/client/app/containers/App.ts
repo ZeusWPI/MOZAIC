@@ -3,7 +3,7 @@ import { h, div } from 'react-hyperscript-helpers';
 import { connect } from 'react-redux';
 import log from 'electron-log';
 
-import { IGState } from '../reducers';
+import { GState } from '../reducers';
 import Navbar from '../containers/NavbarContainer';
 import { FatalErrorView } from '../components/FatalError';
 
@@ -43,7 +43,7 @@ export class App extends React.Component<Props, State> {
   }
 }
 
-const mapStateToProps = (state: IGState) => {
+const mapStateToProps = (state: GState) => {
   return { globalErrors: state.globalErrors };
 };
 

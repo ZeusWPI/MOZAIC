@@ -8,7 +8,7 @@ import log from 'electron-log';
 import * as A from '../actions/actions';
 import * as M from './database/models';
 import { store as globalStore } from '../index';
-import { IGState } from '../reducers';
+import { GState } from '../reducers';
 import { Config } from './Config';
 import { migrate } from './database/migrate';
 
@@ -93,7 +93,7 @@ export function bindToStore(store: any): Promise<void> {
  * TODO: Optimize for UUID dicts
  */
 function changeListener() {
-  const state: IGState = globalStore.getState();
+  const state: GState = globalStore.getState();
   listeners.forEach((listener) => {
     const oldValue = listener.oldValue;
     const newValue = listener.select(state);
@@ -109,11 +109,11 @@ function changeListener() {
  * on the first, possible irrelevant, state change.
  */
 function initializeListeners() {
-  const state: IGState = globalStore.getState();
+  const state: GState = globalStore.getState();
   listeners.forEach((l) => l.select(state));
 }
 
-type Selector<T> = (state: IGState) => T;
+type Selector<T> = (state: GState) => T;
 type Mutator<T> = (newValue: T) => void;
 
 class TableListener<T> {
@@ -121,7 +121,7 @@ class TableListener<T> {
 
   constructor(private selector: Selector<T>, private accessor: string) { }
 
-  public select(state: IGState): T {
+  public select(state: GState): T {
     const val: T = this.selector(state);
     this.oldValue = val;
     return val;
@@ -139,19 +139,19 @@ class TableListener<T> {
 
 const listeners: TableListener<any>[] = [
   new TableListener<M.MatchList>(
-    (state: IGState) => state.matches,
+    (state: GState) => state.matches,
     SCHEMA.MATCHES,
   ),
   new TableListener<M.BotList>(
-    (state: IGState) => state.bots,
+    (state: GState) => state.bots,
     SCHEMA.BOTS,
   ),
   new TableListener<M.MapList>(
-    (state: IGState) => state.maps,
+    (state: GState) => state.maps,
     SCHEMA.MAPS,
   ),
   new TableListener<M.Notification[]>(
-    (state: IGState) => state.notifications,
+    (state: GState) => state.notifications,
     SCHEMA.NOTIFICATIONS,
   ),
 ];

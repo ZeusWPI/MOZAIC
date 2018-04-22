@@ -1,37 +1,36 @@
-import { Action } from 'redux';
+import { Action as ReduxAction } from 'redux';
 
-export interface IAction extends Action { }
-export interface IActionWithPayload<T> extends IAction {
+export interface Action extends ReduxAction { }
+export interface ActionWithPayload<T> extends Action {
   readonly payload: T;
 }
 
-interface IActionCreator<T> {
+interface ActionCreator<T> {
   readonly type: string;
-  (payload: T): IActionWithPayload<T>;
+  (payload: T): ActionWithPayload<T>;
 
-  test(action: IAction): action is IActionWithPayload<T>;
+  test(action: Action): action is ActionWithPayload<T>;
 }
 
-interface IActionCreatorVoid {
+interface ActionCreatorVoid {
   readonly type: string;
-  (): IAction;
+  (): Action;
 
-  test(action: IAction): action is IAction;
+  test(action: Action): action is Action;
 }
 
-
-export const actionCreator = <T>(type: string): IActionCreator<T> =>
+export const actionCreator = <T>(type: string): ActionCreator<T> =>
   Object.assign((payload: T): any => ({ type, payload }), {
     type,
-    test(action: IAction): action is IActionWithPayload<T> {
+    test(action: Action): action is ActionWithPayload<T> {
       return action.type === type;
     },
   });
 
-export const actionCreatorVoid = (type: string): IActionCreatorVoid =>
+export const actionCreatorVoid = (type: string): ActionCreatorVoid =>
   Object.assign((): any => ({ type }), {
     type,
-    test(action: IAction): action is IAction {
+    test(action: Action): action is Action {
       return action.type === type;
     },
   });

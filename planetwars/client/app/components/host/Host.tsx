@@ -138,7 +138,7 @@ interface BotSlotsProps {
   changeLocalBot: (token: Token, slot: BotSlot) => void;
 }
 
-export const BotSlots: React.SFC<BotSlotsProps> = props => {
+export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
   const slots = Object.keys(props.selectedBots).map((token, idx) => {
     return (
       <Slot
@@ -202,7 +202,7 @@ export class Slot extends React.Component<SlotProps> {
     const newBot = this.props.bot;
     newBot.id = id;
     this.props.changeLocalBot(this.props.token, newBot);
-  };
+  }
 
   private changeBotName(evt: any) {
     const name: string = evt.target.value;
@@ -218,7 +218,7 @@ interface MapSelectorProps {
   selectedMap: string;
 }
 
-export const MapSelector: React.SFC<MapSelectorProps> = props => {
+export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
   const mapElements = Object.keys(props.maps).map((key, idx) => (
     <option value={key} key={idx}>
       {props.maps[key].name}

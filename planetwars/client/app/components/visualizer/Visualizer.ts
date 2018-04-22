@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { h, div } from 'react-hyperscript-helpers'
+import { h, div } from 'react-hyperscript-helpers';
 
 import { Visualizer } from './lib';
 

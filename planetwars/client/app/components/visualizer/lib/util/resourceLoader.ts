@@ -8,7 +8,7 @@ const prefix = (process.env.NODE_ENV === 'development') ?
 
 const resourcePath = path.resolve(prefix, 'components', 'visualizer', 'lib', 'assets', 'images');
 
-class ResourceLoader {
+export class ResourceLoader {
   public svg: any;
 
   constructor(svg: any) {
@@ -41,5 +41,3 @@ class ResourceLoader {
       .attr("xlink:href", path.resolve(resourcePath, name));
   }
 }
-
-module.exports = ResourceLoader;

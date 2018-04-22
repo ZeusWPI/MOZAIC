@@ -1,33 +1,54 @@
 import * as d3 from 'd3';
-const React = require('react');
-const h = require('react-hyperscript');
+import * as React from 'react';
+import * as h from 'react-hyperscript';
 
 import Config from '../util/config';
 import { GameState } from '../../../../lib/match/log';
-const ResourceLoader = require('../util/resourceLoader');
-const spaceMath = require('../util/spacemath')
-const PlanetRenderer = require('../renderers/planets');
-const ExpeditionRenderer = require('../renderers/expeditions');
-const Voronoi = require('./voronoi.js')
-let styles = require('./renderer.scss');
+import { ResourceLoader } from '../util/resourceLoader';
+import * as spaceMath from '../util/spacemath';
+import { PlanetRenderer } from '../renderers/planets';
+import { ExpeditionRenderer } from '../renderers/expeditions';
 
-class Renderer extends React.Component<any> {
-  componentDidMount() {
+import Voronoi = require('./voronoi.js');
+
+// tslint:disable-next-line:no-var-requires
+const styles = require('./renderer.scss');
+
+export class Renderer extends React.Component<any> {
+  private svg: any;
+  private voronoiContainer: any;
+  private container: any;
+  private planetRenderer: PlanetRenderer;
+  private expeditionRenderer: ExpeditionRenderer;
+  private voronoiRenderer: any;
+  private min: [number, number];
+  private max: [number, number];
+  private scale: number;
+
+  public componentDidMount() {
     this.loadResources();
-    //this.voronoiContainer = d3.select(this.svg).append('g');
+    // this.voronoiContainer = d3.select(this.svg).append('g');
     this.setupRenderers();
     this.draw();
 
   }
 
-  componentDidUpdate(prevProps: any) {
+  public componentDidUpdate(prevProps: any) {
     if (this.props.game !== prevProps.game) {
       this.setupRenderers();
     }
     this.draw();
   }
 
-  setupRenderers() {
+  public render() {
+    return h(`svg.${styles.battlefield}`, {
+      ref: (svg: any) => {
+        this.svg = svg;
+      },
+    });
+  }
+
+  private setupRenderers() {
     // remove all old elements
     d3.select(this.svg).selectAll('g').remove();
     this.voronoiContainer = d3.select(this.svg).append('g');
@@ -49,15 +70,7 @@ class Renderer extends React.Component<any> {
     this.createZoom();
   }
 
-  render() {
-    return h(`svg.${styles.battlefield}`, {
-      ref: (svg: any) => {
-        this.svg = svg;
-      },
-    });
-  }
-
-  calculateViewBox() {
+  private calculateViewBox() {
     const firstState = this.props.game.matchLog.gameStates[0];
 
     const offset = Config.orbitSize + Config.padding;
@@ -77,18 +90,18 @@ class Renderer extends React.Component<any> {
     d3.select(this.svg).attr('viewBox', viewBox);
   }
 
-  loadResources() {
+  private loadResources() {
     // TODO: improve API
     new ResourceLoader(d3.select(this.svg)).setupPatterns();
   }
 
-  createZoom() {
-    var zoom = d3.zoom()
+  private createZoom() {
+    const zoom = d3.zoom()
       .scaleExtent(Config.maxScales)
       .on('zoom', () => {
         const transform = d3.event.transform;
         // TODO restore scroll constraints, but make them work on maps with
-        // arbetrary center points
+        // arbitrary center points
         transform.x = spaceMath.clamp(transform.x, -this.max[0] / 2, this.max[0] / 2);
         transform.y = spaceMath.clamp(transform.y, -this.max[1] / 2, this.max[1] / 2);
         this.container.attr('transform', transform);
@@ -97,7 +110,7 @@ class Renderer extends React.Component<any> {
     d3.select(this.svg).call(zoom);
   }
 
-  draw() {
+  private draw() {
     const gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
     const params = {
       speed: this.props.speed,
@@ -111,5 +124,3 @@ class Renderer extends React.Component<any> {
     this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
   }
 }
-
-module.exports = Renderer;

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { push } from 'react-router-redux';
 
 import { actionCreator, actionCreatorVoid } from './helpers';
-import { IGState } from '../reducers';
+import { GState } from '../reducers';
 import { parseLog } from '../lib/match/log';
 
 // Nav
@@ -37,7 +37,7 @@ export function runMatch(params: MatchParams) {
     // TODO: split this logic
     const matchId = uuidv4();
     const { map, bots, maxTurns } = params;
-    const state: IGState = getState();
+    const state: GState = getState();
     const botNames = Object.keys(params.bots).map((token) => params.bots[token].name);
 
     const match: M.Match = {
@@ -79,7 +79,7 @@ export function runMatch(params: MatchParams) {
 
 export function completeMatch(matchId: M.MatchId) {
   return (dispatch: any, getState: any) => {
-    const state: IGState = getState();
+    const state: GState = getState();
     const match = state.matches[matchId];
     if (match.status === 'playing') {
       const matchPlayers = match.players.map((uuid) => {
@@ -114,7 +114,7 @@ export function completeMatch(matchId: M.MatchId) {
 
 export function handleMatchError(matchId: M.MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
-    const state: IGState = getState();
+    const state: GState = getState();
     const match = state.matches[matchId];
     if (match.status === 'playing') {
       dispatch(saveMatch({

@@ -16,12 +16,14 @@
       true,
       "spaces"
     ],
+    "jsx-no-multiline-js": false,
     // prefixing interfaces with I?
     // What is this, 1970?
     "interface-name": [
       true,
       "never-prefix"
     ],
+    "interface-over-type-literal": false,
     "max-classes-per-file": [
       false
     ],
@@ -48,6 +50,7 @@
         "SwitchCase": 1
       }
     ],
+    "unified-signatures": false,
     "valid-jsdoc": [
       false,
       {

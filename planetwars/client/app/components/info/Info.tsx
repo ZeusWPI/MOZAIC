@@ -7,19 +7,19 @@ import { Link, NavLink } from "react-router-dom";
 const styles = require('./Info.scss');
 
 declare const __COMMIT_HASH__: string;
-declare const __BRANCHNAME__: string;
+declare const __BRANCH_NAME__: string;
 declare const __TAG__: string;
 
 export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   public state = { mapToggled: false };
 
-  public lauchReadme() {
+  public launchReadme() {
     shell.openExternal('https://github.com/ZeusWPI/MOZAIC/blob/development/planetwars/README.md');
   }
 
   public render() {
     const Readme = () => (
-      <a onClick={this.lauchReadme}>
+      <a onClick={this.launchReadme}>
         README
       </a>);
     const toggle = (evt: any) => this.setState({ mapToggled: !this.state.mapToggled });
@@ -94,7 +94,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
 }
 
 export const Version: React.SFC<{}> = (props) => {
-  let version = __BRANCHNAME__ + "@" + __COMMIT_HASH__;
+  let version = __BRANCH_NAME__ + "@" + __COMMIT_HASH__;
   if (__TAG__ !== "") {
     version = __TAG__;
   }

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { store } from '../index';
 import * as A from '../actions/actions';
 import * as M from '../utils/database/models';
-import { IAction } from '../actions/helpers';
+import { Action } from '../actions/helpers';
 
 // ----------------------------------------------------------------------------
 // State
@@ -24,7 +24,7 @@ import { IAction } from '../actions/helpers';
  * only represents the actual data state, with no little consideration for the
  * logic above it. Same goes for matches.
  */
-export interface IGState {
+export interface GState {
   readonly routing: RouterState;
 
   readonly navbar: NavbarState;
@@ -60,7 +60,7 @@ export interface MatchesPageState {
 
 export interface AboutPageState { }
 
-export const initialState: IGState = {
+export const initialState: GState = {
   routing: { location: null },
 
   navbar: { toggled: false, notificationsVisible: false },
@@ -215,7 +215,7 @@ const playPageReducer = combineReducers<PlayPageState>({
   },
 });
 
-const globalErrorReducer = (state: any[] = [], action: IAction) => {
+const globalErrorReducer = (state: any[] = [], action: Action) => {
   if (A.dbError.test(action)) {
     return [...state, action.payload];
   }
@@ -225,7 +225,7 @@ const globalErrorReducer = (state: any[] = [], action: IAction) => {
   return state;
 };
 
-export const rootReducer = combineReducers<IGState>({
+export const rootReducer = combineReducers<GState>({
   routing: routing as Reducer<any>,
 
   navbar: navbarReducer,

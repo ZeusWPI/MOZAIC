@@ -8,7 +8,7 @@ import {
   JsonExpedition,
   JsonCommand,
 } from '../types';
-import * as fs from 'mz/fs';
+import { readFileSync } from 'mz/fs';
 
 import { MatchLog, GameState, PlayerOutputs } from './MatchLog';
 
@@ -26,7 +26,7 @@ export function parseLog(players: PlayerData[], path: string) {
     };
   });
   const parser = new LogParser(matchPlayers);
-  const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
+  const lines = readFileSync(path, 'utf-8').trim().split('\n');
   lines.forEach((line: string) => {
     parser.parseMessage(JSON.parse(line));
   });

@@ -3,11 +3,11 @@ import { connect } from 'react-redux';
 import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host';
 import { Importer } from '../utils/Importer';
 import * as A from '../actions/actions';
-import { IGState } from '../reducers';
+import { GState } from '../reducers';
 import { BotId, BotSlot, BotSlotList, Token } from '../utils/database/models';
 import * as crypto from 'crypto';
 
-const mapStateToProps = (state: IGState) => {
+const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const selectedBots = state.playPage.selectedBots;
   const maps = state.maps;

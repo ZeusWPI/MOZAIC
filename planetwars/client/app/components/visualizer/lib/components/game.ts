@@ -4,9 +4,10 @@ import { MatchLog } from '../../../../lib/match/log';
 import Config from '../util/config';
 
 export default class Game {
-  playerColorMap: Map<string, string>;
-  planetTypeMap: Map<string, string>;
-  matchLog: MatchLog;
+  public matchLog: MatchLog;
+
+  private playerColorMap: Map<string, string>;
+  private planetTypeMap: Map<string, string>;
 
   constructor(matchLog: MatchLog) {
     this.matchLog = matchLog;
@@ -26,8 +27,8 @@ export default class Game {
 
   public planetType(name: string): string {
     if (!this.planetTypeMap.has(name)) {
-      var types: string[] = Config.planetTypes;
-      var type: string = types[Math.floor(Math.random() * types.length)];
+      const types: string[] = Config.planetTypes;
+      const type: string = types[Math.floor(Math.random() * types.length)];
       this.planetTypeMap.set(name, type);
     }
     return this.planetTypeMap.get(name)!;

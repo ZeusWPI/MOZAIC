@@ -8,7 +8,7 @@ import Matches, {
   MatchViewerProps,
 } from '../components/matches/Matches';
 import { Match } from '../components/matches/types';
-import { IGState } from '../reducers/index';
+import { GState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import * as A from '../actions/actions';
 import { PathLike } from 'mz/fs';
@@ -19,7 +19,7 @@ interface StateProps {
   matches: Match[];
 }
 
-function mapStateToProps(state: IGState, ownProps: any): StateProps {
+function mapStateToProps(state: GState, ownProps: any): StateProps {
   const matches = Object.keys(state.matches).map((matchId) => {
     return getMatchData(state, matchId);
   });
@@ -51,7 +51,7 @@ function mapDispatchToProps(dispatch: any): DispatchProps {
   };
 }
 
-const getMatchData = (state: IGState, matchId: MatchId) => {
+const getMatchData = (state: GState, matchId: MatchId) => {
   const matchData = state.matches[matchId];
   const mapData = state.maps[matchData.map];
 
@@ -65,7 +65,7 @@ const getMatchData = (state: IGState, matchId: MatchId) => {
   };
 };
 
-const getBotData = (state: IGState, botId: BotId) => {
+const getBotData = (state: GState, botId: BotId) => {
   const bot = state.bots[botId];
   console.log(botId, state);
   return {

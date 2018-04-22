@@ -2,6 +2,8 @@
 // If so, find a proper location for it.
 import * as React from 'react';
 import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
+
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
 type LogLoader = (files: FileList) => void;
