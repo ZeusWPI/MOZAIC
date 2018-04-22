@@ -82,21 +82,14 @@ impl MessageResolver {
     pub fn send(&mut self, player_id: PlayerId, data: Vec<u8>) -> MessageId {
         let message_id = self.get_message_id();
 
-        // TODO: provide an util for this
-        let message = proto::Message {
-            payload: Some(message::Payload::Message(message::Message {
-                message_id: message_id.as_u64(),
-                data,
-            }))
+        let message = message::Message {
+            message_id: message_id.as_u64(),
+            data,
         };
 
-        let mut bytes = BytesMut::with_capacity(message.encoded_len());
-        // encoding can only fail because the buffer does not have
-        // enough space allocated, but we just allocated the required
-        // space.
-        message.encode(&mut bytes).unwrap();
-        self.player_handler.send(player_id, bytes.to_vec());
-
+        let payload = message::Payload::Message(message);
+        self.send_message(player_id, payload);
+        
         return message_id;
     }
 
@@ -124,12 +117,17 @@ impl MessageResolver {
 
     pub fn respond(&mut self, foreign_id: ForeignMessageId, data: Vec<u8>) {
         let ForeignMessageId { player_id, message_id } = foreign_id;
-        // TODO: provide an util for this
+        let response = message::Response {
+            message_id: message_id,
+            data,
+        };
+        let payload = message::Payload::Response(response);
+        self.send_message(player_id, payload);        
+    }
+
+    fn send_message(&mut self, player_id: PlayerId, payload: message::Payload) {
         let message = proto::Message {
-            payload: Some(message::Payload::Response(message::Response {
-                message_id: message_id,
-                data,
-            }))
+            payload: Some(payload),
         };
 
         let mut bytes = BytesMut::with_capacity(message.encoded_len());
