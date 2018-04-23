@@ -7,14 +7,8 @@ use players::{PlayerId, PlayerHandler};
 
 use super::message_resolver::{MessageResolver, MessageId, PlayerMessage, MessageContent, ResponseValue};
 
-/// A basic util for sending requests to multiple players which have to be
-/// answered before a specified deadline. It is limited to one request per
-/// player. 
-/// All requests are uniquely numbered to avoid that delayed messages end up in
-/// the next round of requests.
-/// The `request` method can be used to add a request to the lock.
-/// The lock will then resolve once all requests are resolved, and yield the
-/// results.
+/// A basic util for sending requests to players, and blocking until they have
+/// all been resolved.
 pub struct PlayerLock {
     /// The MessageResolver operated by this lock.
     message_resolver: MessageResolver,
@@ -28,7 +22,6 @@ pub struct PlayerLock {
 
 
 impl PlayerLock {
-
     /// Construct a lock for given player handles and message channel.
     pub fn new(player_handler: PlayerHandler) -> Self {
         PlayerLock {
@@ -38,7 +31,13 @@ impl PlayerLock {
         }
     }
 
-    /// Send a request to the specified player and add it to the lock.
+    /// Send some data to a player.
+    pub fn send(&mut self, player_id: PlayerId, data: Vec<u8>) {
+        self.message_resolver.send(player_id, data);
+    }
+
+    /// Send a request to a player, blocking until it is resolved (either by
+    /// a response or by timeout).
     pub fn request(&mut self,
                    player_id: PlayerId,
                    data: Vec<u8>,
@@ -52,6 +51,8 @@ impl PlayerLock {
         self.requests.insert(request_id, player_id);
     }
 
+    /// Poll for request responses. They will only be yielded once all
+    /// requests have been fulfilled.
     pub fn poll(&mut self) -> Poll<HashMap<PlayerId, ResponseValue>, ()> {
 
         // receive messages while there are unanswered requests
@@ -66,7 +67,8 @@ impl PlayerLock {
     fn handle_message(&mut self, message: PlayerMessage) {
         match message.content {
             MessageContent::Message { .. } => {
-                // ignore
+                // We only accept responses from players, so messages
+                // are ignored.
                 // TODO: log
             },
             MessageContent::Response { message_id, value } => {
