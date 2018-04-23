@@ -10,9 +10,11 @@ use tokio::timer::Delay;
 use protocol::{self as proto, message};
 
 
+/// Uniquely identifies a message sent by this handler
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct MessageId(u64);
 
+/// Uniquely identifies a message sent by a player
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ForeignMessageId {
     player_id: PlayerId,
@@ -31,7 +33,6 @@ pub struct PlayerMessage {
     pub content: MessageContent,
 }
 
-// TODO: name me 
 pub enum MessageContent {
     Message {
         message_id: ForeignMessageId,
@@ -54,6 +55,19 @@ pub enum ResponseError {
 }
 
 
+// TODO: is this decently named?
+/// A MessageResolver implements a simple communication scheme that allows
+/// sending messages to peers, with the added ability to wait for a response.
+/// The communication scheme is designed to be liberal, not making too many
+/// assumptions about the usage pattern. When receiving a message, the user
+/// can decide for himself whether this message requires a response or not.
+/// This way, the scheme can be used both for request/response (RPC style)
+/// interaction, one-way messages, or any combination of both.
+///
+/// The communication scheme works by assigning each message an unique number,
+/// which then optionally serves as a synchronization point. The synchronization
+/// can then be performed by sending a response tagged with the same
+/// identification number.
 pub struct MessageResolver {
     /// The PlayerHandler this message resolver acts upon.
     player_handler: PlayerHandler,
@@ -84,7 +98,7 @@ impl MessageResolver {
         }
     }
 
-    /// Send a message to a player
+    /// Send a message to a player.
     pub fn send(&mut self, player_id: PlayerId, data: Vec<u8>) -> MessageId {
         let message_id = self.get_message_id();
 
@@ -99,7 +113,7 @@ impl MessageResolver {
         return message_id;
     }
 
-    /// Request something from the specified player
+    /// Send a message to a player and wait until deadline for a response.
     pub fn request(&mut self,
                    player_id: PlayerId,
                    data: Vec<u8>,
@@ -112,6 +126,7 @@ impl MessageResolver {
         return message_id;
     }
 
+    /// Poll the resolver for a message.
     pub fn poll_message(&mut self) -> Poll<PlayerMessage, ()> {
         match try!(self.poll_events()) {
             Async::Ready(message) => return Ok(Async::Ready(message)),
@@ -121,6 +136,7 @@ impl MessageResolver {
         return self.poll_timeout();
     }
 
+    /// Send a response to a message previously received from a player.
     pub fn respond(&mut self, foreign_id: ForeignMessageId, data: Vec<u8>) {
         let ForeignMessageId { player_id, message_id } = foreign_id;
         let response = message::Response {
