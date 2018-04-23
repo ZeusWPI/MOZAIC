@@ -147,6 +147,7 @@ impl MessageResolver {
         self.send_message(player_id, payload);        
     }
 
+    /// Dispatch a payload to a player.
     fn send_message(&mut self, player_id: PlayerId, payload: message::Payload) {
         let message = proto::Message {
             payload: Some(payload),
@@ -199,11 +200,13 @@ impl MessageResolver {
         }
     }
 
+    // TODO: yield descriptive error values that can be logged, instead of ().
+    /// Parse a message.
     fn get_message_content(&mut self, player_id: PlayerId, data: Vec<u8>)
         -> Result<MessageContent, ()>
     {
         let message = match proto::Message::decode(data) {
-            Err(err) => panic!("got invalid message: {:?}", err),
+            Err(_err) => return Err(()),
             Ok(message) => message,
         };
         let content = match message.payload.unwrap() {
@@ -225,25 +228,21 @@ impl MessageResolver {
         return Ok(content);
     }
 
+    // TODO: yield descriptive error values that can be logged, instead of ().
+    /// Try matching a response with a request, and resolve the request.
     fn resolve_response(&mut self, player_id: PlayerId, message_id: MessageId)
         -> Result<(), ()>
     {
-        // TODO: replace panics with error values, so that they can be logged
-        // and handled gracefully
-
         // If the request id is not in the hashmap of unresolved requests,
         // someone sent a rogue response.
         let request_player = match self.requests.get(&message_id) {
-            // TODO: panic is for debugging reasons,
-            //       remove me when everything works
-            // TODO: it should be logged though
-            None => panic!("got unsolicited response"),
+            None => return Err(()),
             Some(&player_id) => player_id,
         };
         
         // Check whether the sender is authorized to answer this request.
         if player_id != request_player {
-            panic!("got a rogue answer");
+            return Err(());
         }
 
         // mark the request as resolved
@@ -251,6 +250,7 @@ impl MessageResolver {
         return Ok(());
     }
 
+    /// Poll for a timeout message.
     fn poll_timeout(&mut self) -> Poll<PlayerMessage, ()> {
         loop {
             let deadline = try_ready!(self.poll_deadline());
@@ -271,7 +271,7 @@ impl MessageResolver {
         }
     }
 
-    // poll for a message with an elapsed deadline
+    /// Poll for a deadline that has elapsed.
     fn poll_deadline(&mut self) -> Poll<Deadline, ()> {
         // TODO: comment this.
 
@@ -293,14 +293,16 @@ impl MessageResolver {
         return Ok(Async::Ready(deadline));
     }
 
-    /// Poll timer and expire requests if neccesary.
+    /// Poll the deadline timer.
     fn poll_delay(&mut self) -> Poll<(), ()> {
         match self.delay.poll() {
             Ok(res) => return Ok(res),
+            // timer errors are programming errors; they should not happen.
             Err(err) => panic!("timer error: {:?}", err),
         }
     }
 
+    /// Yield a fresh message id.
     fn get_message_id(&mut self) -> MessageId {
         self.message_counter += 1;
         return MessageId(self.message_counter);
