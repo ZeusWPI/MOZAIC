@@ -45,7 +45,13 @@ pub enum MessageContent {
     // TODO: disconnect, ...
 }
 
-pub type ResponseValue = Result<Vec<u8>, ()>;
+/// The result of a response
+pub type ResponseValue = Result<Vec<u8>, ResponseError>;
+
+pub enum ResponseError {
+    /// Indicates that a response did not arrive in time
+    Timeout,
+}
 
 
 pub struct MessageResolver {
@@ -241,7 +247,7 @@ impl MessageResolver {
 
             if let Some(player_id) = self.requests.remove(&message_id) {
                 println!("removed {}", message_id.as_u64());
-                let value = Err(());
+                let value = Err(ResponseError::Timeout);
                 let content = MessageContent::Response { message_id, value };
                 let message = PlayerMessage { player_id, content };
                 return Ok(Async::Ready(message));

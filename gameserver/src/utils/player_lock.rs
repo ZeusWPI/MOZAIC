@@ -52,7 +52,7 @@ impl PlayerLock {
         self.requests.insert(request_id, player_id);
     }
 
-    pub fn poll(&mut self) -> Poll<HashMap<PlayerId, Result<Vec<u8>, ()>>, ()> {
+    pub fn poll(&mut self) -> Poll<HashMap<PlayerId, ResponseValue>>, ()> {
 
         // receive messages while there are unanswered requests
         while !self.requests.is_empty() {
