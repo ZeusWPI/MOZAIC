@@ -12,9 +12,9 @@ import { parseLog } from '../lib/match/log';
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
 
 // Bots
-export const importBotFromDB = actionCreator<M.BotData>('IMPORT_BOT_FROM_DB');
-export const addBot = actionCreator<M.BotConfig>('ADD_BOT');
-export const editBot = actionCreator<M.BotData>('EDIT_BOT');
+export const importBotFromDB = actionCreator<M.Bot>('IMPORT_BOT_FROM_DB');
+export const addBot = actionCreator<{ name: string, command: string }>('ADD_BOT');
+export const editBot = actionCreator<M.Bot>('EDIT_BOT');
 export const removeBot = actionCreator<M.BotId>('REMOVE_BOT');
 
 // Matches
@@ -133,9 +133,9 @@ export const importMap = actionCreator<M.MapMeta>('IMPORT_MAP');
 export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 
 // Host
-export const selectBot = actionCreator<M.BotSlot & { token: M.Token }>('SELECT_BOT');
+export const selectBot = actionCreator<M.BotSlot>('SELECT_BOT');
 export const unselectBot = actionCreator<M.BotId>('UNSELECT_BOT');
-export const changeLocalBot = actionCreator<{ token: M.Token, slot: M.BotSlot }>('CHANGE_LOCAL_BOT');
+export const changeLocalBot = actionCreator<M.BotSlot>('CHANGE_LOCAL_BOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
 
 // DB

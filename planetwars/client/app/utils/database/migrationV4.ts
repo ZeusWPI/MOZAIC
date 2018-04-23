@@ -39,6 +39,7 @@ export type Finished = { status: 'finished' };
 export type Errored = { status: 'error'; error: string };
 
 export interface HostedMatchProps {
+  type: 'hosted';
   status: MatchStatus;
   uuid: MatchId;
   players: BotSlotList;
@@ -56,6 +57,7 @@ export type FinishedHostedMatch = HostedMatchProps & Finished & {
 };
 
 export interface JoinedMatchProps {
+  type: 'joined';
   status: MatchStatus;
   uuid: MatchId; // Different from Hosted match id
   localPlayers: InternalBotSlot[];
@@ -89,7 +91,9 @@ export interface PlayerMap<T> {
 // tslint:disable-next-line:variable-name
 export const MatchStatuses = V1.MatchStatuses;
 
-export type MatchList = V1.MatchList;
+export interface MatchList {
+  [matchId: string]: Match;
+}
 
 export type MapList = V1.MapList;
 
@@ -105,7 +109,9 @@ export type JsonPlanet = V1.JsonPlanet;
 
 export type BotId = V1.BotId;
 
-export type BotList = V3.BotList;
+export interface BotList {
+  [key: string /* UUID */]: Bot;
+}
 
 export interface Bot {
   uuid: BotId;
@@ -119,19 +125,20 @@ export type Token = string;
 
 export type BotSlot = ExternalBotSlot | InternalBotSlot;
 
-export interface BotSlotProperties {
+export interface BotSlotProps {
   type: 'internal' | 'external';
   token: Token;
 }
 
-export type ExternalBotSlot = BotSlotProperties & {
+export type ExternalBotSlot = BotSlotProps & {
   type: 'external';
   name: string;
 };
 
-export interface InternalBotSlot {
+export type InternalBotSlot = BotSlotProps & {
   type: 'internal';
   botId: BotId;
+  name: string;
 }
 
 export interface BotSlotList {

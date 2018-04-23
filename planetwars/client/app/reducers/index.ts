@@ -127,13 +127,12 @@ const mapsReducer = (state: M.MapList = {}, action: any) => {
 
 const botsReducer = (state: IBotsState = {}, action: any) => {
   if (A.addBot.test(action)) {
-    const config: M.BotConfig = action.payload;
+    const { name, command } = action.payload;
     const _now = Date.now();
     const createdAt = new Date(_now);
     const lastUpdatedAt = new Date(_now);
     const uuid = uuidv4();
-    const history = [config];
-    const bot: M.BotData = { uuid, config, createdAt, lastUpdatedAt, history };
+    const bot: M.Bot = { uuid, name, command, createdAt, lastUpdatedAt };
     return { ...state, [bot.uuid]: bot };
   }
 
@@ -143,7 +142,6 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
   if (A.editBot.test(action)) {
     const bot = action.payload;
-    bot.history.push(bot.config);
     bot.lastUpdatedAt = new Date(Date.now());
     state[bot.uuid] = bot;
     return { ...state };
@@ -187,8 +185,7 @@ const matchesPageReducer = combineReducers<MatchesPageState>({
 const playPageReducer = combineReducers<PlayPageState>({
   selectedBots: (state: M.BotSlotList = {}, action) => {
     if (A.selectBot.test(action)) {
-      const slot: M.BotSlot = { name: action.payload.name, id: action.payload.id };
-      return { ...state, [action.payload.token]: slot };
+      return { ...state, [action.payload.token]: action.payload };
     }
 
     if (A.unselectBot.test(action)) {
@@ -202,7 +199,7 @@ const playPageReducer = combineReducers<PlayPageState>({
     }
 
     if (A.changeLocalBot.test(action)) {
-      state[action.payload.token] = action.payload.slot;
+      state[action.payload.token] = action.payload;
       return { ...state };
     }
     return state;
