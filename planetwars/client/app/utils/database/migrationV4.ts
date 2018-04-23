@@ -21,23 +21,70 @@ export const defaults = {
 
 // Game Models ----------------------------------------------------------------
 
-export type MatchId = V1.MatchId;
+export type MatchId = string;
 
-export type MatchProperties = V1.MatchProperties;
+export type Match = HostedMatch | JoinedMatch;
+export type HostedMatch =
+  PlayingHostedMatch |
+  ErroredHostedMatch |
+  FinishedHostedMatch;
 
-export type PlayingMatch = V1.PlayingMatch;
+export type JoinedMatch =
+  PlayingJoinedMatch |
+  ErroredJoinedMatch |
+  FinishedJoinedMatch;
 
-export type FinishedMatch = V1.FinishedMatch;
+export type Playing = { status: 'playing' };
+export type Finished = { status: 'finished' };
+export type Errored = { status: 'error'; error: string };
 
-export type ErroredMatch = V1.ErroredMatch;
+export interface HostedMatchProps {
+  status: MatchStatus;
+  uuid: MatchId;
+  players: BotSlotList;
+  maxTurns: number;
+  timestamp: Date;
+  logPath: string;
+  map: MapId;
+  network: NetworkConfig;
+}
 
-export type Match = V1.Match;
+export type PlayingHostedMatch = HostedMatchProps & Playing;
+export type ErroredHostedMatch = HostedMatchProps & Errored;
+export type FinishedHostedMatch = HostedMatchProps & Finished & {
+  stats: MatchStats;
+};
 
-export type MatchStatus = V1.MatchStatus;
+export interface JoinedMatchProps {
+  status: MatchStatus;
+  uuid: MatchId; // Different from Hosted match id
+  localPlayers: InternalBotSlot[];
+  timestamp: Date;
+  network: NetworkConfig;
+}
 
-export type MatchStats = V1.MatchStats;
+export type PlayingJoinedMatch = JoinedMatchProps & Playing;
+export type FinishedJoinedMatch = JoinedMatchProps & Finished & {
+  importedLog?: { logPath: string; stats: MatchStats; playerNames: string[] };
+};
+export type ErroredJoinedMatch = JoinedMatchProps & Errored & {
+  importedLog?: { logPath: string; }
+};
 
-export type PlayerMap<T> = V1.PlayerMap<T>;
+export enum MatchStatus {
+  'playing',
+  'finished',
+  'error',
+}
+
+export interface MatchStats {
+  winners: BotId[];
+  score: PlayerMap<number>;
+}
+
+export interface PlayerMap<T> {
+  [uuid: string]: T;
+}
 
 // tslint:disable-next-line:variable-name
 export const MatchStatuses = V1.MatchStatuses;
@@ -56,38 +103,63 @@ export const isGameMap = V1.isGameMap;
 
 export type JsonPlanet = V1.JsonPlanet;
 
-// Config Models --------------------------------------------------------------
-
-export interface MatchConfig {
-  players: BotSlotList;
-  gameConfig: GameConfig;
-  logFile: string;
-}
-
-export type GameConfig = V3.GameConfig;
-
 export type BotId = V1.BotId;
+
+export type BotList = V3.BotList;
+
+export interface Bot {
+  uuid: BotId;
+  lastUpdatedAt: Date;
+  createdAt: Date;
+  name: string;
+  command: string;
+}
 
 export type Token = string;
 
-export interface BotSlot {
-  id?: BotId; // undefined if it is an external bot
-  name: string;
+export type BotSlot = ExternalBotSlot | InternalBotSlot;
+
+export interface BotSlotProperties {
+  type: 'internal' | 'external';
+  token: Token;
 }
 
-// TODO: Make this an array
+export type ExternalBotSlot = BotSlotProperties & {
+  type: 'external';
+  name: string;
+};
+
+export interface InternalBotSlot {
+  type: 'internal';
+  botId: BotId;
+}
+
 export interface BotSlotList {
   [key: string /*Token*/]: BotSlot;
 }
 
-export type BotList = V3.BotList;
+// Config Models --------------------------------------------------------------
 
-export type BotData = V3.BotData;
+export interface MatchConfig {
+  players: PlayerConfig[];
+  gameConfig: GameConfig;
+  logFile: string;
+}
 
-export type BotConfig = V3.BotConfig;
+export interface PlayerConfig {
+  token: Token;
+  name: string;
+}
+
+export type GameConfig = V3.GameConfig;
 
 // Util Models ----------------------------------------------------------------
 
 export type NotificationType = V1.NotificationType;
 
 export type Notification = V1.Notification;
+
+export interface NetworkConfig {
+  ip: string;
+  port: string;
+}
