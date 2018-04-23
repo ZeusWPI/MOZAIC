@@ -262,7 +262,6 @@ impl MessageResolver {
             }
 
             if let Some(player_id) = self.requests.remove(&message_id) {
-                println!("removed {}", message_id.as_u64());
                 let value = Err(ResponseError::Timeout);
                 let content = MessageContent::Response { message_id, value };
                 let message = PlayerMessage { player_id, content };

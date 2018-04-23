@@ -5,7 +5,7 @@ use std::sync::{Arc, Mutex};
 use futures::{Future, Poll, Async};
 
 use players::{PlayerId, PlayerHandler};
-use utils::{PlayerLock, ResponseValue};
+use utils::{PlayerLock, ResponseValue, ResponseError};
 use network::router::RoutingTable;
 
 use super::Config;
@@ -152,10 +152,23 @@ impl PwController {
             // TODO: log received message.
             // TODO: this should probably happen in the lock as well, so that
             //       we have a correct timestamp.
-            if let Ok(message) = result {
-                self.execute_message(player_id, message);
-            } else {
-                // TODO: log
+            match result {
+                Ok(message) => {
+                    let content = match String::from_utf8(message.clone()) {
+                        Ok(content) => content,
+                        Err(_err) => "invalid utf-8".to_string(),
+                    };
+                    info!(self.logger, "message received";
+                        player_id,
+                        "content" => content,
+                    );
+
+                    self.execute_message(player_id, message);
+                },
+                Err(ResponseError::Timeout) => {
+                    info!(self.logger, "timeout"; player_id);
+
+                }
             }
         }
     }
@@ -168,7 +181,7 @@ impl PwController {
             },
             Err(err) => {
                 info!(self.logger, "parse error";
-                    "player_id" => player_id.as_usize(),
+                    player_id,
                     "error" => err.to_string()
                 );
             },
