@@ -24,13 +24,15 @@ export interface HostDispatchProps {
 
 export interface HostState {
   selectedBots: M.BotSlot[];
-  selectedMap: string;
+  selectedMap?: M.MapId;
   mapToggled: boolean;
 }
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
 export class Host extends React.Component<HostProps, HostState> {
+  public state: HostState = { selectedBots: [], mapToggled: false };
+
   public render() {
     const toggle = (evt: any) => this.setState({ mapToggled: true });
     return (
@@ -108,6 +110,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private startServer = () => {
+    if (!this.state.selectedMap) { alert('Please pick a map!'); return; }
     const config: M.MatchParams = {
       players: this.state.selectedBots,
       map: this.state.selectedMap,
@@ -238,7 +241,7 @@ export class Slot extends React.Component<SlotProps> {
 interface MapSelectorProps {
   maps: M.MapList;
   selectMap: (id: string) => void;
-  selectedMap: string;
+  selectedMap?: string;
 }
 
 export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
