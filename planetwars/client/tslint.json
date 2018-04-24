@@ -22,6 +22,8 @@
       true,
       "never-prefix"
     ],
+    "jsx-no-multiline-js": false,
+    "jsx-key": false,
     "max-classes-per-file": [
       false
     ],

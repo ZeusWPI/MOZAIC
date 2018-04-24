@@ -3,7 +3,7 @@ import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
 import { parseLog, MatchLog } from '../../lib/match/log';
 import { LogView } from './LogView';
-import { GraphView } from './GraphView';
+import { GraphView } from './graphs/GraphView';
 
 const styles = require('./Matches.scss');
 
