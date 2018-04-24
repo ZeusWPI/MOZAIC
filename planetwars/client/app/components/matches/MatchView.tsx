@@ -3,6 +3,7 @@ import Visualizer from '../visualizer/Visualizer';
 import { Match, FinishedMatch, ErroredMatch } from './types';
 import { parseLog, MatchLog } from '../../lib/match/log';
 import { LogView } from './LogView';
+import { GraphView } from './GraphView';
 
 const styles = require('./Matches.scss');
 
@@ -80,6 +81,7 @@ interface Props {
 enum ViewState {
   VISUALIZER,
   LOG,
+  GRAPHS,
 }
 
 interface State {
@@ -90,7 +92,7 @@ export class MatchViewer extends React.Component<Props, State> {
   public constructor(props: Props) {
     super(props);
     this.state = {
-      viewState: ViewState.VISUALIZER,
+      viewState: ViewState.GRAPHS,
     };
   }
 
@@ -104,12 +106,14 @@ export class MatchViewer extends React.Component<Props, State> {
 
     const showVis = () => this.showVisualizer();
     const showLog = () => this.showLog();
+    const showGraphs = () => this.showGraphs();
 
     return (
       <div className={styles.matchView}>
         <div className={styles.matchTitleBar}>
           <div onClick={showVis} className={styles.matchTitleBarElement}> Visualizer </div>
           <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
+          <div onClick={showGraphs} className={styles.matchTitleBarElement}> Graphs </div>
         </div>
         <div className={styles.displayBox}>
           <MatchDisplay viewState={viewState} matchLog={matchLog} />
@@ -120,6 +124,10 @@ export class MatchViewer extends React.Component<Props, State> {
 
   private showVisualizer() {
     this.setState({ viewState: ViewState.VISUALIZER });
+  }
+
+  private showGraphs() {
+    this.setState({ viewState: ViewState.GRAPHS });
   }
 
   private showLog() {
@@ -138,6 +146,8 @@ const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
       return <Visualizer matchLog={props.matchLog} />;
     case ViewState.LOG:
       return <LogView matchLog={props.matchLog} />;
+    case ViewState.GRAPHS:
+      return <GraphView matchLog={props.matchLog} />;
   }
 };
 
