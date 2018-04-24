@@ -108,13 +108,14 @@ interface BotEditorState {
 }
 
 export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
-  constructor(props: BotEditorProps) {
-    super(props);
-    this.state = this.fromSelectedBot(props.selectedBot);
-  }
+  public state: BotEditorState = { command: '', name: '', errors: {} };
 
-  public componentWillReceiveProps(nextProps: BotEditorProps) {
-    this.setState(this.fromSelectedBot(nextProps.selectedBot));
+  public static getDerivedStateFromProps(nextProps: BotEditorProps, prevState: BotEditorState): BotEditorState {
+    if (!nextProps.selectedBot) {
+      return { selectedBot: undefined, name: '', command: '', errors: {} };
+    }
+    const { name, command } = nextProps.selectedBot;
+    return { name, command, selectedBot: nextProps.selectedBot, errors: {} };
   }
 
   public render() {
@@ -199,7 +200,6 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
       alert(JSON.stringify(validation)); // TODO Fix decently
       return;
     }
-
     if (selectedBot) {
       this.props.editBot({ ...selectedBot, name, command });
     } else {
@@ -213,12 +213,5 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
     } else {
       this.setState({ name: '', command: '' });
     }
-  }
-
-  private fromSelectedBot(selectedBot?: M.Bot) {
-    if (!selectedBot) {
-      return { selectedBot: undefined, name: '', command: '', errors: {} };
-    }
-    return { ...selectedBot, errors: {} };
   }
 }

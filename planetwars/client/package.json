@@ -78,7 +78,8 @@
       "category": "public.app-category.games"
     },
     "dmg": {
-      "contents": [{
+      "contents": [
+        {
           "x": 410,
           "y": 150,
           "type": "link",
@@ -106,8 +107,8 @@
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.21.0",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
+    "react": "^16.3.0",
+    "react-dom": "^16.3.0",
     "react-helpers": "0.0.1",
     "react-hyperscript": "^3.0.0",
     "react-hyperscript-helpers": "^1.2.0",
