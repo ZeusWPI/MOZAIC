@@ -66,5 +66,11 @@ function upgradeV2(db: V2.DbSchema): V3.DbSchema {
 }
 
 function upgradeV3(db: V3.DbSchema): V4.DbSchema {
-  return { ...db, version: 'v4' };
+  const oldBots: V3.BotList = db.bots;
+  const newBots: V4.BotList = {};
+  const oldMatches: V3.MatchList = db.matches;
+  const newMatches: V4.MatchList = {};
+
+  throw new Error('Somebody forgot to implement a migration!');
+  // return { ...db, bots: newBots, matches: newMatches, version: 'v4' };
 }
