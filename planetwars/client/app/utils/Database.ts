@@ -5,7 +5,7 @@ import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
 import log from 'electron-log';
 
-import * as A from '../actions/actions';
+import * as A from '../actions/index';
 import * as M from './database/models';
 import { store as globalStore } from '../index';
 import { GState } from '../reducers';

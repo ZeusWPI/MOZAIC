@@ -34,21 +34,25 @@ export type JoinedMatch =
   ErroredJoinedMatch |
   FinishedJoinedMatch;
 
-export type Playing = { status: 'playing' };
-export type Finished = { status: 'finished' };
-export type Errored = { status: 'error'; error: string };
+export type Playing = { status: MatchStatus.playing };
+export type Finished = { status: MatchStatus.finished };
+export type Errored = { status: MatchStatus.error; error: string };
 
-export interface HostedMatchProps {
-  type: 'hosted';
+export interface MatchProps {
+  type: MatchType;
   status: MatchStatus;
-  uuid: MatchId;
-  players: BotSlotList;
-  maxTurns: number;
+  uuid: string;
   timestamp: Date;
-  logPath: string;
-  map: MapId;
   network: NetworkConfig;
 }
+
+export type HostedMatchProps = MatchProps & {
+  type: MatchType.hosted;
+  players: BotSlotList;
+  maxTurns: number;
+  logPath: string;
+  map: MapId;
+};
 
 export type PlayingHostedMatch = HostedMatchProps & Playing;
 export type ErroredHostedMatch = HostedMatchProps & Errored;
@@ -56,22 +60,23 @@ export type FinishedHostedMatch = HostedMatchProps & Finished & {
   stats: MatchStats;
 };
 
-export interface JoinedMatchProps {
-  type: 'joined';
-  status: MatchStatus;
-  uuid: MatchId; // Different from Hosted match id
+export type JoinedMatchProps = MatchProps & {
+  type: MatchType.joined;
   localPlayers: InternalBotSlot[];
-  timestamp: Date;
-  network: NetworkConfig;
-}
+};
 
 export type PlayingJoinedMatch = JoinedMatchProps & Playing;
 export type FinishedJoinedMatch = JoinedMatchProps & Finished & {
   importedLog?: { logPath: string; stats: MatchStats; playerNames: string[] };
 };
 export type ErroredJoinedMatch = JoinedMatchProps & Errored & {
-  importedLog?: { logPath: string; }
+  importedLog?: { logPath: string; },
 };
+
+export enum MatchType {
+  'hosted',
+  'joined',
+}
 
 export enum MatchStatus {
   'playing',
@@ -80,12 +85,18 @@ export enum MatchStatus {
 }
 
 export interface MatchStats {
-  winners: BotId[];
+  winners: Token[];
   score: PlayerMap<number>;
 }
 
 export interface PlayerMap<T> {
   [uuid: string]: T;
+}
+
+export interface MatchParams {
+  players: BotSlotList;
+  map: MapId;
+  maxTurns: number;
 }
 
 // tslint:disable-next-line:variable-name
@@ -139,7 +150,7 @@ export type InternalBotSlot = BotSlotProps & {
   type: 'internal';
   botId: BotId;
   name: string;
-}
+};
 
 export interface BotSlotList {
   [key: string /*Token*/]: BotSlot;

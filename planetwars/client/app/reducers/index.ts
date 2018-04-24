@@ -3,7 +3,7 @@ import { combineReducers, Reducer } from 'redux';
 import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
-import * as A from '../actions/actions';
+import * as A from '../actions/index';
 import * as M from '../utils/database/models';
 import { Action } from '../actions/helpers';
 
@@ -27,14 +27,14 @@ import { Action } from '../actions/helpers';
 export interface GState {
   readonly routing: RouterState;
 
-  readonly navbar: NavbarState;
-  readonly bots: M.BotList;
-  readonly matches: M.MatchList;
-  readonly notifications: M.Notification[];
-  readonly maps: M.MapList;
+  readonly bots: BotsState;
+  readonly matches: MatchesState;
+  readonly notifications: NotificationsState;
+  readonly maps: MapsState;
 
+  // TODO: Remove this state
   readonly matchesPage: MatchesPageState;
-  readonly playPage: PlayPageState;
+  readonly navbar: NavbarState;
 
   readonly globalErrors: any[];
 }
@@ -46,13 +46,10 @@ export interface NavbarState {
   readonly notificationsVisible: boolean;
 }
 
-export type IBotsState = M.BotList;
-export type IMatchesState = M.MatchList;
-
-export interface PlayPageState {
-  selectedBots: M.BotSlotList;
-  selectedMap: string;
-}
+export type NotificationsState = M.Notification[];
+export type BotsState = M.BotList;
+export type MatchesState = M.MatchList;
+export type MapsState = M.MapList;
 
 export interface MatchesPageState {
   readonly importError?: string;
@@ -69,10 +66,6 @@ export const initialState: GState = {
   maps: {},
   notifications: [],
 
-  playPage: {
-    selectedBots: {},
-    selectedMap: "",
-  },
   matchesPage: {},
   globalErrors: [],
 };
@@ -125,7 +118,7 @@ const mapsReducer = (state: M.MapList = {}, action: any) => {
   return state;
 };
 
-const botsReducer = (state: IBotsState = {}, action: any) => {
+const botsReducer = (state: BotsState = {}, action: any) => {
   if (A.addBot.test(action)) {
     const { name, command } = action.payload;
     const _now = Date.now();
@@ -159,7 +152,7 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
 // const botsPageReducer = combineReducers<IBotsPageState>({});
 
-const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState => {
+const matchesReducer = (state: MatchesState = {}, action: any): MatchesState => {
   switch (action.type) {
     case A.saveMatch.type: {
       const match = action.payload;
@@ -182,36 +175,6 @@ const matchesPageReducer = combineReducers<MatchesPageState>({
   },
 });
 
-const playPageReducer = combineReducers<PlayPageState>({
-  selectedBots: (state: M.BotSlotList = {}, action) => {
-    if (A.selectBot.test(action)) {
-      return { ...state, [action.payload.token]: action.payload };
-    }
-
-    if (A.unselectBot.test(action)) {
-      const filteredState: M.BotSlotList = Object.keys(state)
-        .filter((key) => key !== action.payload)
-        .reduce((obj: M.BotSlotList, key) => {
-          obj[key] = state[key];
-          return obj;
-        }, {});
-      return filteredState;
-    }
-
-    if (A.changeLocalBot.test(action)) {
-      state[action.payload.token] = action.payload;
-      return { ...state };
-    }
-    return state;
-  },
-  selectedMap: (state: string = "", action) => {
-    if (A.selectMap.test(action)) {
-      return action.payload;
-    }
-    return state;
-  },
-});
-
 const globalErrorReducer = (state: any[] = [], action: Action) => {
   if (A.dbError.test(action)) {
     return [...state, action.payload];
@@ -225,14 +188,13 @@ const globalErrorReducer = (state: any[] = [], action: Action) => {
 export const rootReducer = combineReducers<GState>({
   routing: routing as Reducer<any>,
 
-  navbar: navbarReducer,
   bots: botsReducer,
   matches: matchesReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
 
+  navbar: navbarReducer,
   matchesPage: matchesPageReducer,
-  playPage: playPageReducer,
 
   globalErrors: globalErrorReducer,
 });

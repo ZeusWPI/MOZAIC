@@ -10,7 +10,7 @@ import Matches, {
 import { Match } from '../components/matches/types';
 import { GState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import * as A from '../actions/actions';
+import * as A from '../actions/index';
 import { PathLike } from 'mz/fs';
 import { BotId, MatchId } from '../utils/database/models';
 

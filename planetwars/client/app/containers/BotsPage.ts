@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { GState } from '../reducers/index';
-import { addBot, removeBot, editBot } from '../actions/actions';
+import { addBot, removeBot, editBot } from '../actions/index';
 import { BotConfig, BotData, BotId } from "../utils/database/models";
 
 interface Props {

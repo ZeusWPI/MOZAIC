@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 
 import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host';
 import { Importer } from '../utils/Importer';
-import * as A from '../actions/actions';
+import * as A from '../actions/index';
 import { GState } from '../reducers';
 import { BotId, BotSlot, BotSlotList, Token } from '../utils/database/models';
 import * as crypto from 'crypto';
@@ -17,15 +17,17 @@ const mapStateToProps = (state: GState) => {
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    selectBotInternal(name: string, id: BotId) {
+    selectBotInternal(name: string, botId: BotId) {
       dispatch(A.selectBot({
-        id,
+        type: 'internal',
+        botId,
         token: generateToken(),
         name,
       }));
     },
     selectBotExternal(name: string) {
       dispatch(A.selectBot({
+        type: 'external',
         token: generateToken(),
         name,
       }));
@@ -34,10 +36,10 @@ const mapDispatchToProps = (dispatch: any) => {
       dispatch(A.unselectBot(uuid));
     },
     runMatch(params: A.MatchParams) {
-      dispatch(A.runMatch(params));
+      dispatch(A.startServer(params));
     },
     changeLocalBot(token: Token, slot: BotSlot) {
-      dispatch(A.changeLocalBot({ token, slot }));
+      dispatch(A.changeLocalBot(slot));
     },
     selectMap(id: string) {
       dispatch(A.selectMap(id));

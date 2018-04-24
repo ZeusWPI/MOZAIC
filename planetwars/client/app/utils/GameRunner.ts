@@ -22,19 +22,14 @@ class GameRunner extends EventEmitter {
   constructor(conf: MatchConfig) {
     super();
     const { gameConfig: { maxTurns, mapFile }, logFile } = conf;
-    const players = Object.keys(conf.players).map((token) => this.convertBotConfig(token, conf.players[token]));
-    // tslint:disable-next-line:variable-name
-    const game_config = { max_turns: maxTurns, map_file: mapFile };
-    this.conf = { players, game_config, log_file: logFile };
+    const players = conf.players;
+    const gameConfig = { max_turns: maxTurns, map_file: mapFile };
+    this.conf = { players, game_config: gameConfig, log_file: logFile };
   }
 
   public run() {
     // TODO: maybe make sure this isn't called twice
     this.runBotRunner();
-  }
-
-  private convertBotConfig(token: Token, bot: BotSlot): ExternalBotConfig {
-    return { token, name: bot.name };
   }
 
   private runBotRunner() {

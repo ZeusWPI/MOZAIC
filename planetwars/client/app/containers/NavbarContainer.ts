@@ -8,7 +8,7 @@ import {
   toggleNotifications,
   removeNotification,
   clearNotifications,
-} from '../actions/actions';
+} from '../actions/index';
 import { Navbar } from '../components/Navbar';
 
 const mapStateToProps = (state: GState) => {
