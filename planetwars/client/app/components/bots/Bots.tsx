@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-import { BotConfig, BotList, BotData, BotId } from '../../utils/database/models';
+import * as M from '../../utils/database/models';
 
 // TODO import decently
 // tslint:disable-next-line:no-var-requires
@@ -10,18 +10,17 @@ const stringArgv = require('string-argv');
 const styles = require("./Bots.scss");
 
 export interface BotsStateProps {
-  bots: BotList;
-  selectedBot?: BotData;
+  bots: M.BotList;
+  selectedBot?: M.Bot;
 }
 
-// tslint:disable-next-line:interface-over-type-literal
 export type ConfigErrors = { name?: string, command?: string };
 
 export interface BotsDispatchProps {
-  addBot: (config: BotConfig) => void;
-  removeBot: (uuid: BotId) => void;
-  editBot: (bot: BotData) => void;
-  validate: (config: BotConfig) => ConfigErrors;
+  addBot: (name: string, command: string) => void;
+  removeBot: (uuid: M.BotId) => void;
+  editBot: (bot: M.Bot) => void;
+  validate: (name: string, command: string) => ConfigErrors;
 }
 
 type IBotsProps = BotsStateProps & BotsDispatchProps;
@@ -51,7 +50,7 @@ export class Bots extends React.Component<IBotsProps, {}> {
 // ----------------------------------------------------------------------------
 
 interface BotListProps {
-  bots: BotList;
+  bots: M.BotList;
 }
 
 export class BotsList extends React.Component<BotListProps, {}> {
@@ -67,7 +66,7 @@ export class BotsList extends React.Component<BotListProps, {}> {
     );
   }
 }
-// tslint:disable-next-line:variable-name
+
 export const NewBot: React.SFC<{}> = (props) => {
   return (
     <div className={styles.newBot}>
@@ -76,14 +75,13 @@ export const NewBot: React.SFC<{}> = (props) => {
   );
 };
 
-// tslint:disable-next-line:variable-name
-const BotListItem: React.SFC<BotData> = (props) => {
-  const { config, lastUpdatedAt, createdAt, uuid } = props;
+const BotListItem: React.SFC<M.Bot> = (props) => {
+  const { name, lastUpdatedAt, createdAt, uuid } = props;
   return (
     <Link to={`/bots/${uuid}`} key={uuid}>
       <li>
         <p>
-          {config.name}
+          {name}
         </p>
       </li>
     </Link>
@@ -95,16 +93,16 @@ const BotListItem: React.SFC<BotData> = (props) => {
 // ----------------------------------------------------------------------------
 
 interface BotEditorProps {
-  selectedBot?: BotData;
-  addBot: (bot: BotConfig) => void;
-  removeBot: (uuid: BotId) => void;
-  editBot: (bot: BotData) => void;
-  validate: (config: BotConfig) => ConfigErrors;
+  selectedBot?: M.Bot;
+  addBot: (name: string, command: string) => void;
+  removeBot: (uuid: M.BotId) => void;
+  editBot: (bot: M.Bot) => void;
+  validate: (name: string, command: string) => ConfigErrors;
 }
 
 interface BotEditorState {
   errors: any;
-  selectedBot?: BotData;
+  selectedBot?: M.Bot;
   command: string;
   name: string;
 }
@@ -193,10 +191,8 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
   }
 
   private handleSubmit() {
-    const command = this.state.command;
-    const { name, selectedBot } = this.state;
-    const config = { name, command };
-    const validation = this.props.validate(config);
+    const { name, selectedBot, command } = this.state;
+    const validation = this.props.validate(name, command);
 
     if (Object.keys(validation).length !== 0) {
       this.setState({ errors: validation });
@@ -205,9 +201,9 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
     }
 
     if (selectedBot) {
-      this.props.editBot({ ...selectedBot, config });
+      this.props.editBot({ ...selectedBot, name, command });
     } else {
-      this.props.addBot(config);
+      this.props.addBot(name, command);
     }
   }
 
@@ -219,12 +215,10 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
     }
   }
 
-  private fromSelectedBot(selectedBot?: BotData) {
+  private fromSelectedBot(selectedBot?: M.Bot) {
     if (!selectedBot) {
       return { selectedBot: undefined, name: '', command: '', errors: {} };
     }
-    const { uuid, config: { name, command } } = selectedBot;
-    const cmd = command;
-    return { selectedBot, name, command: cmd, errors: {} };
+    return { ...selectedBot, errors: {} };
   }
 }

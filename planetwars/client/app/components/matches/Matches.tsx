@@ -2,7 +2,9 @@ import * as React from 'react';
 import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
-import { Match, Player, Map } from './types';
+
+import * as M from '../../utils/database/models';
+import * as Comp from './types';
 import MatchView from './MatchView';
 import { FatalErrorView } from '../FatalError';
 
@@ -12,8 +14,8 @@ const styles = require('./Matches.scss');
 export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
 
 export interface MatchViewerStateProps {
-  selectedMatch?: Match;
-  matches: Match[];
+  selectedMatch?: Comp.Match;
+  matches: Comp.Match[];
 }
 
 export interface MatchViewerDispatchProps {
@@ -37,18 +39,23 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
   public render() {
     const { fatalError } = this.state;
     const { matches } = this.props;
+    const selected = this.props.selectedMatch;
 
     if (fatalError) { return this.renderError(fatalError); }
     if (matches.length === 0) { return <NoMatches />; }
+
+    const SelectedView = () => (selected && selected.type === M.MatchType.hosted)
+      ? <MatchView match={selected} />
+      : <p> TODO </p>;
 
     return (
       <div className={styles.matchViewer}>
         <MatchList
           matches={matches}
-          selected={this.props.selectedMatch}
+          selected={selected}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={this.props.selectedMatch} />
+        <SelectedView />
       </div>);
   }
 
@@ -62,8 +69,8 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
 }
 
 interface MatchListProps {
-  matches: Match[];
-  selected?: Match;
+  matches: Comp.Match[];
+  selected?: Comp.Match;
   selectMatch: (matchId: string) => void;
 }
 
@@ -84,13 +91,13 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   return <ul className={styles.matchList}> {listEntries} </ul>;
 };
 
-function calcPlayerData(match: Match): PlayerProps[] {
-  if (match.status === 'finished') {
+function calcPlayerData(match: Comp.HostedMatch): PlayerProps[] {
+  if (match.status === M.MatchStatus.finished) {
     return match.players.map((player) => ({
-      uuid: player.uuid,
+      token: player.token,
       name: player.name,
-      isWinner: match.stats.winners.some((id) => id === player.uuid),
-      score: match.stats.score[player.uuid],
+      isWinner: match.stats.winners.some((id) => id === player.token),
+      score: match.stats.score[player.token],
     })).sort((a, b) => {
       // sort major on isWinner, minor on score
       if (a.isWinner && !b.isWinner) {
@@ -103,7 +110,7 @@ function calcPlayerData(match: Match): PlayerProps[] {
     });
   } else {
     return match.players.map((player) => ({
-      uuid: player.uuid,
+      token: player.token,
       name: player.name,
       isWinner: false,
     }));
@@ -111,25 +118,26 @@ function calcPlayerData(match: Match): PlayerProps[] {
 }
 
 interface MatchEntryProps {
-  match: Match;
+  match: Comp.Match;
   selected?: boolean;
   onClick: () => void;
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   let className = styles.matchListEntry;
-  if (props.selected) {
+  const { selected, match } = props;
+  if (selected) {
     className = classnames(styles.selected, className);
   }
 
-  const playerData = calcPlayerData(props.match);
-
+  if (match.type !== M.MatchType.hosted) { return <p>Local Match</p>; }
+  const playerData = calcPlayerData(match);
   return (
     <div className={className} onClick={props.onClick}>
       <div className={styles.matchListEntryContent}>
         <PlayerList players={playerData} />
-        <TimeLocation match={props.match} />
-        <MatchStatus match={props.match} />
+        <TimeLocation match={match} />
+        <MatchStatus match={match} />
       </div>
     </div>
   );
@@ -139,7 +147,7 @@ export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
   <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true} />;
 
 interface PlayerProps {
-  uuid: string;
+  token: string;
   name: string;
   isWinner: boolean;
   score?: number;
@@ -147,7 +155,7 @@ interface PlayerProps {
 
 export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
   const entries = players.map((player) => (
-    <PlayerEntry key={player.uuid} player={player} />
+    <PlayerEntry key={player.token} player={player} />
   ));
   return <ul className={styles.playerList}> {entries} </ul>;
 };
@@ -187,7 +195,7 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{ match: Match }> = ({ match }) => (
+export const TimeLocation: SFC<{ match: Comp.HostedMatch }> = ({ match }) => (
   <div className={styles.timeLocation}>
     <div className={styles.mapName} title='map'>
       <div className={styles.iconSpan}>
@@ -201,12 +209,12 @@ export const TimeLocation: SFC<{ match: Match }> = ({ match }) => (
     </div>
   </div>);
 
-export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
+export const MatchStatus: SFC<{ match: Comp.HostedMatch }> = ({ match }) => {
   switch (match.status) {
-    case 'finished': {
+    case M.MatchStatus.finished: {
       return null;
     }
-    case 'playing': {
+    case M.MatchStatus.playing: {
       return (
         <div className={styles.matchStatus}>
           <div className={styles.iconSpan}>
@@ -215,7 +223,7 @@ export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
           in progress
         </div>);
     }
-    case 'error': {
+    case M.MatchStatus.error: {
       return (
         <div className={styles.matchStatus}>
           <div className={styles.iconSpan}>

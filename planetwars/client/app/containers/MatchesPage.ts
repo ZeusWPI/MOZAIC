@@ -44,7 +44,7 @@ const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
   const matchData = state.matches[matchId];
 
   if (matchData.type === M.MatchType.hosted) {
-    const players = matchData.players.map(({ name }) => ({ name }));
+    const players = matchData.players.map(({ name, token }) => ({ name, token }));
     const mapData = state.maps[matchData.map];
     const map = { uuid: mapData.uuid, name: mapData.name };
     const { network, maxTurns, ...props } = matchData;

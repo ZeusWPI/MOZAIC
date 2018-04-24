@@ -1,14 +1,16 @@
 import * as React from 'react';
+
 import Visualizer from '../visualizer/Visualizer';
-import { Match, FinishedHostedMatch, ErroredHostedMatch } from './types';
+import * as Comp from './types';
 import { parseLog, MatchLog } from '../../lib/match/log';
 import { LogView } from './LogView';
+import * as M from '../../utils/database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
 export interface ContainerProps {
-  match?: Match;
+  match?: Comp.HostedMatch;
 }
 
 export interface MatchViewState {
@@ -44,15 +46,16 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
       return null;
     }
     switch (match.status) {
-      case 'finished': {
-        const log = parseLog(match.players, match.logPath);
+      case M.MatchStatus.finished: {
+        const players = match.players.map(({ token, name }) => ({ uuid: token, name }));
+        const log = parseLog(players, match.logPath);
         return (
           <div className={styles.matchViewContainer}>
             <MatchViewer matchLog={log} />
           </div>
         );
       }
-      case 'error': {
+      case M.MatchStatus.error: {
         return (
           <div className={styles.matchViewContainer}>
             <div className={styles.matchError}>
@@ -61,7 +64,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
           </div>
         );
       }
-      case 'playing': {
+      case M.MatchStatus.finished: {
         return (
           <div className={styles.matchViewContainer}>
             <div className={styles.matchInProgress}>
@@ -70,6 +73,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
           </div>
         );
       }
+      default: throw new Error('We suck at programming');
     }
   }
 }

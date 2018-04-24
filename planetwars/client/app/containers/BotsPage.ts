@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { GState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/index';
-import { BotConfig, BotData, BotId } from "../utils/database/models";
+import * as M from "../utils/database/models";
 
 interface Props {
   match: any;
@@ -11,9 +11,9 @@ interface Props {
 
 const mapStateToProps = (state: GState, ownProps: Props) => {
   const bots = state.bots;
-  const uuid: BotId | undefined = ownProps.match.params.bot;
+  const uuid: M.BotId | undefined = ownProps.match.params.bot;
   if (uuid) {
-    const selectedBot: BotData = bots[uuid];
+    const selectedBot: M.Bot = bots[uuid];
     return { bots, selectedBot };
   }
   return { bots };
@@ -21,22 +21,22 @@ const mapStateToProps = (state: GState, ownProps: Props) => {
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    addBot: (config: BotConfig) => {
-      dispatch(addBot(config));
+    addBot: (name: string, command: string) => {
+      dispatch(addBot({ name, command }));
     },
-    removeBot: (uuid: BotId) => {
+    removeBot: (uuid: M.BotId) => {
       dispatch(removeBot(uuid));
     },
-    editBot: (bot: BotData) => {
+    editBot: (bot: M.Bot) => {
       dispatch(editBot(bot));
     },
-    validate: (config: BotConfig) => {
+    validate: (name: string, command: string) => {
       const errors: ConfigErrors = {};
-      if (!config.name || config.name.length === 0) {
+      if (!name || name.length === 0) {
         errors.name = 'Name should not be empty';
       }
 
-      if (!config.command || config.command.length === 0) {
+      if (!command || command.length === 0) {
         errors.command = 'Command should not be empty';
       }
 
