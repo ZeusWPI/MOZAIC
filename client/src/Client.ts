@@ -1,18 +1,13 @@
 import * as protocol_root from './proto';
 import Message = protocol_root.mozaic.protocol.Message;
 import { BotRunner, BotConfig } from "./BotRunner";
-import { Connection } from "./connection";
+import { Connection, Address } from "./Connection";
 import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
 
 export interface ConnectionData {
     token: Buffer,
     address: Address,
-}
-
-export interface Address {
-    host: string;
-    port: number;
 }
 
 export interface Request {
@@ -29,27 +24,20 @@ enum ClientState {
 
 export class Client {
     readonly connection: Connection;
-    // TODO: get rid of this
-    readonly address: Address;
     readonly botRunner: BotRunner;
     readonly requestQueue: (number | Long)[];
     private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig) {
-        this.connection = new Connection(connData.token);
+        this.connection = new Connection(connData.address, connData.token);
         this.botRunner = new BotRunner(botConfig);
-        this.address = connData.address;
         this.requestQueue = [];
         this.state = ClientState.CONNECTING;
         this.initHandlers();
     }
 
     public run() {
-        let socket = new Socket();
-        socket.once('connect', () => {
-            this.connection.connect(socket);
-        });
-        socket.connect(this.address.port, this.address.host);
+        this.connection.connect();
         this.botRunner.run();
     }
 
