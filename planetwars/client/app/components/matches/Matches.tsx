@@ -9,10 +9,15 @@ import { FatalErrorView } from '../FatalError';
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
-export interface MatchViewerProps {
-  selectMatch: (matchId: string) => void;
+export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
+
+export interface MatchViewerStateProps {
   selectedMatch?: Match;
   matches: Match[];
+}
+
+export interface MatchViewerDispatchProps {
+  selectMatch: (matchId: string) => void;
 }
 
 export interface MatchViewerState {

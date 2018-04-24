@@ -1,38 +1,32 @@
 import * as React from "react";
 
-import {
-  BotConfig,
-  BotList,
-  BotData,
-  BotId,
-  BotSlot,
-  Token,
-  BotSlotList,
-  MatchConfig,
-  MapList,
-} from '../../utils/database/models';
-import { MatchParams } from "../../actions/actions";
+import * as M from '../../utils/database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
 
 export interface HostStateProps {
-  bots: BotList;
-  maps: MapList;
-  selectedBots: BotSlotList;
-  selectedMap: string;
+  bots: M.BotList;
+  maps: M.MapList;
+  // selectedBots: M.BotSlot[];
+  // selectedMap: string;
 }
 
 export interface HostDispatchProps {
-  selectBotInternal: (name: string, id: BotId) => void;
-  selectBotExternal: (name: string) => void;
-  unselectBot: (uuid: string, all: boolean) => void;
-  runMatch: (params: MatchParams) => void;
-  changeLocalBot: (token: Token, slot: BotSlot) => void;
-  selectMap: (id: string) => void;
+  // selectBotInternal: (name: string, id: M.BotId) => void;
+  // selectBotExternal: (name: string) => void;
+  // unselectBot: (uuid: string, all: boolean) => void;
+  runMatch: (params: M.MatchParams) => void;
+  generateToken(): string;
+  // changeLocalBot: (token: M.Token, slot: M.BotSlot) => void;
+  // selectMap: (id: string) => void;
 }
 
-export interface HostState { }
+export interface HostState {
+  selectedBots: M.BotSlot[];
+  selectedMap: string;
+  mapToggled: boolean;
+}
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
@@ -79,9 +73,9 @@ export class Host extends React.Component<HostProps, HostState> {
           </h2>
 
           <BotSlots
-            selectedBots={this.props.selectedBots}
+            selectedBots={this.state.selectedBots}
             allBots={this.props.bots}
-            changeLocalBot={this.props.changeLocalBot}
+            updateSlot={this.updateSlot}
           />
         </div>
         <div id={styles.mapSelector}>
@@ -92,8 +86,8 @@ export class Host extends React.Component<HostProps, HostState> {
 
           <MapSelector
             maps={this.props.maps}
-            selectMap={this.props.selectMap}
-            selectedMap={this.props.selectedMap}
+            selectMap={this.selectMap}
+            selectedMap={this.state.selectedMap}
           />
           <div className={styles.mapPreview}>
             <figure className="image is-128x128">
@@ -114,39 +108,66 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private startServer = () => {
-    const config: MatchParams = {
-      bots: this.props.selectedBots,
-      map: this.props.selectedMap,
+    const config: M.MatchParams = {
+      players: this.state.selectedBots,
+      map: this.state.selectedMap,
       maxTurns: 500,
     };
     console.log(config);
     this.props.runMatch(config);
   }
 
+  // TODO: Check if correct
+  private selectBotInternal = (name: string, botId: M.BotId) => {
+    const token = this.props.generateToken();
+    const botSlot: M.BotSlot = { type: 'internal', botId, name, token };
+    this.setState({
+      ...this.state,
+      selectedBots: [...this.state.selectedBots, botSlot],
+    });
+  }
+
+  private selectBotExternal = (name: string) => {
+    const token = this.props.generateToken();
+    const botSlot: M.BotSlot = { type: 'external', name, token };
+    this.setState({
+      ...this.state,
+      selectedBots: [...this.state.selectedBots, botSlot],
+    });
+  }
+
+  private updateSlot = (index: number, slot: M.BotSlot) => {
+    throw new Error('Not implemented');
+  }
+
+  private selectMap = (id: M.MapId) => {
+    throw new Error('Not implemented');
+  }
+
   private addInternal = () => {
-    this.props.selectBotInternal("My Bot", "");
+    this.selectBotInternal("My Bot", "");
   }
 
   private addExternal = () => {
-    this.props.selectBotExternal("My Enemy's Bot");
+    this.selectBotExternal("My Enemy's Bot");
   }
 }
 
 interface BotSlotsProps {
-  selectedBots: BotSlotList;
-  allBots: BotList;
-  changeLocalBot: (token: Token, slot: BotSlot) => void;
+  selectedBots: M.BotSlot[];
+  allBots: M.BotList;
+  updateSlot: (index: number, slot: M.BotSlot) => void;
 }
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
-  const slots = Object.keys(props.selectedBots).map((token, idx) => {
+  const slots = props.selectedBots.map((slot, idx) => {
     return (
       <Slot
         key={idx}
-        bot={props.selectedBots[token]}
+        bot={slot}
         allBots={props.allBots}
-        token={token}
-        changeLocalBot={props.changeLocalBot}
+        token={slot.token}
+        updateSlot={props.updateSlot}
       />
     );
   });
@@ -154,27 +175,27 @@ export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
 };
 
 interface SlotProps {
-  bot: BotSlot;
-  allBots: BotList;
-  token: Token;
-  changeLocalBot: (token: Token, slot: BotSlot) => void;
+  bot: M.BotSlot;
+  allBots: M.BotList;
+  token: M.Token;
+  updateSlot: (index: number, slot: M.BotSlot) => void;
 }
 
 export class Slot extends React.Component<SlotProps> {
   public render() {
     let extra;
-    if (this.props.bot.id !== undefined) {
+    if (this.props.bot.type === 'internal') {
       const options = Object.keys(this.props.allBots).map((uuid, i) => {
         return (
           <option value={uuid} key={i}>
             {" "}
-            {this.props.allBots[uuid].config.name}{" "}
+            {this.props.allBots[uuid].name}{" "}
           </option>
         );
       });
       extra = (
         <div>
-          <select value={this.props.bot.id} onChange={this.changeBotID}>
+          <select value={this.props.bot.botId} onChange={this.changeBotID}>
             <option value="">Select Bot</option>
             {options}
           </select>
@@ -198,22 +219,24 @@ export class Slot extends React.Component<SlotProps> {
   }
 
   private changeBotID = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-    const id: BotId = evt.target.value;
-    const newBot = this.props.bot;
-    newBot.id = id;
-    this.props.changeLocalBot(this.props.token, newBot);
+    throw new Error('Not implemented!');
+    // const id: M.BotId = evt.target.value;
+    // const newBot = this.props.bot as M.InternalBotSlot;
+    // newBot. = id;
+    // this.props.changeLocalBot(this.props.token, newBot);
   }
 
   private changeBotName(evt: any) {
-    const name: string = evt.target.value;
-    const newBot = this.props.bot;
-    newBot.name = name;
-    this.props.changeLocalBot(this.props.token, newBot);
+    throw new Error('Not implemented!');
+    // const name: string = evt.target.value;
+    // const newBot = this.props.bot;
+    // newBot.name = name;
+    // this.props.updateSlot(this.props.token, newBot);
   }
 }
 
 interface MapSelectorProps {
-  maps: MapList;
+  maps: M.MapList;
   selectMap: (id: string) => void;
   selectedMap: string;
 }

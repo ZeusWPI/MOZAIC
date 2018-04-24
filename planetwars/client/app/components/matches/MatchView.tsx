@@ -1,6 +1,6 @@
 import * as React from 'react';
 import Visualizer from '../visualizer/Visualizer';
-import { Match, FinishedMatch, ErroredMatch } from './types';
+import { Match, FinishedHostedMatch, ErroredHostedMatch } from './types';
 import { parseLog, MatchLog } from '../../lib/match/log';
 import { LogView } from './LogView';
 

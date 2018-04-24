@@ -38,11 +38,10 @@ export function startServer(params: M.MatchParams) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const { map, players, maxTurns } = params;
-    const botSlots = Object.keys(players).map((token) => players[token]);
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
 
-    const playerConfigs = botSlots.map(({ token, name }) => ({ token, name }));
+    const playerConfigs = players.map(({ token, name }) => ({ token, name }));
     const gameConfig = { maxTurns, mapFile: state.maps[map].mapPath };
     const config: M.MatchConfig = {
       gameConfig,
@@ -86,12 +85,8 @@ function completeHostedMatch(matchId: M.MatchId) {
   };
 }
 
-function getStats(logPath: string, players: M.BotSlotList): M.MatchStats {
-  const matchPlayers = Object.keys(players).map((token) => ({
-    uuid: token,
-    name: players[token].name,
-  }));
-
+function getStats(logPath: string, players: M.BotSlot[]): M.MatchStats {
+  const matchPlayers = players.map(({ token, name }) => ({ uuid: token, name }));
   const log = parseLog(matchPlayers, logPath);
   const winners = Array.from(log.getWinners()).map((p) => p.uuid);
 

@@ -1,15 +1,6 @@
-import { MatchStats } from '../../utils/database/models';
-
-export interface MatchProps {
-  uuid: string;
-  players: Player[];
-  map: Map;
-  timestamp: Date;
-  logPath: string;
-}
+import { MatchStats, MatchStatus, MatchType } from '../../utils/database/models';
 
 export interface Player {
-  uuid: string;
   name: string;
 }
 
@@ -18,18 +9,50 @@ export interface Map {
   name: string;
 }
 
-export type PlayingMatch = MatchProps & {
-  status: 'playing',
+export type Match = HostedMatch | JoinedMatch;
+export type HostedMatch = PlayingHostedMatch | FinishedHostedMatch | ErroredHostedMatch;
+export type JoinedMatch = PlayingJoinedMatch | FinishedJoinedMatch | ErroredJoinedMatch;
+
+export interface MatchProps {
+  uuid: string;
+  timestamp: Date;
+}
+
+export type HostedMatchProps = MatchProps & {
+  type: MatchType.hosted;
+  map: Map;
+  logPath: string;
+  players: Player[];
 };
 
-export type FinishedMatch = MatchProps & {
-  status: 'finished',
+export type PlayingHostedMatch = HostedMatchProps & {
+  status: MatchStatus.playing,
+};
+
+export type FinishedHostedMatch = HostedMatchProps & {
+  status: MatchStatus.finished,
   stats: MatchStats,
 };
 
-export type ErroredMatch = MatchProps & {
-  status: 'error',
+export type ErroredHostedMatch = HostedMatchProps & {
+  status: MatchStatus.error,
   error: string,
 };
 
-export type Match = PlayingMatch | FinishedMatch | ErroredMatch;
+export type JoinedMatchProps = MatchProps & {
+  type: MatchType;
+  localPlayers: Player[];
+};
+
+export type PlayingJoinedMatch = JoinedMatchProps & {
+  status: MatchStatus.playing;
+};
+
+export type FinishedJoinedMatch = JoinedMatchProps & {
+  status: MatchStatus.finished;
+  importedLog?: { logPath: string; stats: MatchStats; playerNames: string[] };
+};
+export type ErroredJoinedMatch = JoinedMatchProps & {
+  status: MatchStatus.error,
+  importedLog?: { logPath: string; },
+};

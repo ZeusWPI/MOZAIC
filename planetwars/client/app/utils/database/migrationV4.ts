@@ -48,7 +48,7 @@ export interface MatchProps {
 
 export type HostedMatchProps = MatchProps & {
   type: MatchType.hosted;
-  players: BotSlotList;
+  players: BotSlot[];
   maxTurns: number;
   logPath: string;
   map: MapId;
@@ -94,7 +94,7 @@ export interface PlayerMap<T> {
 }
 
 export interface MatchParams {
-  players: BotSlotList;
+  players: BotSlot[];
   map: MapId;
   maxTurns: number;
 }
@@ -151,10 +151,6 @@ export type InternalBotSlot = BotSlotProps & {
   botId: BotId;
   name: string;
 };
-
-export interface BotSlotList {
-  [key: string /*Token*/]: BotSlot;
-}
 
 // Config Models --------------------------------------------------------------
 
