@@ -70,7 +70,7 @@ const getBotData = (state: IGState, botId: BotID) => {
   const bot = state.bots[botId];
   return {
     uuid: botId,
-    name: bot.config.name,
+    name: bot != null ? bot.config.name : "<deleted bot>",
   };
 };
 
