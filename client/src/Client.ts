@@ -52,16 +52,23 @@ export class Client {
         let message = Message.decode(data);
         switch (message.payload) {
             case 'message': {
-                let msg = message.message!;
-                let messageId = msg.messageId! as number;
-                this.onServerMessage(messageId, msg.data!);
+                this.handleMessage(message.message!);
                 break;
             }
             case 'response': {
-                // TODO
+                this.handleResponse(message.response!);
                 break;
             }
         }
+    }
+
+    public handleResponse(response: Message.IResponse) {
+        // TODO
+    }
+
+    public handleMessage(message: Message.IMessage) {
+        let messageId = message.messageId! as number;
+        this.onServerMessage(messageId, message.data!);
     }
 
     public onServerMessage(messageId: number | Long, data: Uint8Array) {
