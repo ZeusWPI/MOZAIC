@@ -176,7 +176,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private addInternal = () => {
-    this.selectBotInternal("My Bot", "");
+    this.selectBotInternal("", "");
   }
 
   private addExternal = () => {
@@ -233,11 +233,10 @@ export interface InternalSlotProps {
 export class InternalSlot extends React.Component<InternalSlotProps> {
 
   public render() {
-    const options = Object.keys(this.props.allBots).map((uuid, i) => {
+    const options = Object.keys(this.props.allBots).map((uuid) => {
       return (
-        <option value={uuid} key={i}>
-          {" "}
-          {this.props.allBots[uuid].name}{" "}
+        <option value={uuid} key={uuid}>
+          {this.props.allBots[uuid].name}
         </option>
       );
     });
@@ -253,22 +252,31 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
         Name:{" "}
         <input
           type="text"
-          defaultValue={this.props.slot.name}
-          onBlur={setName}
+          placeholder="bot name"
+          value={this.props.slot.name}
+          onChange={setName}
         />
       </div>
     );
   }
 
-  private setBot(id: M.BotId) {
-    this.props.setSlot({
-      ...this.props.slot,
-      botId: id,
-    });
+  private setBot(botId: M.BotId) {
+    const { slot, allBots, setSlot } = this.props;
+
+    let name = slot.name;
+    if (!name) {
+      name = allBots[botId].name;
+    }
+    if (slot.botId && name === allBots[slot.botId].name) {
+      name = allBots[botId].name;
+    }
+
+    setSlot({ ...slot, botId, name});
   }
 
   private setName(name: string) {
-    // TODO
+    const { slot, setSlot } = this.props;
+    setSlot({ ...slot, name });
   }
 }
 

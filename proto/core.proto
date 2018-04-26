@@ -23,16 +23,34 @@ message ConnectionError {
 
 
 message Packet {
+    message Message {
+        bytes data = 1;
+    }
+
+    message CloseConnection {
+        // for future use
+    }
+
     oneof payload {
         Message message = 1;
         CloseConnection close_connection = 2;
     }
 }
 
+// TODO: this naming might be really stupid.
 message Message {
-    bytes data = 1;
-}
+    message Message {
+        uint64 message_id = 1;
+        bytes data = 2;
+    }
+    
+    message Response {
+        uint64 message_id = 1;
+        bytes data = 2;
+    }
 
-message CloseConnection {
-    // for future use
+    oneof payload {
+        Message message = 1;
+        Response response = 2;
+    }
 }

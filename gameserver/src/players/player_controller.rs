@@ -3,60 +3,87 @@ use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use std::io;
 use std::str;
 use std::sync::{Arc, Mutex};
+use slog;
 
-use connection::router::RoutingTable;
-use connection::connection::Connection;
+use network::router::RoutingTable;
+use network::connection::Connection;
 
-use planetwars::controller::PlayerId;
+// TODO: find a better place for this
+#[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct PlayerId {
+    id: usize,
+}
 
-error_chain! {
-    errors {
-        ConnectionClosed
+impl PlayerId {
+    pub fn new(id: usize) -> PlayerId {
+        PlayerId {
+            id
+        }
     }
 
-    foreign_links {
-        Io(io::Error);
+    pub fn as_usize(&self) -> usize {
+        self.id
     }
 }
 
-pub struct ClientMessage {
+impl slog::KV for PlayerId {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_usize("player_id", self.as_usize())
+    }
+}
+
+
+// TODO: find a better place for this
+#[derive(Clone)]
+pub struct Client {
+    pub id: PlayerId,
+    pub player_name: String,
+    pub handle: UnboundedSender<PlayerCommand>,
+}
+
+pub struct PlayerEvent {
     pub player_id: PlayerId,
-    pub message: Message,
+    pub content: EventContent,
 }
 
-pub enum Message {
+pub enum EventContent {
     Data(Vec<u8>),
-    Connected,
     Disconnected,
-    Timeout,
 }
 
-pub enum Command {
+pub enum PlayerCommand {
     Send(Vec<u8>),
     Disconnect,
 }
 
-pub struct ClientController {
+/// The PlayerController is in charge of handling a player connection.
+/// It bridges between the game controller and the network connection
+/// to the actual client.
+pub struct PlayerController {
     player_id: PlayerId,
     
     connection: Connection,
 
-    ctrl_chan: UnboundedReceiver<Command>,
-    ctrl_handle: UnboundedSender<Command>,
+    ctrl_chan: UnboundedReceiver<PlayerCommand>,
+    ctrl_handle: UnboundedSender<PlayerCommand>,
     
-    game_handle: UnboundedSender<ClientMessage>,
+    game_handle: UnboundedSender<PlayerEvent>,
 }
 
-impl ClientController {
+impl PlayerController {
     pub fn new(player_id: PlayerId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
-               game_handle: UnboundedSender<ClientMessage>)
+               game_handle: UnboundedSender<PlayerEvent>)
                -> Self
     {
         let (snd, rcv) = unbounded();
 
-        let mut controller = ClientController {
+        return PlayerController {
             connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
@@ -65,25 +92,23 @@ impl ClientController {
             game_handle,
             player_id,
         };
-        controller.send_message(Message::Connected);
-        return controller;
     }
 
     /// Get a handle to the control channel for this client.
-    pub fn handle(&self) -> UnboundedSender<Command> {
+    pub fn handle(&self) -> UnboundedSender<PlayerCommand> {
         self.ctrl_handle.clone()
     }
 
     /// Send a message to the game this controller serves.
-    fn send_message(&mut self, message: Message) {
-        let msg = ClientMessage {
+    fn send_message(&mut self, content: EventContent) {
+        let msg = PlayerEvent {
             player_id: self.player_id,
-            message: message,
+            content,
         };
         self.game_handle.unbounded_send(msg).expect("game handle broke");
     }
 
-    fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
+    fn poll_ctrl_chan(&mut self) -> Poll<PlayerCommand, ()> {
         // we hold a handle to this channel, so it can never close.
         // this means errors can not happen.
         let value = self.ctrl_chan.poll().unwrap();
@@ -94,10 +119,10 @@ impl ClientController {
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.poll_ctrl_chan()) {
-                Command::Send(message) => {
-                   self.connection.send(message);
+                PlayerCommand::Send(data) => {
+                   self.connection.send(data);
                 },
-                Command::Disconnect => {
+                PlayerCommand::Disconnect => {
                     return Ok(Async::Ready(()));
                 }
             }
@@ -114,13 +139,12 @@ impl ClientController {
         }
     }
  
-    fn handle_client_message(&mut self, bytes: Vec<u8>) {
-        let data = Message::Data(bytes);
-        self.send_message(data);
+    fn handle_client_message(&mut self, msg: Vec<u8>) {
+        self.send_message(EventContent::Data(msg));
     }
 }
 
-impl Future for ClientController {
+impl Future for PlayerController {
     type Item = ();
     type Error = ();
 

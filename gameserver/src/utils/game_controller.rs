@@ -1,4 +1,6 @@
 
+// TODO: do we still need this trait?
+
 use std::collections::HashMap;
 use std::collections::HashSet;
 
