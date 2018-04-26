@@ -40,6 +40,7 @@ export class Navbar extends React.Component<NavProps, {}> {
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/host" }, ["Host"]),
           h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
+          h(Link, `.navbar-item`, { to: "/join" }, ["Join"]),
         ]),
         div(`.navbar-end`, [
           h(Link, `.navbar-item`, { to: "/info" }, ["Info"]),

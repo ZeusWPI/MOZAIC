@@ -10,6 +10,7 @@ import BotsPage from './containers/BotsPage';
 import MatchesPage from './containers/MatchesPage';
 import InfoPage from './containers/InfoPage';
 import Navbar from './containers/NavbarContainer';
+import JoinPage from "./containers/JoinPage";
 
 export default class Routes extends React.Component<any, any> {
   public render() {
@@ -44,6 +45,10 @@ export default class Routes extends React.Component<any, any> {
             path: '/info',
             component: InfoPage,
           }),
+          h(Route, {
+            path: '/join',
+            component: JoinPage,
+          })
         ]),
       ])
     );
