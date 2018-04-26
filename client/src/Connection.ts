@@ -1,10 +1,16 @@
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
+import Packet = proto.Packet;
 import * as net from 'net';
 import * as stream from 'stream';
 import { EventEmitter } from 'events';
 import { BufferWriter, BufferReader } from 'protobufjs/minimal';
 import { read } from 'fs';
+
+export interface Address {
+    host: string;
+    port: number;
+}
 
 enum ConnectionState {
     DISCONNECTED,
@@ -14,52 +20,59 @@ enum ConnectionState {
 };
 
 export class Connection extends EventEmitter {
-    private token: Buffer;
     private state: ConnectionState;
-    private socket?: net.Socket;
+    private token: Buffer;
+    private address: Address;
+    private socket: net.Socket;
 
     private recvBuffer: Buffer;
     
-    public constructor(token: Buffer) {
+    public constructor(address: Address, token: Buffer) {
         super();
+        this.state = ConnectionState.DISCONNECTED;
+        this.address = address;
         this.token = token;
         this.recvBuffer = new Buffer(0);
-        this.state = ConnectionState.DISCONNECTED;
+        this.socket = new net.Socket();
+        this.setCallbacks();
     }
 
-    public connect(socket: net.Socket) {
-        this.socket = socket;
+    public connect() {
+        this.state = ConnectionState.CONNECTING;
         // drop old receive buffer
         this.recvBuffer = new Buffer(0);
+        this.socket.connect(this.address.port, this.address.host);
+    }
 
-        // set callbacks
-        // TODO: handle errors and such
-        socket.on('data', (buf: Buffer) => this.readMessages(buf));
-        socket.on('close', () => {
-            this.emit('close');
-        }); 
-
-        // initiate handshake
-        this.state = ConnectionState.CONNECTING;
+    // initiate connection handshake
+    private sendConnectionRequest() {
         let request = proto.ConnectionRequest.create({ token: this.token });
-
         this.writeMessage(proto.ConnectionRequest.encode(request));
     }
 
-    public sendMessage(data: Buffer) {
-        let message = proto.Message.create({ data });
-        let packet = proto.Packet.create({ message });
-        this.writeMessage(proto.Packet.encode(packet));
+    public send(data: Uint8Array) {
+        let message = Packet.Message.create({ data });
+        let packet = Packet.create({ message });
+        this.writeMessage(Packet.encode(packet));
+    }
+
+    private setCallbacks() {
+        this.socket.on('connect', () => this.sendConnectionRequest());
+        this.socket.on('data', (buf: Buffer) => this.readMessages(buf));
+        this.socket.on('close', () => {
+            this.state = ConnectionState.DISCONNECTED;
+            this.emit('close');
+        }); 
     }
 
     // write a write-op to the underlying socket.
     // it is illegal to call this when not connected.
     private writeMessage(write: BufferWriter) {
         let buf = write.ldelim().finish();
-        this.socket!.write(buf);
+        this.socket.write(buf);
     }
 
-    private readMessage(buf: Buffer) {
+    private handleMessage(buf: Buffer) {
         switch (this.state) {
             case ConnectionState.CONNECTING: {
                 let response = proto.ConnectionResponse.decode(buf);
@@ -75,9 +88,9 @@ export class Connection extends EventEmitter {
                 break;
             }
             case ConnectionState.CONNECTED: {
-                let packet = proto.Packet.decode(buf);
+                let packet = Packet.decode(buf);
                 if (packet.message) {
-                    this.emit('message', packet.message.data);
+                    this.emit('message', packet.message.data!);
                 }
                 break;
             }
@@ -126,7 +139,7 @@ export class Connection extends EventEmitter {
 
             // reader.pos is now at the first byte after the segment length
             let bytes = this.recvBuffer.slice(reader.pos, end);
-            this.readMessage(bytes);
+            this.handleMessage(bytes);
             // advance position
             pos = end;
         }

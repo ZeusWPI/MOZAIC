@@ -1,6 +1,6 @@
-import { Connection } from './connection';
+import { Connection, Address } from './Connection';
 import { BotRunner, BotConfig } from './BotRunner';
-import { Client, Address } from './Client';
+import { Client } from './Client';
 
 const tokens = ["aaaa", "bbbb"];
 

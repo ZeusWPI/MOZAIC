@@ -7,9 +7,7 @@ use tokio::net::TcpStream;
 
 use super::router::{RoutingTable, RoutingMessage};
 use protobuf_codec::MessageStream;
-use protocol::{Packet, Message, CloseConnection};
-use protocol::packet::Payload;
-
+use protocol::{Packet, packet};
 
 type PacketStream = MessageStream<TcpStream, Packet>;
 
@@ -42,13 +40,11 @@ impl StreamHandler {
     }
 }
 
-
-
 pub struct Connection {
     /// The token that identifies this connection
     token: Vec<u8>,
     stream_handler: StreamHandler,
-    buffer: Vec<Vec<u8>>,
+    buffer: Vec<packet::Payload>,
     routing_chan: UnboundedReceiver<RoutingMessage>,
 
 }
@@ -66,9 +62,9 @@ impl Connection {
         }
     }
 
-    pub fn send(&mut self, message: Vec<u8>) -> Poll<(), io::Error> {
-        self.buffer.push(message);
-        return self.flush_buffer();
+    pub fn send(&mut self, data: Vec<u8>) {
+        let payload = packet::Payload::Message(packet::Message { data });
+        self.buffer.push(payload);
     }
 
     pub fn flush_buffer(&mut self) -> Poll<(), io::Error> {
@@ -76,16 +72,9 @@ impl Connection {
         let stream = try_ready!(self.stream_handler.poll_stream());
         while !self.buffer.is_empty() {
             try_ready!(stream.poll_complete());
-            let message = self.buffer.remove(0);
-            // toDO: put this somewhere else
+            let payload = self.buffer.remove(0);
             let packet = Packet {
-                payload: Some(
-                    Payload::Message(
-                        Message {
-                            data: message,
-                        }
-                    )
-                )
+                payload: Some(payload),
             };
             let res = try!(stream.start_send(packet));
             assert!(res.is_ready(), "writing to PacketStream blocked");
@@ -104,10 +93,10 @@ impl Connection {
 
             if let Some(payload) = packet.payload {
                 match payload {
-                    Payload::Message(message) => {
-                        return Ok(Async::Ready(Some(message.data)));
+                    packet::Payload::Message(message) => {
+                        return Ok(Async::Ready(Some(message.data)))
                     },
-                    Payload::CloseConnection(_) => {
+                    packet::Payload::CloseConnection(_) => {
                         // TODO
                         println!("connection with token {:?} closed", self.token);
                     }

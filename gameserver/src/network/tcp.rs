@@ -1,6 +1,5 @@
-use bytes::BytesMut;
 use futures::{Future, Poll, Async, Stream};
-use futures::sink::{Sink, Send};
+use futures::sink::Send;
 use futures::sync::mpsc::UnboundedSender;
 use prost::Message;
 use std::io;
