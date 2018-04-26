@@ -140,11 +140,14 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private updateSlot = (index: number, slot: M.BotSlot) => {
-    throw new Error('Not implemented');
+    this.setState((state) => {
+      state.selectedBots[index] = slot;
+      return state;
+    });
   }
 
   private selectMap = (id: M.MapId) => {
-    throw new Error('Not implemented');
+    this.setState({ selectedMap: id});
   }
 
   private addInternal = () => {
