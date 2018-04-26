@@ -173,13 +173,13 @@ interface BotSlotsProps {
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
   const slots = props.selectedBots.map((slot, idx) => {
+    const updateSlot = (s: M.BotSlot) => props.updateSlot(idx, s);
     return (
       <Slot
         key={idx}
         bot={slot}
         allBots={props.allBots}
-        token={slot.token}
-        updateSlot={props.updateSlot}
+        updateSlot={updateSlot}
       />
     );
   });
@@ -189,57 +189,63 @@ export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
 interface SlotProps {
   bot: M.BotSlot;
   allBots: M.BotList;
-  token: M.Token;
-  updateSlot: (index: number, slot: M.BotSlot) => void;
+  updateSlot: (slot: M.BotSlot) => void;
 }
 
 export class Slot extends React.Component<SlotProps> {
   public render() {
-    let extra;
-    if (this.props.bot.type === 'internal') {
-      const options = Object.keys(this.props.allBots).map((uuid, i) => {
-        return (
-          <option value={uuid} key={i}>
-            {" "}
-            {this.props.allBots[uuid].name}{" "}
-          </option>
-        );
-      });
-      extra = (
-        <div>
-          <select value={this.props.bot.botId} onChange={this.changeBotID}>
-            <option value="">Select Bot</option>
-            {options}
-          </select>
-          (token: {this.props.token})
-        </div>
-      );
-    } else {
-      extra = <div>token: {this.props.token}</div>;
+    const { bot, allBots, updateSlot } = this.props;
+    switch (bot.type) {
+      case 'internal':
+        return <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot}/>;
+      case 'external':
+        return <ExternalSlot slot={bot} setSlot={updateSlot}/>;
     }
+  }
+}
+
+
+export interface InternalSlotProps {
+  slot: M.InternalBotSlot;
+  allBots: M.BotList;
+  setSlot: (slot: M.InternalBotSlot) => void;
+}
+
+export class InternalSlot extends React.Component<InternalSlotProps> {
+
+  public render() {
+    const options = Object.keys(this.props.allBots).map((uuid, i) => {
+      return (
+        <option value={uuid} key={i}>
+          {" "}
+          {this.props.allBots[uuid].name}{" "}
+        </option>
+      );
+    });
+
+    const setName = (e: any) => this.setName(e.target.value);
     return (
-      <li>
+      <div>
         Name:{" "}
         <input
           type="text"
-          defaultValue={this.props.bot.name}
-          onBlur={this.changeBotName}
+          defaultValue={this.props.slot.name}
+          onBlur={setName}
         />
-        {extra}
-      </li>
+      </div>
     );
   }
 
-
-  private changeBotID = (evt: React.ChangeEvent<HTMLSelectElement>) => {
-    throw new Error('Not implemented!');
-    // const id: M.BotId = evt.target.value;
-    // const newBot = this.props.bot as M.InternalBotSlot;
-    // newBot. = id;
-    // this.props.changeLocalBot(this.props.token, newBot);
+  private setBot(id: M.BotId) {
+    this.props.setSlot({
+      ...this.props.slot,
+      botId: id,
+    });
   }
 
-
+  private setName(name: string) {
+    // TODO
+  }
 }
 
 export interface ExternalSlotProps {
@@ -250,29 +256,26 @@ export interface ExternalSlotProps {
 
 export class ExternalSlot extends React.Component<ExternalSlotProps> {
   public render() {
-
+    const setName = (e: any) => this.changeBotName(e.target.value);
     return (
       <li>
         Name:{" "}
         <input
           type="text"
           defaultValue={this.props.slot.name}
-          onBlur={this.changeBotName}
+          onBlur={setName}
         />
         <div>token: {this.props.slot.token}</div>;
       </li>
     );
   }
 
-  private changeBotName(evt: any) {
-    // throw new Error('Not implemented!');
-    const name: string = evt.target.value;
+  private changeBotName(name: string) {
     const newSlot = this.props.slot;
     newSlot.name = name;
     this.props.setSlot(newSlot);
   }
 }
-
 
 interface MapSelectorProps {
   maps: M.MapList;
