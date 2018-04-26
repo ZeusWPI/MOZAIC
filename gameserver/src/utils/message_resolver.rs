@@ -318,6 +318,7 @@ struct Deadline {
 impl Ord for Deadline {
     fn cmp(&self, other: &Deadline) -> Ordering {
         self.instant.cmp(&other.instant)
+        other.instant.cmp(&self.instant)
     }
 }
 
