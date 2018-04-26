@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import * as M from '../../utils/database/models';
+import {ExternalBotSlot} from "../../utils/database/migrationV4";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
@@ -17,7 +18,9 @@ export interface HostDispatchProps {
   // selectBotExternal: (name: string) => void;
   // unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: M.MatchParams) => void;
+
   generateToken(): string;
+
   // changeLocalBot: (token: M.Token, slot: M.BotSlot) => void;
   // selectMap: (id: string) => void;
 }
@@ -31,10 +34,10 @@ export interface HostState {
 export type HostProps = HostStateProps & HostDispatchProps;
 
 export class Host extends React.Component<HostProps, HostState> {
-  public state: HostState = { selectedBots: [], mapToggled: false };
+  public state: HostState = {selectedBots: [], mapToggled: false};
 
   public render() {
-    const toggle = (evt: any) => this.setState({ mapToggled: true });
+    const toggle = (evt: any) => this.setState({mapToggled: true});
     return (
       <div id={styles.host}>
         <div className={styles.header}>
@@ -50,7 +53,7 @@ export class Host extends React.Component<HostProps, HostState> {
             onClick={this.addInternal}
           >
             <span className="icon is-small">
-              <i className="fa fa-hand-spock-o" />
+              <i className="fa fa-hand-spock-o"/>
             </span>
             <span>My Bot</span>
           </button>
@@ -62,7 +65,7 @@ export class Host extends React.Component<HostProps, HostState> {
             onClick={this.addExternal}
           >
             <span className="icon is-small">
-              <i className="fa fa-hand-scissors-o" />
+              <i className="fa fa-hand-scissors-o"/>
             </span>
             <span>External Bot</span>
           </button>
@@ -93,7 +96,7 @@ export class Host extends React.Component<HostProps, HostState> {
           />
           <div className={styles.mapPreview}>
             <figure className="image is-128x128">
-              <img src="https://bulma.io/images/placeholders/128x128.png" />
+              <img src="https://bulma.io/images/placeholders/128x128.png"/>
             </figure>
           </div>
           <h2 className="title is-5">
@@ -110,7 +113,10 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private startServer = () => {
-    if (!this.state.selectedMap) { alert('Please pick a map!'); return; }
+    if (!this.state.selectedMap) {
+      alert('Please pick a map!');
+      return;
+    }
     const config: M.MatchParams = {
       players: this.state.selectedBots,
       map: this.state.selectedMap,
@@ -123,7 +129,7 @@ export class Host extends React.Component<HostProps, HostState> {
   // TODO: Check if correct
   private selectBotInternal = (name: string, botId: M.BotId) => {
     const token = this.props.generateToken();
-    const botSlot: M.BotSlot = { type: 'internal', botId, name, token };
+    const botSlot: M.BotSlot = {type: 'internal', botId, name, token};
     this.setState({
       ...this.state,
       selectedBots: [...this.state.selectedBots, botSlot],
@@ -132,7 +138,7 @@ export class Host extends React.Component<HostProps, HostState> {
 
   private selectBotExternal = (name: string) => {
     const token = this.props.generateToken();
-    const botSlot: M.BotSlot = { type: 'external', name, token };
+    const botSlot: M.BotSlot = {type: 'external', name, token};
     this.setState({
       ...this.state,
       selectedBots: [...this.state.selectedBots, botSlot],
@@ -147,7 +153,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private selectMap = (id: M.MapId) => {
-    this.setState({ selectedMap: id});
+    this.setState({selectedMap: id});
   }
 
   private addInternal = () => {
@@ -224,6 +230,7 @@ export class Slot extends React.Component<SlotProps> {
     );
   }
 
+
   private changeBotID = (evt: React.ChangeEvent<HTMLSelectElement>) => {
     throw new Error('Not implemented!');
     // const id: M.BotId = evt.target.value;
@@ -232,14 +239,40 @@ export class Slot extends React.Component<SlotProps> {
     // this.props.changeLocalBot(this.props.token, newBot);
   }
 
+
+}
+
+export interface ExternalSlotProps {
+  slot: M.ExternalBotSlot,
+  setSlot: (slot: M.ExternalBotSlot) => void
+
+}
+
+export class ExternalSlot extends React.Component<ExternalSlotProps> {
+  public render() {
+
+    return (
+      <li>
+        Name:{" "}
+        <input
+          type="text"
+          defaultValue={this.props.slot.name}
+          onBlur={this.changeBotName}
+        />
+        <div>token: {this.props.slot.token}</div>;
+      </li>
+    );
+  }
+
   private changeBotName(evt: any) {
-    throw new Error('Not implemented!');
-    // const name: string = evt.target.value;
-    // const newBot = this.props.bot;
-    // newBot.name = name;
-    // this.props.updateSlot(this.props.token, newBot);
+    // throw new Error('Not implemented!');
+    const name: string = evt.target.value;
+    const newSlot = this.props.slot;
+    newSlot.name = name;
+    this.props.setSlot(newSlot);
   }
 }
+
 
 interface MapSelectorProps {
   maps: M.MapList;
