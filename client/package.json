@@ -2,6 +2,8 @@
   "name": "mozaic-client",
   "version": "0.0.0",
   "description": "Client code for MOZAIC framework",
+  "main": "dist/index.js",
+  "types" : "dist/index.d.ts",
   "scripts": {
     "build": "gulp build",
     "test": "echo \"Error: no test specified\" && exit 1"

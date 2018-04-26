@@ -1,6 +1,10 @@
 import * as M from '../utils/database/models';
 import * as Varia from './varia';
 
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
+import * as PwClient from 'mozaic-client';
+
 import { actionCreator } from './helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../utils/Config';
@@ -28,12 +32,36 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
     map,
     timestamp: new Date(),
     logPath: Config.matchLogPath(matchId),
-    network: { ip: 'no-ip-yet', port: 'no-port-yet' },
+    network: { ip: '127.0.0.1', port: '9142' },
   };
   return match;
 }
 
-export function startServer(params: M.MatchParams) {
+// TODO: don't make this an action
+export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
+  return (dispatch: any, getState: any) => {
+    const state: GState = getState();
+    const botData = state.bots[bot.botId];
+    console.log("started " + bot.token);
+    const connData = {
+      token: Buffer.from(bot.token, 'hex'),
+      address: {
+        host: match.network.ip,
+        // Why isn't a port a number?
+        port: parseInt(match.network.port, 10),
+      },
+    };
+    const argv = stringArgv(botData.command);
+    const botConfig = {
+      command: argv[0],
+      params: argv.slice(1),
+    };
+    const client = new PwClient.Client(connData, botConfig);
+    client.run();
+  };
+}
+
+export function runMatch(params: M.MatchParams) {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
@@ -65,6 +93,14 @@ export function startServer(params: M.MatchParams) {
       dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
     });
     runner.run();
+
+    setTimeout(() => {
+      match.players.forEach((bot) => {
+        if (bot.type === 'internal') {
+          dispatch(runBot(match, bot));
+        }
+      });
+    }, 5000);
   };
 }
 

@@ -34,7 +34,7 @@ const mapDispatchToProps = (dispatch: any) => {
     //   dispatch(A.unselectBot(uuid));
     // },
     runMatch(params: M.MatchParams) {
-      dispatch(A.startServer(params));
+      dispatch(A.runMatch(params));
     },
     generateToken,
     // changeLocalBot(token: Token, slot: BotSlot) {

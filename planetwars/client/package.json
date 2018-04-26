@@ -107,6 +107,7 @@
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.21.0",
+    "mozaic-client": "file:../../client",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
     "react-helpers": "0.0.1",
