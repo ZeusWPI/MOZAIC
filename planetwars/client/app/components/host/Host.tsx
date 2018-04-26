@@ -242,9 +242,14 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
       );
     });
 
+    const setBot = (e: any) => this.setBot(e.target.value);
     const setName = (e: any) => this.setName(e.target.value);
     return (
       <div>
+        <select value={this.props.slot.botId} onChange={setBot}>
+            <option value="">Select Bot</option>
+            {options}
+        </select>
         Name:{" "}
         <input
           type="text"
