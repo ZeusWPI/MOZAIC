@@ -165,7 +165,7 @@ impl MessageResolver {
     /// Adds a deadline to the deadline queue, updating the delay future if
     /// neccesary.
     fn enqueue_deadline(&mut self, message_id: MessageId, instant: Instant) {
-        if instant < self.delay.deadline() {
+        if instant < self.delay.deadline() || self.deadlines.is_empty() {
             self.delay.reset(instant);
         }
         let deadline = Deadline { message_id, instant };
@@ -318,7 +318,6 @@ struct Deadline {
 impl Ord for Deadline {
     fn cmp(&self, other: &Deadline) -> Ordering {
         self.instant.cmp(&other.instant)
-        other.instant.cmp(&self.instant)
     }
 }
 
