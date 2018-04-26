@@ -29,15 +29,17 @@ export interface HostState {
   selectedBots: M.BotSlot[];
   selectedMap?: M.MapId;
   mapToggled: boolean;
+  maxTurns: number;
 }
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
 export class Host extends React.Component<HostProps, HostState> {
-  public state: HostState = {selectedBots: [], mapToggled: false};
+  public state: HostState = {selectedBots: [], mapToggled: false, maxTurns: 500};
 
   public render() {
     const toggle = (evt: any) => this.setState({mapToggled: true});
+    const setMaxTurns = (evt: any) => this.setMaxTurns(evt.target.value);
     return (
       <div id={styles.host}>
         <div className={styles.header}>
@@ -83,7 +85,7 @@ export class Host extends React.Component<HostProps, HostState> {
             updateSlot={this.updateSlot}
           />
         </div>
-        <div id={styles.mapSelector}>
+        <div className={styles.mapSelection}>
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">3</span>
             <span className={styles.tagInfoText}> Pick a Map</span>
@@ -94,6 +96,12 @@ export class Host extends React.Component<HostProps, HostState> {
             selectMap={this.selectMap}
             selectedMap={this.state.selectedMap}
           />
+
+          <div className={styles.maxTurns}>
+            <span className={styles.header}>Max Turns</span>
+            <input type="text" defaultValue={this.state.maxTurns.toString()} onBlur={setMaxTurns}/>
+
+          </div>
           <div className={styles.mapPreview}>
             <figure className="image is-128x128">
               <img src="https://bulma.io/images/placeholders/128x128.png"/>
@@ -112,6 +120,17 @@ export class Host extends React.Component<HostProps, HostState> {
     );
   }
 
+  private setMaxTurns = (maxTurns: string) => {
+    let turns: number = parseInt(maxTurns);
+    this.setState(
+      {
+        ...this.state,
+        maxTurns: turns,
+      }
+    )
+
+  };
+
   private startServer = () => {
     if (!this.state.selectedMap) {
       alert('Please pick a map!');
@@ -120,7 +139,7 @@ export class Host extends React.Component<HostProps, HostState> {
     const config: M.MatchParams = {
       players: this.state.selectedBots,
       map: this.state.selectedMap,
-      maxTurns: 500,
+      maxTurns: this.state.maxTurns,
     };
     console.log(config);
     this.props.runMatch(config);

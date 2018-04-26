@@ -65,20 +65,30 @@
   }
 }
 
-#mapSelector {
+.mapSelection {
   grid-area: map-selector;
+  $mapSelWidth: 128px;
+  $mapSelHeigth: 128px;
+
+  .mapPreview {
+    width: $mapSelWidth;
+    height: $mapSelHeigth;
+    border: 1px #ccc dashed;
+    margin-bottom: 20px;
+  }
+
+  .maxTurns {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    width: $mapSelWidth;
+  }
 }
 
 #botList {
   grid-area: bot-list;
 }
 
-.mapPreview {
-  width: 128px;
-  height: 128px;
-  border: 1px #ccc dashed;
-  margin-bottom: 20px;
-}
 
 .header,
 #addBotButtons,
