@@ -15,8 +15,8 @@ class PlanetRenderer {
 
   bind(data: any) {
     return this.container
-    .selectAll('.planet')
-    .data(data, (p: Planet) => p.name);
+      .selectAll('.planet')
+      .data(data, (p: Planet) => p.name);
   }
 
   draw(data: any, params: any) {
@@ -73,7 +73,10 @@ class PlanetRenderer {
       .style("text-anchor", "middle")
       .text((d: any) => d.name)
       .merge(labels)
-      .attr('fill', (d: any) => d3.color(this.game.playerColor(d.owner)).brighter());
+      .attr('fill', (d: any) => {
+        const color = d3.color(this.game.playerColor(d.owner));
+        return color && color.brighter();
+      });
   }
 
   drawShipCounts(planets: any, params: any, size: any) {
@@ -86,7 +89,10 @@ class PlanetRenderer {
       .attr("font-size", params.scale + "px")
       .style("text-anchor", "middle")
       .merge(labels)
-      .attr('fill', (d: any) => d3.color(this.game.playerColor(d.owner)).brighter())
+      .attr('fill', (d: any) => {
+        const color = d3.color(this.game.playerColor(d.owner));
+        return color && color.brighter();
+      })
       .text((d: Planet) => "\u2694 " + d.shipCount);
   }
 }
