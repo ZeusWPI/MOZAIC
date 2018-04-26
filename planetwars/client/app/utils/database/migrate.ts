@@ -25,7 +25,7 @@ export function migrate(oldDb: DbSchema): V4.DbSchema {
   while (db.version !== 'v4') {
     switch (db.version) {
       case 'v1': upgrade('V1', 'V2', upgradeV1); break;
-      case 'v2': upgrade('V2', 'V3', upgradeV1); break;
+      case 'v2': upgrade('V2', 'V3', upgradeV2); break;
       case 'v3': upgrade('V3', 'V4', upgradeV3); break;
       default:
         log.error(`[DB] Unknown database version. ${db}`);

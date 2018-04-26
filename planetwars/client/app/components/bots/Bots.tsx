@@ -23,9 +23,9 @@ export interface BotsDispatchProps {
   validate: (name: string, command: string) => ConfigErrors;
 }
 
-type IBotsProps = BotsStateProps & BotsDispatchProps;
+type BotsProps = BotsStateProps & BotsDispatchProps;
 
-export class Bots extends React.Component<IBotsProps, {}> {
+export class Bots extends React.Component<BotsProps, {}> {
 
   public render() {
     const { bots, selectedBot, removeBot, addBot, editBot, validate } = this.props;
@@ -119,6 +119,7 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
   }
 
   public render() {
+    console.log(this.state.name);
     const onNameInput = (evt: any) => this.setState({ name: evt.target.value });
     const name = (
       <div className='field'>
