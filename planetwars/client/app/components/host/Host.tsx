@@ -2,6 +2,7 @@ import * as React from "react";
 
 import * as M from '../../utils/database/models';
 import {ExternalBotSlot} from "../../utils/database/migrationV4";
+import BotSelector from './BotSelector';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
@@ -121,7 +122,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private setMaxTurns = (maxTurns: string) => {
-    let turns: number = parseInt(maxTurns);
+    let turns: number = parseInt(maxTurns, 10);
     this.setState(
       {
         ...this.state,
@@ -232,29 +233,23 @@ export interface InternalSlotProps {
 
 export class InternalSlot extends React.Component<InternalSlotProps> {
 
-  public render() {
-    const options = Object.keys(this.props.allBots).map((uuid) => {
-      return (
-        <option value={uuid} key={uuid}>
-          {this.props.allBots[uuid].name}
-        </option>
-      );
-    });
+  constructor(props: InternalSlotProps) {
+    super(props);
+    this.setBot = this.setBot.bind(this);
+    this.setName = this.setBot.bind(this);
+  }
 
-    const setBot = (e: any) => this.setBot(e.target.value);
-    const setName = (e: any) => this.setName(e.target.value);
+  public render() {
+    const { slot, allBots } = this.props;
     return (
       <div>
-        <select value={this.props.slot.botId} onChange={setBot}>
-            <option value="">Select Bot</option>
-            {options}
-        </select>
+        <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot}/>
         Name:{" "}
         <input
           type="text"
           placeholder="bot name"
           value={this.props.slot.name}
-          onChange={setName}
+          onChange={this.setName}
         />
       </div>
     );
@@ -274,7 +269,8 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     setSlot({ ...slot, botId, name});
   }
 
-  private setName(name: string) {
+  private setName(evt: any) {
+    const name: string = evt.target.value;
     const { slot, setSlot } = this.props;
     setSlot({ ...slot, name });
   }
