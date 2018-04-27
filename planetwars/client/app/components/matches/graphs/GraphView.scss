@@ -1,17 +1,41 @@
+@import '../../../app.global.scss';
+
 .allGraphsContainer {
   width: 100%;
   height: 100%;
   display: flex;
-  justify-content: center;
-  ul {
-    min-width: 70%;
-    max-width: 90%;
+  justify-content: start;
+  flex-direction: column;
+  align-items: center;
+  .sections {
+    width: 100%;
+    height: 100%;
+    padding: 20px 20px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    li {
-      background-color: red;
+    justify-content: start;
+    .section {
+      overflow-x: auto;
+      min-height: 100px;
       width: 100%;
+      display: flex;
+      justify-content: space-between;
     }
+
+  } // .graph {
+  //   width: 100%;
+  //   height: 100%;
+  // }
+}
+
+.pieArc {
+  path {
+    stroke: $background;
+    stroke-width: 3px;
+  }
+  text {
+    text-anchor: middle;
+    fill: $primary;
   }
 }

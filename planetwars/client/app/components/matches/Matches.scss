@@ -10,12 +10,12 @@ $selectedHighlightWidth: 4px;
   min-width: 650px;
   flex-direction: row;
   display: flex;
-  flex: auto;
 }
 
 .matchList {
   height: 100%;
-  flex-basis: 400px;
+  min-width: 300px;
+  width: 300px;
   flex-shrink: 1;
   flex-grow: 0;
   border-right: 1px solid $altBackground;
@@ -163,4 +163,5 @@ $selectedHighlightWidth: 4px;
 .displayBox {
   display: flex;
   height: 100%;
+  width: 100%;
 }

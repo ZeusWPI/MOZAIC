@@ -13,8 +13,8 @@ export interface ContainerProps {
 
 export interface MatchViewState {
   error?: {
-    error: any;
-    info: any;
+    error: Error;
+    info: React.ErrorInfo;
   };
 }
 
@@ -26,7 +26,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
   }
 
   // Catch the visualizer throwing errors so your whole app isn't broken
-  public componentDidCatch(error: any, info: any) {
+  public componentDidCatch(error: Error, info: React.ErrorInfo) {
     this.setState({ error: { error, info } });
   }
 
@@ -35,7 +35,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
       return (
         <div>
           <p>{this.state.error.error.toString()}</p>
-          <p>{JSON.stringify(this.state.error.info)}</p>
+          <pre>{this.state.error.error.stack}</pre>
         </div>
       );
     }
@@ -140,7 +140,7 @@ interface MatchDisplayProps {
   matchLog: MatchLog;
 }
 
-const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
+export const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
   switch (props.viewState) {
     case ViewState.VISUALIZER:
       return <Visualizer matchLog={props.matchLog} />;
