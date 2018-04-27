@@ -32,10 +32,11 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
     map,
     timestamp: new Date(),
     logPath: Config.matchLogPath(matchId),
-    network: { ip: '127.0.0.1', port: '9142' },
+    network: { host: '127.0.0.1', port: 9142 },
   };
   return match;
 }
+
 
 // TODO: don't make this an action
 export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
@@ -44,11 +45,7 @@ export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
     const botData = state.bots[bot.botId];
     const connData = {
       token: Buffer.from(bot.token, 'hex'),
-      address: {
-        host: match.network.ip,
-        // Why isn't a port a number?
-        port: parseInt(match.network.port, 10),
-      },
+      address: match.network,
     };
     const argv = stringArgv(botData.command);
     const botConfig = {

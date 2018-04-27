@@ -43,7 +43,7 @@ export interface MatchProps {
   status: MatchStatus;
   uuid: string;
   timestamp: Date;
-  network: NetworkConfig;
+  network: Address;
 }
 
 export type HostedMatchProps = MatchProps & {
@@ -173,7 +173,7 @@ export type NotificationType = V1.NotificationType;
 
 export type Notification = V1.Notification;
 
-export interface NetworkConfig {
-  ip: string;
-  port: string;
+export interface Address {
+  host: string;
+  port: number;
 }
