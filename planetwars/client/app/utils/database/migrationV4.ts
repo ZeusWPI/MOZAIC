@@ -62,7 +62,7 @@ export type FinishedHostedMatch = HostedMatchProps & Finished & {
 
 export type JoinedMatchProps = MatchProps & {
   type: MatchType.joined;
-  localPlayers: InternalBotSlot[];
+  bot: InternalBotSlot;
 };
 
 export type PlayingJoinedMatch = JoinedMatchProps & Playing;

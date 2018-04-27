@@ -37,6 +37,22 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   return match;
 }
 
+function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
+  return (dispatch: any, getState: any) => {
+    const match: M.JoinedMatch =  {
+      type: M.MatchType.joined,
+      status: M.MatchStatus.playing,
+      uuid: uuidv4(),
+      timestamp: new Date(),
+      network: host,
+      bot,
+    };
+
+    dispatch(saveMatch(match));
+
+    dispatch(runBot(match, bot));
+  };
+}
 
 // TODO: don't make this an action
 export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
