@@ -67,10 +67,10 @@ export type JoinedMatchProps = MatchProps & {
 
 export type PlayingJoinedMatch = JoinedMatchProps & Playing;
 export type FinishedJoinedMatch = JoinedMatchProps & Finished & {
-  importedLog?: { logPath: string; stats: MatchStats; playerNames: string[] };
+  // importedLog?: { logPath: string; stats: MatchStats; playerNames: string[] };
 };
 export type ErroredJoinedMatch = JoinedMatchProps & Errored & {
-  importedLog?: { logPath: string; },
+  // importedLog?: { logPath: string; },
 };
 
 export enum MatchType {

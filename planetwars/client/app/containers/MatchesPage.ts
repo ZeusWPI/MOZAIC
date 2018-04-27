@@ -50,8 +50,9 @@ const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
     const { network, maxTurns, ...props } = matchData;
     return { ...props, players, map };
   } else {
-    const { network, ...props } = matchData;
-    return { ...props };
+    const { network, bot, ...props } = matchData;
+    const localPlayers = [bot];
+    return { ...props, localPlayers };
   }
 };
 
