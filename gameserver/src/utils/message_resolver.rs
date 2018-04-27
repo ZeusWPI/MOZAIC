@@ -132,7 +132,6 @@ impl MessageResolver {
             Async::Ready(message) => return Ok(Async::Ready(message)),
             Async::NotReady => {}
         };
-
         return self.poll_timeout();
     }
 
@@ -283,7 +282,7 @@ impl MessageResolver {
                 Some(deadline) => deadline,
             };
 
-            if Instant::now() < deadline.instant {
+            if Instant::now() <= deadline.instant {
                 return Ok(Async::NotReady);
             }
         }
@@ -293,7 +292,7 @@ impl MessageResolver {
     }
 
     /// Poll the deadline timer.
-    fn poll_delay(&mut self) -> Poll<(), ()> {
+    fn poll_delay(&mut self) -> Poll<(), ()> {        
         match self.delay.poll() {
             Ok(res) => return Ok(res),
             // timer errors are programming errors; they should not happen.
@@ -317,7 +316,8 @@ struct Deadline {
 
 impl Ord for Deadline {
     fn cmp(&self, other: &Deadline) -> Ordering {
-        self.instant.cmp(&other.instant)
+        // reverse order so that the maximum deadline expires first.
+        other.instant.cmp(&self.instant)
     }
 }
 
