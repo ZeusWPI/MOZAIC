@@ -1,11 +1,11 @@
-import { spawn, ChildProcess } from 'child_process';
+import { execFile, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import * as split2 from 'split2';
 import { Readable } from 'stream';
 
 export interface BotConfig {
     command: string;
-    args?: string[];
+    args: string[];
 }
 
 interface Bot {
@@ -27,7 +27,7 @@ export class BotRunner extends EventEmitter {
      */
     public run() {
         const config = this.config;
-        let process = spawn(config.command, config.args);
+        let process = execFile(config.command, config.args);
         this.setProcess(process);
     }
 
@@ -60,6 +60,14 @@ export class BotRunner extends EventEmitter {
             let data = Buffer.from(line, 'utf-8');
             this.onData(data);
         });
+
+        process.stderr.on('data', (data: Buffer) => {
+            console.log(data.toString('utf-8'));
+        });
+
+        // TODO: handle these better
+        process.on('exit', () => console.log('BOT EXITTED'));
+        process.on('error', (err: Error) => console.log(`ERROR: ${err}`));
 
         this.bot = {
             process,

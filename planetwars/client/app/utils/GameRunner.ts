@@ -1,13 +1,14 @@
 import * as fs from 'fs';
 import * as tmp from 'tmp';
 import { EventEmitter } from 'events';
-import { execFile } from 'child_process';
+import { spawn, execFile } from 'child_process';
 
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
 import { MatchConfig, Token, BotSlot } from './database/models';
 import { Config } from './Config';
+import { exec } from 'mz/child_process';
 
 // TODO: maybe s/game/match/g ?
 declare interface GameRunner {
@@ -35,17 +36,12 @@ class GameRunner extends EventEmitter {
   private runBotRunner() {
     const configFile = this.writeConfigFile();
     console.log(configFile);
-    const callback = this.processEnded.bind(this);
-    const child = execFile(Config.matchRunner, [configFile], callback);
+    const process = execFile(Config.matchRunner, [configFile]);
+    process.stdout.on('data', (d: Buffer) => console.log(d.toString('utf-8')));
+    process.stderr.on('data', (d: Buffer) => console.log(d.toString('utf-8')));
+    process.on('close', () => this.emit('matchEnded'));
+    process.on('error', (err: Error) => this.emit('error', err));
     this.emit('matchStarted');
-  }
-
-  private processEnded(error: Error | null, stdout: string, stderr: string) {
-    if (error) {
-      this.emit('error', error);
-    } else {
-      this.emit('matchEnded');
-    }
   }
 
   private writeConfigFile() {

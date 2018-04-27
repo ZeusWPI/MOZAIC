@@ -57,7 +57,9 @@ export class Connection extends EventEmitter {
     }
 
     private setCallbacks() {
-        this.socket.on('connect', () => this.sendConnectionRequest());
+        this.socket.on('connect', () => {
+            this.sendConnectionRequest();
+        });
         this.socket.on('data', (buf: Buffer) => this.readMessages(buf));
         this.socket.on('close', () => {
             this.state = ConnectionState.DISCONNECTED;

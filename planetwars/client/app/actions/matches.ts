@@ -42,7 +42,6 @@ export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const botData = state.bots[bot.botId];
-    console.log("started " + bot.token);
     const connData = {
       token: Buffer.from(bot.token, 'hex'),
       address: {
@@ -54,7 +53,7 @@ export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
     const argv = stringArgv(botData.command);
     const botConfig = {
       command: argv[0],
-      params: argv.slice(1),
+      args: argv.slice(1),
     };
     const client = new PwClient.Client(connData, botConfig);
     client.run();

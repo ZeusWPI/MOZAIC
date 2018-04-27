@@ -37,8 +37,11 @@ export class Client {
     }
 
     public run() {
+        console.log('connecting');
         this.connection.connect();
+        console.log('running bot');
         this.botRunner.run();
+        console.log('run finished');
     }
 
     public handleBotMessage(message: Uint8Array) {
