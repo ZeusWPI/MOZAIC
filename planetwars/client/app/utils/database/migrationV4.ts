@@ -97,6 +97,7 @@ export interface MatchParams {
   players: BotSlot[];
   map: MapId;
   maxTurns: number;
+  address: Address;
 }
 
 // tslint:disable-next-line:variable-name

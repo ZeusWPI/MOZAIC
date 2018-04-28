@@ -32,7 +32,7 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
     map,
     timestamp: new Date(),
     logPath: Config.matchLogPath(matchId),
-    network: { host: '127.0.0.1', port: 9142 },
+    network: params.address,
   };
   return match;
 }
@@ -87,7 +87,7 @@ export function runMatch(params: M.MatchParams) {
       gameConfig,
       players: playerConfigs,
       logFile: match.logPath,
-      address: `${match.network.host}:${match.network.port}`,
+      address: `${params.address.host}:${params.address.port}`,
     };
 
     const runner = new GameRunner(config);

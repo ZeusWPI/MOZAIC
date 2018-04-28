@@ -3,6 +3,7 @@ import * as React from "react";
 import * as M from '../../utils/database/models';
 import {ExternalBotSlot} from "../../utils/database/migrationV4";
 import BotSelector from './BotSelector';
+import { AddressForm } from "./AddressForm";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
@@ -31,12 +32,25 @@ export interface HostState {
   selectedMap?: M.MapId;
   mapToggled: boolean;
   maxTurns: number;
+  address: M.Address;
 }
 
 export type HostProps = HostStateProps & HostDispatchProps;
 
 export class Host extends React.Component<HostProps, HostState> {
-  public state: HostState = {selectedBots: [], mapToggled: false, maxTurns: 500};
+  constructor(props: HostProps) {
+    super(props);
+    this.state = {
+      selectedBots: [],
+      mapToggled: false,
+      maxTurns: 500,
+      address: {
+        host: '127.0.0.1',
+        port: 9142,
+      },
+    };
+    this.setAddress = this.setAddress.bind(this);
+  }
 
   public render() {
     const toggle = (evt: any) => this.setState({mapToggled: true});
@@ -101,8 +115,10 @@ export class Host extends React.Component<HostProps, HostState> {
           <div className={styles.maxTurns}>
             <span className={styles.header}>Max Turns</span>
             <input type="text" defaultValue={this.state.maxTurns.toString()} onBlur={setMaxTurns}/>
-
           </div>
+
+          <AddressForm address={this.state.address} onChange={this.setAddress}/>
+
           <div className={styles.mapPreview}>
             <figure className="image is-128x128">
               <img src="https://bulma.io/images/placeholders/128x128.png"/>
@@ -119,6 +135,10 @@ export class Host extends React.Component<HostProps, HostState> {
         </div>
       </div>
     );
+  }
+
+  private setAddress(address: M.Address) {
+    this.setState({address});
   }
 
   private setMaxTurns = (maxTurns: string) => {
@@ -141,6 +161,7 @@ export class Host extends React.Component<HostProps, HostState> {
       players: this.state.selectedBots,
       map: this.state.selectedMap,
       maxTurns: this.state.maxTurns,
+      address: this.state.address,
     };
     console.log(config);
     this.props.runMatch(config);
@@ -223,7 +244,6 @@ export class Slot extends React.Component<SlotProps> {
     }
   }
 }
-
 
 export interface InternalSlotProps {
   slot: M.InternalBotSlot;
