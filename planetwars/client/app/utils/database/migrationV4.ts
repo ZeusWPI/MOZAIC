@@ -157,6 +157,7 @@ export type InternalBotSlot = BotSlotProps & {
 export interface MatchConfig {
   players: PlayerConfig[];
   gameConfig: GameConfig;
+  address: string;
   logFile: string;
 }
 

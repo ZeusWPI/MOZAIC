@@ -1,14 +1,13 @@
 import * as fs from 'fs';
 import * as tmp from 'tmp';
 import { EventEmitter } from 'events';
-import { spawn, execFile } from 'child_process';
+import { execFile } from 'child_process';
 
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
 import { MatchConfig, Token, BotSlot } from './database/models';
 import { Config } from './Config';
-import { exec } from 'mz/child_process';
 
 // TODO: maybe s/game/match/g ?
 declare interface GameRunner {
@@ -22,10 +21,15 @@ class GameRunner extends EventEmitter {
 
   constructor(conf: MatchConfig) {
     super();
-    const { gameConfig: { maxTurns, mapFile }, logFile } = conf;
+    const { gameConfig: { maxTurns, mapFile }, logFile, address } = conf;
     const players = conf.players;
     const gameConfig = { max_turns: maxTurns, map_file: mapFile };
-    this.conf = { players, game_config: gameConfig, log_file: logFile };
+    this.conf = {
+      players,
+      address,
+      game_config: gameConfig,
+      log_file: logFile
+    };
   }
 
   public run() {
@@ -59,6 +63,7 @@ class GameRunner extends EventEmitter {
 export interface ExternalMatchConfig {
   players: ExternalBotConfig[];
   game_config: ExternalGameConfig;
+  address: string;
   log_file: string;
 }
 

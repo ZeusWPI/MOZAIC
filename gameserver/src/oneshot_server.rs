@@ -20,6 +20,7 @@ use planetwars::{PwController, Config as PwConfig};
 #[derive(Serialize, Deserialize)]
 pub struct MatchDescription<T: DeserializeOwned> {
     pub players: Vec<PlayerConfig>,
+    pub address: String,
     pub log_file: String,
     pub game_config: T,
 }
@@ -89,7 +90,7 @@ impl Future for OneshotServer {
             std::process::exit(0);
         }));
 
-        let addr = "127.0.0.1:9142".parse().unwrap();
+        let addr = self.config.address.parse().unwrap();
         let listener = network::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
         tokio::spawn(listener);
 

@@ -87,6 +87,7 @@ export function runMatch(params: M.MatchParams) {
       gameConfig,
       players: playerConfigs,
       logFile: match.logPath,
+      address: `${match.network.host}:${match.network.port}`,
     };
 
     const runner = new GameRunner(config);
