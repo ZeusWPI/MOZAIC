@@ -37,7 +37,7 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   return match;
 }
 
-function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
+export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
   return (dispatch: any, getState: any) => {
     const match: M.JoinedMatch =  {
       type: M.MatchType.joined,

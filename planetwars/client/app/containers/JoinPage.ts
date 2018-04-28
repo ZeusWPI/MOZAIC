@@ -7,13 +7,16 @@ import { GState } from '../reducers';
 import { Importer } from '../utils/Importer';
 import {Join, JoinDispatchProps, JoinState, JoinStateProps} from '../components/join/Join';
 
-const mapStateToProps = null;
-
-const mapDispatchToProps = (dispatch: any) => {
-  return {join: (config: JoinState) => {dispatch(A.join)}}
-
+const mapStateToProps = (state: GState) => {
+  return {
+    allBots: state.bots,
+  };
 };
 
-
+const mapDispatchToProps = (dispatch: any) => {
+  return {joinMatch: (address: M.Address, bot: M.InternalBotSlot) => {
+    dispatch(A.joinMatch(address, bot));
+  }};
+};
 
 export default connect<JoinStateProps, JoinDispatchProps>(mapStateToProps, mapDispatchToProps)(Join);

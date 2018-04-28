@@ -1,91 +1,101 @@
 import * as React from "react";
+import * as M from '../../utils/database/models';
+import AddressForm from '../host/AddressForm';
+import { BotSelector } from "../host/BotSelector";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Join.scss");
 
 export interface JoinStateProps {
-
+  allBots: M.BotList;
 }
 
 export interface JoinDispatchProps {
-
-  join: (config: any) => void
-
+  joinMatch: (address: M.Address, bot: M.InternalBotSlot) => void;
 }
-
 
 export type JoinProps = JoinStateProps & JoinDispatchProps;
 
 export interface JoinState {
-  hostName: string;
+  address: M.Address;
+  botId?: M.BotId;
   token: string;
 }
 
-
 export class Join extends React.Component<JoinProps, JoinState> {
-
-  public state: JoinState = {hostName: '', token: ''};
-
-  public render () {
-    const setHost = (evt: any) => {
-
-      this.setHostName(evt.target.value);
-
+  constructor(props: JoinProps) {
+    super(props);
+    this.state = {
+      address: {
+        host: '127.0.0.1',
+        port: 9142,
+      },
+      token: '',
     };
-    const setToken = (evt: any) => {
-      this.setToken(evt.target.value);
-    };
+    this.setAddress = this.setAddress.bind(this);
+    this.setToken = this.setToken.bind(this);
+    this.setBotId =this.setBotId.bind(this);
+    this.joinGame = this.joinGame.bind(this);
+  }
 
-    const joinGame = () => {
-      this.joinGame();
-    };
+  public render() {
+    const { address, token } = this.state;
+
 
     return (
-      <div className={styles.joinPage}>
-        <div className={styles.inputField}>
-          <span className={styles.jointitle}>Hostname</span>
-          <input type="text" onBlur={setHost}/>
-        </div>
+      <div>
+        <AddressForm address={address} onChange={this.setAddress}/>
 
         <div className={styles.inputField}>
           <span className={styles.jointitle}>Token</span>
-          <input type="text" onBlur={setToken}/>
+          <input type="text" onChange={this.setToken}/>
         </div>
 
-        <button type="button" onClick={joinGame}>Join</button>
+        <BotSelector
+          bots={this.props.allBots}
+          value={this.state.botId}
+          onChange={this.setBotId}
+        />
 
 
+        <button
+          type="button"
+          onClick={this.joinGame}
+          disabled={!this.isValid()}
+        >
+          Join
+        </button>
       </div>
     );
   }
 
-  private setHostName (name: string) {
-
-    this.setState({
-      ...this.state,
-      hostName: name
-    });
-
+  private isValid() {
+    return this.state.botId && this.state.token;
   }
 
-  private setToken (token: string) {
-
+  private setAddress(address: M.Address) {
     this.setState({
-      ...this.state,
-      token: token
+      address,
     });
-
   }
 
-  private joinGame () {
-    let config = {
+  private setToken(evt: React.FormEvent<HTMLInputElement>) {
+    this.setState({
+      token: evt.currentTarget.value,
+    });
+  }
 
-      hostName: this.state.hostName,
-      token: this.state.token
+  private setBotId(botId: M.BotId) {
+    this.setState({ botId });
+  }
+
+  private joinGame() {
+    const bot: M.InternalBotSlot = {
+      type: 'internal',
+      token: this.state.token,
+      botId: this.state.botId!,
+      name: this.props.allBots[this.state.botId!].name,
     };
-
-    this.props.join(config);
+    this.props.joinMatch(this.state.address, bot);
   }
-
-
 }
