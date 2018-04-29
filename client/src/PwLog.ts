@@ -3,8 +3,14 @@ export interface LogRecord {
     message: LogMessage;
 }
 
-export type LogMessage =
-    StepMessage;
+export type LogMessage
+    = StepMessage
+    | CommandMessage;
+
+export interface CommandMessage {
+    "type": "command";
+    "content": string;
+}
 
 export interface StepMessage {
     "type": "step";

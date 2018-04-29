@@ -49,6 +49,10 @@ export class Client {
     }
 
     public handleBotMessage(message: Uint8Array) {
+        this.logger.log({
+            "type": "command",
+            "content": new TextDecoder('utf-8').decode(message),
+        });
         let requestId = this.requestQueue.shift();
         if (requestId) {
             this.sendResponse(requestId, message);
@@ -92,7 +96,7 @@ export class Client {
                 const msg = new TextDecoder('utf-8').decode(data);
                 let state: GameState = JSON.parse(msg);
                 let log_entry = { 'state': state };
-                
+
                 this.logger.log({
                     "type": 'step',
                     "turn_number": this.turnNum,
