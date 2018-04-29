@@ -1,6 +1,14 @@
 import { PlayerData } from "./MatchRunner";
 import { BotConfig } from "./BotRunner";
 import { Address, Client } from "./index";
+import * as fs from 'fs';
+import { Logger } from "./Logger";
+
+export interface ClientRunnerParams {
+    clients: ClientData[];
+    address: Address;
+    logFile: string;
+}
 
 export interface ClientData {
     botConfig: BotConfig;
@@ -10,14 +18,17 @@ export interface ClientData {
 export class ClientRunner {
     readonly clients: Client[];
 
-    constructor(address: Address, players: ClientData[]) {
-        this.clients = players.map((playerData) => {
+    constructor(params: ClientRunnerParams) {
+        const log = fs.createWriteStream(params.logFile);
+
+        this.clients = params.clients.map((playerData, idx) => {
+            const logger = new Logger(idx, log);
             const { token, botConfig } = playerData;
             const connData = {
-                address,
+                address: params.address,
                 token: Buffer.from(token, 'hex'),
             };
-            return new Client(connData,botConfig);
+            return new Client(connData, botConfig, logger);
         });
     }
 

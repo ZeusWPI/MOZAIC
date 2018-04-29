@@ -4,6 +4,8 @@ import { BotRunner, BotConfig } from "./BotRunner";
 import { Connection, Address } from "./Connection";
 import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
+import { Logger } from './Logger';
+import { TextDecoder } from 'text-encoding';
 
 export interface ConnectionData {
     token: Buffer,
@@ -26,22 +28,21 @@ export class Client {
     readonly connection: Connection;
     readonly botRunner: BotRunner;
     readonly requestQueue: (number | Long)[];
+    readonly logger: Logger;
     private state: ClientState;
 
-    constructor(connData: ConnectionData, botConfig: BotConfig) {
+    constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
         this.connection = new Connection(connData.address, connData.token);
         this.botRunner = new BotRunner(botConfig);
+        this.logger = logger;
         this.requestQueue = [];
         this.state = ClientState.CONNECTING;
         this.initHandlers();
     }
 
     public run() {
-        console.log('connecting');
         this.connection.connect();
-        console.log('running bot');
         this.botRunner.run();
-        console.log('run finished');
     }
 
     public handleBotMessage(message: Uint8Array) {
@@ -83,6 +84,12 @@ export class Client {
                 break;
             }
             case ClientState.CONNECTED: {
+                // got a game state
+                const msg = new TextDecoder('utf-8').decode(data);
+                let state = JSON.parse(msg);
+                let log_entry = { 'state': state };
+                this.logger.log(log_entry);
+
                 this.requestQueue.push(messageId);
                 this.botRunner.sendMessage(data);
                 break;

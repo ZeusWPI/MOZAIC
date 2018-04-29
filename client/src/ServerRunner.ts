@@ -54,7 +54,8 @@ export class ServerRunner {
     }
 
     private configJSON() : ServerConfigJSON {
-        const { players, mapFile, maxTurns, address, logFile } = this.params;
+        const { players, mapFile, maxTurns, address } = this.params;
+        const logFile = tmp.fileSync().name;
 
         const game_config = {
             map_file: mapFile,

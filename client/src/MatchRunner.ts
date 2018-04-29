@@ -23,6 +23,7 @@ export class MatchRunner {
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
 
+        const { address, logFile } = params;
         let clients: ClientData[] = [];
         params.players.forEach((playerData) => {
             const { botConfig, token } = playerData;
@@ -30,7 +31,11 @@ export class MatchRunner {
                 clients.push({ botConfig, token });
             }
         });
-        this.clientRunner = new ClientRunner(params.address, clients);
+        this.clientRunner = new ClientRunner({
+            clients,
+            address,
+            logFile,
+        });
     }
 
     public run() {
