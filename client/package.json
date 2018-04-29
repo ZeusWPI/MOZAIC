@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "description": "Client code for MOZAIC framework",
   "main": "dist/index.js",
-  "types" : "dist/index.d.ts",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "gulp build",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -21,6 +21,8 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
-    "split2": "^2.2.0"
+    "split2": "^2.2.0",
+    "text-encoding": "^0.6.4",
+    "tmp": "0.0.33"
   }
 }
