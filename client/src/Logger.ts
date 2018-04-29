@@ -1,4 +1,5 @@
 import * as stream from 'stream';
+import { LogMessage, LogRecord } from './PwLog';
 
 export class Logger {
     readonly player: number;
@@ -9,8 +10,8 @@ export class Logger {
         this.player = player;
     }
 
-    public log(data: object) {
-        let record = { player: this.player, data }
+    public log(message: LogMessage) {
+        let record: LogRecord = { player: this.player, message }
         let str = JSON.stringify(record) + '\n';
         this.sink.write(str);
     }

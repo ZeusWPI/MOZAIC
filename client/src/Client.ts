@@ -6,6 +6,7 @@ import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
 import { Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
+import { GameState } from './PwLog';
 
 export interface ConnectionData {
     token: Buffer,
@@ -29,6 +30,7 @@ export class Client {
     readonly botRunner: BotRunner;
     readonly requestQueue: (number | Long)[];
     readonly logger: Logger;
+    private turnNum: 0;
     private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
@@ -38,6 +40,7 @@ export class Client {
         this.requestQueue = [];
         this.state = ClientState.CONNECTING;
         this.initHandlers();
+        this.turnNum = 0;
     }
 
     public run() {
@@ -85,10 +88,16 @@ export class Client {
             }
             case ClientState.CONNECTED: {
                 // got a game state
+                this.turnNum += 1;
                 const msg = new TextDecoder('utf-8').decode(data);
-                let state = JSON.parse(msg);
+                let state: GameState = JSON.parse(msg);
                 let log_entry = { 'state': state };
-                this.logger.log(log_entry);
+                
+                this.logger.log({
+                    "type": 'step',
+                    "turn_number": this.turnNum,
+                    "state": state,
+                });
 
                 this.requestQueue.push(messageId);
                 this.botRunner.sendMessage(data);
