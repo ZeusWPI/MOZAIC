@@ -12,11 +12,43 @@ export type PlayerActionMessage = {
     content: PlayerAction;
 }
 
-export type PlayerAction = PlayerActionTimeout;
+export type PlayerAction
+    = PlayerActionTimeout
+    | PlayerActionParseError
+    | PlayerActionCommands;
 
 export type PlayerActionTimeout = {
     type: 'timeout'
 };
+
+export type PlayerActionParseError = {
+    type: 'parse_error';
+    content: string;
+}
+
+export type PlayerActionCommands = {
+    type: 'commands';
+    content: PlayerCommand[];
+}
+
+export type PlayerCommand = {
+    command: Command;
+    error?: DispatchError;
+}
+
+export type DispatchError
+    = 'NotEnoughShips'
+    | 'OriginNotOwned'
+    | 'ZeroShipMove'
+    | 'OriginDoesNotExist'
+    | 'DestinationDoesNotExist';
+
+
+export interface Command {
+    "origin": string;
+    "destination": string;
+    "ship_count": number;
+}
 
 export interface LogRecord {
     player: number;
@@ -25,7 +57,8 @@ export interface LogRecord {
 
 export type LogMessage
     = StepMessage
-    | CommandMessage;
+    | CommandMessage
+    | PlayerActionLogMessage;
 
 export interface CommandMessage {
     "type": "command";
@@ -36,6 +69,11 @@ export interface StepMessage {
     "type": "step";
     "turn_number": number;
     "state": GameState;
+}
+
+export interface PlayerActionLogMessage {
+    "type": "player_action";
+    "action": PlayerAction;
 }
 
 export interface GameState {

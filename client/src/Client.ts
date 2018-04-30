@@ -111,7 +111,10 @@ export class Client {
                         break;
                     }
                     case 'player_action': {
-                        // TODO
+                        this.logger.log({
+                            "type": 'player_action',
+                            "action": serverMessage.content,
+                        })
                         break;
                     }
                 }
