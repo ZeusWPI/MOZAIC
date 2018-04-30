@@ -136,9 +136,10 @@ impl PwController {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
 
-                let serialized = serialize_rotated(&self.state, offset);
-                let request = serde_json::to_vec(&serialized).unwrap();
-                self.lock.request(player.id, request, deadline);
+                let serialized_state = serialize_rotated(&self.state, offset);
+                let message = proto::ServerMessage::GameState(serialized_state);
+                let serialized = serde_json::to_vec(&message).unwrap();
+                self.lock.request(player.id, serialized, deadline);
             }
         }
     }
@@ -165,7 +166,9 @@ impl PwController {
             }
 
             let player_action = self.execute_action(player_id, result);
-            // TODO: send action back to player
+            let message = proto::ServerMessage::PlayerAction(player_action);
+            let serialized = serde_json::to_vec(&message).unwrap();
+            self.lock.send(player_id, serialized);
         }
     }
 

@@ -66,10 +66,21 @@ pub struct PlayerCommand {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+#[serde(tag = "type", content = "value")]
 pub enum PlayerAction {
     Timeout,
     ParseError(String),
     Commands(Vec<PlayerCommand>),
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "type", content = "content")]
+pub enum ServerMessage {
+    /// Game state in current turn
+    GameState(State),
+    /// The action that was performed
+    PlayerAction(PlayerAction),
 }
 
 impl slog::Value for Command {
