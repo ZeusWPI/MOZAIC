@@ -6,7 +6,7 @@ import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
 import { Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
-import { GameState } from './PwLog';
+import { ServerMessage, GameState } from './PwLog';
 
 export interface ConnectionData {
     token: Buffer,
@@ -93,18 +93,28 @@ export class Client {
             case ClientState.CONNECTED: {
                 // got a game state
                 this.turnNum += 1;
-                const msg = new TextDecoder('utf-8').decode(data);
-                let state: GameState = JSON.parse(msg);
-                let log_entry = { 'state': state };
+                const text = new TextDecoder('utf-8').decode(data);
+                let serverMessage: ServerMessage = JSON.parse(text);
 
-                this.logger.log({
-                    "type": 'step',
-                    "turn_number": this.turnNum,
-                    "state": state,
-                });
-
-                this.requestQueue.push(messageId);
-                this.botRunner.sendMessage(data);
+                // TODO: ewwwwww
+                switch (serverMessage.type) {
+                    case 'game_state': {
+                        const state = serverMessage.content;
+                        this.logger.log({
+                            "type": 'step',
+                            "turn_number": this.turnNum,
+                            "state": state,
+                        });
+        
+                        this.requestQueue.push(messageId);
+                        this.botRunner.sendMessage(JSON.stringify(state));
+                        break;
+                    }
+                    case 'player_action': {
+                        // TODO
+                        break;
+                    }
+                }
                 break;
             }
         }
