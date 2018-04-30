@@ -49,6 +49,28 @@ pub struct GameInfo {
     pub players: Vec<String>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum CommandError {
+    NotEnoughShips,
+    OriginNotOwned,
+    ZeroShipMove,
+    OriginDoesNotExist,
+    DestinationDoesNotExist,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct PlayerCommand {
+    pub command: Command,
+    pub error: Option<CommandError>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PlayerAction {
+    Timeout,
+    ParseError(String),
+    Commands(Vec<PlayerCommand>),
+}
 
 impl slog::Value for Command {
     fn serialize(&self,

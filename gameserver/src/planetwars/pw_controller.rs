@@ -11,7 +11,12 @@ use network::router::RoutingTable;
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
 use super::pw_serializer::{serialize, serialize_rotated};
-use super::pw_protocol as proto;
+use super::pw_protocol::{
+    self as proto,
+    PlayerAction,
+    PlayerCommand, 
+    CommandError,
+};
 
 use slog;
 use serde_json;
@@ -33,15 +38,6 @@ enum GameState {
     Playing,
     /// Game has terminated
     Finished,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum CommandError {
-    NotEnoughShips,
-    OriginNotOwned,
-    ZeroShipMove,
-    OriginDoesNotExist,
-    DestinationDoesNotExist,
 }
 
 impl PwController {
@@ -149,11 +145,11 @@ impl PwController {
 
     fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, ResponseValue>) {
         for (player_id, result) in msgs.drain() {
-            // TODO: log received message.
-            // TODO: this should probably happen in the lock as well, so that
+            // log received message
+            // TODO: this should probably happen in the lock, so that
             //       we have a correct timestamp.
-            match result {
-                Ok(message) => {
+            match &result {
+                &Ok(ref message) => {
                     let content = match String::from_utf8(message.clone()) {
                         Ok(content) => content,
                         Err(_err) => "invalid utf-8".to_string(),
@@ -162,49 +158,51 @@ impl PwController {
                         player_id,
                         "content" => content,
                     );
-
-                    self.execute_message(player_id, message);
                 },
-                Err(ResponseError::Timeout) => {
+                &Err(ResponseError::Timeout) => {
                     info!(self.logger, "timeout"; player_id);
-
                 }
             }
+
+            let player_action = self.execute_action(player_id, result);
+            // TODO: send action back to player
         }
     }
 
-    /// Parse and execute a player message.
-    fn execute_message(&mut self, player_id: PlayerId, msg: Vec<u8>) {
-        match serde_json::from_slice(&msg) {
-            Ok(action) => {
-                self.execute_action(player_id, action);
-            },
-            Err(err) => {
-                info!(self.logger, "parse error";
-                    player_id,
-                    "error" => err.to_string()
-                );
-            },
+    fn execute_action(&mut self, player_id: PlayerId, response: ResponseValue)
+        -> PlayerAction
+    {
+        // TODO: it would be cool if this could be done with error_chain.
+
+        let message = match response {
+            Err(ResponseError::Timeout) => return PlayerAction::Timeout,
+            Ok(message) => message,
         };
-    }
 
-    fn execute_action(&mut self, player_id: PlayerId, action: proto::Action) {
-        for cmd in action.commands.iter() {
-            match self.parse_command(player_id, &cmd) {
+        let action: proto::Action = match serde_json::from_slice(&message) {
+            Err(err) => return PlayerAction::ParseError(err.to_string()),
+            Ok(action) => action,
+        };
+
+        let commands = action.commands.into_iter().map(|command| {
+            match self.parse_command(player_id, &command) {
                 Ok(dispatch) => {
-                    info!(self.logger, "dispatch";
-                        player_id,
-                        cmd);
                     self.state.dispatch(&dispatch);
+                    PlayerCommand {
+                        command,
+                        error: None,
+                    }
                 },
-                Err(err) => {
-                    info!(self.logger, "illegal command";
-                        player_id,
-                        cmd,
-                        "error" => serde_json::to_string(&err).unwrap());
+                Err(error) => {
+                    PlayerCommand {
+                        command,
+                        error: Some(error),
+                    }
                 }
             }
-        }
+        }).collect();
+
+        return PlayerAction::Commands(commands);
     }
 
     fn parse_command(&self, player_id: PlayerId, mv: &proto::Command)
