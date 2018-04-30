@@ -6,7 +6,7 @@ import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
 import { Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
-import { ServerMessage, GameState } from './PwLog';
+import { ServerMessage, GameState } from './PwTypes';
 
 export interface ConnectionData {
     token: Buffer,
