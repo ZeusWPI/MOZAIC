@@ -122,12 +122,16 @@ export class Client {
             this.handleBotMessage(message);
         });
 
-        this.connection.on('message', (message: Uint8Array) => {
+        this.connection.onMessage.subscribe((message) => {
             this.handleServerMessage(message);
         });
 
-        this.connection.on('close', () => {
+        this.connection.onError.subscribe((err) => {
+            throw err;
+        });
+
+        this.connection.onClose.subscribe(() => {
             this.botRunner.killBot();
-        })
+        });
     }
 }

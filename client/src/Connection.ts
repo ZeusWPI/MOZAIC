@@ -1,9 +1,17 @@
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
 import Packet = proto.Packet;
+
 import * as net from 'net';
 import * as stream from 'stream';
-import { EventEmitter } from 'events';
+
+import {
+    SimpleEventDispatcher,
+    SignalDispatcher,
+    ISignal,
+    ISimpleEvent,
+} from 'strongly-typed-events';
+
 import { BufferWriter, BufferReader } from 'protobufjs/minimal';
 import { read } from 'fs';
 
@@ -19,16 +27,20 @@ enum ConnectionState {
     CLOSED,
 };
 
-export class Connection extends EventEmitter {
+export class Connection {
     private state: ConnectionState;
     private token: Buffer;
     private address: Address;
     private socket: net.Socket;
 
+    private _onConnect = new SignalDispatcher();
+    private _onMessage = new SimpleEventDispatcher<Uint8Array>();
+    private _onError = new SimpleEventDispatcher<Error>();
+    private _onClose = new SignalDispatcher();
+
     private recvBuffer: Buffer;
     
     public constructor(address: Address, token: Buffer) {
-        super();
         this.state = ConnectionState.DISCONNECTED;
         this.address = address;
         this.token = token;
@@ -42,6 +54,22 @@ export class Connection extends EventEmitter {
         // drop old receive buffer
         this.recvBuffer = new Buffer(0);
         this.socket.connect(this.address.port, this.address.host);
+    }
+
+    public get onConnect() {
+        return this._onConnect.asEvent();
+    }
+
+    public get onMessage() {
+        return this._onMessage.asEvent();
+    }
+
+    public get onError() {
+        return this._onError.asEvent();
+    }
+
+    public get onClose() {
+        return this._onClose.asEvent();
     }
 
     // initiate connection handshake
@@ -63,7 +91,7 @@ export class Connection extends EventEmitter {
         this.socket.on('data', (buf: Buffer) => this.readMessages(buf));
         this.socket.on('close', () => {
             this.state = ConnectionState.DISCONNECTED;
-            this.emit('close');
+            this._onClose.dispatch();
         }); 
     }
 
@@ -80,19 +108,21 @@ export class Connection extends EventEmitter {
                 let response = proto.ConnectionResponse.decode(buf);
                 if (response.success) {
                     this.state = ConnectionState.CONNECTED;
-                    this.emit('connected');
+                    this._onConnect.dispatch();
                 }
                 if (response.error) {
                     // TODO: should there be a special error state?
                     this.state = ConnectionState.CLOSED;;
-                    this.emit('error', response.error.message);
+                    // TODO this is not particulary nice
+                    const err = new Error(response.error.message!);
+                    this._onError.dispatch(err);
                 }
                 break;
             }
             case ConnectionState.CONNECTED: {
                 let packet = Packet.decode(buf);
                 if (packet.message) {
-                    this.emit('message', packet.message.data!);
+                    this._onMessage.dispatch(packet.message.data!);
                 }
                 break;
             }
@@ -109,6 +139,11 @@ export class Connection extends EventEmitter {
         }
     }
 
+    /**
+     * Try to parse messages from the read buffer.
+     * TODO: maybe extract this into its own class.
+     * @param bytes bytes to append to the read buffer.
+     */
     private readMessages(bytes: Buffer) {
         // Buffer.concat returns a new buffer, so the bytes are copied over
         // from recvBuffer, so that the old value becomes garbage.

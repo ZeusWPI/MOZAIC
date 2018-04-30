@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "split2": "^2.2.0",
+    "strongly-typed-events": "^1.4.3",
     "text-encoding": "^0.6.4",
     "tmp": "0.0.33"
   }
