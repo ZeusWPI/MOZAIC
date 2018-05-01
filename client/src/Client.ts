@@ -27,14 +27,17 @@ enum ClientState {
 
 export class Client {
     readonly connection: Connection;
+    readonly address: Address;
     readonly botRunner: BotRunner;
     readonly requestQueue: (number | Long)[];
     readonly logger: Logger;
+
     private turnNum: 0;
     private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
-        this.connection = new Connection(connData.address, connData.token);
+        this.connection = new Connection(connData.token);
+        this.address = connData.address;
         this.botRunner = new BotRunner(botConfig);
         this.logger = logger;
         this.requestQueue = [];
@@ -44,7 +47,7 @@ export class Client {
     }
 
     public run() {
-        this.connection.connect();
+        this.connection.connect(this.address.host, this.address.port);
         this.botRunner.run();
     }
 
