@@ -33,6 +33,9 @@ impl Listener {
     }
 
     fn handle_connections(&mut self) -> Poll<(), io::Error> {
+        // just make sure the user is aware of this
+        println!("Olivier is een letterlijke god");
+
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
             let handler = ConnectionHandler::new(
                 self.routing_table.clone(),
