@@ -6,7 +6,8 @@ import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
 import { Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
-import { ServerMessage, GameState } from './PwTypes';
+import { ServerMessage, GameState, PlayerAction } from './PwTypes';
+import { RequestResolver } from './RequestResolver';
 
 export interface ConnectionData {
     token: Buffer,
@@ -30,107 +31,23 @@ export class Client {
     readonly address: Address;
     readonly botRunner: BotRunner;
     readonly logger: Logger;
+    private resolver: RequestResolver;
 
     private turnNum: 0;
     private state: ClientState;
 
     constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
         this.connection = new Connection(connData.token);
+
+        this.handleMessage = this.handleMessage.bind(this);
+        this.resolver = new RequestResolver(this.connection, this.handleMessage);
+
+
         this.address = connData.address;
         this.botRunner = new BotRunner(botConfig);
         this.logger = logger;
         this.state = ClientState.CONNECTING;
-        this.initHandlers();
         this.turnNum = 0;
-    }
-
-    public run() {
-        this.connection.connect(this.address.host, this.address.port);
-        this.botRunner.run();
-    }
-
-    public handleServerMessage(data: Uint8Array) {
-        let message = Message.decode(data);
-        switch (message.payload) {
-            case 'message': {
-                this.handleMessage(message.message!);
-                break;
-            }
-            case 'response': {
-                this.handleResponse(message.response!);
-                break;
-            }
-        }
-    }
-
-    public handleResponse(response: Message.IResponse) {
-        // TODO
-    }
-
-    public handleMessage(message: Message.IMessage) {
-        let messageId = message.messageId! as number;
-        this.onServerMessage(messageId, message.data!);
-    }
-
-    public onServerMessage(messageId: number | Long, data: Uint8Array) {
-        switch (this.state) {
-            case ClientState.CONNECTING: {
-                let hello = Buffer.from("hello", 'utf-8');
-                this.sendResponse(messageId, hello);
-                this.state = ClientState.CONNECTED;
-                break;
-            }
-            case ClientState.CONNECTED: {
-                // got a game state
-                this.turnNum += 1;
-                const text = new TextDecoder('utf-8').decode(data);
-                let serverMessage: ServerMessage = JSON.parse(text);
-
-                // TODO: ewwwwww
-                switch (serverMessage.type) {
-                    case 'game_state': {
-                        const state = serverMessage.content;
-                        this.logger.log({
-                            "type": 'step',
-                            "turn_number": this.turnNum,
-                            "state": state,
-                        });
-
-                        const request = JSON.stringify(state);
-                        this.botRunner.request(request, (response) => {
-                            this.logger.log({
-                                "type": "command",
-                                "content": response,
-                            });
-                            const buf = Buffer.from(response, 'utf-8');
-                            this.sendResponse(messageId, buf);
-                        });
-                        break;
-                    }
-                    case 'player_action': {
-                        this.logger.log({
-                            "type": 'player_action',
-                            "action": serverMessage.content,
-                        })
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
-
-    public sendResponse(messageId: number | Long, data: Uint8Array) {
-        let response = Message.Response.create({ messageId, data });
-        let message = Message.create({ response });
-        let buffer = Message.encode(message).finish();
-        this.connection.send(buffer);
-    }
-
-    private initHandlers() {
-        this.connection.onMessage.subscribe((message) => {
-            this.handleServerMessage(message);
-        });
 
         this.connection.onError.subscribe((err) => {
             throw err;
@@ -140,4 +57,69 @@ export class Client {
             this.botRunner.killBot();
         });
     }
+
+    public run() {
+        this.connection.connect(this.address.host, this.address.port);
+        this.botRunner.run();
+    }
+
+    private handleMessage(data: Uint8Array): void | Promise<Uint8Array> {
+        switch (this.state) {
+            case ClientState.CONNECTING: {
+                return this.handleConnectingMessage(data);
+            }
+            case ClientState.CONNECTED: {
+                return this.handleGameMessage(data);
+            }
+        }
+    }
+
+    private handleConnectingMessage(data: Uint8Array): Promise<Uint8Array> {
+        this.state = ClientState.CONNECTED;
+        return Promise.resolve(data);
+    }
+
+    private handleGameMessage(data: Uint8Array): void | Promise<Uint8Array>
+    {
+        const text = new TextDecoder('utf-8').decode(data);
+        let serverMessage: ServerMessage = JSON.parse(text);
+
+        switch (serverMessage.type) {
+            case 'game_state': {
+                return this.handleGameState(serverMessage.content);
+            }
+            case 'player_action': {
+                return this.handlePlayerAction(serverMessage.content);
+            }
+        }
+    }
+
+    private handleGameState(state: GameState): Promise<Uint8Array> {
+        this.turnNum += 1;
+
+        this.logger.log({
+            "type": 'step',
+            "turn_number": this.turnNum,
+            "state": state,
+        });
+
+        return new Promise((resolve, reject) => {
+            const request = JSON.stringify(state);
+            this.botRunner.request(request, (response) => {
+                this.logger.log({
+                    "type": "command",
+                    "content": response,
+                });
+                const buf = Buffer.from(response, 'utf-8');
+                resolve(buf);
+            });
+        });
+    }
+
+    private handlePlayerAction(action: PlayerAction) {
+        this.logger.log({
+            "type": 'player_action',
+            "action": action,
+        })
+    }   
 }
