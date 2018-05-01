@@ -29,7 +29,6 @@ export class Client {
     readonly connection: Connection;
     readonly address: Address;
     readonly botRunner: BotRunner;
-    readonly requestQueue: (number | Long)[];
     readonly logger: Logger;
 
     private turnNum: 0;
@@ -40,7 +39,6 @@ export class Client {
         this.address = connData.address;
         this.botRunner = new BotRunner(botConfig);
         this.logger = logger;
-        this.requestQueue = [];
         this.state = ClientState.CONNECTING;
         this.initHandlers();
         this.turnNum = 0;
@@ -49,17 +47,6 @@ export class Client {
     public run() {
         this.connection.connect(this.address.host, this.address.port);
         this.botRunner.run();
-    }
-
-    public handleBotMessage(message: Uint8Array) {
-        this.logger.log({
-            "type": "command",
-            "content": new TextDecoder('utf-8').decode(message),
-        });
-        let requestId = this.requestQueue.shift();
-        if (requestId) {
-            this.sendResponse(requestId, message);
-        }
     }
 
     public handleServerMessage(data: Uint8Array) {
@@ -108,9 +95,16 @@ export class Client {
                             "turn_number": this.turnNum,
                             "state": state,
                         });
-        
-                        this.requestQueue.push(messageId);
-                        this.botRunner.sendMessage(JSON.stringify(state));
+
+                        const request = JSON.stringify(state);
+                        this.botRunner.request(request, (response) => {
+                            this.logger.log({
+                                "type": "command",
+                                "content": response,
+                            });
+                            const buf = Buffer.from(response, 'utf-8');
+                            this.sendResponse(messageId, buf);
+                        });
                         break;
                     }
                     case 'player_action': {
@@ -134,10 +128,6 @@ export class Client {
     }
 
     private initHandlers() {
-        this.botRunner.on('message', (message: Uint8Array) => {
-            this.handleBotMessage(message);
-        });
-
         this.connection.onMessage.subscribe((message) => {
             this.handleServerMessage(message);
         });

@@ -13,12 +13,17 @@ interface Bot {
     output: Readable,
 }
 
+export type OutputHandler = (line: string) => void;
+
 export class BotRunner extends EventEmitter {
     readonly config: BotConfig;
     private bot?: Bot;
+    private handlerQueue: OutputHandler[];
+    private defaultHandler = (line: string) => {};
 
     constructor(config: BotConfig) {
         super();
+        this.handlerQueue = [];
         this.config = config;
     }
 
@@ -31,11 +36,16 @@ export class BotRunner extends EventEmitter {
         this.setProcess(process);
     }
 
+    public request(query: string, handler: OutputHandler) {
+        this.handlerQueue.push(handler);
+        this.sendMessage(query);
+    }
+
     /**
      * Send a message to the running bot
      * @param message the message to send
      */
-    public sendMessage(message: Uint8Array | string) {
+    private sendMessage(message: Uint8Array | string) {
         if (this.bot) {
             this.bot.process.stdin.write(message + '\n');
         } else {
@@ -57,8 +67,7 @@ export class BotRunner extends EventEmitter {
         const output = process.stdout.pipe(split2());
 
         output.on('data', (line: string) => {
-            let data = Buffer.from(line, 'utf-8');
-            this.onData(data);
+            this.onLine(line);
         });
 
         process.stderr.on('data', (data: Buffer) => {
@@ -75,7 +84,12 @@ export class BotRunner extends EventEmitter {
         };
     }
 
-    private onData(data: Buffer) {
-        this.emit('message', data);
+    private onLine(line: string) {
+        const handler = this.handlerQueue.shift();
+        if (handler) {
+            handler(line);
+        } else {
+            this.defaultHandler(line);
+        }
     }
 }
