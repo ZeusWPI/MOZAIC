@@ -11,6 +11,7 @@
   "author": "Zeus WPI",
   "license": "MIT",
   "devDependencies": {
+    "@types/bluebird": "^3.5.20",
     "@types/node": "^9.4.6",
     "@types/split2": "^2.1.6",
     "gulp": "^4.0.0",
@@ -21,6 +22,7 @@
     "typescript": "^2.7.2"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "split2": "^2.2.0",
     "strongly-typed-events": "^1.4.3",
     "text-encoding": "^0.6.4",
