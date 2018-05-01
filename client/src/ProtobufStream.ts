@@ -1,5 +1,8 @@
 import { Transform } from 'stream';
 import { BufferReader, BufferWriter } from 'protobufjs';
+import { Socket } from 'net';
+import { SignalDispatcher, ISignal } from 'ste-signals';
+import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 /**
  * Take a byte stream of length-delimited protobuf messages, and
@@ -83,6 +86,58 @@ export class ProtobufWriter extends Transform {
 
     public _transform(w: BufferWriter, encoding: string, callback: Function) {
         const buf = w.ldelim().finish();
+        console.log('bla');
         callback(null, buf);
     }
+}
+
+export class ProtobufStream {
+    private _reader = new ProtobufReader();
+    private _socket = new Socket();
+
+    private _onConnect = new SignalDispatcher();
+    private _onClose = new SignalDispatcher();
+    private _onData = new SimpleEventDispatcher<Uint8Array>();
+
+    constructor() {
+        this._socket.pipe(this._reader);
+
+        this._socket.on('connect', () => {
+            this._onConnect.dispatch();
+        });
+
+        this._socket.on('close', () => {
+            this._onClose.dispatch();
+        });
+
+        this._reader.on('data', (data: Uint8Array) => {
+            this._onData.dispatch(data);
+        });
+    }
+
+    public connect(host: string, port: number) {
+        this._socket.connect(port, host);
+    }
+
+    public write(writer: BufferWriter) {
+        const buf = writer.ldelim().finish();
+        this._socket.write(buf);
+    }
+
+    public get readStream() {
+        return this._reader;
+    }
+
+    public get onConnect() {
+        return this._onConnect.asEvent();
+    }
+
+    public get onClose() {
+        return this._onClose.asEvent();
+    }
+
+    public get onMessage() {
+        return this._onData.asEvent();
+    }
+
 }
