@@ -11,6 +11,7 @@ export interface LogFormat {
 export interface Player {
   uuid: string;
   name: string;
+  number: number;
   score: number;
 }
 
