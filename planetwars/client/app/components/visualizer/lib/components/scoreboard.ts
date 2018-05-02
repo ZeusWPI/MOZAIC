@@ -2,8 +2,7 @@ import Game from "./game";
 import * as React from "react";
 import { Component } from "react";
 import * as d3 from "d3";
-import { Player } from '../../../../lib/match/types';
-import { GameState } from '../../../../lib/match/log';
+import { GameState, Player } from '../../../../lib/match';
 
 import * as h from 'react-hyperscript';
 

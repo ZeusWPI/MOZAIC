@@ -1,5 +1,5 @@
 import { GameState, Player } from '../../../../lib/match/types';
-import { MatchLog } from '../../../../lib/match/log';
+import { MatchLog } from '../../../../lib/match';
 
 import Config from '../util/config';
 

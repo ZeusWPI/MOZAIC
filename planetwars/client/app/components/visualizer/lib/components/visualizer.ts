@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { MatchLog, GameState } from '../../../../lib/match/log';
+import { MatchLog, GameState } from '../../../../lib/match';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
