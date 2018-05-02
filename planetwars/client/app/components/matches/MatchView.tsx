@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Visualizer from '../visualizer/Visualizer';
 import * as Comp from './types';
-import { parseLog, MatchLog } from '../../lib/match/log';
+import { parseLog, MatchLog } from '../../lib/match/MatchLog';
 import { LogView } from './LogView';
 import * as M from '../../utils/database/models';
 
