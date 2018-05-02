@@ -44,13 +44,13 @@ export interface MatchProps {
   uuid: string;
   timestamp: Date;
   network: Address;
+  logPath: string;
 }
 
 export type HostedMatchProps = MatchProps & {
   type: MatchType.hosted;
   players: BotSlot[];
   maxTurns: number;
-  logPath: string;
   map: MapId;
 };
 
