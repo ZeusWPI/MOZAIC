@@ -1,6 +1,8 @@
 import { ServerRunner } from "./ServerRunner";
 import { ClientRunner, ClientData } from "./ClientRunner";
 import { BotConfig, Address } from "./index";
+import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
+import { SignalDispatcher, ISignal } from "ste-signals";
 
 export interface MatchParams {
     players: PlayerData[];
@@ -31,6 +33,8 @@ export class MatchRunner {
                 clients.push({ botConfig, token });
             }
         });
+        console.log(params.players);
+        console.log(clients);
         this.clientRunner = new ClientRunner({
             clients,
             address,
@@ -45,5 +49,13 @@ export class MatchRunner {
         setTimeout(() => {
             this.clientRunner.run();
         }, 1000);
+    }
+
+    public get onComplete() {
+        return this.serverRunner.onExit;
+    }
+
+    public get onError() {
+        return this.serverRunner.onError;
     }
 }

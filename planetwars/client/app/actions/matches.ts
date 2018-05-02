@@ -9,8 +9,7 @@ import { actionCreator } from './helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../utils/Config';
 import { GState } from '../reducers/index';
-import { parseLog } from '../lib/match/log/index';
-import GameRunner from '../utils/GameRunner';
+import { parseLog } from '../lib/match/MatchLog';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -38,39 +37,7 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
 }
 
 export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
-  return (dispatch: any, getState: any) => {
-    const match: M.JoinedMatch =  {
-      type: M.MatchType.joined,
-      status: M.MatchStatus.playing,
-      uuid: uuidv4(),
-      timestamp: new Date(),
-      network: host,
-      bot,
-    };
-
-    dispatch(saveMatch(match));
-
-    dispatch(runBot(match, bot));
-  };
-}
-
-// TODO: don't make this an action
-export function runBot(match: M.MatchProps, bot: M.InternalBotSlot) {
-  return (dispatch: any, getState: any) => {
-    const state: GState = getState();
-    const botData = state.bots[bot.botId];
-    const connData = {
-      token: Buffer.from(bot.token, 'hex'),
-      address: match.network,
-    };
-    const argv = stringArgv(botData.command);
-    const botConfig = {
-      command: argv[0],
-      args: argv.slice(1),
-    };
-    const client = new PwClient.Client(connData, botConfig);
-    client.run();
-  };
+  throw new Error("not implemented");
 }
 
 export function runMatch(params: M.MatchParams) {
@@ -81,39 +48,49 @@ export function runMatch(params: M.MatchParams) {
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
 
-    const playerConfigs = players.map(({ token, name }) => ({ token, name }));
-    const gameConfig = { maxTurns, mapFile: state.maps[map].mapPath };
-    const config: M.MatchConfig = {
-      gameConfig,
+    const playerConfigs = players.map((slot) => {
+      let botConfig;
+      if (slot.type === 'internal') {
+        const botData = state.bots[slot.botId];
+        const argv = stringArgv(botData.command);
+        botConfig = {
+          command: argv[0],
+          args: argv.slice(1),
+        };
+      }
+      return {
+        name: slot.name,
+        token: slot.token,
+        botConfig,
+      };
+    });
+
+    const config: PwClient.MatchParams = {
       players: playerConfigs,
+      mapFile: state.maps[map].mapPath,
+      maxTurns,
+      address: params.address,
       logFile: match.logPath,
-      address: `${params.address.host}:${params.address.port}`,
     };
 
-    const runner = new GameRunner(config);
-    runner.on('matchEnded', () => {
+    const runner = new PwClient.MatchRunner(Config.matchRunner, config);
+    runner.onComplete.subscribe(() => {
       dispatch(completeHostedMatch(match.uuid));
       const title = 'Match ended';
       const body = `A match on map '${state.maps[params.map].name}' has ended`;
       const link = `/matches/${match.uuid}`;
       dispatch(Varia.addNotification({ title, body, link, type: 'Finished' }));
     });
-    runner.on('error', (error) => {
+
+    runner.onError.subscribe((error) => {
       dispatch(handleHostedMatchError(match.uuid, error));
       const title = 'Match errored';
       const body = `A match on map '${state.maps[params.map].name}' has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
     });
-    runner.run();
 
-    setTimeout(() => {
-      match.players.forEach((bot) => {
-        if (bot.type === 'internal') {
-          dispatch(runBot(match, bot));
-        }
-      });
-    }, 5000);
+    runner.run();
   };
 }
 

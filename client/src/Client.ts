@@ -59,6 +59,7 @@ export class Client {
     }
 
     public run() {
+        console.log('running client');
         this.connection.connect(this.address.host, this.address.port);
         this.botRunner.run();
     }
@@ -76,6 +77,7 @@ export class Client {
 
     private handleConnectingMessage(data: Uint8Array): Promise<Uint8Array> {
         this.state = ClientState.CONNECTED;
+        console.log('connected');
         return Promise.resolve(data);
     }
 

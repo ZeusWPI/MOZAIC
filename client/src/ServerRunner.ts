@@ -2,6 +2,8 @@ import { Address } from "./index";
 import * as tmp from 'tmp';
 import * as fs from 'fs';
 import { execFile } from 'child_process';
+import { SignalDispatcher, ISignal } from "ste-signals";
+import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
 
 export interface ServerParams {
@@ -21,6 +23,9 @@ export class ServerRunner {
     private params: ServerParams;
     private serverPath: string;
 
+    private _onExit = new SignalDispatcher();
+    private _onError = new SimpleEventDispatcher<Error>();
+
     constructor(serverPath: string, params: ServerParams) {
         this.params = params;
         this.serverPath = serverPath;
@@ -37,12 +42,19 @@ export class ServerRunner {
             console.log(data.toString('utf-8'))
         });
         process.on('close', () => {
-            // TODO
-            console.log('done');
+            this._onExit.dispatch();
         });
         process.on('error', (err: Error) => {
-            console.log(err);
+            this._onError.dispatch(err);
         });
+    }
+
+    public get onExit() {
+        return this._onExit.asEvent();
+    }
+
+    public get onError() {
+        return this._onError.asEvent();
     }
 
     private writeConfigFile() {
