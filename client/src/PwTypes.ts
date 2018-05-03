@@ -40,12 +40,12 @@ export type PlayerActionTimeout = {
 
 export type PlayerActionParseError = {
     type: 'parse_error';
-    content: string;
+    value: string;
 }
 
 export type PlayerActionCommands = {
     type: 'commands';
-    content: PlayerCommand[];
+    value: PlayerCommand[];
 }
 
 export type PlayerCommand = {

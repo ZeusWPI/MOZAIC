@@ -20,7 +20,10 @@ export interface PlayerData {
 
 export class MatchRunner {
     private serverRunner: ServerRunner;
-    private clientRunner: ClientRunner
+    private clientRunner: ClientRunner;
+
+    private _onComplete = new SignalDispatcher();
+    private _onError = new SimpleEventDispatcher<Error>();
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
@@ -33,13 +36,22 @@ export class MatchRunner {
                 clients.push({ botConfig, token });
             }
         });
-        console.log(params.players);
-        console.log(clients);
         this.clientRunner = new ClientRunner({
             clients,
             address,
             logFile,
         });
+
+        this.serverRunner.onExit.subscribe(() => {
+            this._onComplete.dispatch()
+        });
+        this.serverRunner.onError.subscribe((err) => {
+            this._onError.dispatch(err);
+        });
+        // TODO: is this desired behaviour?
+        this.clientRunner.onError.subscribe((err) => {
+            this._onError.dispatch(err);
+        })
     }
 
     public run() {
@@ -52,10 +64,10 @@ export class MatchRunner {
     }
 
     public get onComplete() {
-        return this.serverRunner.onExit;
+        return this._onComplete.asEvent();
     }
 
     public get onError() {
-        return this.serverRunner.onError;
+        return this._onError.asEvent();
     }
 }

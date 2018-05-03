@@ -2,6 +2,8 @@ import { execFile, ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import * as split2 from 'split2';
 import { Readable } from 'stream';
+import { SignalDispatcher, ISignal } from 'ste-signals';
+import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 export interface BotConfig {
     command: string;
@@ -15,14 +17,16 @@ interface Bot {
 
 export type OutputHandler = (line: string) => void;
 
-export class BotRunner extends EventEmitter {
+export class BotRunner {
     readonly config: BotConfig;
     private bot?: Bot;
     private handlerQueue: OutputHandler[];
     private defaultHandler = (line: string) => {};
 
+    private _onExit = new SignalDispatcher();
+    private _onError = new SimpleEventDispatcher<Error>();
+
     constructor(config: BotConfig) {
-        super();
         this.handlerQueue = [];
         this.config = config;
     }
@@ -39,6 +43,14 @@ export class BotRunner extends EventEmitter {
     public request(query: string, handler: OutputHandler) {
         this.handlerQueue.push(handler);
         this.sendMessage(query);
+    }
+
+    public get onExit() {
+        return this._onExit.asEvent();
+    }
+
+    public get onError() {
+        return this._onError.asEvent();
     }
 
     /**
@@ -75,8 +87,12 @@ export class BotRunner extends EventEmitter {
         });
 
         // TODO: handle these better
-        process.on('exit', () => console.log('BOT EXITTED'));
-        process.on('error', (err: Error) => console.log(`ERROR: ${err}`));
+        process.on('exit', () => {
+            this._onExit.dispatch();
+        });
+        process.on('error', (err: Error) => {
+            this._onError.dispatch(err);
+        });
 
         this.bot = {
             process,

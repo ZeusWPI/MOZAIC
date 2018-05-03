@@ -8,6 +8,8 @@ import { Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
 import { ServerMessage, GameState, PlayerAction } from './PwTypes';
 import { RequestResolver } from './RequestResolver';
+import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
+import { SignalDispatcher, ISignal } from 'ste-signals';
 
 export interface ConnectionData {
     token: Buffer,
@@ -36,6 +38,9 @@ export class Client {
     private turnNum: 0;
     private state: ClientState;
 
+    private _onExit = new SignalDispatcher();
+    private _onError = new SimpleEventDispatcher<Error>();
+
     constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
         this.connection = new Connection(connData.token);
 
@@ -49,12 +54,17 @@ export class Client {
         this.state = ClientState.CONNECTING;
         this.turnNum = 0;
 
+        this.botRunner.onError.subscribe((err) => {
+            this._onError.dispatch(err);
+        });
+
         this.connection.onError.subscribe((err) => {
-            throw err;
+            this._onError.dispatch(err);
         });
 
         this.connection.onClose.subscribe(() => {
             this.botRunner.killBot();
+            this._onExit.dispatch();
         });
     }
 
@@ -62,6 +72,14 @@ export class Client {
         console.log('running client');
         this.connection.connect(this.address.host, this.address.port);
         this.botRunner.run();
+    }
+
+    public get onExit() {
+        return this._onExit.asEvent();
+    }
+
+    public get onError() {
+        return this._onError.asEvent();
     }
 
     private handleMessage(data: Uint8Array): void | Promise<Uint8Array> {
