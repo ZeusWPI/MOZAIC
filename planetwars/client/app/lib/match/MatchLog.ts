@@ -12,7 +12,7 @@ export function parseLog(players: PlayerData[], path: string) {
     return {
       uuid: data.uuid,
       name: data.name,
-      number: idx,
+      number: idx + 1,
       score: 0,
     };
   });
@@ -66,9 +66,13 @@ export class MatchLog {
   public gameStates: GameState[];
 
   constructor(players: Player[]) {
-    this.players = players;
     this.playerLogs = {};
     this.gameStates = [];
+
+    this.players = {};
+    players.forEach((player) => {
+      this.players[player.number] = player;
+    });
   }
 
   public addEntry(entry: PwTypes.LogEntry) {

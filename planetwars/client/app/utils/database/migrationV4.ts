@@ -35,7 +35,7 @@ export type JoinedMatch =
   FinishedJoinedMatch;
 
 export type Playing = { status: MatchStatus.playing };
-export type Finished = { status: MatchStatus.finished };
+export type Finished = { status: MatchStatus.finished; stats: MatchStats; };
 export type Errored = { status: MatchStatus.error; error: string };
 
 export interface MatchProps {
@@ -47,6 +47,9 @@ export interface MatchProps {
   logPath: string;
 }
 
+export type FinishedMatch = FinishedHostedMatch | FinishedJoinedMatch;
+export type ErroredMatch = ErroredHostedMatch | ErroredJoinedMatch;
+
 export type HostedMatchProps = MatchProps & {
   type: MatchType.hosted;
   players: BotSlot[];
@@ -56,9 +59,7 @@ export type HostedMatchProps = MatchProps & {
 
 export type PlayingHostedMatch = HostedMatchProps & Playing;
 export type ErroredHostedMatch = HostedMatchProps & Errored;
-export type FinishedHostedMatch = HostedMatchProps & Finished & {
-  stats: MatchStats;
-};
+export type FinishedHostedMatch = HostedMatchProps & Finished;
 
 export type JoinedMatchProps = MatchProps & {
   type: MatchType.joined;
