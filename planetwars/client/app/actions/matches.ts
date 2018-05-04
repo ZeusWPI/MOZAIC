@@ -37,7 +37,61 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
 }
 
 export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
-  throw new Error("not implemented");
+  return (dispatch: any, getState: any) => {
+    const state: GState = getState();
+
+    const matchId = uuidv4();
+
+    const match: M.JoinedMatch =  {
+      uuid: matchId,
+      type: M.MatchType.joined,
+      status: M.MatchStatus.playing,
+      timestamp: new Date(),
+      network: host,
+      logPath: Config.matchLogPath(matchId),
+      bot,
+    };
+
+    dispatch(saveMatch(match));
+
+    const botData = state.bots[bot.botId];
+    const argv = stringArgv(botData.command);
+    const botConfig = {
+      command: argv[0],
+      args: argv.slice(1),
+    };
+
+    const config = {
+      clients: [
+        {
+          botConfig,
+          token: bot.token,
+        },
+      ],
+      address: host,
+      logFile: match.logPath,
+    };
+
+    // TODO: remove this dupe
+    const runner = new PwClient.ClientRunner(config);
+    runner.onComplete.subscribe(() => {
+      dispatch(completeMatch(match.uuid));
+      const title = 'Match ended';
+      const body = `A remote match has ended`;
+      const link = `/matches/${match.uuid}`;
+      dispatch(Varia.addNotification({ title, body, link, type: 'Finished' }));
+    });
+
+    runner.onError.subscribe((error) => {
+      dispatch(handleMatchError(match.uuid, error));
+      const title = 'Match errored';
+      const body = `A remote match on map has errored`;
+      const link = `/matches/${match.uuid}`;
+      dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
+    });
+
+    runner.run();
+  };
 }
 
 export function runMatch(params: M.MatchParams) {
@@ -75,7 +129,7 @@ export function runMatch(params: M.MatchParams) {
 
     const runner = new PwClient.MatchRunner(Config.matchRunner, config);
     runner.onComplete.subscribe(() => {
-      dispatch(completeHostedMatch(match.uuid));
+      dispatch(completeMatch(match.uuid));
       const title = 'Match ended';
       const body = `A match on map '${state.maps[params.map].name}' has ended`;
       const link = `/matches/${match.uuid}`;
@@ -83,7 +137,7 @@ export function runMatch(params: M.MatchParams) {
     });
 
     runner.onError.subscribe((error) => {
-      dispatch(handleHostedMatchError(match.uuid, error));
+      dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
       const body = `A match on map '${state.maps[params.map].name}' has errored`;
       const link = `/matches/${match.uuid}`;
@@ -94,15 +148,22 @@ export function runMatch(params: M.MatchParams) {
   };
 }
 
-function completeHostedMatch(matchId: M.MatchId) {
+
+function completeMatch(matchId: M.MatchId) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
-    if (match.type !== M.MatchType.hosted) { throw new Error('We suck at coding.'); }
     if (match.status !== M.MatchStatus.playing) { throw new Error('We suck at coding.'); }
 
-    const stats = getStats(match.logPath, match.players);
-    const updatedMatch: M.FinishedHostedMatch = {
+    let players;
+    if (match.type === M.MatchType.hosted) {
+      players = match.players;
+    } else {
+      players = [match.bot];
+    }
+
+    const stats = getStats(match.logPath, players);
+    const updatedMatch: M.FinishedMatch = {
       ...match,
       stats,
       status: M.MatchStatus.finished,
@@ -114,24 +175,27 @@ function completeHostedMatch(matchId: M.MatchId) {
 function getStats(logPath: string, players: M.BotSlot[]): M.MatchStats {
   const matchPlayers = players.map(({ token, name }) => ({ uuid: token, name }));
   const log = parseLog(matchPlayers, logPath);
+  console.log('winners');
+  console.log(log.getWinners());
   const winners = Array.from(log.getWinners()).map((p) => p.uuid);
 
-  const score = log.players.reduce((scores, player) => {
-    scores[player.uuid] = player.score;
+  const score = Object.keys(log.players).reduce((scores, playerNum) => {
+    const player = log.players[Number(playerNum)];
+    scores[player.number] = player.score;
     return scores;
   }, {} as M.PlayerMap<number>);
 
   return { winners, score };
 }
 
-function handleHostedMatchError(matchId: M.MatchId, error: Error) {
+function handleMatchError(matchId: M.MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
     if (match.type !== M.MatchType.hosted) { throw new Error('We suck at coding.'); }
     if (match.status !== M.MatchStatus.playing) { throw new Error('We suck at coding.'); }
 
-    const updatedMatch: M.ErroredHostedMatch = {
+    const updatedMatch: M.ErroredMatch = {
       ...match,
       status: M.MatchStatus.error,
       // TODO: include more information or something
