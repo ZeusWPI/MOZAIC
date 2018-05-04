@@ -61,7 +61,7 @@ export interface PlayerMap<T> {
 }
 
 export class MatchLog {
-  public players: Player[];
+  public players: PlayerMap<Player>;
   public playerLogs: PlayerMap<PlayerLog>;
   public gameStates: GameState[];
 
@@ -96,7 +96,7 @@ export class MatchLog {
     Object.keys(gameState.planets).forEach((planetName) => {
       const planet = gameState.planets[planetName];
       if (planet.owner) {
-        planet.owner.score += 1;
+        this.players[planet.owner].score += 1;
       }
     });
     this.gameStates.push(gameState);
@@ -109,7 +109,7 @@ export class MatchLog {
         name: p.name,
         x: p.x,
         y: p.y,
-        owner: this.players[p.owner - 1],
+        owner: p.owner,
         shipCount: p.ship_count,
       };
     });
@@ -119,7 +119,7 @@ export class MatchLog {
         id: e.id,
         origin: planets[e.origin],
         destination: planets[e.destination],
-        owner: this.players[e.owner - 1],
+        owner: e.owner,
         shipCount: e.ship_count,
         turnsRemaining: e.turns_remaining,
       };

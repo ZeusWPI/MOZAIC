@@ -23,7 +23,7 @@ export interface Planet {
   name: string;
   x: number;
   y: number;
-  owner?: Player;
+  owner?: number;
   shipCount: number;
 }
 
@@ -31,7 +31,7 @@ export interface Expedition {
   id: number;
   origin: Planet;
   destination: Planet;
-  owner: Player;
+  owner: number;
   shipCount: number;
   turnsRemaining: number;
 }
