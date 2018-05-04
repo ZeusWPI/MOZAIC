@@ -6,21 +6,21 @@ import Config from '../util/config';
 export default class Game {
   public matchLog: MatchLog;
 
-  private playerColorMap: Map<string, string>;
+  private playerColorMap: Map<number, string>;
   private planetTypeMap: Map<string, string>;
 
   constructor(matchLog: MatchLog) {
     this.matchLog = matchLog;
     this.planetTypeMap = new Map();
     this.playerColorMap = new Map();
-    matchLog.players.forEach((player, idx) => {
-      this.playerColorMap.set(player.name, Config.playerColors[idx]);
+    Object.keys(matchLog.players).forEach((playerNum, idx) => {
+      this.playerColorMap.set(Number(playerNum), Config.playerColors[idx]);
     });
   }
 
-  public playerColor(player?: Player): string {
-    if (player) {
-      return this.playerColorMap.get(player.name)!;
+  public playerColor(playerNum?: number): string {
+    if (playerNum) {
+      return this.playerColorMap.get(playerNum)!;
     }
     return Config.neutralColor;
   }

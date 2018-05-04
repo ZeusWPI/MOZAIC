@@ -23,12 +23,17 @@ interface PlayerLogs {
 }
 
 function makePlayerLogs(log: MatchLog): PlayerLogs {
-  const players = log.players.filter((p) => p.number !== undefined);
+  const players = Object.keys(log.playerLogs).map((key) => {
+    return log.players[Number(key)];
+  });
+
   const turns = log.gameStates.map((state, idx) => {
     const playerTurns: PlayerMap<PlayerTurn> = {};
     players.forEach((player) => {
-      const playerTurn = log.playerLogs[player.number].turns[idx];
-      playerTurns[player.number] = playerTurn;
+      const turn = log.playerLogs[player.number].turns[idx];
+      if (turn) {
+        playerTurns[player.number] = turn;
+      }
     });
     return playerTurns;
   });
