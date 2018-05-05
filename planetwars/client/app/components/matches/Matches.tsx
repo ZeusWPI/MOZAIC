@@ -93,11 +93,11 @@ export const MatchList: SFC<MatchListProps> = (props) => {
 
 function calcPlayerData(match: Comp.HostedMatch): PlayerProps[] {
   if (match.status === M.MatchStatus.finished) {
-    return match.players.map((player) => ({
-      token: player.token,
+    return match.players.map((player, idx) => ({
       name: player.name,
-      isWinner: match.stats.winners.some((id) => id === player.token),
-      score: match.stats.score[player.token],
+      number: player.number,
+      isWinner: match.stats.winners.some((num) => num === idx + 1),
+      score: match.stats.score[idx + 1],
     })).sort((a, b) => {
       // sort major on isWinner, minor on score
       if (a.isWinner && !b.isWinner) {
@@ -110,7 +110,7 @@ function calcPlayerData(match: Comp.HostedMatch): PlayerProps[] {
     });
   } else {
     return match.players.map((player) => ({
-      token: player.token,
+      number: player.number,
       name: player.name,
       isWinner: false,
     }));
@@ -147,15 +147,15 @@ export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
   <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true} />;
 
 interface PlayerProps {
-  token: string;
   name: string;
+  number: number;
   isWinner: boolean;
   score?: number;
 }
 
 export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
   const entries = players.map((player) => (
-    <PlayerEntry key={player.token} player={player} />
+    <PlayerEntry key={player.number} player={player} />
   ));
   return <ul className={styles.playerList}> {entries} </ul>;
 };

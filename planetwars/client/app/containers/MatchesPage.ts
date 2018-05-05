@@ -44,15 +44,20 @@ const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
   const matchData = state.matches[matchId];
 
   if (matchData.type === M.MatchType.hosted) {
-    const players = matchData.players.map(({ name, token }) => ({ name, token }));
+    const players = matchData.players.map(({ name }, idx) => (
+      { name, number: idx + 1 }
+    ));
     const mapData = state.maps[matchData.map];
     const map = { uuid: mapData.uuid, name: mapData.name };
     const { network, maxTurns, ...props } = matchData;
     return { ...props, players, map };
   } else {
     const { network, bot, ...props } = matchData;
-    const localPlayers = [bot];
-    return { ...props, localPlayers };
+    const players = [{
+      name: bot.name,
+      number: 1,
+    }];
+    return { ...props, players: [] };
   }
 };
 

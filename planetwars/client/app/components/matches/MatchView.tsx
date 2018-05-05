@@ -47,11 +47,10 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     }
     switch (match.status) {
       case M.MatchStatus.finished: {
-        const players = match.players.map(({ token, name }) => ({ uuid: token, name }));
-        const log = parseLog(players, match.logPath);
+        const log = parseLog(match.logPath);
         return (
           <div className={styles.matchViewContainer}>
-            <MatchViewer matchLog={log} />
+            <MatchViewer match={match} matchLog={log} />
           </div>
         );
       }
@@ -79,6 +78,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
 }
 
 interface Props {
+  match: Comp.Match;
   matchLog: MatchLog;
 }
 
@@ -94,6 +94,7 @@ interface State {
 export class MatchViewer extends React.Component<Props, State> {
   public constructor(props: Props) {
     super(props);
+    this.playerName = this.playerName.bind(this);
     this.state = {
       viewState: ViewState.VISUALIZER,
     };
@@ -117,10 +118,29 @@ export class MatchViewer extends React.Component<Props, State> {
           <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
         </div>
         <div className={styles.displayBox}>
-          <MatchDisplay viewState={viewState} matchLog={matchLog} />
+          <MatchDisplay
+            viewState={viewState}
+            matchLog={matchLog}
+            playerName={this.playerName()}
+          />
         </div>
       </div>
     );
+  }
+
+  public playerName() {
+    const playerNames: { [playerNum: number]: string } = {};
+    this.props.match.players.forEach((player) => {
+      playerNames[player.number] = player.name;
+    });
+
+    return (playerNum: number) => {
+      if (playerNames[playerNum]) {
+        return playerNames[playerNum];
+      } else {
+        return `Player ${playerNum}`;
+      }
+    };
   }
 
   private showVisualizer() {
@@ -135,14 +155,16 @@ export class MatchViewer extends React.Component<Props, State> {
 interface MatchDisplayProps {
   viewState: ViewState;
   matchLog: MatchLog;
+  playerName: (playerNum: number) => string;
 }
 
 const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
-  switch (props.viewState) {
+  const { viewState, matchLog, playerName } = props;
+  switch (viewState) {
     case ViewState.VISUALIZER:
-      return <Visualizer matchLog={props.matchLog} />;
+      return <Visualizer playerName={playerName} matchLog={matchLog} />;
     case ViewState.LOG:
-      return <LogView matchLog={props.matchLog} />;
+      return <LogView playerName={playerName} matchLog={matchLog} />;
   }
 };
 

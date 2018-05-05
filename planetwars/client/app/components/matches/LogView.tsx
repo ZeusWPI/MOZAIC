@@ -13,32 +13,28 @@ import { PlayerMap, PlayerTurn } from '../../lib/match/MatchLog';
 // tslint:disable-next-line:no-var-requires
 const styles = require("./LogView.scss");
 
-interface LogViewProps {
+export interface LogViewProps {
+  playerName: (playerNum: number) => string;
   matchLog: MatchLog;
 }
 
-interface PlayerLogs {
-  players: Player[];
-  turns: PlayerMap<PlayerTurn>[];
-}
+type PlayerLogs = PlayerMap<PlayerTurn>[];
 
 function makePlayerLogs(log: MatchLog): PlayerLogs {
-  const players = Object.keys(log.playerLogs).map((key) => {
-    return log.players[Number(key)];
-  });
+  const playerNums = Object.keys(log.playerLogs).map(Number);
 
   const turns = log.gameStates.map((state, idx) => {
     const playerTurns: PlayerMap<PlayerTurn> = {};
-    players.forEach((player) => {
-      const turn = log.playerLogs[player.number].turns[idx];
+    playerNums.forEach((player) => {
+      const turn = log.playerLogs[player].turns[idx];
       if (turn) {
-        playerTurns[player.number] = turn;
+        playerTurns[player] = turn;
       }
     });
     return playerTurns;
   });
 
-  return { players, turns };
+  return turns;
 }
 
 export class LogView extends Component<LogViewProps> {
@@ -47,12 +43,11 @@ export class LogView extends Component<LogViewProps> {
     const playerLogs = makePlayerLogs(this.props.matchLog);
 
     const entries = this.props.matchLog.gameStates.map((state, idx) => {
-      const players = playerLogs.players;
-      const turns = playerLogs.turns[idx];
+      const turns = playerLogs[idx];
       return (
         <li className={classNames(styles.turn)} key={idx}>
           <TurnNumView turn={idx} />
-          <TurnView players={players} turns={turns} />
+          <TurnView playerName={this.props.playerName} turns={turns} />
         </li>
       );
     });
@@ -69,7 +64,7 @@ export class LogView extends Component<LogViewProps> {
 export default LogView;
 
 interface TurnProps {
-  players: Player[];
+  playerName: (playerNum: number) => string;
   turns: PlayerMap<PlayerTurn>;
 }
 
@@ -78,9 +73,17 @@ export const TurnView: SFC<TurnProps> = (props) => {
   if (Object.keys(props.turns).length === 0) {
     return <GameEnd />;
   }
-  const players = props.players.map((player, idx) => {
-    const playerTurn = props.turns[player.number];
-    return <PlayerView key={idx} player={player} turn={playerTurn} />;
+  const players = Object.keys(props.turns).map((_playerNum) => {
+    const playerNum = Number(_playerNum);
+    const playerTurn = props.turns[playerNum];
+    const playerName = props.playerName(playerNum);
+    return (
+      <PlayerView
+        key={playerNum}
+        playerName={playerName}
+        turn={playerTurn}
+      />
+    );
   });
 
   return (
@@ -89,13 +92,13 @@ export const TurnView: SFC<TurnProps> = (props) => {
     </ul>);
 };
 
-interface PlayerViewProps { player: Player; turn: PlayerTurn; }
-export const PlayerView: SFC<PlayerViewProps> = ({ player, turn }) => {
+interface PlayerViewProps { playerName: string; turn: PlayerTurn; }
+export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
   const isError = { [styles.error]: turn.action!.type !== 'commands' };
   return (
-    <li className={classNames(styles.player, isError)} key={player.uuid}>
+    <li className={classNames(styles.player, isError)}>
       <div>
-        <p className={styles.playerName}>{player.name}</p>
+        <p className={styles.playerName}>{playerName}</p>
       </div>
       <PlayerTurnView turn={turn} />
     </li>

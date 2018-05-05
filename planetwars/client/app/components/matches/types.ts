@@ -1,7 +1,7 @@
 import { MatchStats, MatchStatus, MatchType } from '../../utils/database/models';
 
 export interface Player {
-  token: string;
+  number: number;
   name: string;
 }
 
@@ -16,6 +16,7 @@ export type JoinedMatch = PlayingJoinedMatch | FinishedJoinedMatch | ErroredJoin
 
 export interface MatchProps {
   uuid: string;
+  players: Player[];
   timestamp: Date;
 }
 
@@ -23,7 +24,6 @@ export type HostedMatchProps = MatchProps & {
   type: MatchType.hosted;
   map: Map;
   logPath: string;
-  players: Player[];
 };
 
 export type PlayingHostedMatch = HostedMatchProps & {
@@ -42,7 +42,6 @@ export type ErroredHostedMatch = HostedMatchProps & {
 
 export type JoinedMatchProps = MatchProps & {
   type: MatchType.joined;
-  localPlayers: Player[];
 };
 
 export type PlayingJoinedMatch = JoinedMatchProps & {
