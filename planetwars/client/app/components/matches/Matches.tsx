@@ -7,6 +7,7 @@ import * as M from '../../utils/database/models';
 import * as Comp from './types';
 import MatchView from './MatchView';
 import { FatalErrorView } from '../FatalError';
+import { MatchType } from '../../utils/database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -44,9 +45,9 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
     if (fatalError) { return this.renderError(fatalError); }
     if (matches.length === 0) { return <NoMatches />; }
 
-    const SelectedView = () => (selected && selected.type === M.MatchType.hosted)
-      ? <MatchView match={selected} />
-      : <p> TODO </p>;
+    // const SelectedView = () => (selected && selected.type === M.MatchType.hosted)
+    //   ? <MatchView match={selected} />
+    //   : <p> TODO </p>;
 
     return (
       <div className={styles.matchViewer}>
@@ -55,7 +56,7 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
           selected={selected}
           selectMatch={this.props.selectMatch}
         />
-        <SelectedView />
+        <MatchView match={selected} />
       </div>);
   }
 
@@ -91,7 +92,7 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   return <ul className={styles.matchList}> {listEntries} </ul>;
 };
 
-function calcPlayerData(match: Comp.HostedMatch): PlayerProps[] {
+function calcPlayerData(match: Comp.Match): PlayerProps[] {
   if (match.status === M.MatchStatus.finished) {
     return match.players.map((player, idx) => ({
       name: player.name,
@@ -130,7 +131,6 @@ export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
     className = classnames(styles.selected, className);
   }
 
-  if (match.type !== M.MatchType.hosted) { return <p>Local Match</p>; }
   const playerData = calcPlayerData(match);
   return (
     <div className={className} onClick={props.onClick}>
@@ -195,21 +195,37 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{ match: Comp.HostedMatch }> = ({ match }) => (
-  <div className={styles.timeLocation}>
-    <div className={styles.mapName} title='map'>
-      <div className={styles.iconSpan}>
-        <FaIcon icon='globe' />
-      </div>
-      {match.map.name}
-    </div>
+export const TimeLocation: SFC<{ match: Comp.Match }> = ({ match }) => {
+  let location = null;
+  if (match.type === MatchType.hosted) {
+    location = <MapField mapName={match.map.name}/>;
+  }
 
+  const time = (
     <div className={styles.matchTime} title='date'>
       {dateOrHour(match.timestamp)}
     </div>
-  </div>);
+  );
 
-export const MatchStatus: SFC<{ match: Comp.HostedMatch }> = ({ match }) => {
+  return (
+    <div className={styles.timeLocation}>
+      {location}
+      {time}
+    </div>
+  );
+};
+
+export const MapField: SFC<{ mapName: string }> = ({ mapName }) => (
+  <div className={styles.mapName} title='map'>
+    <div className={styles.iconSpan}>
+      <FaIcon icon='globe' />
+    </div>
+
+    {mapName}
+  </div>
+);
+
+export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
   switch (match.status) {
     case M.MatchStatus.finished: {
       return null;

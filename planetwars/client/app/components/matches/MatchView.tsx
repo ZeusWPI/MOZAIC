@@ -10,7 +10,7 @@ import * as M from '../../utils/database/models';
 const styles = require('./Matches.scss');
 
 export interface ContainerProps {
-  match?: Comp.HostedMatch;
+  match?: Comp.Match;
 }
 
 export interface MatchViewState {
@@ -63,7 +63,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
           </div>
         );
       }
-      case M.MatchStatus.finished: {
+      case M.MatchStatus.playing: {
         return (
           <div className={styles.matchViewContainer}>
             <div className={styles.matchInProgress}>
