@@ -2,7 +2,7 @@ import Game from "./game";
 import * as React from "react";
 import { Component } from "react";
 import * as d3 from "d3";
-import { GameState, Player, PlayerMap } from '../../../../lib/match';
+import { GameState, Player, PlayerMap, MatchLog } from '../../../../lib/match';
 
 import * as h from 'react-hyperscript';
 
@@ -20,13 +20,14 @@ const styles = require('./scoreboard.scss');
 interface ScoreboardProps {
   game: Game;
   turnNum: number;
+  playerName: (playerNum: number) => string;
 }
 
-function countPlanets(players: PlayerMap<Player>, state: GameState) {
+function countPlanets(players: number[], state: GameState) {
   const counts: { [playerNum: number]: number} = {};
 
-  Object.keys(players).forEach((playerNum) => {
-    counts[Number(playerNum)] = 0;
+  players.forEach((playerNum) => {
+    counts[playerNum] = 0;
   });
 
   Object.keys(state.planets).forEach((planetName) => {
@@ -38,11 +39,11 @@ function countPlanets(players: PlayerMap<Player>, state: GameState) {
   return counts;
 }
 
-function countShips(players: PlayerMap<Player>, state: GameState) {
+function countShips(players: number[], state: GameState) {
   const counts: { [playerNum: number]: number} = {};
 
-  Object.keys(players).forEach((playerNum) => {
-    counts[Number(playerNum)] = 0;
+  players.forEach((playerNum) => {
+    counts[playerNum] = 0;
   });
 
   Object.keys(state.planets).forEach((planetName) => {
@@ -61,24 +62,24 @@ export default class Scoreboard extends Component<ScoreboardProps> {
   private svg: any;
 
   public render() {
-    const { game, turnNum } = this.props;
+    const { game, turnNum, playerName } = this.props;
     const gameState = game.matchLog.gameStates[turnNum];
-    const planetCounts = countPlanets(game.matchLog.players, gameState);
-    const shipCounts = countShips(game.matchLog.players, gameState);
+    const players = Array.from(game.matchLog.getPlayers());
+    const planetCounts = countPlanets(players, gameState);
+    const shipCounts = countShips(players, gameState);
 
-    const rows = Object.keys(game.matchLog.players).map((playerNum) => {
-      const player = game.matchLog.players[Number(playerNum)];
-      const planetCount = planetCounts[player.number];
-      return tr({ style: { color: game.playerColor(player.number) } }, [
+    const rows = players.map((playerNum) => {
+      const planetCount = planetCounts[playerNum];
+      return tr({ style: { color: game.playerColor(playerNum) } }, [
         h('i.fa.fa-cogs', {
           'aria-hidden': true,
         }),
-        td(player.name),
+        td(playerName(playerNum)),
         td(planetCount),
         h('i.fa.fa-globe', {
           'aria-hidden': true,
         }),
-        td(shipCounts[player.number]),
+        td(shipCounts[playerNum]),
         h('i.fa.fa-rocket', {
           'aria-hidden': true,
         }),

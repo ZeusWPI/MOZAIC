@@ -36,6 +36,7 @@ interface PlayerData {
 }
 
 interface VisualizerProps {
+  playerName: (playerNum: number) => string;
   matchLog: MatchLog;
 }
 
@@ -73,7 +74,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
   }
 
   public setGame(matchLog: MatchLog) {
-    this.game = new Game(matchLog);
+    this.game = new Game(matchLog, this.props.playerName);
     this.setTurn(0);
     this.setPlaying(true);
   }
@@ -100,6 +101,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     const scoreboard = h(Scoreboard, {
       game: this.game,
       turnNum: this.state.turnNum,
+      playerName: this.props.playerName,
     });
 
     const renderer = h(Renderer, {

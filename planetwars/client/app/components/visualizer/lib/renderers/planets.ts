@@ -58,7 +58,7 @@ export class PlanetRenderer {
     titles.enter().append('title')
       .attr('class', 'title')
       .merge(titles)
-      .text((d: any) => Config.playerName(d.owner));
+      .text((d: any) => this.game.playerName(d.owner));
   }
 
   private drawNameLabels(planets: any, params: any, size: any) {

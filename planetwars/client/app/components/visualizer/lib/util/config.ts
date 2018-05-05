@@ -23,11 +23,4 @@ export default {
     '#d62728', // red
     '#9467bd', // purple
   ],
-  playerName: (player: any) => {
-    if (player) {
-      return player.name;
-    } else {
-      return 'Nobody';
-    }
-  },
 };

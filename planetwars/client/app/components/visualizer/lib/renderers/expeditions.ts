@@ -72,7 +72,7 @@ export class ExpeditionRenderer {
     titles.enter().append('title')
       .attr('class', 'title')
       .merge(titles)
-      .text((d: any) => Config.playerName(d.owner));
+      .text((d: any) => this.game.playerName(d.owner));
   }
 
   private expeditionPos(expedition: Expedition) {

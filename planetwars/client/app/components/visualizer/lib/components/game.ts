@@ -3,19 +3,31 @@ import { MatchLog } from '../../../../lib/match';
 
 import Config from '../util/config';
 
+type PlayerNameFn = (playerNum: number) => string;
+
 export default class Game {
   public matchLog: MatchLog;
 
+  private _playerName: PlayerNameFn;
   private playerColorMap: Map<number, string>;
   private planetTypeMap: Map<string, string>;
 
-  constructor(matchLog: MatchLog) {
+  constructor(matchLog: MatchLog, playerName: PlayerNameFn) {
     this.matchLog = matchLog;
+    this._playerName = playerName;
     this.planetTypeMap = new Map();
     this.playerColorMap = new Map();
-    Object.keys(matchLog.players).forEach((playerNum, idx) => {
-      this.playerColorMap.set(Number(playerNum), Config.playerColors[idx]);
+    matchLog.getPlayers().forEach((playerNum, idx) => {
+      this.playerColorMap.set(playerNum, Config.playerColors[idx]);
     });
+  }
+
+  public playerName(playerNum?: number): string {
+    if (playerNum) {
+      return this._playerName(playerNum);
+    } else {
+      return 'Nobody';
+    }
   }
 
   public playerColor(playerNum?: number): string {
