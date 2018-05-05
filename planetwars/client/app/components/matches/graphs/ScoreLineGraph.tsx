@@ -20,6 +20,7 @@ export class ScoreLineGraphSection extends Section<{}> {
     return <ScoreLineGraph width={width} height={height} data={turns} />;
   }
 }
+
 export interface Turn {
   turn: number;
   players: PlayerSnapshot[];
@@ -33,35 +34,42 @@ export interface PlayerSnapshot {
 
 export class ScoreLineGraph extends Graph<Turn[]> {
   protected createGraph(): void {
-
     const { width, height, data } = this.props;
     const node = this.node;
     const svg = d3.select(node);
-    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    const players = (data[0]) ? data[0].players.map((p) => p.player) : [];
 
     // Clear old graph
     svg.selectAll('*').remove();
 
-    const g = svg
-      .append("g")
-    // .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    const g = svg.append("g");
 
-    const x = d3.scaleOrdinal<number, number>()
-      .range([0, width])
-      .domain([0, data.length] as any);
+    const x = d3.scalePoint<number>()
+      .domain(d3.range(data.length))
+      .rangeRound([0, width]);
 
-    const maxY = d3.max(data, (t) => d3.max(t.players, (p) => p.amountOfShips));
-    const y = d3.scaleOrdinal<number, number>()
-      .range([0, height])
-      .domain([0, maxY || 0]);
+    const maxShips = d3.max(data, (t) => d3.max(t.players, (p) => p.amountOfShips));
+    const maxY = maxShips ? (maxShips + 1) : 1;
+    const y = d3.scaleBand<number>()
+      .domain(d3.range(maxY || 1))
+      .range([height, 0]);
 
-    const line1 = d3.line<Turn>()
-      .x((d) => d.turn)
-      .y((d) => d.players[0].amountOfShips);
+    console.log(x(0), x(data.length - 1));
 
-    const line2 = d3.line<Turn>()
-      .x((d) => d.turn)
-      .y((d) => d.players[1].amountOfShips);
+    players.forEach((pId) => {
+      const line = d3.line<Turn>()
+        .x((d) => x(d.turn) as number)
+        .y((d) => y(d.players[pId].amountOfShips) || 0);
+
+      g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", color(pId.toString()))
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", line);
+    });
 
     g.append("g")
       .attr("transform", "translate(0," + height + ")")
@@ -79,24 +87,11 @@ export class ScoreLineGraph extends Graph<Turn[]> {
       .attr("text-anchor", "end")
       .text("Amount of ships");
 
-    g.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", color('1'))
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
-      .attr("stroke-width", 1.5)
-      .attr("d", line1);
-
-    g.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", color('2'))
-      .attr("stroke-linejoin", "round")
-      .attr("stroke-linecap", "round")
-      .attr("stroke-width", 1.5)
-      .attr("d", line2);
-
     console.log('Graph!');
   }
+}
+
+function faulty(msg: string, val?: any, def?: number): number {
+  console.log(val, msg);
+  return def || 0;
 }

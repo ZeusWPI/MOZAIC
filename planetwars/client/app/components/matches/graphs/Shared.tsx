@@ -102,3 +102,13 @@ export class DemoPie extends Graph<DemoData[]> {
       .text((d) => d.data.value);
   }
 }
+
+export interface PlayerLegendData {
+  id: number;
+}
+
+export class PlayerLegend extends Graph<{}> {
+  protected createGraph(): void {
+
+  }
+}
