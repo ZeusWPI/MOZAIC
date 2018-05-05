@@ -57,7 +57,7 @@ const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
       name: bot.name,
       number: 1,
     }];
-    return { ...props, players: [] };
+    return { ...props, players };
   }
 };
 
