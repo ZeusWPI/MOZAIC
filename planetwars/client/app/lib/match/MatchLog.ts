@@ -7,17 +7,8 @@ interface PlayerData {
   name: string;
 }
 
-export function parseLog(players: PlayerData[], path: string) {
-  const matchPlayers = players.map((data, idx) => {
-    return {
-      uuid: data.uuid,
-      name: data.name,
-      number: idx + 1,
-      score: 0,
-    };
-  });
-  const log = new MatchLog(matchPlayers);
-
+export function parseLog(path: string) {
+  const log = new MatchLog();
   const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
   lines.forEach((line: string) => {
     log.addEntry(JSON.parse(line));
@@ -61,18 +52,12 @@ export interface PlayerMap<T> {
 }
 
 export class MatchLog {
-  public players: PlayerMap<Player>;
   public playerLogs: PlayerMap<PlayerLog>;
   public gameStates: GameState[];
 
-  constructor(players: Player[]) {
+  constructor() {
     this.playerLogs = {};
     this.gameStates = [];
-
-    this.players = {};
-    players.forEach((player) => {
-      this.players[player.number] = player;
-    });
   }
 
   public addEntry(entry: PwTypes.LogEntry) {
@@ -87,23 +72,17 @@ export class MatchLog {
       // TODO: rotate player number
       if (entry.player === 0 && entry.record.turn_number > this.gameStates.length) {
         const state = this.parseState(entry.record.state);
-        this.addGameState(state);
+        this.gameStates.push(state);
       }
     }
   }
 
-  public getWinners(): Set<Player> {
-    return this.gameStates[this.gameStates.length - 1].livingPlayers();
+  public getPlayers(): Set<number> {
+    return this.gameStates[0].livingPlayers();
   }
 
-  public addGameState(gameState: GameState) {
-    Object.keys(gameState.planets).forEach((planetName) => {
-      const planet = gameState.planets[planetName];
-      if (planet.owner) {
-        this.players[planet.owner].score += 1;
-      }
-    });
-    this.gameStates.push(gameState);
+  public getWinners(): Set<number> {
+    return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
   private parseState(json: PwTypes.GameState): GameState {
@@ -142,7 +121,7 @@ export class GameState {
     this.expeditions = expeditions;
   }
 
-  public livingPlayers(): Set<Player> {
+  public livingPlayers(): Set<number> {
     const livingPlayers = new Set();
     Object.keys(this.planets).forEach((planetName) => {
       const planet = this.planets[planetName];

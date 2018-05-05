@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../utils/Config';
 import { GState } from '../reducers/index';
 import { parseLog } from '../lib/match/MatchLog';
+import { calcScores } from '../lib/match';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -162,7 +163,7 @@ function completeMatch(matchId: M.MatchId) {
       players = [match.bot];
     }
 
-    const stats = getStats(match.logPath, players);
+    const stats = getStats(match.logPath);
     const updatedMatch: M.FinishedMatch = {
       ...match,
       stats,
@@ -172,20 +173,14 @@ function completeMatch(matchId: M.MatchId) {
   };
 }
 
-function getStats(logPath: string, players: M.BotSlot[]): M.MatchStats {
-  const matchPlayers = players.map(({ token, name }) => ({ uuid: token, name }));
-  const log = parseLog(matchPlayers, logPath);
+function getStats(logPath: string): M.MatchStats {
+  const log = parseLog(logPath);
   console.log('winners');
   console.log(log.getWinners());
-  const winners = Array.from(log.getWinners()).map((p) => p.uuid);
-
-  const score = Object.keys(log.players).reduce((scores, playerNum) => {
-    const player = log.players[Number(playerNum)];
-    scores[player.number] = player.score;
-    return scores;
-  }, {} as M.PlayerMap<number>);
-
-  return { winners, score };
+  return {
+    winners: Array.from(log.getWinners()),
+    score: calcScores(log),
+  };
 }
 
 function handleMatchError(matchId: M.MatchId, error: Error) {

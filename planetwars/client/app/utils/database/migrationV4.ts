@@ -86,7 +86,7 @@ export enum MatchStatus {
 }
 
 export interface MatchStats {
-  winners: Token[];
+  winners: number[];
   score: PlayerMap<number>;
 }
 
