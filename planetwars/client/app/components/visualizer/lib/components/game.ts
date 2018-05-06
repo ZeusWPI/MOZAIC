@@ -17,8 +17,11 @@ export default class Game {
     this._playerName = playerName;
     this.planetTypeMap = new Map();
     this.playerColorMap = new Map();
-    matchLog.getPlayers().forEach((playerNum, idx) => {
-      this.playerColorMap.set(playerNum, Config.playerColors[idx]);
+
+    matchLog.getPlayers().forEach((playerNum) => {
+      // player numbers are 1-based
+      const colorNum = (playerNum - 1) % Config.playerColors.length;
+      this.playerColorMap.set(playerNum, Config.playerColors[colorNum]);
     });
   }
 
