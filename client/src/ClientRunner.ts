@@ -15,6 +15,7 @@ export interface ClientRunnerParams {
 export interface ClientData {
     botConfig: BotConfig;
     token: string;
+    number: number;
 }
 
 export class ClientRunner {
@@ -28,8 +29,8 @@ export class ClientRunner {
     constructor(params: ClientRunnerParams) {
         const log = fs.createWriteStream(params.logFile);
 
-        this.clients = params.clients.map((playerData, idx) => {
-            const logger = new Logger(idx, log);
+        this.clients = params.clients.map((playerData) => {
+            const logger = new Logger(playerData.number, log);
             const { token, botConfig } = playerData;
             const connData = {
                 address: params.address,

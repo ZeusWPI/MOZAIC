@@ -15,6 +15,7 @@ export interface MatchParams {
 export interface PlayerData {
     name: string;
     token: string;
+    number: number;
     botConfig?: BotConfig;
 }
 
@@ -31,9 +32,9 @@ export class MatchRunner {
         const { address, logFile } = params;
         let clients: ClientData[] = [];
         params.players.forEach((playerData) => {
-            const { botConfig, token } = playerData;
+            const { botConfig, token, number } = playerData;
             if (botConfig) {
-                clients.push({ botConfig, token });
+                clients.push({ botConfig, token, number });
             }
         });
         this.clientRunner = new ClientRunner({

@@ -67,6 +67,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
         {
           botConfig,
           token: bot.token,
+          number: 1,
         },
       ],
       address: host,
@@ -103,7 +104,7 @@ export function runMatch(params: M.MatchParams) {
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
 
-    const playerConfigs = players.map((slot) => {
+    const playerConfigs = players.map((slot, idx) => {
       let botConfig;
       if (slot.type === 'internal') {
         const botData = state.bots[slot.botId];
@@ -116,6 +117,7 @@ export function runMatch(params: M.MatchParams) {
       return {
         name: slot.name,
         token: slot.token,
+        number: idx + 1,
         botConfig,
       };
     });
