@@ -1,6 +1,7 @@
 import { PwTypes } from 'mozaic-client';
 import { PlanetList, Expedition, Player } from './types';
 import * as fs from 'fs';
+import * as _ from 'lodash';
 
 interface PlayerData {
   uuid: string;
@@ -55,9 +56,14 @@ export class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;
   public gameStates: GameState[];
 
+  // this should be set when parsing the first gamestate.
+  // Also, this sucks. Please get rid of this ASAP.
+  private players: number[];
+
   constructor() {
     this.playerLogs = {};
     this.gameStates = [];
+    this.players = [];
   }
 
   public addEntry(entry: PwTypes.LogEntry) {
@@ -68,31 +74,55 @@ export class MatchLog {
     this.playerLogs[entry.player].addRecord(entry.record);
 
     if (entry.record.type === 'step') {
-      // check whether this is a new state
-      // TODO: rotate player number
-      if (entry.player === 0 && entry.record.turn_number > this.gameStates.length) {
-        const state = this.parseState(entry.record.state);
-        this.gameStates.push(state);
-      }
+      this.handleState(entry.player, entry.record);
     }
   }
 
-  public getPlayers(): Set<number> {
-    return this.gameStates[0].livingPlayers();
+  public getPlayers(): number[] {
+    return this.players;
   }
 
   public getWinners(): Set<number> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
-  private parseState(json: PwTypes.GameState): GameState {
+  private handleState(clientNum: number, record: PwTypes.StepRecord) {
+    if (this.gameStates.length === 0) {
+      this.init(clientNum, record.state);
+    }
+
+    // only handle new states
+    if (record.turn_number > this.gameStates.length) {
+      const state = this.parseState(clientNum, record.state);
+      this.gameStates.push(state);
+    }
+  }
+
+  /**
+   * Init the log from a first state
+   * @param json the json representation of the state
+   */
+  private init(clientNum: number, json: PwTypes.GameState) {
+    const players = new Set<number>();
+    json.planets.forEach((planet) => {
+      if (planet.owner) {
+        players.add(planet.owner);
+      }
+    });
+    const rotation = playerRotation(clientNum, players.size);
+    this.players = _.map(Array.from(players), rotation);
+  }
+
+  private parseState(clientNum: number, json: PwTypes.GameState): GameState {
+    const rotate = playerRotation(clientNum, this.players.length);
+
     const planets: PlanetList = {};
     json.planets.forEach((p) => {
       planets[p.name] = {
         name: p.name,
         x: p.x,
         y: p.y,
-        owner: p.owner,
+        owner: p.owner ? rotate(p.owner) : p.owner,
         shipCount: p.ship_count,
       };
     });
@@ -102,7 +132,7 @@ export class MatchLog {
         id: e.id,
         origin: planets[e.origin],
         destination: planets[e.destination],
-        owner: e.owner,
+        owner: rotate(e.owner),
         shipCount: e.ship_count,
         turnsRemaining: e.turns_remaining,
       };
@@ -134,6 +164,12 @@ export class GameState {
     });
     return livingPlayers;
   }
+}
+
+function playerRotation(clientNum: number, numPlayers: number) {
+  return (playerNum: number) => {
+    return ((numPlayers + (playerNum - clientNum)) % (numPlayers)) + 1;
+  };
 }
 
 export default MatchLog;
