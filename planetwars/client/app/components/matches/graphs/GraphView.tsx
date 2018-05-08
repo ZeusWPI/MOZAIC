@@ -6,6 +6,7 @@ import * as External from '../../../lib/match/log';
 import { MatchLog } from './MatchLog';
 import { DemoPie, Section } from './Shared';
 import { ScoreLineGraphSection } from './ScoreLineGraph';
+import { PlayerShipsGraphSection } from './PlayerShipsGraph';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
@@ -32,6 +33,7 @@ export class GraphView extends Component<GraphViewProps, GraphViewState> {
     const sections: JSX.Element[] = [
       <DemoSection log={log} />,
       <ScoreLineGraphSection log={log} />,
+      <PlayerShipsGraphSection log={log} />,
     ];
 
     return (
