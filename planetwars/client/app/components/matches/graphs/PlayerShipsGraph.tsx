@@ -16,7 +16,7 @@ export class PlayerShipsGraphSection extends Section<{}> {
     const height = 250;
     const width = 250;
     return (
-    <div> 
+    <div>
       <PlayerShipsGraph width={width} height={height} data={playerSnapShotList} />
      </div>);
   }
