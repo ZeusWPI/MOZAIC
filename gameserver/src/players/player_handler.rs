@@ -60,7 +60,7 @@ impl PlayerHandler {
         handle.unbounded_send(PlayerCommand::Send(data)).unwrap();
     }
 
-    /// Poll for a PlayerMessage.
+    /// Poll for a PlayerEvent.
     pub fn poll_message(&mut self) -> Poll<PlayerEvent, ()> {
         match self.player_messages.poll() {
             Ok(Async::Ready(Some(message))) => Ok(Async::Ready(message)),
