@@ -3,7 +3,7 @@ import { Component } from 'react';
 import * as d3 from 'd3';
 
 import { Graph, Section, color, GraphProps } from './Shared';
-import { PlanetList, Planet, GameState, StaticPlanet } from './MatchLog';
+import { PlanetList, Planet, GameState, StaticPlanet, Expedition } from './MatchLog';
 import { data } from 'react-hyperscript-helpers';
 import { path } from 'd3';
 
@@ -14,37 +14,64 @@ export class MapViewGraphSection extends Section<{}> {
     const log = this.props.log;
     const width = 800;
     const height = 400;
-    return <MapViewGraph width={width} height={height} data={log.gameStates[0].planets} />;
-  }
-}
 
-export class MapViewGraph extends Graph<PlanetList> {
-  protected createGraph(): void {
-    const { width, height, data } = this.props;
-    const planets: Planet[] = [];
-    var minX: number = Number.MAX_SAFE_INTEGER;
-    var maxX: number = Number.MIN_SAFE_INTEGER;
-    var minY: number = Number.MAX_SAFE_INTEGER;
-    var maxY: number = Number.MIN_SAFE_INTEGER;
+    const planets = log.gameStates[0].planets;
+    const planetList: Planet[] = [];
+    let minX: number = Number.MAX_SAFE_INTEGER;
+    let maxX: number = Number.MIN_SAFE_INTEGER;
+    let minY: number = Number.MAX_SAFE_INTEGER;
+    let maxY: number = Number.MIN_SAFE_INTEGER;
     const xCoords: number[] = [];
     const yCoords: number[] = [];
-    Object.keys(data).forEach((name) => {
-      planets.push(data[name]);
-      const x = data[name].x;
-      const y = data[name].y;
+    Object.keys(planets).forEach((name) => {
+      planetList.push(planets[name]);
+      const x = planets[name].x;
+      const y = planets[name].y;
       if (x < minX) { minX = x; }
       if (x > maxX) { maxX = x; }
       if (y < minY) { minY = y; }
       if (y > maxY) { maxY = y; }
     });
 
+    const expeditionList: Expedition[] = [];
+    log.gameStates.forEach((state) => {
+      expeditionList.concat(state.expeditions);
+    });
+
+    const data: MapViewData = {planetMap: planets,
+      planetList,
+      expeditions: expeditionList,
+      minX,
+      maxX,
+      minY,
+      maxY,
+    };
+
+    return <MapViewGraph width={width} height={height} data={data} />;
+  }
+}
+
+export interface MapViewData {
+  planetMap: PlanetList;
+  planetList: Planet[];
+  expeditions: Expedition[];
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+}
+
+export class MapViewGraph extends Graph<MapViewData> {
+  protected createGraph(): void {
+    const { width, height, data } = this.props;
+
     const radius = 10;
 
     const xScale = d3.scaleLinear()
-                    .domain([minX, maxX])
+                    .domain([data.minX, data.maxX])
                     .range([radius, width - radius]);
     const yScale = d3.scaleLinear()
-                    .domain([minY, maxY])
+                    .domain([data.minY, data.maxY])
                     .range([radius, height - radius]);
 
     const node = this.node;
@@ -52,12 +79,12 @@ export class MapViewGraph extends Graph<PlanetList> {
     svg.selectAll("*").remove();
     const g = svg.append("g");
     g.selectAll("circle")
-        .data(planets)
+        .data(data.planetList)
         .enter()
         .append("circle")
-        .attr("cx", d => xScale(d.x))
-        .attr("cy", d => yScale(d.y))
+        .attr("cx", (d) => xScale(d.x))
+        .attr("cy", (d) => yScale(d.y))
         .attr("r", radius)
-        .attr("fill", d => color(d.name.toString()));
+        .attr("fill", (d) => color(d.name.toString()));
   }
 }
