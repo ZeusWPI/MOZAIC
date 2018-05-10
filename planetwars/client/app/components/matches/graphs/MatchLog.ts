@@ -68,15 +68,15 @@ export class GameState {
       const planet = this.planets[pId];
       const { owner, shipCount } = planet;
       if (owner) {
-        players[owner.id].planetsOwned += shipCount;
-        players[owner.id].shipsOwned += 1;
+        players[owner.id].shipsOwned += shipCount;
+        players[owner.id].planetsOwned += 1;
       }
     });
 
     this.expeditions.forEach((exp, g) => {
       const { owner, shipCount } = exp;
       players[owner.id].shipsOwned += shipCount;
-      players[owner.id].expeditionsOwned += shipCount;
+      players[owner.id].expeditionsOwned += 1;
     });
 
     return players;

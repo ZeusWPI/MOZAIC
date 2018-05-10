@@ -49,9 +49,6 @@ export class ScoreLineGraph extends Graph<Turn[]> {
     // Clear old graph
     svg.selectAll('*').remove();
 
-    console.log(data);
-
-
     const g = svg
       .append("g")
       .attr('class', styles.scoreLineGraph)

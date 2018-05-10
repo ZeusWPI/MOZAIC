@@ -4,9 +4,8 @@ import * as d3 from 'd3';
 
 import { Graph, Section, color, GraphProps } from './Shared';
 import { PlanetList, Planet, Player, PlayerSnapShot, GameState } from './MatchLog';
-import { data } from 'react-hyperscript-helpers';
-import { path } from 'd3';
 
+// tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
 
 export class PlayerShipsGraphSection extends Section<{}> {
@@ -16,20 +15,18 @@ export class PlayerShipsGraphSection extends Section<{}> {
     const height = 250;
     const width = 250;
     return (
-    <div>
-      <PlayerShipsGraph width={width} height={height} data={playerSnapShotList} />
-     </div>);
+      <div>
+        <PlayerShipsGraph width={width} height={height} data={playerSnapShotList} />
+      </div>);
   }
 }
 
 export class PlayerShipsGraph extends Graph<GameState[]> {
 
   protected createGraph(): void {
-    const { width, height, data} = this.props;
+    const { width, height, data } = this.props;
     const node = this.node;
     const svg = d3.select(node);
-
-    console.log(data);
 
     const radius = Math.min(width, height) / 2;
     const g = svg.append('g').attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
