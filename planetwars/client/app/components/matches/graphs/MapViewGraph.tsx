@@ -71,7 +71,7 @@ export class MapViewGraph extends Graph<MapViewData> {
       .range([0, radius]);
     const opacityScale = d3.scaleLinear()
       .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
-      .range([0, 0.5]);
+      .range([0, 0.1]);
 
 
     const node = this.node;
@@ -86,7 +86,7 @@ export class MapViewGraph extends Graph<MapViewData> {
         .attr("x2", xScale(expedition.destination.x))
         .attr("y2", yScale(expedition.destination.y))
         .attr("stroke-width", widthScale(expedition.shipCount))
-        .attr("stroke", "white")
+        .attr("stroke", "#888")
         .attr("opacity", opacityScale(expedition.shipCount));
     });
 
