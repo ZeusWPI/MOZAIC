@@ -39,7 +39,12 @@ export class ScoreLineGraphSection extends Section<State> {
     const onChange = (players: PSelectStatus[]) => this.setState({ players });
     const width = 800;
     const height = 400;
-    const data = { turns, eliminations: log.eliminations, selectedPlayers: this.state.players };
+    const selectedPlayers = new Set(this.state.players
+      .filter((sp) => sp.selected)
+      .map((sp) => sp.player.id));
+    const players = this.state.players.map((sp) => sp.player);
+    const eliminations = log.eliminations;
+    const data = { turns, eliminations, selectedPlayers, players };
     return (
       <div className={styles.scoreLineGraph}>
         <PlayerSelector players={this.state.players} onChange={onChange} />
@@ -52,7 +57,8 @@ export class ScoreLineGraphSection extends Section<State> {
 export interface DataProps {
   eliminations: DeathEvent[];
   turns: Turn[];
-  selectedPlayers: PSelectStatus[];
+  selectedPlayers: Set<number>;
+  players: Player[];
 }
 
 export interface Turn {
@@ -67,90 +73,82 @@ export interface PlayerSnapshot {
 }
 
 export class ScoreLineGraph extends Graph<DataProps> {
+
+  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
+  private margin = { top: 20, right: 50, bottom: 30, left: 50 };
+  private width: number;
+  private height: number;
+  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private grid: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private leftYAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private rightYAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private xAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private deathMarks: d3.Selection<d3.BaseType, DeathEvent, d3.BaseType, {}>;
+  private xScale: d3.ScaleLinear<number, number>;
+  private yScale: d3.ScaleLinear<number, number>;
+
   protected createGraph(): void {
-    const { data: { eliminations, turns } } = this.props;
+    const { data: { eliminations, turns, selectedPlayers, players } } = this.props;
     const node = this.node;
-    const svg = d3.select(node);
-    const players = (turns[0]) ? turns[0].players.map((p) => p.player) : [];
-    const margin = { top: 20, right: 50, bottom: 30, left: 50 };
-    const width = this.props.width - margin.left - margin.right;
-    const height = this.props.height - margin.top - margin.top;
+    const margin = this.margin;
 
-    // Clear old graph
-    svg.selectAll('*').remove();
+    this.svg = d3.select(node);
+    this.width = this.props.width - margin.left - margin.right;
+    this.height = this.props.height - margin.top - margin.top;
 
-    const g = svg
+    this.svg.selectAll('*').remove();
+
+    this.root = this.svg
       .append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-    const x = d3.scaleLinear<number>()
-      .domain([0, turns.length])
-      .rangeRound([0, width]);
-
-    const maxShips = d3.max(turns, (t) => d3.max(t.players, (p) => p.amountOfShips));
-    const maxY = maxShips ? (maxShips + 1) : 1;
-    const y = d3.scaleLinear<number>()
-      .domain([0, maxY])
-      .range([height, 0]);
+    this.xScale = this.getXScale();
+    this.yScale = this.getYScale();
+    const x = this.xScale;
+    const y = this.yScale;
 
     // Lines
-    players.forEach((pId) => {
+    players.forEach((p) => {
+      if (!selectedPlayers.has(p.id)) { return; }
+
       const line = d3.line<Turn>()
         .x((d) => x(d.turn) as number)
-        .y((d) => y(d.players[pId].amountOfShips) || 0);
+        .y((d) => y(d.players[p.id].amountOfShips) || 0);
 
-      g.append("path")
+      this.root.append("path")
         .datum(turns)
         .attr("fill", "none")
-        .attr("stroke", color(pId.toString()))
+        .attr("stroke", color(p.id.toString()))
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
-        .transition().duration(750)
         .attr("d", line);
     });
 
-    // Grid
-    g.append('g')
+    this.grid = this.root.append('g')
       .attr('class', styles.grid)
-      // .attr('transform', `translate(0, ${height})`)
-      .call(d3
-        .axisLeft(y)
-        .ticks(5)
-        .tickSize(-width)
-        .tickFormat(null));
+      .call(this.gridDraw());
 
-    // X axis
-    g.append("g")
-      .attr('transform', `translate(0, ${height})`)
+    this.xAxis = this.root.append("g")
+      .attr('transform', `translate(0, ${this.height})`)
       .attr('class', styles.xAxis)
-      .call(d3
-        .axisBottom(x)
-        .tickValues(d3.ticks(0, turns.length, 10))
-        .tickSizeOuter(0),
-    );
+      .call(this.xAxisDraw());
 
-    // Right Y Axis
-    g.append("g")
+    this.rightYAxis = this.root.append("g")
       .attr('class', styles.yAxis)
-      .attr('transform', `translate(${width}, 0)`)
-      .call(d3
-        .axisRight(y)
-        .ticks(5, 'd')
-        .tickSizeOuter(0)
-        .tickSizeInner(0));
+      .attr('transform', `translate(${this.width}, 0)`)
+      .call(this.rightYAxisDraw());
 
-    // Left Y axis (label)
-    g.append("g")
+    this.leftYAxis = this.root.append("g")
       .attr('class', styles.yAxis)
-      .call(d3.axisLeft(y).ticks(0, 'd'))
+      .call(this.leftYAxisDraw())
       .append("text")
       .attr("dx", "120px")
       .text("Amount of ships");
 
     // Death Markers
     const cross = d3.symbol().size(50).type(d3.symbolCross);
-    g.append('g')
+    this.deathMarks = this.root.append('g')
       .selectAll(`.${styles.deathMarker}`)
       .data(eliminations)
       .enter()
@@ -161,11 +159,72 @@ export class ScoreLineGraph extends Graph<DataProps> {
       .attr('transform', 'rotate(45)')
       .attr('class', styles.deathMarker)
       .attr('fill', (d) => color(d.player.toString()));
-
   }
 
   protected updateGraph(): void {
+    this.xScale = this.getXScale();
+    this.yScale = this.getYScale();
+    const dur = 750;
+
+    this.leftYAxis
+      .transition().duration(dur)
+      .call(this.leftYAxisDraw() as any);
+
+    this.rightYAxis
+      .transition().duration(dur)
+      .call(this.rightYAxisDraw() as any);
+
+    this.grid
+      .transition().duration(dur)
+      .call(this.gridDraw() as any);
+
     this.createGraph();
+  }
+
+  private getXScale() {
+    const { data: { turns } } = this.props;
+    const x = d3.scaleLinear<number>()
+      .domain([0, turns.length])
+      .rangeRound([0, this.width]);
+    return x;
+  }
+
+  private getYScale() {
+    const { data: { turns, selectedPlayers } } = this.props;
+    const players = (t: Turn) => t.players.filter((_, i) => selectedPlayers.has(i));
+    const maxShips = d3.max(turns, (t) => d3.max(players(t), (p) => p.amountOfShips));
+    const maxY = maxShips ? (maxShips + 1) : 1;
+    const y = d3.scaleLinear<number>()
+      .domain([0, maxY])
+      .range([this.height, 0]);
+    return y;
+  }
+
+  private xAxisDraw() {
+    return d3
+      .axisBottom(this.xScale)
+      .ticks(10)
+      .tickSizeOuter(0);
+  }
+
+  private gridDraw() {
+    return d3
+      .axisLeft(this.yScale)
+      .ticks(5)
+      .tickSize(-this.width)
+      .tickFormat(null)
+  }
+
+  private leftYAxisDraw() {
+    return d3.axisLeft(this.yScale).ticks(0, 'd');
+  }
+
+  private rightYAxisDraw() {
+    return d3
+      .axisRight(this.yScale)
+      .ticks(5, 'd')
+      .tickSizeOuter(0)
+      .tickSizeInner(0);
   }
 }
 
