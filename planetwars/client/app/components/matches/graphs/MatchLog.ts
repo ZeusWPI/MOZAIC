@@ -17,6 +17,11 @@ export class MatchLog {
     this.playerOutputs = log.playerOutputs;
     this.winners = this.gameStates[this.gameStates.length - 1].livingPlayers;
 
+    this.planets = Object.keys(this.gameStates[0].planets).map((name) => {
+      const { x, y } = this.gameStates[0].planets[name];
+      return { name, x, y };
+    });
+
     this.eliminations = [];
     this.gameStates.slice(1).forEach((gs, iMin1) => {
       const i = iMin1 + 1;
@@ -135,6 +140,17 @@ export interface DeathEvent {
 
 export interface PlanetList {
   [name: string]: Planet;
+}
+
+// tslint:disable-next-line:interface-over-type-literal
+export type Dict<V> = {
+  [key: string]: V;
+};
+
+export interface StaticPlanet {
+  name: string;
+  x: number;
+  y: number;
 }
 
 export interface Planet {
