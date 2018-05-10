@@ -3,6 +3,10 @@ import { Component } from 'react';
 import * as d3 from 'd3';
 
 import { Graph, Section, color } from './Shared';
+import { ticks } from 'd3';
+
+// tslint:disable-next-line:no-var-requires
+const styles = require('./GraphView.scss');
 
 export class ScoreLineGraphSection extends Section<{}> {
   public render() {
@@ -34,15 +38,24 @@ export interface PlayerSnapshot {
 
 export class ScoreLineGraph extends Graph<Turn[]> {
   protected createGraph(): void {
-    const { width, height, data } = this.props;
+    const { data } = this.props;
     const node = this.node;
     const svg = d3.select(node);
     const players = (data[0]) ? data[0].players.map((p) => p.player) : [];
+    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+    const width = this.props.width - margin.left - margin.right;
+    const height = this.props.height - margin.top - margin.top;
 
     // Clear old graph
     svg.selectAll('*').remove();
 
-    const g = svg.append("g");
+    console.log(data);
+
+
+    const g = svg
+      .append("g")
+      .attr('class', styles.scoreLineGraph)
+      .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     const x = d3.scalePoint<number>()
       .domain(d3.range(data.length))
@@ -53,8 +66,6 @@ export class ScoreLineGraph extends Graph<Turn[]> {
     const y = d3.scaleBand<number>()
       .domain(d3.range(maxY || 1))
       .range([height, 0]);
-
-    console.log(x(0), x(data.length - 1));
 
     players.forEach((pId) => {
       const line = d3.line<Turn>()
@@ -72,22 +83,27 @@ export class ScoreLineGraph extends Graph<Turn[]> {
     });
 
     g.append("g")
-      .attr("transform", "translate(0," + height + ")")
-      .call(d3.axisBottom(x))
-      .select(".domain")
-      .remove();
+      .attr('transform', `translate(0, ${height})`)
+      .attr('class', styles.xAxis)
+      .call(d3
+        .axisBottom(x)
+        .tickValues(d3.ticks(0, data.length, 10))
+        .tickSizeOuter(0)
+        .tickSizeInner(0),
+    );
 
     g.append("g")
-      .call(d3.axisLeft(y))
+      .attr('class', styles.yAxis)
+      .call(d3
+        .axisLeft(y)
+        .tickValues(d3.ticks(0, maxY, 5))
+        .tickSizeOuter(0)
+        .tickSizeInner(0),
+    )
       .append("text")
-      .attr("fill", "#000")
       .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", "0.71em")
-      .attr("text-anchor", "end")
+      .attr("dy", "20px")
       .text("Amount of ships");
-
-    console.log('Graph!');
   }
 }
 

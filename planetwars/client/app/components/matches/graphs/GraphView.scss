@@ -30,6 +30,33 @@
 
 .svgWrapper {}
 
+.scoreLineGraph {
+  .xAxis {
+    line,
+    path {
+      stroke: $tertiary;
+    }
+    text {
+      fill: $tertiary;
+    }
+  }
+
+  .yAxis {
+    line,
+    path {
+      stroke: $tertiary;
+    }
+    text {
+      fill: $tertiary;
+    }
+    >text {
+      fill: $primary;
+      font-size: 1.5em;
+      text-anchor: end;
+    }
+  }
+}
+
 .pieArc {
   path {
     stroke: $background;
