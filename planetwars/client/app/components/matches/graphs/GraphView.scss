@@ -20,7 +20,7 @@
       flex-shrink: 0; // Holy fuck this is important
       overflow-x: auto;
       box-sizing: content-box;
-      * {
+      >* {
         flex-shrink: 0;
         margin: auto;
       }
@@ -31,6 +31,29 @@
 .svgWrapper {}
 
 .scoreLineGraph {
+  display: flex;
+
+  .playerList {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    margin: 0 !important;
+
+    .player {
+      padding: 10px;
+      margin-bottom: 5px;
+      transition: transform 0.2s ease-in-out;
+      &:not(.selected) {
+        opacity: 0.5;
+      }
+      &:hover,
+      &:active,
+      &:focus {
+        transform: scale(1.1);
+      }
+    }
+  }
+
   .xAxis {
     line,
     path {
@@ -45,6 +68,7 @@
     line,
     path {
       stroke: $tertiary;
+      display: none;
     }
     text {
       fill: $tertiary;
@@ -54,6 +78,24 @@
       font-size: 1.5em;
       text-anchor: end;
     }
+  }
+
+  .grid {
+    line {
+      stroke: $tertiary;
+      stroke-opacity: 0.3;
+      shape-rendering: crispEdges;
+    }
+    path {
+      stroke-width: 0;
+    }
+    text {
+      display: none;
+    }
+  }
+
+  .deathMarker {
+    shape-rendering: crispEdges;
   }
 }
 

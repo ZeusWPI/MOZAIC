@@ -45,4 +45,8 @@ export class PlayerShipsGraph extends Graph<GameState[]> {
       .attr("d", path)
       .attr("fill", (d) => color(d.data.index.toString()));
   }
+
+  protected updateGraph(): void {
+    this.createGraph();
+  }
 }

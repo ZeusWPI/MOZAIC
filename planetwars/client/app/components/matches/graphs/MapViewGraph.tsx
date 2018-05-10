@@ -125,4 +125,8 @@ export class MapViewGraph extends Graph<MapViewData> {
       .attr("r", (d) => radiusScale(data.receivingPlanetCountMap.get(d.name) as number))
       .attr("fill", (d) => color(d.name.toString()));
   }
+
+  protected updateGraph(): void {
+    this.createGraph();
+  }
 }

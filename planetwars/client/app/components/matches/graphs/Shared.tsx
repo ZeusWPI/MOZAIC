@@ -43,7 +43,7 @@ export abstract class Graph<T> extends Component<GraphProps<T>> {
   }
 
   public componentDidUpdate() {
-    this.createGraph();
+    this.updateGraph();
   }
 
   public render() {
@@ -61,6 +61,8 @@ export abstract class Graph<T> extends Component<GraphProps<T>> {
   }
 
   protected abstract createGraph(): void;
+
+  protected abstract updateGraph(): void;
 }
 
 interface DemoData {
@@ -101,6 +103,10 @@ export class DemoPie extends Graph<DemoData[]> {
       .attr("dy", "0.35em")
       .text((d) => d.data.value);
   }
+
+  protected updateGraph(): void {
+    this.createGraph();
+  }
 }
 
 export interface PlayerLegendData {
@@ -108,7 +114,9 @@ export interface PlayerLegendData {
 }
 
 export class PlayerLegend extends Graph<{}> {
-  protected createGraph(): void {
+  protected createGraph(): void { }
 
+  protected updateGraph(): void {
+    this.createGraph();
   }
 }
