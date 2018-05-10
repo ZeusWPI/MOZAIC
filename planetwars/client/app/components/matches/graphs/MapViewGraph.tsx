@@ -16,9 +16,11 @@ export class MapViewGraphSection extends Section<{}> {
 
     const planets = log.gameStates[0].planets;
     const planetList: Planet[] = [];
+    const planetCountMap: Map<string, number> = new Map<string, number>();
 
     Object.keys(planets).forEach((name) => {
       planetList.push(planets[name]);
+      planetCountMap.set(name, 0);
     });
 
     const [minX, maxX] = d3.extent(planetList, (p) => p.x) as [number, number];
@@ -30,10 +32,23 @@ export class MapViewGraphSection extends Section<{}> {
       expeditionList = newList;
     });
 
+    expeditionList.forEach((e) => {
+      const currentCount = planetCountMap.get(e.destination.name) as number;
+      planetCountMap.set(e.destination.name, currentCount + 1);
+    });
+
+    const planetCounts: PlanetCounter[] = [];
+    Array.from(planetCountMap.keys()).forEach((k) => {
+      const count = planetCountMap.get(k) as number;
+      planetCounts.push({name: k, count});
+    });
+
     const data: MapViewData = {
       planetMap: planets,
       planetList,
       expeditions: expeditionList,
+      receivingPlanetCountMap: planetCountMap,
+      receivingPlanetCount: planetCounts,
       minX,
       maxX,
       minY,
@@ -44,10 +59,17 @@ export class MapViewGraphSection extends Section<{}> {
   }
 }
 
+export interface PlanetCounter {
+  name: string;
+  count: number;
+}
+
 export interface MapViewData {
   planetMap: PlanetList;
   planetList: Planet[];
   expeditions: Expedition[];
+  receivingPlanetCountMap: Map<string, number>;
+  receivingPlanetCount: PlanetCounter[];
   minX: number;
   maxX: number;
   minY: number;
@@ -58,17 +80,21 @@ export class MapViewGraph extends Graph<MapViewData> {
   protected createGraph(): void {
     const { width, height, data } = this.props;
 
-    const radius = 10;
+    const minRadius = 10;
+    const maxRadius = 3 * minRadius;
 
     const xScale = d3.scaleLinear()
       .domain([data.minX, data.maxX])
-      .range([radius, width - radius]);
+      .range([maxRadius, width - maxRadius]);
     const yScale = d3.scaleLinear()
       .domain([data.minY, data.maxY])
-      .range([radius, height - radius]);
+      .range([maxRadius, height - maxRadius]);
+    const radiusScale = d3.scaleLinear()
+      .domain(d3.extent(data.receivingPlanetCount, (e) => e.count) as [number, number])
+      .range([minRadius, maxRadius]);
     const widthScale = d3.scaleLinear()
       .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
-      .range([0, radius]);
+      .range([0, minRadius]);
     const opacityScale = d3.scaleLinear()
       .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
       .range([0, 0.1]);
@@ -96,7 +122,7 @@ export class MapViewGraph extends Graph<MapViewData> {
       .append("circle")
       .attr("cx", (d) => xScale(d.x))
       .attr("cy", (d) => yScale(d.y))
-      .attr("r", radius)
+      .attr("r", (d) => radiusScale(data.receivingPlanetCountMap.get(d.name) as number))
       .attr("fill", (d) => color(d.name.toString()));
   }
 }
