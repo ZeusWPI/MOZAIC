@@ -33,12 +33,14 @@ export class MapViewGraphSection extends Section<{}> {
       if (y > maxY) { maxY = y; }
     });
 
-    const expeditionList: Expedition[] = [];
+    let expeditionList: Expedition[] = [];
     log.gameStates.forEach((state) => {
-      expeditionList.concat(state.expeditions);
+      const newList = expeditionList.concat(state.expeditions);
+      expeditionList = newList;
     });
 
-    const data: MapViewData = {planetMap: planets,
+    const data: MapViewData = {
+      planetMap: planets,
       planetList,
       expeditions: expeditionList,
       minX,
@@ -78,6 +80,20 @@ export class MapViewGraph extends Graph<MapViewData> {
     const svg = d3.select(node);
     svg.selectAll("*").remove();
     const g = svg.append("g");
+
+    console.log("u dikke ma");
+    console.log(data);
+
+    data.expeditions.forEach((expedition) => {
+      g.append("line")
+        .attr("x1", xScale(expedition.origin.x))
+        .attr("y1", yScale(expedition.origin.y))
+        .attr("x2", xScale(expedition.destination.x))
+        .attr("y2", yScale(expedition.destination.y))
+        .attr("stroke-width", 2)
+        .attr("stroke", "#FFF");
+    });
+
     g.selectAll("circle")
         .data(data.planetList)
         .enter()
