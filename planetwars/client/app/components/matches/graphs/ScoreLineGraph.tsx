@@ -4,6 +4,7 @@ import * as d3 from 'd3';
 
 import { Graph, Section, color } from './Shared';
 import { ticks } from 'd3';
+import { DeathEvent } from './MatchLog';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
@@ -19,12 +20,17 @@ export class ScoreLineGraphSection extends Section<{}> {
         amountOfPlanets: p.planetsOwned,
       })),
     }));
+    const data = { turns, eliminations: log.eliminations };
     const width = 800;
     const height = 400;
-    return <ScoreLineGraph width={width} height={height} data={turns} />;
+    return <ScoreLineGraph width={width} height={height} data={data} />;
   }
 }
 
+export interface DataProps {
+  eliminations: DeathEvent[];
+  turns: Turn[];
+}
 export interface Turn {
   turn: number;
   players: PlayerSnapshot[];
@@ -36,12 +42,12 @@ export interface PlayerSnapshot {
   amountOfPlanets: number;
 }
 
-export class ScoreLineGraph extends Graph<Turn[]> {
+export class ScoreLineGraph extends Graph<DataProps> {
   protected createGraph(): void {
-    const { data } = this.props;
+    const { data: { eliminations, turns } } = this.props;
     const node = this.node;
     const svg = d3.select(node);
-    const players = (data[0]) ? data[0].players.map((p) => p.player) : [];
+    const players = (turns[0]) ? turns[0].players.map((p) => p.player) : [];
     const margin = { top: 20, right: 20, bottom: 30, left: 50 };
     const width = this.props.width - margin.left - margin.right;
     const height = this.props.height - margin.top - margin.top;
@@ -49,16 +55,18 @@ export class ScoreLineGraph extends Graph<Turn[]> {
     // Clear old graph
     svg.selectAll('*').remove();
 
+    console.log(eliminations);
+
     const g = svg
       .append("g")
       .attr('class', styles.scoreLineGraph)
       .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
     const x = d3.scalePoint<number>()
-      .domain(d3.range(data.length))
+      .domain(d3.range(turns.length))
       .rangeRound([0, width]);
 
-    const maxShips = d3.max(data, (t) => d3.max(t.players, (p) => p.amountOfShips));
+    const maxShips = d3.max(turns, (t) => d3.max(t.players, (p) => p.amountOfShips));
     const maxY = maxShips ? (maxShips + 1) : 1;
     const y = d3.scaleBand<number>()
       .domain(d3.range(maxY || 1))
@@ -70,7 +78,7 @@ export class ScoreLineGraph extends Graph<Turn[]> {
         .y((d) => y(d.players[pId].amountOfShips) || 0);
 
       g.append("path")
-        .datum(data)
+        .datum(turns)
         .attr("fill", "none")
         .attr("stroke", color(pId.toString()))
         .attr("stroke-linejoin", "round")
@@ -84,7 +92,7 @@ export class ScoreLineGraph extends Graph<Turn[]> {
       .attr('class', styles.xAxis)
       .call(d3
         .axisBottom(x)
-        .tickValues(d3.ticks(0, data.length, 10))
+        .tickValues(d3.ticks(0, turns.length, 10))
         .tickSizeOuter(0)
         .tickSizeInner(0),
     );
@@ -101,7 +109,21 @@ export class ScoreLineGraph extends Graph<Turn[]> {
       .attr("transform", "rotate(-90)")
       .attr("dy", "20px")
       .text("Amount of ships");
+
+    const cross = d3.symbol().size(50).type(d3.symbolCross);
+    g.append('g')
+      .selectAll(`.deathMarker`)
+      .data(eliminations)
+      .enter()
+      .append('g')
+      .attr('transform', (d) => `translate(${x(d.turn)}, ${y(0)})`)
+      .append('path')
+      .attr('d', cross)
+      .attr('transform', 'rotate(45)')
+      .attr('class', 'deathMarker')
+      .attr('fill', (d) => color(d.player.toString()));
   }
+
 }
 
 function faulty(msg: string, val?: any, def?: number): number {
