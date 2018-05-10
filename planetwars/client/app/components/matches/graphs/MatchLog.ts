@@ -6,6 +6,7 @@ export class MatchLog {
   public playerOutputs: PlayerOutputs[];
   public winners: Set<Player>;
   public planets: StaticPlanet[];
+  public eliminations: DeathEvent[];
 
   private externalLog: External.MatchLog;
 
@@ -15,6 +16,17 @@ export class MatchLog {
     this.gameStates = log.gameStates.map((gs) => new GameState(gs, this.players));
     this.playerOutputs = log.playerOutputs;
     this.winners = this.gameStates[this.gameStates.length - 1].livingPlayers;
+
+    this.eliminations = [];
+    this.gameStates.slice(1).forEach((gs, iMin1) => {
+      const i = iMin1 + 1;
+      const prev = this.gameStates[i - 1].livingPlayers;
+      prev.forEach((p) => {
+        if (!gs.livingPlayers.has(p)) {
+          this.eliminations.push({ player: p.id, turn: i });
+        }
+      });
+    });
   }
 
 }
@@ -47,13 +59,13 @@ export class GameState {
 
   public static transformOwner(owner: External.Player | undefined, players: Player[]): Player | undefined {
     if (!owner) { return undefined; }
-    return { ...owner, id: GameState._getPlayerId(owner.uuid, players) };
+    return GameState._getPlayer(owner.uuid, players);
   }
 
-  private static _getPlayerId(uuid: string, players: Player[]): number {
+  private static _getPlayer(uuid: string, players: Player[]): Player {
     const player = players.find((p) => p.uuid === uuid);
     if (!player) { throw new Error('We can\'t code (uuid missing in list of players)'); }
-    return player.id;
+    return player;
   }
 
   private _playerStats(_players: Player[]): PlayerSnapShot[] {
@@ -68,15 +80,15 @@ export class GameState {
       const planet = this.planets[pId];
       const { owner, shipCount } = planet;
       if (owner) {
-        players[owner.id].planetsOwned += shipCount;
-        players[owner.id].shipsOwned += 1;
+        players[owner.id].shipsOwned += shipCount;
+        players[owner.id].planetsOwned += 1;
       }
     });
 
     this.expeditions.forEach((exp, g) => {
       const { owner, shipCount } = exp;
       players[owner.id].shipsOwned += shipCount;
-      players[owner.id].expeditionsOwned += shipCount;
+      players[owner.id].expeditionsOwned += 1;
     });
 
     return players;
@@ -114,6 +126,11 @@ export interface PlayerSnapShot {
   planetsOwned: number;
   shipsOwned: number;
   expeditionsOwned: number;
+}
+
+export interface DeathEvent {
+  player: number;
+  turn: number;
 }
 
 export interface PlanetList {
