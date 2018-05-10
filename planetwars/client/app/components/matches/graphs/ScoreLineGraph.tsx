@@ -55,11 +55,8 @@ export class ScoreLineGraph extends Graph<DataProps> {
     // Clear old graph
     svg.selectAll('*').remove();
 
-<<<<<<< HEAD
-=======
     console.log(eliminations);
 
->>>>>>> bd9fd92225b1d8d4b626d7510b8a7dc19a3e3ec3
     const g = svg
       .append("g")
       .attr('class', styles.scoreLineGraph)

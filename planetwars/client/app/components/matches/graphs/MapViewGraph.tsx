@@ -21,10 +21,10 @@ export class MapViewGraphSection extends Section<{}> {
       planetList.push(planets[name]);
     });
 
-    let expeditionList: Expedition[] = [];
     const [minX, maxX] = d3.extent(planetList, (p) => p.x) as [number, number];
     const [minY, maxY] = d3.extent(planetList, (p) => p.y) as [number, number];
 
+    let expeditionList: Expedition[] = [];
     log.gameStates.forEach((state) => {
       const newList = expeditionList.concat(state.expeditions);
       expeditionList = newList;
@@ -66,14 +66,18 @@ export class MapViewGraph extends Graph<MapViewData> {
     const yScale = d3.scaleLinear()
       .domain([data.minY, data.maxY])
       .range([radius, height - radius]);
+    const widthScale = d3.scaleLinear()
+      .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
+      .range([0, radius]);
+    const opacityScale = d3.scaleLinear()
+      .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
+      .range([0, 0.5]);
+
 
     const node = this.node;
     const svg = d3.select(node);
     svg.selectAll("*").remove();
     const g = svg.append("g");
-
-    console.log("u dikke ma");
-    console.log(data);
 
     data.expeditions.forEach((expedition) => {
       g.append("line")
@@ -81,8 +85,9 @@ export class MapViewGraph extends Graph<MapViewData> {
         .attr("y1", yScale(expedition.origin.y))
         .attr("x2", xScale(expedition.destination.x))
         .attr("y2", yScale(expedition.destination.y))
-        .attr("stroke-width", 2)
-        .attr("stroke", "#FFF");
+        .attr("stroke-width", widthScale(expedition.shipCount))
+        .attr("stroke", "white")
+        .attr("opacity", opacityScale(expedition.shipCount));
     });
 
     g.selectAll("circle")
