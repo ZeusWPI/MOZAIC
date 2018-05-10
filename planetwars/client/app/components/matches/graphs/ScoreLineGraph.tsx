@@ -86,6 +86,7 @@ export class ScoreLineGraph extends Graph<DataProps> {
   private deathMarks: d3.Selection<d3.BaseType, DeathEvent, d3.BaseType, {}>;
   private xScale: d3.ScaleLinear<number, number>;
   private yScale: d3.ScaleLinear<number, number>;
+  private lines: d3.Selection<d3.BaseType, Turn[], null, undefined>[] = [];
 
   protected createGraph(): void {
     const { data: { eliminations, turns, selectedPlayers, players } } = this.props;
@@ -110,19 +111,15 @@ export class ScoreLineGraph extends Graph<DataProps> {
     // Lines
     players.forEach((p) => {
       if (!selectedPlayers.has(p.id)) { return; }
-
-      const line = d3.line<Turn>()
-        .x((d) => x(d.turn) as number)
-        .y((d) => y(d.players[p.id].amountOfShips) || 0);
-
-      this.root.append("path")
+      const line = this.root.append("path")
         .datum(turns)
         .attr("fill", "none")
         .attr("stroke", color(p.id.toString()))
         .attr("stroke-linejoin", "round")
         .attr("stroke-linecap", "round")
         .attr("stroke-width", 1.5)
-        .attr("d", line);
+        .attr("d", this.line(p));
+      this.lines.push(line);
     });
 
     this.grid = this.root.append('g')
@@ -162,6 +159,10 @@ export class ScoreLineGraph extends Graph<DataProps> {
   }
 
   protected updateGraph(): void {
+    // if (this.props.data.players.length !== this.lines.length) {
+    //   this.createGraph();
+    // }
+
     this.xScale = this.getXScale();
     this.yScale = this.getYScale();
     const dur = 750;
@@ -178,7 +179,34 @@ export class ScoreLineGraph extends Graph<DataProps> {
       .transition().duration(dur)
       .call(this.gridDraw() as any);
 
-    this.createGraph();
+    const { players, selectedPlayers } = this.props.data;
+    this.props.data.players.forEach((p, i) => {
+      if (selectedPlayers.has(p.id)) {
+        this.lines[i]
+          .transition().duration(dur)
+          .style('opacity', '1')
+          .attr('d', this.line(p));
+
+      } else {
+        this.lines[i]
+          .transition().duration(dur)
+          .style('opacity', '0')
+          .attr('d', this.flatLine());
+      }
+    });
+  }
+
+  private line(p: Player) {
+    return d3.line<Turn>()
+      .x((d) => this.xScale(d.turn))
+      .y((d) => this.yScale(d.players[p.id].amountOfShips) || 0);
+
+  }
+
+  private flatLine() {
+    return d3.line<Turn>()
+      .x((d) => this.xScale(d.turn))
+      .y((d) => 0);
   }
 
   private getXScale() {
@@ -212,7 +240,7 @@ export class ScoreLineGraph extends Graph<DataProps> {
       .axisLeft(this.yScale)
       .ticks(5)
       .tickSize(-this.width)
-      .tickFormat(null)
+      .tickFormat(null);
   }
 
   private leftYAxisDraw() {
