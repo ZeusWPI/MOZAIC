@@ -83,7 +83,7 @@ export class ScoreLineGraph extends Graph<DataProps> {
   private leftYAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
   private rightYAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
   private xAxis: d3.Selection<d3.BaseType, {}, null, undefined>;
-  private deathMarks: d3.Selection<d3.BaseType, DeathEvent, d3.BaseType, {}>;
+  private deathMarks: d3.Selection<d3.BaseType, {}, null, undefined>;
   private xScale: d3.ScaleLinear<number, number>;
   private yScale: d3.ScaleLinear<number, number>;
   private lines: d3.Selection<d3.BaseType, Turn[], null, undefined>[] = [];
@@ -108,19 +108,7 @@ export class ScoreLineGraph extends Graph<DataProps> {
     const x = this.xScale;
     const y = this.yScale;
 
-    // Lines
-    players.forEach((p) => {
-      if (!selectedPlayers.has(p.id)) { return; }
-      const line = this.root.append("path")
-        .datum(turns)
-        .attr("fill", "none")
-        .attr("stroke", color(p.id.toString()))
-        .attr("stroke-linejoin", "round")
-        .attr("stroke-linecap", "round")
-        .attr("stroke-width", 1.5)
-        .attr("d", this.line(p));
-      this.lines.push(line);
-    });
+    this.drawLines();
 
     this.grid = this.root.append('g')
       .attr('class', styles.grid)
@@ -143,25 +131,15 @@ export class ScoreLineGraph extends Graph<DataProps> {
       .attr("dx", "120px")
       .text("Amount of ships");
 
-    // Death Markers
-    const cross = d3.symbol().size(50).type(d3.symbolCross);
-    this.deathMarks = this.root.append('g')
-      .selectAll(`.${styles.deathMarker}`)
-      .data(eliminations)
-      .enter()
-      .append('g')
-      .attr('transform', (d) => `translate(${x(d.turn)}, ${y(0)})`)
-      .append('path')
-      .attr('d', cross)
-      .attr('transform', 'rotate(45)')
-      .attr('class', styles.deathMarker)
-      .attr('fill', (d) => color(d.player.toString()));
+    this.deathMarks = this.root.append('g');
+    this.drawDeathMarks();
   }
 
   protected updateGraph(): void {
-    // if (this.props.data.players.length !== this.lines.length) {
-    //   this.createGraph();
-    // }
+    if (this.props.data.players.length !== this.lines.length) {
+      this.lines.forEach((l) => l.remove());
+      this.drawLines();
+    }
 
     this.xScale = this.getXScale();
     this.yScale = this.getYScale();
@@ -179,7 +157,11 @@ export class ScoreLineGraph extends Graph<DataProps> {
       .transition().duration(dur)
       .call(this.gridDraw() as any);
 
-    const { players, selectedPlayers } = this.props.data;
+    this.xAxis
+      .transition().duration(dur)
+      .call(this.xAxisDraw() as any);
+
+    const { players, selectedPlayers, eliminations } = this.props.data;
     this.props.data.players.forEach((p, i) => {
       if (selectedPlayers.has(p.id)) {
         this.lines[i]
@@ -194,6 +176,47 @@ export class ScoreLineGraph extends Graph<DataProps> {
           .attr('d', this.flatLine());
       }
     });
+
+    this.deathMarks.selectAll('*').remove();
+    this.drawDeathMarks();
+  }
+
+  private drawLines(): void {
+    const { players, selectedPlayers, turns } = this.props.data;
+    this.lines = [];
+    players.forEach((p) => {
+      if (!selectedPlayers.has(p.id)) { return; }
+      const line = this.root.append("path")
+        .datum(turns)
+        .attr("fill", "none")
+        .attr("stroke", color(p.id.toString()))
+        .attr("stroke-linejoin", "round")
+        .attr("stroke-linecap", "round")
+        .attr("stroke-width", 1.5)
+        .attr("d", this.line(p));
+      this.lines.push(line);
+    });
+  }
+
+  private drawDeathMarks(): void {
+    const { eliminations } = this.props.data;
+    const cross = d3.symbol().size(50).type(d3.symbolCross);
+
+    const locs = this.deathMarks
+      .selectAll(`.${styles.deathMarker}`)
+      .data(eliminations)
+      .enter()
+      .append('g');
+
+    locs
+      .attr('transform', (d) => `translate(${this.xScale(d.turn)}, ${this.yScale(0)})`);
+
+    locs
+      .append('path')
+      .attr('d', cross)
+      .attr('transform', 'rotate(45)')
+      .attr('class', styles.deathMarker)
+      .attr('fill', (d) => color(d.player.toString()));
   }
 
   private line(p: Player) {
