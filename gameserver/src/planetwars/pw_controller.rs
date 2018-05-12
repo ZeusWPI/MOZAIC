@@ -1,15 +1,17 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
+use std::mem;
 
 use tokio;
-use futures::{Future, Poll, Async};
+use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 
 //use utils::{PlayerLock, ResponseValue, ResponseError};
 use utils::request_handler::{
     ConnectionId,
     Event,
+    EventContent,
     ConnectionHandler,
     Command as ConnectionCommand,
     ResponseValue,
@@ -88,7 +90,11 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
+
     players: HashMap<PlayerId, Player>,
+
+    waiting_for: HashSet<PlayerId>,
+    commands: HashMap<PlayerId, ResponseValue>,
 
     event_channel: UnboundedReceiver<Event<PlayerId>>,
     routing_table: Arc<Mutex<RoutingTable>>,
@@ -151,6 +157,9 @@ impl PwController {
             planet_map,
             players,
             logger,
+
+            waiting_for: HashSet::new(),
+            commands: HashMap::new(),
         };
     }
 
@@ -207,6 +216,7 @@ impl PwController {
 
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
+
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
@@ -214,6 +224,8 @@ impl PwController {
                 let serialized_state = serialize_rotated(&self.state, offset);
                 let message = proto::ServerMessage::GameState(serialized_state);
                 let serialized = serde_json::to_vec(&message).unwrap();
+
+                self.waiting_for.insert(player.id);
                 self.players.get_mut(&player.id).unwrap()
                     .request(serialized, deadline);
             }
@@ -324,7 +336,25 @@ impl Future for PwController {
             if self.state.is_finished() {
                 return Ok(Async::Ready(()));
             }
-            // TODO
+
+            let event = try_ready!(self.event_channel.poll())
+                .expect("event channel closed");
+
+            match event.content {
+                EventContent::Connected => {},
+                EventContent::Disconnected => {},
+                EventContent::Message { .. } => {},
+                EventContent::Response { request_data, value } => {
+                    let player_id = request_data;
+                    self.commands.insert(player_id, value);
+                    self.waiting_for.remove(&player_id);
+                }
+            }
+
+            if self.waiting_for.is_empty() {
+                let commands = mem::replace(&mut self.commands, HashMap::new());
+                self.step(commands);
+            }
         }
     }
 }
