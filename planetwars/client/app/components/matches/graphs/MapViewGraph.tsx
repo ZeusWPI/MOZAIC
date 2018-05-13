@@ -11,13 +11,18 @@ const styles = require('./GraphView.scss');
 export class MapViewGraphSection extends Section<{}> {
   public render() {
     const { gameStates, planets, planetMap } = this.props.log;
-    const width = 800;
-    const height = 400;
 
     const [minX, maxX] = d3.extent(planets, (p) => p.x) as [number, number];
     const [minY, maxY] = d3.extent(planets, (p) => p.y) as [number, number];
     const max = { x: maxX, y: maxY };
     const min = { x: minX, y: minY };
+
+    const dX = (max.x - min.x);
+    const dY = (max.y - min.y);
+    const ratio = dY / dX;
+
+    const width = 600;
+    const height = ratio * width;
 
     const paths = Array(planets.length).fill(0)
       .map(() => Array(planets.length).fill(0));
@@ -48,7 +53,7 @@ export class MapViewGraph extends Graph<MapViewData> {
   private root: d3.Selection<d3.BaseType, {}, null, undefined>;
 
   protected createGraph(): void {
-    const { width, height, data } = this.props;
+    const { data, width, height } = this.props;
     const { min, max, paths, planets } = data;
 
     const radius = 20;
@@ -83,7 +88,7 @@ export class MapViewGraph extends Graph<MapViewData> {
           .attr("x2", x(planets[dest].x))
           .attr("y2", y(planets[dest].y))
           .attr("stroke-width", strokeWidth(path))
-          .attr("stroke", "#888")
+          .attr("stroke", color('1'))
           .attr("opacity", opacity(path));
       });
     });
