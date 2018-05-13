@@ -9,6 +9,7 @@ import { ScoreLineGraphSection } from './ScoreLineGraph';
 import { PlayerShipsGraphSection } from './PlayerShipsGraph';
 import { MapViewGraphSection } from './MapViewGraph';
 import { PlanetOwnerShipGraphSection } from './PlanetOwnerShipGraph';
+import { InteractionPieSection } from './InteractionPies';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
@@ -33,10 +34,11 @@ export class GraphView extends Component<GraphViewProps, GraphViewState> {
   public render() {
     const log = this.state.log;
     const sections: JSX.Element[] = [
-      <DemoSection log={log} />,
+      // <DemoSection log={log} />,
+      <InteractionPieSection log={log} />,
       <ScoreLineGraphSection log={log} />,
-      <MapViewGraphSection log={log}/>,
-      <PlanetOwnerShipGraphSection log={log}/>,
+      <MapViewGraphSection log={log} />,
+      <PlanetOwnerShipGraphSection log={log} />,
     ];
 
     return (

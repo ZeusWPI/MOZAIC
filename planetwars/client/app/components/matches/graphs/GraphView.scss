@@ -30,6 +30,12 @@
 
 .svgWrapper {}
 
+.interactionPie {
+  text {
+    fill: $primary;
+  }
+}
+
 .scoreLineGraph {
   display: flex;
 

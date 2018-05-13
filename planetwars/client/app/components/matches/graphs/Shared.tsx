@@ -16,6 +16,7 @@ const _colors = [
   '#DEC547', // (yellow) Main Secondary color (1)
 ];
 
+export const neutralColor = '#868685';
 export const color = d3.scaleOrdinal(_colors);
 
 export interface SectionProps {
