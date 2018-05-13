@@ -4,7 +4,6 @@ import * as M from '../../utils/database/models';
 // tslint:disable-next-line:no-var-requires
 const styles = require("./AddressForm.scss");
 
-
 export interface AddressFormProps {
   address: M.Address;
   onChange: (address: M.Address) => void;

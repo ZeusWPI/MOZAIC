@@ -2,13 +2,12 @@
 
 #host {
   display: grid;
-  grid-template-columns: 2fr 1fr;
+  grid-template-columns: 1fr 2fr;
   grid-template-rows: 0.3fr 150px 1fr 1fr;
   grid-template-areas:
     "header header"
-    "add-buttons  map-selector"
-    "bot-list map-selector"
-    "bot-list .";
+    "map-selector  bot-list"
+    "map-selector  bot-list";
 
   h1,
   h2 {
@@ -34,6 +33,10 @@
   height: 0;
   // margin: 0 -16px;
   min-width: 32px;
+}
+
+.hidden {
+  display: none;
 }
 
 .header {
