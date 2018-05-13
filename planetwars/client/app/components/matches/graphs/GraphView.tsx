@@ -8,6 +8,7 @@ import { DemoPie, Section } from './Shared';
 import { ScoreLineGraphSection } from './ScoreLineGraph';
 import { PlayerShipsGraphSection } from './PlayerShipsGraph';
 import { MapViewGraphSection } from './MapViewGraph';
+import { PlanetOwnerShipGraphSection } from './PlanetOwnerShipGraph';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
@@ -35,6 +36,7 @@ export class GraphView extends Component<GraphViewProps, GraphViewState> {
       <DemoSection log={log} />,
       <ScoreLineGraphSection log={log} />,
       <MapViewGraphSection log={log}/>,
+      <PlanetOwnerShipGraphSection log={log}/>,
     ];
 
     return (
