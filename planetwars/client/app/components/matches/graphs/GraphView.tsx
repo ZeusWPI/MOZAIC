@@ -33,8 +33,8 @@ export class GraphView extends Component<GraphViewProps, GraphViewState> {
     const log = this.state.log;
     const sections: JSX.Element[] = [
       <DemoSection log={log} />,
+      <MapViewGraphSection log={log} />,
       <ScoreLineGraphSection log={log} />,
-      <MapViewGraphSection log={log}/>,
     ];
 
     return (

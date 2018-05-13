@@ -6,6 +6,7 @@ export class MatchLog {
   public playerOutputs: PlayerOutputs[];
   public winners: Set<Player>;
   public planets: StaticPlanet[];
+  public planetMap: Dict<StaticPlanet>;
   public eliminations: DeathEvent[];
 
   private externalLog: External.MatchLog;
@@ -17,9 +18,14 @@ export class MatchLog {
     this.playerOutputs = log.playerOutputs;
     this.winners = this.gameStates[this.gameStates.length - 1].livingPlayers;
 
-    this.planets = Object.keys(this.gameStates[0].planets).map((name) => {
-      const { x, y } = this.gameStates[0].planets[name];
-      return { name, x, y };
+    this.planets = [];
+    this.planetMap = {};
+    const firstState = this.gameStates[0];
+    Object.keys(firstState.planets).forEach((name, index) => {
+      const { x, y } = firstState.planets[name];
+      const p = { name, x, y, index };
+      this.planets.push(p);
+      this.planetMap[p.name] = p;
     });
 
     this.eliminations = [];
@@ -148,6 +154,7 @@ export type Dict<V> = {
 };
 
 export interface StaticPlanet {
+  index: number;
   name: string;
   x: number;
   y: number;

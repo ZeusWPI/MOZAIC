@@ -3,127 +3,101 @@ import { Component } from 'react';
 import * as d3 from 'd3';
 
 import { Graph, Section, color, GraphProps } from './Shared';
-import { PlanetList, Planet, GameState, StaticPlanet, Expedition } from './MatchLog';
+import { PlanetList, Planet, GameState, StaticPlanet, Expedition, Dict } from './MatchLog';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./GraphView.scss');
 
 export class MapViewGraphSection extends Section<{}> {
   public render() {
-    const log = this.props.log;
+    const { gameStates, planets, planetMap } = this.props.log;
     const width = 800;
     const height = 400;
 
-    const planets = log.gameStates[0].planets;
-    const planetList: Planet[] = [];
-    const planetCountMap: Map<string, number> = new Map<string, number>();
+    const [minX, maxX] = d3.extent(planets, (p) => p.x) as [number, number];
+    const [minY, maxY] = d3.extent(planets, (p) => p.y) as [number, number];
+    const max = { x: maxX, y: maxY };
+    const min = { x: minX, y: minY };
 
-    Object.keys(planets).forEach((name) => {
-      planetList.push(planets[name]);
-      planetCountMap.set(name, 0);
+    const paths = Array(planets.length).fill(0)
+      .map(() => Array(planets.length).fill(0));
+
+    gameStates.forEach((gs) => {
+      gs.expeditions.forEach((e) => {
+        const { origin, destination, shipCount } = e;
+        const or = planetMap[origin.name];
+        const dest = planetMap[destination.name];
+        paths[or.index][dest.index] += shipCount;
+      });
     });
 
-    const [minX, maxX] = d3.extent(planetList, (p) => p.x) as [number, number];
-    const [minY, maxY] = d3.extent(planetList, (p) => p.y) as [number, number];
-
-    let expeditionList: Expedition[] = [];
-    log.gameStates.forEach((state) => {
-      const newList = expeditionList.concat(state.expeditions);
-      expeditionList = newList;
-    });
-
-    expeditionList.forEach((e) => {
-      const currentCount = planetCountMap.get(e.destination.name) as number;
-      planetCountMap.set(e.destination.name, currentCount + 1);
-    });
-
-    const planetCounts: PlanetCounter[] = [];
-    Array.from(planetCountMap.keys()).forEach((k) => {
-      const count = planetCountMap.get(k) as number;
-      planetCounts.push({name: k, count});
-    });
-
-    const data: MapViewData = {
-      planetMap: planets,
-      planetList,
-      expeditions: expeditionList,
-      receivingPlanetCountMap: planetCountMap,
-      receivingPlanetCount: planetCounts,
-      minX,
-      maxX,
-      minY,
-      maxY,
-    };
-
+    const data = { max, min, planets, paths };
     return <MapViewGraph width={width} height={height} data={data} />;
   }
 }
 
-export interface PlanetCounter {
-  name: string;
-  count: number;
-}
-
 export interface MapViewData {
-  planetMap: PlanetList;
-  planetList: Planet[];
-  expeditions: Expedition[];
-  receivingPlanetCountMap: Map<string, number>;
-  receivingPlanetCount: PlanetCounter[];
-  minX: number;
-  maxX: number;
-  minY: number;
-  maxY: number;
+  planets: StaticPlanet[];
+  paths: number[][];
+  min: { x: number, y: number };
+  max: { x: number, y: number };
 }
 
 export class MapViewGraph extends Graph<MapViewData> {
+  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
+  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
+
   protected createGraph(): void {
     const { width, height, data } = this.props;
+    const { min, max, paths, planets } = data;
 
-    const minRadius = 10;
-    const maxRadius = 3 * minRadius;
+    const radius = 20;
 
-    const xScale = d3.scaleLinear()
-      .domain([data.minX, data.maxX])
-      .range([maxRadius, width - maxRadius]);
-    const yScale = d3.scaleLinear()
-      .domain([data.minY, data.maxY])
-      .range([maxRadius, height - maxRadius]);
-    const radiusScale = d3.scaleLinear()
-      .domain(d3.extent(data.receivingPlanetCount, (e) => e.count) as [number, number])
-      .range([minRadius, maxRadius]);
-    const widthScale = d3.scaleLinear()
-      .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
-      .range([0, minRadius]);
-    const opacityScale = d3.scaleLinear()
-      .domain([0, d3.max(data.expeditions, (e) => e.shipCount) as number])
-      .range([0, 0.1]);
+    const x = d3.scaleLinear()
+      .domain([min.x, max.x])
+      .range([0 + radius, width - radius]);
 
+    const y = d3.scaleLinear()
+      .domain([min.y, max.y])
+      .range([0 + radius, height - radius]);
 
-    const node = this.node;
-    const svg = d3.select(node);
-    svg.selectAll("*").remove();
-    const g = svg.append("g");
+    const busiestPath = d3.max(paths, (ps) => d3.max(ps, (p) => p)) || 0;
+    const strokeWidth = d3.scaleLinear()
+      .domain([0, busiestPath])
+      .range([1, radius]);
 
-    data.expeditions.forEach((expedition) => {
-      g.append("line")
-        .attr("x1", xScale(expedition.origin.x))
-        .attr("y1", yScale(expedition.origin.y))
-        .attr("x2", xScale(expedition.destination.x))
-        .attr("y2", yScale(expedition.destination.y))
-        .attr("stroke-width", widthScale(expedition.shipCount))
-        .attr("stroke", "#888")
-        .attr("opacity", opacityScale(expedition.shipCount));
+    const opacity = d3.scaleLinear()
+      .domain([0, busiestPath])
+      .range([0.1, 1]);
+
+    this.svg = d3.select(this.node);
+    this.svg.selectAll('*').remove();
+    this.root = this.svg.append('g').attr('class', 'root-yo');
+
+    const lines = this.root.append('g').attr('class', 'lines-yo');
+    paths.forEach((planetPaths, or) => {
+      planetPaths.forEach((path, dest) => {
+        lines.append('line')
+          .attr("x1", x(planets[or].x))
+          .attr("y1", y(planets[or].y))
+          .attr("x2", x(planets[dest].x))
+          .attr("y2", y(planets[dest].y))
+          .attr("stroke-width", strokeWidth(path))
+          .attr("stroke", "#888")
+          .attr("opacity", opacity(path));
+      });
     });
 
-    g.selectAll("circle")
-      .data(data.planetList)
+    this.root.append('g')
+      .attr('class', 'circles-yo')
+      .selectAll('circle')
+      .data(data.planets)
       .enter()
-      .append("circle")
-      .attr("cx", (d) => xScale(d.x))
-      .attr("cy", (d) => yScale(d.y))
-      .attr("r", (d) => radiusScale(data.receivingPlanetCountMap.get(d.name) as number))
-      .attr("fill", (d) => color(d.name.toString()));
+      .append('circle')
+      .attr("cx", (p) => x(p.x))
+      .attr("cy", (p) => y(p.y))
+      .attr("r", radius)
+      .attr("fill", color('0'));
   }
 
   protected updateGraph(): void {
