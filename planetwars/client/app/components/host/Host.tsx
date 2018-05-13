@@ -179,7 +179,7 @@ export class Host extends React.Component<HostProps, HostState> {
 
   private addExternalBot = (name: string) => {
     const token = this.props.generateToken();
-    const botSlot: M.BotSlot = {type: 'external', name, token};
+    const botSlot: M.BotSlot = {type: 'external', name, token, connected: false};
     const selectedBots = this.state.selectedBots;
     selectedBots.push(botSlot);
     this.setState({selectedBots});

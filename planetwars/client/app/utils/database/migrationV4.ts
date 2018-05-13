@@ -141,6 +141,7 @@ export type BotSlot = ExternalBotSlot | InternalBotSlot;
 export interface BotSlotProps {
   type: 'internal' | 'external';
   token: Token;
+  connected: boolean; // Maybe more info?
 }
 
 export type ExternalBotSlot = BotSlotProps & {
