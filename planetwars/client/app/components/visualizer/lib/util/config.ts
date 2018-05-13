@@ -18,10 +18,17 @@ export default {
   neutralColor: '#d3d3d3',
   // Taken from d3's category20
   playerColors: [
-    '#ff7f0e', // orange
-    '#1f77b4', // blue
-    '#d62728', // red
-    '#9467bd', // purple
+    // '#ff7f0e', // orange
+    // '#1f77b4', // blue
+    // '#d62728', // red
+    // '#9467bd', // purple
+    '#DE8D47', // (orange) Main Primary color
+    '#2C8286', // (teal) Main Complement color
+    '#9ECE43', // (green) Free style
+    '#DE4B47', // (red) Free style
+    '#553C99', // (purple) Main Secondary color (2)
+    '#B4397C', // (pink) Adjacent
+    '#DEC547', // (yellow) Main Secondary color (1)
   ],
   playerName: (player: any) => {
     if (player) {

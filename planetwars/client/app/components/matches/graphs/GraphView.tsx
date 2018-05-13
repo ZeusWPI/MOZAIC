@@ -57,7 +57,7 @@ export class DemoSection extends Section<{}> {
     const demoData = (playerAmount: number) => {
       return Array.from({ length: playerAmount }).map((v, i) => ({
         player: i,
-        value: Math.ceil(Math.random() * 100),
+        value: Math.ceil((Math.random() + 0.10) * 100),
       }));
     };
     const width = 250;

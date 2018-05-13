@@ -29,10 +29,12 @@ export class MapViewGraphSection extends Section<{}> {
 
     gameStates.forEach((gs) => {
       gs.expeditions.forEach((e) => {
+        // TODO: This could be customized (destination, origin, #n expeditions, sum)
         const { origin, destination, shipCount } = e;
         const or = planetMap[origin.name];
         const dest = planetMap[destination.name];
         paths[or.index][dest.index] += shipCount;
+        paths[dest.index][or.index] += shipCount;
       });
     });
 
@@ -56,20 +58,25 @@ export class MapViewGraph extends Graph<MapViewData> {
     const { data, width, height } = this.props;
     const { min, max, paths, planets } = data;
 
-    const radius = 20;
+    const minRadius = 5;
+    const maxRadius = 30;
 
     const x = d3.scaleLinear()
       .domain([min.x, max.x])
-      .range([0 + radius, width - radius]);
+      .range([0 + maxRadius, width - maxRadius]);
 
     const y = d3.scaleLinear()
       .domain([min.y, max.y])
-      .range([0 + radius, height - radius]);
+      .range([0 + maxRadius, height - maxRadius]);
 
     const busiestPath = d3.max(paths, (ps) => d3.max(ps, (p) => p)) || 0;
     const strokeWidth = d3.scaleLinear()
       .domain([0, busiestPath])
-      .range([1, radius]);
+      .range([1, maxRadius]);
+
+    const radius = d3.scaleLinear()
+      .domain([0, busiestPath])
+      .range([minRadius, maxRadius]);
 
     const opacity = d3.scaleLinear()
       .domain([0, busiestPath])
@@ -101,7 +108,7 @@ export class MapViewGraph extends Graph<MapViewData> {
       .append('circle')
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
-      .attr("r", radius)
+      .attr("r", (p) => radius(d3.max(paths[p.index]) || minRadius))
       .attr("fill", color('0'));
   }
 

@@ -7,13 +7,13 @@ import { MatchLog } from './MatchLog';
 const styles = require('./GraphView.scss');
 
 const _colors = [
-  '#DE8D47', // Main Primary color
-  '#2C8286', // Main Complement color
-  '#9ECE43', // Free style (green)
-  '#DE4B47', // Free style (red)
-  '#553C99', // Main Secondary color (2)
-  '#B4397C', // Adjacent
-  '#DEC547', // Main Secondary color (1)
+  '#DE8D47', // (orange) Main Primary color
+  '#2C8286', // (teal) Main Complement color
+  '#9ECE43', // (green) Free style
+  '#DE4B47', // (red) Free style
+  '#553C99', // (purple) Main Secondary color (2)
+  '#B4397C', // (pink) Adjacent
+  '#DEC547', // (yellow) Main Secondary color (1)
 ];
 
 export const color = d3.scaleOrdinal(_colors);
