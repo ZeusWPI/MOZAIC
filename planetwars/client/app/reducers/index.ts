@@ -53,9 +53,7 @@ export type BotsState = M.BotList;
 export type MatchesState = M.MatchList;
 export type MapsState = M.MapList;
 
-export interface HostState {
-  selectedBots: M.BotSlot[];
-}
+export type HostState = M.BotSlot[];
 
 export interface MatchesPageState {
   readonly importError?: string;
@@ -71,9 +69,7 @@ export const initialState: GState = {
   matches: {},
   maps: {},
   notifications: [],
-  host: {
-    selectedBots: [],
-  },
+  host: [],
 
   matchesPage: {},
   globalErrors: [],
@@ -117,22 +113,21 @@ const notificationReducer = (state: M.Notification[] = [], action: any) => {
   return state;
 };
 
-const hostReducer = (state: HostState = { selectedBots: [] }, action: Action) =>  {
+const hostReducer = (state: HostState = [], action: Action) =>  {
   if (A.playerConnected.test(action)) {
-    const newState = state;
-    newState.selectedBots.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = true;
+    const newState = state.slice();
+    newState.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = true;
     return newState;
   }
   if (A.playerDisconnected.test(action)) {
-    const newState = state;
-    newState.selectedBots.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = false;
+    const newState = state.slice();
+    newState.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = false;
     return newState;
   }
   if (A.newBotSlots.test(action)) {
-    const newState = state;
-    newState.selectedBots = [];
+    const newState = [];
     for (let i = 1; i <= action.payload; i++) {
-      newState.selectedBots.push({
+      newState.push({
         type: 'external',
         name: 'Player ' + i,
         token: generateToken(),
@@ -142,10 +137,10 @@ const hostReducer = (state: HostState = { selectedBots: [] }, action: Action) =>
     return newState;
   }
   if (A.changeBotSlot.test(action)) {
-    const newState = state;
-    for (let i = 0; i < state.selectedBots.length; i++) {
-      if (state.selectedBots[i].token === action.payload.token) {
-        newState.selectedBots[i] = action.payload;
+    const newState = state.slice();
+    for (let i = 0; i < state.length; i++) {
+      if (state[i].token === action.payload.token) {
+        newState[i] = action.payload;
       }
     }
     return newState;

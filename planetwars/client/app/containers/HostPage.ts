@@ -10,7 +10,7 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const maps = state.maps;
-  const selectedBots = state.host.selectedBots;
+  const selectedBots = state.host;
   return { bots, maps, selectedBots };
 };
 
