@@ -20,7 +20,7 @@ export interface HostDispatchProps {
   runMatch: (params: M.MatchParams) => void;
   toggleConnected: (bot: M.BotSlot) => void;
 
-  changeLocalBot: (slot: M.BotSlot) => void;
+  changeBotSlot: (slot: M.BotSlot) => void;
   // selectMap: (id: string) => void;
 }
 
@@ -120,7 +120,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private updateSlot = (slot: M.BotSlot) => {
-    this.props.changeLocalBot(slot);
+    this.props.changeBotSlot(slot);
   }
 
   private startSignal = () => {
@@ -271,6 +271,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     return (
       <div>
         <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot}/>
+        <button onClick={this.joinLocal}>Join</button>
         Name:{" "}
         <input
           type="text"
@@ -281,6 +282,11 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
         <button onClick={this.props.makeExternal}>Make external</button>
       </div>
     );
+  }
+
+  private joinLocal = () => {
+    const { slot, allBots } = this.props;
+    alert("Joining with bot " + allBots[slot.botId].name + " with token " + slot.token);
   }
 
   private setBot(botId: M.BotId) {

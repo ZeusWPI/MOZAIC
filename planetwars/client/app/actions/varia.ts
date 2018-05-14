@@ -17,7 +17,7 @@ export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 
 // Host
 export const newBotSlots = actionCreator<number>('ADD_SLOTS');
-export const changeLocalBot = actionCreator<M.BotSlot>('CHANGE_LOCAL_BOT');
+export const changeBotSlot = actionCreator<M.BotSlot>('CHANGE_BOT_SLOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
 export const playerConnected = actionCreator<M.BotSlot>('PLAYER_CONNECT');
 export const playerDisconnected = actionCreator<M.BotSlot>('PLAYER_DISCONNECT');

@@ -141,6 +141,15 @@ const hostReducer = (state: HostState = { selectedBots: [] }, action: Action) =>
     }
     return newState;
   }
+  if (A.changeBotSlot.test(action)) {
+    const newState = state;
+    for (let i = 0; i < state.selectedBots.length; i++) {
+      if (state.selectedBots[i].token === action.payload.token) {
+        newState.selectedBots[i] = action.payload;
+      }
+    }
+    return newState;
+  }
   return state;
 };
 

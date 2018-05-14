@@ -29,8 +29,8 @@ const mapDispatchToProps = (dispatch: any) => {
         dispatch(A.playerConnected(botslot));
       }
     },
-    changeLocalBot(slot: M.BotSlot) {
-      dispatch(A.changeLocalBot(slot));
+    changeBotSlot(slot: M.BotSlot) {
+      dispatch(A.changeBotSlot(slot));
     },
   };
 };
