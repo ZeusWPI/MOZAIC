@@ -359,7 +359,7 @@ interface MapSelectorProps {
 export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
   const mapElements = Object.keys(props.maps).map((key, idx) => (
     <option value={key} key={idx}>
-      {props.maps[key].name}
+      {props.maps[key].name + " (" + props.maps[key].slots + " players)"}
     </option>
   ));
   const handleChange = (evt: any) => props.selectMap(evt.target.value);
