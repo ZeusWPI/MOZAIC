@@ -1,6 +1,7 @@
 import { routerReducer as routing, RouterState } from 'react-router-redux';
 import { combineReducers, Reducer } from 'redux';
 import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 
 import { store } from '../index';
 import * as A from '../actions/index';
@@ -31,6 +32,7 @@ export interface GState {
   readonly matches: MatchesState;
   readonly notifications: NotificationsState;
   readonly maps: MapsState;
+  readonly host: HostState;
 
   // TODO: Remove this state
   readonly matchesPage: MatchesPageState;
@@ -69,6 +71,9 @@ export const initialState: GState = {
   matches: {},
   maps: {},
   notifications: [],
+  host: {
+    selectedBots: [],
+  },
 
   matchesPage: {},
   globalErrors: [],
@@ -115,16 +120,34 @@ const notificationReducer = (state: M.Notification[] = [], action: any) => {
 const hostReducer = (state: HostState = { selectedBots: [] }, action: Action) =>  {
   if (A.playerConnected.test(action)) {
     const newState = state;
-    // newState.bots[action.payload.token].connected = true;
+    newState.selectedBots.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = true;
     return newState;
   }
   if (A.playerDisconnected.test(action)) {
     const newState = state;
-    // newState.bots[action.payload.token].connected = true;
+    newState.selectedBots.filter((slot: M.BotSlot) => slot.token === action.payload.token)[0].connected = false;
+    return newState;
+  }
+  if (A.newBotSlots.test(action)) {
+    const newState = state;
+    newState.selectedBots = [];
+    for (let i = 1; i <= action.payload; i++) {
+      newState.selectedBots.push({
+        type: 'external',
+        name: 'Player ' + i,
+        token: generateToken(),
+        connected: false,
+      });
+    }
     return newState;
   }
   return state;
 };
+
+function generateToken() {
+  const token = crypto.randomBytes(32).toString('hex');
+  return token;
+}
 
 const mapsReducer = (state: M.MapList = {}, action: any) => {
   if (A.importMapFromDB.test(action)) {

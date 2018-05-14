@@ -10,33 +10,18 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const maps = state.maps;
-  return { bots, maps };
+  const selectedBots = state.host.selectedBots;
+  return { bots, maps, selectedBots };
 };
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    // selectBotInternal(name: string, botId: BotId) {
-    //   dispatch(A.selectBot({
-    //     type: 'internal',
-    //     botId,
-    //     token: generateToken(),
-    //     name,
-    //   }));
-    // },
-    // selectBotExternal(name: string) {
-    //   dispatch(A.selectBot({
-    //     type: 'external',
-    //     token: generateToken(),
-    //     name,
-    //   }));
-    // },
-    // unselectBot(uuid: BotId) {
-    //   dispatch(A.unselectBot(uuid));
-    // },
+    newBotSlots(amount: number) {
+      dispatch(A.newBotSlots(amount));
+    },
     runMatch(params: M.MatchParams) {
       dispatch(A.runMatch(params));
     },
-    generateToken,
     toggleConnected(botslot: M.BotSlot) {
       if (botslot.connected) {
         dispatch(A.playerDisconnected(botslot));
@@ -44,18 +29,10 @@ const mapDispatchToProps = (dispatch: any) => {
         dispatch(A.playerConnected(botslot));
       }
     },
-    // changeLocalBot(token: Token, slot: BotSlot) {
-    //   dispatch(A.changeLocalBot(slot));
-    // },
-    // selectMap(id: string) {
-    //   dispatch(A.selectMap(id));
-    // },
+    changeLocalBot(slot: M.BotSlot) {
+      dispatch(A.changeLocalBot(slot));
+    },
   };
 };
-
-function generateToken() {
-  const token = crypto.randomBytes(32).toString('hex');
-  return token;
-}
 
 export default connect<HostStateProps, HostDispatchProps>(mapStateToProps, mapDispatchToProps)(Host);

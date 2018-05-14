@@ -11,30 +11,24 @@ const styles = require("./Host.scss");
 export interface HostStateProps {
   bots: M.BotList;
   maps: M.MapList;
-  // selectedBots: M.BotSlot[];
+  selectedBots: M.BotSlot[];
   // selectedMap: string;
 }
 
 export interface HostDispatchProps {
-  // selectBotInternal: (name: string, id: M.BotId) => void;
-  // addExternalBot: (name: string) => void;
-  // unselectBot: (uuid: string, all: boolean) => void;
+  newBotSlots: (amount: number) => void;
   runMatch: (params: M.MatchParams) => void;
   toggleConnected: (bot: M.BotSlot) => void;
 
-  generateToken(): string;
-
-  // changeLocalBot: (token: M.Token, slot: M.BotSlot) => void;
+  changeLocalBot: (slot: M.BotSlot) => void;
   // selectMap: (id: string) => void;
 }
 
 export interface HostState {
-  selectedBots: M.BotSlot[];
   selectedMap?: M.MapId;
   mapToggled: boolean;
   maxTurns: number;
   address: M.Address;
-  lobbyVisible: boolean;
 }
 
 export type HostProps = HostStateProps & HostDispatchProps;
@@ -43,14 +37,12 @@ export class Host extends React.Component<HostProps, HostState> {
   constructor(props: HostProps) {
     super(props);
     this.state = {
-      selectedBots: [],
       mapToggled: false,
       maxTurns: 500,
       address: {
         host: '127.0.0.1',
         port: 9142,
       },
-      lobbyVisible: false,
     };
     this.setAddress = this.setAddress.bind(this);
   }
@@ -63,7 +55,7 @@ export class Host extends React.Component<HostProps, HostState> {
         <div className={styles.header}>
           <h1 className="title is-1">> Set up Host Game_ </h1>
         </div>
-        <div className={this.state.lobbyVisible ? styles.hidden : styles.mapSelection}>
+        <div className={this.props.selectedBots.length > 0 ? styles.hidden : styles.mapSelection}>
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">1</span>
             <span className={styles.tagInfoText}> Pick a Map</span>
@@ -106,14 +98,14 @@ export class Host extends React.Component<HostProps, HostState> {
             Go!
           </button>
         </div>
-        <div id={styles.botList} className={this.state.lobbyVisible ? "" : styles.hidden}>
+        <div id={styles.botList} className={this.props.selectedBots.length ? "" : styles.hidden}>
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">6</span>
             <span className={styles.tagInfoText}> Wait for people to join...</span>
           </h2>
 
           <BotSlots
-            selectedBots={this.state.selectedBots}
+            selectedBots={this.props.selectedBots}
             allBots={this.props.bots}
             updateSlot={this.updateSlot}
             toggleConnected={this.props.toggleConnected}
@@ -125,6 +117,10 @@ export class Host extends React.Component<HostProps, HostState> {
         </div>
       </div>
     );
+  }
+
+  private updateSlot = (slot: M.BotSlot) => {
+    this.props.changeLocalBot(slot);
   }
 
   private startSignal = () => {
@@ -151,47 +147,18 @@ export class Host extends React.Component<HostProps, HostState> {
       return;
     }
     // TODO: make sure this is correct (it isn't currently for Large)
-    console.log(this.props.maps[this.state.selectedMap].slots);
-    for (let i = 0; i < this.props.maps[this.state.selectedMap].slots; i++) {
-      this.addExternal();
-    }
+    this.props.newBotSlots(this.props.maps[this.state.selectedMap].slots);
 
     const config: M.MatchParams = {
-      players: this.state.selectedBots,
+      players: this.props.selectedBots,
       map: this.state.selectedMap,
       maxTurns: this.state.maxTurns,
       address: this.state.address,
     };
 
     alert("Start server on " + config.address.host + ":" + config.address.port + " with " + config.players.length + " players, map " + config.map + " and a maximum of " + config.maxTurns + " turns");
-
-    this.setState({lobbyVisible: true});
     // console.log(config);
     // this.props.runMatch(config);
-  }
-
-  // private selectBotInternal = (name: string, botId: M.BotId) => {
-  //   const token = this.props.generateToken();
-  //   const botSlot: M.BotSlot = {type: 'internal', botId, name, token};
-  //   this.setState({
-  //     ...this.state,
-  //     selectedBots: [...this.state.selectedBots, botSlot],
-  //   });
-  // }
-
-  private addExternalBot = (name: string) => {
-    const token = this.props.generateToken();
-    const botSlot: M.BotSlot = {type: 'external', name, token, connected: false};
-    const selectedBots = this.state.selectedBots;
-    selectedBots.push(botSlot);
-    this.setState({selectedBots});
-  }
-
-  private updateSlot = (index: number, slot: M.BotSlot) => {
-    this.setState((state) => {
-      state.selectedBots[index] = slot;
-      return state;
-    });
   }
 
   private selectMap = (id: M.MapId) => {
@@ -201,28 +168,23 @@ export class Host extends React.Component<HostProps, HostState> {
   // private addInternal = () => {
   //   this.selectBotInternal("", "");
   // }
-
-  private addExternal = () => {
-    this.addExternalBot("My Enemy's Bot");
-  }
 }
 
 interface BotSlotsProps {
   selectedBots: M.BotSlot[];
   allBots: M.BotList;
-  updateSlot: (index: number, slot: M.BotSlot) => void;
+  updateSlot: (slot: M.BotSlot) => void;
   toggleConnected: (bot: M.BotSlot) => void;
 }
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
   const slots = props.selectedBots.map((slot, idx) => {
-    const updateSlot = (s: M.BotSlot) => props.updateSlot(idx, s);
     return (
       <Slot
         key={idx}
         bot={slot}
         allBots={props.allBots}
-        updateSlot={updateSlot}
+        updateSlot={props.updateSlot}
         toggleConnected={props.toggleConnected}
       />
     );
