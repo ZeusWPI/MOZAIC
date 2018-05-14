@@ -124,6 +124,12 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private startSignal = () => {
+    const notConnected = this.props.selectedBots.filter((bot) => !bot.connected);
+    const amount = notConnected.length;
+    if (amount > 0) {
+      alert("Waiting for " + amount + " more player" + (amount === 1 ? "" : "s") + " to join...");
+      return;
+    }
     alert("Send go to server");
   }
 
@@ -271,7 +277,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     return (
       <div>
         <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot}/>
-        <button onClick={this.joinLocal}>Join</button>
+        <button onClick={this.joinLocal} disabled={this.props.slot.connected}>Join</button>
         Name:{" "}
         <input
           type="text"
@@ -279,13 +285,17 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
           value={this.props.slot.name}
           onChange={this.setName}
         />
-        <button onClick={this.props.makeExternal}>Make external</button>
+        <button onClick={this.props.makeExternal} disabled={this.props.slot.connected}>Make external</button>
       </div>
     );
   }
 
   private joinLocal = () => {
     const { slot, allBots } = this.props;
+    if (!slot.botId) {
+      alert("Please select a bot first.");
+      return;
+    }
     alert("Joining with bot " + allBots[slot.botId].name + " with token " + slot.token);
   }
 
@@ -328,7 +338,7 @@ export class ExternalSlot extends React.Component<ExternalSlotProps> {
           onBlur={setName}
         />
         <div>token: {this.props.slot.token}</div>;
-        <button onClick={this.props.makeInternal}>Make internal</button>
+        <button onClick={this.props.makeInternal} disabled={this.props.slot.connected}>Make internal</button>
       </li>
     );
   }
