@@ -237,9 +237,19 @@ export class Slot extends React.Component<SlotProps> {
     const { bot, allBots, updateSlot } = this.props;
     switch (bot.type) {
       case 'internal':
-        return <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
+        return (
+          <div>
+            <span className={"tag is-small is-rounded " + (this.props.bot.connected ? "is-success" : "is-danger")} />
+            <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
+          </div>
+        );
       case 'external':
-        return <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
+        return (
+          <div>
+            <span className={"tag is-small is-rounded " + (this.props.bot.connected ? "is-success" : "is-danger")} />
+            <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
+          </div>
+        );
     }
   }
   private makeExternal = () => {
