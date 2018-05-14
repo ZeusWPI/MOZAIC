@@ -162,7 +162,9 @@ export class Host extends React.Component<HostProps, HostState> {
       address: this.state.address,
     };
 
-    alert("Start server on " + config.address.host + ":" + config.address.port + " with " + config.players.length + " players, map " + config.map + " and a maximum of " + config.maxTurns + " turns");
+    alert("Start server on " + config.address.host + ":" + config.address.port +
+          " with " + this.props.maps[this.state.selectedMap].slots + " players, map " +
+          config.map + " and a maximum of " + config.maxTurns + " turns");
     // console.log(config);
     // this.props.runMatch(config);
   }
@@ -269,7 +271,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
   constructor(props: InternalSlotProps) {
     super(props);
     this.setBot = this.setBot.bind(this);
-    this.setName = this.setBot.bind(this);
+    this.setName = this.setName.bind(this);
   }
 
   public render() {
