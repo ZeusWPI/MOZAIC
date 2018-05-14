@@ -222,7 +222,9 @@ export class Slot extends React.Component<SlotProps> {
                 "is-danger is-loading"
               )}
               onClick={this.toggleConnected}
-            />
+            >
+              <FaIcon icon={this.props.bot.connected ? "check" : "spinner"} className={this.props.bot.connected ? "" : styles.rotate}/>
+            </span>
             <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>
           </div>
         );
