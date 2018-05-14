@@ -51,6 +51,10 @@ export type BotsState = M.BotList;
 export type MatchesState = M.MatchList;
 export type MapsState = M.MapList;
 
+export interface HostState {
+  selectedBots: M.BotSlot[];
+}
+
 export interface MatchesPageState {
   readonly importError?: string;
 }
@@ -104,6 +108,20 @@ const notificationReducer = (state: M.Notification[] = [], action: any) => {
     return newState;
   } else if (A.clearNotifications.test(action)) {
     return [];
+  }
+  return state;
+};
+
+const hostReducer = (state: HostState = { selectedBots: [] }, action: Action) =>  {
+  if (A.playerConnected.test(action)) {
+    const newState = state;
+    // newState.bots[action.payload.token].connected = true;
+    return newState;
+  }
+  if (A.playerDisconnected.test(action)) {
+    const newState = state;
+    // newState.bots[action.payload.token].connected = true;
+    return newState;
   }
   return state;
 };
@@ -192,6 +210,7 @@ export const rootReducer = combineReducers<GState>({
   matches: matchesReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
+  host: hostReducer,
 
   navbar: navbarReducer,
   matchesPage: matchesPageReducer,

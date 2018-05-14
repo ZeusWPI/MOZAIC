@@ -20,6 +20,7 @@ export interface HostDispatchProps {
   // addExternalBot: (name: string) => void;
   // unselectBot: (uuid: string, all: boolean) => void;
   runMatch: (params: M.MatchParams) => void;
+  toggleConnected: (bot: M.BotSlot) => void;
 
   generateToken(): string;
 
@@ -115,6 +116,7 @@ export class Host extends React.Component<HostProps, HostState> {
             selectedBots={this.state.selectedBots}
             allBots={this.props.bots}
             updateSlot={this.updateSlot}
+            toggleConnected={this.props.toggleConnected}
           />
 
           <button className="button" onClick={this.startSignal}>
@@ -209,6 +211,7 @@ interface BotSlotsProps {
   selectedBots: M.BotSlot[];
   allBots: M.BotList;
   updateSlot: (index: number, slot: M.BotSlot) => void;
+  toggleConnected: (bot: M.BotSlot) => void;
 }
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
@@ -220,6 +223,7 @@ export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
         bot={slot}
         allBots={props.allBots}
         updateSlot={updateSlot}
+        toggleConnected={props.toggleConnected}
       />
     );
   });
@@ -230,6 +234,7 @@ interface SlotProps {
   bot: M.BotSlot;
   allBots: M.BotList;
   updateSlot: (slot: M.BotSlot) => void;
+  toggleConnected: (bot: M.BotSlot) => void;
 }
 
 export class Slot extends React.Component<SlotProps> {
@@ -239,19 +244,38 @@ export class Slot extends React.Component<SlotProps> {
       case 'internal':
         return (
           <div>
-            <span className={"tag is-small is-rounded " + (this.props.bot.connected ? "is-success" : "is-danger")} />
+            <span
+              className={"tag is-small is-rounded " + (
+                this.props.bot.connected ?
+                "is-success" :
+                "is-danger"
+              )}
+              onClick={this.toggleConnected}
+            />
             <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
           </div>
         );
       case 'external':
         return (
           <div>
-            <span className={"tag is-small is-rounded " + (this.props.bot.connected ? "is-success" : "is-danger")} />
+            <span
+              className={"tag is-small is-rounded " + (
+                this.props.bot.connected ?
+                "is-success" :
+                "is-danger"
+              )}
+              onClick={this.toggleConnected}
+            />
             <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
           </div>
         );
     }
   }
+
+  private toggleConnected = () => {
+    this.props.toggleConnected(this.props.bot);
+  }
+
   private makeExternal = () => {
     const newSlot = this.props.bot;
     newSlot.type = 'external';

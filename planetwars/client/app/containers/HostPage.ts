@@ -37,6 +37,13 @@ const mapDispatchToProps = (dispatch: any) => {
       dispatch(A.runMatch(params));
     },
     generateToken,
+    toggleConnected(botslot: M.BotSlot) {
+      if (botslot.connected) {
+        dispatch(A.playerDisconnected(botslot));
+      } else {
+        dispatch(A.playerConnected(botslot));
+      }
+    },
     // changeLocalBot(token: Token, slot: BotSlot) {
     //   dispatch(A.changeLocalBot(slot));
     // },

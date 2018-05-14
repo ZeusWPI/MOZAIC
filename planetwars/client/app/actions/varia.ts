@@ -20,6 +20,8 @@ export const selectBot = actionCreator<M.BotSlot>('SELECT_BOT');
 export const unselectBot = actionCreator<M.BotId>('UNSELECT_BOT');
 export const changeLocalBot = actionCreator<M.BotSlot>('CHANGE_LOCAL_BOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
+export const playerConnected = actionCreator<M.BotSlot>('PLAYER_CONNECT');
+export const playerDisconnected = actionCreator<M.BotSlot>('PLAYER_DISCONNECT');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');
