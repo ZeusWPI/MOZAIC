@@ -4,6 +4,7 @@ import * as M from '../../utils/database/models';
 import {ExternalBotSlot} from "../../utils/database/migrationV4";
 import BotSelector from './BotSelector';
 import { AddressForm } from "./AddressForm";
+import * as classnames from 'classnames';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Host.scss");
@@ -218,11 +219,11 @@ export class Slot extends React.Component<SlotProps> {
               className={"tag is-small is-rounded " + (
                 this.props.bot.connected ?
                 "is-success" :
-                "is-danger"
+                "is-danger is-loading"
               )}
               onClick={this.toggleConnected}
             />
-            <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
+            <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>
           </div>
         );
       case 'external':
@@ -235,8 +236,10 @@ export class Slot extends React.Component<SlotProps> {
                 "is-danger"
               )}
               onClick={this.toggleConnected}
-            />
-            <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
+            >
+              <FaIcon icon={this.props.bot.connected ? "check" : "spinner"} className={this.props.bot.connected ? "" : styles.rotate}/>
+            </span>
+            <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>
           </div>
         );
     }
@@ -339,7 +342,7 @@ export class ExternalSlot extends React.Component<ExternalSlotProps> {
           defaultValue={this.props.slot.name}
           onBlur={setName}
         />
-        <div>token: {this.props.slot.token}</div>;
+        <div>token: {this.props.slot.token}</div>
         <button onClick={this.props.makeInternal} disabled={this.props.slot.connected}>Make internal</button>
       </li>
     );
@@ -376,3 +379,6 @@ export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
     </select>
   );
 };
+
+export const FaIcon: React.SFC<{ icon: string, className?: string }> = ({ icon, className }) =>
+  <i className={classnames('fa', 'fa-' + icon, className)} aria-hidden={true} />;
