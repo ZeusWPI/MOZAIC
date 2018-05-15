@@ -90,7 +90,7 @@ export interface OwnerShipData {
 export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
   protected createGraph(): void { 
     const { width, height, data } = this.props;
-    const margin = { top: 20, right: 20, bottom: 100, left: 20};
+    const margin = { top: 20, right: 20, bottom: 100, left: 35};
     const xScale = d3.scaleBand()
                     .domain(data.planetNames)
                     .rangeRound([0 + margin.left, width - margin.right])
@@ -100,7 +100,13 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
                     .domain([0, data.numberOfStates])
                     .range([0, height - margin.top - margin.bottom]);
 
+    const yScale = d3.scaleLinear()
+                  .domain([0, 100])
+                  .range([height - margin.top - margin.bottom, 0]);
+    
     const xAxis = d3.axisBottom(xScale);
+    const yAxis = d3.axisLeft(yScale)
+                  .tickFormat((d) => d + "%");
 
 
     const node = this.node;
@@ -140,8 +146,20 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
       .style("fill", neutralColor)
       .attr("transform", "rotate(-45)")
       .style("text-anchor", "end");
-  }
 
+    const yAxisSvg = g.append("g")
+      .attr("transform", `translate(${margin.left}, ${margin.top})`)
+      .call(yAxis);
+
+    yAxisSvg.selectAll("line")
+    .style("stroke", neutralColor);
+
+    yAxisSvg.selectAll("path")
+    .style("stroke", neutralColor);
+
+    yAxisSvg.selectAll("text")
+    .style("fill", neutralColor);
+  }
 
   protected updateGraph(): void {
     this.createGraph();
