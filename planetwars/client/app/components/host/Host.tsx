@@ -211,40 +211,46 @@ interface SlotProps {
 export class Slot extends React.Component<SlotProps> {
   public render() {
     const { bot, allBots, updateSlot } = this.props;
+
+    let slot;
     switch (bot.type) {
       case 'internal':
-        return (
-          <div>
-            <span
-              className={"tag is-small is-rounded " + (
-                this.props.bot.connected ?
-                "is-success" :
-                "is-danger is-loading"
-              )}
-              onClick={this.toggleConnected}
-            >
-              <FaIcon icon={this.props.bot.connected ? "check" : "spinner"} className={this.props.bot.connected ? "" : styles.rotate}/>
-            </span>
-            <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>
-          </div>
-        );
+        slot = <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
+        break;
       case 'external':
-        return (
-          <div>
-            <span
-              className={"tag is-small is-rounded " + (
-                this.props.bot.connected ?
-                "is-success" :
-                "is-danger"
-              )}
-              onClick={this.toggleConnected}
-            >
-              <FaIcon icon={this.props.bot.connected ? "check" : "spinner"} className={this.props.bot.connected ? "" : styles.rotate}/>
-            </span>
-            <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>
-          </div>
-        );
+        slot = <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
+        break;
     }
+
+    return (
+      <div>
+        <span
+          className={"tag is-small is-rounded " + (
+            this.props.bot.connected ?
+            "is-success" :
+            "is-danger is-loading"
+          )}
+          onClick={this.toggleConnected}
+        >
+        <FaIcon
+          icon={this.props.bot.connected ? "check" : "spinner"}
+          className={this.props.bot.connected ? "" : styles.rotate}
+        />
+        </span>
+        Name:{" "}
+        <input
+          type="text"
+          defaultValue={this.props.bot.name}
+          onBlur={this.setName}
+        />
+        {slot}
+      </div>
+    );
+  }
+
+  private setName = (evt: any) => {
+    const name: string = evt.target.value;
+    this.props.updateSlot({ ...this.props.bot, name });
   }
 
   private toggleConnected = () => {
@@ -252,15 +258,16 @@ export class Slot extends React.Component<SlotProps> {
   }
 
   private makeExternal = () => {
-    const newSlot = this.props.bot;
-    newSlot.type = 'external';
-    this.props.updateSlot(newSlot);
+    // const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
+    // newSlot.type = 'external';
+    const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
+    this.props.updateSlot({...newSlot, type: 'external'} as M.ExternalBotSlot);
   }
 
   private makeInternal = () => {
-    const newSlot = this.props.bot;
-    newSlot.type = 'internal';
-    this.props.updateSlot(newSlot);
+    // newSlot.type = 'internal';
+    const newSlot: M.ExternalBotSlot = this.props.bot as M.ExternalBotSlot;
+    this.props.updateSlot({...newSlot, type: 'internal', botId: ""} as M.InternalBotSlot);
   }
 }
 
@@ -275,8 +282,6 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
 
   constructor(props: InternalSlotProps) {
     super(props);
-    this.setBot = this.setBot.bind(this);
-    this.setName = this.setName.bind(this);
   }
 
   public render() {
@@ -285,13 +290,6 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
       <div>
         <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot}/>
         <button onClick={this.joinLocal} disabled={this.props.slot.connected}>Join</button>
-        Name:{" "}
-        <input
-          type="text"
-          placeholder="bot name"
-          value={this.props.slot.name}
-          onChange={this.setName}
-        />
         <button onClick={this.props.makeExternal} disabled={this.props.slot.connected}>Make external</button>
       </div>
     );
@@ -306,7 +304,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     alert("Joining with bot " + allBots[slot.botId].name + " with token " + slot.token);
   }
 
-  private setBot(botId: M.BotId) {
+  private setBot = (botId: M.BotId) => {
     const { slot, allBots, setSlot } = this.props;
 
     let name = slot.name;
@@ -318,12 +316,6 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     }
 
     setSlot({ ...slot, botId, name});
-  }
-
-  private setName(evt: any) {
-    const name: string = evt.target.value;
-    const { slot, setSlot } = this.props;
-    setSlot({ ...slot, name });
   }
 }
 
@@ -338,12 +330,6 @@ export class ExternalSlot extends React.Component<ExternalSlotProps> {
     const setName = (e: any) => this.changeBotName(e.target.value);
     return (
       <li>
-        Name:{" "}
-        <input
-          type="text"
-          defaultValue={this.props.slot.name}
-          onBlur={setName}
-        />
         <div>token: {this.props.slot.token}</div>
         <button onClick={this.props.makeInternal} disabled={this.props.slot.connected}>Make internal</button>
       </li>
