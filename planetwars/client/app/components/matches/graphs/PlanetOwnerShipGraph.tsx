@@ -50,14 +50,11 @@ export class PlanetOwnerShipGraphSection extends Section<{}> {
         let playerName: string;
         let playerId: number | null;
         if (player !== undefined) {
-          playerName = player.name;
           playerId = player.id;
         } else {
-          playerName = "undefined";
           playerId = null;
         }
         planetPlayerData.push({ planetName: name,
-          playerName,
           playerId,
           expeditionCount: (playerCount.get(player) as number),
         });
@@ -82,7 +79,6 @@ export interface PlanetOwnerShipData {
 
 export interface PlanetPlayerData {
   planetName: string;
-  playerName: string;
   playerId: number | null;
   expeditionCount: number;
 }
@@ -94,14 +90,18 @@ export interface OwnerShipData {
 export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
   protected createGraph(): void { 
     const { width, height, data } = this.props;
+    const margin = { top: 20, right: 20, bottom: 100, left: 20};
     const xScale = d3.scaleBand()
                     .domain(data.planetNames)
-                    .rangeRound([0, width])
+                    .rangeRound([0 + margin.left, width - margin.right])
                     .paddingInner(0.05);
 
     const heightScale = d3.scaleLinear()
                     .domain([0, data.numberOfStates])
-                    .range([0, height]);
+                    .range([0, height - margin.top - margin.bottom]);
+
+    const xAxis = d3.axisBottom(xScale);
+
 
     const node = this.node;
     const svg = d3.select(node);
@@ -110,7 +110,7 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
 
     const planetBarCurrentHeight: Map<string, number> = new Map<string, number>();
     for (let name of data.planetNames) {
-      planetBarCurrentHeight.set(name, 0);
+      planetBarCurrentHeight.set(name, margin.top);
     }
 
     data.planetPlayerData.forEach((element) => {
@@ -125,6 +125,21 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
       const planetHeight = planetBarCurrentHeight.get(element.planetName) as number;
       planetBarCurrentHeight.set(element.planetName, planetHeight + curHeight);
     });
+
+    const xAxisSvg = g.append("g")
+      .attr("transform", `translate(0, ${height - margin.bottom})`)
+      .call(xAxis);
+
+    xAxisSvg.selectAll("line")
+      .style("stroke", neutralColor);
+
+    xAxisSvg.selectAll("path")
+      .style("stroke", neutralColor);
+
+    xAxisSvg.selectAll("text")
+      .style("fill", neutralColor)
+      .attr("transform", "rotate(-45)")
+      .style("text-anchor", "end");
   }
 
 
