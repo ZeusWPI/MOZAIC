@@ -10,7 +10,7 @@ const styles = require('./GraphView.scss');
 
 export class MapViewGraphSection extends Section<{}> {
   public render() {
-    const { gameStates, planets, planetMap } = this.props.log;
+    const { gameStates, planets, planetMap, expeditions } = this.props.log;
 
     const [minX, maxX] = d3.extent(planets, (p) => p.x) as [number, number];
     const [minY, maxY] = d3.extent(planets, (p) => p.y) as [number, number];
@@ -27,15 +27,12 @@ export class MapViewGraphSection extends Section<{}> {
     const paths = Array(planets.length).fill(0)
       .map(() => Array(planets.length).fill(0));
 
-    gameStates.forEach((gs) => {
-      gs.expeditions.forEach((e) => {
-        // TODO: This could be customized (destination, origin, #n expeditions, sum)
-        const { origin, destination, shipCount } = e;
-        const or = planetMap[origin.name];
-        const dest = planetMap[destination.name];
-        paths[or.index][dest.index] += shipCount;
-        paths[dest.index][or.index] += shipCount;
-      });
+    expeditions.forEach((exp) => {
+      const { origin, destination, shipCount } = exp;
+      const or = planetMap[origin.name];
+      const dest = planetMap[destination.name];
+      paths[or.index][dest.index] += shipCount;
+      paths[dest.index][or.index] += shipCount;
     });
 
     const data = { max, min, planets, paths };
