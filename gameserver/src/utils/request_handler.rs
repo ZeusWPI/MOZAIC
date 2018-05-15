@@ -152,25 +152,22 @@ impl ConnectionHandler {
             .expect("event channel broke");
     }
 
-    fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
-        // we hold a handle to this channel, so it can never close.
-        // this means errors can not happen.
-        let value = self.ctrl_chan.poll().unwrap();
-        return Ok(value.map(|item| item.unwrap()));
-    }
-
     /// Pull commands from the control channel and execute them.
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
-            match try_ready!(self.poll_ctrl_chan()) {
-                Command::Message { data } => {
+            match try_ready!(self.ctrl_chan.poll()) {
+                Some(Command::Message { data }) => {
                     self.send_message(data);
                 },
-                Command::Request { request_num, data, deadline } => {
+                Some(Command::Request { request_num, data, deadline }) => {
                     let message_id = self.send_message(data);
                     self.requests.insert(message_id, request_num);
                     self.timeouts.set_timeout(message_id, deadline);
                 },
+                None => {
+                    // The control channel was closed; exit.
+                    return Ok(Async::Ready(()));
+                }
             }
         }
     }
