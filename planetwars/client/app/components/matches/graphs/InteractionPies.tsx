@@ -9,7 +9,7 @@ const styles = require('./GraphView.scss');
 
 export class InteractionPieSection extends Section<{}> {
   public render() {
-    const { players, arrivals, gameStates } = this.props.log;
+    const { players, gameStates, expeditions } = this.props.log;
     const width = 250;
     const height = 250;
 
@@ -20,16 +20,14 @@ export class InteractionPieSection extends Section<{}> {
           ({ player: i, value: 0 })));
     interactions.forEach((pI) => pI[players.length].player = null);
 
-    arrivals.forEach((arr) => {
-      const { destination, shipCount, owner, turn } = arr;
-      if (turn >= gameStates.length) { return; }
-
-      const target = gameStates[turn].planets[destination.name].owner;
-      if (target) {
-        interactions[owner.id][target.id].value += shipCount;
-      } else {
-        interactions[owner.id][players.length].value += shipCount;
-      }
+    expeditions.forEach((exp) => {
+      const { destination, shipCount, owner, turn, duration } = exp;
+      const arrival = turn + duration;
+      if (arrival >= gameStates.length) { return; }
+      const gs = gameStates[arrival - 1];
+      const target = gs.planets[destination.name].owner;
+      const index = (target) ? target.id : players.length;
+      interactions[owner.id][index].value += shipCount;
     });
 
     const pies = players.map((player, i) => {
@@ -61,7 +59,6 @@ export class InteractionPie extends Graph<PieProps> {
     const g = svg.append('g')
       .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
       .attr('class', styles.interactionPie);
-
 
     const radius = Math.min(width, height) / 2;
     const outerRadius = radius - 10;

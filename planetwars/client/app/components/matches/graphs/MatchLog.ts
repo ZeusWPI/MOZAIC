@@ -8,7 +8,7 @@ export class MatchLog {
   public planets: StaticPlanet[];
   public planetMap: Dict<StaticPlanet>;
   public eliminations: DeathEvent[];
-  public arrivals: Arrival[];
+  public expeditions: StaticExpedition[];
 
   private externalLog: External.MatchLog;
 
@@ -40,23 +40,16 @@ export class MatchLog {
       });
     });
 
-    this.arrivals = [];
-    this.playerOutputs.forEach((turnCommands, turn) => {
-      this.players.forEach((p) => {
-        const command = turnCommands[p.uuid];
-        const owner = this.players[p.id];
-        if (!command) { return; }
-
-        command.commands.forEach((exp) => {
-          if (!exp.command) { return; }
-          const { ship_count } = exp.command;
-          const origin = this.planetMap[exp.command.origin];
-          const destination = this.planetMap[exp.command.destination];
-          const dist = distance(origin, destination);
-          const shipCount = parseInt(ship_count, 10);
-          const arrival = { owner, shipCount, destination, origin, turn: turn + dist - 1 };
-          this.arrivals.push(arrival);
-        });
+    const seenExpeditions = new Set();
+    this.expeditions = [];
+    this.gameStates.forEach((gs, turn) => {
+      gs.expeditions.forEach((e) => {
+        if (seenExpeditions.has(e.id)) { return; }
+        seenExpeditions.add(e.id);
+        const { origin, destination, owner, turnsRemaining, id, shipCount } = e;
+        const duration = turnsRemaining;
+        const exp = { origin, destination, owner, id, turn, shipCount, duration };
+        this.expeditions.push(exp);
       });
     });
   }
@@ -170,14 +163,6 @@ export interface DeathEvent {
   turn: number;
 }
 
-interface Arrival {
-  turn: number;
-  shipCount: number;
-  destination: StaticPlanet;
-  origin: StaticPlanet;
-  owner: Player;
-}
-
 export interface PlanetList {
   [name: string]: Planet;
 }
@@ -206,6 +191,16 @@ export interface StaticPlanet {
   name: string;
   x: number;
   y: number;
+}
+
+export interface StaticExpedition {
+  id: number;
+  turn: number;
+  origin: Planet;
+  destination: Planet;
+  owner: Player;
+  shipCount: number;
+  duration: number;
 }
 
 export interface Expedition {
