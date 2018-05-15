@@ -7,11 +7,11 @@ use tokio;
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 
-//use utils::{PlayerLock, ResponseValue, ResponseError};
 use utils::request_handler::{
     ConnectionId,
     Event,
     EventContent,
+    ConnectionHandle,
     ConnectionHandler,
     Command as ConnectionCommand,
     ResponseValue,
@@ -63,27 +63,9 @@ impl slog::KV for PlayerId {
 
 pub struct Player {
     id: PlayerId,
-    connection_id: ConnectionId,
-    connection_handle: UnboundedSender<ConnectionCommand<PlayerId>>,
+    connection: ConnectionHandle,
 }
 
-impl Player {
-    fn send(&mut self, data: Vec<u8>) {
-        let cmd = ConnectionCommand::Message { data };
-        self.connection_handle.unbounded_send(cmd)
-            .expect("connection handle broke");
-    }
-
-    fn request(&mut self, msg: Vec<u8>, deadline: Instant) {
-        let cmd = ConnectionCommand::Request {
-            deadline,
-            message: msg,
-            request_data: self.id,
-        };
-        self.connection_handle.unbounded_send(cmd)
-            .expect("connection handle broke");
-    }
-}
 
 pub struct PwController {
     game_state: GameState,
@@ -91,12 +73,13 @@ pub struct PwController {
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
 
+    connection_player: HashMap<ConnectionId, PlayerId>,
     players: HashMap<PlayerId, Player>,
 
     waiting_for: HashSet<PlayerId>,
     commands: HashMap<PlayerId, ResponseValue>,
 
-    event_channel: UnboundedReceiver<Event<PlayerId>>,
+    event_channel: UnboundedReceiver<Event>,
     routing_table: Arc<Mutex<RoutingTable>>,
 }
 
@@ -126,12 +109,13 @@ impl PwController {
         }).collect();
 
         let mut players = HashMap::new();
+        let mut connection_player = HashMap::new();
 
         for (num, token) in client_tokens.into_iter().enumerate() {
             let player_id = PlayerId::new(num);
             let connection_id = ConnectionId { connection_num: num };
 
-            let connection_handler = ConnectionHandler::new(
+            let (handle, handler) = ConnectionHandler::new(
                 connection_id,
                 token,
                 routing_table.clone(),
@@ -140,13 +124,13 @@ impl PwController {
 
             let player = Player {
                 id: player_id,
-                connection_id,
-                connection_handle: connection_handler.handle(),
+                connection: handle,
             };
 
-            tokio::spawn(connection_handler);
+            tokio::spawn(handler);
 
             players.insert(player_id, player);
+            connection_player.insert(connection_id, player_id);
         }
 
         return PwController {
@@ -156,6 +140,7 @@ impl PwController {
             state,
             planet_map,
             players,
+            connection_player,
             logger,
 
             waiting_for: HashSet::new(),
@@ -226,7 +211,7 @@ impl PwController {
                 let serialized = serde_json::to_vec(&message).unwrap();
 
                 self.waiting_for.insert(player.id);
-                self.players.get_mut(&player.id).unwrap()
+                self.players.get_mut(&player.id).unwrap().connection
                     .request(serialized, deadline);
             }
         }
@@ -256,7 +241,8 @@ impl PwController {
             let player_action = self.execute_action(player_id, result);
             let message = proto::ServerMessage::PlayerAction(player_action);
             let serialized = serde_json::to_vec(&message).unwrap();
-            self.players.get_mut(&player_id).unwrap().send(serialized);
+            self.players.get_mut(&player_id).unwrap().connection.
+                send(serialized);
         }
     }
 
@@ -344,8 +330,10 @@ impl Future for PwController {
                 EventContent::Connected => {},
                 EventContent::Disconnected => {},
                 EventContent::Message { .. } => {},
-                EventContent::Response { request_data, value } => {
-                    let player_id = request_data;
+                EventContent::Response { request_id, value } => {
+                    // we only send requests to players
+                    let &player_id = self.connection_player
+                        .get(&event.connection_id).unwrap();
                     self.commands.insert(player_id, value);
                     self.waiting_for.remove(&player_id);
                 }
