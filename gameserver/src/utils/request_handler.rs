@@ -8,7 +8,7 @@ use std::time::Instant;
 use std::collections::HashMap;
 
 use network::router::RoutingTable;
-use network::connection::Connection;
+use network::connection::{Connection, ConnectionEvent};
 
 use utils::timeout_heap::TimeoutHeap;
 
@@ -141,12 +141,18 @@ impl<RequestData> ConnectionHandler<RequestData> {
         }
     }
 
-    fn poll_client_connection(&mut self) -> Poll<(), io::Error> {
-        try!(self.connection.flush_buffer());
+    fn poll_client_connection(&mut self) -> Poll<(), ()> {
         loop {
-            let item = try_ready!(self.connection.poll_message());
-            if let Some(msg) = item {
-                self.handle_client_message(msg);
+            match try_ready!(self.connection.poll()) {
+                ConnectionEvent::Packet(data) => {
+                    self.handle_client_message(data);
+                }
+                ConnectionEvent::Connected => {
+                    self.dispatch_event(EventContent::Connected);
+                }
+                ConnectionEvent::Disconnected => {
+                    self.dispatch_event(EventContent::Disconnected);
+                }
             }
         }
     }
@@ -218,12 +224,6 @@ impl<RequestData> Future for ConnectionHandler<RequestData> {
             Async::Ready(()) => return Ok(Async::Ready(())),
             Async::NotReady => (),
         };
-        let res = self.poll_client_connection();
-        if let Err(_err) = res {
-            // TODO: well
-        }
-        
-        // TODO: proper exit
-        Ok(Async::NotReady)
+        return self.poll_client_connection();
     }
 }
