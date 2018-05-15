@@ -21,6 +21,34 @@ pub struct ConnectionId {
     pub connection_num: usize,
 }
 
+pub struct ConnectionHandle {
+    connection_id: ConnectionId,
+    ctrl_chan: UnboundedSender<Command>,
+    request_counter: usize,
+}
+
+impl ConnectionHandle {
+    pub fn send(&mut self, data: Vec<u8>) {
+        let cmd = Command::Message { data };
+        self.send_command(cmd);
+    }
+
+    pub fn request(&mut self, data: Vec<u8>, deadline: Instant) -> RequestId {
+        let request_num = self.request_counter;
+        self.request_counter += 1;
+
+        let cmd = Command::Request { request_num, data, deadline };
+        self.send_command(cmd);
+
+        return RequestId { request_num, connection_id: self.connection_id };
+    }
+
+    fn send_command(&mut self, command: Command) {
+        self.ctrl_chan.unbounded_send(command)
+            .expect("connection handle broke");
+    }
+}
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct MessageId(u64);
 
@@ -62,7 +90,7 @@ pub enum Command {
     },
     Request {
         request_num: usize,
-        message: Vec<u8>,
+        data: Vec<u8>,
         deadline: Instant,
     },
 }
@@ -74,7 +102,6 @@ pub struct ConnectionHandler {
     connection: Connection,
 
     ctrl_chan: UnboundedReceiver<Command>,
-    ctrl_handle: UnboundedSender<Command>,
 
     requests: HashMap<MessageId, usize>,
     timeouts: TimeoutHeap<MessageId>,
@@ -88,17 +115,22 @@ impl ConnectionHandler {
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
                event_channel: UnboundedSender<Event>)
-               -> Self
+               -> (ConnectionHandle, ConnectionHandler)
     {
         let (snd, rcv) = unbounded();
 
-        return ConnectionHandler {
+        let handle = ConnectionHandle {
+            connection_id,
+            ctrl_chan: snd,
+            request_counter: 0,
+        };
+
+        let handler = ConnectionHandler {
             connection_id,
 
             connection: Connection::new(token, routing_table),
 
             ctrl_chan: rcv,
-            ctrl_handle: snd,
 
             requests: HashMap::new(),
             timeouts: TimeoutHeap::new(),
@@ -106,11 +138,8 @@ impl ConnectionHandler {
 
             event_channel,
         };
-    }
 
-    /// Get a handle to the control channel for this client.
-    pub fn handle(&self) -> UnboundedSender<Command> {
-        self.ctrl_handle.clone()
+        return (handle, handler);
     }
 
     /// Send a message to the game this controller serves.
@@ -137,8 +166,8 @@ impl ConnectionHandler {
                 Command::Message { data } => {
                     self.send_message(data);
                 },
-                Command::Request { request_num, message, deadline } => {
-                    let message_id = self.send_message(message);
+                Command::Request { request_num, data, deadline } => {
+                    let message_id = self.send_message(data);
                     self.requests.insert(message_id, request_num);
                     self.timeouts.set_timeout(message_id, deadline);
                 },
