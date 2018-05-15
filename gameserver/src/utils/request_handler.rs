@@ -2,7 +2,6 @@
 
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
-use std::io;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use std::collections::HashMap;
@@ -25,12 +24,18 @@ pub struct ConnectionId {
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct MessageId(u64);
 
-pub struct Event<RequestData> {
-    pub connection_id: ConnectionId,
-    pub content: EventContent<RequestData>,
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct RequestId {
+    connection_id: ConnectionId,
+    request_num: usize,
 }
 
-pub enum EventContent<RequestData> {
+pub struct Event {
+    pub connection_id: ConnectionId,
+    pub content: EventContent,
+}
+
+pub enum EventContent {
     Connected,
     Disconnected,
     Message {
@@ -38,7 +43,7 @@ pub enum EventContent<RequestData> {
         data: Vec<u8>,
     },
     Response {
-        request_data: RequestData,
+        request_id: RequestId,
         value: ResponseValue,
     }
 }
@@ -51,38 +56,38 @@ pub enum ResponseError {
     Timeout,
 }
 
-pub enum Command<RequestData> {
+pub enum Command {
     Message {
         data: Vec<u8>
     },
     Request {
-        request_data: RequestData,
+        request_num: usize,
         message: Vec<u8>,
         deadline: Instant,
     },
 }
 
 
-pub struct ConnectionHandler<RequestData> {
+pub struct ConnectionHandler {
     connection_id: ConnectionId,
 
     connection: Connection,
 
-    ctrl_chan: UnboundedReceiver<Command<RequestData>>,
-    ctrl_handle: UnboundedSender<Command<RequestData>>,
+    ctrl_chan: UnboundedReceiver<Command>,
+    ctrl_handle: UnboundedSender<Command>,
 
-    requests: HashMap<MessageId, RequestData>,
+    requests: HashMap<MessageId, usize>,
     timeouts: TimeoutHeap<MessageId>,
     message_counter: u64,
     
-    event_channel: UnboundedSender<Event<RequestData>>,
+    event_channel: UnboundedSender<Event>,
 }
 
-impl<RequestData> ConnectionHandler<RequestData> {
+impl ConnectionHandler {
     pub fn new(connection_id: ConnectionId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
-               event_channel: UnboundedSender<Event<RequestData>>)
+               event_channel: UnboundedSender<Event>)
                -> Self
     {
         let (snd, rcv) = unbounded();
@@ -104,12 +109,12 @@ impl<RequestData> ConnectionHandler<RequestData> {
     }
 
     /// Get a handle to the control channel for this client.
-    pub fn handle(&self) -> UnboundedSender<Command<RequestData>> {
+    pub fn handle(&self) -> UnboundedSender<Command> {
         self.ctrl_handle.clone()
     }
 
     /// Send a message to the game this controller serves.
-    fn dispatch_event(&mut self, content: EventContent<RequestData>) {
+    fn dispatch_event(&mut self, content: EventContent) {
         let event = Event {
             connection_id: self.connection_id,
             content,
@@ -118,7 +123,7 @@ impl<RequestData> ConnectionHandler<RequestData> {
             .expect("event channel broke");
     }
 
-    fn poll_ctrl_chan(&mut self) -> Poll<Command<RequestData>, ()> {
+    fn poll_ctrl_chan(&mut self) -> Poll<Command, ()> {
         // we hold a handle to this channel, so it can never close.
         // this means errors can not happen.
         let value = self.ctrl_chan.poll().unwrap();
@@ -132,9 +137,9 @@ impl<RequestData> ConnectionHandler<RequestData> {
                 Command::Message { data } => {
                     self.send_message(data);
                 },
-                Command::Request { message, request_data, deadline } => {
+                Command::Request { request_num, message, deadline } => {
                     let message_id = self.send_message(message);
-                    self.requests.insert(message_id, request_data);
+                    self.requests.insert(message_id, request_num);
                     self.timeouts.set_timeout(message_id, deadline);
                 },
             }
@@ -178,10 +183,12 @@ impl<RequestData> ConnectionHandler<RequestData> {
     }
 
     fn resolve_response(&mut self, message_id: MessageId, data: Vec<u8>) {
-        if let Some(request_data) = self.requests.remove(&message_id) {
+        if let Some(request_num) = self.requests.remove(&message_id) {
             self.timeouts.cancel_timeout(message_id);
             let value = Ok(data);
-            let event = EventContent::Response { request_data, value };
+            let connection_id = self.connection_id;
+            let request_id = RequestId { connection_id, request_num };
+            let event = EventContent::Response { request_id, value };
             self.dispatch_event(event);
         }
     }
@@ -214,7 +221,7 @@ impl<RequestData> ConnectionHandler<RequestData> {
     }
 }
 
-impl<RequestData> Future for ConnectionHandler<RequestData> {
+impl Future for ConnectionHandler {
     type Item = ();
     type Error = ();
 
