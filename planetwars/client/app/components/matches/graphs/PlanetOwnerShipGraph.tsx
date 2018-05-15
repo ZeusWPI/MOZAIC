@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import * as d3 from 'd3';
 
-import { Graph, Section, color, GraphProps } from './Shared';
+import { Graph, Section, color, GraphProps, neutralColor } from './Shared';
 import { PlanetList, Planet, GameState, StaticPlanet, Player } from './MatchLog';
 
 // tslint:disable-next-line:no-var-requires
@@ -48,17 +48,17 @@ export class PlanetOwnerShipGraphSection extends Section<{}> {
       const playerCount = (planetMap.get(name) as OwnerShipData).playerCount;
       Array.from(playerCount.keys()).sort().forEach((player) => {
         let playerName: string;
-        let playerUuid: string;
+        let playerId: number | null;
         if (player !== undefined) {
           playerName = player.name;
-          playerUuid = player.uuid;
+          playerId = player.id;
         } else {
           playerName = "undefined";
-          playerUuid = "undefined";
+          playerId = null;
         }
         planetPlayerData.push({ planetName: name,
           playerName,
-          playerUuid,
+          playerId,
           expeditionCount: (playerCount.get(player) as number),
         });
       });
@@ -83,7 +83,7 @@ export interface PlanetOwnerShipData {
 export interface PlanetPlayerData {
   planetName: string;
   playerName: string;
-  playerUuid: string;
+  playerId: number | null;
   expeditionCount: number;
 }
 
@@ -120,7 +120,7 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
         .attr("y", planetBarCurrentHeight.get(element.planetName) as number)
         .attr("width", xScale.bandwidth)
         .attr("height", curHeight)
-        .attr("fill", color(element.playerUuid));
+        .attr("fill", element.playerId !== null ? color(element.playerId.toString()) : neutralColor);
 
       const planetHeight = planetBarCurrentHeight.get(element.planetName) as number;
       planetBarCurrentHeight.set(element.planetName, planetHeight + curHeight);
