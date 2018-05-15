@@ -46,7 +46,7 @@ export class PlanetOwnerShipGraphSection extends Section<{}> {
     const planetNames = Array.from(planetMap.keys());
     planetNames.forEach((name) => {
       const playerCount = (planetMap.get(name) as OwnerShipData).playerCount;
-      Array.from(playerCount.keys()).sort().forEach((player) => {
+      Array.from(playerCount.keys()).forEach((player) => {
         let playerName: string;
         let playerId: number | null;
         if (player !== undefined) {
@@ -59,6 +59,16 @@ export class PlanetOwnerShipGraphSection extends Section<{}> {
           expeditionCount: (playerCount.get(player) as number),
         });
       });
+    });
+
+    planetPlayerData.sort((a, b) => {
+      if (a.playerId === null) {
+        return -1;
+      } else if (b.playerId === null) {
+        return 1;
+      } else {
+        return a.playerId - b.playerId;
+      }
     });
 
     const width = 800;
