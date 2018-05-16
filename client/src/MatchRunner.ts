@@ -1,8 +1,10 @@
 import { ServerRunner } from "./ServerRunner";
 import { ClientRunner, ClientData } from "./ClientRunner";
 import { BotConfig, Address, Connection } from "./index";
+import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
+import { MessageHandler, RequestResolver } from "./RequestResolver";
 
 export interface MatchParams {
     ctrl_token: string;
@@ -25,8 +27,13 @@ export class MatchRunner {
     private serverRunner: ServerRunner;
     private clientRunner: ClientRunner;
 
+    private connHandler: RequestResolver;
+
     private _onComplete = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
+
+    private _onPlayerConnected = new SimpleEventDispatcher<number>();
+    private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
@@ -56,7 +63,25 @@ export class MatchRunner {
         // TODO: is this desired behaviour?
         this.clientRunner.onError.subscribe((err) => {
             this._onError.dispatch(err);
-        })
+        });
+
+        this.connHandler = new RequestResolver(this.connection, (data) => {
+            const text = new TextDecoder('utf-8').decode(data);
+            let message: LobbyMessage = JSON.parse(text);
+            
+            switch (message.type) {
+                case 'player_connected': {
+                    const { player_id } = message.content;
+                    this._onPlayerConnected.dispatch(player_id);
+                    break;
+                }
+                case 'player_disconnected': {
+                    const { player_id } = message.content;
+                    this._onPlayerDisconnected.dispatch(player_id);
+                    break;
+                }
+            }
+        });
     }
 
     public run() {
@@ -72,11 +97,39 @@ export class MatchRunner {
         }, 1000);
     }
 
+    public get controlChannel() {
+        return this.connection;
+    }
+
     public get onComplete() {
         return this._onComplete.asEvent();
     }
 
     public get onError() {
         return this._onError.asEvent();
+    }
+
+    public get onPlayerConnected() {
+        return this._onPlayerConnected.asEvent();
+    }
+
+    public get onPlayerDisconnected() {
+        return this._onPlayerDisconnected.asEvent();
+    }
+}
+
+type LobbyMessage = PlayerConnectedMessage | PlayerDisconnectedMessage;
+
+interface PlayerConnectedMessage {
+    type: "player_connected";
+    content: {
+        player_id: number;
+    }
+}
+
+interface PlayerDisconnectedMessage {
+    type: "player_disconnected";
+    content: {
+        player_id: number;
     }
 }
