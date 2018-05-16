@@ -79,6 +79,7 @@ enum PwMatchState {
 
 impl PwMatch {
     pub fn new(conf: Config,
+               ctrl_token: Vec<u8>,
                client_tokens: Vec<Vec<u8>>,
                routing_table: Arc<Mutex<RoutingTable>>,
                logger: slog::Logger)
@@ -88,6 +89,7 @@ impl PwMatch {
 
         let lobby = Lobby::new(
             conf,
+            ctrl_token,
             client_tokens,
             routing_table,
             snd.clone(),
@@ -149,6 +151,7 @@ impl Future for PwMatch {
 pub struct Lobby {
     conf: Config,
     logger: slog::Logger,
+    ctrl_handle: ConnectionHandle,
 
     waiting_for: HashSet<PlayerId>,
     connection_player: HashMap<ConnectionId, PlayerId>,
@@ -157,19 +160,28 @@ pub struct Lobby {
 
 impl Lobby {
     fn new(conf: Config,
+           ctrl_token: Vec<u8>,
            client_tokens: Vec<Vec<u8>>,
            routing_table: Arc<Mutex<RoutingTable>>,
            event_channel_handle: UnboundedSender<Event>,
            logger: slog::Logger)
            -> Self
     {
+        let (ctrl_handle, handler) = ConnectionHandler::new(
+            ConnectionId { connection_num: 0 },
+            ctrl_token,
+            routing_table.clone(),
+            event_channel_handle.clone(),
+        );
+        tokio::spawn(handler);
+
         let mut players = HashMap::new();
         let mut connection_player = HashMap::new();
         let mut waiting_for = HashSet::new();
 
         for (num, token) in client_tokens.into_iter().enumerate() {
             let player_id = PlayerId::new(num);
-            let connection_id = ConnectionId { connection_num: num };
+            let connection_id = ConnectionId { connection_num: num+1 };
 
             let (handle, handler) = ConnectionHandler::new(
                 connection_id,
@@ -193,6 +205,7 @@ impl Lobby {
         return Lobby {
             conf,
             logger,
+            ctrl_handle,
             waiting_for,
             connection_player,
             players,
