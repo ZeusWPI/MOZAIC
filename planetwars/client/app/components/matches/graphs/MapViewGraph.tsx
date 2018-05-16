@@ -35,7 +35,16 @@ export class MapViewGraphSection extends Section<{}> {
       paths[dest.index][or.index] += shipCount;
     });
 
-    const data = { max, min, planets, paths };
+    const startingPlanets: StaticPlanet[] = [];
+    Array.from(Object.keys(gameStates[0].planets)).forEach((name) => {
+      const planet = gameStates[0].planets[name];
+      if (planet.owner !== undefined) {
+        const staticPlanet = planetMap[name];
+        startingPlanets.push(staticPlanet);
+      }
+    });
+
+    const data = { max, min, planets, paths, startingPlanets };
     return <MapViewGraph width={width} height={height} data={data} />;
   }
 }
@@ -45,6 +54,7 @@ export interface MapViewData {
   paths: number[][];
   min: { x: number, y: number };
   max: { x: number, y: number };
+  startingPlanets: StaticPlanet[];
 }
 
 export class MapViewGraph extends Graph<MapViewData> {
@@ -107,6 +117,17 @@ export class MapViewGraph extends Graph<MapViewData> {
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => radius(d3.max(paths[p.index]) || minRadius))
       .attr("fill", color('0'));
+
+    this.root.append('g')
+      .attr('class', 'starting-planets-yo')
+      .selectAll('circle')
+      .data(data.startingPlanets)
+      .enter()
+      .append('circle')
+      .attr("cx", (p) => x(p.x))
+      .attr("cy", (p) => y(p.y))
+      .attr("r", minRadius)
+      .attr("fill", color("1"));
   }
 
   protected updateGraph(): void {
