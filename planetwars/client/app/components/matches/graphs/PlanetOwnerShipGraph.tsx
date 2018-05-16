@@ -139,7 +139,22 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
         .attr("y", planetBarCurrentHeight.get(element.planetName) as number)
         .attr("width", xScale.bandwidth)
         .attr("height", curHeight)
-        .attr("fill", element.playerId !== null ? color(element.playerId.toString()) : neutralColor);
+        .attr("fill", element.playerId !== null ? color(element.playerId.toString()) : neutralColor)
+        .on("mouseover", () => {
+          g.append("text")
+            .attr("class", "score-value")
+            .attr("x", width - margin.right + 10)
+            .attr("y", height - margin.bottom)
+            .text(
+              d3.format(".2%")(
+                (element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number)) / data.numberOfStates
+              )
+            )
+            .style("fill", neutralColor);
+        })
+        .on("mouseout", () => {
+          g.selectAll(".score-value").remove();
+        });
 
       const planetHeight = planetBarCurrentHeight.get(element.planetName) as number;
       planetBarCurrentHeight.set(element.planetName, planetHeight + curHeight);
