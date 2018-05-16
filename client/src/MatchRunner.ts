@@ -97,6 +97,12 @@ export class MatchRunner {
         }, 1000);
     }
 
+    public start() {
+        let cmd: LobbyCommand = { type: "start_match" };
+        let text = JSON.stringify(cmd);
+        this.connHandler.send(Buffer.from(text, 'utf-8'));
+    }
+
     public get controlChannel() {
         return this.connection;
     }
@@ -132,4 +138,8 @@ interface PlayerDisconnectedMessage {
     content: {
         player_id: number;
     }
+}
+
+interface LobbyCommand {
+    type: "start_match"
 }
