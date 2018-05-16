@@ -122,11 +122,11 @@ impl Future for PwMatch {
                 PwMatchState::Lobby(mut lobby) => {
                     lobby.handle_event(event);
                     
-                    if lobby.waiting_for.is_empty() {
+                    if lobby.waiting {
+                        self.state = PwMatchState::Lobby(lobby);
+                    } else {
                         let pw_controller = PwController::new(lobby);
                         self.state = PwMatchState::Playing(pw_controller);
-                    } else {
-                        self.state = PwMatchState::Lobby(lobby);
                     }
                 }
 
@@ -153,7 +153,8 @@ pub struct Lobby {
     logger: slog::Logger,
     ctrl_handle: ConnectionHandle,
 
-    waiting_for: HashSet<PlayerId>,
+    // whether we should stay in the waiting state
+    waiting: bool,
     connection_player: HashMap<ConnectionId, PlayerId>,
     players: HashMap<PlayerId, Player>,
 }
@@ -206,7 +207,7 @@ impl Lobby {
             conf,
             logger,
             ctrl_handle,
-            waiting_for,
+            waiting: true,
             connection_player,
             players,
         }
@@ -222,7 +223,6 @@ impl Lobby {
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
-                    self.waiting_for.remove(&player_id);
                 }
             },
             EventContent::Disconnected => {
@@ -233,10 +233,17 @@ impl Lobby {
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
-                    self.waiting_for.insert(player_id);
                 }
             },
-            EventContent::Message { .. } => {},
+            EventContent::Message { data, .. } => {
+                let cmd = serde_json::from_slice(&data).unwrap();
+
+                match cmd {
+                    proto::LobbyCommand::StartMatch => {
+                        self.waiting = false;
+                    }
+                }
+            },
             EventContent::Response { .. } => {},
         }
     }
