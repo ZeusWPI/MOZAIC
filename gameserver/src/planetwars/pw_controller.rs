@@ -65,6 +65,73 @@ pub struct Player {
     connection: ConnectionHandle,
 }
 
+pub struct PwMatch {
+    state: PwMatchState,
+    event_channel: UnboundedReceiver<Event>,
+}
+
+enum PwMatchState {
+    Lobby(Lobby),
+    Playing(PwController),
+    Finished,
+}
+
+impl PwMatch {
+    pub fn new(conf: Config,
+               client_tokens: Vec<Vec<u8>>,
+               routing_table: Arc<Mutex<RoutingTable>>,
+               logger: slog::Logger)
+               -> Self
+    {
+        let (snd, rcv) = mpsc::unbounded();
+
+        let lobby = Lobby::new(conf, client_tokens, routing_table, snd, logger);
+
+        return PwMatch {
+            state: PwMatchState::Lobby(lobby),
+            event_channel: rcv,
+        }
+    }
+
+    fn take_state(&mut self) -> PwMatchState {
+        mem::replace(&mut self.state, PwMatchState::Finished)
+    }
+}
+
+impl Future for PwMatch {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        loop {
+            let event = try_ready!(self.event_channel.poll())
+                .expect("event channel closed");
+
+            
+            match self.take_state() {
+                PwMatchState::Lobby(mut lobby) => {
+                    lobby.handle_event(event);
+                    // TODO
+                    let pw_controller = PwController::new(lobby);
+                    self.state = PwMatchState::Playing(pw_controller);
+                }
+                PwMatchState::Playing(mut pw_controller) => {
+                    pw_controller.handle_event(event);
+
+                    if pw_controller.state.is_finished() {
+                        self.state = PwMatchState::Finished;
+                    } else {    
+                        self.state = PwMatchState::Playing(pw_controller);
+                    }
+                }
+                PwMatchState::Finished => {
+                    return Ok(Async::Ready(()));
+                }
+            }
+        }
+    }
+}
+
 pub struct Lobby {
     conf: Config,
     logger: slog::Logger,
@@ -134,14 +201,10 @@ pub struct PwController {
 
     waiting_for: HashSet<PlayerId>,
     commands: HashMap<PlayerId, ResponseValue>,
-
-    event_channel: UnboundedReceiver<Event>,
 }
 
 impl PwController {
     pub fn new(lobby: Lobby) -> Self {
-        let (snd, rcv) = mpsc::unbounded();
-
         let state = lobby.conf.create_game(lobby.players.len());
 
         let planet_map = state.planets.iter().map(|planet| {
@@ -149,7 +212,6 @@ impl PwController {
         }).collect();
 
         let mut controller = PwController {
-            event_channel: rcv,
             state,
             planet_map,
             players: lobby.players,
@@ -308,38 +370,24 @@ impl PwController {
             ship_count: mv.ship_count,
         })
     }
-}
 
-impl Future for PwController {
-    type Item = ();
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<(), ()> {
-        loop {
-            if self.state.is_finished() {
-                return Ok(Async::Ready(()));
+    fn handle_event(&mut self, event: Event) {
+        match event.content {
+            EventContent::Connected => {},
+            EventContent::Disconnected => {},
+            EventContent::Message { .. } => {},
+            EventContent::Response { request_id, value } => {
+                // we only send requests to players
+                let &player_id = self.connection_player
+                    .get(&event.connection_id).unwrap();
+                self.commands.insert(player_id, value);
+                self.waiting_for.remove(&player_id);
             }
+        }
 
-            let event = try_ready!(self.event_channel.poll())
-                .expect("event channel closed");
-
-            match event.content {
-                EventContent::Connected => {},
-                EventContent::Disconnected => {},
-                EventContent::Message { .. } => {},
-                EventContent::Response { request_id, value } => {
-                    // we only send requests to players
-                    let &player_id = self.connection_player
-                        .get(&event.connection_id).unwrap();
-                    self.commands.insert(player_id, value);
-                    self.waiting_for.remove(&player_id);
-                }
-            }
-
-            if self.waiting_for.is_empty() {
-                let commands = mem::replace(&mut self.commands, HashMap::new());
-                self.step(commands);
-            }
+        if self.waiting_for.is_empty() {
+            let commands = mem::replace(&mut self.commands, HashMap::new());
+            self.step(commands);
         }
     }
 }
