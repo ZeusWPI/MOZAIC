@@ -65,36 +65,22 @@ pub struct Player {
     connection: ConnectionHandle,
 }
 
-pub struct PwController {
-    state: PlanetWars,
-    planet_map: HashMap<String, usize>,
+pub struct Lobby {
+    conf: Config,
     logger: slog::Logger,
 
     connection_player: HashMap<ConnectionId, PlayerId>,
     players: HashMap<PlayerId, Player>,
-
-    waiting_for: HashSet<PlayerId>,
-    commands: HashMap<PlayerId, ResponseValue>,
-
-    event_channel: UnboundedReceiver<Event>,
-    routing_table: Arc<Mutex<RoutingTable>>,
 }
 
-impl PwController {
-    pub fn new(conf: Config,
-               client_tokens: Vec<Vec<u8>>,
-               routing_table: Arc<Mutex<RoutingTable>>,
-               logger: slog::Logger)
-               -> Self
+impl Lobby {
+    fn new(conf: Config,
+           client_tokens: Vec<Vec<u8>>,
+           routing_table: Arc<Mutex<RoutingTable>>,
+           event_channel_handle: UnboundedSender<Event>,
+           logger: slog::Logger)
+           -> Self
     {
-        let (snd, rcv) = mpsc::unbounded();
-
-        let state = conf.create_game(client_tokens.len());
-
-        let planet_map = state.planets.iter().map(|planet| {
-            (planet.name.clone(), planet.id)
-        }).collect();
-
         let mut players = HashMap::new();
         let mut connection_player = HashMap::new();
 
@@ -106,7 +92,7 @@ impl PwController {
                 connection_id,
                 token,
                 routing_table.clone(),
-                snd.clone(),
+                event_channel_handle.clone(),
             );
 
             let player = Player {
@@ -120,14 +106,55 @@ impl PwController {
             connection_player.insert(connection_id, player_id);
         }
 
+        return Lobby {
+            conf,
+            logger,
+            connection_player,
+            players,
+        }
+    }
+
+    fn handle_event(&mut self, event: Event) {
+        match event.content {
+            EventContent::Connected => {},
+            EventContent::Disconnected => {},
+            EventContent::Message { .. } => {},
+            EventContent::Response { .. } => {},
+        }
+    }
+}
+
+pub struct PwController {
+    state: PlanetWars,
+    planet_map: HashMap<String, usize>,
+    logger: slog::Logger,
+
+    connection_player: HashMap<ConnectionId, PlayerId>,
+    players: HashMap<PlayerId, Player>,
+
+    waiting_for: HashSet<PlayerId>,
+    commands: HashMap<PlayerId, ResponseValue>,
+
+    event_channel: UnboundedReceiver<Event>,
+}
+
+impl PwController {
+    pub fn new(lobby: Lobby) -> Self {
+        let (snd, rcv) = mpsc::unbounded();
+
+        let state = lobby.conf.create_game(lobby.players.len());
+
+        let planet_map = state.planets.iter().map(|planet| {
+            (planet.name.clone(), planet.id)
+        }).collect();
+
         let mut controller = PwController {
-            routing_table,
             event_channel: rcv,
             state,
             planet_map,
-            players,
-            connection_player,
-            logger,
+            players: lobby.players,
+            connection_player: lobby.connection_player,
+            logger: lobby.logger,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
