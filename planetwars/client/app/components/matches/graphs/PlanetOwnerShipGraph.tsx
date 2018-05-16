@@ -71,10 +71,12 @@ export class PlanetOwnerShipGraphSection extends Section<{}> {
       }
     });
 
+    log.players.sort();
+
     const width = 800;
     const height = 400;
 
-    const data: PlanetOwnerShipData = { numberOfStates, planetPlayerData, planetNames, planetExpeditionCount };
+    const data: PlanetOwnerShipData = { numberOfStates, planetPlayerData, planetNames, players: log.players, planetExpeditionCount };
 
     return < PlanetOwnerShipGraph width={width} height={height} data={data} />;
   }
@@ -84,6 +86,7 @@ export interface PlanetOwnerShipData {
   numberOfStates: number;
   planetPlayerData: PlanetPlayerData[];
   planetNames: string[];
+  players: Player[];
   planetExpeditionCount: Map<string, number>;
 }
 
@@ -100,7 +103,7 @@ export interface OwnerShipData {
 export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
   protected createGraph(): void { 
     const { width, height, data } = this.props;
-    const margin = { top: 20, right: 20, bottom: 100, left: 35};
+    const margin = { top: 20, right: 100, bottom: 100, left: 35};
     const xScale = d3.scaleBand()
                     .domain(data.planetNames)
                     .rangeRound([0 + margin.left, width - margin.right])
@@ -169,6 +172,28 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
 
     yAxisSvg.selectAll("text")
     .style("fill", neutralColor);
+
+    let currentY = margin.top;
+    data.players.forEach((player) => {
+      g.append("text")
+        .text(player.name)
+        .attr("x", width - margin.right)
+        .attr("y", currentY)
+        .attr("font-size", "16px")
+        .attr("text-anchor", "start")
+        .attr("alignment-baseline", "hanging")
+        .attr("fill", color(player.id.toString()));
+      currentY += 20;
+    });
+    
+    g.append("text")
+      .text("free")
+      .attr("x", width - margin.right)
+      .attr("y", currentY)
+      .attr("font-size", "16px")
+      .attr("text-anchor", "start")
+      .attr("alignment-baseline", "hanging")
+      .attr("fill", neutralColor);
   }
 
   protected updateGraph(): void {
