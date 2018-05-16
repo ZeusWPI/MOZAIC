@@ -1,10 +1,11 @@
 import { ServerRunner } from "./ServerRunner";
 import { ClientRunner, ClientData } from "./ClientRunner";
-import { BotConfig, Address } from "./index";
+import { BotConfig, Address, Connection } from "./index";
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
 
 export interface MatchParams {
+    ctrl_token: string;
     players: PlayerData[];
     mapFile: string;
     maxTurns: number;
@@ -20,6 +21,7 @@ export interface PlayerData {
 }
 
 export class MatchRunner {
+    private connection: Connection;
     private serverRunner: ServerRunner;
     private clientRunner: ClientRunner;
 
@@ -28,6 +30,8 @@ export class MatchRunner {
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
+        let token = Buffer.from(params.ctrl_token, 'hex');
+        this.connection = new Connection(token);
 
         const { address, logFile } = params;
         let clients: ClientData[] = [];
@@ -60,6 +64,10 @@ export class MatchRunner {
         // run clients after a second, so that we are certain the server has
         // started.
         setTimeout(() => {
+            this.connection.connect(
+                this.serverRunner.address.host,
+                this.serverRunner.address.port,
+            );
             this.clientRunner.run();
         }, 1000);
     }

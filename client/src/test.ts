@@ -18,6 +18,7 @@ const simpleBot: BotConfig = {
 const bin_path = "../gameserver/target/debug/mozaic_bot_driver";
 
 const params: MatchParams = {
+    ctrl_token: "abba",
     players: [
         {
             name: 'timp',
