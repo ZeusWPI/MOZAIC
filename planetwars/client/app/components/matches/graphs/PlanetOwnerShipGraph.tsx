@@ -133,25 +133,39 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
     }
 
     data.planetPlayerData.forEach((element) => {
-      const relativeCount = element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number);
-      const curHeight = heightScale(relativeCount);
+      const curRatio = element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number);
+      const curHeight = heightScale(curRatio);
+      const curY = planetBarCurrentHeight.get(element.planetName) as number;
       g.append("rect")
         .attr("x", xScale(element.planetName) as number)
-        .attr("y", planetBarCurrentHeight.get(element.planetName) as number)
+        .attr("y", curY)
         .attr("width", xScale.bandwidth)
         .attr("height", curHeight)
         .attr("fill", element.playerId !== null ? color(element.playerId.toString()) : neutralColor)
-        .on("mouseover", () => {
+        .on("mouseover", function() {
+          g.append("rect")
+            .attr("class", "overlay")
+            .attr("x", xScale(element.planetName) as number)
+            .attr("y", curY)
+            .attr("width", xScale.bandwidth)
+            .attr("height", curHeight)
+            .attr("fill", "white")
+            .attr("opacity", 0.25)
+            .on("mouseout", function() {
+              g.selectAll(".overlay").remove();
+            })
+            .on("mouseout", () => {
+              d3.selectAll(".score-value").remove();
+              d3.selectAll(".overlay").remove();
+            });
+
           g.append("text")
             .attr("class", "score-value")
             .attr("x", width - margin.right + 10)
             .attr("y", height - margin.bottom)
-            .text(d3.format(".2%")(relativeCount / data.numberOfStates))
+            .text(d3.format(".2%")(curRatio / data.numberOfStates))
             .style("fill", neutralColor);
         })
-        .on("mouseout", () => {
-          g.selectAll(".score-value").remove();
-        });
 
       const planetHeight = planetBarCurrentHeight.get(element.planetName) as number;
       planetBarCurrentHeight.set(element.planetName, planetHeight + curHeight);
