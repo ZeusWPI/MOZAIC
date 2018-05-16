@@ -2,7 +2,6 @@
 mod network;
 mod oneshot_server;
 mod planetwars;
-mod players;
 mod protobuf_codec;
 mod utils;
 

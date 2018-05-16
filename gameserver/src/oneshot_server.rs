@@ -14,7 +14,7 @@ use tokio::timer::Delay;
 
 use network;
 use network::router::RoutingTable;
-use planetwars::{PwController, Config as PwConfig};
+use planetwars::{PwMatch, Config as PwConfig};
 
 #[serde(bound(deserialize = ""))]
 #[derive(Serialize, Deserialize)]
@@ -75,7 +75,7 @@ impl Future for OneshotServer {
             player_desc.token.clone()
         }).collect();
 
-        let controller = PwController::new(
+        let controller = PwMatch::new(
             self.config.game_config.clone(),
             client_tokens,
             routing_table.clone(),
