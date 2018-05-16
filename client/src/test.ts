@@ -40,4 +40,21 @@ const params: MatchParams = {
 }
 
 let runner = new MatchRunner(bin_path, params);
+let waiting_for = new Set();
+
+params.players.forEach((player) => {
+    waiting_for.add(player.number);
+});
+
+runner.onPlayerConnected.subscribe((player_num) => {
+    waiting_for.delete(player_num);
+    if (waiting_for.size == 0) {
+        runner.start_match();
+    }
+});
+
+runner.onPlayerDisconnected.subscribe((player_num) => {
+    waiting_for.add(player_num);
+})
+
 runner.run();

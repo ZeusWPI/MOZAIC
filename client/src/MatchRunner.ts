@@ -97,7 +97,7 @@ export class MatchRunner {
         }, 1000);
     }
 
-    public start() {
+    public start_match() {
         let cmd: LobbyCommand = { type: "start_match" };
         let text = JSON.stringify(cmd);
         this.connHandler.send(Buffer.from(text, 'utf-8'));
