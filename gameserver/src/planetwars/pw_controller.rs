@@ -111,10 +111,15 @@ impl Future for PwMatch {
             match self.take_state() {
                 PwMatchState::Lobby(mut lobby) => {
                     lobby.handle_event(event);
-                    // TODO
-                    let pw_controller = PwController::new(lobby);
-                    self.state = PwMatchState::Playing(pw_controller);
+                    
+                    if lobby.waiting_for.is_empty() {
+                        let pw_controller = PwController::new(lobby);
+                        self.state = PwMatchState::Playing(pw_controller);
+                    } else {
+                        self.state = PwMatchState::Lobby(lobby);
+                    }
                 }
+
                 PwMatchState::Playing(mut pw_controller) => {
                     pw_controller.handle_event(event);
 
@@ -124,6 +129,7 @@ impl Future for PwMatch {
                         self.state = PwMatchState::Playing(pw_controller);
                     }
                 }
+
                 PwMatchState::Finished => {
                     return Ok(Async::Ready(()));
                 }
@@ -136,6 +142,7 @@ pub struct Lobby {
     conf: Config,
     logger: slog::Logger,
 
+    waiting_for: HashSet<PlayerId>,
     connection_player: HashMap<ConnectionId, PlayerId>,
     players: HashMap<PlayerId, Player>,
 }
@@ -150,6 +157,7 @@ impl Lobby {
     {
         let mut players = HashMap::new();
         let mut connection_player = HashMap::new();
+        let mut waiting_for = HashSet::new();
 
         for (num, token) in client_tokens.into_iter().enumerate() {
             let player_id = PlayerId::new(num);
@@ -171,11 +179,13 @@ impl Lobby {
 
             players.insert(player_id, player);
             connection_player.insert(connection_id, player_id);
+            waiting_for.insert(player_id);
         }
 
         return Lobby {
             conf,
             logger,
+            waiting_for,
             connection_player,
             players,
         }
@@ -183,7 +193,13 @@ impl Lobby {
 
     fn handle_event(&mut self, event: Event) {
         match event.content {
-            EventContent::Connected => {},
+            EventContent::Connected => {
+                let val = self.connection_player.get(&event.connection_id);
+                if let Some(player_id) = val {
+                    println!("{:?} connected", player_id);
+                    self.waiting_for.remove(player_id);
+                }
+            },
             EventContent::Disconnected => {},
             EventContent::Message { .. } => {},
             EventContent::Response { .. } => {},
