@@ -14,11 +14,13 @@ use tokio::timer::Delay;
 
 use network;
 use network::router::RoutingTable;
-use planetwars::{PwController, Config as PwConfig};
+use planetwars::{PwMatch, Config as PwConfig};
 
 #[serde(bound(deserialize = ""))]
 #[derive(Serialize, Deserialize)]
 pub struct MatchDescription<T: DeserializeOwned> {
+    #[serde(deserialize_with="from_hex")]
+    pub ctrl_token: Vec<u8>,
     pub players: Vec<PlayerConfig>,
     pub address: String,
     pub log_file: String,
@@ -75,8 +77,9 @@ impl Future for OneshotServer {
             player_desc.token.clone()
         }).collect();
 
-        let controller = PwController::new(
+        let controller = PwMatch::new(
             self.config.game_config.clone(),
+            self.config.ctrl_token.clone(),
             client_tokens,
             routing_table.clone(),
             logger,

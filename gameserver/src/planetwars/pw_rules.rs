@@ -1,4 +1,4 @@
-use players::PlayerId;
+use super::PlayerId;
 
 /// The planet wars game rules.
 pub struct PlanetWars {

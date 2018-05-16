@@ -51,7 +51,7 @@ export class Client {
         this.address = connData.address;
         this.botRunner = new BotRunner(botConfig);
         this.logger = logger;
-        this.state = ClientState.CONNECTING;
+        this.state = ClientState.CONNECTED;
         this.turnNum = 0;
 
         this.botRunner.onError.subscribe((err) => {

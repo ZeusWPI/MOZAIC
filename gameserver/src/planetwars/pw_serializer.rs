@@ -1,4 +1,4 @@
-use players::PlayerId;
+use super::PlayerId;
 
 use super::pw_rules::{PlanetWars, Planet, Expedition};
 use super::pw_protocol as proto;

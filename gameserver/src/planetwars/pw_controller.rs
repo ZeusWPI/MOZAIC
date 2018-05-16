@@ -1,11 +1,21 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
+use std::mem;
 
-use futures::{Future, Poll, Async};
+use tokio;
+use futures::{Future, Poll, Async, Stream};
+use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 
-use players::{PlayerId, PlayerHandler};
-use utils::{PlayerLock, ResponseValue, ResponseError};
+use utils::request_handler::{
+    ConnectionId,
+    Event,
+    EventContent,
+    ConnectionHandle,
+    ConnectionHandler,
+    ResponseValue,
+    ResponseError,
+};
 use network::router::RoutingTable;
 
 use super::Config;
@@ -21,83 +31,259 @@ use super::pw_protocol::{
 use slog;
 use serde_json;
 
-
-pub struct PwController {
-    lock: PlayerLock,
-    game_state: GameState,
-    state: PlanetWars,
-    planet_map: HashMap<String, usize>,
-    logger: slog::Logger,
+// TODO: find a better place for this
+#[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
+pub struct PlayerId {
+    id: usize,
 }
 
+impl PlayerId {
+    pub fn new(id: usize) -> PlayerId {
+        PlayerId {
+            id
+        }
+    }
 
-enum GameState {
-    /// Waiting for players to connect
-    Connecting,
-    /// Game is in progress
-    Playing,
-    /// Game has terminated
+    pub fn as_usize(&self) -> usize {
+        self.id
+    }
+}
+
+impl slog::KV for PlayerId {
+    fn serialize(&self,
+                 _record: &slog::Record,
+                 serializer: &mut slog::Serializer)
+                 -> slog::Result
+    {
+        serializer.emit_usize("player_id", self.as_usize())
+    }
+}
+
+pub struct Player {
+    id: PlayerId,
+    connection: ConnectionHandle,
+}
+
+pub struct PwMatch {
+    state: PwMatchState,
+    event_channel_handle: UnboundedSender<Event>,
+    event_channel: UnboundedReceiver<Event>,
+}
+
+enum PwMatchState {
+    Lobby(Lobby),
+    Playing(PwController),
     Finished,
 }
 
-impl PwController {
+impl PwMatch {
     pub fn new(conf: Config,
+               ctrl_token: Vec<u8>,
                client_tokens: Vec<Vec<u8>>,
                routing_table: Arc<Mutex<RoutingTable>>,
                logger: slog::Logger)
                -> Self
     {
-        let state = conf.create_game(client_tokens.len());
+        let (snd, rcv) = mpsc::unbounded();
+
+        let lobby = Lobby::new(
+            conf,
+            ctrl_token,
+            client_tokens,
+            routing_table,
+            snd.clone(),
+            logger
+        );
+
+        return PwMatch {
+            state: PwMatchState::Lobby(lobby),
+            event_channel_handle: snd,
+            event_channel: rcv,
+        }
+    }
+
+    fn take_state(&mut self) -> PwMatchState {
+        mem::replace(&mut self.state, PwMatchState::Finished)
+    }
+}
+
+impl Future for PwMatch {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        loop {
+            let event = try_ready!(self.event_channel.poll())
+                .expect("event channel closed");
+
+            
+            match self.take_state() {
+                PwMatchState::Lobby(mut lobby) => {
+                    lobby.handle_event(event);
+                    
+                    if lobby.waiting {
+                        self.state = PwMatchState::Lobby(lobby);
+                    } else {
+                        let pw_controller = PwController::new(lobby);
+                        self.state = PwMatchState::Playing(pw_controller);
+                    }
+                }
+
+                PwMatchState::Playing(mut pw_controller) => {
+                    pw_controller.handle_event(event);
+
+                    if pw_controller.state.is_finished() {
+                        self.state = PwMatchState::Finished;
+                        // TODO: how do we properly handle this?
+                        return Ok(Async::Ready(()));
+                    } else {
+                        self.state = PwMatchState::Playing(pw_controller);
+                    }
+                }
+
+                PwMatchState::Finished => {}
+            }
+        }
+    }
+}
+
+pub struct Lobby {
+    conf: Config,
+    logger: slog::Logger,
+    ctrl_handle: ConnectionHandle,
+
+    // whether we should stay in the waiting state
+    waiting: bool,
+    connection_player: HashMap<ConnectionId, PlayerId>,
+    players: HashMap<PlayerId, Player>,
+}
+
+impl Lobby {
+    fn new(conf: Config,
+           ctrl_token: Vec<u8>,
+           client_tokens: Vec<Vec<u8>>,
+           routing_table: Arc<Mutex<RoutingTable>>,
+           event_channel_handle: UnboundedSender<Event>,
+           logger: slog::Logger)
+           -> Self
+    {
+        let (ctrl_handle, handler) = ConnectionHandler::new(
+            ConnectionId { connection_num: 0 },
+            ctrl_token,
+            routing_table.clone(),
+            event_channel_handle.clone(),
+        );
+        tokio::spawn(handler);
+
+        let mut players = HashMap::new();
+        let mut connection_player = HashMap::new();
+        let mut waiting_for = HashSet::new();
+
+        for (num, token) in client_tokens.into_iter().enumerate() {
+            let player_id = PlayerId::new(num);
+            let connection_id = ConnectionId { connection_num: num+1 };
+
+            let (handle, handler) = ConnectionHandler::new(
+                connection_id,
+                token,
+                routing_table.clone(),
+                event_channel_handle.clone(),
+            );
+
+            let player = Player {
+                id: player_id,
+                connection: handle,
+            };
+
+            tokio::spawn(handler);
+
+            players.insert(player_id, player);
+            connection_player.insert(connection_id, player_id);
+            waiting_for.insert(player_id);
+        }
+
+        return Lobby {
+            conf,
+            logger,
+            ctrl_handle,
+            waiting: true,
+            connection_player,
+            players,
+        }
+    }
+
+    fn handle_event(&mut self, event: Event) {
+        match event.content {
+            EventContent::Connected => {
+                let val = self.connection_player.get(&event.connection_id);
+                if let Some(&player_id) = val {
+                    let msg = proto::LobbyMessage::PlayerConnected {
+                        player_id: (player_id.as_usize() + 1) as u64
+                    };
+                    let serialized = serde_json::to_vec(&msg).unwrap();
+                    self.ctrl_handle.send(serialized);
+                }
+            },
+            EventContent::Disconnected => {
+                let val = self.connection_player.get(&event.connection_id);
+                if let Some(&player_id) = val {
+                    let msg = proto::LobbyMessage::PlayerDisconnected {
+                        player_id: (player_id.as_usize() + 1) as u64
+                    };
+                    let serialized = serde_json::to_vec(&msg).unwrap();
+                    self.ctrl_handle.send(serialized);
+                }
+            },
+            EventContent::Message { data, .. } => {
+                let cmd = serde_json::from_slice(&data).unwrap();
+
+                match cmd {
+                    proto::LobbyCommand::StartMatch => {
+                        self.waiting = false;
+                    }
+                }
+            },
+            EventContent::Response { .. } => {},
+        }
+    }
+}
+
+pub struct PwController {
+    state: PlanetWars,
+    planet_map: HashMap<String, usize>,
+    logger: slog::Logger,
+
+    connection_player: HashMap<ConnectionId, PlayerId>,
+    players: HashMap<PlayerId, Player>,
+
+    waiting_for: HashSet<PlayerId>,
+    commands: HashMap<PlayerId, ResponseValue>,
+}
+
+impl PwController {
+    pub fn new(lobby: Lobby) -> Self {
+        let state = lobby.conf.create_game(lobby.players.len());
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
 
-        let mut player_handler = PlayerHandler::new(routing_table);
-        for (player_num, token) in client_tokens.into_iter().enumerate() {
-            let player_id = PlayerId::new(player_num);
-            player_handler.add_player(player_id, token);
-        }
-
         let mut controller = PwController {
-            lock: PlayerLock::new(player_handler),
-            game_state: GameState::Connecting,
             state,
             planet_map,
-            logger,
+            players: lobby.players,
+            connection_player: lobby.connection_player,
+            logger: lobby.logger,
+
+            waiting_for: HashSet::new(),
+            commands: HashMap::new(),
         };
-
-        // TODO: put this somewhere else
-        // Send hello's to all players. Once they reply, we know they have
-        // connected and the game can begin.
-        let deadline = Instant::now() + Duration::from_secs(60);
-        for player in controller.state.players.iter() {
-            let msg = "hello".to_string().into_bytes();
-            controller.lock.request(player.id, msg, deadline);
-        }
-
+        controller.start_game();
         return controller;
     }
 
-    /// Check whether all players have succesfully connected.
-    fn connect(&mut self, messages: HashMap<PlayerId, ResponseValue>) {
-        // TODO: proper logging
-        for (player_id, response) in messages.into_iter() {
-            match response {
-                Ok(_) => {},
-                Err(_) =>  {
-                    println!("player {} failed to connect", player_id.as_usize());
-                    self.game_state = GameState::Finished;
-                    return;
-                },
-            }
-        }
-        // All players have connected; we can start the game.
-        self.start_game();
-    }
 
     fn start_game(&mut self) {
-        self.game_state = GameState::Playing;
         self.log_state();
         self.prompt_players();
     }
@@ -111,7 +297,6 @@ impl PwController {
         self.log_state();
 
         if self.state.is_finished() {
-            self.game_state = GameState::Finished;
         } else {
             self.prompt_players();
         }
@@ -132,6 +317,7 @@ impl PwController {
 
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
+
         for player in self.state.players.iter() {
             if player.alive {
                 let offset = self.state.players.len() - player.id.as_usize();
@@ -139,7 +325,10 @@ impl PwController {
                 let serialized_state = serialize_rotated(&self.state, offset);
                 let message = proto::ServerMessage::GameState(serialized_state);
                 let serialized = serde_json::to_vec(&message).unwrap();
-                self.lock.request(player.id, serialized, deadline);
+
+                self.waiting_for.insert(player.id);
+                self.players.get_mut(&player.id).unwrap().connection
+                    .request(serialized, deadline);
             }
         }
     }
@@ -168,7 +357,8 @@ impl PwController {
             let player_action = self.execute_action(player_id, result);
             let message = proto::ServerMessage::PlayerAction(player_action);
             let serialized = serde_json::to_vec(&message).unwrap();
-            self.lock.send(player_id, serialized);
+            self.players.get_mut(&player_id).unwrap().connection.
+                send(serialized);
         }
     }
 
@@ -237,28 +427,24 @@ impl PwController {
             ship_count: mv.ship_count,
         })
     }
-}
 
-impl Future for PwController {
-    type Item = ();
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<(), ()> {
-        loop {
-            match self.game_state {
-                GameState::Connecting => {
-                    // once all players gave a sign of life, the game can start.
-                    let responses = try_ready!(self.lock.poll());
-                    self.connect(responses);
-                },
-                GameState::Playing => {
-                    let responses = try_ready!(self.lock.poll());
-                    self.step(responses);
-                },
-                GameState::Finished => {
-                    return Ok(Async::Ready(()));
-                }
+    fn handle_event(&mut self, event: Event) {
+        match event.content {
+            EventContent::Connected => {},
+            EventContent::Disconnected => {},
+            EventContent::Message { .. } => {},
+            EventContent::Response { value, .. } => {
+                // we only send requests to players
+                let &player_id = self.connection_player
+                    .get(&event.connection_id).unwrap();
+                self.commands.insert(player_id, value);
+                self.waiting_for.remove(&player_id);
             }
+        }
+
+        if self.waiting_for.is_empty() {
+            let commands = mem::replace(&mut self.commands, HashMap::new());
+            self.step(commands);
         }
     }
 }

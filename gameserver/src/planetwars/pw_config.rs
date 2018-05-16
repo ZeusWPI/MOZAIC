@@ -4,7 +4,7 @@ use std::io;
 
 use serde_json;
 
-use players::PlayerId;
+use super::PlayerId;
 use super::pw_protocol as proto;
 use super::pw_rules::*;
 

@@ -7,6 +7,7 @@ import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
 
 export interface ServerParams {
+    ctrl_token: string;
     players: PlayerData[];
     mapFile: string;
     maxTurns: number;
@@ -29,6 +30,10 @@ export class ServerRunner {
     constructor(serverPath: string, params: ServerParams) {
         this.params = params;
         this.serverPath = serverPath;
+    }
+
+    public get address() {
+        return this.params.address;
     }
 
     public runServer() {
@@ -66,7 +71,7 @@ export class ServerRunner {
     }
 
     private configJSON() : ServerConfigJSON {
-        const { players, mapFile, maxTurns, address } = this.params;
+        const { ctrl_token, players, mapFile, maxTurns, address } = this.params;
         const logFile = tmp.fileSync().name;
 
         const game_config = {
@@ -74,6 +79,7 @@ export class ServerRunner {
             max_turns: maxTurns,
         };
         return {
+            ctrl_token,
             players,
             game_config,
             address: `${address.host}:${address.port}`,
@@ -83,6 +89,7 @@ export class ServerRunner {
 }
 
 export interface ServerConfigJSON {
+    ctrl_token: string;
     players: BotConfigJSON[];
     game_config: GameConfigJSON;
     address: string;

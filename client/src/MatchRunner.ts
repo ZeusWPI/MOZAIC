@@ -1,10 +1,13 @@
 import { ServerRunner } from "./ServerRunner";
 import { ClientRunner, ClientData } from "./ClientRunner";
-import { BotConfig, Address } from "./index";
+import { BotConfig, Address, Connection } from "./index";
+import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
+import { MessageHandler, RequestResolver } from "./RequestResolver";
 
 export interface MatchParams {
+    ctrl_token: string;
     players: PlayerData[];
     mapFile: string;
     maxTurns: number;
@@ -20,14 +23,22 @@ export interface PlayerData {
 }
 
 export class MatchRunner {
+    private connection: Connection;
     private serverRunner: ServerRunner;
     private clientRunner: ClientRunner;
+
+    private connHandler: RequestResolver;
 
     private _onComplete = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
 
+    private _onPlayerConnected = new SimpleEventDispatcher<number>();
+    private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
+
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
+        let token = Buffer.from(params.ctrl_token, 'hex');
+        this.connection = new Connection(token);
 
         const { address, logFile } = params;
         let clients: ClientData[] = [];
@@ -52,7 +63,25 @@ export class MatchRunner {
         // TODO: is this desired behaviour?
         this.clientRunner.onError.subscribe((err) => {
             this._onError.dispatch(err);
-        })
+        });
+
+        this.connHandler = new RequestResolver(this.connection, (data) => {
+            const text = new TextDecoder('utf-8').decode(data);
+            let message: LobbyMessage = JSON.parse(text);
+            
+            switch (message.type) {
+                case 'player_connected': {
+                    const { player_id } = message.content;
+                    this._onPlayerConnected.dispatch(player_id);
+                    break;
+                }
+                case 'player_disconnected': {
+                    const { player_id } = message.content;
+                    this._onPlayerDisconnected.dispatch(player_id);
+                    break;
+                }
+            }
+        });
     }
 
     public run() {
@@ -60,8 +89,22 @@ export class MatchRunner {
         // run clients after a second, so that we are certain the server has
         // started.
         setTimeout(() => {
+            this.connection.connect(
+                this.serverRunner.address.host,
+                this.serverRunner.address.port,
+            );
             this.clientRunner.run();
         }, 1000);
+    }
+
+    public start_match() {
+        let cmd: LobbyCommand = { type: "start_match" };
+        let text = JSON.stringify(cmd);
+        this.connHandler.send(Buffer.from(text, 'utf-8'));
+    }
+
+    public get controlChannel() {
+        return this.connection;
     }
 
     public get onComplete() {
@@ -71,4 +114,32 @@ export class MatchRunner {
     public get onError() {
         return this._onError.asEvent();
     }
+
+    public get onPlayerConnected() {
+        return this._onPlayerConnected.asEvent();
+    }
+
+    public get onPlayerDisconnected() {
+        return this._onPlayerDisconnected.asEvent();
+    }
+}
+
+type LobbyMessage = PlayerConnectedMessage | PlayerDisconnectedMessage;
+
+interface PlayerConnectedMessage {
+    type: "player_connected";
+    content: {
+        player_id: number;
+    }
+}
+
+interface PlayerDisconnectedMessage {
+    type: "player_disconnected";
+    content: {
+        player_id: number;
+    }
+}
+
+interface LobbyCommand {
+    type: "start_match"
 }
