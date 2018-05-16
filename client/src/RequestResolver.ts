@@ -1,5 +1,6 @@
 import * as protocol_root from './proto';
 import Message = protocol_root.mozaic.protocol.Message;
+import IMessage = protocol_root.mozaic.protocol.IMessage;
 import { Connection } from './index';
 
 export type MessageHandler =
@@ -7,14 +8,24 @@ export type MessageHandler =
 
 export class RequestResolver {
     private connection: Connection;
+    private messageCounter: number;
     private handler: MessageHandler;
 
     constructor(connection: Connection, handler: MessageHandler) {
         this.connection = connection;
         this.handler = handler;
+        this.messageCounter = 0;
 
         this.onMessage = this.onMessage.bind(this);
         this.connection.onMessage.subscribe(this.onMessage);
+    }
+
+    public send(data: Uint8Array) {
+        let messageId = this.messageCounter;
+        this.messageCounter += 1;
+        
+        let message = Message.Message.create({ messageId, data });
+        this.sendMessage({ message });
     }
 
     public request(data: Uint8Array): Promise<Uint8Array> {
@@ -47,8 +58,12 @@ export class RequestResolver {
 
     private sendResponse(messageId: number | Long, data: Uint8Array) {
         let response = Message.Response.create({ messageId, data });
-        let message = Message.create({ response });
-        let buffer = Message.encode(message).finish();
+        this.sendMessage({ response });
+    }
+
+    private sendMessage(message: IMessage) {
+        let msg = Message.create(message);
+        let buffer = Message.encode(msg).finish();
         this.connection.send(buffer);
     }
 }
