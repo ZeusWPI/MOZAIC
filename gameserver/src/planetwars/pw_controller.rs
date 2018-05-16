@@ -13,7 +13,6 @@ use utils::request_handler::{
     EventContent,
     ConnectionHandle,
     ConnectionHandler,
-    Command as ConnectionCommand,
     ResponseValue,
     ResponseError,
 };
@@ -219,7 +218,7 @@ impl Lobby {
                 let val = self.connection_player.get(&event.connection_id);
                 if let Some(&player_id) = val {
                     let msg = proto::LobbyMessage::PlayerConnected {
-                        player_id: player_id.as_usize() as u64
+                        player_id: (player_id.as_usize() + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
@@ -229,7 +228,7 @@ impl Lobby {
                 let val = self.connection_player.get(&event.connection_id);
                 if let Some(&player_id) = val {
                     let msg = proto::LobbyMessage::PlayerDisconnected {
-                        player_id: player_id.as_usize() as u64
+                        player_id: (player_id.as_usize() + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
@@ -434,7 +433,7 @@ impl PwController {
             EventContent::Connected => {},
             EventContent::Disconnected => {},
             EventContent::Message { .. } => {},
-            EventContent::Response { request_id, value } => {
+            EventContent::Response { value, .. } => {
                 // we only send requests to players
                 let &player_id = self.connection_player
                     .get(&event.connection_id).unwrap();
