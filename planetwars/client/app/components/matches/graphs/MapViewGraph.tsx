@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Component } from 'react';
 import * as d3 from 'd3';
 
-import { Graph, Section, color, GraphProps } from './Shared';
+import { Graph, Section, color, GraphProps, neutralColor } from './Shared';
 import { PlanetList, Planet, GameState, StaticPlanet, Expedition, Dict } from './MatchLog';
 
 // tslint:disable-next-line:no-var-requires
@@ -116,7 +116,37 @@ export class MapViewGraph extends Graph<MapViewData> {
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => radius(d3.max(paths[p.index]) || minRadius))
-      .attr("fill", color('0'));
+      .attr("fill", color('0'))
+      .on("mouseover", (p) => {
+        const r = radius(d3.max(paths[p.index]) || minRadius);
+        let curX = x(p.x);
+        let curY = y(p.y);
+        let anchor: string;
+        let baseline = "";
+        if (curX <= width / 2) {
+          curX += r;
+          anchor = "start";
+        } else {
+          curX -= r;
+          anchor = "end";
+        }
+        if (curY <= height / 2) {
+          curY += r;
+        } else {
+          curY -= r;
+          baseline = "hanging";
+        }
+        this.root.append('text')
+          .attr('class', 'text-yo')
+          .attr("x",  curX)
+          .attr("y", curY)
+          .attr("text-anchor", anchor)
+          .attr("alignment-baseline", baseline)
+          .text(p.name)
+          .style("font-weight", "bold")
+          .style("fill", "white");
+      })
+      .on("mouseout", () => this.root.selectAll(".text-yo").remove());
 
     this.root.append('g')
       .attr('class', 'starting-planets-yo')
@@ -127,7 +157,37 @@ export class MapViewGraph extends Graph<MapViewData> {
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
       .attr("r", minRadius)
-      .attr("fill", color("1"));
+      .attr("fill", color("1"))
+      .on("mouseover", (p) => {
+        const r = radius(d3.max(paths[p.index]) || minRadius);
+        let curX = x(p.x);
+        let curY = y(p.y);
+        let anchor: string;
+        let baseline = "";
+        if (curX <= width / 2) {
+          curX += r;
+          anchor = "start";
+        } else {
+          curX -= r;
+          anchor = "end";
+        }
+        if (curY <= height / 2) {
+          curY += r;
+        } else {
+          curY -= r;
+          baseline = "hanging";
+        }
+        this.root.append('text')
+          .attr('class', 'text-yo')
+          .attr("x",  curX)
+          .attr("y", curY)
+          .attr("text-anchor", anchor)
+          .attr("alignment-baseline", baseline)
+          .text(p.name)
+          .style("font-weight", "bold")
+          .style("fill", "white");
+      })
+      .on("mouseout", () => this.root.selectAll(".text-yo").remove());
   }
 
   protected updateGraph(): void {
