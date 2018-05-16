@@ -27,7 +27,6 @@ use super::pw_protocol::{
     PlayerAction,
     PlayerCommand, 
     CommandError,
-    Command,
 };
 
 use slog;
@@ -66,9 +65,7 @@ pub struct Player {
     connection: ConnectionHandle,
 }
 
-
 pub struct PwController {
-    game_state: GameState,
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
@@ -81,16 +78,6 @@ pub struct PwController {
 
     event_channel: UnboundedReceiver<Event>,
     routing_table: Arc<Mutex<RoutingTable>>,
-}
-
-
-enum GameState {
-    /// Waiting for players to connect
-    Connecting,
-    /// Game is in progress
-    Playing,
-    /// Game has terminated
-    Finished,
 }
 
 impl PwController {
@@ -133,9 +120,8 @@ impl PwController {
             connection_player.insert(connection_id, player_id);
         }
 
-        return PwController {
+        let mut controller = PwController {
             routing_table,
-            game_state: GameState::Connecting,
             event_channel: rcv,
             state,
             planet_map,
@@ -146,27 +132,12 @@ impl PwController {
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
         };
+        controller.start_game();
+        return controller;
     }
 
-    /// Check whether all players have succesfully connected.
-    fn connect(&mut self, messages: HashMap<PlayerId, ResponseValue>) {
-        // TODO: proper logging
-        for (player_id, response) in messages.into_iter() {
-            match response {
-                Ok(_) => {},
-                Err(_) =>  {
-                    println!("player {} failed to connect", player_id.as_usize());
-                    self.game_state = GameState::Finished;
-                    return;
-                },
-            }
-        }
-        // All players have connected; we can start the game.
-        self.start_game();
-    }
 
     fn start_game(&mut self) {
-        self.game_state = GameState::Playing;
         self.log_state();
         self.prompt_players();
     }
@@ -180,7 +151,6 @@ impl PwController {
         self.log_state();
 
         if self.state.is_finished() {
-            self.game_state = GameState::Finished;
         } else {
             self.prompt_players();
         }
