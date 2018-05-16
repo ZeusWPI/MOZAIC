@@ -216,11 +216,26 @@ impl Lobby {
         match event.content {
             EventContent::Connected => {
                 let val = self.connection_player.get(&event.connection_id);
-                if let Some(player_id) = val {
-                    self.waiting_for.remove(player_id);
+                if let Some(&player_id) = val {
+                    let msg = proto::LobbyMessage::PlayerConnected {
+                        player_id: player_id.as_usize() as u64
+                    };
+                    let serialized = serde_json::to_vec(&msg).unwrap();
+                    self.ctrl_handle.send(serialized);
+                    self.waiting_for.remove(&player_id);
                 }
             },
-            EventContent::Disconnected => {},
+            EventContent::Disconnected => {
+                let val = self.connection_player.get(&event.connection_id);
+                if let Some(&player_id) = val {
+                    let msg = proto::LobbyMessage::PlayerDisconnected {
+                        player_id: player_id.as_usize() as u64
+                    };
+                    let serialized = serde_json::to_vec(&msg).unwrap();
+                    self.ctrl_handle.send(serialized);
+                    self.waiting_for.insert(player_id);
+                }
+            },
             EventContent::Message { .. } => {},
             EventContent::Response { .. } => {},
         }

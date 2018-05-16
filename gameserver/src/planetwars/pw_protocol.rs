@@ -84,6 +84,19 @@ pub enum ServerMessage {
     PlayerAction(PlayerAction),
 }
 
+// lobby messages
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "type", content = "content")]
+pub enum LobbyMessage {
+    PlayerConnected {
+        player_id: u64,
+    },
+    PlayerDisconnected {
+        player_id: u64,
+    }
+}
+
 impl slog::Value for Command {
     fn serialize(&self,
                  _record: &slog::Record,
