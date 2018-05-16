@@ -67,6 +67,7 @@ pub struct Player {
 
 pub struct PwMatch {
     state: PwMatchState,
+    event_channel_handle: UnboundedSender<Event>,
     event_channel: UnboundedReceiver<Event>,
 }
 
@@ -85,10 +86,17 @@ impl PwMatch {
     {
         let (snd, rcv) = mpsc::unbounded();
 
-        let lobby = Lobby::new(conf, client_tokens, routing_table, snd, logger);
+        let lobby = Lobby::new(
+            conf,
+            client_tokens,
+            routing_table,
+            snd.clone(),
+            logger
+        );
 
         return PwMatch {
             state: PwMatchState::Lobby(lobby),
+            event_channel_handle: snd,
             event_channel: rcv,
         }
     }
@@ -125,14 +133,14 @@ impl Future for PwMatch {
 
                     if pw_controller.state.is_finished() {
                         self.state = PwMatchState::Finished;
-                    } else {    
+                        // TODO: how do we properly handle this?
+                        return Ok(Async::Ready(()));
+                    } else {
                         self.state = PwMatchState::Playing(pw_controller);
                     }
                 }
 
-                PwMatchState::Finished => {
-                    return Ok(Async::Ready(()));
-                }
+                PwMatchState::Finished => {}
             }
         }
     }
@@ -196,7 +204,6 @@ impl Lobby {
             EventContent::Connected => {
                 let val = self.connection_player.get(&event.connection_id);
                 if let Some(player_id) = val {
-                    println!("{:?} connected", player_id);
                     self.waiting_for.remove(player_id);
                 }
             },
