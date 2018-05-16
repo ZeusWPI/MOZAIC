@@ -31,7 +31,11 @@ export class InteractionPieSection extends Section<{}> {
     });
 
     const pies = players.map((player, i) => {
-      const data = { player, interactions: interactions[i] };
+      // Filter out support ships
+      const _interactions: Interaction[] = interactions[i].filter((int) =>
+        (int.player == null) || (int.player !== player.id));
+
+      const data = { player, interactions: _interactions };
       return (
         <InteractionPie key={i} width={width} height={height} data={data} />
       );
@@ -98,7 +102,7 @@ export class InteractionPie extends Graph<PieProps> {
     arc.append("text")
       .attr("transform", (d) => "translate(" + label.centroid(d) + ")")
       .attr("dy", "0.35em")
-      .text((d) => (d.data.value) ? d.data.value : '');
+      .text((d) => (d.data.value) ? d.data.value : (console.log(d) as any));
   }
 
   protected updateGraph(): void {
