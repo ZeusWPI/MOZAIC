@@ -133,7 +133,8 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
     }
 
     data.planetPlayerData.forEach((element) => {
-      const curHeight = heightScale(element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number));
+      const relativeCount = element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number);
+      const curHeight = heightScale(relativeCount);
       g.append("rect")
         .attr("x", xScale(element.planetName) as number)
         .attr("y", planetBarCurrentHeight.get(element.planetName) as number)
@@ -145,11 +146,7 @@ export class PlanetOwnerShipGraph extends Graph<PlanetOwnerShipData> {
             .attr("class", "score-value")
             .attr("x", width - margin.right + 10)
             .attr("y", height - margin.bottom)
-            .text(
-              d3.format(".2%")(
-                (element.expeditionCount / (data.planetExpeditionCount.get(element.planetName) as number)) / data.numberOfStates
-              )
-            )
+            .text(d3.format(".2%")(relativeCount / data.numberOfStates))
             .style("fill", neutralColor);
         })
         .on("mouseout", () => {
