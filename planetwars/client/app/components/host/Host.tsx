@@ -13,6 +13,7 @@ export interface HostStateProps {
   bots: M.BotList;
   maps: M.MapList;
   selectedBots: M.BotSlot[];
+  ctrlToken: M.Token;
   // selectedMap: string;
 }
 
@@ -161,6 +162,7 @@ export class Host extends React.Component<HostProps, HostState> {
       map: this.state.selectedMap,
       maxTurns: this.state.maxTurns,
       address: this.state.address,
+      ctrl_token: this.props.ctrlToken,
     };
 
     alert("Start server on " + config.address.host + ":" + config.address.port +

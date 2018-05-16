@@ -128,6 +128,7 @@ export function runMatch(params: M.MatchParams) {
       maxTurns,
       address: params.address,
       logFile: match.logPath,
+      ctrl_token: params.ctrl_token,
     };
 
     const runner = new PwClient.MatchRunner(Config.matchRunner, config);

@@ -6,6 +6,7 @@ import { execFile } from 'child_process';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
+import * as crypto from 'crypto';
 import { MatchConfig, Token, BotSlot } from './database/models';
 import { Config } from './Config';
 
@@ -28,7 +29,7 @@ class GameRunner extends EventEmitter {
       players,
       address,
       game_config: gameConfig,
-      log_file: logFile
+      log_file: logFile,
     };
   }
 
@@ -55,6 +56,10 @@ class GameRunner extends EventEmitter {
     fs.writeFileSync(file.fd, json);
     return file.name;
   }
+}
+
+export function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
 }
 
 // External Configs -----------------------------------------------------------

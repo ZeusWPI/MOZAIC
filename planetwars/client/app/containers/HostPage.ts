@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 
 import * as A from '../actions/index';
 import * as M from '../utils/database/models';
+import { generateToken } from "../utils/GameRunner";
 import { GState } from '../reducers';
 import { Importer } from '../utils/Importer';
 import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host';
@@ -11,7 +12,8 @@ const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const maps = state.maps;
   const selectedBots = state.host;
-  return { bots, maps, selectedBots };
+  const ctrlToken = generateToken();
+  return { bots, maps, selectedBots, ctrlToken };
 };
 
 const mapDispatchToProps = (dispatch: any) => {

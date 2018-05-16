@@ -99,6 +99,7 @@ export interface MatchParams {
   map: MapId;
   maxTurns: number;
   address: Address;
+  ctrl_token: Token;
 }
 
 // tslint:disable-next-line:variable-name

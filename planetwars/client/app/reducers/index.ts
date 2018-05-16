@@ -1,11 +1,11 @@
 import { routerReducer as routing, RouterState } from 'react-router-redux';
 import { combineReducers, Reducer } from 'redux';
 import { v4 as uuidv4 } from 'uuid';
-import * as crypto from 'crypto';
 
 import { store } from '../index';
 import * as A from '../actions/index';
 import * as M from '../utils/database/models';
+import { generateToken } from '../utils/GameRunner'
 import { Action } from '../actions/helpers';
 
 // ----------------------------------------------------------------------------
@@ -147,11 +147,6 @@ const hostReducer = (state: HostState = [], action: Action) =>  {
   }
   return state;
 };
-
-function generateToken() {
-  const token = crypto.randomBytes(32).toString('hex');
-  return token;
-}
 
 const mapsReducer = (state: M.MapList = {}, action: any) => {
   if (A.importMapFromDB.test(action)) {
