@@ -97,6 +97,13 @@ pub enum LobbyMessage {
     }
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+#[serde(tag = "type", content = "content")]
+pub enum LobbyCommand {
+    StartMatch,
+}
+
 impl slog::Value for Command {
     fn serialize(&self,
                  _record: &slog::Record,
