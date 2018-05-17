@@ -31,11 +31,8 @@ export class InteractionPieSection extends Section<{}> {
     });
 
     const pies = players.map((player, i) => {
-      // Filter out support ships
-      const _interactions: Interaction[] = interactions[i].filter((int) =>
-        (int.player == null) || (int.player !== player.id));
 
-      const data = { player, interactions: _interactions };
+      const data = { player, interactions: interactions[i] };
       return (
         <InteractionPie key={i} width={width} height={height} data={data} />
       );
@@ -53,46 +50,67 @@ interface PieProps {
 }
 
 export class InteractionPie extends Graph<PieProps> {
+  private arc: d3.Selection<d3.BaseType, d3.PieArcDatum<Interaction>, d3.BaseType, {}>;
+  private pie = d3.pie<Interaction>().sort(null).value((d) => d.value);
+  private g: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private path: d3.Arc<any, d3.PieArcDatum<Interaction>>;
+  private radius: number;
+  private outerRadius: number;
+  private innerRadius: number;
+
   protected createGraph(): void {
     const { width, height, data } = this.props;
     const node = this.node;
     const svg = d3.select(node);
     svg.selectAll('*').remove();
 
-    const pie = d3.pie<Interaction>().sort(null).value((d) => d.value);
-    const g = svg.append('g')
+    this.g = svg.append('g')
       .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
       .attr('class', styles.interactionPie);
 
-    const radius = Math.min(width, height) / 2;
-    const outerRadius = radius - 10;
-    const innerRadius = radius / 2;
+    this.radius = Math.min(width, height) / 2;
+    this.outerRadius = this.radius - 10;
+    this.innerRadius = this.radius / 2;
 
-    const path = d3.arc<d3.PieArcDatum<Interaction>>()
-      .outerRadius(outerRadius)
-      .innerRadius(innerRadius);
+    this.path = d3.arc<d3.PieArcDatum<Interaction>>()
+      .outerRadius(this.outerRadius)
+      .innerRadius(this.innerRadius);
 
-    const owner = g.append('circle')
-      .attr('r', innerRadius)
-      .attr('fill', color(data.player.id.toString()));
+    const owner = this.g.append('circle')
+      .attr('r', this.innerRadius)
+      .attr('fill', color(data.player.id.toString()))
+      .on('mouseover', () => this.handleMouseOver())
+      .on('mouseout', () => this.handleMouseOut());
 
-    const ownerLabel = g
+    const ownerLabel = this.g
       .append('text')
       .attr('text-anchor', 'middle')
       .attr('alignment-baseline', 'middle')
-      .text(data.player.name);
+      .text(data.player.name)
+      .on('mouseover', () => this.handleMouseOver())
+      .on('mouseout', () => this.handleMouseOut());
 
+    this.arc = this.g.selectAll('.arc')
+      .data(this.pie(this.getInteractions(false)));
+
+    this.drawPie(this.arc);
+  }
+
+  protected updateGraph(): void {
+    this.createGraph();
+  }
+
+  private drawPie(selector: d3.Selection<d3.BaseType, d3.PieArcDatum<Interaction>, d3.BaseType, {}>) {
     const label = d3.arc<d3.PieArcDatum<Interaction>>()
-      .outerRadius(radius - 40)
-      .innerRadius(radius - 40);
+      .outerRadius(this.radius - 40)
+      .innerRadius(this.radius - 40);
 
-    const arc = g.selectAll('.arc')
-      .data(pie(data.interactions))
+    const arc = selector
       .enter().append('g')
       .attr('class', styles.pieArc);
 
     arc.append("path")
-      .attr("d", path)
+      .attr("d", this.path)
       .attr("fill", (d) => {
         return (d.data.player !== null)
           ? color(d.data.player.toString())
@@ -105,7 +123,27 @@ export class InteractionPie extends Graph<PieProps> {
       .text((d) => (d.data.value) ? d.data.value : (console.log(d) as any));
   }
 
-  protected updateGraph(): void {
-    this.createGraph();
+  private handleMouseOver() {
+    this.arc = this.g.selectAll('.arc')
+      .data(this.pie(this.getInteractions(true)));
+
+    this.drawPie(this.arc);
   }
+
+  private handleMouseOut() {
+    this.arc = this.g.selectAll('.arc')
+      .data(this.pie(this.getInteractions(false)));
+
+    this.drawPie(this.arc);
+  }
+
+  private getInteractions(withSupport: boolean = false): Interaction[] {
+    // Filter out support ships
+    const { data: { interactions, player } } = this.props;
+    return (withSupport)
+      ? interactions
+      : interactions.filter((int) => (int.player == null) || (int.player !== player.id));
+  }
+
+
 }
