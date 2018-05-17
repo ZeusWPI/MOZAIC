@@ -14,12 +14,13 @@ export interface HostStateProps {
   maps: M.MapList;
   selectedBots: M.BotSlot[];
   ctrlToken: M.Token;
+  serverShouldStart: boolean;
   // selectedMap: string;
 }
 
 export interface HostDispatchProps {
-  newBotSlots: (amount: number) => void;
-  runMatch: (params: M.MatchParams) => void;
+  setupServer: (params: M.ServerParams) => void;
+  startServer: () => void;
   toggleConnected: (bot: M.BotSlot) => void;
 
   changeBotSlot: (slot: M.BotSlot) => void;
@@ -50,6 +51,9 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   public render() {
+    if (this.props.serverShouldStart) {
+      this.props.startServer();
+    }
     const toggle = (evt: any) => this.setState({mapToggled: true});
     const setMaxTurns = (evt: any) => this.setMaxTurns(evt.target.value);
     return (
@@ -96,7 +100,7 @@ export class Host extends React.Component<HostProps, HostState> {
             <span className={styles.tagInfoText}> Start server</span>
           </h2>
 
-          <button className="button" onClick={this.startServer}>
+          <button className="button" onClick={this.setupServer}>
             Go!
           </button>
         </div>
@@ -149,36 +153,23 @@ export class Host extends React.Component<HostProps, HostState> {
     );
   }
 
-  private startServer = () => {
+  private setupServer = () => {
     if (!this.state.selectedMap) {
       alert('Please pick a map!');
       return;
     }
-    // TODO: make sure this is correct (it isn't currently for Large)
-    this.props.newBotSlots(this.props.maps[this.state.selectedMap].slots);
-
-    const config: M.MatchParams = {
-      players: this.props.selectedBots,
-      map: this.state.selectedMap,
+    const config: M.ServerParams = {
+      numPlayers: this.props.maps[this.state.selectedMap].slots,
       maxTurns: this.state.maxTurns,
+      mapId: this.state.selectedMap,
       address: this.state.address,
-      ctrl_token: this.props.ctrlToken,
     };
-
-    alert("Start server on " + config.address.host + ":" + config.address.port +
-          " with " + this.props.maps[this.state.selectedMap].slots + " players, map " +
-          config.map + " and a maximum of " + config.maxTurns + " turns");
-    // console.log(config);
-    // this.props.runMatch(config);
+    this.props.setupServer(config);
   }
 
   private selectMap = (id: M.MapId) => {
     this.setState({selectedMap: id});
   }
-
-  // private addInternal = () => {
-  //   this.selectBotInternal("", "");
-  // }
 }
 
 interface BotSlotsProps {

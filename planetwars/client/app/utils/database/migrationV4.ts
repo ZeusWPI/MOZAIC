@@ -102,6 +102,13 @@ export interface MatchParams {
   ctrl_token: Token;
 }
 
+export interface ServerParams {
+  numPlayers: number;
+  maxTurns: number;
+  mapId: MapId;
+  address: Address;
+}
+
 // tslint:disable-next-line:variable-name
 export const MatchStatuses = V1.MatchStatuses;
 

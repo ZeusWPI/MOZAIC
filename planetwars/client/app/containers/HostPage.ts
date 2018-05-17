@@ -11,24 +11,26 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const maps = state.maps;
-  const selectedBots = state.host;
+  const selectedBots = state.host.slots;
   const ctrlToken = generateToken();
-  return { bots, maps, selectedBots, ctrlToken };
+  const serverShouldStart = (state.host.matchParams !== undefined) && !state.host.serverRunning;
+  console.log(serverShouldStart);
+  return { bots, maps, selectedBots, ctrlToken, serverShouldStart };
 };
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    newBotSlots(amount: number) {
-      dispatch(A.newBotSlots(amount));
+    setupServer(params: M.ServerParams) {
+      dispatch(A.setupServer(params));
     },
-    runMatch(params: M.MatchParams) {
-      dispatch(A.runMatch(params));
+    startServer() {
+      dispatch(A.runMatch());
     },
     toggleConnected(botslot: M.BotSlot) {
       if (botslot.connected) {
-        dispatch(A.playerDisconnected(botslot));
+        dispatch(A.playerDisconnected(botslot.token));
       } else {
-        dispatch(A.playerConnected(botslot));
+        dispatch(A.playerConnected(botslot.token));
       }
     },
     changeBotSlot(slot: M.BotSlot) {

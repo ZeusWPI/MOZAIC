@@ -1,5 +1,6 @@
 import { actionCreator, actionCreatorVoid } from './helpers';
 import * as M from '../utils/database/models';
+import * as PwClient from 'mozaic-client';
 
 // Nav
 export const toggleNavMenu = actionCreatorVoid('TOGGLE_NAV_MENU');
@@ -16,11 +17,12 @@ export const importMap = actionCreator<M.MapMeta>('IMPORT_MAP');
 export const importMapError = actionCreator<string>('IMPORT_MAP_ERROR');
 
 // Host
-export const newBotSlots = actionCreator<number>('ADD_SLOTS');
+export const setupServer = actionCreator<M.ServerParams>('SETUP_SERVER');
 export const changeBotSlot = actionCreator<M.BotSlot>('CHANGE_BOT_SLOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
-export const playerConnected = actionCreator<M.BotSlot>('PLAYER_CONNECT');
-export const playerDisconnected = actionCreator<M.BotSlot>('PLAYER_DISCONNECT');
+export const playerConnected = actionCreator<M.Token>('PLAYER_CONNECT');
+export const playerDisconnected = actionCreator<M.Token>('PLAYER_DISCONNECT');
+export const serverStarted = actionCreator<PwClient.MatchRunner>('SERVER_STARTED');
 
 // DB
 export const dbError = actionCreator<any>('DB_ERROR');
