@@ -6,7 +6,6 @@ import * as External from '../../../lib/match/log';
 import { MatchLog } from './MatchLog';
 import { DemoPie, Section } from './Shared';
 import { ScoreLineGraphSection } from './ScoreLineGraph';
-import { PlayerShipsGraphSection } from './PlayerShipsGraph';
 import { MapViewGraphSection } from './MapViewGraph';
 import { PlanetOwnerShipGraphSection } from './PlanetOwnerShipGraph';
 import { InteractionPieSection } from './InteractionPies';
