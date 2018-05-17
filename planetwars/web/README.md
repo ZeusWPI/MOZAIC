@@ -22,11 +22,11 @@ The client-side should do these things:
 - `rustup install nightly`
 - `rustup update && cargo update`
 - run `rustup override set nightly` in this dir to set nightly builds for this project, or `rustup default nightly` to use it everywhere
-1. Have Node.js and NPM installed
-1. Run `npm install`
+1. Have Node.js and Yarn installed
+1. Run `yarn install`
 1. To build $ run either do:
-- Run `npm run build && npm start`
-- Or run 'cargo run' and 'npm run watch' (in different terminals), you can then just refresh the webpage when you update the client-side (updating the backend would still require another cargo call of course)
+- Run `yarn run build && yarn start`
+- Or run 'cargo run' and 'yarn run watch' (in different terminals), you can then just refresh the webpage when you update the client-side (updating the backend would still require another cargo call of course)
 
 ## Guide for newbies about the project stack
 

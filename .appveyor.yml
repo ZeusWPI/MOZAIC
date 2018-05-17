@@ -16,7 +16,8 @@ cache:
   - gameserver\target
   - planetwars\client\node_modules
   - '%USERPROFILE%\.electron'
-  - '%USERPROFILE%\.cargo'
+  - '%USERPROFILE%\\.cargo'
+  - '%LOCALAPPDATA%\Yarn'
 
 init:
   - git config --global core.autocrlf input
@@ -36,5 +37,5 @@ build_script:
  - cd %APPVEYOR_BUILD_FOLDER%
  - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver
  - cd planetwars\client
- - npm install
- - npm run package-win
+ - yarn install
+ - yarn run package-win

@@ -3,7 +3,7 @@
 ## Platform & Language
 
 - Node
-- NPM
+- Yarn
 - TypeScript
 
 ## Core

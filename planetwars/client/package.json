@@ -183,7 +183,6 @@
     "webpack-merge": "^2.0.0"
   },
   "devEngines": {
-    "node": ">=8.x",
-    "npm": ">=5.x"
+    "node": ">=8.x"
   }
 }

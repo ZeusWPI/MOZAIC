@@ -36,7 +36,7 @@ const server = app.listen(PORT, 'localhost', serverError => {
   }
 
   if (argv['start-hot']) {
-    spawn('npm', ['run', 'start-hot'], {
+    spawn('yarn', ['run', 'start-hot'], {
         shell: true,
         env: process.env,
         stdio: 'inherit'
