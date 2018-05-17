@@ -28,6 +28,10 @@ pub struct ConnectionHandle {
 }
 
 impl ConnectionHandle {
+    pub fn id(&self) -> ConnectionId {
+        self.connection_id
+    }
+
     pub fn send(&mut self, data: Vec<u8>) {
         let cmd = Command::Message { data };
         self.send_command(cmd);
