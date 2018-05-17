@@ -49,8 +49,8 @@ export function populateBots(): Promise<void[]> {
   const pBots = Object.keys(Config.staticBots).map((path) => {
     const file = p.parse(path).base;
     const newPath = p.resolve(Config.bots, file);
-    const name = `${Config.staticBots[path]} (check if python is correct before executing)`;
-    const command = 'python3 ' + newPath;
+    const name = `${Config.staticBots[path]}`;
+    const command = `python3 "${newPath}"`;
     const config = { name, command };
     return Promise
       .resolve(copyFile(path, newPath))
