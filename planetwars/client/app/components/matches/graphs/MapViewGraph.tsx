@@ -35,12 +35,12 @@ export class MapViewGraphSection extends Section<{}> {
       paths[dest.index][or.index] += shipCount;
     });
 
-    const startingPlanets: StaticPlanet[] = [];
+    const startingPlanets: Set<StaticPlanet> = new Set<StaticPlanet>();
     Array.from(Object.keys(gameStates[0].planets)).forEach((name) => {
       const planet = gameStates[0].planets[name];
       if (planet.owner !== undefined) {
         const staticPlanet = planetMap[name];
-        startingPlanets.push(staticPlanet);
+        startingPlanets.add(staticPlanet);
       }
     });
 
@@ -54,7 +54,7 @@ export interface MapViewData {
   paths: number[][];
   min: { x: number, y: number };
   max: { x: number, y: number };
-  startingPlanets: StaticPlanet[];
+  startingPlanets: Set<StaticPlanet>;
 }
 
 export class MapViewGraph extends Graph<MapViewData> {
@@ -116,48 +116,7 @@ export class MapViewGraph extends Graph<MapViewData> {
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => radius(d3.max(paths[p.index]) || minRadius))
-      .attr("fill", color('0'))
-      .on("mouseover", (p) => {
-        const r = radius(d3.max(paths[p.index]) || minRadius);
-        let curX = x(p.x);
-        let curY = y(p.y);
-        let anchor: string;
-        let baseline = "";
-        if (curX <= width / 2) {
-          curX += r;
-          anchor = "start";
-        } else {
-          curX -= r;
-          anchor = "end";
-        }
-        if (curY <= height / 2) {
-          curY += r;
-        } else {
-          curY -= r;
-          baseline = "hanging";
-        }
-        this.root.append('text')
-          .attr('class', 'text-yo')
-          .attr("x",  curX)
-          .attr("y", curY)
-          .attr("text-anchor", anchor)
-          .attr("alignment-baseline", baseline)
-          .text(p.name)
-          .style("font-weight", "bold")
-          .style("fill", "white");
-      })
-      .on("mouseout", () => this.root.selectAll(".text-yo").remove());
-
-    this.root.append('g')
-      .attr('class', 'starting-planets-yo')
-      .selectAll('circle')
-      .data(data.startingPlanets)
-      .enter()
-      .append('circle')
-      .attr("cx", (p) => x(p.x))
-      .attr("cy", (p) => y(p.y))
-      .attr("r", minRadius)
-      .attr("fill", color("1"))
+      .attr("fill", (p) => data.startingPlanets.has(p) ? color('2') : color('0'))
       .on("mouseover", (p) => {
         const r = radius(d3.max(paths[p.index]) || minRadius);
         let curX = x(p.x);
