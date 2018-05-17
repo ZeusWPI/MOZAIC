@@ -24,6 +24,7 @@ export interface HostDispatchProps {
   toggleConnected: (bot: M.BotSlot) => void;
   changeBotSlot: (slot: M.BotSlot) => void;
   sendGo: () => void;
+  joinMatch: (address: M.Address, slot: M.InternalBotSlot) => void;
 
   // selectMap: (id: string) => void;
 }
@@ -116,6 +117,7 @@ export class Host extends React.Component<HostProps, HostState> {
             allBots={this.props.bots}
             updateSlot={this.updateSlot}
             toggleConnected={this.props.toggleConnected}
+            joinMatch={this.joinMatch}
           />
 
           <button className="button" onClick={this.startSignal}>
@@ -124,6 +126,10 @@ export class Host extends React.Component<HostProps, HostState> {
         </div>
       </div>
     );
+  }
+
+  private joinMatch = (slot: M.InternalBotSlot) => {
+    this.props.joinMatch(this.state.address, slot);
   }
 
   private updateSlot = (slot: M.BotSlot) => {
@@ -178,6 +184,7 @@ interface BotSlotsProps {
   allBots: M.BotList;
   updateSlot: (slot: M.BotSlot) => void;
   toggleConnected: (bot: M.BotSlot) => void;
+  joinMatch: (slot: M.InternalBotSlot) => void;
 }
 
 export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
@@ -189,6 +196,7 @@ export const BotSlots: React.SFC<BotSlotsProps> = (props) => {
         allBots={props.allBots}
         updateSlot={props.updateSlot}
         toggleConnected={props.toggleConnected}
+        joinMatch={props.joinMatch}
       />
     );
   });
@@ -200,6 +208,7 @@ interface SlotProps {
   allBots: M.BotList;
   updateSlot: (slot: M.BotSlot) => void;
   toggleConnected: (bot: M.BotSlot) => void;
+  joinMatch: (slot: M.InternalBotSlot) => void;
 }
 
 export class Slot extends React.Component<SlotProps> {
@@ -209,7 +218,15 @@ export class Slot extends React.Component<SlotProps> {
     let slot;
     switch (bot.type) {
       case 'internal':
-        slot = <InternalSlot slot={bot} allBots={allBots} setSlot={updateSlot} makeExternal={this.makeExternal}/>;
+        slot = (
+          <InternalSlot
+            slot={bot}
+            allBots={allBots}
+            setSlot={updateSlot}
+            makeExternal={this.makeExternal}
+            joinMatch={this.props.joinMatch}
+          />
+        );
         break;
       case 'external':
         slot = <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
@@ -270,6 +287,7 @@ export interface InternalSlotProps {
   allBots: M.BotList;
   setSlot: (slot: M.InternalBotSlot) => void;
   makeExternal: () => void;
+  joinMatch: (slot: M.InternalBotSlot) => void;
 }
 
 export class InternalSlot extends React.Component<InternalSlotProps> {
@@ -295,7 +313,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
       alert("Please select a bot first.");
       return;
     }
-    alert("Joining with bot " + allBots[slot.botId].name + " with token " + slot.token);
+    this.props.joinMatch(slot);
   }
 
   private setBot = (botId: M.BotId) => {
