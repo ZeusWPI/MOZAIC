@@ -51,9 +51,9 @@ const { app } = remote;
 const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
-const adapter = new FileAsync(dbPath);
-const database = Promise.resolve(low<DbSchemaV3, typeof adapter>(adapter));
-type dbType = low.Lowdb<DbSchemaV3, typeof adapter>;
+const adapter = new FileAsync<DbSchemaV3>(dbPath);
+const database = Promise.resolve(low<typeof adapter>(adapter));
+type dbType = low.LowdbAsync<DbSchemaV3>;
 
 /*
  * This function will populate the store initially with the DB info and
@@ -61,7 +61,7 @@ type dbType = low.Lowdb<DbSchemaV3, typeof adapter>;
  */
 export function bindToStore(store: any): Promise<void> {
   return database
-    .tap((db: dbType) => db.defaults(defaults).write())
+    .tap((db) => db.defaults(defaults).write())
     .tap((db: dbType) => {
       if (db.get(SCHEMA.VERSION, 'v1').value() !== 'v3') {
         db.setState(migrate(db.value())).write();
