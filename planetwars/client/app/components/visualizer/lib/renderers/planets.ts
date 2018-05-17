@@ -72,7 +72,10 @@ export class PlanetRenderer {
       .style("text-anchor", "middle")
       .text((d: any) => d.name)
       .merge(labels)
-      .attr('fill', (d: any) => d3.color(this.game.playerColor(d.owner)).brighter());
+      .attr('fill', (d: any) => {
+        const color = d3.color(this.game.playerColor(d.owner));
+        return color && color.brighter();
+      });
   }
 
   private drawShipCounts(planets: any, params: any, size: any) {
@@ -85,7 +88,10 @@ export class PlanetRenderer {
       .attr("font-size", params.scale + "px")
       .style("text-anchor", "middle")
       .merge(labels)
-      .attr('fill', (d: any) => d3.color(this.game.playerColor(d.owner)).brighter())
+      .attr('fill', (d: any) => {
+        const color = d3.color(this.game.playerColor(d.owner));
+        return color && color.brighter();
+      })
       .text((d: Planet) => "\u2694 " + d.shipCount);
   }
 }

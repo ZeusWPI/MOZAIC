@@ -38,9 +38,9 @@ const { app } = remote;
 const dbPath = (Config.isDev)
   ? 'db.json'
   : path.join(app.getPath('userData'), 'db.json');
-const adapter = new FileAsync(dbPath);
-const database = Promise.resolve(low<DbSchema, typeof adapter>(adapter));
-type dbType = low.Lowdb<DbSchema, typeof adapter>;
+const adapter = new FileAsync<DbSchema>(dbPath);
+const database = Promise.resolve(low<typeof adapter>(adapter));
+type dbType = low.LowdbAsync<DbSchema>;
 
 /*
  * This function will populate the store initially with the DB info and
