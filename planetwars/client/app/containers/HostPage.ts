@@ -36,6 +36,9 @@ const mapDispatchToProps = (dispatch: any) => {
     changeBotSlot(slot: M.BotSlot) {
       dispatch(A.changeBotSlot(slot));
     },
+    sendGo() {
+      dispatch(A.sendGo());
+    },
   };
 };
 

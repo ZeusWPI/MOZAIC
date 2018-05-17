@@ -22,8 +22,9 @@ export interface HostDispatchProps {
   setupServer: (params: M.ServerParams) => void;
   startServer: () => void;
   toggleConnected: (bot: M.BotSlot) => void;
-
   changeBotSlot: (slot: M.BotSlot) => void;
+  sendGo: () => void;
+
   // selectMap: (id: string) => void;
 }
 
@@ -136,7 +137,7 @@ export class Host extends React.Component<HostProps, HostState> {
       alert("Waiting for " + amount + " more player" + (amount === 1 ? "" : "s") + " to join...");
       return;
     }
-    alert("Send go to server");
+    this.props.sendGo();
   }
 
   private setAddress(address: M.Address) {

@@ -97,6 +97,16 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
   };
 }
 
+export function sendGo() {
+  return (dispatch: any, getState: any) => {
+    const state: GState = getState();
+    if (state.host.runner) {
+      console.log("running");
+      state.host.runner.start_match();
+    }
+  };
+}
+
 export function runMatch() {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
