@@ -21,10 +21,12 @@ See the [intro-slides](https://drive.google.com/open?id=1ZwFlXGm7WZ4urTFxXdyoEz7
 
 We provide easy-to-setup packages clients for all platforms, check out the [releases](https://github.com/ZeusWPI/MOZAIC/releases) section for downloads.
 
-For Mac we suggest using the `.dmg`, for windows the `.exe`.
+For OSX we suggest using the `.dmg`, for windows the `.exe`.
 
 For linux we provide an [AppImage](https://appimage.org/), which after downloading, you need to make executable (`chmod u+x <file>`).
 **Note**: the AppImage does not need to be installed, and you can simply run the file.
+
+For OSX, some commands (such as python) might not work, it usually helps by replacing it by the output of `which` (e.g. `which python3`).
 
 Most of the data will be save to user-data directories which are:
 
