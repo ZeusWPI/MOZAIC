@@ -60,66 +60,102 @@ app.on('ready', () => {
         mainWindow.focus();
       });
 
-      mainWindow.on('closed', () => {
-        mainWindow = null;
-      });
+      mainWindow.on('closed', () => { mainWindow = null; });
 
-      // mainWindow.openDevTools();
 
+      const editActions = [
+        { label: "Undo", accelerator: "CmdOrCtrl+Z", selector: "undo:" },
+        { label: "Redo", accelerator: "Shift+CmdOrCtrl+Z", selector: "redo:" },
+        { type: "separator" },
+        { label: "Cut", accelerator: "CmdOrCtrl+X", selector: "cut:" },
+        { label: "Copy", accelerator: "CmdOrCtrl+C", selector: "copy:" },
+        { label: "Paste", accelerator: "CmdOrCtrl+V", selector: "paste:" },
+        { label: "Select All", accelerator: "CmdOrCtrl+A", selector: "selectAll:" }
+      ]
+
+      // Set context menu (right click)
       mainWindow.webContents.on('context-menu', (e, props) => {
-        const {
-          x,
-          y
-        } = props;
-
+        const { x, y } = props;
         Menu.buildFromTemplate([{
-          label: 'Inspect element',
-          click() {
-            mainWindow.inspectElement(x, y);
-          },
-        }]).popup(mainWindow);
+            label: 'Inspect element',
+            click() { mainWindow.inspectElement(x, y); },
+          }, {
+            type: "separator"
+          }]
+          .concat(editActions)
+        ).popup(mainWindow);
       });
 
+      const visible = (os) => process.platform === os;
+      const visibleAll = (osses) => osses.indexOf(process.platform) >= 0;
+      const notMac = ['win32', 'linux', 'aix', 'freebsd', 'openbsd', 'sunos'];
+      const mac = 'darwin';
+      const all = notMac.concat(mac);
+
+      // Set keyboard shortcuts
+      // All shortcuts will work trigger on each platform
+      // Some duplicates will not be displayed depending on the platform
       const template = [{
-        accelerator: 'CmdOrCtrl+Q',
-        click() {
-          app.quit()
-        }
+        label: 'App',
+        submenu: [{
+          label: 'Exit',
+          accelerator: 'CmdOrCtrl+Q',
+          visible: true,
+          click() { app.quit() }
+        }, {
+          label: 'Close Window',
+          accelerator: 'CmdOrCtrl+W',
+          selector: 'performClose:'
+        }, {
+          label: 'Minimize Window',
+          accelerator: 'CmdOrCtrl+M',
+          selector: 'performMiniaturize:'
+        }, {
+          label: 'Bring All to Front',
+          selector: 'arrangeInFront:'
+        }],
       }, {
-        accelerator: 'CmdOrCtrl+R',
-        click() {
-          mainWindow.webContents.reload()
-        }
+        label: "Edit",
+        submenu: [...editActions]
       }, {
-        accelerator: 'Ctrl+CmdOrCtrl+F',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        }
-      }, {
-        accelerator: 'Alt+CmdOrCtrl+I',
-        click() {
-          mainWindow.toggleDevTools()
-        }
-      }, {
-        accelerator: 'Ctrl+W',
-        click() {
-          mainWindow.close()
-        }
-      }, {
-        accelerator: 'F5',
-        click() {
-          mainWindow.webContents.reload()
-        }
-      }, {
-        accelerator: 'F12',
-        click() {
-          mainWindow.toggleDevTools()
-        }
-      }, {
-        accelerator: 'F11',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        }
+        label: 'View',
+        submenu: [{
+          label: 'Reload',
+          visible: visible(mac),
+          accelerator: 'CmdOrCtrl+R',
+          click() { mainWindow.webContents.reload() }
+        }, {
+          label: 'Reload',
+          visible: visibleAll(notMac),
+          accelerator: 'F5',
+          click() { mainWindow.webContents.reload() }
+        }, {
+          label: 'Toggle Fullscreen',
+          accelerator: 'Ctrl+CmdOrCtrl+F',
+          visible: visible(mac),
+          click() { mainWindow.setFullScreen(!mainWindow.isFullScreen()) }
+        }, {
+          label: 'Toggle Fullscreen',
+          accelerator: 'F11',
+          visible: visibleAll(notMac),
+          click() { mainWindow.setFullScreen(!mainWindow.isFullScreen()) }
+        }, {
+          label: 'Toggle DevTools',
+          accelerator: 'Alt+CmdOrCtrl+I',
+          visible: visible(mac),
+          click() { mainWindow.toggleDevTools() }
+        }, {
+          label: 'Toggle DevTools',
+          accelerator: 'F12',
+          visible: visibleAll(notMac),
+          click() { mainWindow.toggleDevTools() }
+        }, {
+          label: 'Toggle Top Menu',
+          accelerator: 'CmdOrCtrl+T',
+          visible: true,
+          click() { mainWindow.setMenuBarVisibility(!mainWindow.isMenuBarVisible()) }
+        }]
+        // TODO: Add tools here for things like clearing matches, bots, db...
       }];
 
       menu = Menu.buildFromTemplate(template);
@@ -136,7 +172,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('error', (err) => {
-  log.error(`Unexpected error occured: ${err.toString()} ${err.stack}`);
+  log.error(`Unexpected error occurred: ${err.toString()} ${err.stack}`);
 });
 
 app.on('certificate-error', (ev, wc, url) => {
