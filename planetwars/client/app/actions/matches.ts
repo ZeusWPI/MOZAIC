@@ -85,6 +85,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
     });
 
     runner.onError.subscribe((error) => {
+      console.log(error);
       dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
       const body = `A remote match on map has errored`;
@@ -96,10 +97,26 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
   };
 }
 
-export function runMatch(params: M.MatchParams) {
+export function sendGo() {
+  return (dispatch: any, getState: any) => {
+    const state: GState = getState();
+    if (state.host.runner) {
+      console.log("running");
+      state.host.runner.start_match();
+    }
+  };
+}
+
+export function runMatch() {
   // TODO: properly type this
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
+
+    if (!state.host.matchParams) {
+      return;
+    }
+
+    const params = state.host.matchParams;
     const { map, players, maxTurns } = params;
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
@@ -128,6 +145,7 @@ export function runMatch(params: M.MatchParams) {
       maxTurns,
       address: params.address,
       logFile: match.logPath,
+      ctrl_token: params.ctrl_token,
     };
 
     const runner = new PwClient.MatchRunner(Config.matchRunner, config);
@@ -147,10 +165,18 @@ export function runMatch(params: M.MatchParams) {
       dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
     });
 
+    runner.onPlayerConnected.subscribe((playerNumber) => {
+      dispatch(Varia.playerConnected(players[playerNumber - 1].token));
+    });
+
+    runner.onPlayerDisconnected.subscribe((playerNumber) => {
+      dispatch(Varia.playerDisconnected(players[playerNumber - 1].token));
+    });
+
     runner.run();
+    dispatch(Varia.serverStarted(runner));
   };
 }
-
 
 function completeMatch(matchId: M.MatchId) {
   return (dispatch: any, getState: any) => {
@@ -189,8 +215,8 @@ function handleMatchError(matchId: M.MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
-    if (match.type !== M.MatchType.hosted) { throw new Error('We suck at coding.'); }
-    if (match.status !== M.MatchStatus.playing) { throw new Error('We suck at coding.'); }
+    if (match.type !== M.MatchType.hosted) { /* throw new Error('We suck at coding.'); */ return; }
+    if (match.status !== M.MatchStatus.playing) { /*throw new Error('We suck at coding.');*/ return; }
 
     const updatedMatch: M.ErroredMatch = {
       ...match,

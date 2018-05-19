@@ -3,6 +3,7 @@ import * as crypto from 'crypto';
 
 import * as A from '../actions/index';
 import * as M from '../utils/database/models';
+import { generateToken } from "../utils/GameRunner";
 import { GState } from '../reducers';
 import { Importer } from '../utils/Importer';
 import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host';
@@ -10,45 +11,38 @@ import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host
 const mapStateToProps = (state: GState) => {
   const bots = state.bots;
   const maps = state.maps;
-  return { bots, maps };
+  const selectedBots = state.host.slots;
+  const ctrlToken = generateToken();
+  const serverShouldStart = (state.host.matchParams !== undefined) && !state.host.serverRunning;
+  console.log(serverShouldStart);
+  return { bots, maps, selectedBots, ctrlToken, serverShouldStart };
 };
 
 const mapDispatchToProps = (dispatch: any) => {
   return {
-    // selectBotInternal(name: string, botId: BotId) {
-    //   dispatch(A.selectBot({
-    //     type: 'internal',
-    //     botId,
-    //     token: generateToken(),
-    //     name,
-    //   }));
-    // },
-    // selectBotExternal(name: string) {
-    //   dispatch(A.selectBot({
-    //     type: 'external',
-    //     token: generateToken(),
-    //     name,
-    //   }));
-    // },
-    // unselectBot(uuid: BotId) {
-    //   dispatch(A.unselectBot(uuid));
-    // },
-    runMatch(params: M.MatchParams) {
-      dispatch(A.runMatch(params));
+    setupServer(params: M.ServerParams) {
+      dispatch(A.setupServer(params));
     },
-    generateToken,
-    // changeLocalBot(token: Token, slot: BotSlot) {
-    //   dispatch(A.changeLocalBot(slot));
-    // },
-    // selectMap(id: string) {
-    //   dispatch(A.selectMap(id));
-    // },
+    startServer() {
+      dispatch(A.runMatch());
+    },
+    toggleConnected(botslot: M.BotSlot) {
+      if (botslot.connected) {
+        dispatch(A.playerDisconnected(botslot.token));
+      } else {
+        dispatch(A.playerConnected(botslot.token));
+      }
+    },
+    changeBotSlot(slot: M.BotSlot) {
+      dispatch(A.changeBotSlot(slot));
+    },
+    sendGo() {
+      dispatch(A.sendGo());
+    },
+    joinMatch(address: M.Address, bot: M.InternalBotSlot) {
+      dispatch(A.joinMatch(address, bot));
+    },
   };
 };
-
-function generateToken() {
-  const token = crypto.randomBytes(32).toString('hex');
-  return token;
-}
 
 export default connect<HostStateProps, HostDispatchProps>(mapStateToProps, mapDispatchToProps)(Host);

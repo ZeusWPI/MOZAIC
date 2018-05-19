@@ -95,6 +95,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
       token: this.state.token,
       botId: this.state.botId!,
       name: this.props.allBots[this.state.botId!].name,
+      connected: true,
     };
     this.props.joinMatch(this.state.address, bot);
   }

@@ -1,1 +1,39 @@
-BottleBats is de max!
+
+ ██████╗  ██████╗ ████████╗████████╗██╗     ███████╗
+ ██╔══██╗██╔═══██╗╚══██╔══╝╚══██╔══╝██║     ██╔════╝
+ ██████╔╝██║   ██║   ██║      ██║   ██║     █████╗
+ ██╔══██╗██║   ██║   ██║      ██║   ██║     ██╔══╝
+ ██████╔╝╚██████╔╝   ██║      ██║   ███████╗███████╗
+ ╚═════╝  ╚═════╝    ╚═╝      ╚═╝   ╚══════╝╚══════╝
+         ██████╗  █████╗ ████████╗███████╗
+         ██╔══██╗██╔══██╗╚══██╔══╝██╔════╝
+         ██████╔╝███████║   ██║   ███████╗
+         ██╔══██╗██╔══██║   ██║   ╚════██║
+         ██████╔╝██║  ██║   ██║   ███████║
+         ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝
+
+           https://bottlebats.zeuswpi.org
+
+ === WHAT? ===
+
+ BottleBats 2.018 is the second edition of the Zeus
+ WPI AI competition. The simple concept remains the
+ same, but this time it is build on top of the MOZAIC
+ platform for reliable cross-platform en networked
+ (Soon™) play.
+
+ === HOW? ===
+
+ Look at
+ https://github.com/ZeusWPI/MOZAIC#bottlebats-2018 on
+ instructions how to install the client and start
+ coding!
+
+ === UPDATES? ===
+
+ You can stay up-to-date with the latest updates and
+ info about the tournament if you subscribe to our
+ mailinglist. This can be done by going to
+ http://lists.zeus.ugent.be/mailman/listinfo/bottlebats
+ OR by sending an email to
+ bottlebats-join@zeus.ugent.be.

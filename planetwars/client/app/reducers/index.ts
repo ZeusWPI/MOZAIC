@@ -5,7 +5,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { store } from '../index';
 import * as A from '../actions/index';
 import * as M from '../utils/database/models';
+import { generateToken } from '../utils/GameRunner';
 import { Action } from '../actions/helpers';
+import * as PwClient from 'mozaic-client';
 
 // ----------------------------------------------------------------------------
 // State
@@ -31,6 +33,7 @@ export interface GState {
   readonly matches: MatchesState;
   readonly notifications: NotificationsState;
   readonly maps: MapsState;
+  readonly host: HostState;
 
   // TODO: Remove this state
   readonly matchesPage: MatchesPageState;
@@ -51,6 +54,12 @@ export type BotsState = M.BotList;
 export type MatchesState = M.MatchList;
 export type MapsState = M.MapList;
 
+export interface HostState {
+  slots: M.BotSlot[];
+  serverRunning: boolean;
+  matchParams?: M.MatchParams;
+  runner?: PwClient.MatchRunner;
+}
 export interface MatchesPageState {
   readonly importError?: string;
 }
@@ -65,6 +74,10 @@ export const initialState: GState = {
   matches: {},
   maps: {},
   notifications: [],
+  host: {
+    slots: [],
+    serverRunning: false,
+  },
 
   matchesPage: {},
   globalErrors: [],
@@ -104,6 +117,52 @@ const notificationReducer = (state: M.Notification[] = [], action: any) => {
     return newState;
   } else if (A.clearNotifications.test(action)) {
     return [];
+  }
+  return state;
+};
+
+const hostReducer = (state: HostState = { slots: [], serverRunning: false }, action: Action) =>  {
+  if (A.playerConnected.test(action)) {
+    const slots = state.slots.slice();
+    slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = true;
+    return {...state, slots};
+  }
+  if (A.playerDisconnected.test(action)) {
+    const slots = state.slots.slice();
+    slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = false;
+    return {...state, slots};
+  }
+  if (A.setupServer.test(action)) {
+    const slots: M.BotSlot[] = [];
+    for (let i = 1; i <= action.payload.numPlayers; i++) {
+      slots.push({
+        type: 'external',
+        name: 'Player ' + i,
+        token: generateToken(),
+        connected: false,
+      });
+    }
+
+    const params: M.MatchParams = {
+      players: slots,
+      map: action.payload.mapId,
+      maxTurns: action.payload.maxTurns,
+      address: action.payload.address,
+      ctrl_token: generateToken(),
+    };
+    return { ...state, slots, matchParams: params };
+  }
+  if (A.serverStarted.test(action)) {
+    return { ...state, runner: action.payload, serverRunning: true };
+  }
+  if (A.changeBotSlot.test(action)) {
+    const slots = state.slots.slice();
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i].token === action.payload.token) {
+        slots[i] = action.payload;
+      }
+    }
+    return { ...state , slots };
   }
   return state;
 };
@@ -192,6 +251,7 @@ export const rootReducer = combineReducers<GState>({
   matches: matchesReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
+  host: hostReducer,
 
   navbar: navbarReducer,
   matchesPage: matchesPageReducer,

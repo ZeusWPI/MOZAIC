@@ -99,6 +99,14 @@ export interface MatchParams {
   map: MapId;
   maxTurns: number;
   address: Address;
+  ctrl_token: Token;
+}
+
+export interface ServerParams {
+  numPlayers: number;
+  maxTurns: number;
+  mapId: MapId;
+  address: Address;
 }
 
 // tslint:disable-next-line:variable-name
@@ -141,6 +149,7 @@ export type BotSlot = ExternalBotSlot | InternalBotSlot;
 export interface BotSlotProps {
   type: 'internal' | 'external';
   token: Token;
+  connected: boolean; // Maybe more info?
 }
 
 export type ExternalBotSlot = BotSlotProps & {

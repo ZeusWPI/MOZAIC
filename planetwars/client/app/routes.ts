@@ -48,7 +48,7 @@ export default class Routes extends React.Component<any, any> {
           h(Route, {
             path: '/join',
             component: JoinPage,
-          })
+          }),
         ]),
       ])
     );

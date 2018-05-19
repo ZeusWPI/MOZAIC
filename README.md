@@ -8,9 +8,11 @@ It aims to provide a flexible platform to host your very own AI competition. Jus
 Eventually MOZAIC should be very modular, so that you can provide a custom-tailored experience for your competitors, without having to worry about the heavy lifting.
 
 ## BottleBats 2.018
+
 BottleBats 2.018 is the second edition of the Zeus WPI AI competition. The simple concept remains the same, but this time it is build on top of the MOZAIC platform for reliable cross-platform en networked (Soon TM) play. 
 
 ### Concept & Game
+
 Write a bot and compete with your friends. Accept game-states trough stdin and write your actions through stdout, everything is handled by us. 
 
 See the [intro-slides](https://drive.google.com/open?id=1ZwFlXGm7WZ4urTFxXdyoEz7n19PjwkO4Z-iVYLWCDmg) for more info.
@@ -35,21 +37,22 @@ Most of the data will be save to user-data directories which are:
 Try not to mess these up, or things will break.
 
 Important resources:
- - [Demo Bots](https://github.com/ZeusWPI/MOZAIC/tree/development/planetwars/bots)
- - [Competitor Bots](https://hackmd.io/h4vmgyBDS-yQxrztywfxCQ#)
+
+* [Demo Bots](https://github.com/ZeusWPI/MOZAIC/tree/development/planetwars/bots)
+* [Competitor Bots](https://hackmd.io/h4vmgyBDS-yQxrztywfxCQ#)
 
 ## Setup
 
 ### Gameserver
 
 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt).
-    - Rust >= 1.18.0
-    - Cargo >= 0.16.0
+    * Rust >= 1.18.0
+    * Cargo >= 0.16.0
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
 1. Run the botrunner again (still in the `gameserver` directory) with:
-    - Linux - `cargo run ../planetwars/examples/configs/stub.json`
-    - Windows - `cargo run ..\planetwars\examples\configs\stub.windows.json`
+    * Linux - `cargo run ../planetwars/examples/configs/stub.json`
+    * Windows - `cargo run ..\planetwars\examples\configs\stub.windows.json`
 1. It should have generated a log-file `log.json`.
 1. If it did, great, it works! Now run 'cargo build --release'.
 1. Check setup below for the client.
@@ -58,13 +61,13 @@ Important resources:
 
 **Note:** Do the setup for the gameserver first
 
-1. Install Node v8 and npm.
+1. Install Node v8 and Yarn.
 1. Go the `planetwars\client` directory
-1. Install dependencies with `npm install`.
+1. Install dependencies with `yarn install`.
 1. Go the `.\bin` dir and symlink the gameserver with:
     * Linux -  `ln -s ../../../gameserver/target/release/mozaic_bot_driver`
     * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
-1. Go back the `client` dir and run `npm run dev`.
+1. Go back the `client` dir and run `yarn run dev`.
 1. An electron client should be at your disposal!
 
 ### Publishing and packaging

@@ -15,23 +15,23 @@ and maybe do some quick tutorials on React, Redux, or TypeScript.
 Should work on Linux, macOS, and Windows.
 
 - Clone this repo
-- run `npm install`
-- run `npm run dev`
+- run `yarn install`
+- run `yarn run dev`
 
 When running in dev-mode, hot-reloading is enabled, so
 updating code, you can just refresh your Electron app (with F5 for example),
-instead of running de `npm run dev` command again.
+instead of running de `yarn run dev` command again.
 
 ### Notes
 
 Project setup is taken from [here](https://github.com/iRath96/electron-react-typescript-boilerplate),
 so you might find more info on problems there.
 
-If you are using WSL, I suggest installing Node and NPM on Windows,
-and running the NPM commands from there. All tools seem to be supported very well.
+If you are using WSL, I suggest installing Node and Yarn on Windows,
+and running the Yarn commands from there. All tools seem to be supported very well.
 
-Might help to install electron and cross-env globally with NPM with
-`npm install -g electron` and `npm install -g cross-dev` respectively.
+Might help to install electron and cross-env globally with Yarn with
+`yarn install -g electron` and `yarn install -g cross-dev` respectively.
 
 ### Publishing
 

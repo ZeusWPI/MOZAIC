@@ -71,6 +71,7 @@ function upgradeV3(db: V3.DbSchema): V4.DbSchema {
   const oldMatches: V3.MatchList = db.matches;
   const newMatches: V4.MatchList = {};
 
+  // alert('Somebody forgot to implement a migration, this might cause fatal issues if you don\'t abort');
   throw new Error('Somebody forgot to implement a migration!');
   // return { ...db, bots: newBots, matches: newMatches, version: 'v4' };
 }
