@@ -5,6 +5,9 @@ import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { MessageHandler, RequestResolver } from "./RequestResolver";
+import * as fs from 'fs';
+import { GameState } from "./PwTypes";
+import { Logger } from "./Logger";
 
 export interface MatchParams {
     ctrl_token: string;
@@ -26,6 +29,7 @@ export class MatchRunner {
     private connection: Connection;
     private serverRunner: ServerRunner;
     private clientRunner: ClientRunner;
+    private logger: Logger;
 
     private connHandler: RequestResolver;
 
@@ -34,11 +38,14 @@ export class MatchRunner {
 
     private _onPlayerConnected = new SimpleEventDispatcher<number>();
     private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
+    private _onGameState = new SimpleEventDispatcher<GameState>();
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
         let token = Buffer.from(params.ctrl_token, 'hex');
         this.connection = new Connection(token);
+        this.logger = new Logger(fs.createWriteStream(params.logFile));
+
 
         const { address, logFile } = params;
         let clients: ClientData[] = [];
@@ -51,7 +58,7 @@ export class MatchRunner {
         this.clientRunner = new ClientRunner({
             clients,
             address,
-            logFile,
+            logger: this.logger,
         });
 
         this.serverRunner.onExit.subscribe(() => {
@@ -65,9 +72,16 @@ export class MatchRunner {
             this._onError.dispatch(err);
         });
 
+        this.onGameState.subscribe((state) => {
+            this.logger.log({
+                type: "game_state",
+                state,
+            });
+        });
+
         this.connHandler = new RequestResolver(this.connection, (data) => {
             const text = new TextDecoder('utf-8').decode(data);
-            let message: LobbyMessage = JSON.parse(text);
+            let message: ServerMessage = JSON.parse(text);
             
             switch (message.type) {
                 case 'player_connected': {
@@ -78,6 +92,10 @@ export class MatchRunner {
                 case 'player_disconnected': {
                     const { player_id } = message.content;
                     this._onPlayerDisconnected.dispatch(player_id);
+                    break;
+                }
+                case 'game_state': {
+                    this._onGameState.dispatch(message.content);
                     break;
                 }
             }
@@ -122,9 +140,17 @@ export class MatchRunner {
     public get onPlayerDisconnected() {
         return this._onPlayerDisconnected.asEvent();
     }
+
+    public get onGameState() {
+        return this._onGameState.asEvent();
+    }
 }
 
-type LobbyMessage = PlayerConnectedMessage | PlayerDisconnectedMessage;
+type ServerMessage
+    = PlayerConnectedMessage
+    | PlayerDisconnectedMessage
+    | GameStateMessage;
+                
 
 interface PlayerConnectedMessage {
     type: "player_connected";
@@ -138,6 +164,11 @@ interface PlayerDisconnectedMessage {
     content: {
         player_id: number;
     }
+}
+
+interface GameStateMessage {
+    type: "game_state";
+    content: GameState;
 }
 
 interface LobbyCommand {

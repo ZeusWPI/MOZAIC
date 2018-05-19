@@ -84,9 +84,19 @@ export type PlayerActionMessage = {
  * Types for the log
  */
 
-export interface LogEntry {
-    player: number;
-    record: LogRecord;
+export type LogEntry
+    = PlayerLogEntry
+    | GameStateEntry;
+
+export interface GameStateEntry {
+    type: "game_state";
+    state: GameState;
+}
+
+export interface PlayerLogEntry {
+    type: "player_entry",
+    player: number,
+    record: LogRecord,
 }
 
 export type LogRecord

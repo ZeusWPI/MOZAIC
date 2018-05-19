@@ -4,7 +4,7 @@ import { BotRunner, BotConfig } from "./BotRunner";
 import { Connection, Address } from "./Connection";
 import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
-import { Logger } from './Logger';
+import { ClientLogger } from './Logger';
 import { TextDecoder } from 'text-encoding';
 import { ServerMessage, GameState, PlayerAction } from './PwTypes';
 import { RequestResolver } from './RequestResolver';
@@ -32,7 +32,7 @@ export class Client {
     readonly connection: Connection;
     readonly address: Address;
     readonly botRunner: BotRunner;
-    readonly logger: Logger;
+    readonly logger: ClientLogger;
     private resolver: RequestResolver;
 
     private turnNum: 0;
@@ -41,7 +41,7 @@ export class Client {
     private _onExit = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
 
-    constructor(connData: ConnectionData, botConfig: BotConfig, logger: Logger) {
+    constructor(connData: ConnectionData, botConfig: BotConfig, logger: ClientLogger) {
         this.connection = new Connection(connData.token);
 
         this.handleMessage = this.handleMessage.bind(this);
