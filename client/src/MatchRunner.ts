@@ -5,7 +5,6 @@ import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { MessageHandler, RequestResolver } from "./RequestResolver";
-import * as fs from 'fs';
 import { GameState } from "./PwTypes";
 import { Logger } from "./Logger";
 
@@ -44,7 +43,7 @@ export class MatchRunner {
         this.serverRunner = new ServerRunner(serverPath, params);
         let token = Buffer.from(params.ctrl_token, 'hex');
         this.connection = new Connection(token);
-        this.logger = new Logger(fs.createWriteStream(params.logFile));
+        this.logger = new Logger(params.logFile);
 
 
         const { address, logFile } = params;

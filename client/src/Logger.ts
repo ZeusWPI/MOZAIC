@@ -1,11 +1,12 @@
 import * as stream from 'stream';
 import { LogEntry, LogRecord } from './PwTypes';
+import * as fs from 'fs';
 
 export class Logger {
     private sink: stream.Writable;
 
-    constructor(sink: stream.Writable) {
-        this.sink = sink;
+    constructor(logFile: string) {
+        this.sink = fs.createWriteStream(logFile)
     }
 
     public log(entry: LogEntry) {
