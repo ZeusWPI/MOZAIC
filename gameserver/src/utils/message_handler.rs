@@ -53,13 +53,15 @@ pub enum Message {
 }
 
 
-fn encode_message(message_id: u64, data: Vec<u8>) -> Vec<u8> {
+fn encode_message(id: MessageId, data: Vec<u8>) -> Vec<u8> {
+    let MessageId(message_id) = id;
     let message = proto::Message { message_id, data };
     let payload = proto::Payload::Message(message);
     return encode_payload(payload);
 }
 
-fn encode_response(message_id: u64, data: Vec<u8>) -> Vec<u8> {
+fn encode_response(id: MessageId, data: Vec<u8>) -> Vec<u8> {
+    let MessageId(message_id) = id;
     let response = proto::Response { message_id, data };
     let payload = proto::Payload::Response(response);
     return encode_payload(payload);
@@ -80,8 +82,8 @@ fn encode_payload(payload: proto::Payload) -> Vec<u8> {
 
 pub struct MessageHandler {
     message_counter: u64,
-    timeout_heap: TimeoutHeap<u64>,
-    requests: HashMap<u64, usize>,
+    timeout_heap: TimeoutHeap<MessageId>,
+    requests: HashMap<MessageId, usize>,
 }
 
 impl MessageHandler {
@@ -96,16 +98,13 @@ impl MessageHandler {
     pub fn create_message(&mut self, data: Vec<u8>)
         -> Vec<u8>
     {
-        let message_id = self.next_message_id();
-        return encode_message(message_id, data);
+        return encode_message(self.next_message_id(), data);
     }
 
     pub fn create_response(&mut self, message_id: MessageId, data: Vec<u8>)
         -> Vec<u8>
     {
-        
-        let MessageId(id) = message_id;
-        return encode_response(id, data);
+        return encode_response(message_id, data);
     }
 
     pub fn create_request(&mut self,
@@ -130,18 +129,20 @@ impl MessageHandler {
                 bail!(ErrorKind::EmptyMessage);
             },
             Some(proto::Payload::Message(message)) => {
+                let message_id = MessageId(message.message_id);
+
                 Ok(Message::Message {
-                    message_id: MessageId(message.message_id),
+                    message_id,
                     data: message.data,
                 })
             },
             Some(proto::Payload::Response(response)) => {
-                let message_id = response.message_id;
+                let message_id = MessageId(response.message_id);
+
                 let request_num = match self.requests.remove(&message_id) {
                     Some(request_num) => request_num,
                     None => {
-                        let id = MessageId(message_id);
-                        bail!(ErrorKind::UnsolicitedResponse(id));
+                        bail!(ErrorKind::UnsolicitedResponse(message_id));
                     }
                 };
 
@@ -162,9 +163,9 @@ impl MessageHandler {
         }
     }
 
-    fn next_message_id(&mut self) -> u64 {
-        let message_id = self.message_counter;
+    fn next_message_id(&mut self) -> MessageId {
+        let message_num = self.message_counter;
         self.message_counter += 1;
-        return message_id;
+        return MessageId(message_num);
     }
 }
