@@ -1,12 +1,20 @@
 import * as React from 'react';
+import { shell } from 'electron';
 
 interface Props {
   error: Error;
   message?: string;
 }
 
+function launchIssues() {
+  shell.openExternal('https://github.com/ZeusWPI/MOZAIC/issues/');
+}
+
 const Github = () => (
-  <a href="https://github.com/ZeusWPI/MOZAIC/issues/">
+  <a
+    href="https://github.com/ZeusWPI/MOZAIC/issues/"
+    onClick={launchIssues}
+  >
     GitHub <span className="fa fa-github" />
   </a>
 );
