@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import * as crypto from 'crypto';
 
-import * as A from '../../actions/index';
+import * as A from '../../actions';
 import * as M from '../../database/models';
 import { GState } from '../../reducers';
 import { Importer } from '../../utils/Importer';

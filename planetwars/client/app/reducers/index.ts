@@ -3,7 +3,7 @@ import { combineReducers, Reducer } from 'redux';
 import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
-import * as A from '../actions/index';
+import * as A from '../actions';
 import * as M from '../database/models';
 import { generateToken } from '../utils/GameRunner';
 import { Action } from '../actions/helpers';
@@ -42,10 +42,8 @@ export interface GState {
   readonly globalErrors: any[];
 }
 
-// TODO: Remove toggled from redux store
-// TODO: Make notifications their own root level prop
+// TODO: Remove notificationsVisible from global store
 export interface NavbarState {
-  readonly toggled: boolean;
   readonly notificationsVisible: boolean;
 }
 
@@ -69,7 +67,7 @@ export interface AboutPageState { }
 export const initialState: GState = {
   routing: { location: null },
 
-  navbar: { toggled: false, notificationsVisible: false },
+  navbar: { notificationsVisible: false },
   bots: {},
   matches: {},
   maps: {},
@@ -88,12 +86,6 @@ export const initialState: GState = {
 // ----------------------------------------------------------------------------
 
 const navbarReducer = combineReducers<NavbarState>({
-  toggled: (state = false, action) => {
-    if (A.toggleNavMenu.test(action)) {
-      return !state;
-    }
-    return state;
-  },
   notificationsVisible: (state = false, action) => {
     if (A.showNotifications.test(action)) {
       return true;

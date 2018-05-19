@@ -7,7 +7,7 @@ import { PathLike } from 'mz/fs';
 
 import { GState } from '../../reducers/index';
 import { Config } from '../../utils/Config';
-import * as A from '../../actions/index';
+import * as A from '../../actions';
 import * as M from '../../database/models';
 
 import * as Comp from './types';

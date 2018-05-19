@@ -5,16 +5,18 @@ import { Link } from 'react-router-dom';
 import * as React from 'react';
 
 import { Notification } from '../../database/models';
+
 /*
  * CSS for the navbar is found in app.global.scss cause it's pretty unique
  * and most of it relies on global Bulma anyway.
  */
 
-interface NavProps {
-  toggled: boolean;
+export type NavProps = NavStateProps & NavDispatchProps;
+export interface NavStateProps {
   notifications: Notification[];
-  toggle: () => void;
   notificationsVisible: boolean;
+}
+export interface NavDispatchProps {
   toggleNotifications: () => void;
   hideNotifications: () => void;
   showNotifications: () => void;
@@ -22,20 +24,18 @@ interface NavProps {
   clearNotifications: () => void;
 }
 
-export class Navbar extends React.Component<NavProps, {}> {
+interface NavState { toggled: boolean; }
+
+export class Navbar extends React.Component<NavProps, NavState> {
+  public state: NavState = { toggled: false };
 
   public render() {
-    const active = this.props.toggled ? '.is-active' : '';
+    const active = this.state.toggled ? '.is-active' : '';
     return nav(`.navbar`, [
-      div(`.navbar-burger${active}`,
-        {
-          onClick: () => this.props.toggle(),
-        }, [
-          span(),
-          span(),
-          span(),
-        ]),
-      div(`.navbar-menu${this.props.toggled ? '.is-active' : ''}`, [
+      div(`.navbar-burger${active}`, {
+        onClick: () => this.setState({ toggled: !this.state.toggled }),
+      }, [span(), span(), span()]),
+      div(`.navbar-menu${this.state.toggled ? '.is-active' : ''}`, [
         div(`.navbar-start`, [
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/host" }, ["Host"]),

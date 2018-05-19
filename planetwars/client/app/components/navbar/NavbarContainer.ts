@@ -2,28 +2,23 @@ import { connect } from 'react-redux';
 
 import { GState } from '../../reducers/index';
 import {
-  toggleNavMenu,
   showNotifications,
   hideNotifications,
   toggleNotifications,
   removeNotification,
   clearNotifications,
-} from '../../actions/index';
-import { Navbar } from './Navbar';
+} from '../../actions';
+import { Navbar, NavStateProps, NavDispatchProps } from './Navbar';
 
-const mapStateToProps = (state: GState) => {
+const mapStateToProps = (state: GState): NavStateProps => {
   return {
-    toggled: state.navbar.toggled,
     notifications: state.notifications,
     notificationsVisible: state.navbar.notificationsVisible,
   };
 };
 
-const mapDispatchToProps = (dispatch: any) => {
+const mapDispatchToProps = (dispatch: any): NavDispatchProps => {
   return {
-    toggle: () => {
-      dispatch(toggleNavMenu());
-    },
     showNotifications: () => {
       dispatch(showNotifications());
     },
