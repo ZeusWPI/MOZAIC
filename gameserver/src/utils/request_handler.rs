@@ -4,16 +4,10 @@ use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use std::collections::HashMap;
 
 use network::router::RoutingTable;
 use network::connection::{Connection, ConnectionEvent};
-
-use utils::timeout_heap::TimeoutHeap;
-
-use prost::Message as ProtobufMessage;
-use bytes::BytesMut;
-use protocol::{self as proto, message};
+use super::message_handler::*;
 
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -52,9 +46,6 @@ impl ConnectionHandle {
             .expect("connection handle broke");
     }
 }
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct MessageId(u64);
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct RequestId {
@@ -107,9 +98,7 @@ pub struct ConnectionHandler {
 
     ctrl_chan: UnboundedReceiver<Command>,
 
-    requests: HashMap<MessageId, usize>,
-    timeouts: TimeoutHeap<MessageId>,
-    message_counter: u64,
+    message_handler: MessageHandler,
     
     event_channel: UnboundedSender<Event>,
 }
@@ -136,9 +125,7 @@ impl ConnectionHandler {
 
             ctrl_chan: rcv,
 
-            requests: HashMap::new(),
-            timeouts: TimeoutHeap::new(),
-            message_counter: 0,
+            message_handler: MessageHandler::new(),
 
             event_channel,
         };
@@ -161,12 +148,16 @@ impl ConnectionHandler {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
                 Some(Command::Message { data }) => {
-                    self.send_message(data);
+                    let msg = self.message_handler.create_message(data);
+                    self.connection.send(msg);
                 },
                 Some(Command::Request { request_num, data, deadline }) => {
-                    let message_id = self.send_message(data);
-                    self.requests.insert(message_id, request_num);
-                    self.timeouts.set_timeout(message_id, deadline);
+                    let msg = self.message_handler.create_request(
+                        request_num,
+                        data,
+                        deadline,
+                    );
+                    self.connection.send(msg);
                 },
                 None => {
                     // The control channel was closed; exit.
@@ -176,11 +167,12 @@ impl ConnectionHandler {
         }
     }
 
+    /// Pull events from the client connection and handle them.
     fn poll_client_connection(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.connection.poll()) {
                 ConnectionEvent::Packet(data) => {
-                    self.handle_client_message(data);
+                    self.handle_packet(data);
                 }
                 ConnectionEvent::Connected => {
                     self.dispatch_event(EventContent::Connected);
@@ -191,63 +183,28 @@ impl ConnectionHandler {
             }
         }
     }
- 
-    fn handle_client_message(&mut self, data: Vec<u8>) {
-        let message = match proto::Message::decode(data) {
-            Err(_err) => unimplemented!(),
-            Ok(message) => message,
-        };
 
-        match message.payload.unwrap() {
-            message::Payload::Message(message) => {
-                let message_id = MessageId(message.message_id);
-                let data = message.data;
-                let event = EventContent::Message { message_id, data };
-                self.dispatch_event(event);
-            },
-            message::Payload::Response(response) => {
-                let message_id = MessageId(response.message_id);
-                self.resolve_response(message_id, response.data);
+    fn handle_packet(&mut self, data: Vec<u8>) {
+        match self.message_handler.handle_message(data) {
+            Ok(Message::Message { message_id, data }) => {
+                self.dispatch_event(EventContent::Message {
+                    message_id,
+                    data,
+                });
+            }
+            Ok(Message::Response { request_num, data }) => {
+                let connection_id = self.connection_id;
+                let request_id = RequestId { connection_id, request_num };
+                self.dispatch_event(EventContent::Response {
+                    request_id,
+                    value: Ok(data),
+                });
+            }
+            Err(err) => {
+                // TODO
+                println!("{}", err);
             }
         }
-    }
-
-    fn resolve_response(&mut self, message_id: MessageId, data: Vec<u8>) {
-        if let Some(request_num) = self.requests.remove(&message_id) {
-            self.timeouts.cancel_timeout(message_id);
-            let value = Ok(data);
-            let connection_id = self.connection_id;
-            let request_id = RequestId { connection_id, request_num };
-            let event = EventContent::Response { request_id, value };
-            self.dispatch_event(event);
-        }
-    }
-
-    fn send_message(&mut self, data: Vec<u8>) -> MessageId {
-        let message_id = self.message_counter;
-        self.message_counter += 1;
-
-        let message = message::Message { message_id, data };
-        self.send_payload(message::Payload::Message(message));
-        return MessageId(message_id);
-    }
-
-    fn send_reponse(&mut self, message_id: u64, data: Vec<u8>) {
-        let response = message::Response { message_id, data };
-        self.send_payload(message::Payload::Response(response));
-    }
-
-    fn send_payload(&mut self, payload: message::Payload) {
-        let message = proto::Message {
-            payload: Some(payload),
-        };
-
-        let mut bytes = BytesMut::with_capacity(message.encoded_len());
-        // encoding can only fail because the buffer does not have
-        // enough space allocated, but we just allocated the required
-        // space.
-        message.encode(&mut bytes).unwrap();
-        self.connection.send(bytes.to_vec());
     }
 }
 
