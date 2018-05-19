@@ -88,13 +88,14 @@ pub enum ServerMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[serde(tag = "type", content = "content")]
-pub enum LobbyMessage {
+pub enum ControlMessage {
     PlayerConnected {
         player_id: u64,
     },
     PlayerDisconnected {
         player_id: u64,
-    }
+    },
+    GameState(State),
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

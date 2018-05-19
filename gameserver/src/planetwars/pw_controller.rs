@@ -217,7 +217,7 @@ impl Lobby {
             EventContent::Connected => {
                 let val = self.connection_player.get(&event.connection_id);
                 if let Some(&player_id) = val {
-                    let msg = proto::LobbyMessage::PlayerConnected {
+                    let msg = proto::ControlMessage::PlayerConnected {
                         player_id: (player_id.as_usize() + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
@@ -227,7 +227,7 @@ impl Lobby {
             EventContent::Disconnected => {
                 let val = self.connection_player.get(&event.connection_id);
                 if let Some(&player_id) = val {
-                    let msg = proto::LobbyMessage::PlayerDisconnected {
+                    let msg = proto::ControlMessage::PlayerDisconnected {
                         player_id: (player_id.as_usize() + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
@@ -252,6 +252,7 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
+    ctrl_handle: ConnectionHandle,
 
     connection_player: HashMap<ConnectionId, PlayerId>,
     players: HashMap<PlayerId, Player>,
@@ -274,6 +275,7 @@ impl PwController {
             players: lobby.players,
             connection_player: lobby.connection_player,
             logger: lobby.logger,
+            ctrl_handle: lobby.ctrl_handle,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
@@ -310,9 +312,13 @@ impl PwController {
         }
     }
 
-    fn log_state(&self) {
+    fn log_state(&mut self) {
         // TODO: add turn number
         info!(self.logger, "step"; serialize(&self.state));
+        let serialized_state = serialize(&self.state);
+        let message = proto::ControlMessage::GameState(serialized_state);
+        let serialized = serde_json::to_vec(&message).unwrap();
+        self.ctrl_handle.send(serialized);
     }
 
     fn prompt_players(&mut self) {
