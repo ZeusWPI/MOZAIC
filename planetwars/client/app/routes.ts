@@ -5,25 +5,25 @@ import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
 
 import App from './containers/App';
 import HomePage from './containers/HomePage';
-import PlayPage from './containers/PlayPage';
+import HostPage from './containers/HostPage';
 import BotsPage from './containers/BotsPage';
 import MatchesPage from './containers/MatchesPage';
 import InfoPage from './containers/InfoPage';
 import Navbar from './containers/NavbarContainer';
+import JoinPage from "./containers/JoinPage";
 
 export default class Routes extends React.Component<any, any> {
   public render() {
     return (
       h(App, [
-        h(Navbar),
         h(Switch, `.container`, [
           h(Route, {
             path: '/home',
             component: HomePage,
           }),
           h(Route, {
-            path: '/play',
-            component: PlayPage,
+            path: '/host',
+            component: HostPage,
           }),
           h(Route, {
             path: '/bots/:bot',
@@ -44,6 +44,10 @@ export default class Routes extends React.Component<any, any> {
           h(Route, {
             path: '/info',
             component: InfoPage,
+          }),
+          h(Route, {
+            path: '/join',
+            component: JoinPage,
           }),
         ]),
       ])

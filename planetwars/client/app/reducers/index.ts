@@ -3,11 +3,11 @@ import { combineReducers, Reducer } from 'redux';
 import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
-import * as A from '../actions/actions';
-import { BotConfig, IBotData, IBotList, BotID } from '../utils/ConfigModels';
-import { Match, IMatchList, IMapList } from '../utils/GameModels';
-import { Notification } from '../utils/UtilModels';
-import { IAction } from '../actions/helpers';
+import * as A from '../actions/index';
+import * as M from '../utils/database/models';
+import { generateToken } from '../utils/GameRunner';
+import { Action } from '../actions/helpers';
+import * as PwClient from 'mozaic-client';
 
 // ----------------------------------------------------------------------------
 // State
@@ -26,42 +26,47 @@ import { IAction } from '../actions/helpers';
  * only represents the actual data state, with no little consideration for the
  * logic above it. Same goes for matches.
  */
-export interface IGState {
+export interface GState {
   readonly routing: RouterState;
 
-  readonly navbar: INavbarState;
-  readonly bots: IBotList;
-  readonly matches: IMatchList;
-  readonly notifications: Notification[];
-  readonly maps: IMapList;
+  readonly bots: BotsState;
+  readonly matches: MatchesState;
+  readonly notifications: NotificationsState;
+  readonly maps: MapsState;
+  readonly host: HostState;
 
-  readonly matchesPage: IMatchesPageState;
-  readonly playPage: IPlayPageState;
+  // TODO: Remove this state
+  readonly matchesPage: MatchesPageState;
+  readonly navbar: NavbarState;
 
   readonly globalErrors: any[];
 }
 
 // TODO: Remove toggled from redux store
 // TODO: Make notifications their own root level prop
-export interface INavbarState {
+export interface NavbarState {
   readonly toggled: boolean;
   readonly notificationsVisible: boolean;
 }
 
-export type IBotsState = IBotList;
-export type IMatchesState = IMatchList;
+export type NotificationsState = M.Notification[];
+export type BotsState = M.BotList;
+export type MatchesState = M.MatchList;
+export type MapsState = M.MapList;
 
-export interface IPlayPageState {
-  selectedBots: BotID[];
+export interface HostState {
+  slots: M.BotSlot[];
+  serverRunning: boolean;
+  matchParams?: M.MatchParams;
+  runner?: PwClient.MatchRunner;
 }
-
-export interface IMatchesPageState {
+export interface MatchesPageState {
   readonly importError?: string;
 }
 
-export interface IAboutPageState { }
+export interface AboutPageState { }
 
-export const initialState: IGState = {
+export const initialState: GState = {
   routing: { location: null },
 
   navbar: { toggled: false, notificationsVisible: false },
@@ -69,10 +74,11 @@ export const initialState: IGState = {
   matches: {},
   maps: {},
   notifications: [],
-
-  playPage: {
-    selectedBots: [],
+  host: {
+    slots: [],
+    serverRunning: false,
   },
+
   matchesPage: {},
   globalErrors: [],
 };
@@ -81,7 +87,7 @@ export const initialState: IGState = {
 // Reducers
 // ----------------------------------------------------------------------------
 
-const navbarReducer = combineReducers<INavbarState>({
+const navbarReducer = combineReducers<NavbarState>({
   toggled: (state = false, action) => {
     if (A.toggleNavMenu.test(action)) {
       return !state;
@@ -100,7 +106,7 @@ const navbarReducer = combineReducers<INavbarState>({
   },
 });
 
-const notificationReducer = (state: Notification[] = [], action: any) => {
+const notificationReducer = (state: M.Notification[] = [], action: any) => {
   if (A.addNotification.test(action)) {
     const newState = state.slice();
     newState.push(action.payload);
@@ -115,7 +121,53 @@ const notificationReducer = (state: Notification[] = [], action: any) => {
   return state;
 };
 
-const mapsReducer = (state: IMapList = {}, action: any) => {
+const hostReducer = (state: HostState = { slots: [], serverRunning: false }, action: Action) =>  {
+  if (A.playerConnected.test(action)) {
+    const slots = state.slots.slice();
+    slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = true;
+    return {...state, slots};
+  }
+  if (A.playerDisconnected.test(action)) {
+    const slots = state.slots.slice();
+    slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = false;
+    return {...state, slots};
+  }
+  if (A.setupServer.test(action)) {
+    const slots: M.BotSlot[] = [];
+    for (let i = 1; i <= action.payload.numPlayers; i++) {
+      slots.push({
+        type: 'external',
+        name: 'Player ' + i,
+        token: generateToken(),
+        connected: false,
+      });
+    }
+
+    const params: M.MatchParams = {
+      players: slots,
+      map: action.payload.mapId,
+      maxTurns: action.payload.maxTurns,
+      address: action.payload.address,
+      ctrl_token: generateToken(),
+    };
+    return { ...state, slots, matchParams: params };
+  }
+  if (A.serverStarted.test(action)) {
+    return { ...state, runner: action.payload, serverRunning: true };
+  }
+  if (A.changeBotSlot.test(action)) {
+    const slots = state.slots.slice();
+    for (let i = 0; i < slots.length; i++) {
+      if (slots[i].token === action.payload.token) {
+        slots[i] = action.payload;
+      }
+    }
+    return { ...state , slots };
+  }
+  return state;
+};
+
+const mapsReducer = (state: M.MapList = {}, action: any) => {
   if (A.importMapFromDB.test(action)) {
     return { ...state, [action.payload.uuid]: action.payload };
   }
@@ -125,15 +177,14 @@ const mapsReducer = (state: IMapList = {}, action: any) => {
   return state;
 };
 
-const botsReducer = (state: IBotsState = {}, action: any) => {
+const botsReducer = (state: BotsState = {}, action: any) => {
   if (A.addBot.test(action)) {
-    const config: BotConfig = action.payload;
+    const { name, command } = action.payload;
     const _now = Date.now();
     const createdAt = new Date(_now);
     const lastUpdatedAt = new Date(_now);
     const uuid = uuidv4();
-    const history = [config];
-    const bot: IBotData = { uuid, config, createdAt, lastUpdatedAt, history };
+    const bot: M.Bot = { uuid, name, command, createdAt, lastUpdatedAt };
     return { ...state, [bot.uuid]: bot };
   }
 
@@ -143,7 +194,6 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
   if (A.editBot.test(action)) {
     const bot = action.payload;
-    bot.history.push(bot.config);
     bot.lastUpdatedAt = new Date(Date.now());
     state[bot.uuid] = bot;
     return { ...state };
@@ -161,7 +211,7 @@ const botsReducer = (state: IBotsState = {}, action: any) => {
 
 // const botsPageReducer = combineReducers<IBotsPageState>({});
 
-const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState => {
+const matchesReducer = (state: MatchesState = {}, action: any): MatchesState => {
   switch (action.type) {
     case A.saveMatch.type: {
       const match = action.payload;
@@ -175,7 +225,7 @@ const matchesReducer = (state: IMatchesState = {}, action: any): IMatchesState =
   }
 };
 
-const matchesPageReducer = combineReducers<IMatchesPageState>({
+const matchesPageReducer = combineReducers<MatchesPageState>({
   importError: (state = "", action) => {
     if (A.importMatchError.test(action)) {
       return action.payload;
@@ -184,28 +234,7 @@ const matchesPageReducer = combineReducers<IMatchesPageState>({
   },
 });
 
-const playPageReducer = combineReducers<IPlayPageState>({
-  selectedBots: (state: BotID[] = [], action) => {
-    if (A.selectBot.test(action)) {
-      return [...state, action.payload];
-    }
-
-    if (A.unselectBot.test(action)) {
-      const i = state.indexOf(action.payload);
-      state.splice(i, 1);
-      return [...state];
-    }
-
-    // Remove all instances from bot from current config
-    if (A.unselectBotAll.test(action)) {
-      const filtered = state.filter((uuid) => uuid !== action.payload);
-      return [...filtered];
-    }
-    return state;
-  },
-});
-
-const globalErrorReducer = (state: any[] = [], action: IAction) => {
+const globalErrorReducer = (state: any[] = [], action: Action) => {
   if (A.dbError.test(action)) {
     return [...state, action.payload];
   }
@@ -215,17 +244,17 @@ const globalErrorReducer = (state: any[] = [], action: IAction) => {
   return state;
 };
 
-export const rootReducer = combineReducers<IGState>({
+export const rootReducer = combineReducers<GState>({
   routing: routing as Reducer<any>,
 
-  navbar: navbarReducer,
   bots: botsReducer,
   matches: matchesReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
+  host: hostReducer,
 
+  navbar: navbarReducer,
   matchesPage: matchesPageReducer,
-  playPage: playPageReducer,
 
   globalErrors: globalErrorReducer,
 });

@@ -20,19 +20,20 @@ function cmdOutput(cmdString) {
 module.exports = {
   module: {
     loaders: [{
-      test: /\.tsx?$/,
-      loaders: ['react-hot-loader/webpack', 'ts-loader'],
-      exclude: /node_modules/
-    },
-    {
+        test: /\.tsx?$/,
+        loaders: ['react-hot-loader/webpack', 'ts-loader'],
+        exclude: /node_modules/
+      },
+      {
         test: /\.tsx?$/,
         enforce: 'pre',
         loader: 'tslint-loader',
-    },
-    {
-      test: /\.json$/,
-      loader: 'json-loader'
-    }]
+      },
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
+      }
+    ]
   },
 
   output: {
@@ -54,8 +55,8 @@ module.exports = {
 
   plugins: [
     new webpack.DefinePlugin({
-      __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD'),
-      __BRANCHNAME__: cmdOutput('git rev-parse --abbrev-ref HEAD'),
+      __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD') || 'unknown_commit',
+      __BRANCH_NAME__: cmdOutput('git rev-parse --abbrev-ref HEAD') || 'unknown_branch',
       __TAG__: cmdOutput('git tag --points-at HEAD')
     })
   ],

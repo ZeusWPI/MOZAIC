@@ -6,7 +6,8 @@ import { execFile } from 'child_process';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
-import { BotConfig, MatchConfig } from './ConfigModels';
+import * as crypto from 'crypto';
+import { MatchConfig, Token, BotSlot } from './database/models';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?
@@ -21,11 +22,15 @@ class GameRunner extends EventEmitter {
 
   constructor(conf: MatchConfig) {
     super();
-    const { gameConfig: { maxTurns, mapFile }, logFile } = conf;
-    const players = conf.players.map(this.convertBotConfig);
-    // tslint:disable-next-line:variable-name
-    const game_config = { max_turns: maxTurns, map_file: mapFile };
-    this.conf = { players, game_config, log_file: logFile };
+    const { gameConfig: { maxTurns, mapFile }, logFile, address } = conf;
+    const players = conf.players;
+    const gameConfig = { max_turns: maxTurns, map_file: mapFile };
+    this.conf = {
+      players,
+      address,
+      game_config: gameConfig,
+      log_file: logFile,
+    };
   }
 
   public run() {
@@ -33,25 +38,15 @@ class GameRunner extends EventEmitter {
     this.runBotRunner();
   }
 
-  private convertBotConfig(bot: BotConfig): ExternalBotConfig {
-    const [command, ...args] = stringArgv(bot.command);
-    return { name: bot.name, command, args };
-  }
-
   private runBotRunner() {
     const configFile = this.writeConfigFile();
     console.log(configFile);
-    const callback = this.processEnded.bind(this);
-    const child = execFile(Config.matchRunner, [configFile], callback);
+    const process = execFile(Config.matchRunner, [configFile]);
+    process.stdout.on('data', (d: Buffer) => console.log(d.toString('utf-8')));
+    process.stderr.on('data', (d: Buffer) => console.log(d.toString('utf-8')));
+    process.on('close', () => this.emit('matchEnded'));
+    process.on('error', (err: Error) => this.emit('error', err));
     this.emit('matchStarted');
-  }
-
-  private processEnded(error: Error | null, stdout: string, stderr: string) {
-    if (error) {
-      this.emit('error', error);
-    } else {
-      this.emit('matchEnded');
-    }
   }
 
   private writeConfigFile() {
@@ -63,19 +58,23 @@ class GameRunner extends EventEmitter {
   }
 }
 
+export function generateToken() {
+  return crypto.randomBytes(32).toString('hex');
+}
+
 // External Configs -----------------------------------------------------------
 // How the game server expects them
 
 export interface ExternalMatchConfig {
   players: ExternalBotConfig[];
   game_config: ExternalGameConfig;
+  address: string;
   log_file: string;
 }
 
 export interface ExternalBotConfig {
   name: string;
-  command: string;
-  args: string[];
+  token: Token;
 }
 
 interface ExternalGameConfig {

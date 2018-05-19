@@ -1,5 +1,5 @@
 import * as Promise from 'bluebird';
-import * as fs from 'mz/fs';
+import { createReadStream, createWriteStream, readdir } from 'mz/fs';
 import * as mkdirp from 'mkdirp';
 import * as p from 'path';
 import { remote } from 'electron';
@@ -7,8 +7,8 @@ import { remote } from 'electron';
 import { Importer } from './Importer';
 import { Config } from './Config';
 import { store } from '../index';
-import * as A from '../actions/actions';
-import { IGState } from '../reducers';
+import * as A from '../actions/index';
+import { GState } from '../reducers';
 
 // TODO: Move all this shit do database
 export function initializeDirs(): Promise<void[]> {
@@ -24,12 +24,12 @@ export function checkDataFilesAgainstDb(): void {
 }
 
 export function populateMaps(): Promise<void[]> {
-  const state: IGState = store.getState();
+  const state: GState = store.getState();
   if (Object.keys(state.maps).length !== 0) {
     return Promise.resolve([]);
   }
   return Promise
-    .resolve(fs.readdir(Config.staticMaps))
+    .resolve(readdir(Config.staticMaps))
     .then((staticMaps) => {
       const pMaps = staticMaps.map((file) => {
         const path = p.resolve(Config.staticMaps, file);
@@ -42,7 +42,7 @@ export function populateMaps(): Promise<void[]> {
 }
 
 export function populateBots(): Promise<void[]> {
-  const state: IGState = store.getState();
+  const state: GState = store.getState();
   if (Object.keys(state.bots).length !== 0) {
     return Promise.resolve([]);
   }
@@ -61,8 +61,8 @@ export function populateBots(): Promise<void[]> {
 
 // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
 export function copyFile(source: string, target: string) {
-  const rd = fs.createReadStream(source);
-  const wr = fs.createWriteStream(target);
+  const rd = createReadStream(source);
+  const wr = createWriteStream(target);
   return new Promise((resolve, reject) => {
     rd.on('error', reject);
     wr.on('error', reject);

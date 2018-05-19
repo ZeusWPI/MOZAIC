@@ -1,0 +1,109 @@
+@import "../../app.global.scss";
+
+#host {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: 0.3fr 150px 1fr 1fr;
+  grid-template-areas:
+    "header header"
+    "map-selector  bot-list"
+    "map-selector  bot-list";
+
+  h1,
+  h2 {
+    color: $secondary;
+  }
+}
+
+.tagInfoText {
+  font-size: 14px;
+  margin-left: 8px;
+}
+
+.tagInfoText::after {
+  content: " ";
+  font-size: 8px;
+  color: #ccc;
+  margin-left: 8px;
+
+  border-top-color: rgba(255, 255, 255, 0.12);
+  border-top-width: 1px;
+  border-top-style: solid;
+  flex: auto;
+  height: 0;
+  // margin: 0 -16px;
+  min-width: 32px;
+}
+
+.hidden {
+  display: none;
+}
+
+.header {
+  grid-area: header;
+
+  h1 {
+    text-align: center;
+  }
+}
+
+#addBotButtons {
+  grid-area: add-buttons;
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "header header"
+    ". ."
+    ". .";
+
+  grid-gap: 5px;
+
+  h2 {
+    grid-area: header;
+  }
+  p {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.mapSelection {
+  grid-area: bot-list;
+  $mapSelWidth: 128px;
+  $mapSelHeigth: 128px;
+
+  .mapPreview {
+    width: $mapSelWidth;
+    height: $mapSelHeigth;
+    border: 1px #ccc dashed;
+    margin-bottom: 20px;
+  }
+
+  .maxTurns {
+    padding: 10px 0;
+    display: flex;
+    flex-direction: column;
+    width: $mapSelWidth;
+  }
+}
+
+#botList {
+  grid-area: bot-list;
+}
+
+.rotate {
+  animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.header,
+#addBotButtons,
+#mapSelector,
+#botList {
+  padding: 20px;
+}

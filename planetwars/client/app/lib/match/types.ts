@@ -11,6 +11,7 @@ export interface LogFormat {
 export interface Player {
   uuid: string;
   name: string;
+  number: number;
   score: number;
 }
 
@@ -22,7 +23,7 @@ export interface Planet {
   name: string;
   x: number;
   y: number;
-  owner?: Player;
+  owner?: number;
   shipCount: number;
 }
 
@@ -30,7 +31,7 @@ export interface Expedition {
   id: number;
   origin: Planet;
   destination: Planet;
-  owner: Player;
+  owner: number;
   shipCount: number;
   turnsRemaining: number;
 }

@@ -1,9 +1,9 @@
 import { connect } from 'react-redux';
 
-import { IAboutPageState, IGState } from '../reducers/index';
+import { AboutPageState, GState } from '../reducers/index';
 import Info from '../components/info/Info';
 
-const mapStateToProps = (state: IGState) => {
+const mapStateToProps = (state: GState) => {
   return {};
 };
 

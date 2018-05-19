@@ -5,46 +5,34 @@ import { connect, Dispatch } from 'react-redux';
 import { push } from 'react-router-redux';
 
 import Matches, {
-  MatchViewerProps,
+  MatchViewerStateProps,
+  MatchViewerDispatchProps,
 } from '../components/matches/Matches';
-import { Match } from '../components/matches/types';
-import { IGState } from '../reducers/index';
+import * as Comp from '../components/matches/types';
+import { GState } from '../reducers/index';
 import { Config } from '../utils/Config';
-import * as A from '../actions/actions';
+import * as A from '../actions/index';
+import * as M from '../utils/database/models';
 import { PathLike } from 'mz/fs';
-import { BotID } from '../utils/ConfigModels';
-import { MatchId } from '../utils/GameModels';
 
-interface StateProps {
-  selectedMatch?: Match;
-  matches: Match[];
-}
-
-function mapStateToProps(state: IGState, ownProps: any): StateProps {
+function mapStateToProps(state: GState, ownProps: any): MatchViewerStateProps {
   const matches = Object.keys(state.matches).map((matchId) => {
     return getMatchData(state, matchId);
   });
-  // sort descending on time
-  matches.sort((a, b) => {
-    return b.timestamp.getTime() - a.timestamp.getTime();
-  });
+
+  // Sort descending on time
+  matches.sort((a, b) => (b.timestamp.getTime() - a.timestamp.getTime()));
 
   const selectedId: string | undefined = ownProps.match.params.matchId;
   if (selectedId && state.matches[selectedId]) {
-    return {
-      matches,
-      selectedMatch: getMatchData(state, selectedId),
-    };
+    const selectedMatch = getMatchData(state, selectedId);
+    return { matches, selectedMatch };
   } else {
     return { matches };
   }
 }
 
-interface DispatchProps {
-  selectMatch: (matchId: string) => void;
-}
-
-function mapDispatchToProps(dispatch: any): DispatchProps {
+function mapDispatchToProps(dispatch: any): MatchViewerDispatchProps {
   return {
     selectMatch: (matchId: string) => {
       dispatch(push(`/matches/${matchId}`));
@@ -52,26 +40,25 @@ function mapDispatchToProps(dispatch: any): DispatchProps {
   };
 }
 
-const getMatchData = (state: IGState, matchId: MatchId) => {
+const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
   const matchData = state.matches[matchId];
-  const mapData = state.maps[matchData.map];
 
-  return {
-    ...matchData,
-    players: matchData.players.map((botId) => getBotData(state, botId)),
-    map: {
-      uuid: mapData.uuid,
-      name: mapData.name,
-    },
-  };
-};
-
-const getBotData = (state: IGState, botId: BotID) => {
-  const bot = state.bots[botId];
-  return {
-    uuid: botId,
-    name: bot != null ? bot.config.name : "<deleted bot>",
-  };
+  if (matchData.type === M.MatchType.hosted) {
+    const players = matchData.players.map(({ name }, idx) => (
+      { name, number: idx + 1 }
+    ));
+    const mapData = state.maps[matchData.map];
+    const map = { uuid: mapData.uuid, name: mapData.name };
+    const { network, maxTurns, ...props } = matchData;
+    return { ...props, players, map };
+  } else {
+    const { network, bot, ...props } = matchData;
+    const players = [{
+      name: bot.name,
+      number: 1,
+    }];
+    return { ...props, players };
+  }
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(Matches);

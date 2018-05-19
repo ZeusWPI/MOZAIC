@@ -40,7 +40,7 @@ change_directory() {
 }
 
 build() {
-    npm run build
+    yarn run build
 }
 
 deploy() {

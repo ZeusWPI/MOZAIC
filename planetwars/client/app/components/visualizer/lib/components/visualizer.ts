@@ -3,11 +3,11 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { MatchLog, GameState } from '../../../../lib/match/log';
+import { MatchLog, GameState } from '../../../../lib/match';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
-const h = require('react-hyperscript');
+import * as h from 'react-hyperscript';
 const {
   div,
   span,
@@ -16,15 +16,19 @@ const {
   i,
   input,
   p,
-  svg
+  svg,
+  // tslint:disable-next-line:no-var-requires
 } = require('hyperscript-helpers')(h);
 
+// tslint:disable-next-line:no-var-requires
 const Controls = require('./controls');
+// tslint:disable-next-line:no-var-requires
 const ReactUtils = require('../util/react_utils');
 const HideableComponent = ReactUtils.HideableComponent;
 const ControlButton = ReactUtils.ControlButton;
-const Renderer = require('./renderer');
-const VisualsHelper = require('../util/visualsHelper');
+import { Renderer } from './renderer';
+
+// tslint:disable-next-line:no-var-requires
 const styles = require('./visualizer.scss');
 
 interface PlayerData {
@@ -32,6 +36,7 @@ interface PlayerData {
 }
 
 interface VisualizerProps {
+  playerName: (playerNum: number) => string;
   matchLog: MatchLog;
 }
 
@@ -42,8 +47,8 @@ interface VisualizerState {
 }
 
 export class Visualizer extends React.Component<VisualizerProps, VisualizerState> {
-  timer: any;
-  game: Game;
+  private timer: any;
+  private game: Game;
 
   constructor(props: VisualizerProps) {
     super(props);
@@ -54,64 +59,27 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     };
   }
 
-  componentDidMount() {
+  public componentDidMount() {
     this.setGame(this.props.matchLog);
   }
 
-  componentWillUnmount() {
+  public componentWillUnmount() {
     this.setPlaying(false);
   }
 
-
-  componentWillReceiveProps(nextProps: VisualizerProps) {
+  public componentWillReceiveProps(nextProps: VisualizerProps) {
     if (this.props.matchLog !== nextProps.matchLog) {
       this.setGame(nextProps.matchLog);
     }
   }
 
-  setGame(matchLog: MatchLog) {
-    this.game = new Game(matchLog);
+  public setGame(matchLog: MatchLog) {
+    this.game = new Game(matchLog, this.props.playerName);
     this.setTurn(0);
     this.setPlaying(true);
   }
 
-  setTurn(num: number) {
-    const lastTurn = this.game.matchLog.gameStates.length - 1;
-    const turnNum = Math.min(num, lastTurn);
-    if (turnNum === lastTurn) {
-      this.setPlaying(false);
-    }
-    this.setState({ turnNum });
-  }
-
-  setSpeed(speed: number) {
-    this.setState({ speed: speed }, () => {
-      if (this.state.playing) {
-        // update timer
-        this.setTimer();
-      }
-    });
-  }
-
-  nextTurn() {
-    this.setTurn(this.state.turnNum + 1);
-  }
-
-  setPlaying(value: boolean) {
-    this.setState({ playing: value }, () => this.setTimer());
-  }
-
-  setTimer() {
-    // stop old timer
-    if (this.timer) { this.timer.stop(); }
-
-    if (this.state.playing) {
-      const delay = 1000 / this.state.speed;
-      this.timer = d3.interval((t: any) => this.nextTurn(), delay);
-    }
-  }
-
-  render() {
+  public render() {
     const controls = div(`.${styles.control}`, [
       h(Controls, {
         turnNum: this.state.turnNum,
@@ -121,24 +89,25 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
         setPlaying: (v: boolean) => this.setPlaying(v),
         setTurn: (t: number) => this.setTurn(t),
         setSpeed: (s: number) => this.setSpeed(s),
-      })
-    ])
+      }),
+    ]);
 
     if (!this.game) {
       return div(`.${styles.visualizerRootNode}`, [
-        controls
-      ])
+        controls,
+      ]);
     }
 
-    let scoreboard = h(Scoreboard, {
-      game: this.game,
-      turnNum: this.state.turnNum
-    });
-
-    let renderer = h(Renderer, {
+    const scoreboard = h(Scoreboard, {
       game: this.game,
       turnNum: this.state.turnNum,
-      speed: this.state.speed
+      playerName: this.props.playerName,
+    });
+
+    const renderer = h(Renderer, {
+      game: this.game,
+      turnNum: this.state.turnNum,
+      speed: this.state.speed,
     });
 
     return div(`.${styles.visualizerRootNode}`, [
@@ -147,5 +116,41 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       renderer,
     ]);
 
+  }
+
+  private setTurn(num: number) {
+    const lastTurn = this.game.matchLog.gameStates.length - 1;
+    const turnNum = Math.min(num, lastTurn);
+    if (turnNum === lastTurn) {
+      this.setPlaying(false);
+    }
+    this.setState({ turnNum });
+  }
+
+  private setSpeed(speed: number) {
+    this.setState({ speed }, () => {
+      if (this.state.playing) {
+        // update timer
+        this.setTimer();
+      }
+    });
+  }
+
+  private nextTurn() {
+    this.setTurn(this.state.turnNum + 1);
+  }
+
+  private setPlaying(value: boolean) {
+    this.setState({ playing: value }, () => this.setTimer());
+  }
+
+  private setTimer() {
+    // stop old timer
+    if (this.timer) { this.timer.stop(); }
+
+    if (this.state.playing) {
+      const delay = 1000 / this.state.speed;
+      this.timer = d3.interval((t: any) => this.nextTurn(), delay);
+    }
   }
 }

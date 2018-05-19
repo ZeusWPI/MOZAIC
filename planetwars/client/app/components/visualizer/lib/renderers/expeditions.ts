@@ -3,9 +3,9 @@ import Config from '../util/config';
 import Game from '../components/game';
 
 import { Expedition } from '../../../../lib/match/types';
-const space_math = require('../util/spacemath');
+import * as space_math from '../util/spacemath';
 
-class ExpeditionRenderer {
+export class ExpeditionRenderer {
   public container: any;
   public game: Game;
 
@@ -14,17 +14,17 @@ class ExpeditionRenderer {
     this.container = container;
   }
 
-  bind(data: any) {
+  public bind(data: any) {
     return this.container.selectAll('.expedition').data(data, (e: any) => e.id);
   }
 
-  draw(data: any, params: any) {
-    let selector = this.bind(data);
+  public draw(data: any, params: any) {
+    const selector = this.bind(data);
     selector.exit().remove();
-    let expeditions = selector.enter().append('g')
+    const expeditions = selector.enter().append('g')
       .attr('class', 'expedition')
       .attr('transform', (d: Expedition) => {
-        let pos = this.expeditionPos(d);
+        const pos = this.expeditionPos(d);
         return `translate(${pos.x}, ${pos.y})`;
       }).merge(selector);
 
@@ -42,8 +42,8 @@ class ExpeditionRenderer {
     this.drawTitles(expeditions);
   }
 
-  drawShips(expeditions: any, params: any) {
-    let ships = expeditions.selectAll('.ship').data((d: any) => [d]);
+  private drawShips(expeditions: any, params: any) {
+    const ships = expeditions.selectAll('.ship').data((d: any) => [d]);
     ships.enter().append('path')
       .classed('ship', true)
       .attr('d', d3.symbol().size(params.scale * 0.5).type(d3.symbolTriangle))
@@ -53,8 +53,8 @@ class ExpeditionRenderer {
       .attr('fill', (exp: any) => this.game.playerColor(exp.owner));
   }
 
-  drawShipCounts(expeditions: any, params: any) {
-    let counts = expeditions.selectAll('.shipCount').data((d: any) => [d]);
+  private drawShipCounts(expeditions: any, params: any) {
+    const counts = expeditions.selectAll('.shipCount').data((d: any) => [d]);
 
     counts.enter().append('text')
       .classed('shipCount', true)
@@ -66,20 +66,20 @@ class ExpeditionRenderer {
       .attr('fill', (exp: Expedition) => this.game.playerColor(exp.owner));
   }
 
-  drawTitles(expeditions: any) {
-    let titles = expeditions.selectAll('.title').data((d: any) => [d]);
+  private drawTitles(expeditions: any) {
+    const titles = expeditions.selectAll('.title').data((d: any) => [d]);
 
     titles.enter().append('title')
       .attr('class', 'title')
       .merge(titles)
-      .text((d: any) => Config.playerName(d.owner));
+      .text((d: any) => this.game.playerName(d.owner));
   }
 
-  expeditionPos(expedition: Expedition) {
+  private expeditionPos(expedition: Expedition) {
     const totalDistance = Math.ceil(
       space_math.euclideanDistance(
         expedition.origin,
-        expedition.destination)
+        expedition.destination),
     );
     const mod = expedition.turnsRemaining / totalDistance;
 
@@ -97,13 +97,11 @@ class ExpeditionRenderer {
     };
   }
 
-  expeditionRotation(expedition: any) {
-    let angle = (180 / Math.PI) * Math.atan2(
+  private expeditionRotation(expedition: any) {
+    const angle = (180 / Math.PI) * Math.atan2(
       expedition.destination.y - expedition.origin.y,
-      expedition.destination.x - expedition.origin.x
+      expedition.destination.x - expedition.origin.x,
     );
     return (angle + 90) % 360;
   }
 }
-
-module.exports = ExpeditionRenderer;

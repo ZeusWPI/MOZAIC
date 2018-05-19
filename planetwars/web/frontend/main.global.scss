@@ -2,17 +2,17 @@
 @import "~bulma/sass/utilities/functions";
 
 $fa-font-path: "~font-awesome/fonts";
-@import '~font-awesome/scss/font-awesome.scss';
+@import "~font-awesome/scss/font-awesome.scss";
 
 $primary: #201f1d;
-$secondary: #DE8D47;
-$color3: #FFFFFF;
+$secondary: #de8d47;
+$color3: #ffffff;
 $color4: #868685;
-$color5: #DCDCDC;
+$color5: #dcdcdc;
 
 $footer-background-color: $primary;
 
-@import '~bulma';
+@import "~bulma";
 
 #info {
   background-color: $primary;
@@ -34,7 +34,8 @@ $footer-background-color: $primary;
     display: flex;
     align-items: center;
     justify-content: center;
-    .input, .button {
+    .input,
+    .button {
       border-color: $secondary;
     }
     .label {
@@ -136,7 +137,9 @@ $footer-background-color: $primary;
       color: $color3;
     }
   }
-  a { border-bottom: none; }
+  a {
+    border-bottom: none;
+  }
 }
 
 // Link Style
@@ -159,10 +162,15 @@ a {
   color: $secondary;
 }
 
-.grow { transition: all .2s ease-in-out; }
-.grow:hover { transform: scale(1.1); }
+.grow {
+  transition: all 0.2s ease-in-out;
+}
+.grow:hover {
+  transform: scale(1.1);
+}
 
-html, body {
+html,
+body {
   height: 100%;
 }
 

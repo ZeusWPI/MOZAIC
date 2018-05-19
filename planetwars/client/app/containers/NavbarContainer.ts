@@ -1,6 +1,6 @@
 import { connect } from 'react-redux';
 
-import { IGState } from '../reducers/index';
+import { GState } from '../reducers/index';
 import {
   toggleNavMenu,
   showNotifications,
@@ -8,10 +8,10 @@ import {
   toggleNotifications,
   removeNotification,
   clearNotifications,
-} from '../actions/actions';
+} from '../actions/index';
 import { Navbar } from '../components/Navbar';
 
-const mapStateToProps = (state: IGState) => {
+const mapStateToProps = (state: GState) => {
   return {
     toggled: state.navbar.toggled,
     notifications: state.notifications,

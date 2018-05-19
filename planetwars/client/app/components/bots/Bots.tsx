@@ -1,32 +1,31 @@
 import * as React from 'react';
-import { h, div, p, li, ul, form, label, input, button } from "react-hyperscript-helpers";
-// tslint:disable-next-line:no-var-requires
-const stringArgv = require('string-argv');
-
-import { BotConfig, IBotList, IBotData, BotID } from '../../utils/ConfigModels';
 import { Link } from 'react-router-dom';
 
+import * as M from '../../utils/database/models';
+
+// TODO import decently
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Bots.scss");
 
 export interface BotsStateProps {
-  bots: IBotList;
-  selectedBot?: IBotData;
+  bots: M.BotList;
+  selectedBot?: M.Bot;
 }
 
-// tslint:disable-next-line:interface-over-type-literal
 export type ConfigErrors = { name?: string, command?: string };
 
 export interface BotsDispatchProps {
-  addBot: (config: BotConfig) => void;
-  removeBot: (uuid: BotID) => void;
-  editBot: (bot: IBotData) => void;
-  validate: (config: BotConfig) => ConfigErrors;
+  addBot: (name: string, command: string) => void;
+  removeBot: (uuid: M.BotId) => void;
+  editBot: (bot: M.Bot) => void;
+  validate: (name: string, command: string) => ConfigErrors;
 }
 
-type IBotsProps = BotsStateProps & BotsDispatchProps;
+type BotsProps = BotsStateProps & BotsDispatchProps;
 
-export class Bots extends React.Component<IBotsProps, {}> {
+export class Bots extends React.Component<BotsProps, {}> {
 
   public render() {
     const { bots, selectedBot, removeBot, addBot, editBot, validate } = this.props;
@@ -50,11 +49,11 @@ export class Bots extends React.Component<IBotsProps, {}> {
 // List of Bots
 // ----------------------------------------------------------------------------
 
-interface IBotListProps {
-  bots: IBotList;
+interface BotListProps {
+  bots: M.BotList;
 }
 
-export class BotsList extends React.Component<IBotListProps, {}> {
+export class BotsList extends React.Component<BotListProps, {}> {
   public render() {
     const bots = Object.keys(this.props.bots).map((uuid) => {
       return BotListItem(this.props.bots[uuid]);
@@ -67,7 +66,7 @@ export class BotsList extends React.Component<IBotListProps, {}> {
     );
   }
 }
-// tslint:disable-next-line:variable-name
+
 export const NewBot: React.SFC<{}> = (props) => {
   return (
     <div className={styles.newBot}>
@@ -76,14 +75,13 @@ export const NewBot: React.SFC<{}> = (props) => {
   );
 };
 
-// tslint:disable-next-line:variable-name
-const BotListItem: React.SFC<IBotData> = (props) => {
-  const { config, lastUpdatedAt, createdAt, uuid } = props;
+const BotListItem: React.SFC<M.Bot> = (props) => {
+  const { name, lastUpdatedAt, createdAt, uuid } = props;
   return (
     <Link to={`/bots/${uuid}`} key={uuid}>
       <li>
         <p>
-          {config.name}
+          {name}
         </p>
       </li>
     </Link>
@@ -94,32 +92,34 @@ const BotListItem: React.SFC<IBotData> = (props) => {
 // Bot details
 // ----------------------------------------------------------------------------
 
-interface IBotEditorProps {
-  selectedBot?: IBotData;
-  addBot: (bot: BotConfig) => void;
-  removeBot: (uuid: BotID) => void;
-  editBot: (bot: IBotData) => void;
-  validate: (config: BotConfig) => ConfigErrors;
+interface BotEditorProps {
+  selectedBot?: M.Bot;
+  addBot: (name: string, command: string) => void;
+  removeBot: (uuid: M.BotId) => void;
+  editBot: (bot: M.Bot) => void;
+  validate: (name: string, command: string) => ConfigErrors;
 }
 
-interface IBotEditorState {
+interface BotEditorState {
   errors: any;
-  selectedBot?: IBotData;
+  selectedBot?: M.Bot;
   command: string;
   name: string;
 }
 
-export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState> {
-  constructor(props: IBotEditorProps) {
-    super(props);
-    this.state = this.fromSelectedBot(props.selectedBot);
-  }
+export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
+  public state: BotEditorState = { command: '', name: '', errors: {} };
 
-  public componentWillReceiveProps(nextProps: IBotEditorProps) {
-    this.setState(this.fromSelectedBot(nextProps.selectedBot));
+  public static getDerivedStateFromProps(nextProps: BotEditorProps, prevState: BotEditorState): BotEditorState {
+    if (!nextProps.selectedBot) {
+      return { selectedBot: undefined, name: '', command: '', errors: {} };
+    }
+    const { name, command } = nextProps.selectedBot;
+    return { name, command, selectedBot: nextProps.selectedBot, errors: {} };
   }
 
   public render() {
+    console.log(this.state.name);
     const onNameInput = (evt: any) => this.setState({ name: evt.target.value });
     const name = (
       <div className='field'>
@@ -193,21 +193,18 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
   }
 
   private handleSubmit() {
-    const command = this.state.command;
-    const { name, selectedBot } = this.state;
-    const config = { name, command };
-    const validation = this.props.validate(config);
+    const { name, selectedBot, command } = this.state;
+    const validation = this.props.validate(name, command);
 
     if (Object.keys(validation).length !== 0) {
       this.setState({ errors: validation });
       alert(JSON.stringify(validation)); // TODO Fix decently
       return;
     }
-
     if (selectedBot) {
-      this.props.editBot({ ...selectedBot, config });
+      this.props.editBot({ ...selectedBot, name, command });
     } else {
-      this.props.addBot(config);
+      this.props.addBot(name, command);
     }
   }
 
@@ -217,14 +214,5 @@ export class BotEditor extends React.Component<IBotEditorProps, IBotEditorState>
     } else {
       this.setState({ name: '', command: '' });
     }
-  }
-
-  private fromSelectedBot(selectedBot?: IBotData) {
-    if (!selectedBot) {
-      return { selectedBot: undefined, name: '', command: '', errors: {} };
-    }
-    const { uuid, config: { name, command } } = selectedBot;
-    const cmd = command;
-    return { selectedBot, name, command: cmd, errors: {} };
   }
 }

@@ -2,45 +2,76 @@ import * as React from 'react';
 import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
-import { Match, Player, Map } from './types';
-import MatchView from './MatchView';
 
+import * as M from '../../utils/database/models';
+import * as Comp from './types';
+import MatchView from './MatchView';
+import { FatalErrorView } from '../FatalError';
+import { MatchType } from '../../utils/database/models';
+
+// tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
-export interface MatchViewerProps {
-  selectMatch: (matchId: string) => void;
-  selectedMatch?: Match;
-  matches: Match[];
+export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
+
+export interface MatchViewerStateProps {
+  selectedMatch?: Comp.Match;
+  matches: Comp.Match[];
 }
 
-export default class MatchViewer extends Component<MatchViewerProps> {
+export interface MatchViewerDispatchProps {
+  selectMatch: (matchId: string) => void;
+}
+
+export interface MatchViewerState {
+  fatalError?: Error;
+}
+
+export default class MatchViewer extends Component<MatchViewerProps, MatchViewerState> {
   constructor(props: MatchViewerProps) {
     super(props);
+    this.state = {};
+  }
+
+  public componentDidCatch(error: Error, info: React.ErrorInfo) {
+    this.setState({ fatalError: error });
   }
 
   public render() {
+    const { fatalError } = this.state;
     const { matches } = this.props;
+    const selected = this.props.selectedMatch;
+
+    if (fatalError) { return this.renderError(fatalError); }
     if (matches.length === 0) { return <NoMatches />; }
+
+    // const SelectedView = () => (selected && selected.type === M.MatchType.hosted)
+    //   ? <MatchView match={selected} />
+    //   : <p> TODO </p>;
+
     return (
       <div className={styles.matchViewer}>
         <MatchList
           matches={matches}
-          selected={this.props.selectedMatch}
+          selected={selected}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={this.props.selectedMatch} />
+        <MatchView match={selected} />
       </div>);
   }
 
-  private select(idx: number) {
-    this.setState({ selectedMatch: idx });
+  private renderError(error: Error) {
+    return (
+      <FatalErrorView
+        error={error}
+        message='The Matchviewer crashed!'
+      />);
   }
-
 }
 
 interface MatchListProps {
-  matches: Match[];
-  selected?: Match;
+  matches: Comp.Match[];
+  selected?: Comp.Match;
   selectMatch: (matchId: string) => void;
 }
 
@@ -59,15 +90,15 @@ export const MatchList: SFC<MatchListProps> = (props) => {
   });
 
   return <ul className={styles.matchList}> {listEntries} </ul>;
-}
+};
 
-function calcPlayerData(match: Match): PlayerProps[] {
-  if (match.status === 'finished') {
-    return match.players.map((player) => ({
-      uuid: player.uuid,
+function calcPlayerData(match: Comp.Match): PlayerProps[] {
+  if (match.status === M.MatchStatus.finished) {
+    return match.players.map((player, idx) => ({
       name: player.name,
-      isWinner: match.stats.winners.some((id) => id === player.uuid),
-      score: match.stats.score[player.uuid],
+      number: player.number,
+      isWinner: match.stats.winners.some((num) => num === idx + 1),
+      score: match.stats.score[idx + 1],
     })).sort((a, b) => {
       // sort major on isWinner, minor on score
       if (a.isWinner && !b.isWinner) {
@@ -80,7 +111,7 @@ function calcPlayerData(match: Match): PlayerProps[] {
     });
   } else {
     return match.players.map((player) => ({
-      uuid: player.uuid,
+      number: player.number,
       name: player.name,
       isWinner: false,
     }));
@@ -88,46 +119,46 @@ function calcPlayerData(match: Match): PlayerProps[] {
 }
 
 interface MatchEntryProps {
-  match: Match;
+  match: Comp.Match;
   selected?: boolean;
   onClick: () => void;
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
   let className = styles.matchListEntry;
-  if (props.selected) {
+  const { selected, match } = props;
+  if (selected) {
     className = classnames(styles.selected, className);
   }
 
-  const playerData = calcPlayerData(props.match);
-
+  const playerData = calcPlayerData(match);
   return (
     <div className={className} onClick={props.onClick}>
       <div className={styles.matchListEntryContent}>
         <PlayerList players={playerData} />
-        <TimeLocation match={props.match} />
-        <MatchStatus match={props.match} />
+        <TimeLocation match={match} />
+        <MatchStatus match={match} />
       </div>
     </div>
   );
-}
+};
 
 export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
   <i className={classnames('fa', 'fa-' + icon)} aria-hidden={true} />;
 
 interface PlayerProps {
-  uuid: string,
-  name: string,
-  isWinner: boolean,
-  score?: number,
+  name: string;
+  number: number;
+  isWinner: boolean;
+  score?: number;
 }
 
 export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
-  const entries = players.map((player) =>
-    <PlayerEntry key={player.uuid} player={player} />
-  );
+  const entries = players.map((player) => (
+    <PlayerEntry key={player.number} player={player} />
+  ));
   return <ul className={styles.playerList}> {entries} </ul>;
-}
+};
 
 export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
   let icon = null;
@@ -141,7 +172,7 @@ export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
       <PlayerScore player={player} />
     </li>
   );
-}
+};
 
 export const PlayerScore: SFC<{ player: PlayerProps }> = ({ player }) => {
   if (!player.score) {
@@ -155,9 +186,8 @@ export const PlayerScore: SFC<{ player: PlayerProps }> = ({ player }) => {
   );
 };
 
-
 function dateOrHour(date: Date) {
-  let time = moment(date);
+  const time = moment(date);
   if (moment().startOf('day') < time) {
     return time.format("HH:mm");
   } else {
@@ -165,50 +195,67 @@ function dateOrHour(date: Date) {
   }
 }
 
-export const TimeLocation: SFC<{ match: Match }> = ({ match }) => (
-  <div className={styles.timeLocation}>
-    <div className={styles.mapName} title='map'>
-      <div className={styles.iconSpan}>
-        <FaIcon icon='globe' />
-      </div>
-      {match.map.name}
-    </div>
+export const TimeLocation: SFC<{ match: Comp.Match }> = ({ match }) => {
+  let location = null;
+  if (match.type === MatchType.hosted) {
+    location = <MapField mapName={match.map.name}/>;
+  }
 
+  const time = (
     <div className={styles.matchTime} title='date'>
       {dateOrHour(match.timestamp)}
     </div>
-  </div>);
+  );
 
-export const MatchStatus: SFC<{ match: Match }> = ({ match }) => {
+  return (
+    <div className={styles.timeLocation}>
+      {location}
+      {time}
+    </div>
+  );
+};
+
+export const MapField: SFC<{ mapName: string }> = ({ mapName }) => (
+  <div className={styles.mapName} title='map'>
+    <div className={styles.iconSpan}>
+      <FaIcon icon='globe' />
+    </div>
+
+    {mapName}
+  </div>
+);
+
+export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
   switch (match.status) {
-    case 'finished': {
+    case M.MatchStatus.finished: {
       return null;
     }
-    case 'playing': {
-      return <div className={styles.matchStatus}>
-        <div className={styles.iconSpan}>
-          <FaIcon icon='play' />
-        </div>
-        in progress
-      </div>;
+    case M.MatchStatus.playing: {
+      return (
+        <div className={styles.matchStatus}>
+          <div className={styles.iconSpan}>
+            <FaIcon icon='play' />
+          </div>
+          in progress
+        </div>);
     }
-    case 'error': {
-      return <div className={styles.matchStatus}>
-        <div className={styles.iconSpan}>
-          <FaIcon icon='exclamation-triangle' />
-        </div>
-        failed
-      </div>;
+    case M.MatchStatus.error: {
+      return (
+        <div className={styles.matchStatus}>
+          <div className={styles.iconSpan}>
+            <FaIcon icon='exclamation-triangle' />
+          </div>
+          failed
+        </div>);
     }
   }
-}
+};
 
-
-// tslint:disable-next-line:variable-name
 export const NoMatches: React.SFC<{}> = (props) => {
-  return <div className={styles.noMatches}>
-    <p>
-      No matches played yet!
-    </p>
-  </div>;
+  return (
+    <div className={styles.noMatches}>
+      <p>
+        No matches played yet!
+      </p>
+    </div>);
 };

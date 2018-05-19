@@ -1,37 +1,53 @@
 import * as React from 'react';
 import { Component, SFC } from 'react';
 import {
-  JsonCommand,
-  Player,
   MatchLog,
   GameState,
-  PlayerOutputs,
-  PlayerOutput,
-  Command,
-} from '../../lib/match/log/';
+  Player,
+  PwTypes,
+} from '../../lib/match';
 
 import * as classNames from 'classnames';
+import { PlayerMap, PlayerTurn } from '../../lib/match/MatchLog';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./LogView.scss");
 
-interface LogViewProps {
+export interface LogViewProps {
+  playerName: (playerNum: number) => string;
   matchLog: MatchLog;
+}
+
+type PlayerLogs = PlayerMap<PlayerTurn>[];
+
+function makePlayerLogs(log: MatchLog): PlayerLogs {
+  const playerNums = Object.keys(log.playerLogs).map(Number);
+
+  const turns = log.gameStates.map((state, idx) => {
+    const playerTurns: PlayerMap<PlayerTurn> = {};
+    playerNums.forEach((player) => {
+      const turn = log.playerLogs[player].turns[idx];
+      if (turn) {
+        playerTurns[player] = turn;
+      }
+    });
+    return playerTurns;
+  });
+
+  return turns;
 }
 
 export class LogView extends Component<LogViewProps> {
   public render() {
-    const { matchLog: { playerOutputs, players } } = this.props;
+    // TODO: do this transform higher up
+    const playerLogs = makePlayerLogs(this.props.matchLog);
 
-    const entries = playerOutputs.map((output, idx) => {
-
-      // TODO Can we do this?
-      if (!output) { return null; }
-
+    const entries = this.props.matchLog.gameStates.map((state, idx) => {
+      const turns = playerLogs[idx];
       return (
         <li className={classNames(styles.turn)} key={idx}>
           <TurnNumView turn={idx} />
-          <TurnView players={players} outputs={output} />
+          <TurnView playerName={this.props.playerName} turns={turns} />
         </li>
       );
     });
@@ -48,18 +64,26 @@ export class LogView extends Component<LogViewProps> {
 export default LogView;
 
 interface TurnProps {
-  players: Player[];
-  outputs: PlayerOutputs;
+  playerName: (playerNum: number) => string;
+  turns: PlayerMap<PlayerTurn>;
 }
 
 export const TurnView: SFC<TurnProps> = (props) => {
   // The last turn has no outputs for the players
-  if (Object.keys(props.outputs).length === 0) {
+  if (Object.keys(props.turns).length === 0) {
     return <GameEnd />;
   }
-  const players = props.players.map((player, idx) => {
-    const playerOutput = props.outputs[player.uuid];
-    return <PlayerView key={idx} player={player} output={playerOutput} />;
+  const players = Object.keys(props.turns).map((_playerNum) => {
+    const playerNum = Number(_playerNum);
+    const playerTurn = props.turns[playerNum];
+    const playerName = props.playerName(playerNum);
+    return (
+      <PlayerView
+        key={playerNum}
+        playerName={playerName}
+        turn={playerTurn}
+      />
+    );
   });
 
   return (
@@ -68,44 +92,85 @@ export const TurnView: SFC<TurnProps> = (props) => {
     </ul>);
 };
 
-interface PlayerViewProps { player: Player; output: PlayerOutput; }
-export const PlayerView: SFC<PlayerViewProps> = ({ player, output }) => {
-  const isError = { [styles.error]: !!output.error };
+interface PlayerViewProps { playerName: string; turn: PlayerTurn; }
+export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
+  const isError = { [styles.error]: turn.action!.type !== 'commands' };
   return (
-    <li className={classNames(styles.player, isError)} key={player.uuid}>
+    <li className={classNames(styles.player, isError)}>
       <div>
-        <p className={styles.playerName}>{player.name}</p>
+        <p className={styles.playerName}>{playerName}</p>
       </div>
-      <PlayerOutputView output={output} />
+      <PlayerTurnView turn={turn} />
     </li>
   );
 };
 
-export const PlayerOutputView: SFC<{ output: PlayerOutput }> = ({ output }) => {
-  if (output.error) { return <ErrorView output={output} />; }
+export const PlayerTurnView: SFC<{ turn: PlayerTurn }> = ({ turn }) => {
+  const action = turn.action!;
+  switch (action.type) {
+    case 'timeout' || 'parse_error': {
+      return <Timeout/>;
+    }
+    case 'parse_error': {
+      return <ParseErrorView command={turn.command} error={action.value} />;
+    }
+    case 'commands': {
+      return <CommandsView commands={action.value}/>;
+    }
+  }
+};
 
-  const commands = output.commands.map((cmd, idx) => {
+export const Timeout: SFC = () => {
+  return (
+    <div className={styles.playerOutput}>
+      <span className={styles.error}> [TIMEOUT] </span>
+    </div>
+  );
+};
 
-    const Fat = (props: any) => <span className={styles.fat}>{props.children}</span>;
-    const Warning = () => (cmd.error)
-      ? (
-        <p>
-          <span className={styles.warning}> [WARNING] </span> {cmd.error}
-        </p>)
-      : null;
+export interface ParseErrorViewProps { command?: string; error: string; }
+export const ParseErrorView: SFC<ParseErrorViewProps> = (props) => {
+  return (
+    <div className={styles.playerOutput}>
+      <p>
+        <span className={styles.error}> [ERROR] </span> {props.error}
+      </p>
+      <p>
+        [OUTPUT] {props.command}
+      </p>
+    </div>
+  );
+};
+
+export interface CommandsViewProps { commands: PwTypes.PlayerCommand[]; }
+export const CommandsView: SFC<CommandsViewProps> = (props) => {
+  const dispatches = props.commands.map((cmd, idx) => {
     const isWarning = { [styles.warning]: !!cmd.error };
     return (
       <li className={classNames(styles.playerOutput, isWarning)} key={idx}>
-        <Warning />
+        <DispatchError error={cmd.error}/>
         <DispatchView cmd={cmd.command} />
       </li>
     );
   });
-
-  return <ul> {commands} </ul>;
+  return (
+    <ul>{dispatches}</ul>
+  );
 };
 
-export const DispatchView: SFC<{ cmd: JsonCommand }> = ({ cmd }) => {
+export const DispatchError: SFC<{ error?: string }> = ({ error }) => {
+  if (error) {
+    return (
+      <p>
+        <span className={styles.warning}> [WARNING] </span> {error}
+      </p>
+    );
+  } else {
+    return null;
+  }
+};
+
+export const DispatchView: SFC<{ cmd: PwTypes.Command }> = ({ cmd }) => {
   const { ship_count, origin, destination } = cmd;
   return (
     <div className={styles.dispatch}>
@@ -124,19 +189,6 @@ export const DispatchView: SFC<{ cmd: JsonCommand }> = ({ cmd }) => {
 
 export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
   <i className={classNames('fa', 'fa-' + icon)} aria-hidden={true} />;
-
-export const ErrorView: SFC<{ output: PlayerOutput }> = ({ output }) => {
-  return (
-    <div className={styles.playerOutput}>
-      <p>
-        <span className={styles.error}> [ERROR] </span> {output.error}
-      </p>
-      <p>
-        [OUTPUT] {output.raw}
-      </p>
-    </div>
-  );
-};
 
 export const TurnNumView: SFC<{ turn: number }> = ({ turn }) => {
   return (

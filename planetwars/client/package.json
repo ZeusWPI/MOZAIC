@@ -35,16 +35,15 @@
     "hot-server": "cross-env NODE_ENV=development node --max_old_space_size=2096 server.js",
     "build-main": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.electron.js --progress --profile --colors",
     "build-renderer": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.production.js --progress --profile --colors",
-    "build": "npm run build-main && npm run build-renderer",
+    "build": "yarn run build-main && yarn run build-renderer",
     "start": "cross-env NODE_ENV=production electron .",
     "start-hot": "cross-env HOT=1 NODE_ENV=development electron ./app/main.development",
-    "postinstall": "npm run build",
-    "dev": "npm run hot-server -- --start-hot",
-    "package": "npm run build && build --publish never",
-    "package-win": "npm run build && build --win --x64",
-    "package-linux": "npm run build && build --linux",
-    "package-mac": "npm run build && build --mac",
-    "package-all": "npm run build && build -mwl"
+    "dev": "yarn run hot-server -- --start-hot",
+    "package": "yarn run build && build --publish never",
+    "package-win": "yarn run build && build --win --x64",
+    "package-linux": "yarn run build && build --linux",
+    "package-mac": "yarn run build && build --mac",
+    "package-all": "yarn run build && build -mwl"
   },
   "build": {
     "productName": "BottleBats",
@@ -107,8 +106,9 @@
     "lowdb": "^1.0.0",
     "mkdirp": "^0.5.1",
     "moment": "^2.22.1",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
+    "mozaic-client": "file:../../client",
+    "react": "^16.3.0",
+    "react-dom": "^16.3.0",
     "react-helpers": "0.0.1",
     "react-hyperscript": "^3.0.0",
     "react-hyperscript-helpers": "^1.2.0",
@@ -183,7 +183,6 @@
     "webpack-merge": "^2.0.0"
   },
   "devEngines": {
-    "node": ">=8.x",
-    "npm": ">=5.x"
+    "node": ">=8.x"
   }
 }

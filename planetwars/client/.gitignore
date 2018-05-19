@@ -6,7 +6,7 @@ data/matches/*
 data/configs/*
 data/maps/*
 logs/
-db.json
+db*.json
 *.log
 
 
