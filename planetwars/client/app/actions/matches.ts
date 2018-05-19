@@ -9,9 +9,8 @@ import { actionCreator } from './helpers';
 import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../utils/Config';
 import { GState } from '../reducers/index';
-import { parseLog } from '../lib/match/MatchLog';
-import { calcScores } from '../lib/match';
 import { Logger } from 'mozaic-client';
+import { readLog, calcStats } from '../lib/match';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -192,23 +191,14 @@ function completeMatch(matchId: M.MatchId) {
       players = [match.bot];
     }
 
-    const stats = getStats(match.logPath);
+    const log = readLog(match);
+
     const updatedMatch: M.FinishedMatch = {
       ...match,
-      stats,
+      stats: calcStats(log),
       status: M.MatchStatus.finished,
     };
     dispatch(saveMatch(updatedMatch));
-  };
-}
-
-function getStats(logPath: string): M.MatchStats {
-  const log = parseLog(logPath);
-  console.log('winners');
-  console.log(log.getWinners());
-  return {
-    winners: Array.from(log.getWinners()),
-    score: calcScores(log),
   };
 }
 

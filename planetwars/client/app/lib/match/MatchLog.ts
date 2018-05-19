@@ -3,6 +3,22 @@ import { PlanetList, Expedition, Player } from './types';
 import * as fs from 'fs';
 import * as _ from 'lodash';
 
+export class PwGameLog {
+  public gameStates: GameState[];
+
+  constructor() {
+    this.gameStates = [];
+  }
+
+  public getPlayers(): number[] {
+    return Array.from(this.gameStates[0].livingPlayers());
+  }
+
+  public getWinners(): Set<number> {
+    return this.gameStates[this.gameStates.length - 1].livingPlayers();
+  }
+}
+
 interface PlayerData {
   uuid: string;
   name: string;
@@ -17,10 +33,11 @@ export function parseLog(path: string) {
   return log;
 }
 
-export class PlayerLog {
+export class PlayerLog extends PwGameLog {
   public turns: PlayerTurn[];
 
   constructor() {
+    super();
     this.turns = [];
   }
 
@@ -28,6 +45,8 @@ export class PlayerLog {
     switch (record.type) {
       case 'step': {
         this.turns.push({ state: record.state });
+        const state = GameState.fromJson(record.state);
+        this.gameStates.push(state);
         break;
       }
       case 'command': {
@@ -52,13 +71,12 @@ export interface PlayerMap<T> {
   [player: number]: T;
 }
 
-export class MatchLog {
+export class MatchLog extends PwGameLog {
   public playerLogs: PlayerMap<PlayerLog>;
-  public gameStates: GameState[];
 
   constructor() {
+    super()
     this.playerLogs = {};
-    this.gameStates = [];
   }
 
   public addEntry(entry: PwTypes.LogEntry) {
@@ -78,14 +96,6 @@ export class MatchLog {
         playerLog.addRecord(entry.record);
       }
     }
-  }
-
-  public getPlayers(): number[] {
-    return Array.from(this.gameStates[0].livingPlayers());
-  }
-
-  public getWinners(): Set<number> {
-    return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 }
 
