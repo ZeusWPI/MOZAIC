@@ -8,7 +8,7 @@ import { h } from 'react-hyperscript-helpers';
 import Root from './containers/Root';
 import { FatalErrorView } from './components/FatalError';
 import { initialState } from './reducers/index';
-import { bindToStore } from './utils/Database';
+import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 import './app.global.scss';
 import './fontawesome.global.scss';

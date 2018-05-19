@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import * as crypto from 'crypto';
 
 import * as A from '../actions/index';
-import * as M from '../utils/database/models';
+import * as M from '../database/models';
 import { generateToken } from "../utils/GameRunner";
 import { GState } from '../reducers';
 import { Importer } from '../utils/Importer';

@@ -1,4 +1,4 @@
-import * as M from '../utils/database/models';
+import * as M from '../database/models';
 import * as Varia from './varia';
 
 // tslint:disable-next-line:no-var-requires
@@ -43,7 +43,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
 
     const matchId = uuidv4();
 
-    const match: M.JoinedMatch =  {
+    const match: M.JoinedMatch = {
       uuid: matchId,
       type: M.MatchType.joined,
       status: M.MatchStatus.playing,

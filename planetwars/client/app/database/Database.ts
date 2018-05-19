@@ -1,4 +1,3 @@
-import { remote } from 'electron';
 import * as Promise from 'bluebird';
 import * as path from 'path';
 import * as low from 'lowdb';
@@ -6,17 +5,17 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 import log from 'electron-log';
 
 import * as A from '../actions/index';
-import * as M from './database/models';
+import * as M from './models';
 import { store as globalStore } from '../index';
 import { GState } from '../reducers';
-import { Config } from './Config';
-import { migrate } from './database/migrate';
+import { Config } from '../utils/Config';
+import { migrate } from './migrate';
 
 // ----------------------------------------------------------------------------
 // Schema
 // ----------------------------------------------------------------------------
 
-import * as V4 from './database/migrationV4';
+import * as V4 from './migrationV4';
 type DbSchema = V4.DbSchema;
 const latestVersion = V4.defaults.version;
 
@@ -34,10 +33,7 @@ export const SCHEMA = {
 // Initialisation
 // ----------------------------------------------------------------------------
 
-const { app } = remote;
-const dbPath = (Config.isDev)
-  ? 'db.json'
-  : path.join(app.getPath('userData'), 'db.json');
+const dbPath = (Config.isDev) ? 'db.json' : path.join(Config.base, 'db.json');
 const adapter = new FileAsync<DbSchema>(dbPath);
 const database = Promise.resolve(low<typeof adapter>(adapter));
 type dbType = low.LowdbAsync<DbSchema>;

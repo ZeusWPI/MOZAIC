@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "../components/bots/Bots";
 import { GState } from '../reducers/index';
 import { addBot, removeBot, editBot } from '../actions/index';
-import * as M from "../utils/database/models";
+import * as M from "../database/models";
 
 interface Props {
   match: any;

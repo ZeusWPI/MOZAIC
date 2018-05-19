@@ -1,5 +1,5 @@
 import { actionCreator, actionCreatorVoid } from './helpers';
-import * as M from '../utils/database/models';
+import * as M from '../database/models';
 import * as PwClient from 'mozaic-client';
 
 // Nav

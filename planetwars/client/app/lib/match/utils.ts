@@ -1,4 +1,4 @@
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 import * as fs from 'fs';
 import { PwTypes } from '.';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';

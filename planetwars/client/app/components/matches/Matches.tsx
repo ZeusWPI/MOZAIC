@@ -3,11 +3,11 @@ import { Component, SFC } from 'react';
 import * as moment from 'moment';
 import * as classnames from 'classnames';
 
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 import * as Comp from './types';
 import MatchView from './MatchView';
 import { FatalErrorView } from '../FatalError';
-import { MatchType } from '../../utils/database/models';
+import { MatchType } from '../../database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -198,7 +198,7 @@ function dateOrHour(date: Date) {
 export const TimeLocation: SFC<{ match: Comp.Match }> = ({ match }) => {
   let location = null;
   if (match.type === MatchType.hosted) {
-    location = <MapField mapName={match.map.name}/>;
+    location = <MapField mapName={match.map.name} />;
   }
 
   const time = (

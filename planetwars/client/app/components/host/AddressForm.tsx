@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./AddressForm.scss");
@@ -21,20 +21,20 @@ export class AddressForm extends React.Component<AddressFormProps> {
     return (
       <div>
         <div className={styles.inputField}>
-            <span>Host</span>
-            <input
-              type="text"
-              value={host}
-              onChange={this.setHost}
-            />
+          <span>Host</span>
+          <input
+            type="text"
+            value={host}
+            onChange={this.setHost}
+          />
         </div>
         <div className={styles.inputField}>
-            <span>Port</span>
-            <input
-              type="number"
-              value={port}
-              onChange={this.setPort}
-            />
+          <span>Port</span>
+          <input
+            type="number"
+            value={port}
+            onChange={this.setPort}
+          />
         </div>
       </div>
     );

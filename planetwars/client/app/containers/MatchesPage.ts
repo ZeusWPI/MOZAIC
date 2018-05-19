@@ -12,7 +12,7 @@ import * as Comp from '../components/matches/types';
 import { GState } from '../reducers/index';
 import { Config } from '../utils/Config';
 import * as A from '../actions/index';
-import * as M from '../utils/database/models';
+import * as M from '../database/models';
 import { PathLike } from 'mz/fs';
 
 function mapStateToProps(state: GState, ownProps: any): MatchViewerStateProps {

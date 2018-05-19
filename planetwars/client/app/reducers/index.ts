@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { store } from '../index';
 import * as A from '../actions/index';
-import * as M from '../utils/database/models';
+import * as M from '../database/models';
 import { generateToken } from '../utils/GameRunner';
 import { Action } from '../actions/helpers';
 import * as PwClient from 'mozaic-client';
@@ -121,16 +121,16 @@ const notificationReducer = (state: M.Notification[] = [], action: any) => {
   return state;
 };
 
-const hostReducer = (state: HostState = { slots: [], serverRunning: false }, action: Action) =>  {
+const hostReducer = (state: HostState = { slots: [], serverRunning: false }, action: Action) => {
   if (A.playerConnected.test(action)) {
     const slots = state.slots.slice();
     slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = true;
-    return {...state, slots};
+    return { ...state, slots };
   }
   if (A.playerDisconnected.test(action)) {
     const slots = state.slots.slice();
     slots.filter((slot: M.BotSlot) => slot.token === action.payload)[0].connected = false;
-    return {...state, slots};
+    return { ...state, slots };
   }
   if (A.setupServer.test(action)) {
     const slots: M.BotSlot[] = [];
@@ -162,7 +162,7 @@ const hostReducer = (state: HostState = { slots: [], serverRunning: false }, act
         slots[i] = action.payload;
       }
     }
-    return { ...state , slots };
+    return { ...state, slots };
   }
   return state;
 };
