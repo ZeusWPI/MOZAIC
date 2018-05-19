@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import Visualizer from '../visualizer/Visualizer';
 import * as Comp from './types';
-import { parseLog, MatchLog } from '../../lib/match/MatchLog';
+import { parseLogFile, MatchLog } from '../../lib/match';
 import { LogView } from './LogView';
 import * as M from '../../utils/database/models';
 
@@ -47,7 +47,7 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     }
     switch (match.status) {
       case M.MatchStatus.finished: {
-        const log = parseLog(match.logPath);
+        const log = parseLogFile(match.logPath, match.type);
         return (
           <div className={styles.matchViewContainer}>
             <MatchViewer match={match} matchLog={log} />

@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Config } from '../utils/Config';
 import { GState } from '../reducers/index';
 import { Logger } from 'mozaic-client';
-import { readLog, calcStats } from '../lib/match';
+import { parseLogFile, calcStats } from '../lib/match';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -191,7 +191,7 @@ function completeMatch(matchId: M.MatchId) {
       players = [match.bot];
     }
 
-    const log = readLog(match);
+    const log = parseLogFile(match.logPath, match.type);
 
     const updatedMatch: M.FinishedMatch = {
       ...match,
