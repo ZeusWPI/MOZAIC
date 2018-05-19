@@ -298,8 +298,7 @@ impl PwController {
 
         self.log_state();
 
-        if self.state.is_finished() {
-        } else {
+        if !self.state.is_finished() {
             self.prompt_players();
         }
     }
