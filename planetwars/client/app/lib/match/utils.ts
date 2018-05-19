@@ -1,26 +1,38 @@
 import * as M from '../../utils/database/models';
-import { parseLog, MatchLog, PwGameLog } from './MatchLog';
+import * as fs from 'fs';
+import { PwTypes } from '.';
+import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
 
-export function readLog(match: M.Match): PwGameLog {
-  const parsedLog = parseLog(match.logPath);
-  switch (match.type) {
-    case (M.MatchType.hosted): {
-      return parsedLog;
-    }
-    case (M.MatchType.joined): {
-      return parsedLog.playerLogs[1];
-    }
+export function emptyLog(type: M.MatchType): MatchLog {
+  switch (type) {
+    case (M.MatchType.hosted):
+      return new HostedMatchLog();
+    case (M.MatchType.joined):
+      return new JoinedMatchLog();
   }
 }
 
-export function calcStats(log: PwGameLog): M.MatchStats {
+export function logFileEntries(path: string): PwTypes.LogEntry[] {
+  const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
+  return lines.map((line: string) => JSON.parse(line));
+}
+
+export function parseLogFile(path: string, type: M.MatchType): MatchLog {
+  const log = emptyLog(type);
+  logFileEntries(path).forEach((entry) => {
+    log.addEntry(entry);
+  });
+  return log;
+}
+
+export function calcStats(log: MatchLog): M.MatchStats {
   return {
     winners: Array.from(log.getWinners()),
     score: calcScores(log),
   };
 }
 
-export function calcScores(log: PwGameLog) {
+export function calcScores(log: MatchLog) {
   const scores: { [playerNum: number]: number } = {};
 
   // initialize scores
@@ -40,4 +52,3 @@ export function calcScores(log: PwGameLog) {
 
   return scores;
 }
-

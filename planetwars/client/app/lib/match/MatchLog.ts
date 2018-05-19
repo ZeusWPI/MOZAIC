@@ -1,13 +1,14 @@
 import { PwTypes } from 'mozaic-client';
 import { PlanetList, Expedition, Player } from './types';
-import * as fs from 'fs';
 import * as _ from 'lodash';
 
-export class PwGameLog {
+export abstract class MatchLog {
+  public playerLogs: PlayerMap<PlayerLog>;
   public gameStates: GameState[];
 
   constructor() {
     this.gameStates = [];
+    this.playerLogs = {};
   }
 
   public getPlayers(): number[] {
@@ -17,68 +18,20 @@ export class PwGameLog {
   public getWinners(): Set<number> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
-}
 
-interface PlayerData {
-  uuid: string;
-  name: string;
-}
+  public abstract addEntry(entry: PwTypes.LogEntry): void;
 
-export function parseLog(path: string) {
-  const log = new MatchLog();
-  const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
-  lines.forEach((line: string) => {
-    log.addEntry(JSON.parse(line));
-  });
-  return log;
-}
-
-export class PlayerLog extends PwGameLog {
-  public turns: PlayerTurn[];
-
-  constructor() {
-    super();
-    this.turns = [];
-  }
-
-  public addRecord(record: PwTypes.LogRecord) {
-    switch (record.type) {
-      case 'step': {
-        this.turns.push({ state: record.state });
-        const state = GameState.fromJson(record.state);
-        this.gameStates.push(state);
-        break;
-      }
-      case 'command': {
-        this.turns[this.turns.length - 1].command = record.content;
-        break;
-      }
-      case 'player_action': {
-        this.turns[this.turns.length - 1].action = record.action;
-        break;
-      }
+  protected getPlayerLog(playerNum: number) {
+    let playerLog = this.playerLogs[playerNum];
+    if (!playerLog) {
+      playerLog = new PlayerLog();
+      this.playerLogs[playerNum] = playerLog;
     }
+    return playerLog;
   }
 }
 
-export interface PlayerTurn {
-  state: PwTypes.GameState;
-  command?: string;
-  action?: PwTypes.PlayerAction;
-}
-
-export interface PlayerMap<T> {
-  [player: number]: T;
-}
-
-export class MatchLog extends PwGameLog {
-  public playerLogs: PlayerMap<PlayerLog>;
-
-  constructor() {
-    super()
-    this.playerLogs = {};
-  }
-
+export class HostedMatchLog extends MatchLog {
   public addEntry(entry: PwTypes.LogEntry) {
     switch (entry.type) {
       case "game_state": {
@@ -87,13 +40,22 @@ export class MatchLog extends PwGameLog {
         break;
       }
       case "player_entry": {
-        let playerLog = this.playerLogs[entry.player];
-        if (!playerLog) {
-          playerLog = new PlayerLog();
-          this.playerLogs[entry.player] = playerLog;
-        }
+        this.getPlayerLog(entry.player).addRecord(entry.record);
+      }
+    }
+  }
+}
 
-        playerLog.addRecord(entry.record);
+export class JoinedMatchLog extends MatchLog {
+  public addEntry(entry: PwTypes.LogEntry) {
+    if (entry.type === 'player_entry') {
+      // this should always be the case since this is a joined match
+      const { player, record } = entry;
+
+      this.getPlayerLog(player).addRecord(record);
+
+      if (player === 1 && record.type === 'step') {
+        this.gameStates.push(GameState.fromJson(record.state));
       }
     }
   }
@@ -147,6 +109,41 @@ export class GameState {
     });
     return livingPlayers;
   }
+}
+
+export class PlayerLog {
+  public turns: PlayerTurn[];
+
+  constructor() {
+    this.turns = [];
+  }
+
+  public addRecord(record: PwTypes.LogRecord) {
+    switch (record.type) {
+      case 'step': {
+        this.turns.push({ state: record.state });
+        break;
+      }
+      case 'command': {
+        this.turns[this.turns.length - 1].command = record.content;
+        break;
+      }
+      case 'player_action': {
+        this.turns[this.turns.length - 1].action = record.action;
+        break;
+      }
+    }
+  }
+}
+
+export interface PlayerTurn {
+  state: PwTypes.GameState;
+  command?: string;
+  action?: PwTypes.PlayerAction;
+}
+
+export interface PlayerMap<T> {
+  [player: number]: T;
 }
 
 export default MatchLog;
