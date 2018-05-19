@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::Instant;
 
 use bytes::BytesMut;
-use prost::{Message as ProtobufMessage, DecodeError};
+use prost::Message as ProtobufMessage;
 use futures::{Poll, Async};
 
 
@@ -12,9 +12,34 @@ use protocol::Message as MessageWrapper;
 use utils::timeout_heap::TimeoutHeap;
 
 
+mod errors {
+    error_chain! {
+        types {
+            Error, ErrorKind, ResultExt;
+        }
+
+        errors {
+            EmptyMessage
+            UnsolicitedResponse(message_id: super::MessageId) {
+                description("unsolicited response"),
+                display(
+                    "received unsolicited response to message number {}",
+                    message_id.0
+                ),
+            }
+        }
+
+        foreign_links {
+            Decode(::prost::DecodeError);
+        }
+    }
+}
+
+pub use self::errors::{Error, ErrorKind};
+
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct MessageId(u64);
-
 
 pub enum Message {
     Message {
@@ -95,31 +120,35 @@ impl MessageHandler {
         return encode_message(message_id, data);
     }
 
-    pub fn handle_message(&mut self, bytes: Vec<u8>) -> Result<Message, ()> {
-        let wrapper = match MessageWrapper::decode(bytes) {
-            Err(_err) => unimplemented!(),
-            Ok(message) => message,
-        };
+    pub fn handle_message(&mut self, bytes: Vec<u8>)
+        -> Result<Message, Error>
+    {
+        let wrapper = try!(MessageWrapper::decode(bytes));
 
         match wrapper.payload {
             None => {
-                unimplemented!()
+                bail!(ErrorKind::EmptyMessage);
             },
             Some(proto::Payload::Message(message)) => {
-                return Ok(Message::Message {
+                Ok(Message::Message {
                     message_id: MessageId(message.message_id),
                     data: message.data,
-                });
+                })
             },
             Some(proto::Payload::Response(response)) => {
-                let request_num = self.requests
-                    .remove(&response.message_id)
-                    .unwrap();
+                let message_id = response.message_id;
+                let request_num = match self.requests.remove(&message_id) {
+                    Some(request_num) => request_num,
+                    None => {
+                        let id = MessageId(message_id);
+                        bail!(ErrorKind::UnsolicitedResponse(id));
+                    }
+                };
 
-                return Ok(Message::Response {
+                Ok(Message::Response {
                     request_num,
                     data: response.data
-                });                
+                })
             },
         }
     }
