@@ -56,89 +56,36 @@ export class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;
   public gameStates: GameState[];
 
-  // this should be set when parsing the first gamestate.
-  // Also, this sucks. Please get rid of this ASAP.
-  private players: number[];
-
   constructor() {
     this.playerLogs = {};
     this.gameStates = [];
-    this.players = [];
   }
 
   public addEntry(entry: PwTypes.LogEntry) {
-    if (!this.playerLogs[entry.player]) {
-      this.playerLogs[entry.player] = new PlayerLog();
-    }
+    switch (entry.type) {
+      case "game_state": {
+        const state = GameState.fromJson(entry.state);
+        this.gameStates.push(state);
+        break;
+      }
+      case "player_entry": {
+        let playerLog = this.playerLogs[entry.player];
+        if (!playerLog) {
+          playerLog = new PlayerLog();
+          this.playerLogs[entry.player] = playerLog;
+        }
 
-    this.playerLogs[entry.player].addRecord(entry.record);
-
-    if (entry.record.type === 'step') {
-      this.handleState(entry.player, entry.record);
+        playerLog.addRecord(entry.record);
+      }
     }
   }
 
   public getPlayers(): number[] {
-    return this.players;
+    return Array.from(this.gameStates[0].livingPlayers());
   }
 
   public getWinners(): Set<number> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
-  }
-
-  private handleState(clientNum: number, record: PwTypes.StepRecord) {
-    if (this.gameStates.length === 0) {
-      this.init(clientNum, record.state);
-    }
-
-    // only handle new states
-    if (record.turn_number > this.gameStates.length) {
-      const state = this.parseState(clientNum, record.state);
-      this.gameStates.push(state);
-    }
-  }
-
-  /**
-   * Init the log from a first state
-   * @param json the json representation of the state
-   */
-  private init(clientNum: number, json: PwTypes.GameState) {
-    const players = new Set<number>();
-    json.planets.forEach((planet) => {
-      if (planet.owner) {
-        players.add(planet.owner);
-      }
-    });
-    const rotation = playerRotation(clientNum, players.size);
-    this.players = _.map(Array.from(players), rotation);
-  }
-
-  private parseState(clientNum: number, json: PwTypes.GameState): GameState {
-    const rotate = playerRotation(clientNum, this.players.length);
-
-    const planets: PlanetList = {};
-    json.planets.forEach((p) => {
-      planets[p.name] = {
-        name: p.name,
-        x: p.x,
-        y: p.y,
-        owner: p.owner ? rotate(p.owner) : p.owner,
-        shipCount: p.ship_count,
-      };
-    });
-
-    const expeditions = json.expeditions.map((e) => {
-      return {
-        id: e.id,
-        origin: planets[e.origin],
-        destination: planets[e.destination],
-        owner: rotate(e.owner),
-        shipCount: e.ship_count,
-        turnsRemaining: e.turns_remaining,
-      };
-    });
-
-    return new GameState(planets, expeditions);
   }
 }
 
@@ -149,6 +96,32 @@ export class GameState {
   constructor(planets: PlanetList, expeditions: Expedition[]) {
     this.planets = planets;
     this.expeditions = expeditions;
+  }
+
+  public static fromJson(json: PwTypes.GameState) {
+    const planets: PlanetList = {};
+    json.planets.forEach((p) => {
+      planets[p.name] = {
+        name: p.name,
+        x: p.x,
+        y: p.y,
+        owner: p.owner,
+        shipCount: p.ship_count,
+      };
+    });
+
+    const expeditions = json.expeditions.map((e) => {
+      return {
+        id: e.id,
+        origin: planets[e.origin],
+        destination: planets[e.destination],
+        owner: e.owner,
+        shipCount: e.ship_count,
+        turnsRemaining: e.turns_remaining,
+      };
+    });
+
+    return new GameState(planets, expeditions);
   }
 
   public livingPlayers(): Set<number> {
@@ -164,12 +137,6 @@ export class GameState {
     });
     return livingPlayers;
   }
-}
-
-function playerRotation(clientNum: number, numPlayers: number) {
-  return (playerNum: number) => {
-    return ((numPlayers + (playerNum - clientNum)) % (numPlayers)) + 1;
-  };
 }
 
 export default MatchLog;
