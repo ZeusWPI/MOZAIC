@@ -6,15 +6,9 @@ import log from 'electron-log';
 import { GState } from './reducers';
 import { Navbar, FatalErrorView } from './components';
 
-interface Props {
-  globalErrors: any[];
-}
+interface State { fatalError?: Error; }
 
-interface State {
-  fatalError?: Error;
-}
-
-export class App extends React.Component<Props, State> {
+export class App extends React.Component<{}, State> {
   constructor(props: any) {
     super(props);
     this.state = {};
@@ -30,20 +24,10 @@ export class App extends React.Component<Props, State> {
         h(FatalErrorView, { error: this.state.fatalError }),
       ]);
     }
-
-    this.props.globalErrors.forEach((val) => {
-      log.error(`[GLOBAL] ${val} ${val.stack}`);
-      alert(`Unexpected Error ${val}`);
-    });
-
     return (
       div(`.app`, [h(Navbar), this.props.children])
     );
   }
 }
 
-const mapStateToProps = (state: GState) => {
-  return { globalErrors: state.globalErrors };
-};
-
-export default connect(mapStateToProps, undefined)(App);
+export default connect(undefined, undefined)(App);

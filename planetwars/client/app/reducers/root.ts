@@ -22,7 +22,6 @@ import { MapsState, mapsReducer } from './maps';
 
 import { HostPageState, hostReducer } from './hostPage';
 import { NavbarState, navbarReducer } from './navbar';
-import { globalErrorReducer } from './globalErrors';
 
 export interface GState {
   readonly routing: RouterState;
@@ -34,8 +33,6 @@ export interface GState {
 
   readonly host: HostPageState;
   readonly navbar: NavbarState;
-
-  readonly globalErrors: any[];
 }
 
 export const initialState: GState = {
@@ -50,8 +47,6 @@ export const initialState: GState = {
     slots: [],
     serverRunning: false,
   },
-
-  globalErrors: [],
 };
 
 export const rootReducer = combineReducers<GState>({
@@ -64,6 +59,4 @@ export const rootReducer = combineReducers<GState>({
 
   host: hostReducer,
   navbar: navbarReducer,
-
-  globalErrors: globalErrorReducer,
 });
