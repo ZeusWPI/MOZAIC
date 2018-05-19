@@ -11,6 +11,7 @@ import { Config } from '../utils/Config';
 import { GState } from '../reducers/index';
 import { parseLog } from '../lib/match/MatchLog';
 import { calcScores } from '../lib/match';
+import { Logger } from 'mozaic-client';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -71,7 +72,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
         },
       ],
       address: host,
-      logFile: match.logPath,
+      logger: new Logger(match.logPath),
     };
 
     // TODO: remove this dupe
@@ -84,7 +85,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       dispatch(Varia.addNotification({ title, body, link, type: 'Finished' }));
     });
 
-    runner.onError.subscribe((error) => {
+    runner.onError.subscribe((error: Error) => {
       console.log(error);
       dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
