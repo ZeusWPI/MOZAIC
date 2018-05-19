@@ -1,0 +1,40 @@
+os: Visual Studio 2017
+
+branches:
+  only: 
+    - development
+    - /^build-.*$/
+platform:
+  - x64
+
+environment:
+  matrix:
+    - channel: nightly
+      target: x86_64-pc-windows-msvc
+
+cache:
+  - gameserver\target
+  - planetwars\client\node_modules
+  - '%USERPROFILE%\.electron'
+  - '%USERPROFILE%\.cargo'
+
+init:
+  - git config --global core.autocrlf input
+
+# Download rust & node
+install:
+  - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - rustup-init -yv --default-toolchain %channel% --default-host %target%
+  - set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+  - rustc -vV
+  - cargo -vV
+  - ps: Install-Product node 9 x64
+
+build_script:
+ - cd gameserver
+ - cargo build --release
+ - cd %APPVEYOR_BUILD_FOLDER%
+ - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver
+ - cd planetwars\client
+ - npm install
+ - npm run package-win

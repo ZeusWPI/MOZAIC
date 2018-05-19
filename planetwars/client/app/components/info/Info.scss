@@ -1,0 +1,48 @@
+@import '../../app.global.scss';
+
+
+.infoPage {
+  padding: 30px 0;
+  overflow-y: auto;
+  position: relative;
+  p {
+    font-size: 1.2rem;
+  }
+  ul {
+    list-style-type: disc;
+  }
+  .wallOfText {
+    padding: 10px 0 0 0;
+  }
+  .version {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+  }
+}
+
+// .aboutPage {
+//   width: 85%;
+//   height: 100%;
+//   display: flex;
+//   justify-content: flex-start;
+//   align-items: center;
+//   flex-direction: column;
+//   margin: auto;
+//   .aboutTitle {
+//     font-size: xx-large;
+//   }
+//   .subTitle {
+//     font-size: x-large;
+//   }
+//   .argsInfoList {
+//     list-style-type: disc;
+//   }
+//   .mapToggeld {
+//     visibility: visible;
+//   }
+//   .mapHidden {
+//     visibility: hidden;
+//     height: 0;
+//   }
+// }
