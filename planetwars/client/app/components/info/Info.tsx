@@ -25,7 +25,6 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
     const toggle = (evt: any) => this.setState({ mapToggled: !this.state.mapToggled });
     return (
       <div className={styles.infoPage}>
-        <Version />
         <MapPanel toggled={this.state.mapToggled} toggle={toggle} />
         <div className='container'>
           <div>
@@ -88,19 +87,25 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
           </p>
           </section>
         </div>
+        <Version />
       </div >
     );
   }
 }
 
 export const Version: React.SFC<{}> = (props) => {
-  let version = __BRANCH_NAME__ + "@" + __COMMIT_HASH__;
-  if (__TAG__ !== "") {
-    version = __TAG__;
-  }
+  const branch = __BRANCH_NAME__ || 'unknown_branch';
+  const commit = __COMMIT_HASH__ || 'unknown_commit';
+  const version = (__TAG__)
+    ? __TAG__
+    : `${branch}@${commit}`;
   return (
-    <div className={styles.version}>
-      Build: {version}
+    <div className='footer'>
+      <div className='container'>
+        <div className={styles.version}>
+          Build: {version}
+        </div>
+      </div>
     </div>
   );
 };
