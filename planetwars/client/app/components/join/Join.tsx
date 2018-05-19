@@ -34,21 +34,20 @@ export class Join extends React.Component<JoinProps, JoinState> {
     };
     this.setAddress = this.setAddress.bind(this);
     this.setToken = this.setToken.bind(this);
-    this.setBotId =this.setBotId.bind(this);
+    this.setBotId = this.setBotId.bind(this);
     this.joinGame = this.joinGame.bind(this);
   }
 
   public render() {
     const { address, token } = this.state;
 
-
     return (
       <div>
-        <AddressForm address={address} onChange={this.setAddress}/>
+        <AddressForm address={address} onChange={this.setAddress} />
 
         <div className={styles.inputField}>
-          <span className={styles.jointitle}>Token</span>
-          <input type="text" onChange={this.setToken}/>
+          <span className={styles.joinTitle}>Token</span>
+          <input type="text" onChange={this.setToken} />
         </div>
 
         <BotSelector
@@ -56,7 +55,6 @@ export class Join extends React.Component<JoinProps, JoinState> {
           value={this.state.botId}
           onChange={this.setBotId}
         />
-
 
         <button
           type="button"

@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import * as M from '../../utils/database/models';
-import {ExternalBotSlot} from "../../utils/database/migrationV4";
+import { ExternalBotSlot } from "../../utils/database/migrationV4";
 import BotSelector from './BotSelector';
 import { AddressForm } from "./AddressForm";
 import * as classnames from 'classnames';
@@ -56,7 +56,7 @@ export class Host extends React.Component<HostProps, HostState> {
     if (this.props.serverShouldStart) {
       this.props.startServer();
     }
-    const toggle = (evt: any) => this.setState({mapToggled: true});
+    const toggle = (evt: any) => this.setState({ mapToggled: true });
     const setMaxTurns = (evt: any) => this.setMaxTurns(evt.target.value);
     return (
       <div id={styles.host}>
@@ -76,7 +76,7 @@ export class Host extends React.Component<HostProps, HostState> {
           />
           <div className={styles.mapPreview}>
             <figure className="image is-128x128">
-              <img src="https://bulma.io/images/placeholders/128x128.png"/>
+              <img src="https://bulma.io/images/placeholders/128x128.png" />
             </figure>
           </div>
 
@@ -87,7 +87,7 @@ export class Host extends React.Component<HostProps, HostState> {
 
           <div className={styles.maxTurns}>
             <span className={styles.header}>Max Turns</span>
-            <input type="text" defaultValue={this.state.maxTurns.toString()} onBlur={setMaxTurns}/>
+            <input type="text" defaultValue={this.state.maxTurns.toString()} onBlur={setMaxTurns} />
           </div>
 
           <h2 className="title is-5">
@@ -95,7 +95,7 @@ export class Host extends React.Component<HostProps, HostState> {
             <span className={styles.tagInfoText}> Check ip and port </span>
           </h2>
 
-          <AddressForm address={this.state.address} onChange={this.setAddress}/>
+          <AddressForm address={this.state.address} onChange={this.setAddress} />
 
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">5</span>
@@ -147,7 +147,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private setAddress(address: M.Address) {
-    this.setState({address});
+    this.setState({ address });
   }
 
   private setMaxTurns = (maxTurns: string) => {
@@ -175,7 +175,7 @@ export class Host extends React.Component<HostProps, HostState> {
   }
 
   private selectMap = (id: M.MapId) => {
-    this.setState({selectedMap: id});
+    this.setState({ selectedMap: id });
   }
 }
 
@@ -229,7 +229,7 @@ export class Slot extends React.Component<SlotProps> {
         );
         break;
       case 'external':
-        slot = <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal}/>;
+        slot = <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal} />;
         break;
     }
 
@@ -238,15 +238,15 @@ export class Slot extends React.Component<SlotProps> {
         <span
           className={"tag is-small is-rounded " + (
             this.props.bot.connected ?
-            "is-success" :
-            "is-danger is-loading"
+              "is-success" :
+              "is-danger is-loading"
           )}
           onClick={this.toggleConnected}
         >
-        <FaIcon
-          icon={this.props.bot.connected ? "check" : "spinner"}
-          className={this.props.bot.connected ? "" : styles.rotate}
-        />
+          <FaIcon
+            icon={this.props.bot.connected ? "check" : "spinner"}
+            className={this.props.bot.connected ? "" : styles.rotate}
+          />
         </span>
         Name:{" "}
         <input
@@ -272,13 +272,13 @@ export class Slot extends React.Component<SlotProps> {
     // const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
     // newSlot.type = 'external';
     const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
-    this.props.updateSlot({...newSlot, type: 'external'} as M.ExternalBotSlot);
+    this.props.updateSlot({ ...newSlot, type: 'external' } as M.ExternalBotSlot);
   }
 
   private makeInternal = () => {
     // newSlot.type = 'internal';
     const newSlot: M.ExternalBotSlot = this.props.bot as M.ExternalBotSlot;
-    this.props.updateSlot({...newSlot, type: 'internal', botId: ""} as M.InternalBotSlot);
+    this.props.updateSlot({ ...newSlot, type: 'internal', botId: "" } as M.InternalBotSlot);
   }
 }
 
@@ -300,7 +300,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
     const { slot, allBots } = this.props;
     return (
       <div>
-        <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot}/>
+        <BotSelector bots={allBots} value={slot.botId} onChange={this.setBot} />
         <button onClick={this.joinLocal} disabled={this.props.slot.connected}>Join</button>
         <button onClick={this.props.makeExternal} disabled={this.props.slot.connected}>Make external</button>
       </div>
@@ -327,7 +327,7 @@ export class InternalSlot extends React.Component<InternalSlotProps> {
       name = allBots[botId].name;
     }
 
-    setSlot({ ...slot, botId, name});
+    setSlot({ ...slot, botId, name });
   }
 }
 
@@ -368,7 +368,7 @@ export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
     </option>
   ));
   const handleChange = (evt: any) => props.selectMap(evt.target.value);
-  mapElements.unshift(<option value="">Select Map</option>);
+  mapElements.unshift(<option value="" key={'None'}>Select Map</option>);
   return (
     <select
       id={styles.mapSelector}

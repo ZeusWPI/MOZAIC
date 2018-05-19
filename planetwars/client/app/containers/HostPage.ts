@@ -14,7 +14,6 @@ const mapStateToProps = (state: GState) => {
   const selectedBots = state.host.slots;
   const ctrlToken = generateToken();
   const serverShouldStart = (state.host.matchParams !== undefined) && !state.host.serverRunning;
-  console.log(serverShouldStart);
   return { bots, maps, selectedBots, ctrlToken, serverShouldStart };
 };
 
