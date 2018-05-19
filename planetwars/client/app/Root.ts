@@ -5,7 +5,7 @@ import { ConnectedRouter } from 'react-router-redux';
 import { History } from 'history';
 import { h } from 'react-hyperscript-helpers';
 
-import Routes from '../routes';
+import Routes from './routes';
 
 interface RootType {
   store: Redux.Store<any>;

@@ -3,9 +3,8 @@ import { h, div } from 'react-hyperscript-helpers';
 import { connect } from 'react-redux';
 import log from 'electron-log';
 
-import { GState } from '../reducers';
-import Navbar from '../containers/NavbarContainer';
-import { FatalErrorView } from '../components/FatalError';
+import { GState } from './reducers';
+import { Navbar, FatalErrorView } from './components';
 
 interface Props {
   globalErrors: any[];

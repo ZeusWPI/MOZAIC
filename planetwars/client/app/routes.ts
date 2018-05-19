@@ -3,14 +3,16 @@ import { Switch, Route } from 'react-router';
 import { Link } from 'react-router-dom';
 import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
 
-import App from './containers/App';
-import HomePage from './containers/HomePage';
-import HostPage from './containers/HostPage';
-import BotsPage from './containers/BotsPage';
-import MatchesPage from './containers/MatchesPage';
-import InfoPage from './containers/InfoPage';
-import Navbar from './containers/NavbarContainer';
-import JoinPage from "./containers/JoinPage";
+import App from './App';
+import {
+  HomePage,
+  HostPage,
+  BotsPage,
+  MatchesPage,
+  InfoPage,
+  Navbar,
+  JoinPage,
+} from './components';
 
 export default class Routes extends React.Component<any, any> {
   public render() {

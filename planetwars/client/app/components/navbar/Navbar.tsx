@@ -4,7 +4,7 @@ import {
 import { Link } from 'react-router-dom';
 import * as React from 'react';
 
-import { Notification } from '../database/models';
+import { Notification } from '../../database/models';
 /*
  * CSS for the navbar is found in app.global.scss cause it's pretty unique
  * and most of it relies on global Bulma anyway.

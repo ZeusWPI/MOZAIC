@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
-import { AboutPageState, GState } from '../reducers/index';
-import Info from '../components/info/Info';
+import { AboutPageState, GState } from '../../reducers/index';
+import Info from './Info';
 
 const mapStateToProps = (state: GState) => {
   return {};

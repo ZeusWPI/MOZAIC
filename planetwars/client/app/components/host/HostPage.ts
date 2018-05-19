@@ -1,12 +1,13 @@
 import { connect } from 'react-redux';
 import * as crypto from 'crypto';
 
-import * as A from '../actions/index';
-import * as M from '../database/models';
-import { generateToken } from "../utils/GameRunner";
-import { GState } from '../reducers';
-import { Importer } from '../utils/Importer';
-import { Host, HostDispatchProps, HostStateProps } from '../components/host/Host';
+import * as A from '../../actions/index';
+import * as M from '../../database/models';
+import { GState } from '../../reducers';
+import { generateToken } from "../../utils/GameRunner";
+import { Importer } from '../../utils/Importer';
+
+import { Host, HostDispatchProps, HostStateProps } from './Host';
 
 const mapStateToProps = (state: GState) => {
   const bots = state.bots;

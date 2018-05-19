@@ -1,15 +1,17 @@
 import log from 'electron-log';
 log.info('[STARTUP] Renderer process started');
+
 import { render } from 'react-dom';
 import * as Promise from 'bluebird';
 import { AppContainer } from 'react-hot-loader';
 import { h } from 'react-hyperscript-helpers';
 
-import Root from './containers/Root';
-import { FatalErrorView } from './components/FatalError';
+import Root from './Root';
+import { FatalErrorView } from './components';
 import { initialState } from './reducers/index';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
+
 import './app.global.scss';
 import './fontawesome.global.scss';
 
@@ -77,35 +79,17 @@ initializeDirs()
   });
 
 function renderApp() {
-  render(
-    h(AppContainer, [
-      h(Root, { store, history }),
-    ]),
-    document.getElementById('root'),
-  );
-
-  if ((module as any).hot) {
-    (module as any).hot.accept('./containers/Root', () => {
-      // tslint:disable-next-line:variable-name
-      const NextRoot = require('./containers/Root').default;
-      render(
-        h(AppContainer, [
-          h(Root, { store, history }),
-        ]),
-        document.getElementById('root'),
-      );
-    });
-  }
+  const app = h(AppContainer, [
+    h(Root, { store, history }),
+  ]);
+  renderCustom(app);
 }
 
 function renderCustom(element: any) {
-  render(
-    element,
-    document.getElementById('root'),
-  );
+  render(element, document.getElementById('root'));
 
   if ((module as any).hot) {
-    (module as any).hot.accept('./containers/Root', () => {
+    (module as any).hot.accept('./Root', () => {
       render(
         element,
         document.getElementById('root'),
