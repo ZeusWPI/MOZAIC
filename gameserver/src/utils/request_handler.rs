@@ -184,6 +184,20 @@ impl ConnectionHandler {
         }
     }
 
+    /// Check for request timeouts, and dispatch them.
+    fn handle_timeouts(&mut self) -> Poll<(), ()> {
+        loop {
+            let request_num = try_ready!(self.message_handler.poll_timeout());
+            let connection_id = self.connection_id;
+            let request_id = RequestId { connection_id, request_num };
+
+            self.dispatch_event(EventContent::Response {
+                request_id,
+                value: Err(ResponseError::Timeout),
+            });
+        }
+    }
+
     fn handle_packet(&mut self, data: Vec<u8>) {
         match self.message_handler.handle_message(data) {
             Ok(Message::Message { message_id, data }) => {
@@ -218,6 +232,7 @@ impl Future for ConnectionHandler {
             Async::Ready(()) => return Ok(Async::Ready(())),
             Async::NotReady => (),
         };
+        try!(self.handle_timeouts());
         return self.poll_client_connection();
     }
 }
