@@ -17,7 +17,7 @@ const mapDispatchToProps = (dispatch: any) => {
   return {
     joinMatch: (address: M.Address, bot: M.InternalBotSlot) => {
       dispatch(A.joinMatch(address, bot));
-    }
+    },
   };
 };
 

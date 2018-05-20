@@ -10,21 +10,31 @@
     height: inherit;
     display: flex;
     flex-direction: row;
-    .lobbyContainer {
-      width: 55%;
+    .leftColumn {
+      width: 50%;
       flex-grow: 1;
       height: 100%;
+      margin-right: 5px;
+      .lobbyContainer {
+        width: 100%;
+        height: 75%;
+        margin-bottom: 1px;
+      }
+      .serverControlsContainer {
+        width: 100%;
+        height: 25%;
+      }
     }
     .rightColumn {
       flex-grow: 1;
       height: 100%;
-      width: 45%;
+      width: 50%;
       display: flex;
       flex-direction: column;
       .configContainer {
         width: 100%;
         height: 50%; // TODO Solve this decently
-        margin-bottom: 10px;
+        margin-bottom: 1px;
       }
       .localBotSelectorContainer {
         flex-grow: 1;
@@ -44,6 +54,7 @@
     background-color: $secondary;
   }
   .verticalGrowAndScroll {
+    flex: 1 1 auto;
     overflow-y: scroll;
     display: flex;
     flex-direction: column;
@@ -63,6 +74,24 @@
     width: 80%;
     background-color: $tertiary;
     height: 100px;
+  }
+}
+
+.serverControls {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  .controlButton {
+    border: 1px solid $secondary;
+    border-radius: 10px;
+    padding: 20px 20px;
+    &:hover,
+    &:active {
+      background-color: lighten($background, 5);
+    }
   }
 }
 

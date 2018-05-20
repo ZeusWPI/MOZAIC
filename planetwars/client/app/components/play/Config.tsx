@@ -7,23 +7,28 @@ import Section from './Section';
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
-export interface ConfigProps { maps: M.MapList; }
-export interface ConfigState {
+// Config that might contain invalid values
+export interface WeakConfig {
   selectedMap?: M.MapId;
   maxTurns: number;
   serverAddress: string;
   port: number;
 }
 
-export default class Config extends React.Component<ConfigProps> {
+export interface ConfigProps {
+  maps: M.MapList;
+  setConfig(conf: WeakConfig): void;
+}
+
+export type ConfigState = WeakConfig & {};
+
+export class Config extends React.Component<ConfigProps> {
   public state: ConfigState = {
     selectedMap: undefined,
     maxTurns: 500,
     serverAddress: 'localhost',
     port: 9142,
   };
-
-  public componentDidUpdate() { console.log(this.state); }
 
   public render() {
     const { selectedMap, maxTurns, serverAddress, port } = this.state;
@@ -40,10 +45,11 @@ export default class Config extends React.Component<ConfigProps> {
       </Section>
     );
   }
-  private selectMap = (selectedMap: M.MapId) => this.setState({ selectedMap });
-  private setMax = (maxTurns: number) => this.setState({ maxTurns });
-  private setServer = (serverAddress: string) => this.setState({ serverAddress });
-  private setPort = (port: number) => this.setState({ port });
+  private selectMap = (selectedMap: M.MapId) => this.setState({ selectedMap }, this.callBack);
+  private setMax = (maxTurns: number) => this.setState({ maxTurns }, this.callBack);
+  private setServer = (serverAddress: string) => this.setState({ serverAddress }, this.callBack);
+  private setPort = (port: number) => this.setState({ port }, this.callBack);
+  private callBack = () => this.props.setConfig(this.state);
 }
 
 export interface MaxTurnProps { value: number; setMax(val: number): void; }
