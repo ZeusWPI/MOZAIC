@@ -323,19 +323,28 @@ impl PwController {
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
 
-        for player in self.state.players.iter() {
-            if player.alive {
-                let offset = self.state.players.len() - player.id.as_usize();
+        // these borrows are required so that the retain closure
+        // does not have to borrow self (which would create a lifetime conflict)
+        let state = &self.state;
+        let waiting_for = &mut self.waiting_for;
 
-                let serialized_state = serialize_rotated(&self.state, offset);
+        self.players.retain(|player_id, player| {
+            let offset = state.players.len() - player_id.as_usize();
+            let serialized_state = serialize_rotated(state, offset);
+
+            if state.players[player_id.as_usize()].alive {
+                // player is alive, send prompt
                 let message = proto::ServerMessage::GameState(serialized_state);
                 let serialized = serde_json::to_vec(&message).unwrap();
-
-                self.waiting_for.insert(player.id);
-                self.players.get_mut(&player.id).unwrap().connection
-                    .request(serialized, deadline);
+                waiting_for.insert(player.id);
+                player.connection.request(serialized, deadline);
+                // keep this player in the game
+                return true;
+            } else {
+                // this player is dead, kick him!
+                return false;
             }
-        }
+        });
     }
 
     fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, ResponseValue>) {
