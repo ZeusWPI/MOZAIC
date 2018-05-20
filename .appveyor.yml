@@ -32,10 +32,17 @@ install:
   - ps: Install-Product node 9 x64
 
 build_script:
- - cd gameserver
- - cargo build --release
- - cd %APPVEYOR_BUILD_FOLDER%
- - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver
- - cd planetwars\client
- - yarn install
- - yarn run package-win
+  # Build GameServer and move binary to client
+  - cd gameserver
+  - cargo build --release
+  - cd %APPVEYOR_BUILD_FOLDER%
+  - move gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver
+  # Build client network code
+  - cd client
+  - yarn install
+  - yarn run build
+  - cd %APPVEYOR_BUILD_FOLDER%
+  # Build client & package
+  - cd planetwars\client
+  - yarn install
+  - yarn run package-win

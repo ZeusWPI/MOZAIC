@@ -49,10 +49,17 @@ before_script:
   - git lfs pull
 
 script:
+  # Build GameServer and move binary to client
   - cd gameserver
   - cargo build --release
   - cd $TRAVIS_BUILD_DIR
   - mv gameserver/target/release/mozaic_bot_driver planetwars/client/bin/mozaic_bot_driver
+  # Build client network code
+  - cd client
+  - yarn install
+  - yarn run build
+  - cd $TRAVIS_BUILD_DIR
+  # Build client & package
   - cd planetwars/client
   - yarn install
   - yarn run package-$OS_TARGET
