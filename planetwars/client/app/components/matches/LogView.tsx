@@ -69,10 +69,6 @@ interface TurnProps {
 }
 
 export const TurnView: SFC<TurnProps> = (props) => {
-  // The last turn has no outputs for the players
-  if (Object.keys(props.turns).length === 0) {
-    return <GameEnd />;
-  }
   const players = Object.keys(props.turns).map((_playerNum) => {
     const playerNum = Number(_playerNum);
     const playerTurn = props.turns[playerNum];
