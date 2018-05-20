@@ -108,14 +108,14 @@ export class NotificationModal extends React.Component<NotificationModalProps> {
       div('.modal-card', [
         header('.modal-card-head', [
           p('.modal-card-title', ["Notifications"]),
-          button('.delete', {
+          button('.delete.is-primary', {
             'aria-label': close,
             'onClick': this.props.hideModal,
           }),
         ]),
         section(".modal-card-body", [content]),
         footer(".modal-card-foot", [
-          button(".button", {
+          button(".button.is-primary", {
             onClick: () => this.props.clearNotifications(),
           }, ["Mark all as read & close"])]),
       ]),

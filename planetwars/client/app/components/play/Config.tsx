@@ -2,18 +2,11 @@ import * as React from 'react';
 import * as fs from 'fs';
 
 import * as M from '../../database/models';
+import { WeakConfig } from './types';
 import Section from './Section';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
-
-// Config that might contain invalid values
-export interface WeakConfig {
-  selectedMap?: M.MapId;
-  maxTurns: number;
-  serverAddress: string;
-  port: number;
-}
 
 export interface ConfigProps {
   maps: M.MapList;
@@ -117,14 +110,14 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     const { maps, selectedMap, selectMap } = this.props;
 
     const options = maps.map((map, i) => (
-      <option value={map.uuid} key={map.uuid} onChange={this.onChange}>
-        {map.name}
+      <option value={map.uuid} key={map.uuid}>
+        {map.name} ({map.slots})
       </option>
     ));
     return (
       <HorizontalInput id={"map"} label={"Map"}>
         <div className="select">
-          <select name="Maps" id="maps">
+          <select name="Maps" id="maps" onChange={this.onChange}>
             {options}
           </select>
         </div>

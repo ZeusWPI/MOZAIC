@@ -4,7 +4,8 @@ import { connect } from 'react-redux';
 import * as M from '../../database/models';
 import { GState } from '../../reducers';
 
-import { Config, WeakConfig } from './Config';
+import { WeakConfig } from './types';
+import { Config } from './Config';
 import { Lobby } from './Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { ServerControls } from './ServerControls';
@@ -26,14 +27,11 @@ export interface PlayPageDispatchProps { }
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 export interface PlayPageState {
-  isServerRunning: boolean;
   config?: WeakConfig;
 }
 
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
-  public state: PlayPageState = {
-    isServerRunning: false,
-  };
+  public state: PlayPageState = {};
 
   public render() {
     const { maps } = this.props;
@@ -44,7 +42,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           {/* Left side*/}
           <div className={styles.leftColumn}>
             <div className={styles.lobbyContainer}>
-              <Lobby />
+              <Lobby config={this.state.config} maps={maps} />
             </div>
           </div>
 

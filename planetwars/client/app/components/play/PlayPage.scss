@@ -85,13 +85,7 @@
   justify-content: space-around;
   align-items: center;
   .controlButton {
-    border: 1px solid $secondary;
-    border-radius: 10px;
-    padding: 20px 20px;
-    &:hover,
-    &:active {
-      background-color: lighten($background, 5);
-    }
+    color: $text;
   }
 }
 

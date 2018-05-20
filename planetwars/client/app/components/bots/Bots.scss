@@ -26,6 +26,7 @@
         list-style-type: none;
         li {
           padding: 20px 20px; // border-top: 1px solid $tertiart
+          color: $text;
           border-bottom: 1px solid $tertiary;
           margin: 0 10px;
         }
@@ -37,14 +38,12 @@
         font-size: 1.5rem; // border-bottom: 1px solid $tertiary; 
         background: lighten($background, 5);
         a {
+          color: $text;
           width: 100%;
         }
       }
       .newBot:hover {
         background: lighten($background, 10);
-      }
-      a {
-        color: $primary;
       }
     }
 

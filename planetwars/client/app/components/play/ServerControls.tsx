@@ -6,20 +6,30 @@ import Section from './Section';
 const styles = require('./PlayPage.scss');
 
 export interface ServerControlProps {
+  launchDisabled: boolean;
   startServer(): void;
   launchGame(): void;
 }
 
 export class ServerControls extends React.Component<ServerControlProps> {
   public render() {
+    const { launchDisabled, startServer, launchGame } = this.props;
     return (
       <div className={styles.serverControls}>
-        <div className={styles.controlButton} onClick={this.props.startServer}>
-          <span>Start server</span>
-        </div>
-        <div className={styles.controlButton} onClick={this.props.launchGame}>
-          <span>Launch game</span>
-        </div>
+        <button
+          className={styles.controlButton + ' button is-outlined is-primary is-large'}
+          onClick={startServer}
+        >
+          Start server
+        </button>
+
+        <button
+          className={styles.controlButton + ' button is-outlined is-primary is-large'}
+          onClick={launchGame}
+          disabled={launchDisabled}
+        >
+          Launch game
+        </button>
       </div>
     );
   }
