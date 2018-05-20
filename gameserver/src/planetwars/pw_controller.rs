@@ -64,6 +64,39 @@ pub struct Player {
     connection: ConnectionHandle,
 }
 
+impl Player {
+    fn prompt(&mut self, state: &PlanetWars, deadline: Instant) {
+        let s = self.serialized_state(state);
+        self.request(proto::ServerMessage::GameState(s), deadline);
+
+    }
+
+    fn send_final_state(&mut self, state: &PlanetWars) {
+        let s = self.serialized_state(state);
+        self.send(proto::ServerMessage::FinalState(s));
+    }
+
+    fn send_action(&mut self, action: PlayerAction) {
+        self.send(proto::ServerMessage::PlayerAction(action));
+    }
+
+    fn serialized_state(&self, state: &PlanetWars) -> proto::State {
+        let offset = state.players.len() - self.id.as_usize();
+        return serialize_rotated(state, offset);
+    }
+
+    fn request(&mut self, msg: proto::ServerMessage, deadline: Instant) {
+        let data = serde_json::to_vec(&msg).unwrap();
+        self.connection.request(data, deadline);
+    }
+
+    fn send(&mut self, msg: proto::ServerMessage) {
+        let data = serde_json::to_vec(&msg).unwrap();
+        self.connection.send(data);
+    }
+
+}
+
 pub struct PwMatch {
     state: PwMatchState,
     event_channel_handle: UnboundedSender<Event>,
@@ -298,7 +331,9 @@ impl PwController {
 
         self.log_state();
 
-        if !self.state.is_finished() {
+        if self.state.is_finished() {
+            self.finish_game();
+        } else {
             self.prompt_players();
         }
     }
@@ -323,19 +358,34 @@ impl PwController {
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
 
-        for player in self.state.players.iter() {
-            if player.alive {
-                let offset = self.state.players.len() - player.id.as_usize();
+        // these borrows are required so that the retain closure
+        // does not have to borrow self (which would create a lifetime conflict)
+        let state = &self.state;
+        let waiting_for = &mut self.waiting_for;
 
-                let serialized_state = serialize_rotated(&self.state, offset);
-                let message = proto::ServerMessage::GameState(serialized_state);
-                let serialized = serde_json::to_vec(&message).unwrap();
-
-                self.waiting_for.insert(player.id);
-                self.players.get_mut(&player.id).unwrap().connection
-                    .request(serialized, deadline);
+        self.players.retain(|player_id, player| {
+            if state.players[player_id.as_usize()].alive {
+                waiting_for.insert(player.id);
+                player.prompt(state, deadline);
+                // keep this player in the game
+                return true;
+            } else {
+                player.send_final_state(state);
+                // this player is dead, kick him!
+                return false;
             }
-        }
+        });
+    }
+
+    // TODO: ewwwww dup
+    fn finish_game(&mut self) {
+        let state = &self.state;
+
+        self.players.retain(|_player_id, player| {
+            player.send_final_state(state);
+            // the game is over, we are kicking everyone.
+            return false;
+        });
     }
 
     fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, ResponseValue>) {
@@ -360,10 +410,8 @@ impl PwController {
             }
 
             let player_action = self.execute_action(player_id, result);
-            let message = proto::ServerMessage::PlayerAction(player_action);
-            let serialized = serde_json::to_vec(&message).unwrap();
-            self.players.get_mut(&player_id).unwrap().connection.
-                send(serialized);
+            self.players.get_mut(&player_id).unwrap()
+                .send_action(player_action);
         }
     }
 

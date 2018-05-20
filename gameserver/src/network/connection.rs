@@ -38,7 +38,7 @@ impl ConnectionState {
         return self.poll_message(stream);
     }
 
-    fn flush_buffer(&mut self, stream: &mut PacketStream)
+    pub fn flush_buffer(&mut self, stream: &mut PacketStream)
         -> Poll<(), io::Error>
     {
         while !self.buffer.is_empty() {
@@ -112,15 +112,6 @@ impl StreamHandler {
     }
 }
 
-pub struct Connection__ {
-    /// The token that identifies this connection
-    token: Vec<u8>,
-    stream_handler: StreamHandler,
-    buffer: Vec<packet::Payload>,
-    routing_chan: UnboundedReceiver<RoutingMessage>,
-
-}
-
 pub struct Connection {
     token: Vec<u8>,
     stream_handler: StreamHandler,
@@ -178,6 +169,30 @@ impl Connection {
                 self.stream_handler.disconnect();
                 return Ok(Async::Ready(ConnectionEvent::Disconnected));
             }
+        }
+    }
+
+    pub fn poll_complete(&mut self) -> Poll<(), ()> {
+        let mut stream = match try!(self.stream_handler.poll_stream()) {
+            Async::Ready(stream) => stream,
+            Async::NotReady => {
+                // When the connection is not connected to a client,
+                // act as if the connection has completed. This is almost
+                // certainly not what we want, but failing to do this would
+                // yield in possibly infinite waits in the game server.
+                // We should properly handle this with a re-connect time-out
+                // or something similar.
+                return Ok(Async::Ready(()));
+            }
+        };
+
+        match self.state.flush_buffer(&mut stream) {
+            Ok(async) => return Ok(async),
+            Err(_err) => {
+                // ignore the error and act as if the stream has completed.
+                // TODO: this should be handled better.
+                return Ok(Async::Ready(()));
+            },
         }
     }
 

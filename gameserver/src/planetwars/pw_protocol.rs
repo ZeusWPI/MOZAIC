@@ -82,6 +82,8 @@ pub enum ServerMessage {
     GameState(State),
     /// The action that was performed
     PlayerAction(PlayerAction),
+    /// The game is over, and this is the concluding state.
+    FinalState(State),
 }
 
 // lobby messages

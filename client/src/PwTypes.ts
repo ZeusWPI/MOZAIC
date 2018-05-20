@@ -67,13 +67,19 @@ export type DispatchError
 
 export type ServerMessage
     = GameStateMessage
-    | PlayerActionMessage;
+    | PlayerActionMessage
+    | FinalStateMessage;
 
 
 export type GameStateMessage = {
     type: 'game_state';
     content: GameState;
 };
+
+export type FinalStateMessage = {
+    type: 'final_state';
+    content: GameState;
+}
 
 export type PlayerActionMessage = {
     type: 'player_action';

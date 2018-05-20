@@ -111,17 +111,14 @@ export class Client {
             case 'player_action': {
                 return this.handlePlayerAction(serverMessage.content);
             }
+            case 'final_state': {
+                return this.handleFinalState(serverMessage.content);
+            }
         }
     }
 
     private handleGameState(state: GameState): Promise<Uint8Array> {
-        this.turnNum += 1;
-
-        this.logger.log({
-            "type": 'step',
-            "turn_number": this.turnNum,
-            "state": state,
-        });
+        this.logState(state);
 
         return new Promise((resolve, reject) => {
             const request = JSON.stringify(state);
@@ -133,6 +130,20 @@ export class Client {
                 const buf = Buffer.from(response, 'utf-8');
                 resolve(buf);
             });
+        });
+    }
+
+    private handleFinalState(state: GameState) {
+        this.logState(state);
+    }
+
+    private logState(state: GameState) {
+        this.turnNum += 1;
+
+        this.logger.log({
+            "type": 'step',
+            "turn_number": this.turnNum,
+            "state": state,
         });
     }
 
