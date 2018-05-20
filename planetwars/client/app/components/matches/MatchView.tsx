@@ -2,9 +2,10 @@ import * as React from 'react';
 
 import Visualizer from '../visualizer/Visualizer';
 import * as Comp from './types';
-import { parseLogFile, MatchLog } from '../../lib/match';
+import { emptyLog, parseLogFile, MatchLog } from '../../lib/match';
 import { LogView } from './LogView';
 import * as M from '../../database/models';
+import { Log } from '../../reducers/logs';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -64,13 +65,23 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
         );
       }
       case M.MatchStatus.playing: {
-        return (
-          <div className={styles.matchViewContainer}>
-            <div className={styles.matchInProgress}>
-              match in progress
+        if (match.log && match.log.size > 0) {
+          const matchLog = emptyLog(match.type);
+          match.log.forEach(matchLog.addEntry);
+          return (
+            <div className={styles.matchViewContainer}>
+              <MatchViewer match={match} matchLog={matchLog} />
             </div>
-          </div>
-        );
+          );
+        } else {
+          return (
+            <div className={styles.matchViewContainer}>
+              <div className={styles.matchInProgress}>
+                match in progress
+              </div>
+            </div>
+          );
+        }
       }
       default: throw new Error('We suck at programming');
     }

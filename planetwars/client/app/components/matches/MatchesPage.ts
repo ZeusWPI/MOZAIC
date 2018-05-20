@@ -43,6 +43,7 @@ function mapDispatchToProps(dispatch: any): MatchViewerDispatchProps {
 
 const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
   const matchData = state.matches[matchId];
+  const log = state.logs[matchId];
 
   if (matchData.type === M.MatchType.hosted) {
     const players = matchData.players.map(({ name }, idx) => (
@@ -51,14 +52,23 @@ const getMatchData = (state: GState, matchId: M.MatchId): Comp.Match => {
     const mapData = state.maps[matchData.map];
     const map = { uuid: mapData.uuid, name: mapData.name };
     const { network, maxTurns, ...props } = matchData;
-    return { ...props, players, map };
+    return {
+      ...props,
+      players,
+      map,
+      log,
+    };
   } else {
     const { network, bot, ...props } = matchData;
     const players = [{
       name: bot.name,
       number: 1,
     }];
-    return { ...props, players };
+    return {
+      ...props,
+      players,
+      log,
+    };
   }
 };
 

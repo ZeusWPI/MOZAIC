@@ -1,4 +1,5 @@
 import { MatchStats, MatchStatus, MatchType } from '../../database/models';
+import { Log } from '../../reducers/logs';
 
 export interface Player {
   number: number;
@@ -20,6 +21,7 @@ export interface MatchProps {
   uuid: string;
   players: Player[];
   timestamp: Date;
+  log?: Log;
   logPath: string;
 }
 

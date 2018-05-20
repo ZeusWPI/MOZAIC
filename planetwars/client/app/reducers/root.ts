@@ -22,7 +22,7 @@ import { MapsState, mapsReducer } from './maps';
 
 import { HostPageState, hostReducer } from './hostPage';
 import { NavbarState, navbarReducer } from './navbar';
-import { LogsState } from './logs';
+import { LogsState, logsReducer } from './logs';
 
 export interface GState {
   readonly routing: RouterState;
@@ -57,6 +57,7 @@ export const rootReducer = combineReducers<GState>({
 
   bots: botsReducer,
   matches: matchesReducer,
+  logs: logsReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
 

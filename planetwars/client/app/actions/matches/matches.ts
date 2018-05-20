@@ -12,6 +12,7 @@ import { Config } from '../../utils/Config';
 import * as Notify from '../notifications';
 import * as Host from './hosting';
 import { actionCreator } from '../helpers';
+import { createLog } from '..';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -55,6 +56,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
     };
 
     dispatch(saveMatch(match));
+    dispatch(createLog(match.uuid));
 
     const botData = state.bots[bot.botId];
     const argv = stringArgv(botData.command);
@@ -121,6 +123,7 @@ export function runMatch() {
     const { map, players, maxTurns } = params;
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
+    dispatch(createLog(match.uuid));
 
     const playerConfigs = players.map((slot, idx) => {
       let botConfig;
