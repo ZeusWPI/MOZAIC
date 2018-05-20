@@ -37,7 +37,6 @@ export class MatchRunner {
 
     private _onPlayerConnected = new SimpleEventDispatcher<number>();
     private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
-    private _onGameState = new SimpleEventDispatcher<GameState>();
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
@@ -71,13 +70,6 @@ export class MatchRunner {
             this._onError.dispatch(err);
         });
 
-        this.onGameState.subscribe((state) => {
-            this.logger.log({
-                type: "game_state",
-                state,
-            });
-        });
-
         this.connHandler = new RequestResolver(this.connection, (data) => {
             const text = new TextDecoder('utf-8').decode(data);
             let message: ServerMessage = JSON.parse(text);
@@ -94,7 +86,10 @@ export class MatchRunner {
                     break;
                 }
                 case 'game_state': {
-                    this._onGameState.dispatch(message.content);
+                    this.logger.log({
+                        type: "game_state",
+                        state: message.content,
+                    });
                     break;
                 }
             }
@@ -138,10 +133,6 @@ export class MatchRunner {
 
     public get onPlayerDisconnected() {
         return this._onPlayerDisconnected.asEvent();
-    }
-
-    public get onGameState() {
-        return this._onGameState.asEvent();
     }
 }
 
