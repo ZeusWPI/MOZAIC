@@ -298,7 +298,9 @@ impl PwController {
 
         self.log_state();
 
-        if !self.state.is_finished() {
+        if self.state.is_finished() {
+            self.finish_game();
+        } else {
             self.prompt_players();
         }
     }
@@ -332,6 +334,7 @@ impl PwController {
             let offset = state.players.len() - player_id.as_usize();
             let serialized_state = serialize_rotated(state, offset);
 
+            // TODO: extract the duplicate logic here
             if state.players[player_id.as_usize()].alive {
                 // player is alive, send prompt
                 let message = proto::ServerMessage::GameState(serialized_state);
@@ -341,9 +344,28 @@ impl PwController {
                 // keep this player in the game
                 return true;
             } else {
+                let message = proto::ServerMessage::FinalState(serialized_state);
+                let serialized = serde_json::to_vec(&message).unwrap();
+                player.connection.send(serialized);
                 // this player is dead, kick him!
                 return false;
             }
+        });
+    }
+
+    // TODO: ewwwww dup
+    fn finish_game(&mut self) {
+        let state = &self.state;
+
+        self.players.retain(|player_id, player| {
+            let offset = state.players.len() - player_id.as_usize();
+            let serialized_state = serialize_rotated(state, offset);
+
+            let message = proto::ServerMessage::FinalState(serialized_state);
+            let serialized = serde_json::to_vec(&message).unwrap();
+            player.connection.send(serialized);
+            // the game is over, we are kicking everyone.
+            return false;
         });
     }
 
