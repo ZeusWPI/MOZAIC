@@ -7,7 +7,7 @@ import { execFile } from 'child_process';
 const stringArgv = require('string-argv');
 
 import * as crypto from 'crypto';
-import { MatchConfig, Token, BotSlot } from './database/models';
+import { MatchConfig, Token, BotSlot } from '../database/models';
 import { Config } from './Config';
 
 // TODO: maybe s/game/match/g ?

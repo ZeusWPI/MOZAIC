@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from 'react-router-dom';
 
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 
 // TODO import decently
 // tslint:disable-next-line:no-var-requires

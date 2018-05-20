@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import * as M from '../../utils/database/models';
-import { ExternalBotSlot } from "../../utils/database/migrationV4";
+import * as M from '../../database/models';
+import { ExternalBotSlot } from "../../database/migrationV4";
 import BotSelector from './BotSelector';
 import { AddressForm } from "./AddressForm";
 import * as classnames from 'classnames';

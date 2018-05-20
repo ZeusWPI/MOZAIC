@@ -4,7 +4,7 @@ import Visualizer from '../visualizer/Visualizer';
 import * as Comp from './types';
 import { parseLogFile, MatchLog } from '../../lib/match';
 import { LogView } from './LogView';
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');

@@ -3,17 +3,18 @@ import * as p from 'path';
 import * as Promise from 'bluebird';
 import { connect, Dispatch } from 'react-redux';
 import { push } from 'react-router-redux';
+import { PathLike } from 'mz/fs';
 
+import { GState } from '../../reducers/index';
+import { Config } from '../../utils/Config';
+import * as A from '../../actions';
+import * as M from '../../database/models';
+
+import * as Comp from './types';
 import Matches, {
   MatchViewerStateProps,
   MatchViewerDispatchProps,
-} from '../components/matches/Matches';
-import * as Comp from '../components/matches/types';
-import { GState } from '../reducers/index';
-import { Config } from '../utils/Config';
-import * as A from '../actions/index';
-import * as M from '../utils/database/models';
-import { PathLike } from 'mz/fs';
+} from './Matches';
 
 function mapStateToProps(state: GState, ownProps: any): MatchViewerStateProps {
   const matches = Object.keys(state.matches).map((matchId) => {

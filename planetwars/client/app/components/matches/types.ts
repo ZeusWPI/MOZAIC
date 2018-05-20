@@ -1,4 +1,4 @@
-import { MatchStats, MatchStatus, MatchType } from '../../utils/database/models';
+import { MatchStats, MatchStatus, MatchType } from '../../database/models';
 
 export interface Player {
   number: number;

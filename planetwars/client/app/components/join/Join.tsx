@@ -1,5 +1,5 @@
 import * as React from "react";
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 import AddressForm from '../host/AddressForm';
 import { BotSelector } from "../host/BotSelector";
 

@@ -7,7 +7,7 @@ import { remote } from 'electron';
 import { Importer } from './Importer';
 import { Config } from './Config';
 import { store } from '../index';
-import * as A from '../actions/index';
+import * as A from '../actions';
 import { GState } from '../reducers';
 
 // TODO: Move all this shit do database

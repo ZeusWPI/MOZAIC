@@ -1,16 +1,17 @@
-import * as M from '../utils/database/models';
-import * as Varia from './varia';
-
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 import * as PwClient from 'mozaic-client';
-
-import { actionCreator } from './helpers';
-import { v4 as uuidv4 } from 'uuid';
-import { Config } from '../utils/Config';
-import { GState } from '../reducers/index';
 import { Logger } from 'mozaic-client';
-import { parseLogFile, calcStats } from '../lib/match';
+import { v4 as uuidv4 } from 'uuid';
+
+import * as M from '../../database/models';
+import { parseLogFile, calcStats } from '../../lib/match';
+import { GState } from '../../reducers/index';
+import { Config } from '../../utils/Config';
+
+import * as Notify from '../notifications';
+import * as Host from './hosting';
+import { actionCreator } from '../helpers';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -43,7 +44,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
 
     const matchId = uuidv4();
 
-    const match: M.JoinedMatch =  {
+    const match: M.JoinedMatch = {
       uuid: matchId,
       type: M.MatchType.joined,
       status: M.MatchStatus.playing,
@@ -81,7 +82,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       const title = 'Match ended';
       const body = `A remote match has ended`;
       const link = `/matches/${match.uuid}`;
-      dispatch(Varia.addNotification({ title, body, link, type: 'Finished' }));
+      dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
     });
 
     runner.onError.subscribe((error: Error) => {
@@ -90,7 +91,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       const title = 'Match errored';
       const body = `A remote match on map has errored`;
       const link = `/matches/${match.uuid}`;
-      dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
+      dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
     });
 
     runner.run();
@@ -154,7 +155,7 @@ export function runMatch() {
       const title = 'Match ended';
       const body = `A match on map '${state.maps[params.map].name}' has ended`;
       const link = `/matches/${match.uuid}`;
-      dispatch(Varia.addNotification({ title, body, link, type: 'Finished' }));
+      dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
     });
 
     runner.onError.subscribe((error) => {
@@ -162,19 +163,19 @@ export function runMatch() {
       const title = 'Match errored';
       const body = `A match on map '${state.maps[params.map].name}' has errored`;
       const link = `/matches/${match.uuid}`;
-      dispatch(Varia.addNotification({ title, body, link, type: 'Error' }));
+      dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
     });
 
     runner.onPlayerConnected.subscribe((playerNumber) => {
-      dispatch(Varia.playerConnected(players[playerNumber - 1].token));
+      dispatch(Host.playerConnected(players[playerNumber - 1].token));
     });
 
     runner.onPlayerDisconnected.subscribe((playerNumber) => {
-      dispatch(Varia.playerDisconnected(players[playerNumber - 1].token));
+      dispatch(Host.playerDisconnected(players[playerNumber - 1].token));
     });
 
     runner.run();
-    dispatch(Varia.serverStarted(runner));
+    dispatch(Host.serverStarted(runner));
   };
 }
 

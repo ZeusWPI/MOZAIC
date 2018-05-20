@@ -1,5 +1,5 @@
 import * as React from 'react';
-import * as M from '../../utils/database/models';
+import * as M from '../../database/models';
 
 export interface BotSelectorProps {
   value?: M.BotId;
@@ -24,8 +24,8 @@ export const BotSelector: React.SFC<BotSelectorProps> = (props) => {
 
   return (
     <select value={props.value} onChange={onChange}>
-        <option value="">Select Bot</option>
-        {options}
+      <option value="">Select Bot</option>
+      {options}
     </select>
   );
 };
