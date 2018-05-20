@@ -22,10 +22,38 @@ export interface MatchViewState {
 }
 
 export class MatchView extends React.Component<ContainerProps, MatchViewState> {
+  private matchLog?: MatchLog;
+  // how many log records were already consumed
+  private logPos = 0;
 
   public constructor(props: ContainerProps) {
     super(props);
     this.state = {};
+  }
+
+  public componentWillReceiveProps(nextProps: ContainerProps) {
+    const currentMatch = this.props.match;
+    const nextMatch = nextProps.match;
+
+    if (!nextMatch) {
+      this.matchLog = undefined;
+      return;
+    }
+
+    if (!currentMatch || currentMatch.uuid !== nextMatch.uuid) {
+      // create a new match log
+      this.matchLog = emptyLog(nextMatch.type);
+      this.logPos = 0;
+    }
+
+    const log = nextMatch.log;
+    if (!log) { return; }
+
+    // add new entries
+    log.slice(this.logPos).forEach((entry) => {
+      this.matchLog!.addEntry(entry!);
+    });
+    this.logPos = log.size;
   }
 
   // Catch the visualizer throwing errors so your whole app isn't broken
@@ -65,14 +93,10 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
         );
       }
       case M.MatchStatus.playing: {
-        if (match.log && match.log.size > 0) {
-          const matchLog = emptyLog(match.type);
-          match.log.forEach((entry) => {
-            matchLog.addEntry(entry!)
-          });
+        if (this.matchLog && this.matchLog.gameStates.length > 0) {
           return (
             <div className={styles.matchViewContainer}>
-              <MatchViewer match={match} matchLog={matchLog} />
+              <MatchViewer match={match} matchLog={this.matchLog} />
             </div>
           );
         } else {
