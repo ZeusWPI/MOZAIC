@@ -94,9 +94,9 @@ export const TurnView: SFC<TurnProps> = (props) => {
 
 interface PlayerViewProps { playerName: string; turn: PlayerTurn; }
 export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
-  const isError = { [styles.error]: turn.action!.type !== 'commands' };
+  const isError = turn.action && turn.action.type !== 'commands';
   return (
-    <li className={classNames(styles.player, isError)}>
+    <li className={classNames(styles.player, {[styles.error]: isError})}>
       <div>
         <p className={styles.playerName}>{playerName}</p>
       </div>
@@ -106,9 +106,14 @@ export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
 };
 
 export const PlayerTurnView: SFC<{ turn: PlayerTurn }> = ({ turn }) => {
-  const action = turn.action!;
+  const action = turn.action;
+
+  if (!action) {
+    return null;
+  }
+
   switch (action.type) {
-    case 'timeout' || 'parse_error': {
+    case 'timeout': {
       return <Timeout/>;
     }
     case 'parse_error': {
