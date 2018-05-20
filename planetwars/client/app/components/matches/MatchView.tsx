@@ -40,6 +40,13 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
       return;
     }
 
+    // read the log file from disk for finished matches
+    if (nextMatch.status === M.MatchStatus.finished) {
+      this.matchLog = parseLogFile(nextMatch.logPath, nextMatch.type);
+      return;
+    }
+
+    // for other matches, get the log from the redux store
     if (!currentMatch || currentMatch.uuid !== nextMatch.uuid) {
       // create a new match log
       this.matchLog = emptyLog(nextMatch.type);
@@ -47,13 +54,13 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     }
 
     const log = nextMatch.log;
-    if (!log) { return; }
-
-    // add new entries
-    log.slice(this.logPos).forEach((entry) => {
-      this.matchLog!.addEntry(entry!);
-    });
-    this.logPos = log.size;
+    if (log) {
+      // add new entries
+      log.slice(this.logPos).forEach((entry) => {
+        this.matchLog!.addEntry(entry!);
+      });
+      this.logPos = log.size;
+    }
   }
 
   // Catch the visualizer throwing errors so your whole app isn't broken
@@ -74,43 +81,35 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     if (!match) {
       return null;
     }
-    switch (match.status) {
-      case M.MatchStatus.finished: {
-        const log = parseLogFile(match.logPath, match.type);
-        return (
-          <div className={styles.matchViewContainer}>
-            <MatchViewer match={match} matchLog={log} />
+
+    if (match.status === M.MatchStatus.error) {
+      return (
+        <div className={styles.matchViewContainer}>
+          <div className={styles.matchError}>
+            {match.error}
           </div>
-        );
-      }
-      case M.MatchStatus.error: {
-        return (
-          <div className={styles.matchViewContainer}>
-            <div className={styles.matchError}>
-              {match.error}
-            </div>
-          </div>
-        );
-      }
-      case M.MatchStatus.playing: {
-        if (this.matchLog && this.matchLog.gameStates.length > 0) {
-          return (
-            <div className={styles.matchViewContainer}>
-              <MatchViewer match={match} matchLog={this.matchLog} />
-            </div>
-          );
-        } else {
-          return (
-            <div className={styles.matchViewContainer}>
-              <div className={styles.matchInProgress}>
-                match in progress
-              </div>
-            </div>
-          );
-        }
-      }
-      default: throw new Error('We suck at programming');
+        </div>
+      );
     }
+
+    const matchLog = this.matchLog;
+
+    if (!matchLog || matchLog.gameStates.length === 0) {
+      return (
+        <div className={styles.matchViewContainer}>
+          <div className={styles.matchInProgress}>
+            match in progress
+          </div>
+        </div>
+      );
+    }
+
+    // render the match log
+    return (
+      <div className={styles.matchViewContainer}>
+        <MatchViewer match={match} matchLog={matchLog} />
+      </div>
+    );
   }
 }
 
