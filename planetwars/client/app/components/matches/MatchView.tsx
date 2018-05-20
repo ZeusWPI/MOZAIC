@@ -67,7 +67,9 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
       case M.MatchStatus.playing: {
         if (match.log && match.log.size > 0) {
           const matchLog = emptyLog(match.type);
-          match.log.forEach(matchLog.addEntry);
+          match.log.forEach((entry) => {
+            matchLog.addEntry(entry!)
+          });
           return (
             <div className={styles.matchViewContainer}>
               <MatchViewer match={match} matchLog={matchLog} />

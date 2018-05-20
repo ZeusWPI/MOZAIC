@@ -12,7 +12,7 @@ import { Config } from '../../utils/Config';
 import * as Notify from '../notifications';
 import * as Host from './hosting';
 import { actionCreator } from '../helpers';
-import { createLog } from '..';
+import { createLog, addLogEntry } from '..';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -65,6 +65,8 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       args: argv.slice(1),
     };
 
+    const logger = new Logger(match.logPath);
+
     const config = {
       clients: [
         {
@@ -74,7 +76,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
         },
       ],
       address: host,
-      logger: new Logger(match.logPath),
+      logger,
     };
 
     // TODO: remove this dupe
@@ -94,6 +96,13 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       const body = `A remote match on map has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
+    });
+
+    logger.onEntry.subscribe((entry) => {
+      dispatch(addLogEntry({
+        matchId: match.uuid,
+        entry,
+      }));
     });
 
     runner.run();
@@ -176,6 +185,14 @@ export function runMatch() {
     runner.onPlayerDisconnected.subscribe((playerNumber) => {
       dispatch(Host.playerDisconnected(players[playerNumber - 1].token));
     });
+
+    runner.logger.onEntry.subscribe((entry) => {
+      dispatch(addLogEntry({
+        matchId: match.uuid,
+        entry,
+      }));
+    });
+
 
     runner.run();
     dispatch(Host.serverStarted(runner));

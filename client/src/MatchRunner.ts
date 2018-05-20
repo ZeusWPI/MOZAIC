@@ -28,7 +28,7 @@ export class MatchRunner {
     private connection: Connection;
     private serverRunner: ServerRunner;
     private clientRunner: ClientRunner;
-    private logger: Logger;
+    readonly logger: Logger;
 
     private connHandler: RequestResolver;
 
