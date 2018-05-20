@@ -11,12 +11,14 @@
     display: flex;
     flex-direction: row;
     .lobbyContainer {
+      width: 55%;
       flex-grow: 1;
       height: 100%;
     }
     .rightColumn {
       flex-grow: 1;
       height: 100%;
+      width: 45%;
       display: flex;
       flex-direction: column;
       .configContainer {
@@ -50,6 +52,17 @@
     >* {
       width: 100%;
     }
+  }
+}
+
+.mapPreview {
+  display: flex;
+  justify-content: center;
+  margin: 20px 20px;
+  .map {
+    width: 80%;
+    background-color: $tertiary;
+    height: 100px;
   }
 }
 
