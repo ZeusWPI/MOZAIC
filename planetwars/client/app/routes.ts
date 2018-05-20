@@ -5,13 +5,14 @@ import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
 
 import App from './App';
 import {
+  BotsPage,
   HomePage,
   HostPage,
-  BotsPage,
-  MatchesPage,
   InfoPage,
-  Navbar,
   JoinPage,
+  MatchesPage,
+  Navbar,
+  PlayPage,
 } from './components';
 
 export default class Routes extends React.Component<any, any> {
@@ -22,6 +23,10 @@ export default class Routes extends React.Component<any, any> {
           h(Route, {
             path: '/home',
             component: HomePage,
+          }),
+          h(Route, {
+            path: '/play',
+            component: PlayPage,
           }),
           h(Route, {
             path: '/host',
