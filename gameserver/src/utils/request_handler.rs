@@ -161,7 +161,8 @@ impl ConnectionHandler {
                 },
                 None => {
                     // The control channel was closed; exit.
-                    return Ok(Async::Ready(()));
+                    // return Ok(Async::Ready(()));
+                    return Ok(Async::NotReady);
                 }
             }
         }
@@ -228,8 +229,8 @@ impl Future for ConnectionHandler {
 
     fn poll(&mut self) -> Poll<(), ()> {
         match try!(self.handle_commands()) {
-            // ignore the client for now, close the connection when we are done
-            Async::Ready(()) => return Ok(Async::Ready(())),
+            // drop the connection as soon as it is done
+            Async::Ready(()) => return self.connection.poll_complete(),
             Async::NotReady => (),
         };
         try!(self.handle_timeouts());
