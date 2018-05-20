@@ -121,6 +121,6 @@ export class Renderer extends React.Component<any> {
     });
     this.planetRenderer.draw(planets, params);
     this.expeditionRenderer.draw(gameState.expeditions, params);
-    this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
+    this.voronoiRenderer(gameState, this.voronoiContainer);
   }
 }
