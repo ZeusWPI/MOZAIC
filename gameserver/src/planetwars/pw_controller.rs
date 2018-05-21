@@ -7,12 +7,12 @@ use tokio;
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 
-use utils::request_handler::{
-    ConnectionId,
+use utils::client_handler::{
+    ClientId,
     Event,
     EventContent,
-    ConnectionHandle,
-    ConnectionHandler,
+    ClientHandle,
+    ClientHandler,
     ResponseValue,
     ResponseError,
 };
@@ -61,7 +61,7 @@ impl slog::KV for PlayerId {
 
 pub struct Player {
     id: PlayerId,
-    connection: ConnectionHandle,
+    handle: ClientHandle,
 }
 
 impl Player {
@@ -87,12 +87,12 @@ impl Player {
 
     fn request(&mut self, msg: proto::ServerMessage, deadline: Instant) {
         let data = serde_json::to_vec(&msg).unwrap();
-        self.connection.request(data, deadline);
+        self.handle.request(data, deadline);
     }
 
     fn send(&mut self, msg: proto::ServerMessage) {
         let data = serde_json::to_vec(&msg).unwrap();
-        self.connection.send(data);
+        self.handle.send(data);
     }
 
 }
@@ -183,11 +183,11 @@ impl Future for PwMatch {
 pub struct Lobby {
     conf: Config,
     logger: slog::Logger,
-    ctrl_handle: ConnectionHandle,
+    ctrl_handle: ClientHandle,
 
     // whether we should stay in the waiting state
     waiting: bool,
-    connection_player: HashMap<ConnectionId, PlayerId>,
+    client_player: HashMap<ClientId, PlayerId>,
     players: HashMap<PlayerId, Player>,
 }
 
@@ -200,8 +200,8 @@ impl Lobby {
            logger: slog::Logger)
            -> Self
     {
-        let (ctrl_handle, handler) = ConnectionHandler::new(
-            ConnectionId { connection_num: 0 },
+        let (ctrl_handle, handler) = ClientHandler::new(
+            ClientId(0),
             ctrl_token,
             routing_table.clone(),
             event_channel_handle.clone(),
@@ -209,15 +209,15 @@ impl Lobby {
         tokio::spawn(handler);
 
         let mut players = HashMap::new();
-        let mut connection_player = HashMap::new();
+        let mut client_player = HashMap::new();
         let mut waiting_for = HashSet::new();
 
         for (num, token) in client_tokens.into_iter().enumerate() {
             let player_id = PlayerId::new(num);
-            let connection_id = ConnectionId { connection_num: num+1 };
+            let client_id = ClientId(num+1);
 
-            let (handle, handler) = ConnectionHandler::new(
-                connection_id,
+            let (handle, handler) = ClientHandler::new(
+                client_id,
                 token,
                 routing_table.clone(),
                 event_channel_handle.clone(),
@@ -225,13 +225,13 @@ impl Lobby {
 
             let player = Player {
                 id: player_id,
-                connection: handle,
+                handle,
             };
 
             tokio::spawn(handler);
 
             players.insert(player_id, player);
-            connection_player.insert(connection_id, player_id);
+            client_player.insert(client_id, player_id);
             waiting_for.insert(player_id);
         }
 
@@ -240,7 +240,7 @@ impl Lobby {
             logger,
             ctrl_handle,
             waiting: true,
-            connection_player,
+            client_player,
             players,
         }
     }
@@ -248,7 +248,7 @@ impl Lobby {
     fn handle_event(&mut self, event: Event) {
         match event.content {
             EventContent::Connected => {
-                let val = self.connection_player.get(&event.connection_id);
+                let val = self.client_player.get(&event.client_id);
                 if let Some(&player_id) = val {
                     let msg = proto::ControlMessage::PlayerConnected {
                         player_id: (player_id.as_usize() + 1) as u64
@@ -258,7 +258,7 @@ impl Lobby {
                 }
             },
             EventContent::Disconnected => {
-                let val = self.connection_player.get(&event.connection_id);
+                let val = self.client_player.get(&event.client_id);
                 if let Some(&player_id) = val {
                     let msg = proto::ControlMessage::PlayerDisconnected {
                         player_id: (player_id.as_usize() + 1) as u64
@@ -285,9 +285,9 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
-    ctrl_handle: ConnectionHandle,
+    ctrl_handle: ClientHandle,
 
-    connection_player: HashMap<ConnectionId, PlayerId>,
+    client_player: HashMap<ClientId, PlayerId>,
     players: HashMap<PlayerId, Player>,
 
     waiting_for: HashSet<PlayerId>,
@@ -306,7 +306,7 @@ impl PwController {
             state,
             planet_map,
             players: lobby.players,
-            connection_player: lobby.connection_player,
+            client_player: lobby.client_player,
             logger: lobby.logger,
             ctrl_handle: lobby.ctrl_handle,
 
@@ -488,8 +488,8 @@ impl PwController {
             EventContent::Message { .. } => {},
             EventContent::Response { value, .. } => {
                 // we only send requests to players
-                let &player_id = self.connection_player
-                    .get(&event.connection_id).unwrap();
+                let &player_id = self.client_player
+                    .get(&event.client_id).unwrap();
                 self.commands.insert(player_id, value);
                 self.waiting_for.remove(&player_id);
             }
