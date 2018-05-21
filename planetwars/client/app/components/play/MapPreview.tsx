@@ -73,12 +73,11 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
     private root: d3.Selection<d3.BaseType, {}, null, undefined>;
   
     protected createGraph(): void {
-
       const { data, width, height } = this.props;
       const { min, max, planets } = data;
-
-      const minRadius = 5;
-      const maxRadius = 30;
+  
+      const minRadius = 1;
+      const maxRadius = 10;
   
       const x = d3.scaleLinear()
         .domain([min.x, max.x])
@@ -90,7 +89,11 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
   
       this.svg = d3.select(this.node);
       this.svg.selectAll('*').remove();
-      this.root = this.svg.append('g').attr('class', 'root-yo')
+      this.root = this.svg.append('g').attr('class', 'root-yo');
+  
+      const radius = d3.scaleLinear()
+      .domain([0, 40])
+      .range([maxRadius, minRadius]);
 
       this.root.append('g')
         .attr('class', 'circles-yo')
@@ -100,7 +103,7 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
         .append('circle')
         .attr("cx", (p) => x(p.x))
         .attr("cy", (p) => y(p.y))
-        .attr("r", (p) => 5)
+        .attr("r", (p) => radius(this.props.data.planets.length))
         .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff")
     }
   
