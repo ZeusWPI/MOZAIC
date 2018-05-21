@@ -111,7 +111,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     const { maps, selectedMap, selectMap } = this.props;
 
     const options = maps.map((map, i) => (
-      <MapPreview selectedMap={map} selectMap={selectMap} selected={map.uuid === selectedMap}/>
+      <MapPreview selectedMap={map} selectMap={() => selectMap(map.uuid)} selected={map.uuid === selectedMap}/>
     ));
     return (
       <div className={styles.mapSelector}>
@@ -125,7 +125,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
 export interface MapPreviewProps {
   selectedMap?: M.MapMeta;
   selected: boolean;
-  selectMap: (id: M.MapId) => void;
+  selectMap: () => void;
 }
 
 export interface MapPreviewState {
@@ -175,7 +175,7 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     }
 
     return (
-      <div className={styles.mapPreview}>
+      <div className={styles.mapPreview} onClick={this.props.selectMap}>
         <div className={ styles.map }>
           <MapViewGraph data={data} width={100} height={100} />
         </div>
