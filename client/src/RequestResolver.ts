@@ -52,22 +52,22 @@ export class RequestResolver {
     }
 
     private handleMessage(msg: Message.IMessage) {
-        const messageId = msg.messageId!;
-        const response = this.handler(msg.data!);
+        if (!msg.messageId || ! msg.data) { return; }
+        const messageId = Number(msg.messageId);
+        const response = this.handler(msg.data);
         if (response) {
             response.then((resp) => this.sendResponse(messageId, resp));
         }
     }
 
     private handleResponse(response: Message.IResponse) {
-        const messageId = response.messageId;
-        if (messageId) {
-            const handler = this.response_handlers[messageId]
-            if (handler) {
-                handler(response.data);
-                delete this.response_handlers[messageId];
-            }
-
+        if (!response.messageId || !response.data) { return; }
+        const messageId = Number(response.messageId);
+        
+        const handler = this.response_handlers[messageId]
+        if (handler) {
+            handler(response.data);
+            delete this.response_handlers[messageId];
         }
     }
 

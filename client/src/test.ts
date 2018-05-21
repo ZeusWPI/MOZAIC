@@ -56,8 +56,13 @@ MatchRunner.create(bin_path, params).then((match) => {
                 address: addr,
                 token: token,
             };
-            const clientLogger = new ClientLogger(match.logger, clientId);
-            let client = new Client(connData, player.botConfig, clientLogger);
+            const client = new Client({
+                address: addr,
+                token,
+                number: player.number,
+                botConfig: simpleBot,
+                logger: match.logger,
+            });
             client.run();
         });
     });
