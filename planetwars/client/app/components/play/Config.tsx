@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
+import { MapViewGraph, GraphProps, MapViewData } from './MapPreview';
+import { JsonPlanet } from '../../database/migrationV3';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -126,9 +128,22 @@ export class MapSelector extends React.Component<MapSelectorProps> {
   private onChange = (evt: any) => this.props.selectMap(evt.target.value);
 }
 
-export interface MapPreviewProps { selectedMap?: M.MapMeta; }
-export interface MapPreviewState { map?: M.GameMap | Error; }
-export class MapPreview extends React.Component<MapPreviewProps> {
+export interface MapPreviewProps {
+  selectedMap?: M.MapMeta;
+}
+
+export interface MapPreviewState {
+  map?: M.GameMap | Error;
+}
+
+export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState> {
+
+  constructor(props: MapPreviewProps) {
+    super(props);
+    this.state = {
+      map: undefined,
+    }
+  }
 
   public componentDidMount() { this.update(this.props); }
 
@@ -142,11 +157,26 @@ export class MapPreview extends React.Component<MapPreviewProps> {
   }
 
   public render() {
+    const planets = M.isGameMap(this.state.map) ?
+                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+                      return { 
+                        ...planet,
+                        index,
+                      }
+                    }) :
+                    [];
+    
     // TODO: Add preview code here, state can be undefined, a map, or an error;
+    const data: MapViewData = {
+      planets: planets,
+      min: {x: -10, y: -10},
+      max: {x: 10, y: 10},
+    }
+
     return (
       <div className={styles.mapPreview}>
         <div className={styles.map}>
-          <p> Placehodler </p>
+          <MapViewGraph data={data} width={100} height={100} />
         </div>
       </div>
     );
