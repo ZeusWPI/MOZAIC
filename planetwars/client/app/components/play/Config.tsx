@@ -109,10 +109,12 @@ export class MapSelector extends React.Component<MapSelectorProps> {
 
   public render() {
     const { maps, selectedMap, selectMap } = this.props;
+    let select;
 
-    const options = maps.map((map, i) => (
-      <MapPreview selectedMap={map} selectMap={() => selectMap(map.uuid)} selected={map.uuid === selectedMap} />
-    ));
+    const options = maps.map((map, i) => {
+      select = () => selectMap(map.uuid);
+      return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i}/>;
+    });
     return (
       <div className={styles.mapSelector}>
         {options}
@@ -153,18 +155,21 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
   }
 
   public render() {
-    const planets = M.isGameMap(this.state.map)
-      ? this.state.map.planets.map((planet, index) => ({ ...planet, index }))
-      : [];
-
-    let minmax = { min: { x: Infinity, y: Infinity }, max: { x: -Infinity, y: -Infinity } };
+    const planets = M.isGameMap(this.state.map) ?
+                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+                      return {
+                        ...planet,
+                        index,
+                      };
+                    }) :
+                    [];
+    let minmax = {min: {x: Infinity, y: Infinity}, max: {x: -Infinity, y: -Infinity}};
     planets.forEach((planet: StaticPlanet) => {
       minmax = {
-        min: { x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y) },
-        max: { x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y) },
+        min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
+        max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
       };
     });
-
     const data: MapViewData = {
       planets,
       selected: this.props.selected,
