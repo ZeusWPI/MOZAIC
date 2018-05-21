@@ -73,9 +73,10 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
     private root: d3.Selection<d3.BaseType, {}, null, undefined>;
   
     protected createGraph(): void {
+
       const { data, width, height } = this.props;
       const { min, max, planets } = data;
-  
+
       const minRadius = 5;
       const maxRadius = 30;
   
@@ -89,11 +90,7 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
   
       this.svg = d3.select(this.node);
       this.svg.selectAll('*').remove();
-      this.root = this.svg.append('g').attr('class', 'root-yo');
-  
-      const radius = d3.scaleLinear()
-      .domain([0, 0])
-      .range([minRadius, maxRadius]);
+      this.root = this.svg.append('g').attr('class', 'root-yo')
 
       this.root.append('g')
         .attr('class', 'circles-yo')

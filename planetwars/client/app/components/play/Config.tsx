@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
-import { MapViewGraph, GraphProps, MapViewData } from './MapPreview';
+import { MapViewGraph, GraphProps, MapViewData, StaticPlanet } from './MapPreview';
 import { JsonPlanet } from '../../database/migrationV3';
 
 // tslint:disable-next-line:no-var-requires
@@ -165,12 +165,17 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
                       }
                     }) :
                     [];
-    
+    let minmax = {min: {x: Infinity, y:Infinity}, max: {x: -Infinity, y: -Infinity}}
+    planets.forEach((planet: StaticPlanet) => {
+      minmax = {
+        min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
+        max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
+      }
+    });
     // TODO: Add preview code here, state can be undefined, a map, or an error;
     const data: MapViewData = {
       planets: planets,
-      min: {x: -10, y: -10},
-      max: {x: 10, y: 10},
+      ...minmax,
     }
 
     return (
