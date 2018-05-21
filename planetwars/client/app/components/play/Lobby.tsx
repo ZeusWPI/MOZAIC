@@ -88,7 +88,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     );
   }
 
-
   private startServer = () => {
     // const ctrlToken = generateToken();
     // const conf = validateConfig(this.state.config);
@@ -100,7 +99,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private launchGame = () => {
     if (!this.server) { alert('Something went wrong'); return; }
-    this.server.start_match();
+    // this.server.startMatch();
   }
 
 }
