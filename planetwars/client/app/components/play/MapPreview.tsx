@@ -13,6 +13,8 @@ const _colors = [
 
 export const color = d3.scaleOrdinal(_colors);
 
+// TODO: merge these classes into one
+
 export interface GraphProps<T> {
     data: T;
     width: number;
@@ -66,6 +68,7 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
     planets: StaticPlanet[];
     min: { x: number, y: number };
     max: { x: number, y: number };
+    selected: boolean;
   }
 
   export class MapViewGraph extends Graph<MapViewData> {

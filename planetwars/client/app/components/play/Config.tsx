@@ -32,7 +32,6 @@ export class Config extends React.Component<ConfigProps> {
 
     return (
       <Section header={"Config"}>
-        <MapPreview selectedMap={map} />
         <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} />
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={serverAddress} setServer={this.setServer} />
@@ -112,24 +111,21 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     const { maps, selectedMap, selectMap } = this.props;
 
     const options = maps.map((map, i) => (
-      <option value={map.uuid} key={map.uuid}>
-        {map.name} ({map.slots})
-      </option>
+      <MapPreview selectedMap={map} selectMap={selectMap} selected={map.uuid === selectedMap}/>
     ));
     return (
-      <HorizontalInput id={"map"} label={"Map"}>
-        <div className="select">
-          <select name="Maps" id="maps" onChange={this.onChange}>
-            {options}
-          </select>
-        </div>
-      </HorizontalInput>);
+      <div className={styles.mapSelector}>
+        {options}
+      </div>
+    );
   }
   private onChange = (evt: any) => this.props.selectMap(evt.target.value);
 }
 
 export interface MapPreviewProps {
   selectedMap?: M.MapMeta;
+  selected: boolean;
+  selectMap: (id: M.MapId) => void;
 }
 
 export interface MapPreviewState {
@@ -172,15 +168,15 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
         max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
       }
     });
-    // TODO: Add preview code here, state can be undefined, a map, or an error;
     const data: MapViewData = {
       planets: planets,
+      selected: this.props.selected,
       ...minmax,
     }
 
     return (
       <div className={styles.mapPreview}>
-        <div className={styles.map}>
+        <div className={ styles.map }>
           <MapViewGraph data={data} width={100} height={100} />
         </div>
       </div>

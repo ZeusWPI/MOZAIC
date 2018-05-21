@@ -66,14 +66,19 @@
   }
 }
 
-.mapPreview {
+.mapSelector {
   display: flex;
-  justify-content: center;
-  margin: 20px 20px;
-  .map {
-    width: 80%;
-    background-color: $tertiary;
-    height: 100px;
+  flex-flow: row;
+  overflow-y: scroll;
+  .mapPreview {
+    display: flex;
+    justify-content: center;
+    margin: 20px 20px;
+    .map {
+      width: 100px;
+      background-color: $tertiary;
+      height: 100px;
+    }
   }
 }
 
