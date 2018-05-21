@@ -5,7 +5,8 @@ import { Config } from '../../utils/Config';
 import { generateToken } from '../../utils/GameRunner';
 import * as M from '../../database/models';
 
-import { WeakConfig, StrongConfig, validateConfig, exportConfig, ValidationError, hasErrored } from './types';
+import * as Lib from './types';
+// import { WeakConfig, StrongConfig, validateConfig, exportConfig, ValidationError, hasErrored } from './types';
 import Section from './Section';
 import { ServerControls } from './ServerControls';
 
@@ -14,7 +15,7 @@ const styles = require('./PlayPage.scss');
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
-  config?: WeakConfig;
+  config?: Lib.WeakConfig;
 };
 
 export interface LobbyDispatchProps {
@@ -29,12 +30,12 @@ export type LobbyState = ConfiguringState | RuningState;
 export interface ConfiguringState {
   type: 'configuring';
   slots: Slot[];
-  config?: WeakConfig;
+  config?: Lib.WeakConfig;
 }
 export interface RuningState {
   type: 'running';
   slots: Slot[];
-  config: StrongConfig;
+  config: Lib.StrongConfig;
 }
 
 export interface Slot {
@@ -47,6 +48,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private server?: PwClient.MatchRunner;
 
+  // This is where the magic state juggling happens
   public static getDerivedStateFromProps(nextProps: LobbyProps, prevState: LobbyState): LobbyState {
     const { config, maps } = nextProps;
     console.log(nextProps);
@@ -75,21 +77,17 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   public render() {
     const { slots } = this.state;
-    const slotItems = slots.map((slot, index) => (
-      <li key={index}>
-        <SlotElement slot={slot} index={index} />
-      </li>),
-    );
     return (
       <Section header={"Lobby"}>
-        <div>
-          <ul>{slotItems}</ul>
+        <div className={styles.lobby}>
+          <SlotList slots={slots} />
+          <ServerControls
+            startServer={this.startServer}
+            stopServer={this.stopServer}
+            launchGame={this.launchGame}
+            serverRunning={!!this.server}
+          />
         </div>
-        <ServerControls
-          startServer={this.startServer}
-          launchGame={this.launchGame}
-          launchDisabled={!this.server}
-        />
       </Section>
     );
   }
@@ -100,8 +98,8 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       return;
     }
 
-    const config = validateConfig(this.state.config);
-    if (hasErrored(config)) {
+    const config = Lib.validateConfig(this.state.config);
+    if (Lib.hasErrored(config)) {
       alert(`Config is not valid. ${config.address || config.map || config.maxTurns}`);
       return;
     }
@@ -111,9 +109,34 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const ctrlToken = generateToken();
     const logFile = Config.matchLogPath(matchId);
     const params = { ctrl_token: ctrlToken, address: config.address, logFile };
-    this.server = new PwClient.MatchRunner(Config.matchRunner, params);
-    // TODO: Add players
-    this.setState({ type: 'running', config, slots: this.state.slots });
+    console.log('launching server with', params);
+
+    PwClient.MatchRunner.create(Config.matchRunner, params)
+      .then((server) => {
+        console.log('test proc');
+        const slots = this.state.slots;
+        this.server = server;
+        slots.forEach((slot, i) => {
+          server.addPlayer(new Buffer(slot.token));
+        });
+        this.setState({ type: 'running', config, slots });
+      })
+      .catch((err) => {
+        this.stopServer();
+        alert('Failed to start server :( (see console))');
+        console.log('Failed to start server.', err);
+      });
+  }
+
+  private stopServer = () => {
+    if (this.server) {
+      this.server.shutdown();
+      console.log('server killed');
+    }
+    if (this.state.type !== 'configuring') {
+      const { slots, config } = this.state;
+      this.setState({ type: 'configuring', slots, config: Lib.downGrade(config) });
+    }
   }
 
   private launchGame = () => {
@@ -122,7 +145,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       return;
     }
 
-    const gameConf = exportConfig(this.state.config, this.props.maps);
+    const gameConf = Lib.exportConfig(this.state.config, this.props.maps);
 
     // Clear old listeners from the lobby
     this.server.onConnect.clear();
@@ -156,6 +179,22 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     throw new Error('Unimplemented');
   }
 
+}
+
+export interface SlotListProps {
+  slots: Slot[];
+
+}
+export class SlotList extends React.Component<SlotListProps> {
+  public render() {
+    const { slots } = this.props;
+    const slotItems = slots.map((slot, index) => (
+      <li key={index}>
+        <SlotElement slot={slot} index={index} />
+      </li>),
+    );
+    return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
+  }
 }
 
 export interface SlotElementProps { slot: Slot; index: number; }

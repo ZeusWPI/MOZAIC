@@ -21,7 +21,7 @@ export class Config extends React.Component<ConfigProps> {
   public state: ConfigState = {
     selectedMap: undefined,
     maxTurns: 500,
-    serverAddress: 'localhost',
+    serverAddress: '127.0.0.1',
     port: 9142,
   };
 

@@ -19,6 +19,11 @@ export function exportConfig(conf: StrongConfig, maps: M.MapList): ServerGameCon
   };
 }
 
+export function downGrade(conf: StrongConfig): WeakConfig {
+  const { map, maxTurns, address: { host, port } } = conf;
+  return { selectedMap: map, maxTurns, serverAddress: host, port };
+}
+
 // TODO: Move outta here
 export interface ValidationError {
   isError: true; // Cause runtime typechecking // I should really fix something better

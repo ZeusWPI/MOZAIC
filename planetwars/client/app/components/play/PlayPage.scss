@@ -45,6 +45,13 @@
   }
 }
 
+.lobby {
+  width: 100%;
+  .lobbySlots {
+    width: 100%;
+  }
+}
+
 .sectionWithHeader {
   display: flex;
   flex-direction: column;
