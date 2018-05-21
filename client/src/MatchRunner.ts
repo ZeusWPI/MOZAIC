@@ -49,7 +49,7 @@ export class MatchRunner {
         this.connHandler = new RequestResolver(this.connection, (data) => {
             const text = new TextDecoder('utf-8').decode(data);
             let message: ServerMessage = JSON.parse(text);
-            
+
             switch (message.type) {
                 case 'player_connected': {
                     const { player_id } = message.content;
@@ -95,13 +95,13 @@ export class MatchRunner {
 
     public removePlayer(clientId: number): Promise<void> {
         let removePlayer = new LobbyMessage.RemovePlayerRequest({ clientId });
-        return this.lobbyRequest({ removePlayer }).then((data) => {});
+        return this.lobbyRequest({ removePlayer }).then((data) => { });
     }
 
     public startGame(config: object): Promise<void> {
         let payload = Buffer.from(JSON.stringify(config), 'utf-8');
         let startGame = new LobbyMessage.StartGameRequest({ payload });
-        return this.lobbyRequest({ startGame }).then((data) => {});
+        return this.lobbyRequest({ startGame }).then((data) => { });
     }
 
     private lobbyRequest(params: proto.ILobbyMessage): Promise<Uint8Array> {
@@ -117,6 +117,10 @@ export class MatchRunner {
                 this.serverRunner.address.port,
             );
         }, 300);
+    }
+
+    public shutdown() {
+        this.serverRunner.killServer();
     }
 
     public get controlChannel() {
@@ -148,7 +152,7 @@ type ServerMessage
     = PlayerConnectedMessage
     | PlayerDisconnectedMessage
     | GameStateMessage;
-                
+
 
 interface PlayerConnectedMessage {
     type: "player_connected";
