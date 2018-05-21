@@ -4,6 +4,8 @@ import * as fs from 'fs';
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
+import { MapViewGraph, GraphProps, MapViewData, StaticPlanet } from './MapPreview';
+import { JsonPlanet } from '../../database/migrationV3';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -30,7 +32,6 @@ export class Config extends React.Component<ConfigProps> {
 
     return (
       <Section header={"Config"}>
-        <MapPreview selectedMap={map} />
         <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} />
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={serverAddress} setServer={this.setServer} />
@@ -110,25 +111,35 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     const { maps, selectedMap, selectMap } = this.props;
 
     const options = maps.map((map, i) => (
-      <option value={map.uuid} key={map.uuid}>
-        {map.name} ({map.slots})
-      </option>
+      <MapPreview selectedMap={map} selectMap={() => selectMap(map.uuid)} selected={map.uuid === selectedMap}/>
     ));
     return (
-      <HorizontalInput id={"map"} label={"Map"}>
-        <div className="select">
-          <select name="Maps" id="maps" onChange={this.onChange}>
-            {options}
-          </select>
-        </div>
-      </HorizontalInput>);
+      <div className={styles.mapSelector}>
+        {options}
+      </div>
+    );
   }
   private onChange = (evt: any) => this.props.selectMap(evt.target.value);
 }
 
-export interface MapPreviewProps { selectedMap?: M.MapMeta; }
-export interface MapPreviewState { map?: M.GameMap | Error; }
-export class MapPreview extends React.Component<MapPreviewProps> {
+export interface MapPreviewProps {
+  selectedMap?: M.MapMeta;
+  selected: boolean;
+  selectMap: () => void;
+}
+
+export interface MapPreviewState {
+  map?: M.GameMap | Error;
+}
+
+export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState> {
+
+  constructor(props: MapPreviewProps) {
+    super(props);
+    this.state = {
+      map: undefined,
+    };
+  }
 
   public componentDidMount() { this.update(this.props); }
 
@@ -142,11 +153,31 @@ export class MapPreview extends React.Component<MapPreviewProps> {
   }
 
   public render() {
-    // TODO: Add preview code here, state can be undefined, a map, or an error;
+    const planets = M.isGameMap(this.state.map) ?
+                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+                      return {
+                        ...planet,
+                        index,
+                      }
+                    }) :
+                    [];
+    let minmax = {min: {x: Infinity, y: Infinity}, max: {x: -Infinity, y: -Infinity}};
+    planets.forEach((planet: StaticPlanet) => {
+      minmax = {
+        min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
+        max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
+      };
+    });
+    const data: MapViewData = {
+      planets,
+      selected: this.props.selected,
+      ...minmax,
+    };
+
     return (
-      <div className={styles.mapPreview}>
-        <div className={styles.map}>
-          <p> Placehodler </p>
+      <div className={styles.mapPreview} onClick={this.props.selectMap}>
+        <div className={ styles.map }>
+          <MapViewGraph data={data} width={100} height={100} />
         </div>
       </div>
     );
