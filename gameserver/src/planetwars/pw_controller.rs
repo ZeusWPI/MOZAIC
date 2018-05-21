@@ -6,9 +6,13 @@ use std::mem;
 use tokio;
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
+use prost::Message as ProtobufMessage;
+use protocol::LobbyMessage;
+use protocol::lobby_message;
 
 use utils::client_handler::{
     ClientId,
+    MessageId,
     Event,
     EventContent,
     ClientHandle,
@@ -110,9 +114,7 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(conf: Config,
-               ctrl_token: Vec<u8>,
-               client_tokens: Vec<Vec<u8>>,
+    pub fn new(ctrl_token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
                logger: slog::Logger)
                -> Self
@@ -120,9 +122,7 @@ impl PwMatch {
         let (snd, rcv) = mpsc::unbounded();
 
         let lobby = Lobby::new(
-            conf,
             ctrl_token,
-            client_tokens,
             routing_table,
             snd.clone(),
             logger
@@ -154,11 +154,11 @@ impl Future for PwMatch {
                 PwMatchState::Lobby(mut lobby) => {
                     lobby.handle_event(event);
                     
-                    if lobby.waiting {
-                        self.state = PwMatchState::Lobby(lobby);
-                    } else {
+                    if lobby.game_data.is_some() {
                         let pw_controller = PwController::new(lobby);
                         self.state = PwMatchState::Playing(pw_controller);
+                    } else {
+                        self.state = PwMatchState::Lobby(lobby);
                     }
                 }
 
@@ -181,25 +181,25 @@ impl Future for PwMatch {
 }
 
 pub struct Lobby {
-    conf: Config,
     logger: slog::Logger,
     ctrl_handle: ClientHandle,
 
-    // whether we should stay in the waiting state
-    waiting: bool,
-    client_player: HashMap<ClientId, PlayerId>,
-    players: HashMap<PlayerId, Player>,
+    routing_table: Arc<Mutex<RoutingTable>>,
+    event_channel_handle: UnboundedSender<Event>,
+
+    game_data: Option<Vec<u8>>,
+    players: HashMap<ClientId, ClientHandle>,
+    client_counter: u64,
 }
 
 impl Lobby {
-    fn new(conf: Config,
-           ctrl_token: Vec<u8>,
-           client_tokens: Vec<Vec<u8>>,
+    fn new(ctrl_token: Vec<u8>,
            routing_table: Arc<Mutex<RoutingTable>>,
            event_channel_handle: UnboundedSender<Event>,
            logger: slog::Logger)
            -> Self
     {
+        // open control connection
         let (ctrl_handle, handler) = ClientHandler::new(
             ClientId(0),
             ctrl_token,
@@ -208,72 +208,95 @@ impl Lobby {
         );
         tokio::spawn(handler);
 
-        let mut players = HashMap::new();
-        let mut client_player = HashMap::new();
-        let mut waiting_for = HashSet::new();
-
-        for (num, token) in client_tokens.into_iter().enumerate() {
-            let player_id = PlayerId::new(num);
-            let client_id = ClientId(num+1);
-
-            let (handle, handler) = ClientHandler::new(
-                client_id,
-                token,
-                routing_table.clone(),
-                event_channel_handle.clone(),
-            );
-
-            let player = Player {
-                id: player_id,
-                handle,
-            };
-
-            tokio::spawn(handler);
-
-            players.insert(player_id, player);
-            client_player.insert(client_id, player_id);
-            waiting_for.insert(player_id);
-        }
-
         return Lobby {
-            conf,
             logger,
             ctrl_handle,
-            waiting: true,
-            client_player,
-            players,
+
+            routing_table,
+            event_channel_handle,
+
+            game_data: None,
+            players: HashMap::new(),
+            // start counter at 1, because 0 is the control client
+            client_counter: 1,
+        }
+    }
+
+    fn generate_client_id(&mut self) -> ClientId {
+        let num = self.client_counter;
+        self.client_counter += 1;
+        return ClientId(num);
+    }
+
+    fn add_player(&mut self, connection_token: Vec<u8>) -> ClientId {
+        let client_id = self.generate_client_id();
+        let (handle, handler) = ClientHandler::new(
+            client_id,
+            connection_token,
+            self.routing_table.clone(),
+            self.event_channel_handle.clone(),
+        );
+        self.players.insert(client_id, handle);
+        tokio::spawn(handler);
+        return client_id;
+    }
+
+    fn remove_player(&mut self, client_id: ClientId) {
+        self.players.remove(&client_id);
+    }
+
+    fn handle_message(&mut self, message_id: MessageId, content: Vec<u8>) {
+        let message = match LobbyMessage::decode(content) {
+            Err(_) => { return; }, // skip
+            Ok(message) => message
+        };
+        match message.payload {
+            None => { } // skip
+            Some(lobby_message::Payload::AddPlayer(request)) => {
+                let ClientId(client_num) = self.add_player(request.token);
+                let response = lobby_message::AddPlayerResponse {
+                    client_id: client_num,
+                };
+                self.ctrl_handle.respond(message_id, encode_message(&response));
+            }
+            Some(lobby_message::Payload::RemovePlayer(request)) => {
+                self.remove_player(ClientId(request.client_id));
+                let response = lobby_message::RemovePlayerResponse {};
+                self.ctrl_handle.respond(message_id, encode_message(&response));
+            }
+            Some(lobby_message::Payload::StartGame(request)) => {
+                self.game_data = Some(request.payload);
+                let response = lobby_message::StartGameResponse {};
+                self.ctrl_handle.respond(message_id, encode_message(&response));
+            }
         }
     }
 
     fn handle_event(&mut self, event: Event) {
         match event.content {
             EventContent::Connected => {
-                let val = self.client_player.get(&event.client_id);
-                if let Some(&player_id) = val {
+                if self.players.contains_key(&event.client_id) {
+                    let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerConnected {
-                        player_id: (player_id.as_usize() + 1) as u64
+                        player_id: (client_num + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
                 }
             },
             EventContent::Disconnected => {
-                let val = self.client_player.get(&event.client_id);
-                if let Some(&player_id) = val {
+                if self.players.contains_key(&event.client_id) {
+                    let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerDisconnected {
-                        player_id: (player_id.as_usize() + 1) as u64
+                        player_id: (client_num + 1) as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
                 }
             },
-            EventContent::Message { data, .. } => {
-                let cmd = serde_json::from_slice(&data).unwrap();
-
-                match cmd {
-                    proto::LobbyCommand::StartMatch => {
-                        self.waiting = false;
-                    }
+            EventContent::Message { message_id, data } => {
+                if event.client_id == self.ctrl_handle.id() {
+                    self.handle_message(message_id, data);
                 }
             },
             EventContent::Response { .. } => {},
@@ -296,17 +319,35 @@ pub struct PwController {
 
 impl PwController {
     pub fn new(lobby: Lobby) -> Self {
-        let state = lobby.conf.create_game(lobby.players.len());
+        // TODO: neat error handling
+        let raw_conf = lobby.game_data.as_ref()
+            .expect("game data not present in lobby");
+        let conf: Config = serde_json::from_slice(raw_conf)
+            .expect("could not parse game data");
+        let state = conf.create_game(lobby.players.len());
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
         }).collect();
 
+        let mut client_player = HashMap::new();
+        let mut players = HashMap::new();
+
+        let iter = lobby.players.into_iter().enumerate();
+        for (player_num, (client_id, client_handle)) in iter {
+            let player_id = PlayerId::new(player_num);
+            client_player.insert(client_id, player_id);
+            players.insert(player_id, Player {
+                id: player_id,
+                handle: client_handle,
+            });
+        }
+
         let mut controller = PwController {
             state,
             planet_map,
-            players: lobby.players,
-            client_player: lobby.client_player,
+            players,
+            client_player,
             logger: lobby.logger,
             ctrl_handle: lobby.ctrl_handle,
 
@@ -500,4 +541,17 @@ impl PwController {
             self.step(commands);
         }
     }
+}
+
+/// encode a protobuf message
+// TODO: this is a general util, maybe put it somewhere nice.
+fn encode_message<M>(message: &M) -> Vec<u8>
+    where M: ProtobufMessage
+{
+    let mut bytes = Vec::with_capacity(message.encoded_len());
+    // encoding can only fail because the buffer does not have
+    // enough space allocated, but we just allocated the required
+    // space.
+    message.encode(&mut bytes).unwrap();
+    return bytes;
 }
