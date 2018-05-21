@@ -79,6 +79,11 @@
       background-color: $tertiary;
       height: 100px;
     }
+    .selectedText {
+      color: $primary;
+      font-family: FontAwesome;
+      font-size: 30px;
+    }
   }
 }
 

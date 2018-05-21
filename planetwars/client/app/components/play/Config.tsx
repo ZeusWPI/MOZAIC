@@ -138,7 +138,7 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     super(props);
     this.state = {
       map: undefined,
-    }
+    };
   }
 
   public componentDidMount() { this.update(this.props); }
@@ -155,24 +155,24 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
   public render() {
     const planets = M.isGameMap(this.state.map) ?
                     this.state.map.planets.map((planet: JsonPlanet, index: number) => {
-                      return { 
+                      return {
                         ...planet,
                         index,
                       }
                     }) :
                     [];
-    let minmax = {min: {x: Infinity, y:Infinity}, max: {x: -Infinity, y: -Infinity}}
+    let minmax = {min: {x: Infinity, y: Infinity}, max: {x: -Infinity, y: -Infinity}};
     planets.forEach((planet: StaticPlanet) => {
       minmax = {
         min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
         max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
-      }
+      };
     });
     const data: MapViewData = {
-      planets: planets,
+      planets,
       selected: this.props.selected,
       ...minmax,
-    }
+    };
 
     return (
       <div className={styles.mapPreview} onClick={this.props.selectMap}>
