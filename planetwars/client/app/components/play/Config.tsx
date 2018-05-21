@@ -1,11 +1,9 @@
 import * as React from 'react';
-import * as fs from 'fs';
 
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
-import { MapViewGraph, GraphProps, MapViewData, StaticPlanet } from './MapPreview';
-import { JsonPlanet } from '../../database/migrationV3';
+import { MapPreview } from './MapPreview';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -122,84 +120,6 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     );
   }
   private onChange = (evt: any) => this.props.selectMap(evt.target.value);
-}
-
-export interface MapPreviewProps {
-  selectedMap?: M.MapMeta;
-  selected: boolean;
-  selectMap: () => void;
-}
-
-export interface MapPreviewState {
-  map?: M.GameMap | Error;
-}
-
-export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState> {
-
-  constructor(props: MapPreviewProps) {
-    super(props);
-    this.state = {
-      map: undefined,
-    };
-  }
-
-  public componentDidMount() { this.update(this.props); }
-
-  public componentDidUpdate(prevProps: MapPreviewProps) {
-    const meta = this.props.selectedMap;
-    const prev = prevProps.selectedMap;
-    if (!meta) { this.setState({ map: undefined }); return; }
-    if (!prev) { this.update(this.props); return; }
-    if (meta.uuid === prev.uuid) { return; }
-    this.update(this.props);
-  }
-
-  public render() {
-    const planets = M.isGameMap(this.state.map) ?
-                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
-                      return {
-                        ...planet,
-                        index,
-                      };
-                    }) :
-                    [];
-    let minmax = {min: {x: Infinity, y: Infinity}, max: {x: -Infinity, y: -Infinity}};
-    planets.forEach((planet: StaticPlanet) => {
-      minmax = {
-        min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
-        max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
-      };
-    });
-    const data: MapViewData = {
-      planets,
-      selected: this.props.selected,
-      ...minmax,
-    };
-
-    return (
-      <div className={styles.mapPreview} onClick={this.props.selectMap}>
-        <div className={styles.map}>
-          <MapViewGraph data={data} width={100} height={100} />
-        </div>
-      </div>
-    );
-  }
-
-  private update(props: MapPreviewProps) {
-    const meta = this.props.selectedMap;
-    if (!meta) { this.setState({ map: undefined }); return; }
-
-    fs.readFile(meta.mapPath, (err, data) => {
-      if (err) { this.setState({ map: err }); return; }
-      try {
-        const input = JSON.parse(data.toString());
-        const map = M.isGameMap(input) ? input : new Error('Map is not valid');
-        this.setState({ map });
-      } catch (err) {
-        this.setState({ map: err });
-      }
-    });
-  }
 }
 
 export interface InputProps { id: string; label: string; }

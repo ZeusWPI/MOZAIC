@@ -1,5 +1,8 @@
 import * as React from 'react';
 import * as d3 from 'd3';
+import * as M from '../../database/models';
+import { JsonPlanet } from '../../database/migrationV3';
+import * as fs from 'fs';
 
 const _colors = [
   '#DE8D47', // (orange) Main Primary color
@@ -16,18 +19,34 @@ export const color = d3.scaleOrdinal(_colors);
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
-// TODO: merge these classes into one
+export interface StaticPlanet {
+  x: number;
+  y: number;
+  owner: number;
+  index: number;
+  name: string;
+}
 
-export interface GraphProps<T> {
-  data: T;
+export interface MapViewData {
+  planets: StaticPlanet[];
+  min: { x: number, y: number };
+  max: { x: number, y: number };
+  selected: boolean;
+}
+
+export interface MapViewProps {
+  data: MapViewData;
   width: number;
   height: number;
 }
 
-export abstract class Graph<T> extends React.Component<GraphProps<T>> {
+export abstract class MapView extends React.Component<MapViewProps> {
   protected node: SVGSVGElement;
 
-  constructor(props: GraphProps<T>) {
+  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
+  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
+
+  constructor(props: MapViewProps) {
     super(props);
     this.createGraph = this.createGraph.bind(this);
   }
@@ -53,31 +72,6 @@ export abstract class Graph<T> extends React.Component<GraphProps<T>> {
       </div>
     );
   }
-
-  protected abstract createGraph(): void;
-
-  protected abstract updateGraph(): void;
-}
-
-export interface StaticPlanet {
-  x: number;
-  y: number;
-  owner: number;
-  index: number;
-  name: string;
-}
-
-export interface MapViewData {
-  planets: StaticPlanet[];
-  min: { x: number, y: number };
-  max: { x: number, y: number };
-  selected: boolean;
-}
-
-export class MapViewGraph extends Graph<MapViewData> {
-  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
-  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
-
   protected createGraph(): void {
     const { data, width, height } = this.props;
     const { min, max, planets } = data;
@@ -124,5 +118,85 @@ export class MapViewGraph extends Graph<MapViewData> {
 
   protected updateGraph(): void {
     this.createGraph();
+  }
+}
+
+export interface MapPreviewProps {
+  selectedMap?: M.MapMeta;
+  selected: boolean;
+  selectMap: () => void;
+}
+
+export interface MapPreviewState {
+  map?: M.GameMap | Error;
+}
+
+export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState> {
+
+  constructor(props: MapPreviewProps) {
+    super(props);
+    this.state = {
+      map: undefined,
+    };
+  }
+
+  public componentDidMount() {
+    this.update(this.props);
+  }
+
+  public componentDidUpdate(prevProps: MapPreviewProps) {
+    const meta = this.props.selectedMap;
+    const prev = prevProps.selectedMap;
+    if (!meta) { this.setState({ map: undefined }); return; }
+    if (!prev) { this.update(this.props); return; }
+    if (meta.uuid === prev.uuid) { return; }
+    this.update(this.props);
+  }
+
+  public render() {
+    const planets = M.isGameMap(this.state.map) ?
+                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+                      return {
+                        ...planet,
+                        index,
+                      };
+                    }) :
+                    [];
+    let minmax = {min: {x: Infinity, y: Infinity}, max: {x: -Infinity, y: -Infinity}};
+    planets.forEach((planet: StaticPlanet) => {
+      minmax = {
+        min: {x: Math.min(minmax.min.x, planet.x), y: Math.min(minmax.min.y, planet.y)},
+        max: {x: Math.max(minmax.max.x, planet.x), y: Math.max(minmax.max.y, planet.y)},
+      };
+    });
+    const data: MapViewData = {
+      planets,
+      selected: this.props.selected,
+      ...minmax,
+    };
+
+    return (
+      <div className={styles.mapPreview} onClick={this.props.selectMap}>
+        <div className={styles.map}>
+          <MapView data={data} width={100} height={100} />
+        </div>
+      </div>
+    );
+  }
+
+  private update(props: MapPreviewProps) {
+    const meta = this.props.selectedMap;
+    if (!meta) { this.setState({ map: undefined }); return; }
+
+    fs.readFile(meta.mapPath, (err, data) => {
+      if (err) { this.setState({ map: err }); return; }
+      try {
+        const input = JSON.parse(data.toString());
+        const map = M.isGameMap(input) ? input : new Error('Map is not valid');
+        this.setState({ map });
+      } catch (err) {
+        this.setState({ map: err });
+      }
+    });
   }
 }
