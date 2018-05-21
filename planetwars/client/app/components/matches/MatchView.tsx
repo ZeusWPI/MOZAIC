@@ -73,26 +73,24 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
       return;
     }
 
-    // read the log file from disk for finished matches
-    if (nextMatch.status === M.MatchStatus.finished) {
-      this.matchLog = parseLogFile(nextMatch.logPath, nextMatch.type);
-      return;
-    }
-
-    // for other matches, get the log from the redux store
-    if (!currentMatch || currentMatch.uuid !== nextMatch.uuid) {
-      // create a new match log
-      this.matchLog = emptyLog(nextMatch.type);
-      this.logPos = 0;
-    }
-
     const log = nextProps.log;
     if (log) {
+      // a log is present in the redux store; use it
+
+      if (!currentMatch || currentMatch.uuid !== nextMatch.uuid) {
+        // match changed; initialize a new log
+        this.matchLog = emptyLog(nextMatch.type);
+        this.logPos = 0;
+      }
+
       // add new entries
       log.slice(this.logPos).forEach((entry) => {
         this.matchLog!.addEntry(entry!);
       });
       this.logPos = log.size;
+    } else {
+      // no log is present in redux store; read from disk
+      this.matchLog = parseLogFile(nextMatch.logPath, nextMatch.type);
     }
   }
 
@@ -246,6 +244,5 @@ const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
       return <LogView playerName={playerName} matchLog={matchLog} />;
   }
 };
-
 
 export default connect(matchViewSelector)(MatchView);
