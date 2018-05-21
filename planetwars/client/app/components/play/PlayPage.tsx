@@ -6,7 +6,7 @@ import { GState } from '../../reducers';
 
 import { WeakConfig } from './types';
 import { Config } from './Config';
-import { Lobby } from './Lobby';
+import { Lobby, LobbyDispatchProps } from './Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { ServerControls } from './ServerControls';
 
@@ -19,11 +19,22 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
-  return {};
+  const lobbyDispatchProps = {
+    saveMatch() { console.log('save match'); },
+    signalMatchComplete() { console.log('match complete'); },
+    signalMatchErrored(err: Error) { console.log('match errored', err); },
+    signalPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
+    signalPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
+  };
+  return { lobbyDispatchProps };
 }
 
 export interface PlayPageStateProps { maps: M.MapList; }
-export interface PlayPageDispatchProps { }
+
+export interface PlayPageDispatchProps {
+  lobbyDispatchProps: LobbyDispatchProps;
+}
+
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 export interface PlayPageState {
@@ -42,7 +53,12 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           {/* Left side*/}
           <div className={styles.leftColumn}>
             <div className={styles.lobbyContainer}>
-              <Lobby config={this.state.config} maps={maps} />
+              {/* TODO add 'disableAddress' callback */}
+              <Lobby
+                config={this.state.config}
+                maps={maps}
+                {...this.props.lobbyDispatchProps}
+              />
             </div>
           </div>
 
