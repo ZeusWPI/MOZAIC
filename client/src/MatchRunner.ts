@@ -1,5 +1,4 @@
 import { ServerRunner } from "./ServerRunner";
-import { ClientRunner, ClientData } from "./ClientRunner";
 import { BotConfig, Address, Connection } from "./index";
 import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
