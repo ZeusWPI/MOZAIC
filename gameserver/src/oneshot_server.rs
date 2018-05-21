@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 
 use futures::{Future, Poll, Async};
 use hex;
-use serde::de::{Deserialize, Deserializer, DeserializeOwned};
+use serde::de::{Deserialize, Deserializer};
 use serde::de::Error as DeserializationError;
 use slog_json;
 use slog::{self, Drain};
@@ -14,17 +14,14 @@ use tokio::timer::Delay;
 
 use network;
 use network::router::RoutingTable;
-use planetwars::{PwMatch, Config as PwConfig};
+use planetwars::PwMatch;
 
-#[serde(bound(deserialize = ""))]
 #[derive(Serialize, Deserialize)]
-pub struct MatchDescription<T: DeserializeOwned> {
+pub struct MatchDescription {
     #[serde(deserialize_with="from_hex")]
     pub ctrl_token: Vec<u8>,
-    pub players: Vec<PlayerConfig>,
     pub address: String,
     pub log_file: String,
-    pub game_config: T,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -45,11 +42,11 @@ fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
 /// This is a future so that it can be run on a tokio runtime, which allows
 /// us to spawn additional tasks.
 pub struct OneshotServer {
-    config: MatchDescription<PwConfig>,
+    config: MatchDescription,
 }
 
 impl OneshotServer {
-    pub fn new(config: MatchDescription<PwConfig>) -> Self {
+    pub fn new(config: MatchDescription) -> Self {
         OneshotServer {
             config,
         }
@@ -73,14 +70,8 @@ impl Future for OneshotServer {
 
         let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
 
-        let client_tokens = self.config.players.iter().map(|player_desc| {
-            player_desc.token.clone()
-        }).collect();
-
         let controller = PwMatch::new(
-            self.config.game_config.clone(),
             self.config.ctrl_token.clone(),
-            client_tokens,
             routing_table.clone(),
             logger,
         );

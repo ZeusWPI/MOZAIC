@@ -1,5 +1,4 @@
 import { ServerRunner } from "./ServerRunner";
-import { ClientRunner, ClientData } from "./ClientRunner";
 import { BotConfig, Address, Connection } from "./index";
 import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
@@ -8,27 +7,20 @@ import { MessageHandler, RequestResolver } from "./RequestResolver";
 import { GameState } from "./PwTypes";
 import { Logger } from "./Logger";
 
+import * as protocol_root from './proto';
+import proto = protocol_root.mozaic.protocol;
+import LobbyMessage = proto.LobbyMessage;
+
 export interface MatchParams {
     ctrl_token: string;
-    players: PlayerData[];
-    mapFile: string;
-    maxTurns: number;
     address: Address;
     logFile: string;
-}
-
-export interface PlayerData {
-    name: string;
-    token: string;
-    number: number;
-    botConfig?: BotConfig;
 }
 
 export class MatchRunner {
     private connection: Connection;
     private serverRunner: ServerRunner;
-    private clientRunner: ClientRunner;
-    private logger: Logger;
+    readonly logger: Logger;
 
     private connHandler: RequestResolver;
 
@@ -37,7 +29,6 @@ export class MatchRunner {
 
     private _onPlayerConnected = new SimpleEventDispatcher<number>();
     private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
-    private _onGameState = new SimpleEventDispatcher<GameState>();
 
     constructor(serverPath: string, params: MatchParams) {
         this.serverRunner = new ServerRunner(serverPath, params);
@@ -47,35 +38,12 @@ export class MatchRunner {
 
 
         const { address, logFile } = params;
-        let clients: ClientData[] = [];
-        params.players.forEach((playerData) => {
-            const { botConfig, token, number } = playerData;
-            if (botConfig) {
-                clients.push({ botConfig, token, number });
-            }
-        });
-        this.clientRunner = new ClientRunner({
-            clients,
-            address,
-            logger: this.logger,
-        });
 
         this.serverRunner.onExit.subscribe(() => {
             this._onComplete.dispatch()
         });
         this.serverRunner.onError.subscribe((err) => {
             this._onError.dispatch(err);
-        });
-        // TODO: is this desired behaviour?
-        this.clientRunner.onError.subscribe((err) => {
-            this._onError.dispatch(err);
-        });
-
-        this.onGameState.subscribe((state) => {
-            this.logger.log({
-                type: "game_state",
-                state,
-            });
         });
 
         this.connHandler = new RequestResolver(this.connection, (data) => {
@@ -94,34 +62,65 @@ export class MatchRunner {
                     break;
                 }
                 case 'game_state': {
-                    this._onGameState.dispatch(message.content);
+                    this.logger.log({
+                        type: "game_state",
+                        state: message.content,
+                    });
                     break;
                 }
             }
         });
     }
 
+    public static create(serverPath: string, params: MatchParams): Promise<MatchRunner> {
+        return new Promise((resolve, reject) => {
+            const runner = new MatchRunner(serverPath, params);
+            runner.onConnect.one(() => {
+                resolve(runner);
+            });
+            runner.onError.one((err) => {
+                reject(err);
+            });
+            runner.run();
+        });
+    }
+
+    public addPlayer(token: Uint8Array): Promise<number> {
+        let addPlayer = LobbyMessage.AddPlayerRequest.create({ token });
+        return this.lobbyRequest({ addPlayer }).then((data) => {
+            const response = LobbyMessage.AddPlayerResponse.decode(data);
+            return Number(response.clientId);
+        });
+    }
+
+    public removePlayer(clientId: number): Promise<void> {
+        let removePlayer = new LobbyMessage.RemovePlayerRequest({ clientId });
+        return this.lobbyRequest({ removePlayer }).then((data) => {});
+    }
+
+    public startGame(config: object): Promise<void> {
+        let payload = Buffer.from(JSON.stringify(config), 'utf-8');
+        let startGame = new LobbyMessage.StartGameRequest({ payload });
+        return this.lobbyRequest({ startGame }).then((data) => {});
+    }
+
+    private lobbyRequest(params: proto.ILobbyMessage): Promise<Uint8Array> {
+        let msg = LobbyMessage.encode(params).finish();
+        return this.controlChannel.request(msg);
+    }
+
     public run() {
         this.serverRunner.runServer();
-        // run clients after a second, so that we are certain the server has
-        // started.
         setTimeout(() => {
             this.connection.connect(
                 this.serverRunner.address.host,
                 this.serverRunner.address.port,
             );
-            this.clientRunner.run();
-        }, 1000);
-    }
-
-    public start_match() {
-        let cmd: LobbyCommand = { type: "start_match" };
-        let text = JSON.stringify(cmd);
-        this.connHandler.send(Buffer.from(text, 'utf-8'));
+        }, 300);
     }
 
     public get controlChannel() {
-        return this.connection;
+        return this.connHandler;
     }
 
     public get onComplete() {
@@ -140,8 +139,8 @@ export class MatchRunner {
         return this._onPlayerDisconnected.asEvent();
     }
 
-    public get onGameState() {
-        return this._onGameState.asEvent();
+    public get onConnect() {
+        return this.connection.onConnect;
     }
 }
 
@@ -168,8 +167,4 @@ interface PlayerDisconnectedMessage {
 interface GameStateMessage {
     type: "game_state";
     content: GameState;
-}
-
-interface LobbyCommand {
-    type: "start_match"
 }
