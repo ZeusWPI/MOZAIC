@@ -9,9 +9,11 @@ use network::router::RoutingTable;
 use network::connection::{Connection, ConnectionEvent};
 use super::message_handler::*;
 
+pub use super::message_handler::MessageId;
+
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ClientId(pub usize);
+pub struct ClientId(pub u64);
 
 pub struct ClientHandle {
     client_id: ClientId,
@@ -37,6 +39,11 @@ impl ClientHandle {
         self.send_command(cmd);
 
         return RequestId { request_num, client_id: self.client_id };
+    }
+
+    pub fn respond(&mut self, message_id: MessageId, data: Vec<u8>) {
+        let cmd = Command::Response { message_id, data };
+        self.send_command(cmd);
     }
 
     fn send_command(&mut self, command: Command) {
@@ -86,6 +93,10 @@ pub enum Command {
         data: Vec<u8>,
         deadline: Instant,
     },
+    Response {
+        message_id: MessageId,
+        data: Vec<u8>,
+    }
 }
 
 
@@ -157,6 +168,13 @@ impl ClientHandler {
                     );
                     self.connection.send(msg);
                 },
+                Some(Command::Response { message_id, data }) => {
+                    let msg = self.message_handler.create_response(
+                        message_id,
+                        data
+                    );
+                    self.connection.send(msg);
+                }
                 None => {
                     // The control channel was closed; exit.
                     // return Ok(Async::Ready(()));
