@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';
+import { Chance } from 'chance';
 
 import { Config } from '../../utils/Config';
 import { generateToken } from '../../utils/GameRunner';
@@ -39,7 +40,9 @@ export interface RuningState {
 }
 
 export interface Slot {
+  status: 'unbound' | 'boundInternal' | 'connectedInternal' | 'external';
   token: M.Token;
+  name: string;
 }
 
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
@@ -63,15 +66,18 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           .slice(0, mapSlots);
         return { type: 'configuring', config, slots };
       }
-
       return { type: 'configuring', config, slots: Lobby.genSlots(2) };
     }
+
     return prevState;
   }
 
   private static genSlots(amount: number): Slot[] {
     return Array(amount).fill(1).map((_, index) => ({
+      status: 'unbound' as 'unbound',
       token: generateToken(),
+      // name: chance.name(),
+      name: new Chance().name({ prefix: true, nationality: 'it' }),
     }));
   }
 
@@ -181,6 +187,10 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
 }
 
+// ----------------------------------------------------------------------------
+// Slot List
+// ----------------------------------------------------------------------------
+
 export interface SlotListProps {
   slots: Slot[];
 
@@ -189,7 +199,7 @@ export class SlotList extends React.Component<SlotListProps> {
   public render() {
     const { slots } = this.props;
     const slotItems = slots.map((slot, index) => (
-      <li key={index}>
+      <li key={index} className={styles.slotElementWrapper}>
         <SlotElement slot={slot} index={index} />
       </li>),
     );
@@ -199,12 +209,47 @@ export class SlotList extends React.Component<SlotListProps> {
 
 export interface SlotElementProps { slot: Slot; index: number; }
 export class SlotElement extends React.Component<SlotElementProps> {
+
   public render() {
-    const { slot: { token }, index } = this.props;
+    const { slot: { token, status, name }, index } = this.props;
+
+    const clss = (color: string) => `button is-outlined ${color}`;
+    const kick = (
+      <button key='kick' className={clss('is-danger')}>Kick player</button>
+    );
+    const copy = (
+      <button key='copy' className={clss('is-light')}>Copy</button>
+    );
+    const conn = (
+      <button key='conn' className={clss('is-success')}>Connect</button>
+    );
+
+    const tools = {
+      unbound: [copy],
+      boundInternal: [kick, conn],
+      connectedInternal: [kick],
+      external: [kick],
+    };
+
     return (
-      <div>
-        <p>Player {index + 1}</p>
+      <div className={`${styles.slotElement} ${this.statusToClass(status)}`}>
+        <h1>Player {index + 1}</h1>
         <p>{token}</p>
-      </div>);
+        <p>Status: {status}</p>
+        <p>Name: {name}</p>
+        <div>
+          {tools[status]}
+        </div>
+      </div >);
+  }
+
+  private statusToClass(status: string): string {
+    switch (status) {
+      case 'unbound': return styles.unbound;
+      case 'boundInternal': return styles.filled;
+      case 'connectedInternal': return styles.connected;
+      case 'external': return styles.connected;
+      default: return styles.typo;
+    }
   }
 }
