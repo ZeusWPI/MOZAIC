@@ -6,31 +6,39 @@ import { Connection } from './index';
 export type MessageHandler =
     (data: Uint8Array) => Promise<Uint8Array> | void;
 
+type ResponseHandlers = { [messageId: number]: (Uint8Array) => void };
+
+
 export class RequestResolver {
     private connection: Connection;
     private messageCounter: number;
     private handler: MessageHandler;
+    private response_handlers: ResponseHandlers;
 
     constructor(connection: Connection, handler: MessageHandler) {
         this.connection = connection;
         this.handler = handler;
         this.messageCounter = 0;
+        this.response_handlers = {};
 
         this.onMessage = this.onMessage.bind(this);
         this.connection.onMessage.subscribe(this.onMessage);
     }
 
-    public send(data: Uint8Array) {
+    public send(data: Uint8Array): number {
         let messageId = this.messageCounter;
         this.messageCounter += 1;
         
         let message = Message.Message.create({ messageId, data });
         this.sendMessage({ message });
+        return messageId;
     }
 
     public request(data: Uint8Array): Promise<Uint8Array> {
-        // TODO
-        throw new Error("not implemented");
+        return new Promise((resolve, reject) => {
+            let messageId = this.send(data);
+            this.response_handlers[messageId] = resolve;
+        });
     }
 
     private onMessage(data: Uint8Array) {
@@ -52,11 +60,18 @@ export class RequestResolver {
     }
 
     private handleResponse(response: Message.IResponse) {
-        // TODO
-        throw new Error("not implemented");
+        const messageId = response.messageId;
+        if (messageId) {
+            const handler = this.response_handlers[messageId]
+            if (handler) {
+                handler(response.data);
+                delete this.response_handlers[messageId];
+            }
+
+        }
     }
 
-    private sendResponse(messageId: number | Long, data: Uint8Array) {
+    private sendResponse(messageId: number, data: Uint8Array) {
         let response = Message.Response.create({ messageId, data });
         this.sendMessage({ response });
     }
