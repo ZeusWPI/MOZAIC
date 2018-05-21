@@ -72,6 +72,19 @@ export class MatchRunner {
         });
     }
 
+    public static create(serverPath: string, params: MatchParams): Promise<MatchRunner> {
+        return new Promise((resolve, reject) => {
+            const runner = new MatchRunner(serverPath, params);
+            runner.onConnect.one(() => {
+                resolve(runner);
+            });
+            runner.onError.one((err) => {
+                reject(err);
+            });
+            runner.run();
+        });
+    }
+
     public addPlayer(token: Uint8Array): Promise<number> {
         let addPlayer = LobbyMessage.AddPlayerRequest.create({ token });
         return this.lobbyRequest({ addPlayer }).then((data) => {
@@ -98,8 +111,6 @@ export class MatchRunner {
 
     public run() {
         this.serverRunner.runServer();
-        // run clients after a short delay, so that we are certain the server
-        // has started.
         setTimeout(() => {
             this.connection.connect(
                 this.serverRunner.address.host,
