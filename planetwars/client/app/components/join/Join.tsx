@@ -68,21 +68,25 @@ export class Join extends React.Component<JoinProps, JoinState> {
             value={this.state.botId}
             onChange={this.setBotId}
           />
-          <div className="control">
-            <button
-              className="button is-primary"
-              type="button"
-              onClick={this.joinGame}
-              disabled={!this.isValid()}
-            >
-            Join
-            </button>
-            { this.state.import ?
-              <button className={"button is-link"} onClick={this.importConfig}>
-                Import {this.state.import.name} from clipboard
-              </button> :
-              undefined
-            }
+          <div className="field is-grouped">
+            <div className="control">
+              <button
+                className="button is-primary"
+                type="button"
+                onClick={this.joinGame}
+                disabled={!this.isValid()}
+              >
+              Join
+              </button>
+            </div>
+              { this.state.import ? (
+                <div className="control">
+                  <a className={"button is-link"} onClick={this.importConfig}>
+                    Import "{this.state.import.name}" from clipboard
+                  </a>
+                </div> ):
+                undefined
+              }
           </div>
         </div>
       </Section>
@@ -98,7 +102,6 @@ export class Join extends React.Component<JoinProps, JoinState> {
   private checkClipboard = () => {
     const clipBoardtext = clipboard.readText();
     if (this.state.lastClipboard !== clipBoardtext) {
-      console.log(clipBoardtext);
       try {
         const {host, port, name, token} = JSON.parse(clipBoardtext);
         if (host && port && name && token) {
