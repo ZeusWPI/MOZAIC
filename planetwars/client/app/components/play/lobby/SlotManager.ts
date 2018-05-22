@@ -58,6 +58,7 @@ export class SlotManager {
       ...this.slots[i] as UnboundSlot,
       status: 'boundInternal' as 'boundInternal',
       bot,
+      name: bot.name,
     };
   }
 
