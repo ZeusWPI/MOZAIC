@@ -58,8 +58,8 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
     const [command, ...args] = stringArgv(state.bots[bot.botId].command);
     const botConfig = { command, args };
     const address = host;
-    const number = 3;
-    const token = new Buffer(bot.token);
+    const number = 1;
+    const token = new Buffer(bot.token, 'hex');
     const connectionData = { token, address: host };
     const logger = new PwClient.Logger(match.logPath);
     const clientParams = { token, address, logger, number, botConfig };
