@@ -4,6 +4,7 @@ import AddressForm from '../host/AddressForm';
 import { BotSelector } from "../host/BotSelector";
 import Section from '../play/Section';
 import { HorizontalInput } from "../play/Config";
+import { clipboard } from 'electron';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Join.scss");
@@ -18,10 +19,19 @@ export interface JoinDispatchProps {
 
 export type JoinProps = JoinStateProps & JoinDispatchProps;
 
+export interface ImportCopy {
+  token: string;
+  name: string;
+  host: string;
+  port: number;
+}
+
 export interface JoinState {
   address: M.Address;
   botId?: M.BotId;
   token: string;
+  lastClipboard: string;
+  import?: ImportCopy;
 }
 
 export class Join extends React.Component<JoinProps, JoinState> {
@@ -33,6 +43,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
         port: 9142,
       },
       token: '',
+      lastClipboard: '',
     };
     this.setAddress = this.setAddress.bind(this);
     this.setToken = this.setToken.bind(this);
@@ -44,12 +55,12 @@ export class Join extends React.Component<JoinProps, JoinState> {
     const { address, token } = this.state;
 
     return (
-      <Section header={"Join Game"}>
+      <Section header={"Join Game"} onMouseMove={this.checkClipboard}>
         <div>
           <AddressForm address={address} onChange={this.setAddress} />
 
           <HorizontalInput id="token" label="Token">
-            <input type="text" onChange={this.setToken} />
+            <input type="text" onChange={this.setToken} value={this.state.token}/>
           </HorizontalInput>
 
           <BotSelector
@@ -66,10 +77,41 @@ export class Join extends React.Component<JoinProps, JoinState> {
             >
             Join
             </button>
+            { this.state.import ?
+              <button className={"button is-link"} onClick={this.importConfig}>
+                Import {this.state.import.name} from clipboard
+              </button> :
+              undefined
+            }
           </div>
         </div>
       </Section>
     );
+  }
+
+  private importConfig = () => {
+    if (!this.state.import) { return; }
+    const {host, port, name, token} = this.state.import;
+    this.setState({ address: {host, port}, token });
+  }
+
+  private checkClipboard = () => {
+    const clipBoardtext = clipboard.readText();
+    if (this.state.lastClipboard !== clipBoardtext) {
+      console.log(clipBoardtext);
+      try {
+        const {host, port, name, token} = JSON.parse(clipBoardtext);
+        if (host && port && name && token) {
+          this.setState({ import: { host, port, name, token } });
+        } else {
+          this.setState({ import: undefined });
+        }
+      } catch (e) {
+        // JSON.parse error probably...
+        this.setState({ import: undefined });
+      }
+      this.setState({ lastClipboard: clipBoardtext });
+    }
   }
 
   private isValid() {
