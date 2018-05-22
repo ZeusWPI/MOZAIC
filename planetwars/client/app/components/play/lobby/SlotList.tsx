@@ -12,6 +12,7 @@ export interface SlotListProps {
   port?: number;
   host?: string;
   isServerRunning: boolean;
+  willBeKicked(idx: number): boolean;
   connectLocalBot(slot: BoundInternalSlot, playerNum: number): void;
   unbindLocalBot(token: M.Token, playerNum: number): void;
   removeLocalBot(token: M.Token, playerNum: number, clientId: number): void;
@@ -25,6 +26,7 @@ export class SlotList extends React.Component<SlotListProps> {
         <SlotElement
           slot={slot}
           index={index}
+          willBeKicked={this.props.willBeKicked(index)}
           connectLocalBot={this.props.connectLocalBot}
           removeLocalBot={this.props.removeLocalBot}
           removeExternalBot={this.props.removeExternalBot}
@@ -40,6 +42,7 @@ export class SlotList extends React.Component<SlotListProps> {
 export interface SlotElementProps {
   slot: Slot;
   index: number;
+  willBeKicked: boolean;
   host?: string;
   port?: number;
   isServerRunning: boolean;
@@ -106,7 +109,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
       external: [kick],
     };
 
-    const kicked = (slot.willBeKicked) ? (styles.kicked) : '';
+    const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
     return (
       <div className={`${styles.slotElement} ${this.statusToClass(status)} ${kicked}`}>
         <h1>Player {index + 1}</h1>

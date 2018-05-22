@@ -54,6 +54,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     super(props);
     this.state = { type: 'configuring', slots: [] };
     this.slotManager = new SlotManager();
+    this.willBeKicked = this.willBeKicked.bind(this);
   }
 
   public componentWillReceiveProps(nextProps: LobbyProps) {
@@ -80,6 +81,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
             slots={slots}
             port={port}
             host={host}
+            willBeKicked={this.willBeKicked}
             connectLocalBot={this.connectLocalBot}
             unbindLocalBot={this.unbindLocalBot}
             removeLocalBot={this.removeLocalBot}
@@ -98,13 +100,24 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   public addLocalBot(bot: M.Bot) {
-    const slots = this.slotManager.bindLocalBot(bot);
-    this.setState({ slots });
+    this.slotManager.bindLocalBot(bot);
+    this.setState({ slots: [...this.slotManager.slots] });
+  }
+
+  private willBeKicked(index: number): boolean {
+    const { maps, config } = this.props;
+    if (config && config.mapId) {
+      return index >= maps[config.mapId].slots;
+    } else {
+      return false;
+    }
   }
 
   private updateSlots(props: LobbyProps) {
     const { config, maps } = props;
     if (!config || !config.mapId) { return; }
+
+    console.log('update');
 
     const map = maps[config.mapId];
     this.slotManager.update(map);
@@ -196,6 +209,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   private startServer = () => {
     if (!this.validifyConfiguring(this.state)) { return; }
 
+    console.log(this.state.config);
     const config = Lib.validateConfig(this.state.config);
     if (config.type === 'error') {
       alert(`Config is not valid. ${config.address || config.map || config.maxTurns}`);
