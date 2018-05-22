@@ -26,6 +26,7 @@ export type LobbyProps = LobbyDispatchProps & {
 export interface LobbyDispatchProps {
   saveMatch: (match: M.Match) => void;
   addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry): void;
+  sendNotification(title: string, message: string, type: M.NotificationType): void;
   onMatchComplete(matchId: M.MatchId): void;
   onMatchErrored(matchId: M.MatchId, err: Error): void;
   onPlayerReconnectedDuringMatch(id: number): void;
@@ -260,6 +261,28 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           this.props.addLogEntry(matchId, entry);
         });
 
+        this.server.onComplete.subscribe(() => {
+          this.props.sendNotification(
+            "Match ended",
+            `A match on map '${
+              this.state.type === "configuring" ?
+              "unknown" :
+              this.props.maps[this.state.config.mapId]
+            }' has ended`,
+            "Finished",
+          );
+        });
+        this.server.onError.subscribe(() => {
+          this.props.sendNotification(
+            "Match errored",
+            `A match on map '${
+              this.state.type === "configuring" ?
+              "unknown" :
+              this.props.maps[this.state.config.mapId]
+            }' has errored`,
+            "Error",
+          );
+        });
         const newState: RunningState = {
           type: 'running',
           config,

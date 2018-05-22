@@ -39,6 +39,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     onPlayerDisconnectDuringMatch(id: number) {
       console.log('player disconnected', id);
     },
+    sendNotification(title: string, body: string, type: M.NotificationType) {
+      dispatch(A.addNotification({title, body, type}));
+    },
   };
   const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
   return { lobbyDispatchProps, importMap };
