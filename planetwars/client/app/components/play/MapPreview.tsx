@@ -80,10 +80,10 @@ export abstract class MapView extends React.Component<MapViewProps> {
     const maxRadius = 10;
 
     const x = d3.scaleLinear()
-      .domain([min.x, max.x])
+      .domain([min.x - 0.1, max.x + 0.1])
       .range([0 + maxRadius, width - maxRadius]);
     const y = d3.scaleLinear()
-      .domain([min.y, max.y])
+      .domain([min.y - 0.1, max.y + 0.1])
       .range([0 + maxRadius, height - maxRadius]);
 
     this.svg = d3.select(this.node);
