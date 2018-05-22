@@ -24,6 +24,9 @@
         &.unbound {
           border-left: 4px solid $primary;
         }
+        &.filled {
+          border-left: 4px solid darken($primary, 25);
+        }
         &.kicked {
           border-left: 4px solid $red;
         }

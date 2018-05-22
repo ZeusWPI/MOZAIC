@@ -2,7 +2,7 @@ import * as React from 'react';
 import { clipboard } from 'electron';
 
 import * as M from '../../../database/models';
-import { Slot } from './Lobby';
+import { Slot, SlotStatus } from './SlotManager';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -77,7 +77,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
       <div className={`${styles.slotElement} ${this.statusToClass(status)}`}>
         <h1>Player {index + 1}</h1>
         <p>{token}</p>
-        <p>Status: {status}</p>
+        <p>Status: {this.statusToFriendly(status)}</p>
         <p>Name: {name}</p>
         <div>
           {tools[status]}
@@ -95,13 +95,22 @@ export class SlotElement extends React.Component<SlotElementProps> {
     clipboard.writeText(JSON.stringify(data));
   }
 
-  private statusToClass(status: string): string {
+  private statusToClass(status: SlotStatus): string {
     switch (status) {
       case 'unbound': return styles.unbound;
       case 'boundInternal': return styles.filled;
       case 'connectedInternal': return styles.connected;
       case 'external': return styles.connected;
       default: return styles.typo;
+    }
+  }
+
+  private statusToFriendly(status: SlotStatus): string {
+    switch (status) {
+      case 'unbound': return 'Unassigned';
+      case 'boundInternal': return 'Ready Local Bot';
+      case 'connectedInternal': return 'Connected Local Bot';
+      case 'external': return 'External Bot';
     }
   }
 }

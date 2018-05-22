@@ -1,8 +1,6 @@
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';
 
-import { Chance } from 'chance';
-
 import { Config } from '../../../utils/Config';
 import { generateToken } from '../../../utils/GameRunner';
 import * as M from '../../../database/models';
@@ -11,6 +9,7 @@ import * as Lib from '../types';
 import Section from '../Section';
 import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
+import { SlotManager, Slot } from './SlotManager';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -31,56 +30,52 @@ export interface LobbyDispatchProps {
 }
 
 export type LobbyState = ConfiguringState | RuningState;
+
 export interface ConfiguringState {
   type: 'configuring';
   slots: Slot[];
   config?: Lib.WeakConfig;
 }
+
 export interface RuningState {
   type: 'running';
   slots: Slot[];
   config: Lib.StrongConfig;
 }
 
-export interface Slot {
-  status: 'unbound' | 'boundInternal' | 'connectedInternal' | 'external';
-  token: M.Token;
-  name: string;
-}
-
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
-  public state: LobbyState = { type: 'configuring', slots: Lobby.genSlots(2) };
+  private static slotManager: SlotManager = new SlotManager();
+
+  public state: LobbyState = { type: 'configuring', slots: [] };
 
   private server?: PwClient.MatchRunner;
 
   // This is where the magic state juggling happens
   public static getDerivedStateFromProps(nextProps: LobbyProps, prevState: LobbyState): LobbyState {
-    const { config, maps } = nextProps;
-    console.log(nextProps);
+    const { config, localBots, maps } = nextProps;
+    Lobby.slotManager.maps = maps;
 
     if (prevState.type === 'configuring') {
-      const prevSlots = prevState.slots;
-      if (config && config.selectedMap) {
-        const mapSlots = maps[config.selectedMap].slots;
-        const newSlotsRequired = Math.max(0, mapSlots - prevSlots.length);
-        const slots = prevSlots
-          .concat(Lobby.genSlots(newSlotsRequired))
-          .slice(0, mapSlots);
-        return { type: 'configuring', config, slots };
-      }
-      return { type: 'configuring', config, slots: Lobby.genSlots(2) };
+      const newSlots = Lobby.slotManager.update(localBots, config);
+      const slots = [...newSlots];
+      return { type: 'configuring', config, slots };
     }
 
-    return prevState;
-  }
+    if (prevState.type === 'running') {
+      const vConfig = Lib.validateConfig(nextProps.config);
+      if (vConfig.type === 'error') {
+        const { msg, address, map, maxTurns } = vConfig;
+        // alert(`Config is not valid. ${msg || address || map || maxTurns}`);
+        return { ...prevState };
+      }
+      const newSlots = Lobby.slotManager.updateRunning(localBots, vConfig);
+      const slots = [...newSlots];
+      return { type: 'running', slots, config: vConfig };
+    }
 
-  private static genSlots(amount: number): Slot[] {
-    return Array(amount).fill(1).map((_, index) => ({
-      status: 'unbound' as 'unbound',
-      token: generateToken(),
-      name: new Chance().name({ prefix: true, nationality: 'it' }),
-    }));
+    alert('Programmer did an oopsie');
+    return prevState;
   }
 
   public render() {
