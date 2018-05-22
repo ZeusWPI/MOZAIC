@@ -126,6 +126,18 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
     const map = maps[config.mapId];
     this.slotManager.update(map);
+
+    // kick all players that we don't need
+    while (this.slotManager.slots.length > map.slots) {
+      // kick that player!
+      const slot = this.slotManager.slots.pop();
+      if (slot && (slot.status === 'connectedInternal' || slot.status === 'external')) {
+        this.slotManager.disconnectClient(slot.clientId);
+        if (this.server) {
+          this.server.removePlayer(slot.clientId);
+        }
+      }
+    }
     this.syncSlots();
   }
 
