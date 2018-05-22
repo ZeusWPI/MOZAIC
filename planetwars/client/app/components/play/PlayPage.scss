@@ -76,7 +76,6 @@
     margin: 20px 20px;
     .map {
       width: 100px;
-      background-color: $tertiary;
       height: 100px;
     }
     .selectedText {
@@ -84,6 +83,15 @@
       font-family: FontAwesome;
       font-size: 30px;
     }
+    .emptyPlanet {
+      fill: $tertiary;
+    }
+  }
+  .notSelectedMap {
+    border: 3px solid $primary;
+  }
+  .selectedMap {
+    border: 3px solid $green;
   }
 }
 

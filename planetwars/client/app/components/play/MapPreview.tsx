@@ -104,7 +104,8 @@ export abstract class MapView extends React.Component<MapViewProps> {
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => radius(this.props.data.planets.length))
-      .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff");
+      .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff")
+      .classed(styles.emptyPlanet, (p) => !p.owner);
 
     if (this.props.data.selected) {
       this.root.append('g')
@@ -176,7 +177,10 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     };
 
     return (
-      <div className={styles.mapPreview} onClick={this.props.selectMap}>
+      <div
+        className={styles.mapPreview + " " + (this.props.selected ? styles.selectedMap : styles.notSelectedMap)}
+        onClick={this.props.selectMap}
+      >
         <div className={styles.map}>
           <MapView data={data} width={100} height={100} />
         </div>
