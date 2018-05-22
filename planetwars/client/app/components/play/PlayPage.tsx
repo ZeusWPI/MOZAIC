@@ -9,6 +9,7 @@ import { WeakConfig } from './types';
 import { Config } from './Config';
 import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
+import { PwTypes } from 'mozaic-client';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -28,6 +29,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     onMatchErrored(matchId: M.MatchId, err: Error) {
       dispatch(A.handleMatchError(matchId, err));
+    },
+    addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
+      dispatch(A.addLogEntry({ matchId, entry }));
     },
     onPlayerReconnectedDuringMatch(id: number) {
       console.log('player reconnected', id);

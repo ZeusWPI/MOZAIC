@@ -18,8 +18,13 @@ export function logsReducer(state: LogsState = {}, action: any): LogsState {
     }
     case A.addLogEntry.type: {
       const { matchId, entry } = action.payload;
-      const log = state[matchId];
-      return { ...state, [matchId]: log.push(entry) };
+      let log = state[matchId];
+      if (log) {
+        log = log.push(entry);
+      } else {
+        log = List.of(entry);
+      }
+      return { ...state, [matchId]: log };
     }
     default: return state;
   }
