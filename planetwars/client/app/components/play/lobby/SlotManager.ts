@@ -42,18 +42,16 @@ export class SlotManager {
     this.slots = this.genSlots(2);
   }
 
-  public update(map: M.MapMeta): Slot[] {
+  public update(map: M.MapMeta) {
     if (this.slots.length < map.slots) {
       const newSlots = this.genSlots(map.slots - this.slots.length);
       this.slots = this.slots.concat(newSlots);
-      return this.slots;
     } else {
       this.slots.forEach((slot, i) => {
         if (i >= map.slots) {
           this.slots[i].willBeKicked = true;
         }
       });
-      return [...this.slots];
     }
   }
 
