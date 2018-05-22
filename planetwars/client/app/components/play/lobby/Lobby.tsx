@@ -35,7 +35,6 @@ export type LobbyState = ConfiguringState | RuningState;
 export interface ConfiguringState {
   type: 'configuring';
   slots: Slot[];
-  config?: Lib.WeakConfig;
 }
 
 export interface RuningState {
@@ -72,7 +71,8 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   public render() {
-    const { slots, config } = this.state;
+    const config = this.props.config;
+    const slots = this.state.slots;
     const { port, host } = Lib.getWeakAddress(config);
     return (
       <Section header={"Lobby"}>
@@ -209,8 +209,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   private startServer = () => {
     if (!this.validifyConfiguring(this.state)) { return; }
 
-    console.log(this.state.config);
-    const config = Lib.validateConfig(this.state.config);
+    const config = Lib.validateConfig(this.props.config);
     if (config.type === 'error') {
       alert(`Config is not valid. ${config.address || config.map || config.maxTurns}`);
       return;
@@ -335,6 +334,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
     // reset to configuring
     const config = this.props.config;
-    this.setState({ type: 'configuring', config: this.props.config });
+    this.setState({ type: 'configuring' });
   }
 }
