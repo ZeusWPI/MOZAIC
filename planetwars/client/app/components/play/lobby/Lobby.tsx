@@ -163,6 +163,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     if (this.server) {
       delete this.localClients[token];
       this.server.removePlayer(clientId);
+      Lobby.slotManager.disconnectClient(clientId);
 
       const slots = Lobby.slotManager.removeBot(playerNum);
       this.setState({ slots });
@@ -176,6 +177,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     if (!this.validifyRunning(this.state)) { return; }
     if (this.server) {
       this.server.removePlayer(clientId);
+      Lobby.slotManager.disconnectClient(clientId);
       const slots = Lobby.slotManager.removeBot(playerNum);
     }
   }
@@ -222,6 +224,12 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         console.log('test proc');
         const slots = this.state.slots;
         this.server = server;
+        this.server.onPlayerConnected.subscribe((clientId) => {
+          Lobby.slotManager.connectClient(clientId);
+        });
+        this.server.onPlayerDisconnected.subscribe((clientId) => {
+          Lobby.slotManager.connectClient(clientId);
+        });
         this.setState({ type: 'running', config, slots });
       })
       .catch((err) => {

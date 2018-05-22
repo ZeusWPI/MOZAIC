@@ -37,9 +37,12 @@ export type ExternalSlot = SlotProps & {
 export class SlotManager {
 
   public maps: M.MapList;
+  public connectedClients: Set<number> = new Set();
   private slots: Slot[] = [];
 
-  constructor() { this.slots = this.genSlots(2); }
+  constructor() {
+    this.slots = this.genSlots(2);
+  }
 
   public update(config?: WeakConfig): Slot[] {
     if (!config) { return this.slots; }
@@ -101,10 +104,17 @@ export class SlotManager {
     return updateSlot(this.slots[lastIndex], lastIndex);
   }
 
+  public connectClient(clientId: number) {
+    this.connectedClients.add(clientId);
+  }
+
+  public disconnectClient(clientId: number) {
+    this.connectedClients.delete(clientId);
+  }
+
   public connectLocal(playerNum: number, clientId: number): Slot[] {
     const slot = this.slots[playerNum];
     if (!this.verifyBoundInternal(slot)) { return this.slots; }
-
     this.slots[playerNum] = { ...slot, clientId, status: 'connectedInternal' };
     return [...this.slots];
   }
