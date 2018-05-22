@@ -2,22 +2,22 @@ import * as M from '../../database/models';
 
 export function validateConfig(conf?: WeakConfig): StrongConfig | ValidationError {
   if (!conf) { return { msg: 'Please fill in config.', type: 'error' }; }
-  const { selectedMap, maxTurns, host, port } = conf;
+  const { mapId, maxTurns, host, port } = conf;
   const address = { host, port };
-  if (!selectedMap) { return { map: 'Please select a map.', type: 'error' }; }
-  return { type: 'strong', map: selectedMap, maxTurns, address };
+  if (!mapId) { return { map: 'Please select a map.', type: 'error' }; }
+  return { type: 'strong', mapId, maxTurns, address };
 }
 
 export function exportConfig(conf: StrongConfig, maps: M.MapList): ServerGameConfig {
   return {
-    map_file: maps[conf.map].mapPath,
+    map_file: maps[conf.mapId].mapPath,
     max_turns: conf.maxTurns,
   };
 }
 
 export function downGrade(conf: StrongConfig): WeakConfig {
-  const { map, maxTurns, address: { host, port } } = conf;
-  return { type: 'weak', selectedMap: map, maxTurns, host, port };
+  const { mapId, maxTurns, address: { host, port } } = conf;
+  return { type: 'weak', mapId, maxTurns, host, port };
 }
 
 export function getWeakAddress(conf: WeakConfig | StrongConfig | undefined): { port?: number, host?: string } {
@@ -39,7 +39,7 @@ export interface ValidationError {
 // Config that might contain invalid values
 export interface WeakConfig {
   type: 'weak';
-  selectedMap?: M.MapId;
+  mapId?: M.MapId;
   maxTurns: number;
   host: string;
   port: number;
@@ -47,7 +47,7 @@ export interface WeakConfig {
 
 export interface StrongConfig {
   type: 'strong';
-  map: M.MapId;
+  mapId: M.MapId;
   maxTurns: number;
   address: M.Address;
 }

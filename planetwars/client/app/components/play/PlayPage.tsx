@@ -19,12 +19,22 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
-  const lobbyDispatchProps = {
-    saveMatch() { console.log('save match'); },
-    signalMatchComplete() { console.log('match complete'); },
-    signalMatchErrored(err: Error) { console.log('match errored', err); },
-    signalPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
-    signalPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
+  const lobbyDispatchProps: LobbyDispatchProps = {
+    saveMatch(match: M.Match) {
+      dispatch(A.saveMatch(match));
+    },
+    onMatchComplete(matchId: M.MatchId) {
+      dispatch(A.completeMatch(matchId));
+    },
+    onMatchErrored(matchId: M.MatchId, err: Error) {
+      dispatch(A.handleMatchError(matchId, err));
+    },
+    onPlayerReconnectedDuringMatch(id: number) {
+      console.log('player reconnected', id);
+    },
+    onPlayerDisconnectDuringMatch(id: number) {
+      console.log('player disconnected', id);
+    },
   };
   const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
   return { lobbyDispatchProps, importMap };

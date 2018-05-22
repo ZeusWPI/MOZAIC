@@ -21,27 +21,27 @@ export type ConfigState = WeakConfig & {};
 export class Config extends React.Component<ConfigProps> {
   public state: ConfigState = {
     type: 'weak',
-    selectedMap: undefined,
+    mapId: undefined,
     maxTurns: 500,
     host: '127.0.0.1',
     port: 9142,
   };
 
   public render() {
-    const { selectedMap, maxTurns, host, port } = this.state;
+    const { mapId, maxTurns, host, port } = this.state;
     const maps = Object.keys(this.props.maps).map((id) => this.props.maps[id]);
-    const map = (selectedMap) ? this.props.maps[selectedMap] : undefined;
+    const map = (mapId) ? this.props.maps[mapId] : undefined;
 
     return (
       <Section header={"Config"}>
-        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} importMap={this.props.importMap}/>
+        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={mapId} importMap={this.props.importMap}/>
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={host} setServer={this.setServer} />
         <PortField value={port} setPort={this.setPort} />
       </Section>
     );
   }
-  private selectMap = (selectedMap: M.MapId) => this.setState({ selectedMap }, this.callBack);
+  private selectMap = (mapId: M.MapId) => this.setState({ mapId }, this.callBack);
   private setMax = (maxTurns: number) => this.setState({ maxTurns }, this.callBack);
   private setServer = (serverAddress: string) => this.setState({ serverAddress }, this.callBack);
   private setPort = (port: number) => this.setState({ port }, this.callBack);
