@@ -201,3 +201,22 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     });
   }
 }
+
+export interface ImportMapProps {
+  importMap: () => void;
+}
+
+export class ImportMap extends React.Component<ImportMapProps, {}> {
+  public render() {
+    return (
+      <div
+        className={styles.mapPreview + " " + styles.notSelectedMap}
+        onClick={this.props.importMap}
+      >
+        <div className={styles.map}>
+          <i className={"fa fa-plus-circle " + styles.importCircle} />
+        </div>
+      </div>
+    );
+  }
+}

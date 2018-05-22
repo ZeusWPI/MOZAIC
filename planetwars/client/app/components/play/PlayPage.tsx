@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
+import * as A from '../../actions';
 import { GState } from '../../reducers';
 
 import { WeakConfig } from './types';
@@ -25,7 +26,8 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     signalPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
     signalPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
   };
-  return { lobbyDispatchProps };
+  const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
+  return { lobbyDispatchProps, importMap };
 }
 
 // ----------------------------------------------------------------------------
@@ -37,6 +39,7 @@ export interface PlayPageStateProps {
 
 export interface PlayPageDispatchProps {
   lobbyDispatchProps: LobbyDispatchProps;
+  importMap: (mapMeta: M.MapMeta) => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
@@ -74,7 +77,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           {/* Right side*/}
           <div className={styles.rightColumn}>
             <div className={styles.configContainer}>
-              <Config maps={maps} setConfig={this.setConfig} />
+              <Config maps={maps} setConfig={this.setConfig} importMap={this.props.importMap} />
             </div>
             <div className={styles.localBotSelectorContainer}>
               <LocalBotSelector bots={bots} onClick={this.addLocalBot} />

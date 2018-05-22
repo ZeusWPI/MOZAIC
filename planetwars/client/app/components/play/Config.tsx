@@ -3,12 +3,15 @@ import * as React from 'react';
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
-import { MapPreview } from './MapPreview';
+import { MapPreview, ImportMap } from './MapPreview';
+import { remote } from 'electron';
+import { Importer } from '../../utils/Importer';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
 export interface ConfigProps {
+  importMap: (mapMeta: M.MapMeta) => void;
   maps: M.MapList;
   setConfig(conf: WeakConfig): void;
 }
@@ -31,7 +34,7 @@ export class Config extends React.Component<ConfigProps> {
 
     return (
       <Section header={"Config"}>
-        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} />
+        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} importMap={this.props.importMap}/>
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={host} setServer={this.setServer} />
         <PortField value={port} setPort={this.setPort} />
@@ -94,6 +97,7 @@ export const PortField: React.SFC<PortProps> = (props) => {
 };
 
 export interface MapSelectorProps {
+  importMap: (mapMeta: M.MapMeta) => void;
   maps: M.MapMeta[];
   selectedMap?: M.MapId;
   selectMap(id: M.MapId): void;
@@ -117,9 +121,18 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     return (
       <div className={styles.mapSelector}>
         {options}
+        <ImportMap importMap={this.importMap} />
       </div>
     );
   }
+
+  private importMap = () => {
+    remote.dialog.showOpenDialog({ properties: ["openFile", "showHiddenFiles"] }, (paths: string[]) => {
+      Importer.importMapFromFile(paths[0])
+              .then((mapMeta: M.MapMeta) => { this.props.importMap(mapMeta); });
+    });
+  }
+
   private onChange = (evt: any) => this.props.selectMap(evt.target.value);
 }
 
