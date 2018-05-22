@@ -27,7 +27,7 @@ export function hostReducer(state: HostPageState = defaultState, action: any) {
     const slots: M.BotSlot[] = [];
     for (let i = 1; i <= action.payload.numPlayers; i++) {
       slots.push({
-        type: 'external',
+        type: M.BotSlotType.external,
         name: 'Player ' + i,
         token: generateToken(),
         connected: false,

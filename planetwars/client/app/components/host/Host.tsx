@@ -217,7 +217,7 @@ export class Slot extends React.Component<SlotProps> {
 
     let slot;
     switch (bot.type) {
-      case 'internal':
+      case M.BotSlotType.internal:
         slot = (
           <InternalSlot
             slot={bot}
@@ -228,7 +228,7 @@ export class Slot extends React.Component<SlotProps> {
           />
         );
         break;
-      case 'external':
+      case M.BotSlotType.external:
         slot = <ExternalSlot slot={bot} setSlot={updateSlot} makeInternal={this.makeInternal} />;
         break;
     }
@@ -272,13 +272,13 @@ export class Slot extends React.Component<SlotProps> {
     // const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
     // newSlot.type = 'external';
     const newSlot: M.InternalBotSlot = this.props.bot as M.InternalBotSlot;
-    this.props.updateSlot({ ...newSlot, type: 'external' } as M.ExternalBotSlot);
+    this.props.updateSlot({ ...newSlot, type: M.BotSlotType.external } as M.ExternalBotSlot);
   }
 
   private makeInternal = () => {
     // newSlot.type = 'internal';
     const newSlot: M.ExternalBotSlot = this.props.bot as M.ExternalBotSlot;
-    this.props.updateSlot({ ...newSlot, type: 'internal', botId: "" } as M.InternalBotSlot);
+    this.props.updateSlot({ ...newSlot, type: M.BotSlotType.internal, botId: "" } as M.InternalBotSlot);
   }
 }
 

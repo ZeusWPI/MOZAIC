@@ -4,7 +4,7 @@ import { BotRunner, BotConfig } from "./BotRunner";
 import { Connection, Address } from "./Connection";
 import { Socket } from 'net';
 import { BufferWriter } from 'protobufjs';
-import { ClientLogger } from './Logger';
+import { ClientLogger, Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
 import { ServerMessage, GameState, PlayerAction } from './PwTypes';
 import { RequestResolver } from './RequestResolver';
@@ -27,6 +27,13 @@ enum ClientState {
     CONNECTED,
 };
 
+export interface ClientParams {
+    token: Buffer,
+    address: Address,
+    number: number,
+    botConfig: BotConfig,
+    logger: Logger,
+}
 
 export class Client {
     readonly connection: Connection;
@@ -41,16 +48,16 @@ export class Client {
     private _onExit = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
 
-    constructor(connData: ConnectionData, botConfig: BotConfig, logger: ClientLogger) {
-        this.connection = new Connection(connData.token);
+    constructor(params: ClientParams) {
+        this.connection = new Connection(params.token);
 
         this.handleMessage = this.handleMessage.bind(this);
         this.resolver = new RequestResolver(this.connection, this.handleMessage);
 
 
-        this.address = connData.address;
-        this.botRunner = new BotRunner(botConfig);
-        this.logger = logger;
+        this.address = params.address;
+        this.botRunner = new BotRunner(params.botConfig);
+        this.logger = new ClientLogger(params.logger, params.number);
         this.state = ClientState.CONNECTED;
         this.turnNum = 0;
 
@@ -69,7 +76,6 @@ export class Client {
     }
 
     public run() {
-        console.log('running client');
         this.connection.connect(this.address.host, this.address.port);
         this.botRunner.run();
     }
@@ -95,7 +101,6 @@ export class Client {
 
     private handleConnectingMessage(data: Uint8Array): Promise<Uint8Array> {
         this.state = ClientState.CONNECTED;
-        console.log('connected');
         return Promise.resolve(data);
     }
 

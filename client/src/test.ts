@@ -2,6 +2,9 @@ import { Connection, Address } from './Connection';
 import { BotRunner, BotConfig } from './BotRunner';
 import { Client } from './Client';
 import { MatchParams, MatchRunner } from './MatchRunner';
+import { ClientLogger } from './Logger';
+
+
 
 const tokens = ["aaaa", "bbbb"];
 
@@ -17,44 +20,53 @@ const simpleBot: BotConfig = {
 
 const bin_path = "../gameserver/target/debug/mozaic_bot_driver";
 
+const players = [
+    {
+        name: 'timp',
+        token: "aaaa",
+        botConfig: simpleBot,
+        number: 1,
+    },
+    {
+        name: 'bert',
+        token: "bbbb",
+        botConfig: simpleBot,
+        number: 2,
+    }
+];
+
+const gameConfig = {
+    "map_file": "../planetwars/maps/hex.json",
+    "max_turns": 100,
+}
+
 const params: MatchParams = {
     ctrl_token: "abba",
-    players: [
-        {
-            name: 'timp',
-            token: "aaaa",
-            botConfig: simpleBot,
-            number: 1,
-        },
-        {
-            name: 'bert',
-            token: "bbbb",
-            botConfig: simpleBot,
-            number: 2,
-        }
-    ],
-    mapFile: "../planetwars/maps/hex.json",
-    maxTurns: 100,
+
     address: addr,
     logFile: "log.json",
 }
 
-let runner = new MatchRunner(bin_path, params);
-let waiting_for = new Set();
-
-params.players.forEach((player) => {
-    waiting_for.add(player.number);
+MatchRunner.create(bin_path, params).then((match) => {
+    const addPlayers = players.map((player) => {
+        const token = Buffer.from(player.token, 'hex');
+        return match.addPlayer(token).then((clientId) => {
+            console.log(clientId);
+            const connData = {
+                address: addr,
+                token: token,
+            };
+            const client = new Client({
+                address: addr,
+                token,
+                number: player.number,
+                botConfig: simpleBot,
+                logger: match.logger,
+            });
+            client.run();
+        });
+    });
+    Promise.all(addPlayers).then(() => {
+        return match.startGame(gameConfig);
+    });
 });
-
-runner.onPlayerConnected.subscribe((player_num) => {
-    waiting_for.delete(player_num);
-    if (waiting_for.size == 0) {
-        runner.start_match();
-    }
-});
-
-runner.onPlayerDisconnected.subscribe((player_num) => {
-    waiting_for.add(player_num);
-})
-
-runner.run();

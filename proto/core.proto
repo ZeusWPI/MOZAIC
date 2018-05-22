@@ -54,3 +54,35 @@ message Message {
         Response response = 2;
     }
 }
+
+message LobbyMessage {
+    message AddPlayerRequest {
+        bytes token = 1;
+    }
+
+    message AddPlayerResponse {
+        uint64 client_id = 1;
+    }
+
+    message RemovePlayerRequest {
+        uint64 client_id = 1;
+    }
+
+    message RemovePlayerResponse {
+        // placeholder
+    }
+
+    message StartGameRequest {
+        bytes payload = 1;
+    }
+
+    message StartGameResponse {
+        // placeholder
+    }
+
+    oneof payload {
+        AddPlayerRequest add_player = 1;
+        RemovePlayerRequest remove_player = 2;
+        StartGameRequest start_game = 3;
+    }
+}

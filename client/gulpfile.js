@@ -32,11 +32,11 @@ function gen_protobuf(out_path) {
         comments: true,
         es6: false,
         wrap: 'commonjs',
-        "keep-case": false,
-        "force-long": false,
-        "force-number": false,
-        "force-enum-string": false,
-        "force-message": true
+        "keepCase": false,
+        "forceLong": false,
+        "forceNumber": true,
+        "forceEnumString": true,
+        "forceMessage": false,
     };
 
     var root = new protobuf.Root();

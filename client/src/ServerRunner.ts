@@ -1,16 +1,13 @@
 import { Address } from "./index";
 import * as tmp from 'tmp';
 import * as fs from 'fs';
-import { execFile } from 'child_process';
+import { execFile, ChildProcess } from 'child_process';
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
 
 export interface ServerParams {
     ctrl_token: string;
-    players: PlayerData[];
-    mapFile: string;
-    maxTurns: number;
     address: Address;
     logFile: string;
 }
@@ -23,6 +20,7 @@ export interface PlayerData {
 export class ServerRunner {
     private params: ServerParams;
     private serverPath: string;
+    private serverProcess?: ChildProcess;
 
     private _onExit = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
@@ -46,12 +44,25 @@ export class ServerRunner {
         process.stderr.on('data', (data: Buffer) => {
             console.log(data.toString('utf-8'))
         });
-        process.on('close', () => {
+        process.on('close', (exitCode) => {
+            if (exitCode !== 0) {
+                const err = new Error(`server exited with code ${exitCode}`);
+                this._onError.dispatch(err);
+            }
+            // TODO: should exit and error be exclusive or not?
             this._onExit.dispatch();
         });
         process.on('error', (err: Error) => {
             this._onError.dispatch(err);
         });
+
+        this.serverProcess = process;
+    }
+
+    public killServer() {
+        if (this.serverProcess) {
+            this.serverProcess.kill();
+        }
     }
 
     public get onExit() {
@@ -70,18 +81,12 @@ export class ServerRunner {
         return file.name;
     }
 
-    private configJSON() : ServerConfigJSON {
-        const { ctrl_token, players, mapFile, maxTurns, address } = this.params;
+    private configJSON(): ServerConfigJSON {
+        const { ctrl_token, address } = this.params;
         const logFile = tmp.fileSync().name;
 
-        const game_config = {
-            map_file: mapFile,
-            max_turns: maxTurns,
-        };
         return {
             ctrl_token,
-            players,
-            game_config,
             address: `${address.host}:${address.port}`,
             log_file: logFile,
         };
@@ -90,8 +95,6 @@ export class ServerRunner {
 
 export interface ServerConfigJSON {
     ctrl_token: string;
-    players: BotConfigJSON[];
-    game_config: GameConfigJSON;
     address: string;
     log_file: string;
 }
@@ -100,7 +103,7 @@ export interface GameConfigJSON {
     map_file: string;
     max_turns: number;
 }
-  
+
 export interface BotConfigJSON {
     name: string;
     token: string;

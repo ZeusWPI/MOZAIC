@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as M from '../../database/models';
+import { HorizontalInput } from '../play/Config';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./AddressForm.scss");
@@ -20,22 +21,20 @@ export class AddressForm extends React.Component<AddressFormProps> {
     const { host, port } = this.props.address;
     return (
       <div>
-        <div className={styles.inputField}>
-          <span>Host</span>
-          <input
-            type="text"
-            value={host}
-            onChange={this.setHost}
-          />
-        </div>
-        <div className={styles.inputField}>
-          <span>Port</span>
+        <HorizontalInput label="Host" id="host">
+        <input
+          type="text"
+          value={host}
+          onChange={this.setHost}
+        />
+        </HorizontalInput>
+        <HorizontalInput label="Port" id="port">
           <input
             type="number"
             value={port}
             onChange={this.setPort}
-          />
-        </div>
+         />
+        </HorizontalInput>
       </div>
     );
   }

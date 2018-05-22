@@ -1,7 +1,6 @@
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 import * as PwClient from 'mozaic-client';
-import { Logger } from 'mozaic-client';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as M from '../../database/models';
@@ -56,28 +55,17 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
 
     dispatch(saveMatch(match));
 
-    const botData = state.bots[bot.botId];
-    const argv = stringArgv(botData.command);
-    const botConfig = {
-      command: argv[0],
-      args: argv.slice(1),
-    };
+    const [command, ...args] = stringArgv(state.bots[bot.botId].command);
+    const botConfig = { command, args };
+    const address = host;
+    const number = 3;
+    const token = new Buffer(bot.token);
+    const connectionData = { token, address: host };
+    const logger = new PwClient.Logger(match.logPath);
+    const clientParams = { token, address, logger, number, botConfig };
 
-    const config = {
-      clients: [
-        {
-          botConfig,
-          token: bot.token,
-          number: 1,
-        },
-      ],
-      address: host,
-      logger: new Logger(match.logPath),
-    };
-
-    // TODO: remove this dupe
-    const runner = new PwClient.ClientRunner(config);
-    runner.onComplete.subscribe(() => {
+    const runner = new PwClient.Client(clientParams);
+    runner.onExit.subscribe(() => {
       dispatch(completeMatch(match.uuid));
       const title = 'Match ended';
       const body = `A remote match has ended`;
@@ -98,12 +86,21 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
   };
 }
 
+// https://github.com/ZeusWPI/MOZAIC/blob/1f9ab238e96028e3306bfe6b27920f70f9fba430/client/src/test.ts#L38
 export function sendGo() {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
-    if (state.host.runner) {
+    const { runner, matchParams } = state.host;
+    if (!matchParams) { throw Error('Under construction'); }
+
+    const config = {
+      max_turns: matchParams.maxTurns,
+      map_file: state.maps[matchParams.map].mapPath,
+    };
+
+    if (runner) {
       console.log("running");
-      state.host.runner.start_match();
+      runner.startGame(config);
     }
   };
 }
@@ -124,7 +121,7 @@ export function runMatch() {
 
     const playerConfigs = players.map((slot, idx) => {
       let botConfig;
-      if (slot.type === 'internal') {
+      if (slot.type === M.BotSlotType.internal) {
         const botData = state.bots[slot.botId];
         const argv = stringArgv(botData.command);
         botConfig = {
@@ -141,13 +138,12 @@ export function runMatch() {
     });
 
     const config: PwClient.MatchParams = {
-      players: playerConfigs,
-      mapFile: state.maps[map].mapPath,
-      maxTurns,
       address: params.address,
       logFile: match.logPath,
       ctrl_token: params.ctrl_token,
     };
+
+    console.log("This probably doesn't work!!!!");
 
     const runner = new PwClient.MatchRunner(Config.matchRunner, config);
     runner.onComplete.subscribe(() => {
@@ -179,7 +175,7 @@ export function runMatch() {
   };
 }
 
-function completeMatch(matchId: M.MatchId) {
+export function completeMatch(matchId: M.MatchId) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
@@ -203,7 +199,7 @@ function completeMatch(matchId: M.MatchId) {
   };
 }
 
-function handleMatchError(matchId: M.MatchId, error: Error) {
+export function handleMatchError(matchId: M.MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
