@@ -35,37 +35,14 @@ export type ExternalSlot = SlotProps & {
 };
 
 export class SlotManager {
-
-  public maps: M.MapList;
   public connectedClients: Set<number> = new Set();
-  private slots: Slot[] = [];
+  public slots: Slot[] = [];
 
   constructor() {
     this.slots = this.genSlots(2);
   }
 
-  public update(config?: WeakConfig): Slot[] {
-    if (!config) { return this.slots; }
-    if (!config.selectedMap) { return this.slots; }
-
-    const map = this.maps[config.selectedMap];
-
-    if (this.slots.length < map.slots) {
-      const newSlots = this.genSlots(map.slots - this.slots.length);
-      this.slots = this.slots.concat(newSlots);
-      return this.slots;
-    } else {
-      this.slots.forEach((slot, i) => {
-        if (i >= map.slots) {
-          this.slots[i].willBeKicked = true;
-        }
-      });
-      return [...this.slots];
-    }
-  }
-
-  public updateRunning(config: StrongConfig): Slot[] {
-    const map = this.maps[config.map];
+  public update(map: M.MapMeta): Slot[] {
     if (this.slots.length < map.slots) {
       const newSlots = this.genSlots(map.slots - this.slots.length);
       this.slots = this.slots.concat(newSlots);
