@@ -2,7 +2,7 @@ import * as React from 'react';
 import { clipboard } from 'electron';
 
 import * as M from '../../../database/models';
-import { Slot, SlotStatus, BoundInternalSlot, ConnectedInternalSlot, ExternalSlot } from './SlotManager';
+import { Slot } from './SlotManager';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -13,11 +13,10 @@ export interface SlotListProps {
   host?: string;
   isServerRunning: boolean;
   willBeKicked(idx: number): boolean;
-  connectLocalBot(slot: BoundInternalSlot, playerNum: number): void;
-  unbindLocalBot(token: M.Token, playerNum: number): void;
-  removeLocalBot(token: M.Token, playerNum: number, clientId: number): void;
-  removeExternalBot(token: M.Token, playerNum: number, clientId: number): void;
+  connectLocalBot(slot: Slot, playerNum: number): void;
+  removeBot(botNum: number): void;
 }
+
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
     const { slots } = this.props;
@@ -30,9 +29,7 @@ export class SlotList extends React.Component<SlotListProps> {
           port={this.props.port}
           willBeKicked={this.props.willBeKicked(index)}
           connectLocalBot={this.props.connectLocalBot}
-          removeLocalBot={this.props.removeLocalBot}
-          removeExternalBot={this.props.removeExternalBot}
-          unbindLocalBot={this.props.unbindLocalBot}
+          removeBot={this.props.removeBot}
           isServerRunning={this.props.isServerRunning}
         />
       </li>),
@@ -48,37 +45,77 @@ export interface SlotElementProps {
   host?: string;
   port?: number;
   isServerRunning: boolean;
-  connectLocalBot(id: BoundInternalSlot, playerNum: number): void;
-  unbindLocalBot(token: M.Token, playerNum: number): void;
-  removeLocalBot(token: M.Token, playerNum: number, clientId: number): void;
-  removeExternalBot(token: M.Token, playerNum: number, clientId: number): void;
+  connectLocalBot(slot: Slot, playerNum: number): void;
+  removeBot(botNum: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
 
   public render() {
     const { slot, index } = this.props;
-    const { token, status, name } = slot;
+    const { token, name } = slot;
 
-    const kickBot = () => {
-      if (slot.status === 'connectedInternal') {
-        const _slot = slot as ConnectedInternalSlot;
-        this.props.removeLocalBot(token, index, _slot.clientId); // TODO: Fix
-      }
+    const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
+    return (
+      <div className={`${styles.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
+        <h1>Player {index + 1}</h1>
+        <p>{token}</p>
+        <p>Status: {this.statusToFriendly(slot)}</p>
+        <p>Name: {name}</p>
+        <div>
+          {this.getActions()}
+        </div>
+      </div >);
+  }
 
-      if (slot.status === 'boundInternal') {
-        const _slot = slot as BoundInternalSlot;
-        this.props.unbindLocalBot(token, index);
-      }
+  private copyToken = (): void => {
+    clipboard.writeText(JSON.stringify(this.props.slot.token));
+  }
 
-      if (slot.status === 'external') {
-        const _slot = slot as ExternalSlot;
-        this.props.removeExternalBot(token, index, _slot.clientId);
-      }
-    };
+  private copyFull = (): void => {
+    const { slot: { token, name }, index, port, host } = this.props;
+    const data = { token, name, port, host };
+    clipboard.writeText(JSON.stringify(data));
+  }
+
+  private statusToClass(slot: Slot): string {
+    if (slot.bot && slot.connected) {
+      return styles.connectedInternal;
+    }
+    if (slot.bot) {
+      return styles.filled;
+    }
+    if (slot.connected) {
+      return styles.connected;
+    }
+    return styles.unbound;
+  }
+
+  private statusToFriendly(slot: Slot): string {
+    if (slot.bot && slot.connected) {
+      return 'Connected Local Bot';
+    }
+    if (slot.bot) {
+      return 'Local Bot';
+    }
+    if (slot.connected) {
+      return 'Connected external bot';
+    }
+    if (slot.clientId) {
+      return 'Not connected';
+    }
+    return 'Unassigned';
+  }
+
+  private getActions(): JSX.Element[] {
+    const { slot, index } = this.props;
+    const { token, name } = slot;
+
+    const kickBot = () => { this.props.removeBot(index); };
 
     const clss = (color: string) => `button is-outlined ${color}`;
 
-    const connectLocal = () => this.props.connectLocalBot(slot as BoundInternalSlot, index);
+    const connectLocal = () => this.props.connectLocalBot(slot, index);
+
 
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>
@@ -109,52 +146,18 @@ export class SlotElement extends React.Component<SlotElementProps> {
       </button>
     );
 
-    const tools = {
-      unbound: [copy, copyFull],
-      boundInternal: [kick, conn],
-      connectedInternal: [kick],
-      external: [kick],
-    };
-
-    const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
-    return (
-      <div className={`${styles.slotElement} ${this.statusToClass(status)} ${kicked}`}>
-        <h1>Player {index + 1}</h1>
-        <p>{token}</p>
-        <p>Status: {this.statusToFriendly(status)}</p>
-        <p>Name: {name}</p>
-        <div>
-          {tools[status]}
-        </div>
-      </div >);
-  }
-
-  private copyToken = (): void => {
-    clipboard.writeText(JSON.stringify(this.props.slot.token));
-  }
-
-  private copyFull = (): void => {
-    const { slot: { token, status, name }, index, port, host } = this.props;
-    const data = { token, name, port, host };
-    clipboard.writeText(JSON.stringify(data));
-  }
-
-  private statusToClass(status: SlotStatus): string {
-    switch (status) {
-      case 'unbound': return styles.unbound;
-      case 'boundInternal': return styles.filled;
-      case 'connectedInternal': return styles.connected;
-      case 'external': return styles.connected;
-      default: return styles.typo;
+    if (slot.bot && slot.connected) {
+      return [kick];
     }
-  }
-
-  private statusToFriendly(status: SlotStatus): string {
-    switch (status) {
-      case 'unbound': return 'Unassigned';
-      case 'boundInternal': return 'Ready Local Bot';
-      case 'connectedInternal': return 'Connected Local Bot';
-      case 'external': return 'External Bot';
+    if (slot.bot) {
+      return [kick, conn];
     }
+    if (slot.connected) {
+      return [kick];
+    }
+    if (slot.clientId) {
+      return [copy, copyFull]
+    }
+    return [];
   }
 }
