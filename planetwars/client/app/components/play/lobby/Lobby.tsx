@@ -45,39 +45,19 @@ export interface RuningState {
 }
 
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
-
-  private static slotManager: SlotManager = new SlotManager();
-
-  public state: LobbyState = { type: 'configuring', slots: [] };
-
+  private slotManager: SlotManager;
   private server?: PwClient.MatchRunner;
+
   private localClients: { [key: string /*Token*/]: PwClient.Client } = {};
 
-  // This is where the magic state juggling happens
-  public static getDerivedStateFromProps(nextProps: LobbyProps, prevState: LobbyState): LobbyState {
-    const { config, maps } = nextProps;
-    Lobby.slotManager.maps = maps;
+  constructor(props: LobbyProps) {
+    super(props);
+    this.state = { type: 'configuring', slots: [] };
+    this.slotManager = new SlotManager();
+  }
 
-    if (prevState.type === 'configuring') {
-      const newSlots = Lobby.slotManager.update(config);
-      const slots = [...newSlots];
-      return { type: 'configuring', config, slots };
-    }
-
-    if (prevState.type === 'running') {
-      const vConfig = Lib.validateConfig(nextProps.config);
-      if (vConfig.type === 'error') {
-        const { msg, address, map, maxTurns } = vConfig;
-        // alert(`Config is not valid. ${msg || address || map || maxTurns}`);
-        return { ...prevState };
-      }
-      const newSlots = Lobby.slotManager.updateRunning(vConfig);
-      const slots = [...newSlots];
-      return { type: 'running', slots, config: vConfig };
-    }
-
-    alert('Programmer did an oopsie');
-    return prevState;
+  public componentWillReceiveProps(nextProps: LobbyProps) {
+    this.updateSlots(nextProps);
   }
 
   public componentWillUnmount() {
@@ -118,8 +98,17 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   public addLocalBot(bot: M.Bot) {
-    const slots = Lobby.slotManager.bindLocalBot(bot);
+    const slots = this.slotManager.bindLocalBot(bot);
     this.setState({ slots });
+  }
+
+  private updateSlots(props: LobbyProps) {
+    const { config, maps } = props;
+    if (!config || !config.mapId) { return; }
+
+    const map = maps[config.mapId];
+    this.slotManager.update(map);
+    this.setState({ slots: [...this.slotManager.slots] });
   }
 
   private connectLocalBot = (slot: BoundInternalSlot, playerNum: number) => {
@@ -141,17 +130,17 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       const client = new PwClient.Client(params);
       client.onError.subscribe((err) => {
         console.log('client error (todo)');
-        const _slots = Lobby.slotManager.disconnectLocal(playerNum);
+        const _slots = this.slotManager.disconnectLocal(playerNum);
         this.setState({ slots: _slots });
       });
       client.onExit.subscribe(() => {
         console.log('client ext (todo)');
-        const _slots = Lobby.slotManager.disconnectLocal(playerNum);
+        const _slots = this.slotManager.disconnectLocal(playerNum);
         this.setState({ slots: _slots });
       });
       client.run();
       this.localClients[stringToken] = client;
-      const slots = Lobby.slotManager.connectLocal(playerNum, clientId);
+      const slots = this.slotManager.connectLocal(playerNum, clientId);
       this.setState({ slots });
       console.log('connected local bot');
     });
@@ -163,9 +152,9 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     if (this.server) {
       delete this.localClients[token];
       this.server.removePlayer(clientId);
-      Lobby.slotManager.disconnectClient(clientId);
+      this.slotManager.disconnectClient(clientId);
 
-      const slots = Lobby.slotManager.removeBot(playerNum);
+      const slots = this.slotManager.removeBot(playerNum);
       this.setState({ slots });
       this.server.removePlayer(clientId);
       console.log('kicked connected bot');
@@ -177,13 +166,14 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     if (!this.validifyRunning(this.state)) { return; }
     if (this.server) {
       this.server.removePlayer(clientId);
-      Lobby.slotManager.disconnectClient(clientId);
-      const slots = Lobby.slotManager.removeBot(playerNum);
+      this.slotManager.disconnectClient(clientId);
+      const slots = this.slotManager.removeBot(playerNum);
+      // TOD: HLEP
     }
   }
 
   private unbindLocalBot = (token: M.Token, playerNum: number) => {
-    const slots = Lobby.slotManager.removeBot(playerNum);
+    const slots = this.slotManager.removeBot(playerNum);
     this.setState({ slots });
   }
 
@@ -225,10 +215,10 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         const slots = this.state.slots;
         this.server = server;
         this.server.onPlayerConnected.subscribe((clientId) => {
-          Lobby.slotManager.connectClient(clientId);
+          this.slotManager.connectClient(clientId);
         });
         this.server.onPlayerDisconnected.subscribe((clientId) => {
-          Lobby.slotManager.connectClient(clientId);
+          this.slotManager.connectClient(clientId);
         });
         this.setState({ type: 'running', config, slots });
       })
@@ -274,8 +264,39 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.server.startGame(gameConf)
       // This gets procced when the game has actually started
       .then(() => {
-        console.log('started match');
-        this.props.saveMatch();
+        const { host, port, maxTurns, mapId } = this.props.config!;
+        if (!this.validifyRunning(this.state)) { return; }
+        const match: M.PlayingHostedMatch = {
+          uuid: this.state.matchId,
+          type: M.MatchType.hosted,
+          status: M.MatchStatus.playing,
+          maxTurns,
+          map: mapId!,
+          network: { host, port },
+          timestamp: new Date(),
+          logPath: this.state.logFile,
+          players: this.state.slots.map((slot) => {
+            if (slot.status === 'boundInternal' || slot.status === 'connectedInternal') {
+              const botSlot: M.InternalBotSlot = {
+                type: M.BotSlotType.internal,
+                token: slot.token,
+                botId: slot.bot.uuid,
+                name: slot.name,
+                connected: slot.status === 'connectedInternal',
+              };
+              return botSlot;
+            } else {
+              const botSlot: M.ExternalBotSlot = {
+                type: M.BotSlotType.external,
+                token: slot.token,
+                name: slot.name,
+                connected: slot.status === 'external',
+              };
+              return botSlot;
+            }
+          }),
+        };
+        this.props.saveMatch(match);
         this.resetState();
       })
       .catch((err) => {
@@ -293,6 +314,13 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   private resetState() {
-    throw new Error('Unimplemented');
+    // reset state
+    this.server = undefined;
+    this.slotManager = new SlotManager();
+    this.updateSlots(this.props);
+
+    // reset to configuring
+    const config = this.props.config;
+    this.setState({ type: 'configuring', config: this.props.config });
   }
 }

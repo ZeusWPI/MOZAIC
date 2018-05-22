@@ -18,20 +18,20 @@ export type ConfigState = WeakConfig & {};
 export class Config extends React.Component<ConfigProps> {
   public state: ConfigState = {
     type: 'weak',
-    selectedMap: undefined,
+    mapId: undefined,
     maxTurns: 500,
     host: '127.0.0.1',
     port: 9142,
   };
 
   public render() {
-    const { selectedMap, maxTurns, host, port } = this.state;
+    const { mapId, maxTurns, host, port } = this.state;
     const maps = Object.keys(this.props.maps).map((id) => this.props.maps[id]);
-    const map = (selectedMap) ? this.props.maps[selectedMap] : undefined;
+    const map = (mapId) ? this.props.maps[mapId] : undefined;
 
     return (
       <Section header={"Config"}>
-        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={selectedMap} />
+        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={mapId} />
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={host} setServer={this.setServer} />
         <PortField value={port} setPort={this.setPort} />
