@@ -20,10 +20,10 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
   const lobbyDispatchProps = {
     saveMatch() { console.log('save match'); },
-    signalMatchComplete() { console.log('match complete'); },
-    signalMatchErrored(err: Error) { console.log('match errored', err); },
-    signalPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
-    signalPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
+    onMatchComplete() { console.log('match complete'); },
+    onMatchErrored(err: Error) { console.log('match errored', err); },
+    onPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
+    onPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
   };
   return { lobbyDispatchProps };
 }

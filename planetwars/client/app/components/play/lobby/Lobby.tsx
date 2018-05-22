@@ -24,10 +24,10 @@ export type LobbyProps = LobbyDispatchProps & {
 
 export interface LobbyDispatchProps {
   saveMatch(): void;
-  signalMatchComplete(): void;
-  signalMatchErrored(err: Error): void;
-  signalPlayerReconnectedDuringMatch(id: number): void;
-  signalPlayerDisconnectDuringMatch(id: number): void;
+  onMatchComplete(): void;
+  onMatchErrored(err: Error): void;
+  onPlayerReconnectedDuringMatch(id: number): void;
+  onPlayerDisconnectDuringMatch(id: number): void;
 }
 
 export type LobbyState = ConfiguringState | RuningState;
@@ -261,14 +261,14 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.server.onPlayerDisconnected.clear();
 
     // Bind completion listeners
-    this.server.onComplete.subscribe(() => this.props.signalMatchComplete());
-    this.server.onError.subscribe((err) => this.props.signalMatchErrored(err));
+    this.server.onComplete.subscribe(() => this.props.onMatchComplete());
+    this.server.onError.subscribe((err) => this.props.onMatchErrored(err));
 
     // Bind connection listeners
     this.server.onPlayerDisconnected.subscribe(
-      (id: number) => this.props.signalPlayerDisconnectDuringMatch(id));
+      (id: number) => this.props.onPlayerDisconnectDuringMatch(id));
     this.server.onPlayerConnected.subscribe(
-      (id: number) => this.props.signalPlayerReconnectedDuringMatch(id));
+      (id: number) => this.props.onPlayerReconnectedDuringMatch(id));
 
     // Start game
     this.server.startGame(gameConf)
