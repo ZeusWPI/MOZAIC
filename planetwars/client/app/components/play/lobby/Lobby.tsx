@@ -253,7 +253,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       })
       .catch((err) => {
         this.stopServer();
-        alert('Failed to start server :( (see console))');
+        alert(`Could not start game server: \n ${err}`);
         console.log('Failed to start server.', err);
       });
   }
