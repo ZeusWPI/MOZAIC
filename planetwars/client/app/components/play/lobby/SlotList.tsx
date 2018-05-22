@@ -99,7 +99,12 @@ export class SlotElement extends React.Component<SlotElementProps> {
     );
 
     const conn = (
-      <button key='conn' className={clss('is-success')} onClick={connectLocal}>
+      <button
+        key='conn'
+        className={clss('is-success')}
+        onClick={connectLocal}
+        disabled={!this.props.isServerRunning}
+      >
         Connect
       </button>
     );
