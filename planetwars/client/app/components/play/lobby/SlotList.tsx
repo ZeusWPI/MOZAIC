@@ -26,6 +26,8 @@ export class SlotList extends React.Component<SlotListProps> {
         <SlotElement
           slot={slot}
           index={index}
+          host={this.props.host}
+          port={this.props.port}
           willBeKicked={this.props.willBeKicked(index)}
           connectLocalBot={this.props.connectLocalBot}
           removeLocalBot={this.props.removeLocalBot}

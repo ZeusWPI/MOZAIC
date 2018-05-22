@@ -119,7 +119,6 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
   }
 
   public render() {
-    console.log(this.state.name);
     const onNameInput = (evt: any) => this.setState({ name: evt.target.value });
     const name = (
       <div className='field'>
