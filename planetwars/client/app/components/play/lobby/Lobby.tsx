@@ -24,8 +24,8 @@ export type LobbyProps = LobbyDispatchProps & {
 
 export interface LobbyDispatchProps {
   saveMatch: (match: M.Match) => void;
-  onMatchComplete(): void;
-  onMatchErrored(err: Error): void;
+  onMatchComplete(matchId: M.MatchId): void;
+  onMatchErrored(matchId: M.MatchId, err: Error): void;
   onPlayerReconnectedDuringMatch(id: number): void;
   onPlayerDisconnectDuringMatch(id: number): void;
 }
@@ -268,11 +268,13 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   private launchGame = () => {
-    if (!this.server || (this.state.type !== 'running')) {
+
+    if (!this.server || !this.validifyRunning(this.state)) {
       alert('Something went wrong');
       return;
     }
 
+    const matchId = this.state.matchId;
     const gameConf = Lib.exportConfig(this.state.config, this.props.maps);
 
     // Clear old listeners from the lobby
@@ -281,8 +283,12 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.server.onPlayerDisconnected.clear();
 
     // Bind completion listeners
-    this.server.onComplete.subscribe(() => this.props.onMatchComplete());
-    this.server.onError.subscribe((err) => this.props.onMatchErrored(err));
+    this.server.onComplete.subscribe(() => {
+      this.props.onMatchComplete(matchId);
+    });
+    this.server.onError.subscribe((err) => {
+      this.props.onMatchErrored(matchId, err)
+    });
 
     // Bind connection listeners
     this.server.onPlayerDisconnected.subscribe(

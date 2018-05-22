@@ -175,7 +175,7 @@ export function runMatch() {
   };
 }
 
-function completeMatch(matchId: M.MatchId) {
+export function completeMatch(matchId: M.MatchId) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];
@@ -199,7 +199,7 @@ function completeMatch(matchId: M.MatchId) {
   };
 }
 
-function handleMatchError(matchId: M.MatchId, error: Error) {
+export function handleMatchError(matchId: M.MatchId, error: Error) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
     const match = state.matches[matchId];

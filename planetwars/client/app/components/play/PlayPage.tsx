@@ -23,10 +23,18 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     saveMatch(match: M.Match) {
       dispatch(A.saveMatch(match));
     },
-    onMatchComplete() { console.log('match complete'); },
-    onMatchErrored(err: Error) { console.log('match errored', err); },
-    onPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
-    onPlayerDisconnectDuringMatch(id: number) { console.log('player disconnected', id); },
+    onMatchComplete(matchId: M.MatchId) {
+      dispatch(A.completeMatch(matchId));
+    },
+    onMatchErrored(matchId: M.MatchId, err: Error) {
+      dispatch(A.handleMatchError(matchId, err));
+    },
+    onPlayerReconnectedDuringMatch(id: number) {
+      console.log('player reconnected', id);
+    },
+    onPlayerDisconnectDuringMatch(id: number) {
+      console.log('player disconnected', id);
+    },
   };
   return { lobbyDispatchProps };
 }
