@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';
+import { clipboard } from 'electron';
 import { Chance } from 'chance';
 
 import { Config } from '../../utils/Config';
@@ -82,11 +83,12 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   public render() {
-    const { slots } = this.state;
+    const { slots, config } = this.state;
+    const { port, host } = Lib.getWeakAddress(config);
     return (
       <Section header={"Lobby"}>
         <div className={styles.lobby}>
-          <SlotList slots={slots} />
+          <SlotList slots={slots} port={port} host={host} />
           <ServerControls
             startServer={this.startServer}
             stopServer={this.stopServer}
@@ -105,7 +107,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     }
 
     const config = Lib.validateConfig(this.state.config);
-    if (Lib.hasErrored(config)) {
+    if (config.type === 'error') {
       alert(`Config is not valid. ${config.address || config.map || config.maxTurns}`);
       return;
     }
@@ -193,21 +195,27 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
 export interface SlotListProps {
   slots: Slot[];
-
+  port?: number;
+  host?: string;
 }
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
     const { slots } = this.props;
     const slotItems = slots.map((slot, index) => (
       <li key={index} className={styles.slotElementWrapper}>
-        <SlotElement slot={slot} index={index} />
+        <SlotElement slot={slot} index={index} {...this.props} />
       </li>),
     );
     return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
   }
 }
 
-export interface SlotElementProps { slot: Slot; index: number; }
+export interface SlotElementProps {
+  slot: Slot;
+  index: number;
+  host?: string;
+  port?: number;
+}
 export class SlotElement extends React.Component<SlotElementProps> {
 
   public render() {
@@ -218,14 +226,17 @@ export class SlotElement extends React.Component<SlotElementProps> {
       <button key='kick' className={clss('is-danger')}>Kick player</button>
     );
     const copy = (
-      <button key='copy' className={clss('is-light')}>Copy</button>
+      <button key='copy' className={clss('is-light')} onClick={this.copyToken}>Copy</button >
+    );
+    const copyFull = (
+      <button key='copyFull' className={clss('is-light')} onClick={this.copyFull}>Copy Full</button>
     );
     const conn = (
       <button key='conn' className={clss('is-success')}>Connect</button>
     );
 
     const tools = {
-      unbound: [copy],
+      unbound: [copy, copyFull],
       boundInternal: [kick, conn],
       connectedInternal: [kick],
       external: [kick],
@@ -241,6 +252,16 @@ export class SlotElement extends React.Component<SlotElementProps> {
           {tools[status]}
         </div>
       </div >);
+  }
+
+  private copyToken = (): void => {
+    clipboard.writeText(JSON.stringify(this.props.slot.token));
+  }
+
+  private copyFull = (): void => {
+    const { slot: { token, status, name }, index, port, host } = this.props;
+    const data = { token, name, port, host };
+    clipboard.writeText(JSON.stringify(data));
   }
 
   private statusToClass(status: string): string {

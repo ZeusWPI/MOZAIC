@@ -30,13 +30,16 @@
       height: 100%;
       width: 50%;
       display: flex;
+      overflow-y: scroll;
       flex-direction: column;
       .configContainer {
         width: 100%;
         height: 50%; // TODO Solve this decently
+        min-height: 350px;
         margin-bottom: 1px;
       }
       .localBotSelectorContainer {
+        min-height: 150px;
         flex-grow: 1;
         height: 50%;
         width: 100%;
@@ -50,6 +53,7 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   .lobbySlots {
     flex: 1 1 auto;
     height: 80%;
@@ -82,9 +86,12 @@
         background-color: $altBackground;
       }
     }
-    .serverControls {
-      height: 20%;
-    }
+  }
+  .serverControls {
+    flex: 1 1 20%;
+    min-height: 70px;
+    max-height: 20%;
+    height: 20%;
   }
 }
 
@@ -127,6 +134,43 @@
       color: $primary;
       font-family: FontAwesome;
       font-size: 30px;
+    }
+  }
+}
+
+.localBotSelector {
+  flex: 1 1 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: scroll;
+  .localBot {
+    margin: 5px 0;
+    padding: 8px;
+    width: 100%;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    .botInfo {
+      flex: 1 1 auto;
+      width: 80%;
+      .botCommand {
+        color: $tertiary;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
+    .botAdder {
+      min-width: 50px;
+      height: 100%;
+    }
+    &.selected {
+      border-left: 4px solid $primary;
+    }
+    &:hover {
+      background-color: $altBackground;
     }
   }
 }

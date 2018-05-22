@@ -14,8 +14,8 @@ import { ServerControls } from './ServerControls';
 const styles = require('./PlayPage.scss');
 
 function mapStateToProps(state: GState): PlayPageStateProps {
-  const { maps } = state;
-  return { maps };
+  const { maps, bots } = state;
+  return { maps, bots };
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
@@ -29,7 +29,12 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
   return { lobbyDispatchProps };
 }
 
-export interface PlayPageStateProps { maps: M.MapList; }
+// ----------------------------------------------------------------------------
+
+export interface PlayPageStateProps {
+  maps: M.MapList;
+  bots: M.BotList;
+}
 
 export interface PlayPageDispatchProps {
   lobbyDispatchProps: LobbyDispatchProps;
@@ -45,7 +50,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = {};
 
   public render() {
-    const { maps } = this.props;
+    const { maps, bots } = this.props;
     return (
       <div className={styles.playPageContainer}>
         <div className={styles.playPage}>
@@ -68,7 +73,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
               <Config maps={maps} setConfig={this.setConfig} />
             </div>
             <div className={styles.localBotSelectorContainer}>
-              <LocalBotSelector />
+              <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
             </div>
           </div>
         </div>
@@ -77,6 +82,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   }
 
   private setConfig = (config: WeakConfig) => this.setState({ config });
+  private addLocalBot = (id: M.BotId) => console.log('add bot');
 }
 
 export default connect<PlayPageStateProps, PlayPageDispatchProps>(
