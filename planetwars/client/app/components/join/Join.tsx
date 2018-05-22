@@ -2,6 +2,8 @@ import * as React from "react";
 import * as M from '../../database/models';
 import AddressForm from '../host/AddressForm';
 import { BotSelector } from "../host/BotSelector";
+import Section from '../play/Section';
+import { HorizontalInput } from "../play/Config";
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./Join.scss");
@@ -42,28 +44,31 @@ export class Join extends React.Component<JoinProps, JoinState> {
     const { address, token } = this.state;
 
     return (
-      <div>
-        <AddressForm address={address} onChange={this.setAddress} />
+      <Section header={"Join Game"}>
+        <div>
+          <AddressForm address={address} onChange={this.setAddress} />
 
-        <div className={styles.inputField}>
-          <span className={styles.joinTitle}>Token</span>
-          <input type="text" onChange={this.setToken} />
+          <HorizontalInput id="token" label="Token">
+            <input type="text" onChange={this.setToken} />
+          </HorizontalInput>
+
+          <BotSelector
+            bots={this.props.allBots}
+            value={this.state.botId}
+            onChange={this.setBotId}
+          />
+          <div className="control">
+            <button
+              className="button is-primary"
+              type="button"
+              onClick={this.joinGame}
+              disabled={!this.isValid()}
+            >
+            Join
+            </button>
+          </div>
         </div>
-
-        <BotSelector
-          bots={this.props.allBots}
-          value={this.state.botId}
-          onChange={this.setBotId}
-        />
-
-        <button
-          type="button"
-          onClick={this.joinGame}
-          disabled={!this.isValid()}
-        >
-          Join
-        </button>
-      </div>
+      </Section>
     );
   }
 
