@@ -82,7 +82,6 @@ export abstract class MapView extends React.Component<MapViewProps> {
     const x = d3.scaleLinear()
       .domain([min.x, max.x])
       .range([0 + maxRadius, width - maxRadius]);
-
     const y = d3.scaleLinear()
       .domain([min.y, max.y])
       .range([0 + maxRadius, height - maxRadius]);
@@ -92,8 +91,8 @@ export abstract class MapView extends React.Component<MapViewProps> {
     this.root = this.svg.append('g').attr('class', 'root-yo');
 
     const radius = d3.scaleLinear()
-    .domain([0, 40])
-    .range([maxRadius, minRadius]);
+      .domain([0, 40])
+      .range([maxRadius, minRadius]);
 
     this.root.append('g')
       .attr('class', 'circles-yo')

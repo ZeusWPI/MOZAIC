@@ -14,10 +14,10 @@
       width: 50%;
       flex-grow: 1;
       height: 100%;
-      margin-right: 5px;
+      padding-right: 5px;
       .lobbyContainer {
         width: 100%;
-        height: 75%;
+        height: 100%;
         margin-bottom: 1px;
       }
       .serverControlsContainer {
@@ -30,13 +30,16 @@
       height: 100%;
       width: 50%;
       display: flex;
+      overflow-y: scroll;
       flex-direction: column;
       .configContainer {
         width: 100%;
         height: 50%; // TODO Solve this decently
+        min-height: 350px;
         margin-bottom: 1px;
       }
       .localBotSelectorContainer {
+        min-height: 150px;
         flex-grow: 1;
         height: 50%;
         width: 100%;
@@ -55,6 +58,7 @@
   }
   .verticalGrowAndScroll {
     flex: 1 1 auto;
+    width: 100%;
     overflow-y: scroll;
     display: flex;
     flex-direction: column;
@@ -95,103 +99,39 @@
   }
 }
 
-.serverControls {
-  width: 100%;
-  height: 100%;
+.localBotSelector {
   flex: 1 1 auto;
+  width: 100%;
   display: flex;
-  justify-content: space-around;
-  align-items: center;
-  .controlButton {
-    color: $text;
+  flex-direction: column;
+  overflow-y: scroll;
+  .localBot {
+    margin: 5px 0;
+    padding: 8px;
+    width: 100%;
+    border-left: 4px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    .botInfo {
+      flex: 1 1 auto;
+      width: 80%;
+      .botCommand {
+        color: $tertiary;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
+    .botAdder {
+      min-width: 50px;
+      height: 100%;
+    }
+    &.selected {
+      border-left: 4px solid $primary;
+    }
+    &:hover {
+      background-color: $altBackground;
+    }
   }
 }
-
-// .playPage {
-//   display: flex;
-//   width: 100%;
-//   height: 100%;
-//   flex-direction: column;
-//   overflow-y: auto;
-//   .botsListPane {
-//     width: 100%;
-//     height: 50%;
-//     .botsHeader {
-//       @extend %header;
-//     }
-//     .newBot {
-//       &:hover {
-//         background: lighten($background, 10);
-//       }
-//       padding: 20px 20px;
-//       text-align: center; // background: lighten($background, 5);
-//     }
-//     .botListItem {
-//       padding: 20px 20px;
-//       .name {
-//         font-size: 1.5rem;
-//       }
-//       .command {
-//         color: $tertiary;
-//       }
-//       p {
-//         white-space: nowrap;
-//         overflow: hidden;
-//         text-overflow: ellipsis;
-//       }
-//       &:hover {
-//         background: lighten($background, 5);
-//       }
-//       &.selected {
-//         border-left: solid 2px $secondary;
-//         background: lighten($background, 10);
-//       }
-//     }
-//   }
-//   .matchSetupPane {
-//     width: 100%;
-//     height: 50%;
-//     display: flex;
-//     justify-content: space-between;
-//     flex-direction: column;
-//     .selectedBotsOverview {
-//       display: flex;
-//       width: 100%;
-//       justify-content: center;
-//       align-items: center;
-//       .botTag {
-//         padding: 0 20px;
-//         span {
-//           background: lighten($background, 10);
-//           border-radius: 5px;
-//           font-size: 1.2rem;
-//           padding: 10px 10px;
-//         }
-//       }
-//     }
-//     .playButton {
-//       width: 100%;
-//       display: flex;
-//       padding: 50px 0;
-//       justify-content: center;
-//       input {
-//         width: 60%;
-//         font-size: 4rem;
-//         padding: 0;
-//         height: 100px;
-//         border: 2px solid $secondary;
-//       }
-//     }
-//     .options {
-//       padding: 0 10%;
-//     }
-//     .setupHeader {
-//       @extend %header;
-//     }
-//   }
-// }
-// %header {
-//   text-align: center;
-//   background: $secondary;
-//   font-size: 1.5rem;
-// }

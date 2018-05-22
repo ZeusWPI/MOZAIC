@@ -1,32 +1,31 @@
 import * as React from 'react';
 
-import Section from './Section';
-
 // tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+const styles = require('./Lobby.scss');
 
 export interface ServerControlProps {
-  launchDisabled: boolean;
+  serverRunning: boolean;
   startServer(): void;
+  stopServer(): void;
   launchGame(): void;
 }
 
 export class ServerControls extends React.Component<ServerControlProps> {
   public render() {
-    const { launchDisabled, startServer, launchGame } = this.props;
+    const { serverRunning, startServer, launchGame, stopServer } = this.props;
     return (
       <div className={styles.serverControls}>
         <button
           className={styles.controlButton + ' button is-outlined is-primary is-large'}
-          onClick={startServer}
+          onClick={(serverRunning) ? stopServer : startServer}
         >
-          Start server
+          {(serverRunning) ? 'Stop server' : 'Start server'}
         </button>
 
         <button
           className={styles.controlButton + ' button is-outlined is-primary is-large'}
           onClick={launchGame}
-          disabled={launchDisabled}
+          disabled={!serverRunning}
         >
           Launch game
         </button>

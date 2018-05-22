@@ -1,7 +1,7 @@
 import { Address } from "./index";
 import * as tmp from 'tmp';
 import * as fs from 'fs';
-import { execFile } from 'child_process';
+import { execFile, ChildProcess } from 'child_process';
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
@@ -20,6 +20,7 @@ export interface PlayerData {
 export class ServerRunner {
     private params: ServerParams;
     private serverPath: string;
+    private serverProcess?: ChildProcess;
 
     private _onExit = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
@@ -49,6 +50,14 @@ export class ServerRunner {
         process.on('error', (err: Error) => {
             this._onError.dispatch(err);
         });
+
+        this.serverProcess = process;
+    }
+
+    public killServer() {
+        if (this.serverProcess) {
+            this.serverProcess.kill();
+        }
     }
 
     public get onExit() {
@@ -67,7 +76,7 @@ export class ServerRunner {
         return file.name;
     }
 
-    private configJSON() : ServerConfigJSON {
+    private configJSON(): ServerConfigJSON {
         const { ctrl_token, address } = this.params;
         const logFile = tmp.fileSync().name;
 
@@ -89,7 +98,7 @@ export interface GameConfigJSON {
     map_file: string;
     max_turns: number;
 }
-  
+
 export interface BotConfigJSON {
     name: string;
     token: string;
