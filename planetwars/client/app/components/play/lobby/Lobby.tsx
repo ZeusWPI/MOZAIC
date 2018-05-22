@@ -1,3 +1,5 @@
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';
 
@@ -9,7 +11,7 @@ import * as Lib from '../types';
 import Section from '../Section';
 import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
-import { SlotManager, Slot } from './SlotManager';
+import { SlotManager, Slot, BoundInternalSlot } from './SlotManager';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -50,6 +52,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   public state: LobbyState = { type: 'configuring', slots: [] };
 
   private server?: PwClient.MatchRunner;
+  private localClients: { [key: string /*Token*/]: PwClient.Client } = {};
 
   // This is where the magic state juggling happens
   public static getDerivedStateFromProps(nextProps: LobbyProps, prevState: LobbyState): LobbyState {
@@ -78,6 +81,16 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     return prevState;
   }
 
+  public componentWillUnmount() {
+    console.log('play page did unmount');
+    this.killServer();
+  }
+
+  public componentDidCatch(error: Error) {
+    console.log('component did catch', error);
+    this.killServer();
+  }
+
   public render() {
     const { slots, config } = this.state;
     const { port, host } = Lib.getWeakAddress(config);
@@ -102,19 +115,72 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     );
   }
 
-  private connectLocalBot = (token: M.Token) => {
-    console.log('connect local bot');
+  private connectLocalBot = (slot: BoundInternalSlot, playerNum: number) => {
+    if (!this.validifyRunning(this.state)) { return; }
+    if (!this.server) { return; }
+
+    const { config: { address } } = this.state;
+    const { bot, token: stringToken } = slot;
+    const { name, command: fullCommand } = bot;
+
+    const [command, ...args] = stringArgv(bot.command);
+    const botConfig = { name, command, args };
+    const logger = new PwClient.Logger('sdf');
+    const token = new Buffer(stringToken);
+
+    this.server.addPlayer(token).then((number) => {
+      const params = { token, address, number, botConfig, logger };
+      const client = new PwClient.Client(params);
+      client.onError.subscribe((err) => {
+        console.log('client error (todo)');
+        const _slots = Lobby.slotManager.disconnectLocal(playerNum);
+        this.setState({ slots: _slots });
+      });
+      client.onExit.subscribe(() => {
+        console.log('client ext (todo)');
+        const _slots = Lobby.slotManager.disconnectLocal(playerNum);
+        this.setState({ slots: _slots });
+      });
+      client.run();
+      this.localClients[stringToken] = client;
+      const slots = Lobby.slotManager.connectLocal(playerNum, number);
+      this.setState({ slots });
+      console.log('connected local bot');
+    });
+
   }
 
-  private removeBot = (token: M.Token) => {
-    console.log('kick bot');
+  private removeBot = (token: M.Token, playerNum: number, clientId: number) => {
+    if (!this.validifyRunning(this.state)) { return; }
+    if (this.server) {
+      delete this.localClients[token];
+      this.server.removePlayer(clientId);
+      const slots = Lobby.slotManager.removeBot(playerNum);
+      this.setState({ slots });
+      this.server.removePlayer(clientId);
+      console.log('kicked connected bot');
+      return;
+    }
+  }
+
+  private validifyRunning(s: LobbyState): s is RuningState {
+    if (!this.server || this.state.type !== 'running') {
+      alert('Something went wrong (state is wrong or server is missing).');
+      return false;
+    }
+    return true;
+  }
+
+  private validifyConfiguring(s: LobbyState): s is ConfiguringState {
+    if (this.server || this.state.type !== 'configuring') {
+      alert('Something went wrong (state is wrong or server is already running).');
+      return false;
+    }
+    return true;
   }
 
   private startServer = () => {
-    if (this.server || this.state.type !== 'configuring') {
-      alert('Something went wrong.');
-      return;
-    }
+    if (!this.validifyConfiguring(this.state)) { return; }
 
     const config = Lib.validateConfig(this.state.config);
     if (config.type === 'error') {
@@ -134,9 +200,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         console.log('test proc');
         const slots = this.state.slots;
         this.server = server;
-        slots.forEach((slot, i) => {
-          server.addPlayer(new Buffer(slot.token));
-        });
         this.setState({ type: 'running', config, slots });
       })
       .catch((err) => {
@@ -147,10 +210,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   private stopServer = () => {
-    if (this.server) {
-      this.server.shutdown();
-      console.log('server killed');
-    }
+    this.killServer();
     if (this.state.type !== 'configuring') {
       const { slots, config } = this.state;
       this.setState({ type: 'configuring', slots, config: Lib.downGrade(config) });
@@ -191,6 +251,14 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         alert('Failed to start match. See console for info.');
         console.log(err);
       });
+  }
+
+  private killServer() {
+    if (this.server) {
+      this.server.shutdown();
+      this.server = undefined;
+      console.log('server killed');
+    }
   }
 
   private resetState() {
