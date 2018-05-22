@@ -86,8 +86,18 @@ export class SlotManager {
 
   public setMatchRunner(matchRunner: MatchRunner) {
     this.matchRunner = matchRunner;
+
+    matchRunner.onPlayerConnected.subscribe((clientId) => {
+      this.connectClient(clientId);
+    });
+
+    matchRunner.onPlayerDisconnected.subscribe((clientId) => {
+      this.disconnectClient(clientId);
+    });
+
     this.slotList.forEach((token) => {
       const slot = this.slots[token];
+      this.registerSlot(slot);
       this.notifyListeners();
     });
   }
@@ -106,7 +116,7 @@ export class SlotManager {
       this.matchRunner.addPlayer(token).then((clientId) => {
         slot.clientId = clientId;
         this.clients[clientId] = slot;
-        this.onSlotChange(this);
+        this.notifyListeners();
       });
     }
   }
@@ -117,7 +127,7 @@ export class SlotManager {
       this.matchRunner.removePlayer(slot.clientId).then(() => {
         delete this.clients[clientId];
         delete this.slots[slot.token];
-        this.onSlotChange(this);
+        this.notifyListeners();
       });
     }
   }
