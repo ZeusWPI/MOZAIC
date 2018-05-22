@@ -43,7 +43,7 @@ export class Config extends React.Component<ConfigProps> {
   }
   private selectMap = (mapId: M.MapId) => this.setState({ mapId }, this.callBack);
   private setMax = (maxTurns: number) => this.setState({ maxTurns }, this.callBack);
-  private setServer = (serverAddress: string) => this.setState({ serverAddress }, this.callBack);
+  private setServer = (host: string) => this.setState({ host }, this.callBack);
   private setPort = (port: number) => this.setState({ port }, this.callBack);
   private callBack = () => this.props.setConfig(this.state);
 }
