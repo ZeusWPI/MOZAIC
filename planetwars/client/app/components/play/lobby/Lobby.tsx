@@ -140,7 +140,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const [command, ...args] = stringArgv(bot.command);
     const number = playerNum;
     const botConfig = { name, command, args };
-    const logger = new PwClient.Logger('sdf');
+    const logger = this.server.logger;
     const token = new Buffer(stringToken);
 
     // callbacks should be set on the current slotmanager,
