@@ -2,7 +2,7 @@ import * as React from 'react';
 import { clipboard } from 'electron';
 
 import * as M from '../../../database/models';
-import { Slot, SlotStatus } from './SlotManager';
+import { Slot, SlotStatus, BoundInternalSlot } from './SlotManager';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -11,15 +11,20 @@ export interface SlotListProps {
   slots: Slot[];
   port?: number;
   host?: string;
-  connectLocalBot(id: M.BotId): void;
-  removeBot(token: M.Token): void;
+  connectLocalBot(slot: BoundInternalSlot, playerNum: number): void;
+  removeBot(token: M.Token, playerNum: number, clientId: number): void;
 }
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
-    const { slots } = this.props;
+    const { slots, connectLocalBot, removeBot } = this.props;
     const slotItems = slots.map((slot, index) => (
       <li key={index} className={styles.slotElementWrapper}>
-        <SlotElement slot={slot} index={index} {...this.props} />
+        <SlotElement
+          slot={slot}
+          index={index}
+          connectLocalBot={connectLocalBot}
+          removeBot={removeBot}
+        />
       </li>),
     );
     return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
@@ -31,16 +36,19 @@ export interface SlotElementProps {
   index: number;
   host?: string;
   port?: number;
-  connectLocalBot(id: M.BotId): void;
-  removeBot(token: M.Token): void;
+  connectLocalBot(id: BoundInternalSlot, playerNum: number): void;
+  removeBot(token: M.Token, playerNum: number, clientId: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
 
   public render() {
-    const { slot: { token, status, name }, index } = this.props;
-    const kickBot = () => this.props.removeBot(token);
+    const { slot, index } = this.props;
+    const { token, status, name } = slot;
+
+    const kickBot = () => this.props.removeBot(token, index, (slot as any).clientId); // TODO: Fix
     const clss = (color: string) => `button is-outlined ${color}`;
-    const connectLocal = () => this.props.connectLocalBot(token);
+
+    const connectLocal = () => this.props.connectLocalBot(slot as BoundInternalSlot, index);
 
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>
@@ -61,7 +69,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
     );
 
     const conn = (
-      <button key='conn' className={clss('is-success')}>
+      <button key='conn' className={clss('is-success')} onClick={connectLocal}>
         Connect
       </button>
     );
