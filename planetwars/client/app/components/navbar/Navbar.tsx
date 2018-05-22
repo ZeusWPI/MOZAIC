@@ -39,7 +39,6 @@ export class Navbar extends React.Component<NavProps, NavState> {
         div(`.navbar-start`, [
           h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
           h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
-          h(Link, `.navbar-item`, { to: "/host" }, ["Host"]),
           h(Link, `.navbar-item`, { to: "/join" }, ["Join"]),
           h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
         ]),
