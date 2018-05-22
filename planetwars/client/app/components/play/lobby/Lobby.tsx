@@ -140,7 +140,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const botConfig = { name, command, args };
 
     const client = new PwClient.Client({
-      token: Buffer.from(stringToken, 'utf-8'),
+      token: Buffer.from(stringToken, 'hex'),
       address: config.address,
       number: playerNum + 1, // number is 1-based
       botConfig,

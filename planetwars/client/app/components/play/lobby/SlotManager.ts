@@ -112,7 +112,7 @@ export class SlotManager {
 
   private registerSlot(slot: Slot) {
     if (this.matchRunner) {
-      const token = Buffer.from(slot.token, 'utf-8');
+      const token = Buffer.from(slot.token, 'hex');
       this.matchRunner.addPlayer(token).then((clientId) => {
         slot.clientId = clientId;
         this.clients[clientId] = slot;
