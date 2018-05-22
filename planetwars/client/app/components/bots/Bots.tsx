@@ -119,7 +119,6 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
   }
 
   public render() {
-    console.log(this.state.name);
     const onNameInput = (evt: any) => this.setState({ name: evt.target.value });
     const name = (
       <div className='field'>
@@ -167,9 +166,9 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
 
     const buttons = (
       <div className='control'>
-        <input className='button' type='submit' value='Save' />
+        <input className='button is-primary' type='submit' value='Save' />
         <button
-          className='button'
+          className='button is-primary'
           type='button'
           onClick={handleRemove}
         >
@@ -184,7 +183,7 @@ export class BotEditor extends React.Component<BotEditorProps, BotEditorState> {
     };
 
     return (
-      <form className={styles.botEditor} onSubmit={onSubmit}>
+      <form className={styles.botEditor + ' is-primary'} onSubmit={onSubmit}>
         {name}
         {command}
         {buttons}

@@ -35,47 +35,35 @@ Promise.config({
 
 log.info('[STARTUP] Promise configured');
 
-type BreakType = 'fatal' | 'map' | 'bots';
-class Breaker extends Error {
-  constructor(public type: string, public error: Error) {
-    super();
-    console.log(error);
-  }
-}
-
 log.info('[STARTUP] Init app render');
-
 initializeDirs()
   .then(() => log.info('[STARTUP] Initialized dirs'))
   .then(() => bindToStore(store))
   .then(() => log.info('[STARTUP] Bound to store'))
-  .then(renderApp).catch((err) => Promise.reject(new Breaker('fatal', err)))
-  .then(() => log.info('[STARTUP] Finished rendering app'))
-  .then(populateMaps).catch((err) => Promise.reject(new Breaker('map', err)))
-  .then(populateBots).catch((err) => Promise.reject(new Breaker('bots', err)))
-  .catch((br: Breaker) => {
-    switch (br.type) {
-      case 'fatal': {
-        log.error(`[FATAL] ${br.error} ${br.stack}`);
-        renderCustom(h(FatalErrorView, { error: br.error }));
-        break;
-      }
-      case 'map': {
-        log.error(br.error, br.stack);
-        alert(`[POPULATE] Loading some default maps failed with ${br.error}`);
-        break;
-      }
-      case 'bots': {
-        log.error(br.error, br.stack);
-        alert(`[POPULATE] Loading some default bots failed with ${br.error}`);
-        break;
-      }
-      default: {
-        log.error(br, br.stack);
-        alert(`Unexpected error: ${br}`);
-        break;
-      }
-    }
+  .then(() => Promise.try(() => {
+    renderApp();
+    log.info('[STARTUP] App rendered');
+    Promise
+      .try(populateMaps)
+      .catch((err) => {
+        log.error('[POPULATE] Loading some default maps failed.', err, err.stack);
+        alert(`[POPULATE] Loading some default maps failed with ${err}`);
+      });
+
+    Promise
+      .try(populateBots)
+      .catch((err) => {
+        log.error('[POPULATE] Loading some default bots failed.', err, err.stack);
+        alert(`[POPULATE] Loading some default bots failed with ${err.error}`);
+      });
+  }))
+  .catch((error) => {
+    log.error('[FATAL]', error, error.stack);
+    renderCustom(h(FatalErrorView, { error }));
+  })
+  .catch((err) => {
+    log.error('[FATAL]', err, err.stack);
+    alert(`Unexpected error: ${err}`);
   });
 
 function renderApp() {

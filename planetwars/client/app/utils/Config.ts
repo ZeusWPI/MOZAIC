@@ -1,6 +1,8 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
 import { remote } from 'electron';
+import { v4 as uuidv4 } from 'uuid';
+
 import { Match, MapId, MatchId } from '../database/models';
 
 const appPath = (process.env.NODE_ENV === 'development') ?
@@ -16,8 +18,13 @@ export class Config {
   private static _configs = 'configs';
   private static _resources = p.resolve(appPath, 'resources');
 
+  // Base path for user data
   public static base = p.resolve(remote.app.getPath('userData'));
+
+  // Path were we keep binaries such as the matchrunner
   public static bin = p.resolve(appPath, Config._bin);
+
+  // Data folder in user data for maps, bots, matches, ...
   public static data = p.resolve(Config.base, Config._data);
 
   public static bots = p.resolve(Config.data, Config._bots);
@@ -44,6 +51,10 @@ export class Config {
     [p.resolve(Config._staticBots, 'simple1.py')]: 'SimpleBot 1',
     [p.resolve(Config._staticBots, 'simple2.py')]: 'SimpleBot 2',
   };
+
+  public static generateMatchId(): MatchId {
+    return uuidv4();
+  }
 
   public static matchLogPath(matchId: MatchId): string {
     return p.resolve(Config.matches, matchId + '.json');

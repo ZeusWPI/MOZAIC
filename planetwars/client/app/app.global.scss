@@ -6,26 +6,22 @@
 // Custom Variables
 $background: #201f1d;
 $altBackground: lighten($background, 5);
-$primary: #ffffff;
+$primary: #de8d47;
 $secondary: #de8d47;
 $tertiary: #868685;
 
 // Bulma variables
 $body-background-color: $background;
-$text: $primary;
+$text: #ffffff;
 $dark: $background;
+$red: #DE4B47;
+$green: #9ECE43;
 
 $navbar-background-color: $background;
 $navbar-item-hover-background-color: lighten($background, 5);
-$navbar-item-color: $primary;
+$navbar-item-color: $text;
 
-$link: $secondary;
-$link-active: $secondary;
-$link-hover: $secondary;
-
-$menu-item-hover-color: $secondary;
-$menu-item-active-color: $secondary;
-
+$link: $primary;
 @import "~bulma/bulma";
 
 //------------------------------------------------------------------------------
@@ -80,14 +76,13 @@ body {
     right: -10px;
     font-size: 0.6em;
     font-family: Tahoma;
-    background: $secondary;
-    color: $primary;
     width: 18px;
     height: 18px;
     text-align: center;
     line-height: 18px;
     border-radius: 50%;
     box-shadow: 0 0 1px #333;
+    background: $primary;
   }
 
   .notificationBell[notification-count="0"]:after {
@@ -100,8 +95,6 @@ body {
   color: $background;
 }
 
-.button {
-  background-color: $background;
-  color: $primary;
-  border-color: $primary;
+.button+.is-primary+.is-outlined {
+  color: $text !important;
 }

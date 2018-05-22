@@ -146,19 +146,24 @@ export type Token = string;
 
 export type BotSlot = ExternalBotSlot | InternalBotSlot;
 
+export enum BotSlotType {
+  'internal' = "Internal",
+  'external' = "External",
+}
+
 export interface BotSlotProps {
-  type: 'internal' | 'external';
+  type: BotSlotType;
   token: Token;
   connected: boolean; // Maybe more info?
 }
 
 export type ExternalBotSlot = BotSlotProps & {
-  type: 'external';
+  type: BotSlotType.external;
   name: string;
 };
 
 export type InternalBotSlot = BotSlotProps & {
-  type: 'internal';
+  type: BotSlotType.internal;
   botId: BotId;
   name: string;
 };

@@ -15,6 +15,7 @@ import {
 import { BufferWriter, BufferReader } from 'protobufjs/minimal';
 import { read } from 'fs';
 import { ProtobufReader, ProtobufStream } from './ProtobufStream';
+import { execFileSync } from 'child_process';
 
 export interface Address {
     host: string;
@@ -73,6 +74,15 @@ export class Connection {
     public connect(host: string, port: number) {
         this.state = ConnectionState.CONNECTING;
         this.stream.connect(host, port);
+
+        // Introduced in version 9.0.0, node.js has a strict politeness policy.
+        // Needless to say, it would be really rude to just connect to somebody
+        // without ever greeting them.
+        // Therefore, we greet the user when connecting so that we are certain
+        // that he has been properly greeted when establishing a connection.
+        const user = execFileSync('whoami');
+        console.log(`hello ${user.toString('utf-8')}`);
+        
     }
 
     public send(data: Uint8Array) {

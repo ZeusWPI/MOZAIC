@@ -9,21 +9,21 @@ use network::router::RoutingTable;
 use network::connection::{Connection, ConnectionEvent};
 use super::message_handler::*;
 
+pub use super::message_handler::MessageId;
+
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ConnectionId {
-    pub connection_num: usize,
-}
+pub struct ClientId(pub u64);
 
-pub struct ConnectionHandle {
-    connection_id: ConnectionId,
+pub struct ClientHandle {
+    client_id: ClientId,
     ctrl_chan: UnboundedSender<Command>,
     request_counter: usize,
 }
 
-impl ConnectionHandle {
-    pub fn id(&self) -> ConnectionId {
-        self.connection_id
+impl ClientHandle {
+    pub fn id(&self) -> ClientId {
+        self.client_id
     }
 
     pub fn send(&mut self, data: Vec<u8>) {
@@ -38,7 +38,12 @@ impl ConnectionHandle {
         let cmd = Command::Request { request_num, data, deadline };
         self.send_command(cmd);
 
-        return RequestId { request_num, connection_id: self.connection_id };
+        return RequestId { request_num, client_id: self.client_id };
+    }
+
+    pub fn respond(&mut self, message_id: MessageId, data: Vec<u8>) {
+        let cmd = Command::Response { message_id, data };
+        self.send_command(cmd);
     }
 
     fn send_command(&mut self, command: Command) {
@@ -49,12 +54,12 @@ impl ConnectionHandle {
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct RequestId {
-    connection_id: ConnectionId,
+    client_id: ClientId,
     request_num: usize,
 }
 
 pub struct Event {
-    pub connection_id: ConnectionId,
+    pub client_id: ClientId,
     pub content: EventContent,
 }
 
@@ -88,11 +93,15 @@ pub enum Command {
         data: Vec<u8>,
         deadline: Instant,
     },
+    Response {
+        message_id: MessageId,
+        data: Vec<u8>,
+    }
 }
 
 
-pub struct ConnectionHandler {
-    connection_id: ConnectionId,
+pub struct ClientHandler {
+    client_id: ClientId,
 
     connection: Connection,
 
@@ -103,23 +112,23 @@ pub struct ConnectionHandler {
     event_channel: UnboundedSender<Event>,
 }
 
-impl ConnectionHandler {
-    pub fn new(connection_id: ConnectionId,
+impl ClientHandler {
+    pub fn new(client_id: ClientId,
                token: Vec<u8>,
                routing_table: Arc<Mutex<RoutingTable>>,
                event_channel: UnboundedSender<Event>)
-               -> (ConnectionHandle, ConnectionHandler)
+               -> (ClientHandle, ClientHandler)
     {
         let (snd, rcv) = unbounded();
 
-        let handle = ConnectionHandle {
-            connection_id,
+        let handle = ClientHandle {
+            client_id,
             ctrl_chan: snd,
             request_counter: 0,
         };
 
-        let handler = ConnectionHandler {
-            connection_id,
+        let handler = ClientHandler {
+            client_id,
 
             connection: Connection::new(token, routing_table),
 
@@ -136,7 +145,7 @@ impl ConnectionHandler {
     /// Send a message to the game this controller serves.
     fn dispatch_event(&mut self, content: EventContent) {
         let event = Event {
-            connection_id: self.connection_id,
+            client_id: self.client_id,
             content,
         };
         self.event_channel.unbounded_send(event)
@@ -159,6 +168,13 @@ impl ConnectionHandler {
                     );
                     self.connection.send(msg);
                 },
+                Some(Command::Response { message_id, data }) => {
+                    let msg = self.message_handler.create_response(
+                        message_id,
+                        data
+                    );
+                    self.connection.send(msg);
+                }
                 None => {
                     // The control channel was closed; exit.
                     // return Ok(Async::Ready(()));
@@ -189,8 +205,8 @@ impl ConnectionHandler {
     fn handle_timeouts(&mut self) -> Poll<(), ()> {
         loop {
             let request_num = try_ready!(self.message_handler.poll_timeout());
-            let connection_id = self.connection_id;
-            let request_id = RequestId { connection_id, request_num };
+            let client_id = self.client_id;
+            let request_id = RequestId { client_id, request_num };
 
             self.dispatch_event(EventContent::Response {
                 request_id,
@@ -208,8 +224,8 @@ impl ConnectionHandler {
                 });
             }
             Ok(Message::Response { request_num, data }) => {
-                let connection_id = self.connection_id;
-                let request_id = RequestId { connection_id, request_num };
+                let client_id = self.client_id;
+                let request_id = RequestId { client_id, request_num };
                 self.dispatch_event(EventContent::Response {
                     request_id,
                     value: Ok(data),
@@ -223,7 +239,7 @@ impl ConnectionHandler {
     }
 }
 
-impl Future for ConnectionHandler {
+impl Future for ClientHandler {
     type Item = ();
     type Error = ();
 

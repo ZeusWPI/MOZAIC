@@ -1,5 +1,6 @@
 import * as React from 'react';
 import * as M from '../../database/models';
+import { HorizontalInput } from '../play/Config';
 
 export interface BotSelectorProps {
   value?: M.BotId;
@@ -23,11 +24,32 @@ export const BotSelector: React.SFC<BotSelectorProps> = (props) => {
   };
 
   return (
-    <select value={props.value} onChange={onChange}>
-      <option value="">Select Bot</option>
-      {options}
-    </select>
+    <HorizontalOption id="bot" label="Bot">
+      <select value={props.value} onChange={onChange}>
+        <option value="">Select Bot</option>
+        {options}
+      </select>
+    </HorizontalOption>
   );
 };
 
 export default BotSelector;
+
+export interface OptionProps { id: string; label: string; }
+export const HorizontalOption: React.SFC<OptionProps> = (props) => {
+  return (
+    <div className="field is-horizontal">
+      <div className="field-label">
+        <label htmlFor={props.id} className="label">{props.label}</label>
+      </div>
+      <div className="field-body">
+        <div className="field">
+          <div className="control">
+            <div className="select">
+              {props.children}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>);
+};

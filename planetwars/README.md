@@ -23,7 +23,8 @@ Every turn, all player owned planets create one extra ship. This is done before 
 
 ### Communication
 
-Your bot is started with its name as its first parameter, that way you'll know which player you are in the input you receive. You'll receive that information in newline-separated JSON, and we expect it back the same way.
+You'll receive input on stdin as newline-separated JSON, and we expect your commands written to stdout in the same fashion.
+In the game states you receive, you'll always be player number one.
 
 ## Gamestate
 

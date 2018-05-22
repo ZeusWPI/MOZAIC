@@ -46,11 +46,7 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 
-use serde::de::DeserializeOwned;
-
 use oneshot_server::{MatchDescription, OneshotServer};
-
-type FullMatchDescription = MatchDescription<planetwars::Config>;
 
 // Load the config and start the game.
 fn main() {
@@ -60,7 +56,7 @@ fn main() {
         std::process::exit(1)
     }
 
-    let match_description: FullMatchDescription = match parse_config(Path::new(&args[1])) {
+    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
@@ -77,8 +73,8 @@ fn main() {
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config<C: DeserializeOwned>(path: &Path)
-    -> Result<MatchDescription<C>, Box<Error>>
+pub fn parse_config(path: &Path)
+    -> Result<MatchDescription, Box<Error>>
 {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
@@ -88,7 +84,7 @@ pub fn parse_config<C: DeserializeOwned>(path: &Path)
     file.read_to_string(&mut contents)?;
 
     println!("Parsing config");
-    let config: MatchDescription<C> = serde_json::from_str(&contents)?;
+    let config: MatchDescription = serde_json::from_str(&contents)?;
 
     println!("Config parsed succesfully");
     Ok(config)
