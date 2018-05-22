@@ -49,6 +49,8 @@ export interface PlayPageState {
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = { localBots: [] };
 
+  private lobby: Lobby;
+
   public render() {
     const { maps, bots } = this.props;
     const { config, localBots } = this.state;
@@ -63,8 +65,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
               <Lobby
                 config={config}
                 maps={maps}
-                localBots={localBots}
-                removeLocalBot={this.removeLocalBot}
+                ref={(inst) => this.lobby = inst!}
                 {...this.props.lobbyDispatchProps}
               />
             </div>
@@ -85,15 +86,10 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   }
 
   private setConfig = (config: WeakConfig) => this.setState({ config });
-  private addLocalBot = (id: M.BotId) => {
-    const localBots = [...this.state.localBots, this.props.bots[id]];
-    this.setState({ localBots });
-  }
 
-  private removeLocalBot = (index: number) => {
-    const localBots = this.state.localBots;
-    localBots.splice(index, 1);
-    this.setState({ localBots: [...localBots] });
+  private addLocalBot = (id: M.BotId) => {
+    const bot = this.props.bots[id];
+    this.lobby.addLocalBot(bot);
   }
 
 }

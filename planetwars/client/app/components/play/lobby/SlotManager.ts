@@ -11,6 +11,7 @@ export interface SlotProps {
   status: SlotStatus;
   token: M.Token;
   name: string;
+  willBeKicked: boolean;
 }
 
 export type UnboundSlot = SlotProps & {
@@ -20,14 +21,12 @@ export type UnboundSlot = SlotProps & {
 export type BoundInternalSlot = SlotProps & {
   status: 'boundInternal';
   bot: M.Bot;
-  localBotIndex: number;
 };
 
 export type ConnectedInternalSlot = SlotProps & {
   status: 'connectedInternal';
   bot: M.Bot;
   clientId: number;
-  localBotIndex: number;
 };
 
 export type ExternalSlot = SlotProps & {
@@ -42,31 +41,54 @@ export class SlotManager {
 
   constructor() { this.slots = this.genSlots(2); }
 
-  public update(localBots: M.Bot[], config?: WeakConfig): Slot[] {
+  public update(config?: WeakConfig): Slot[] {
     if (!config) { return this.slots; }
     if (!config.selectedMap) { return this.slots; }
 
     const map = this.maps[config.selectedMap];
 
-    const biggest = Math.max(map.slots, localBots.length);
-    if (this.slots.length < biggest) {
-      const newSlots = this.genSlots(biggest - this.slots.length);
-      // TODO: Don't just concat, cut off unbounded slots < bigger
-      this.slots = this.slots.concat(newSlots);
+    if (this.slots.length < map.slots) {
+      const newSlots = this.genSlots(map.slots - this.slots.length);
+      return this.slots.concat(newSlots);
+    } else {
+      return this.slots;
     }
+  }
 
-    localBots.forEach((bot, localBotIndex) => {
-      const { token } = this.slots[localBotIndex] as UnboundSlot | BoundInternalSlot;
-      const { name, uuid } = bot;
-      const status = 'boundInternal' as 'boundInternal';
-      const newSlot = { status, token, name, bot, localBotIndex };
-      this.slots[localBotIndex] = newSlot;
-    });
+  public updateRunning(config: StrongConfig): Slot[] {
+    const map = this.maps[config.map];
+    if (this.slots.length < map.slots) {
+      const newSlots = this.genSlots(map.slots - this.slots.length);
+      return this.slots.concat(newSlots);
+    } else {
+      this.slots.forEach((slot, i) => {
+
+      });
+    }
     return this.slots;
   }
 
-  public updateRunning(localBots: M.Bot[], config: StrongConfig): Slot[] {
-    return this.slots;
+  public bindLocalBot(bot: M.Bot): Slot[] {
+
+    const updateSlot = (slot: Slot, i: number) => {
+      const { name, uuid } = bot;
+      const { token } = slot;
+      const status = 'boundInternal' as 'boundInternal';
+      const willBeKicked = (i >= this.slots.length);
+      this.slots[i] = { status, name, bot, token, willBeKicked };
+      return [...this.slots];
+    };
+
+    for (let index = 0; index < this.slots.length; index++) {
+      const slot = this.slots[index];
+      if (slot.status === 'unbound') {
+        return updateSlot(slot, index);
+      }
+    }
+
+    this.slots.push(this.genSlots(1)[0]);
+    const lastIndex = this.slots.length - 1;
+    return updateSlot(this.slots[lastIndex], lastIndex);
   }
 
   public connectLocal(playerNum: number, clientId: number): Slot[] {
@@ -116,6 +138,7 @@ export class SlotManager {
       status: 'unbound' as 'unbound',
       token: generateToken(),
       name: new Chance().name({ prefix: true, nationality: 'it' }),
+      willBeKicked: false,
     }));
   }
 }

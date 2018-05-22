@@ -11,23 +11,25 @@ export interface SlotListProps {
   slots: Slot[];
   port?: number;
   host?: string;
+  isServerRunning: boolean;
   connectLocalBot(slot: BoundInternalSlot, playerNum: number): void;
-  unbindLocalBot(token: M.Token, playerNum: number, localBotIndex: number): void;
-  removeLocalBot(token: M.Token, playerNum: number, clientId: number, localBotIndex: number): void;
+  unbindLocalBot(token: M.Token, playerNum: number): void;
+  removeLocalBot(token: M.Token, playerNum: number, clientId: number): void;
   removeExternalBot(token: M.Token, playerNum: number, clientId: number): void;
 }
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
-    const { slots, connectLocalBot, removeLocalBot, removeExternalBot, unbindLocalBot } = this.props;
+    const { slots } = this.props;
     const slotItems = slots.map((slot, index) => (
       <li key={index} className={styles.slotElementWrapper}>
         <SlotElement
           slot={slot}
           index={index}
-          connectLocalBot={connectLocalBot}
-          removeLocalBot={removeLocalBot}
-          removeExternalBot={removeExternalBot}
-          unbindLocalBot={unbindLocalBot}
+          connectLocalBot={this.props.connectLocalBot}
+          removeLocalBot={this.props.removeLocalBot}
+          removeExternalBot={this.props.removeExternalBot}
+          unbindLocalBot={this.props.unbindLocalBot}
+          isServerRunning={this.props.isServerRunning}
         />
       </li>),
     );
@@ -40,9 +42,10 @@ export interface SlotElementProps {
   index: number;
   host?: string;
   port?: number;
+  isServerRunning: boolean;
   connectLocalBot(id: BoundInternalSlot, playerNum: number): void;
-  unbindLocalBot(token: M.Token, playerNum: number, localBotIndex: number): void;
-  removeLocalBot(token: M.Token, playerNum: number, clientId: number, localBotIndex: number): void;
+  unbindLocalBot(token: M.Token, playerNum: number): void;
+  removeLocalBot(token: M.Token, playerNum: number, clientId: number): void;
   removeExternalBot(token: M.Token, playerNum: number, clientId: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
@@ -54,12 +57,12 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const kickBot = () => {
       if (slot.status === 'connectedInternal') {
         const _slot = slot as ConnectedInternalSlot;
-        this.props.removeLocalBot(token, index, _slot.clientId, _slot.localBotIndex); // TODO: Fix
+        this.props.removeLocalBot(token, index, _slot.clientId); // TODO: Fix
       }
 
       if (slot.status === 'boundInternal') {
         const _slot = slot as BoundInternalSlot;
-        this.props.unbindLocalBot(token, index, _slot.localBotIndex);
+        this.props.unbindLocalBot(token, index);
       }
 
       if (slot.status === 'external') {

@@ -19,8 +19,7 @@ const styles = require('./Lobby.scss');
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
   config?: Lib.WeakConfig;
-  localBots: M.Bot[];
-  removeLocalBot(index: number): void;
+  // removeLocalBot(index: number): void;
 };
 
 export interface LobbyDispatchProps {
@@ -56,11 +55,11 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   // This is where the magic state juggling happens
   public static getDerivedStateFromProps(nextProps: LobbyProps, prevState: LobbyState): LobbyState {
-    const { config, localBots, maps } = nextProps;
+    const { config, maps } = nextProps;
     Lobby.slotManager.maps = maps;
 
     if (prevState.type === 'configuring') {
-      const newSlots = Lobby.slotManager.update(localBots, config);
+      const newSlots = Lobby.slotManager.update(config);
       const slots = [...newSlots];
       return { type: 'configuring', config, slots };
     }
@@ -72,7 +71,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         // alert(`Config is not valid. ${msg || address || map || maxTurns}`);
         return { ...prevState };
       }
-      const newSlots = Lobby.slotManager.updateRunning(localBots, vConfig);
+      const newSlots = Lobby.slotManager.updateRunning(vConfig);
       const slots = [...newSlots];
       return { type: 'running', slots, config: vConfig };
     }
@@ -105,6 +104,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
             unbindLocalBot={this.unbindLocalBot}
             removeLocalBot={this.removeLocalBot}
             removeExternalBot={this.removeExternalBot}
+            isServerRunning={this.state.type === 'running'}
           />
           <ServerControls
             startServer={this.startServer}
@@ -115,6 +115,11 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         </div>
       </Section>
     );
+  }
+
+  public addLocalBot(bot: M.Bot) {
+    const slots = Lobby.slotManager.bindLocalBot(bot);
+    this.setState({ slots });
   }
 
   private connectLocalBot = (slot: BoundInternalSlot, playerNum: number) => {
@@ -153,11 +158,10 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   }
 
-  private removeLocalBot = (token: M.Token, playerNum: number, clientId: number, localBotIndex: number) => {
+  private removeLocalBot = (token: M.Token, playerNum: number, clientId: number) => {
     if (!this.validifyRunning(this.state)) { return; }
     if (this.server) {
       delete this.localClients[token];
-      this.props.removeLocalBot(localBotIndex);
       this.server.removePlayer(clientId);
 
       const slots = Lobby.slotManager.removeBot(playerNum);
@@ -176,8 +180,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     }
   }
 
-  private unbindLocalBot = (token: M.Token, playerNum: number, localBotIndex: number) => {
-    this.props.removeLocalBot(localBotIndex);
+  private unbindLocalBot = (token: M.Token, playerNum: number) => {
     const slots = Lobby.slotManager.removeBot(playerNum);
     this.setState({ slots });
   }
@@ -263,6 +266,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.server.startGame(gameConf)
       // This gets procced when the game has actually started
       .then(() => {
+        console.log('started match');
         this.props.saveMatch();
         this.resetState();
       })
