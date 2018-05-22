@@ -85,9 +85,15 @@ impl Future for OneshotServer {
         }));
 
         let addr = self.config.address.parse().unwrap();
-        let listener = network::tcp::Listener::new(&addr, routing_table.clone()).unwrap();
-        tokio::spawn(listener);
-
-        return Ok(Async::Ready(()));
+        match network::tcp::Listener::new(&addr, routing_table.clone()) {
+            Ok(listener) => {
+                tokio::spawn(listener);
+                return Ok(Async::Ready(()));
+            }
+            Err(err) => {
+                eprintln!("server failed: {}", err);
+                ::std::process::exit(1);
+            }
+        };
     }
 }
