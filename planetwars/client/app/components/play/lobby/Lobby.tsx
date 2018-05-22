@@ -124,7 +124,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const { config, maps } = props;
     if (!config || !config.mapId) { return; }
 
-
     const map = maps[config.mapId];
     this.slotManager.update(map);
     this.syncSlots();
@@ -177,9 +176,9 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       this.server.removePlayer(clientId);
       this.slotManager.disconnectClient(clientId);
 
-      const slots = this.slotManager.removeBot(playerNum);
-      this.setState({ slots });
+      this.slotManager.removeBot(playerNum);
       this.server.removePlayer(clientId);
+      this.syncSlots();
       console.log('kicked connected bot');
       return;
     }
@@ -190,8 +189,8 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     if (this.server) {
       this.server.removePlayer(clientId);
       this.slotManager.disconnectClient(clientId);
-      const slots = this.slotManager.removeBot(playerNum);
-      // TOD: HLEP
+      this.slotManager.removeBot(playerNum);
+      this.syncSlots();
     }
   }
 
@@ -268,7 +267,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   private launchGame = () => {
-
     if (!this.server || !this.validifyRunning(this.state)) {
       alert('Something went wrong');
       return;
@@ -356,7 +354,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.updateSlots(this.props);
 
     // reset to configuring
-    const config = this.props.config;
     this.setState({ type: 'configuring' });
   }
 }
