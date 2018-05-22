@@ -44,7 +44,12 @@ export class ServerRunner {
         process.stderr.on('data', (data: Buffer) => {
             console.log(data.toString('utf-8'))
         });
-        process.on('close', () => {
+        process.on('close', (exitCode) => {
+            if (exitCode !== 0) {
+                const err = new Error(`server exited with code ${exitCode}`);
+                this._onError.dispatch(err);
+            }
+            // TODO: should exit and error be exclusive or not?
             this._onExit.dispatch();
         });
         process.on('error', (err: Error) => {
