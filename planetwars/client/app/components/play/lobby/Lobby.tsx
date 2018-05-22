@@ -30,17 +30,19 @@ export interface LobbyDispatchProps {
   onPlayerDisconnectDuringMatch(id: number): void;
 }
 
-export type LobbyState = ConfiguringState | RuningState;
+export type LobbyState = ConfiguringState | RunningState;
 
 export interface ConfiguringState {
   type: 'configuring';
   slots: Slot[];
 }
 
-export interface RuningState {
+export interface RunningState {
   type: 'running';
   slots: Slot[];
   config: Lib.StrongConfig;
+  matchId: M.MatchId;
+  logFile: string;
 }
 
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
@@ -198,7 +200,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     this.setState({ slots });
   }
 
-  private validifyRunning(s: LobbyState): s is RuningState {
+  private validifyRunning(s: LobbyState): s is RunningState {
     if (!this.server || this.state.type !== 'running') {
       alert('Something went wrong (state is wrong or server is missing).');
       return false;
@@ -241,7 +243,14 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         this.server.onPlayerDisconnected.subscribe((clientId) => {
           this.slotManager.connectClient(clientId);
         });
-        this.setState({ type: 'running', config, slots });
+        const newState: RunningState = {
+          type: 'running',
+          config,
+          slots,
+          matchId,
+          logFile,
+        };
+        this.setState(newState);
       })
       .catch((err) => {
         this.stopServer();
