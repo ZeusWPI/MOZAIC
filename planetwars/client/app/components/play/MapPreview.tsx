@@ -76,7 +76,7 @@ export abstract class MapView extends React.Component<MapViewProps> {
     const { data, width, height } = this.props;
     const { min, max, planets } = data;
 
-    const minRadius = 1;
+    const minRadius = 2;
     const maxRadius = 10;
 
     const x = d3.scaleLinear()
@@ -102,7 +102,7 @@ export abstract class MapView extends React.Component<MapViewProps> {
       .append('circle')
       .attr("cx", (p) => x(p.x))
       .attr("cy", (p) => y(p.y))
-      .attr("r", (p) => radius(this.props.data.planets.length))
+      .attr("r", (p) => Math.min(Math.max(radius(this.props.data.planets.length), minRadius), maxRadius))
       .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff")
       .classed(styles.emptyPlanet, (p) => !p.owner);
 
