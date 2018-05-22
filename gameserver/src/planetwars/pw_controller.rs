@@ -278,7 +278,7 @@ impl Lobby {
                 if self.players.contains_key(&event.client_id) {
                     let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerConnected {
-                        player_id: (client_num + 1) as u64
+                        player_id: client_num as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
@@ -288,7 +288,7 @@ impl Lobby {
                 if self.players.contains_key(&event.client_id) {
                     let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerDisconnected {
-                        player_id: (client_num + 1) as u64
+                        player_id: client_num as u64
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
