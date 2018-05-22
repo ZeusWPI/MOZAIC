@@ -1,9 +1,7 @@
 import * as React from 'react';
 
-import Section from './Section';
-
 // tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+const styles = require('./Lobby.scss');
 
 export interface ServerControlProps {
   serverRunning: boolean;

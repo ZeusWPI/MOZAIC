@@ -1,23 +1,25 @@
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';
-import { clipboard } from 'electron';
+
 import { Chance } from 'chance';
 
-import { Config } from '../../utils/Config';
-import { generateToken } from '../../utils/GameRunner';
-import * as M from '../../database/models';
+import { Config } from '../../../utils/Config';
+import { generateToken } from '../../../utils/GameRunner';
+import * as M from '../../../database/models';
 
-import * as Lib from './types';
-// import { WeakConfig, StrongConfig, validateConfig, exportConfig, ValidationError, hasErrored } from './types';
-import Section from './Section';
+import * as Lib from '../types';
+import Section from '../Section';
+import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
 
 // tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+const styles = require('./Lobby.scss');
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
   config?: Lib.WeakConfig;
+  localBots: M.Bot[];
+  removeLocalBot(index: number): void;
 };
 
 export interface LobbyDispatchProps {
@@ -77,7 +79,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     return Array(amount).fill(1).map((_, index) => ({
       status: 'unbound' as 'unbound',
       token: generateToken(),
-      // name: chance.name(),
       name: new Chance().name({ prefix: true, nationality: 'it' }),
     }));
   }
@@ -88,7 +89,13 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     return (
       <Section header={"Lobby"}>
         <div className={styles.lobby}>
-          <SlotList slots={slots} port={port} host={host} />
+          <SlotList
+            slots={slots}
+            port={port}
+            host={host}
+            connectLocalBot={this.connectLocalBot}
+            removeBot={this.removeBot}
+          />
           <ServerControls
             startServer={this.startServer}
             stopServer={this.stopServer}
@@ -98,6 +105,14 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         </div>
       </Section>
     );
+  }
+
+  private connectLocalBot = (token: M.Token) => {
+    console.log('connect local bot');
+  }
+
+  private removeBot = (token: M.Token) => {
+    console.log('kick bot');
   }
 
   private startServer = () => {
@@ -185,92 +200,5 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private resetState() {
     throw new Error('Unimplemented');
-  }
-
-}
-
-// ----------------------------------------------------------------------------
-// Slot List
-// ----------------------------------------------------------------------------
-
-export interface SlotListProps {
-  slots: Slot[];
-  port?: number;
-  host?: string;
-}
-export class SlotList extends React.Component<SlotListProps> {
-  public render() {
-    const { slots } = this.props;
-    const slotItems = slots.map((slot, index) => (
-      <li key={index} className={styles.slotElementWrapper}>
-        <SlotElement slot={slot} index={index} {...this.props} />
-      </li>),
-    );
-    return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
-  }
-}
-
-export interface SlotElementProps {
-  slot: Slot;
-  index: number;
-  host?: string;
-  port?: number;
-}
-export class SlotElement extends React.Component<SlotElementProps> {
-
-  public render() {
-    const { slot: { token, status, name }, index } = this.props;
-
-    const clss = (color: string) => `button is-outlined ${color}`;
-    const kick = (
-      <button key='kick' className={clss('is-danger')}>Kick player</button>
-    );
-    const copy = (
-      <button key='copy' className={clss('is-light')} onClick={this.copyToken}>Copy</button >
-    );
-    const copyFull = (
-      <button key='copyFull' className={clss('is-light')} onClick={this.copyFull}>Copy Full</button>
-    );
-    const conn = (
-      <button key='conn' className={clss('is-success')}>Connect</button>
-    );
-
-    const tools = {
-      unbound: [copy, copyFull],
-      boundInternal: [kick, conn],
-      connectedInternal: [kick],
-      external: [kick],
-    };
-
-    return (
-      <div className={`${styles.slotElement} ${this.statusToClass(status)}`}>
-        <h1>Player {index + 1}</h1>
-        <p>{token}</p>
-        <p>Status: {status}</p>
-        <p>Name: {name}</p>
-        <div>
-          {tools[status]}
-        </div>
-      </div >);
-  }
-
-  private copyToken = (): void => {
-    clipboard.writeText(JSON.stringify(this.props.slot.token));
-  }
-
-  private copyFull = (): void => {
-    const { slot: { token, status, name }, index, port, host } = this.props;
-    const data = { token, name, port, host };
-    clipboard.writeText(JSON.stringify(data));
-  }
-
-  private statusToClass(status: string): string {
-    switch (status) {
-      case 'unbound': return styles.unbound;
-      case 'boundInternal': return styles.filled;
-      case 'connectedInternal': return styles.connected;
-      case 'external': return styles.connected;
-      default: return styles.typo;
-    }
   }
 }

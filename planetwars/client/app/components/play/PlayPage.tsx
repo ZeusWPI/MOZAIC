@@ -6,9 +6,8 @@ import { GState } from '../../reducers';
 
 import { WeakConfig } from './types';
 import { Config } from './Config';
-import { Lobby, LobbyDispatchProps } from './Lobby';
+import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
-import { ServerControls } from './ServerControls';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -44,13 +43,15 @@ export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 export interface PlayPageState {
   config?: WeakConfig;
+  localBots: M.Bot[];
 }
 
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
-  public state: PlayPageState = {};
+  public state: PlayPageState = { localBots: [] };
 
   public render() {
     const { maps, bots } = this.props;
+    const { config, localBots } = this.state;
     return (
       <div className={styles.playPageContainer}>
         <div className={styles.playPage}>
@@ -60,8 +61,10 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
             <div className={styles.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
-                config={this.state.config}
+                config={config}
                 maps={maps}
+                localBots={localBots}
+                removeLocalBot={this.removeLocalBot}
                 {...this.props.lobbyDispatchProps}
               />
             </div>
@@ -82,7 +85,17 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   }
 
   private setConfig = (config: WeakConfig) => this.setState({ config });
-  private addLocalBot = (id: M.BotId) => console.log('add bot');
+  private addLocalBot = (id: M.BotId) => {
+    const localBots = [...this.state.localBots, this.props.bots[id]];
+    this.setState({ localBots });
+  }
+
+  private removeLocalBot = (index: number) => {
+    const localBots = this.state.localBots;
+    localBots.splice(index, 1);
+    this.setState({ localBots: [...localBots] });
+  }
+
 }
 
 export default connect<PlayPageStateProps, PlayPageDispatchProps>(

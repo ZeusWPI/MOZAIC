@@ -112,6 +112,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
     const { maps, selectedMap, selectMap } = this.props;
 
     const options = maps.map((map, i) => (
+      // tslint:disable-next-line:jsx-no-lambda
       <MapPreview selectedMap={map} selectMap={() => selectMap(map.uuid)} selected={map.uuid === selectedMap} />
     ));
     return (
