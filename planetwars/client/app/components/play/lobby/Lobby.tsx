@@ -113,15 +113,19 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     }
   }
 
+  // sync slotmanager slots with state slots
+  private syncSlots() {
+    this.setState({ slots: [...this.slotManager.slots]});
+  }
+
   private updateSlots(props: LobbyProps) {
     const { config, maps } = props;
     if (!config || !config.mapId) { return; }
 
-    console.log('update');
 
     const map = maps[config.mapId];
     this.slotManager.update(map);
-    this.setState({ slots: [...this.slotManager.slots] });
+    this.syncSlots();
   }
 
   private connectLocalBot = (slot: BoundInternalSlot, playerNum: number) => {
@@ -138,23 +142,27 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const logger = new PwClient.Logger('sdf');
     const token = new Buffer(stringToken);
 
+    // callbacks should be set on the current slotmanager,
+    // not the one belonging to 'this'. (It changes when a match is launched).
+    const slotManager = this.slotManager;
+
     this.server.addPlayer(token).then((clientId) => {
       const params = { token, address, number, botConfig, logger };
       const client = new PwClient.Client(params);
       client.onError.subscribe((err) => {
         console.log('client error (todo)');
-        const _slots = this.slotManager.disconnectLocal(playerNum);
-        this.setState({ slots: _slots });
+        const _slots = slotManager.disconnectLocal(playerNum);
+        this.syncSlots();
       });
       client.onExit.subscribe(() => {
         console.log('client ext (todo)');
-        const _slots = this.slotManager.disconnectLocal(playerNum);
-        this.setState({ slots: _slots });
+        slotManager.disconnectLocal(playerNum);
+        this.syncSlots();
       });
       client.run();
       this.localClients[stringToken] = client;
-      const slots = this.slotManager.connectLocal(playerNum, clientId);
-      this.setState({ slots });
+      slotManager.connectLocal(playerNum, clientId);
+      this.syncSlots();
       console.log('connected local bot');
     });
 
