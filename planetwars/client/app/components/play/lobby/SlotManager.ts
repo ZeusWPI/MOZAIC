@@ -3,114 +3,143 @@ import { Chance } from 'chance';
 import * as M from '../../../database/models';
 import { generateToken } from '../../../utils/GameRunner';
 import { WeakConfig, StrongConfig } from '../types';
+import { MatchRunner } from 'mozaic-client';
 
-export type Slot = UnboundSlot | BoundInternalSlot | ConnectedInternalSlot | ExternalSlot;
-export type SlotStatus = 'unbound' | 'boundInternal' | 'connectedInternal' | 'external';
-
-export interface SlotProps {
-  status: SlotStatus;
-  token: M.Token;
+export interface Slot {
   name: string;
+  token: M.Token;
+  connected: boolean;
+  clientId?: number;
+  bot?: M.Bot;
 }
 
-export type UnboundSlot = SlotProps & {
-  status: 'unbound';
-};
-
-export type BoundInternalSlot = SlotProps & {
-  status: 'boundInternal';
-  bot: M.Bot;
-};
-
-export type ConnectedInternalSlot = SlotProps & {
-  status: 'connectedInternal';
-  bot: M.Bot;
-  clientId: number;
-};
-
-export type ExternalSlot = SlotProps & {
-  clientId: number;
-  status: 'external';
-};
+export type Slots = { [token: string]: Slot };
+export type Clients = { [clientId: number]: Slot};
 
 export class SlotManager {
+  public matchRunner?: MatchRunner;
   public connectedClients: Set<number> = new Set();
-  public slots: Slot[] = [];
+  public slots: Slots;
+  public slotList: string[];
+  public clients: Clients;
+
+  private onSlotChange: (self: SlotManager) => void;
+
+  constructor(callback: (self: SlotManager) => void) {
+    this.slotList = [];
+    this.slots = {};
+    this.clients = {};
+    this.onSlotChange = callback;
+  }
 
   public update(map: M.MapMeta) {
-    while (this.slots.length < map.slots) {
-      this.slots.push(this.createSlot());
+    while (this.slotList.length < map.slots) {
+      const slot = this.createSlot();
+      this.slotList.push(slot.token);
     }
+
+    while (this.slotList.length > map.slots) {
+      const token = this.slotList.pop()!;
+      const slot = this.slots[token];
+      this.unregisterSlot(slot);
+    }
+    this.notifyListeners();
   }
 
   public bindLocalBot(bot: M.Bot) {
-    // find first unbound slot
+    // find first unused slot
     let i = 0;
-    while (i < this.slots.length && this.slots[i].status !== 'unbound') {
+    while (i < this.slotList.length
+      && (this.slots[this.slotList[i]].bot
+          || this.slots[this.slotList[i]].connected)
+    ) {
       i += 1;
     }
-    // create a new unbound slot when none was found
-    if (i === this.slots.length) {
-      this.slots.push(this.createSlot());
-    }
+    // dont add more bots than slots
+    if (i === this.slotList.length) { return; }
 
-    this.slots[i] = {
-      ...this.slots[i] as UnboundSlot,
-      status: 'boundInternal' as 'boundInternal',
-      bot,
-    };
+    const slot = this.slots[this.slotList[i]];
+    slot.bot = bot;
+    slot.name = bot.name;
+    this.notifyListeners();
   }
 
   public connectClient(clientId: number) {
     this.connectedClients.add(clientId);
+    this.clients[clientId].connected = true;
+    this.notifyListeners();
   }
 
   public disconnectClient(clientId: number) {
     this.connectedClients.delete(clientId);
+    this.clients[clientId].connected = false;
+    this.notifyListeners();
   }
 
-  public connectLocal(playerNum: number, clientId: number): Slot[] {
-    const slot = this.slots[playerNum];
-    if (!this.verifyBoundInternal(slot)) { return this.slots; }
-    this.slots[playerNum] = { ...slot, clientId, status: 'connectedInternal' };
-    return [...this.slots];
+  public removeBot(playerNum: number) {
+    const oldSlot = this.slots[this.slotList[playerNum]];
+    this.unregisterSlot(oldSlot);
+    const newSlot = this.createSlot();
+    this.slotList[playerNum] = newSlot.token;
+    this.notifyListeners();
   }
 
-  public removeBot(playerNum: number): Slot[] {
-    const slot = this.slots[playerNum];
-    this.slots[playerNum] = this.createSlot();
-    return [...this.slots];
+  public setMatchRunner(matchRunner: MatchRunner) {
+    this.matchRunner = matchRunner;
+
+    matchRunner.onPlayerConnected.subscribe((clientId) => {
+      this.connectClient(clientId);
+    });
+
+    matchRunner.onPlayerDisconnected.subscribe((clientId) => {
+      this.disconnectClient(clientId);
+    });
+
+    this.slotList.forEach((token) => {
+      const slot = this.slots[token];
+      this.registerSlot(slot);
+      this.notifyListeners();
+    });
   }
 
-  public disconnectLocal(playerNum: number): Slot[] {
-    const slot = this.slots[playerNum];
-    if (!this.verifyConnectedInternal(slot)) { return this.slots; }
-
-    this.slots[playerNum] = { ...slot, status: 'boundInternal' };
-    return [...this.slots];
+  public getSlots(): Slot[] {
+    return this.slotList.map((token) => this.slots[token]);
   }
 
-  private verifyBoundInternal(slot: Slot): slot is BoundInternalSlot {
-    this.assert(slot, 'boundInternal');
-    return true;
+  private notifyListeners() {
+    this.onSlotChange(this);
   }
 
-  private verifyConnectedInternal(slot: Slot): slot is BoundInternalSlot {
-    this.assert(slot, 'connectedInternal');
-    return true;
+  private registerSlot(slot: Slot) {
+    if (this.matchRunner) {
+      const token = Buffer.from(slot.token, 'hex');
+      this.matchRunner.addPlayer(token).then((clientId) => {
+        slot.clientId = clientId;
+        this.clients[clientId] = slot;
+        this.notifyListeners();
+      });
+    }
   }
 
-  private assert(slot: Slot, status: SlotStatus): void | never {
-    if (slot.status !== status) {
-      throw new Error('We can\'t program.');
+  private unregisterSlot(slot: Slot) {
+    if (this.matchRunner && slot.clientId) {
+      const clientId = slot.clientId;
+      this.matchRunner.removePlayer(slot.clientId).then(() => {
+        delete this.clients[clientId];
+        delete this.slots[slot.token];
+        this.notifyListeners();
+      });
     }
   }
 
   private createSlot(): Slot {
-    return {
-      status: 'unbound' as 'unbound',
-      token: generateToken(),
+    const slot = {
       name: new Chance().name({ prefix: true, nationality: 'it' }),
+      token: generateToken(),
+      connected: false,
     };
+    this.slots[slot.token] = slot;
+    this.registerSlot(slot);
+    return slot;
   }
 }
