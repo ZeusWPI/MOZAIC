@@ -121,7 +121,7 @@ export function runMatch() {
 
     const playerConfigs = players.map((slot, idx) => {
       let botConfig;
-      if (slot.type === 'internal') {
+      if (slot.type === M.BotSlotType.internal) {
         const botData = state.bots[slot.botId];
         const argv = stringArgv(botData.command);
         botConfig = {

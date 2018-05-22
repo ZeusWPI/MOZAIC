@@ -89,7 +89,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
 
   private joinGame() {
     const bot: M.InternalBotSlot = {
-      type: 'internal',
+      type: M.BotSlotType.internal,
       token: this.state.token,
       botId: this.state.botId!,
       name: this.props.allBots[this.state.botId!].name,
