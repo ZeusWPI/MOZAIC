@@ -23,7 +23,7 @@ export type LobbyProps = LobbyDispatchProps & {
 };
 
 export interface LobbyDispatchProps {
-  saveMatch(): void;
+  saveMatch: (match: M.Match) => void;
   onMatchComplete(): void;
   onMatchErrored(err: Error): void;
   onPlayerReconnectedDuringMatch(id: number): void;

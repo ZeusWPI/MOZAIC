@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
+import * as A from '../../actions';
 import { GState } from '../../reducers';
 
 import { WeakConfig } from './types';
@@ -18,8 +19,10 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
-  const lobbyDispatchProps = {
-    saveMatch() { console.log('save match'); },
+  const lobbyDispatchProps: LobbyDispatchProps = {
+    saveMatch(match: M.Match) {
+      dispatch(A.saveMatch(match));
+    },
     onMatchComplete() { console.log('match complete'); },
     onMatchErrored(err: Error) { console.log('match errored', err); },
     onPlayerReconnectedDuringMatch(id: number) { console.log('player reconnected', id); },
