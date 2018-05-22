@@ -106,8 +106,9 @@ export class SlotElement extends React.Component<SlotElementProps> {
       external: [kick],
     };
 
+    const kicked = (slot.willBeKicked) ? (styles.kicked) : '';
     return (
-      <div className={`${styles.slotElement} ${this.statusToClass(status)}`}>
+      <div className={`${styles.slotElement} ${this.statusToClass(status)} ${kicked}`}>
         <h1>Player {index + 1}</h1>
         <p>{token}</p>
         <p>Status: {this.statusToFriendly(status)}</p>

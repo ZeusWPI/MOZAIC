@@ -49,9 +49,15 @@ export class SlotManager {
 
     if (this.slots.length < map.slots) {
       const newSlots = this.genSlots(map.slots - this.slots.length);
-      return this.slots.concat(newSlots);
-    } else {
+      this.slots = this.slots.concat(newSlots);
       return this.slots;
+    } else {
+      this.slots.forEach((slot, i) => {
+        if (i >= map.slots) {
+          this.slots[i].willBeKicked = true;
+        }
+      });
+      return [...this.slots];
     }
   }
 
@@ -59,13 +65,16 @@ export class SlotManager {
     const map = this.maps[config.map];
     if (this.slots.length < map.slots) {
       const newSlots = this.genSlots(map.slots - this.slots.length);
-      return this.slots.concat(newSlots);
+      this.slots = this.slots.concat(newSlots);
+      return this.slots;
     } else {
       this.slots.forEach((slot, i) => {
-
+        if (i >= map.slots) {
+          this.slots[i].willBeKicked = true;
+        }
       });
+      return [...this.slots];
     }
-    return this.slots;
   }
 
   public bindLocalBot(bot: M.Bot): Slot[] {
@@ -76,6 +85,7 @@ export class SlotManager {
       const status = 'boundInternal' as 'boundInternal';
       const willBeKicked = (i >= this.slots.length);
       this.slots[i] = { status, name, bot, token, willBeKicked };
+      console.log(slot, ...this.slots);
       return [...this.slots];
     };
 
