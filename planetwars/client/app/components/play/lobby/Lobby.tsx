@@ -102,7 +102,9 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
             port={port}
             host={host}
             connectLocalBot={this.connectLocalBot}
-            removeBot={this.removeBot}
+            unbindLocalBot={this.unbindLocalBot}
+            removeLocalBot={this.removeLocalBot}
+            removeExternalBot={this.removeExternalBot}
           />
           <ServerControls
             startServer={this.startServer}
@@ -124,11 +126,12 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const { name, command: fullCommand } = bot;
 
     const [command, ...args] = stringArgv(bot.command);
+    const number = playerNum;
     const botConfig = { name, command, args };
     const logger = new PwClient.Logger('sdf');
     const token = new Buffer(stringToken);
 
-    this.server.addPlayer(token).then((number) => {
+    this.server.addPlayer(token).then((clientId) => {
       const params = { token, address, number, botConfig, logger };
       const client = new PwClient.Client(params);
       client.onError.subscribe((err) => {
@@ -143,24 +146,40 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       });
       client.run();
       this.localClients[stringToken] = client;
-      const slots = Lobby.slotManager.connectLocal(playerNum, number);
+      const slots = Lobby.slotManager.connectLocal(playerNum, clientId);
       this.setState({ slots });
       console.log('connected local bot');
     });
 
   }
 
-  private removeBot = (token: M.Token, playerNum: number, clientId: number) => {
+  private removeLocalBot = (token: M.Token, playerNum: number, clientId: number, localBotIndex: number) => {
     if (!this.validifyRunning(this.state)) { return; }
     if (this.server) {
       delete this.localClients[token];
+      this.props.removeLocalBot(localBotIndex);
       this.server.removePlayer(clientId);
+
       const slots = Lobby.slotManager.removeBot(playerNum);
       this.setState({ slots });
       this.server.removePlayer(clientId);
       console.log('kicked connected bot');
       return;
     }
+  }
+
+  private removeExternalBot = (token: M.Token, playerNum: number, clientId: number) => {
+    if (!this.validifyRunning(this.state)) { return; }
+    if (this.server) {
+      this.server.removePlayer(clientId);
+      const slots = Lobby.slotManager.removeBot(playerNum);
+    }
+  }
+
+  private unbindLocalBot = (token: M.Token, playerNum: number, localBotIndex: number) => {
+    this.props.removeLocalBot(localBotIndex);
+    const slots = Lobby.slotManager.removeBot(playerNum);
+    this.setState({ slots });
   }
 
   private validifyRunning(s: LobbyState): s is RuningState {

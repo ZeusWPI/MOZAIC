@@ -31,6 +31,7 @@ export type ConnectedInternalSlot = SlotProps & {
 };
 
 export type ExternalSlot = SlotProps & {
+  clientId: number;
   status: 'external';
 };
 
