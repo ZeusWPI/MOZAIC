@@ -29,10 +29,6 @@ export default class Routes extends React.Component<any, any> {
             component: PlayPage,
           }),
           h(Route, {
-            path: '/host',
-            component: HostPage,
-          }),
-          h(Route, {
             path: '/bots/:bot',
             component: BotsPage,
           }),
