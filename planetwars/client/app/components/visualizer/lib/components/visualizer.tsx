@@ -7,19 +7,6 @@ import { MatchLog, GameState } from '../../../../lib/match';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
-import * as h from 'react-hyperscript';
-const {
-  div,
-  span,
-  h1,
-  button,
-  i,
-  input,
-  p,
-  svg,
-  // tslint:disable-next-line:no-var-requires
-} = require('hyperscript-helpers')(h);
-
 // tslint:disable-next-line:no-var-requires
 const Controls = require('./controls');
 // tslint:disable-next-line:no-var-requires
@@ -57,6 +44,10 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
       speed: 1,
       playing: false,
     };
+
+    this.setPlaying = this.setPlaying.bind(this);
+    this.setTurn = this.setTurn.bind(this);
+    this.setSpeed = this.setSpeed.bind(this);
   }
 
   public componentDidMount() {
@@ -80,42 +71,51 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
   }
 
   public render() {
-    const controls = div(`.${styles.control}`, [
-      h(Controls, {
-        turnNum: this.state.turnNum,
-        numTurns: this.props.matchLog.gameStates.length - 1,
-        playing: this.state.playing,
-        speed: this.state.speed,
-        setPlaying: (v: boolean) => this.setPlaying(v),
-        setTurn: (t: number) => this.setTurn(t),
-        setSpeed: (s: number) => this.setSpeed(s),
-      }),
-    ]);
+    const controls = (
+      <div className={styles.control}>
+        <Controls
+          turnNum={this.state.turnNum}
+          numTurns={this.props.matchLog.gameStates.length - 1}
+          playing={this.state.playing}
+          speed={this.state.speed}
+          setPlaying={this.setPlaying}
+          setTurn={this.setTurn}
+          setSpeed={this.setSpeed}
+        />
+      </div>
+    );
 
     if (!this.game) {
-      return div(`.${styles.visualizerRootNode}`, [
-        controls,
-      ]);
+      return (
+        <div className={styles.visualizerRootNode}>
+          {controls}
+        </div>
+      );
     }
 
-    const scoreboard = h(Scoreboard, {
-      game: this.game,
-      turnNum: this.state.turnNum,
-      playerName: this.props.playerName,
-    });
+    const scoreboard = (
+      <Scoreboard
+        game={this.game}
+        turnNum={this.state.turnNum}
+        playerName={this.props.playerName}
+      />
+    );
 
-    const renderer = h(Renderer, {
-      game: this.game,
-      turnNum: this.state.turnNum,
-      speed: this.state.speed,
-    });
+    const renderer = (
+      <Renderer
+        game={this.game}
+        turnNum={this.state.turnNum}
+        speed={this.state.speed}
+      />
+    );
 
-    return div(`.${styles.visualizerRootNode}`, [
-      controls,
-      scoreboard,
-      renderer,
-    ]);
-
+    return (
+      <div className={styles.visualizerRootNode}>
+        {controls}
+        {scoreboard}
+        {renderer}
+      </div>
+    );
   }
 
   private setTurn(num: number) {

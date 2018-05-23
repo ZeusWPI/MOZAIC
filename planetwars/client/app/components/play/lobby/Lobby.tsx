@@ -12,6 +12,7 @@ import Section from '../Section';
 import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
 import { SlotManager, Slot } from './SlotManager';
+import { PwTypes } from 'mozaic-client';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -24,7 +25,8 @@ export type LobbyProps = LobbyDispatchProps & {
 
 export interface LobbyDispatchProps {
   saveMatch: (match: M.Match) => void;
-  sendNotification: (title: string, message: string, type: M.NotificationType) => void;
+  addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry): void;
+  sendNotification(title: string, message: string, type: M.NotificationType): void;
   onMatchComplete(matchId: M.MatchId): void;
   onMatchErrored(matchId: M.MatchId, err: Error): void;
   onPlayerReconnectedDuringMatch(id: number): void;
@@ -214,6 +216,9 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         });
         this.server.onPlayerDisconnected.subscribe((clientId) => {
           slotManager.connectClient(clientId);
+        });
+        this.server.logger.onEntry.subscribe((entry) => {
+          this.props.addLogEntry(matchId, entry);
         });
 
         this.server.onComplete.subscribe(() => {

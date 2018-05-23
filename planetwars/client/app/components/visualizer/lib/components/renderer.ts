@@ -30,14 +30,16 @@ export class Renderer extends React.Component<any> {
     // this.voronoiContainer = d3.select(this.svg).append('g');
     this.setupRenderers();
     this.draw();
-
   }
 
   public componentDidUpdate(prevProps: any) {
     if (this.props.game !== prevProps.game) {
       this.setupRenderers();
+      this.draw();
     }
-    this.draw();
+    if (this.props.turnNum !== prevProps.turnNum) {
+      this.draw();
+    }
   }
 
   public render() {
@@ -111,6 +113,7 @@ export class Renderer extends React.Component<any> {
   }
 
   private draw() {
+    console.log('draw');
     const gameState = this.props.game.matchLog.gameStates[this.props.turnNum];
     const params = {
       speed: this.props.speed,
@@ -121,6 +124,6 @@ export class Renderer extends React.Component<any> {
     });
     this.planetRenderer.draw(planets, params);
     this.expeditionRenderer.draw(gameState.expeditions, params);
-    this.voronoiRenderer(this.props.turnNum, this.voronoiContainer);
+    this.voronoiRenderer(gameState, this.voronoiContainer);
   }
 }

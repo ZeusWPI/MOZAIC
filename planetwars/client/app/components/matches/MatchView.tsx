@@ -2,15 +2,49 @@ import * as React from 'react';
 
 import Visualizer from '../visualizer/Visualizer';
 import * as Comp from './types';
-import { parseLogFile, MatchLog } from '../../lib/match';
+import { emptyLog, parseLogFile, MatchLog } from '../../lib/match';
 import { LogView } from './LogView';
 import * as M from '../../database/models';
+import { Log } from '../../reducers/logs';
+import { GState } from '../../reducers/index';
+import { createSelector } from 'reselect';
+import { connect } from 'react-redux';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
 
 export interface ContainerProps {
-  match?: Comp.Match;
+  matchId?: string;
+}
+
+const matchSelector = (state: GState, ownProps: ContainerProps) => {
+  if (ownProps.matchId) {
+    return state.matches[ownProps.matchId];
+  } else {
+    return undefined;
+  }
+};
+
+const logSelector = (state: GState, ownProps: ContainerProps) => {
+  if (ownProps.matchId) {
+    return state.logs[ownProps.matchId];
+  } else {
+    return undefined;
+  }
+};
+
+const matchViewSelector = createSelector(
+  matchSelector,
+  logSelector,
+  (match, log): MatchViewProps => ({
+    match,
+    log,
+  }),
+);
+
+export interface MatchViewProps {
+  match?: M.Match;
+  log?: Log;
 }
 
 export interface MatchViewState {
@@ -20,11 +54,44 @@ export interface MatchViewState {
   };
 }
 
-export class MatchView extends React.Component<ContainerProps, MatchViewState> {
+export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
+  private matchLog?: MatchLog;
+  // how many log records were already consumed
+  private logPos = 0;
 
-  public constructor(props: ContainerProps) {
+  public constructor(props: MatchViewProps) {
     super(props);
     this.state = {};
+  }
+
+  public componentWillReceiveProps(nextProps: MatchViewProps) {
+    const currentMatch = this.props.match;
+    const nextMatch = nextProps.match;
+
+    if (!nextMatch) {
+      this.matchLog = undefined;
+      return;
+    }
+
+    const log = nextProps.log;
+    if (log) {
+      // a log is present in the redux store; use it
+
+      if (!currentMatch || currentMatch.uuid !== nextMatch.uuid) {
+        // match changed; initialize a new log
+        this.matchLog = emptyLog(nextMatch.type);
+        this.logPos = 0;
+      }
+
+      // add new entries
+      log.slice(this.logPos).forEach((entry) => {
+        this.matchLog!.addEntry(entry!);
+      });
+      this.logPos = log.size;
+    } else {
+      // no log is present in redux store; read from disk
+      this.matchLog = parseLogFile(nextMatch.logPath, nextMatch.type);
+    }
   }
 
   // Catch the visualizer throwing errors so your whole app isn't broken
@@ -45,40 +112,40 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     if (!match) {
       return null;
     }
-    switch (match.status) {
-      case M.MatchStatus.finished: {
-        const log = parseLogFile(match.logPath, match.type);
-        return (
-          <div className={styles.matchViewContainer}>
-            <MatchViewer match={match} matchLog={log} />
+
+    if (match.status === M.MatchStatus.error) {
+      return (
+        <div className={styles.matchViewContainer}>
+          <div className={styles.matchError}>
+            {match.error}
           </div>
-        );
-      }
-      case M.MatchStatus.error: {
-        return (
-          <div className={styles.matchViewContainer}>
-            <div className={styles.matchError}>
-              {match.error}
-            </div>
-          </div>
-        );
-      }
-      case M.MatchStatus.playing: {
-        return (
-          <div className={styles.matchViewContainer}>
-            <div className={styles.matchInProgress}>
-              match in progress
-            </div>
-          </div>
-        );
-      }
-      default: throw new Error('We suck at programming');
+        </div>
+      );
     }
+
+    const matchLog = this.matchLog;
+
+    if (!matchLog || matchLog.gameStates.length === 0) {
+      return (
+        <div className={styles.matchViewContainer}>
+          <div className={styles.matchInProgress}>
+            match in progress
+          </div>
+        </div>
+      );
+    }
+
+    // render the match log
+    return (
+      <div className={styles.matchViewContainer}>
+        <MatchViewer match={match} matchLog={matchLog} />
+      </div>
+    );
   }
 }
 
 interface Props {
-  match: Comp.Match;
+  match: M.Match;
   matchLog: MatchLog;
 }
 
@@ -129,10 +196,20 @@ export class MatchViewer extends React.Component<Props, State> {
   }
 
   public playerName() {
+    const { match } = this.props;
     const playerNames: { [playerNum: number]: string } = {};
-    this.props.match.players.forEach((player) => {
-      playerNames[player.number] = player.name;
-    });
+
+    switch (match.type) {
+      case M.MatchType.joined: {
+        playerNames[1] = match.bot.name;
+        break;
+      }
+      case M.MatchType.hosted: {
+        match.players.forEach((player, idx) => {
+          playerNames[idx + 1] = player.name; 
+        });
+      }
+    }
 
     return (playerNum: number) => {
       if (playerNames[playerNum]) {
@@ -168,4 +245,4 @@ const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
   }
 };
 
-export default MatchView;
+export default connect(matchViewSelector)(MatchView);

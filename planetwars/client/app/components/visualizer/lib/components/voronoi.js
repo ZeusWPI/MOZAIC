@@ -261,20 +261,23 @@ function initVoronoi(game, box) {
 
   data.polygons.forEach(p => p.initNeighbours(data));
 
-  //                                              >>>>>>>>>>>>>>>>>>MAKING TURNS
-  var turnPolygonPoints = [];
+  // we should always draw the initial state
+  var shouldDraw = true;
 
-  for (var turn of turns) {
-    var changed = false;
+  return function(turn, svg) {
+    // check whether we should redraw
     Object.values(turn.planets).forEach(p => {
       data.used[p.name] = false;
       if (data.polygonsNameMap[p.name].owner !== p.owner) {
-        changed = true;
+        // the data changed; we should redraw.
+        shouldDraw = true;
         data.polygonsNameMap[p.name].owner = p.owner;
       }
     });
-    if (changed || turnPolygonPoints.length < 1) {
-      var polygonPoints = [];
+
+    if (shouldDraw) {
+      // clear voronoi
+      svg.selectAll("*").remove();
 
       for (var i = 0; i < data.polygons.length; i++) {
         let poly = data.polygons[i];
@@ -289,83 +292,16 @@ function initVoronoi(game, box) {
             var target = [poly.getPoint(poly.polygon[si], layer)];
 
             poly.maybeStart(layer, poly.polygon[si], poly.polygon[sie], poly.owner, target, data, []);
-            polygonPoints.push({
-              target: target,
-              color: game.playerColor(poly.owner),
-            });
-          }
-        }
-      }
-
-      turnPolygonPoints.push(polygonPoints);
-    } else {
-      var last = turnPolygonPoints[turnPolygonPoints.length - 1];
-      turnPolygonPoints.push(last);
-    }
-  }
-
-  //                                              <<<<<<<<<<<<<<<<<<MAKING TURNS
-
-  return function(turn, svg) {
-    svg.selectAll("*").remove();
-    var poliess = turnPolygonPoints[turn];
-
-    var first = true;
-    var toDraw;
-    var colors = ["black", "grey", "limegreen", "green", "red", "purple", "yellow"];
-    var colorI = 0;
-
-    var startDraw = [];
-    for (var polygonWrap of poliess) {
-      svg.append("path")
-        .attr("d", getPath(polygonWrap.target)).attr("class", "polygon")
-        .style("fill", polygonWrap.color).style("opacity", 1 / sections);
-
-      startDraw.push({
-        p: polygonWrap.target[0],
-        color: polygonWrap.color
-      });
-
-      if (first) {
-        first = false;
-        toDraw = polygonWrap.target;
-      }
-      //points.forEach(p => p.draw("black", svg));
-    }
-    /*
-    for(let p of toDraw){
-      svg.append("circle").attr("cx", p[0]).attr("cy", p[1]).attr("r", 0.3).attr("fill", colors[colorI]).attr("opacity", 0.5);
-      colorI = (colorI + 1) % colors.length;
-    }
-
-    for(let p of startDraw){
-      svg.append("circle").attr("cx", p.p[0]).attr("cy", p.p[1]).attr("r", 0.3).attr("fill", p.color);
-    } */
-
-    /*
-    svg.selectAll("*").remove();
-
-    var step = merged[0];//turns.indexOf(turn)];
-    var polycount = 0;
-
-    for(let owner in step){
-      if(step.hasOwnProperty(owner)){
-        var color = color_map[owner];
-        for(var points of step[owner]){
-          if(points.length > 0){
-            polycount ++;
-            console.log("points");
-            console.log(points);
             svg.append("path")
-            .attr("d", getPath(points)).attr("class", "polygon")
-            .style("fill",color).style("opacity", 1);
-            //points.forEach(p => p.draw("black", svg));
+              .attr("d", getPath(target)).attr("class", "polygon")
+              .style("fill", game.playerColor(poly.owner))
+              .style("opacity", 1 / sections);
           }
         }
       }
     }
-    console.log("polygCOUNT "+polycount);
-    */
+    // the voronoi has been drawn.
+    shouldDraw = false;
   };
 }
 

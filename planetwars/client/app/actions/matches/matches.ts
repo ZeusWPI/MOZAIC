@@ -11,6 +11,7 @@ import { Config } from '../../utils/Config';
 import * as Notify from '../notifications';
 import * as Host from './hosting';
 import { actionCreator } from '../helpers';
+import { createLog, addLogEntry } from '..';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -54,6 +55,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
     };
 
     dispatch(saveMatch(match));
+    dispatch(createLog(match.uuid));
 
     const [command, ...args] = stringArgv(state.bots[bot.botId].command);
     const botConfig = { command, args };
@@ -80,6 +82,13 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       const body = `A remote match on map has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
+    });
+
+    logger.onEntry.subscribe((entry) => {
+      dispatch(addLogEntry({
+        matchId: match.uuid,
+        entry,
+      }));
     });
 
     runner.run();
@@ -118,6 +127,7 @@ export function runMatch() {
     const { map, players, maxTurns } = params;
     const match = createHostedMatch(params);
     dispatch(saveMatch(match));
+    dispatch(createLog(match.uuid));
 
     const playerConfigs = players.map((slot, idx) => {
       let botConfig;
@@ -169,6 +179,14 @@ export function runMatch() {
     runner.onPlayerDisconnected.subscribe((playerNumber) => {
       dispatch(Host.playerDisconnected(players[playerNumber - 1].token));
     });
+
+    runner.logger.onEntry.subscribe((entry) => {
+      dispatch(addLogEntry({
+        matchId: match.uuid,
+        entry,
+      }));
+    });
+
 
     runner.run();
     dispatch(Host.serverStarted(runner));

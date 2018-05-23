@@ -15,7 +15,7 @@ const styles = require('./Matches.scss');
 export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
 
 export interface MatchViewerStateProps {
-  selectedMatch?: Comp.Match;
+  selectedMatch?: M.MatchId;
   matches: Comp.Match[];
 }
 
@@ -38,25 +38,22 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
   }
 
   public render() {
+    console.log('RENDERING MATCHES PAGE');
     const { fatalError } = this.state;
     const { matches } = this.props;
-    const selected = this.props.selectedMatch;
+    const selectedId = this.props.selectedMatch;
 
     if (fatalError) { return this.renderError(fatalError); }
     if (matches.length === 0) { return <NoMatches />; }
-
-    // const SelectedView = () => (selected && selected.type === M.MatchType.hosted)
-    //   ? <MatchView match={selected} />
-    //   : <p> TODO </p>;
 
     return (
       <div className={styles.matchViewer}>
         <MatchList
           matches={matches}
-          selected={selected}
+          selected={selectedId}
           selectMatch={this.props.selectMatch}
         />
-        <MatchView match={selected} />
+        <MatchView matchId={selectedId} />
       </div>);
   }
 
@@ -71,7 +68,7 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
 
 interface MatchListProps {
   matches: Comp.Match[];
-  selected?: Comp.Match;
+  selected?: M.MatchId;
   selectMatch: (matchId: string) => void;
 }
 
@@ -83,7 +80,7 @@ export const MatchList: SFC<MatchListProps> = (props) => {
         <MatchListEntry
           key={match.uuid}
           match={match}
-          selected={props.selected && (props.selected.uuid === match.uuid)}
+          selected={props.selected === match.uuid}
           onClick={onClick}
         />
       </li>);

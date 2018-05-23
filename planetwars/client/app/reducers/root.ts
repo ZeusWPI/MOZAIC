@@ -22,12 +22,14 @@ import { MapsState, mapsReducer } from './maps';
 
 import { HostPageState, hostReducer } from './hostPage';
 import { NavbarState, navbarReducer } from './navbar';
+import { LogsState, logsReducer } from './logs';
 
 export interface GState {
   readonly routing: RouterState;
 
   readonly bots: BotsState;
   readonly matches: MatchesState;
+  readonly logs: LogsState;
   readonly notifications: NotificationsState;
   readonly maps: MapsState;
 
@@ -41,6 +43,7 @@ export const initialState: GState = {
   navbar: { notificationsVisible: false },
   bots: {},
   matches: {},
+  logs: {},
   maps: {},
   notifications: [],
   host: {
@@ -54,6 +57,7 @@ export const rootReducer = combineReducers<GState>({
 
   bots: botsReducer,
   matches: matchesReducer,
+  logs: logsReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
 
