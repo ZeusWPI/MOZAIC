@@ -6,7 +6,19 @@ use protobuf_codec::MessageStream;
 use protocol;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ClientId(pub u64);
+pub struct ClientId(u64);
+
+impl ClientId {
+    pub fn new(num: u64) -> ClientId {
+        ClientId(num)
+    }
+
+    pub fn as_u64(&self) -> u64 {
+        let ClientId(num) = *self;
+        return num;
+    }
+}
+
 
 pub enum RoutingMessage {
     Connecting {

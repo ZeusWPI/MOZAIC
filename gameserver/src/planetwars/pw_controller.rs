@@ -200,7 +200,7 @@ impl Lobby {
     {
         // open control connection
         let (ctrl_handle, handler) = ClientHandler::new(
-            ClientId(0),
+            ClientId::new(0),
             ctrl_token,
             routing_table.clone(),
             event_channel_handle.clone(),
@@ -224,7 +224,7 @@ impl Lobby {
     fn generate_client_id(&mut self) -> ClientId {
         let num = self.client_counter;
         self.client_counter += 1;
-        return ClientId(num);
+        return ClientId::new(num);
     }
 
     fn add_player(&mut self, connection_token: Vec<u8>) -> ClientId {
@@ -252,14 +252,14 @@ impl Lobby {
         match message.payload {
             None => { } // skip
             Some(lobby_message::Payload::AddPlayer(request)) => {
-                let ClientId(client_num) = self.add_player(request.token);
+                let client_id = self.add_player(request.token);
                 let response = lobby_message::AddPlayerResponse {
-                    client_id: client_num,
+                    client_id: client_id.as_u64(),
                 };
                 self.ctrl_handle.respond(message_id, encode_message(&response));
             }
             Some(lobby_message::Payload::RemovePlayer(request)) => {
-                self.remove_player(ClientId(request.client_id));
+                self.remove_player(ClientId::new(request.client_id));
                 let response = lobby_message::RemovePlayerResponse {};
                 self.ctrl_handle.respond(message_id, encode_message(&response));
             }
@@ -275,9 +275,8 @@ impl Lobby {
         match event.content {
             EventContent::Connected => {
                 if self.players.contains_key(&event.client_id) {
-                    let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerConnected {
-                        player_id: client_num as u64
+                        player_id: event.client_id.as_u64(),
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);
@@ -285,9 +284,8 @@ impl Lobby {
             },
             EventContent::Disconnected => {
                 if self.players.contains_key(&event.client_id) {
-                    let ClientId(client_num) = event.client_id;
                     let msg = proto::ControlMessage::PlayerDisconnected {
-                        player_id: client_num as u64
+                        player_id: event.client_id.as_u64(),
                     };
                     let serialized = serde_json::to_vec(&msg).unwrap();
                     self.ctrl_handle.send(serialized);

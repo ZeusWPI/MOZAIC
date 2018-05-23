@@ -10,7 +10,7 @@ use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
 use protobuf_codec::{MessageStream, ProtobufTransport};
-use super::router::{RoutingTable, RoutingMessage};
+use super::router::{RoutingTable, RoutingMessage, ConnectionData, ClientId};
 use protocol as proto;
 
 
@@ -60,11 +60,13 @@ impl Future for Listener {
     }
 }
 
-fn connection_success() -> proto::ConnectionResponse {
+fn connection_success(client_id: ClientId) -> proto::ConnectionResponse {
    proto::ConnectionResponse {
         response: Some(
             proto::connection_response::Response::Success(
-                proto::ConnectionSuccess {}
+                proto::ConnectionSuccess {
+                    client_id: client_id.as_u64(),
+                }
             )
         )
     }
@@ -89,7 +91,7 @@ struct Waiting {
 
 enum Action {
     Accept {
-        handle: UnboundedSender<RoutingMessage>,
+        connection_data: ConnectionData,
     },
     Refuse {
         reason: String,
@@ -109,20 +111,18 @@ impl Waiting {
         let mut table = self.routing_table.lock().unwrap(); 
         let action = match table.get(&request.token) {
             None => Action::Refuse { reason: "invalid token".to_string() },
-            Some(connection_data) => Action::Accept {
-                handle: connection_data.routing_channel,
-            },
+            Some(connection_data) => Action::Accept { connection_data },
         };
         return Ok(Async::Ready(action));
     }
 
     fn step(self, action: Action) -> HandlerState {
         match action {
-            Action::Accept { handle } => {
-                let response = connection_success();
+            Action::Accept { connection_data } => {
+                let response = connection_success(connection_data.client_id);
                 let accepting = Accepting {
                     send: self.transport.send_msg(response),
-                    handle,
+                    handle: connection_data.routing_channel,
                 };
                 return HandlerState::Accepting(accepting);
             },
