@@ -1,0 +1,241 @@
+{
+    "planets": [
+        {
+            "name": "guns1",
+            "x": -1,
+            "y": -1,
+            "ship_count": 0
+        },
+        {
+            "name": "guns2",
+            "x": -2,
+            "y": -1,
+            "ship_count": 0
+        },
+        {
+            "name": "guns3",
+            "x": -1,
+            "y": -2,
+            "ship_count": 0
+        },
+        {
+            "name": "food1",
+            "x": 1,
+            "y": -1,
+            "ship_count": 0
+        },
+        {
+            "name": "food2",
+            "x": 2,
+            "y": -1,
+            "ship_count": 0
+        },
+        {
+            "name": "food3",
+            "x": 1,
+            "y": -2,
+            "ship_count": 0
+        },
+        {
+            "name": "swords1",
+            "x": -1,
+            "y": 1,
+            "ship_count": 0
+        },
+        {
+            "name": "swords2",
+            "x": -2,
+            "y": 1,
+            "ship_count": 0
+        },
+        {
+            "name": "swords3",
+            "x": -1,
+            "y": 2,
+            "ship_count": 0
+        },
+        {
+            "name": "explosives1",
+            "x": 1,
+            "y": 1,
+            "ship_count": 0
+        },
+        {
+            "name": "explosives2",
+            "x": 2,
+            "y": 1,
+            "ship_count": 0
+        },
+        {
+            "name": "explosives3",
+            "x": 1,
+            "y": 2,
+            "ship_count": 0
+        },
+        {
+            "name": "trap-1",
+            "x": 5,
+            "y": 0,
+            "ship_count": 50
+        },
+        {
+            "name": "trap-2",
+            "x": 2.5,
+            "y": 4.330,
+            "ship_count": 50
+        },
+        {
+            "name": "trap-3",
+            "x": -2.5,
+            "y": 4.33,
+            "ship_count": 50
+        },
+        {
+            "name": "trap-4",
+            "x": -5,
+            "y": 0,
+            "ship_count": 50
+        },
+        {
+            "name": "trap-5",
+            "x": -2.5,
+            "y": -4.33,
+            "ship_count": 50
+        },
+        {
+            "name": "trap-6",
+            "x": 2.5,
+            "y": -4.33,
+            "ship_count": 50
+        },
+        {
+            "name": "plate-1",
+            "x": 25,
+            "y": 0,
+            "ship_count": 5,
+            "owner": 1
+        },
+        {
+            "name": "plate-2",
+            "x": 23.776,
+            "y": 7.752,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-3",
+            "x": 20.225,
+            "y": 14.695,
+            "ship_count": 5,
+            "owner": 5
+        },
+        {
+            "name": "plate-4",
+            "x": 14.695,
+            "y": 20.225,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-5",
+            "x": 7.725,
+            "y": 23.776,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-6",
+            "x": 0,
+            "y": 25,
+            "ship_count": 5,
+            "owner": 3
+        },
+        {
+            "name": "plate-7",
+            "x": -7.725,
+            "y": 23.776,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-8",
+            "x": -14.695,
+            "y": 20.225,
+            "ship_count": 5,
+            "owner": 7
+        },
+        {
+            "name": "plate-9",
+            "x": -20.225,
+            "y": 14.695,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-10",
+            "x": -23.776,
+            "y": 7.752,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-11",
+            "x": -25,
+            "y": 0,
+            "ship_count": 5,
+            "owner": 2
+        },
+        {
+            "name": "plate-12",
+            "x": -23.776,
+            "y": -7.752,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-13",
+            "x": -20.225,
+            "y": -14.695,
+            "ship_count": 5,
+            "owner": 6
+        },
+        {
+            "name": "plate-14",
+            "x": -14.695,
+            "y": -20.225,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-15",
+            "x": -7.725,
+            "y": -23.776,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-16",
+            "x": 0,
+            "y": -25,
+            "ship_count": 5,
+            "owner": 4
+        },
+        {
+            "name": "plate-17",
+            "x": 7.725,
+            "y": -23.776,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-18",
+            "x": 14.695,
+            "y": -20.225,
+            "ship_count": 5,
+            "owner": 8
+        },
+        {
+            "name": "plate-19",
+            "x": 20.225,
+            "y": -14.695,
+            "ship_count": 5
+        },
+        {
+            "name": "plate-20",
+            "x": 23.776,
+            "y": -7.725,
+            "ship_count": 5
+        }
+    ]
+}
+    
