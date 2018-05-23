@@ -11,7 +11,6 @@ use protocol::LobbyMessage;
 use protocol::lobby_message;
 
 use utils::client_handler::{
-    ClientId,
     MessageId,
     Event,
     EventContent,
@@ -20,7 +19,7 @@ use utils::client_handler::{
     ResponseValue,
     ResponseError,
 };
-use network::router::RoutingTable;
+use network::router::{RoutingTable, ClientId};
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};

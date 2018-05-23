@@ -109,7 +109,9 @@ impl Waiting {
         let mut table = self.routing_table.lock().unwrap(); 
         let action = match table.get(&request.token) {
             None => Action::Refuse { reason: "invalid token".to_string() },
-            Some(handle) => Action::Accept { handle },
+            Some(connection_data) => Action::Accept {
+                handle: connection_data.routing_channel,
+            },
         };
         return Ok(Async::Ready(action));
     }
