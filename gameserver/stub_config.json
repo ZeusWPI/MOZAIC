@@ -1,17 +1,5 @@
 {
-    "players": [
-        {
-            "name": "bert",
-            "token": "aaaa"
-        },
-        {
-            "name": "timp",
-            "token": "bbbb"
-        }
-    ],
-    "game_config": {
-        "map_file": "../planetwars/maps/hex.json",
-        "max_turns": 500
-    },
-    "log_file": "log.json"
+    "log_file": "log.json",
+    "ctrl_token": "abba",
+    "address": "0.0.0.0:9142"
 }
