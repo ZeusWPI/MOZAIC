@@ -1,5 +1,3 @@
-use super::PlayerId;
-
 use super::pw_rules::{PlanetWars, Planet, Expedition};
 use super::pw_protocol as proto;
 
@@ -45,9 +43,9 @@ impl<'a> Serializer<'a> {
     /// Gets the player number for given player id.
     /// Player numbers are 1-based (as opposed to player ids), They will also be
     /// rotated based on the number offset for this serializer.
-    fn player_num(&self, player_id: PlayerId) -> u64 {
+    fn player_num(&self, player_num: usize) -> u64 {
         let num_players = self.state.players.len();
-        let rotated_id = (player_id.as_usize() + self.player_num_offset) % num_players;
+        let rotated_id = (player_num + self.player_num_offset) % num_players;
         // protocol player ids start at 1
         return (rotated_id + 1) as u64;
     }

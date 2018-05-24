@@ -4,9 +4,9 @@ use std::io;
 
 use serde_json;
 
-use super::PlayerId;
 use super::pw_protocol as proto;
 use super::pw_rules::*;
+use network::ClientId;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,11 +16,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn create_game(&self, num_players: usize) -> PlanetWars {
-        let players = (0..num_players)
-            .map(|id| Player { id: PlayerId::new(id), alive: true })
+    pub fn create_game(&self, clients: Vec<ClientId>) -> PlanetWars {
+        let planets = self.load_map(clients.len());
+        let players = clients.into_iter()
+            .map(|client_id| Player { id: client_id, alive: true })
             .collect();
-        let planets = self.load_map(num_players);
         
         PlanetWars {
             players: players,
@@ -40,12 +40,13 @@ impl Config {
             .enumerate()
             .map(|(num, planet)| {
             let mut fleets = Vec::new();
-                let owner = planet.owner.and_then(|num| {
-                    // subtract one to convert from player num to player id
-                    let id = num as usize - 1;
+                let owner = planet.owner.and_then(|owner_num| {
+                    // in the current map format, player numbers start at 1.
+                    // TODO: we might want to change this.
+                    let player_num = owner_num as usize - 1;
                     // ignore players that are not in the game
-                    if id < num_players {
-                        Some(PlayerId::new(id))
+                    if player_num < num_players {
+                        Some(player_num)
                     } else { 
                         None
                     }

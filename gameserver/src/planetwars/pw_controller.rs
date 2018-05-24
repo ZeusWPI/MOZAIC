@@ -34,36 +34,9 @@ use super::pw_protocol::{
 use slog;
 use serde_json;
 
-// TODO: find a better place for this
-#[derive(PartialEq, Clone, Copy, Eq, Hash, Serialize, Deserialize, Debug)]
-pub struct PlayerId {
-    id: usize,
-}
-
-impl PlayerId {
-    pub fn new(id: usize) -> PlayerId {
-        PlayerId {
-            id
-        }
-    }
-
-    pub fn as_usize(&self) -> usize {
-        self.id
-    }
-}
-
-impl slog::KV for PlayerId {
-    fn serialize(&self,
-                 _record: &slog::Record,
-                 serializer: &mut slog::Serializer)
-                 -> slog::Result
-    {
-        serializer.emit_usize("player_id", self.as_usize())
-    }
-}
-
 pub struct Player {
-    id: PlayerId,
+    id: ClientId,
+    num: usize,
     handle: ClientHandle,
 }
 
@@ -84,7 +57,7 @@ impl Player {
     }
 
     fn serialized_state(&self, state: &PlanetWars) -> proto::State {
-        let offset = state.players.len() - self.id.as_usize();
+        let offset = state.players.len() - self.num;
         return serialize_rotated(state, offset);
     }
 
@@ -307,11 +280,11 @@ pub struct PwController {
     logger: slog::Logger,
     ctrl_handle: ClientHandle,
 
-    client_player: HashMap<ClientId, PlayerId>,
-    players: HashMap<PlayerId, Player>,
+    client_player: HashMap<ClientId, usize>,
+    players: HashMap<ClientId, Player>,
 
-    waiting_for: HashSet<PlayerId>,
-    commands: HashMap<PlayerId, ResponseValue>,
+    waiting_for: HashSet<ClientId>,
+    commands: HashMap<ClientId, ResponseValue>,
 }
 
 impl PwController {
@@ -321,7 +294,10 @@ impl PwController {
             .expect("game data not present in lobby");
         let conf: Config = serde_json::from_slice(raw_conf)
             .expect("could not parse game data");
-        let state = conf.create_game(lobby.players.len());
+
+        // TODO: we probably want a way to fixate player order
+        let client_ids = lobby.players.keys().cloned().collect();
+        let state = conf.create_game(client_ids);
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
@@ -332,10 +308,10 @@ impl PwController {
 
         let iter = lobby.players.into_iter().enumerate();
         for (player_num, (client_id, client_handle)) in iter {
-            let player_id = PlayerId::new(player_num);
-            client_player.insert(client_id, player_id);
-            players.insert(player_id, Player {
-                id: player_id,
+            client_player.insert(client_id, player_num);
+            players.insert(client_id, Player {
+                id: client_id,
+                num: player_num,
                 handle: client_handle,
             });
         }
@@ -362,7 +338,7 @@ impl PwController {
     }
 
     /// Advance the game by one turn.
-    fn step(&mut self, messages: HashMap<PlayerId, ResponseValue>) {
+    fn step(&mut self, messages: HashMap<ClientId, ResponseValue>) {
         self.state.repopulate();
         self.execute_messages(messages);
         self.state.step();
@@ -376,7 +352,7 @@ impl PwController {
         }
     }
 
-    fn outcome(&self) -> Option<Vec<PlayerId>> {
+    fn outcome(&self) -> Option<Vec<ClientId>> {
         if self.state.is_finished() {
             Some(self.state.living_players())
         } else {
@@ -401,8 +377,8 @@ impl PwController {
         let state = &self.state;
         let waiting_for = &mut self.waiting_for;
 
-        self.players.retain(|player_id, player| {
-            if state.players[player_id.as_usize()].alive {
+        self.players.retain(|_, player| {
+            if state.players[player.num].alive {
                 waiting_for.insert(player.id);
                 player.prompt(state, deadline);
                 // keep this player in the game
@@ -426,34 +402,16 @@ impl PwController {
         });
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<PlayerId, ResponseValue>) {
-        for (player_id, result) in msgs.drain() {
-            // log received message
-            // TODO: this should probably happen in the lock, so that
-            //       we have a correct timestamp.
-            match &result {
-                &Ok(ref message) => {
-                    let content = match String::from_utf8(message.clone()) {
-                        Ok(content) => content,
-                        Err(_err) => "invalid utf-8".to_string(),
-                    };
-                    info!(self.logger, "message received";
-                        player_id,
-                        "content" => content,
-                    );
-                },
-                &Err(ResponseError::Timeout) => {
-                    info!(self.logger, "timeout"; player_id);
-                }
-            }
-
-            let player_action = self.execute_action(player_id, result);
-            self.players.get_mut(&player_id).unwrap()
+    fn execute_messages(&mut self, mut msgs: HashMap<ClientId, ResponseValue>) {
+        for (client_id, result) in msgs.drain() {
+            let player_num = self.players[&client_id].num;
+            let player_action = self.execute_action(player_num, result);
+            self.players.get_mut(&client_id).unwrap()
                 .send_action(player_action);
         }
     }
 
-    fn execute_action(&mut self, player_id: PlayerId, response: ResponseValue)
+    fn execute_action(&mut self, player_num: usize, response: ResponseValue)
         -> PlayerAction
     {
         // TODO: it would be cool if this could be done with error_chain.
@@ -469,7 +427,7 @@ impl PwController {
         };
 
         let commands = action.commands.into_iter().map(|command| {
-            match self.parse_command(player_id, &command) {
+            match self.parse_command(player_num, &command) {
                 Ok(dispatch) => {
                     self.state.dispatch(&dispatch);
                     PlayerCommand {
@@ -489,7 +447,7 @@ impl PwController {
         return PlayerAction::Commands(commands);
     }
 
-    fn parse_command(&self, player_id: PlayerId, mv: &proto::Command)
+    fn parse_command(&self, player_num: usize, mv: &proto::Command)
                      -> Result<Dispatch, CommandError>
     {
         let origin_id = *self.planet_map
@@ -500,7 +458,7 @@ impl PwController {
             .get(&mv.destination)
             .ok_or(CommandError::DestinationDoesNotExist)?;
 
-        if self.state.planets[origin_id].owner() != Some(player_id) {
+        if self.state.planets[origin_id].owner() != Some(player_num) {
             return Err(CommandError::OriginNotOwned);
         }
 
@@ -525,11 +483,10 @@ impl PwController {
             EventContent::Disconnected => {},
             EventContent::Message { .. } => {},
             EventContent::Response { value, .. } => {
-                // we only send requests to players
-                let &player_id = self.client_player
-                    .get(&event.client_id).unwrap();
-                self.commands.insert(player_id, value);
-                self.waiting_for.remove(&player_id);
+                // we only send requests to players, so we do not have to check
+                // whether the responder is a player
+                self.commands.insert(event.client_id, value);
+                self.waiting_for.remove(&event.client_id);
             }
         }
 
