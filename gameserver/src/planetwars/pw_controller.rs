@@ -23,7 +23,7 @@ use network::router::{RoutingTable, ClientId};
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
-use super::pw_serializer::{serialize, serialize_rotated};
+use super::pw_serializer::serialize_state;
 use super::pw_protocol::{
     self as proto,
     PlayerAction,
@@ -41,24 +41,16 @@ pub struct Player {
 }
 
 impl Player {
-    fn prompt(&mut self, state: &PlanetWars, deadline: Instant) {
-        let s = self.serialized_state(state);
-        self.request(proto::ServerMessage::GameState(s), deadline);
-
+    fn prompt(&mut self, state: proto::State, deadline: Instant) {
+        self.request(proto::ServerMessage::GameState(state), deadline);
     }
 
-    fn send_final_state(&mut self, state: &PlanetWars) {
-        let s = self.serialized_state(state);
-        self.send(proto::ServerMessage::FinalState(s));
+    fn send_final_state(&mut self, state: proto::State) {
+        self.send(proto::ServerMessage::FinalState(state));
     }
 
     fn send_action(&mut self, action: PlayerAction) {
         self.send(proto::ServerMessage::PlayerAction(action));
-    }
-
-    fn serialized_state(&self, state: &PlanetWars) -> proto::State {
-        let offset = state.players.len() - self.num;
-        return serialize_rotated(state, offset);
     }
 
     fn request(&mut self, msg: proto::ServerMessage, deadline: Instant) {
@@ -70,7 +62,6 @@ impl Player {
         let data = serde_json::to_vec(&msg).unwrap();
         self.handle.send(data);
     }
-
 }
 
 pub struct PwMatch {
@@ -362,8 +353,7 @@ impl PwController {
 
     fn log_state(&mut self) {
         // TODO: add turn number
-        info!(self.logger, "step"; serialize(&self.state));
-        let serialized_state = serialize(&self.state);
+        let serialized_state = serialize_state(&self.state);
         let message = proto::ControlMessage::GameState(serialized_state);
         let serialized = serde_json::to_vec(&message).unwrap();
         self.ctrl_handle.send(serialized);
@@ -371,6 +361,7 @@ impl PwController {
 
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
+        let serialized = serialize_state(&self.state);
 
         // these borrows are required so that the retain closure
         // does not have to borrow self (which would create a lifetime conflict)
@@ -380,11 +371,11 @@ impl PwController {
         self.players.retain(|_, player| {
             if state.players[player.num].alive {
                 waiting_for.insert(player.id);
-                player.prompt(state, deadline);
+                player.prompt(serialized.clone(), deadline);
                 // keep this player in the game
                 return true;
             } else {
-                player.send_final_state(state);
+                player.send_final_state(serialized.clone());
                 // this player is dead, kick him!
                 return false;
             }
@@ -393,10 +384,10 @@ impl PwController {
 
     // TODO: ewwwww dup
     fn finish_game(&mut self) {
-        let state = &self.state;
+        let serialized = serialize_state(&self.state);
 
         self.players.retain(|_player_id, player| {
-            player.send_final_state(state);
+            player.send_final_state(serialized.clone());
             // the game is over, we are kicking everyone.
             return false;
         });
