@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package mozaic.protocol;
+
+// A log message is one record in a MOZAIC log. MOZAIC aims to implement
+// distributed logging, having each component in the system log the information
+// it has. For example, logging the error stream a bot produces will be the
+// responsibility of the client running the bot. This way, we can generate
+// detailed logs without generating lots of network bandwidth.
+// The different log components can then be merged to get the full match log.
+message LogMessage {
+    // Identifies the client that logged this message.
+    // The game server does not log anything, it rather sends log messages back
+    // to the client that controls it (the game owner). We could either choose
+    // to annotate these messages with client id 0 (in proto3, fields that are
+    // not present are decoded as the default value, which is 0 for uint64.
+    // Tagging with 0 thus means omitting the id), or tag them with the client
+    // id that was assigned to the game server. Which would be preferable?
+    // A relevant question here might be whether we want to distinguish between
+    // messages logged by the gameserver and the game controller, or whether we
+    // want to treat these as identical.
+    uint64 client_id = 1;
+
+    // Identifies the type of message.
+    // Using a number for the identification (rather than native protobuf types)
+    // allows us to register and swap log message types on-the-fly. This way,
+    // we can let each logical component handle their own logging without
+    // requiring the main game implementation to interfere. It suffies to assign
+    // a message type number to the component (of course, components can't
+    // choose their own numbers to avoid collisions). On the reading end, a
+    // library can handle the parsing as well, provided with the type number
+    // that was used.
+    // The message type thus instructs how to interpret the message payload.
+    uint64 message_type = 2;
+
+    // The actual data in the log message.
+    bytes data = 3;
+
+    // We probably also want to include log levels and timestamps, but these
+    // are not too relevant to the discussion.
+}
