@@ -1,15 +1,16 @@
 import { ServerRunner } from "./ServerRunner";
 import { BotConfig, Address, Connection } from "./index";
-import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { SignalDispatcher, ISignal } from "ste-signals";
-import { MessageHandler, RequestResolver } from "./RequestResolver";
 import { GameState } from "./PwTypes";
 import { Logger } from "./Logger";
 
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
 import LobbyMessage = proto.LobbyMessage;
+import { MessageResolver } from "./MessageResolver";
+import { Client } from "./Client";
+import { MatchControl } from "./MatchControl";
 
 export interface MatchParams {
     ctrl_token: string;
@@ -17,158 +18,57 @@ export interface MatchParams {
     logFile: string;
 }
 
+// silly aggregation class
 export class MatchRunner {
-    private connection: Connection;
-    private serverRunner: ServerRunner;
-    readonly logger: Logger;
+    public serverRunner: ServerRunner;
+    public matchControl: MatchControl;
 
-    private connHandler: RequestResolver;
-
-    private _onComplete = new SignalDispatcher();
-    private _onError = new SimpleEventDispatcher<Error>();
-
-    private _onPlayerConnected = new SimpleEventDispatcher<number>();
-    private _onPlayerDisconnected = new SimpleEventDispatcher<number>();
-
-    constructor(serverPath: string, params: MatchParams) {
-        this.serverRunner = new ServerRunner(serverPath, params);
-        let token = Buffer.from(params.ctrl_token, 'hex');
-        this.connection = new Connection(token);
-        this.logger = new Logger(params.logFile);
-
-
-        const { address, logFile } = params;
-
-        this.serverRunner.onExit.subscribe(() => {
-            this._onComplete.dispatch()
-        });
-        this.serverRunner.onError.subscribe((err) => {
-            this._onError.dispatch(err);
-        });
-
-        this.connHandler = new RequestResolver(this.connection, (data) => {
-            const text = new TextDecoder('utf-8').decode(data);
-            let message: ServerMessage = JSON.parse(text);
-
-            switch (message.type) {
-                case 'player_connected': {
-                    const { player_id } = message.content;
-                    this._onPlayerConnected.dispatch(player_id);
-                    break;
-                }
-                case 'player_disconnected': {
-                    const { player_id } = message.content;
-                    this._onPlayerDisconnected.dispatch(player_id);
-                    break;
-                }
-                case 'game_state': {
-                    this.logger.log({
-                        type: "game_state",
-                        state: message.content,
-                    });
-                    break;
-                }
-            }
-        });
+    constructor(serverRunner: ServerRunner, matchControl: MatchControl) {
+        this.serverRunner = serverRunner;
+        this.matchControl = matchControl;
     }
 
     public static create(serverPath: string, params: MatchParams): Promise<MatchRunner> {
         return new Promise((resolve, reject) => {
-            const runner = new MatchRunner(serverPath, params);
-            runner.onConnect.one(() => {
-                resolve(runner);
+            const logger = new Logger(params.logFile);
+
+            const serverRunner = new ServerRunner(serverPath, params);
+            serverRunner.onError.subscribe(reject);
+            serverRunner.runServer();
+
+            MatchControl.connect({
+                host: params.address.host,
+                port: params.address.port,
+                token: Buffer.from(params.ctrl_token, 'hex'),
+                logger: logger,
+            }).then((control) => {
+                const matchRunner = new MatchRunner(serverRunner, control);
+                resolve(matchRunner);
             });
-            runner.onError.one((err) => {
-                reject(err);
-            });
-            runner.run();
         });
-    }
-
-    public addPlayer(token: Uint8Array): Promise<number> {
-        let addPlayer = LobbyMessage.AddPlayerRequest.create({ token });
-        return this.lobbyRequest({ addPlayer }).then((data) => {
-            const response = LobbyMessage.AddPlayerResponse.decode(data);
-            return Number(response.clientId);
-        });
-    }
-
-    public removePlayer(clientId: number): Promise<void> {
-        let removePlayer = new LobbyMessage.RemovePlayerRequest({ clientId });
-        return this.lobbyRequest({ removePlayer }).then((data) => { });
-    }
-
-    public startGame(config: object): Promise<void> {
-        let payload = Buffer.from(JSON.stringify(config), 'utf-8');
-        let startGame = new LobbyMessage.StartGameRequest({ payload });
-        return this.lobbyRequest({ startGame }).then((data) => { });
-    }
-
-    private lobbyRequest(params: proto.ILobbyMessage): Promise<Uint8Array> {
-        let msg = LobbyMessage.encode(params).finish();
-        return this.controlChannel.request(msg);
-    }
-
-    public run() {
-        this.serverRunner.runServer();
-        setTimeout(() => {
-            this.connection.connect(
-                this.serverRunner.address.host,
-                this.serverRunner.address.port,
-            );
-        }, 300);
     }
 
     public shutdown() {
         this.serverRunner.killServer();
     }
 
-    public get controlChannel() {
-        return this.connHandler;
-    }
-
     public get onComplete() {
-        return this._onComplete.asEvent();
+        return this.serverRunner.onExit;
     }
 
     public get onError() {
-        return this._onError.asEvent();
+        return this.serverRunner.onError;
     }
 
     public get onPlayerConnected() {
-        return this._onPlayerConnected.asEvent();
+        return this.matchControl.onPlayerConnected;
     }
 
     public get onPlayerDisconnected() {
-        return this._onPlayerDisconnected.asEvent();
+        return this.matchControl.onPlayerDisconnected;
     }
 
-    public get onConnect() {
-        return this.connection.onConnect;
+    public get logger() {
+        return this.matchControl.logger;
     }
-}
-
-type ServerMessage
-    = PlayerConnectedMessage
-    | PlayerDisconnectedMessage
-    | GameStateMessage;
-
-
-interface PlayerConnectedMessage {
-    type: "player_connected";
-    content: {
-        player_id: number;
-    }
-}
-
-interface PlayerDisconnectedMessage {
-    type: "player_disconnected";
-    content: {
-        player_id: number;
-    }
-}
-
-interface GameStateMessage {
-    type: "game_state";
-    content: GameState;
 }
