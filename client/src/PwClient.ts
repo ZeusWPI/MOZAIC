@@ -7,9 +7,10 @@ import { BufferWriter } from 'protobufjs';
 import { ClientLogger, Logger } from './Logger';
 import { TextDecoder } from 'text-encoding';
 import { ServerMessage, GameState, PlayerAction } from './PwTypes';
-import { RequestResolver } from './RequestResolver';
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 import { SignalDispatcher, ISignal } from 'ste-signals';
+import { Client, ClientParams } from './Client';
+import { MessageResolver } from './MessageResolver';
 
 export interface ConnectionData {
     token: Buffer,
@@ -21,63 +22,36 @@ export interface Request {
     data: Buffer;
 }
 
-// TODO: expand this
-enum ClientState {
-    CONNECTING,
-    CONNECTED,
-};
 
-export interface ClientParams {
-    token: Buffer,
-    address: Address,
-    number: number,
+export type Params = ClientParams & {
     botConfig: BotConfig,
-    logger: Logger,
 }
 
 export class PwClient {
-    readonly connection: Connection;
-    readonly address: Address;
+    readonly client: Client;
     readonly botRunner: BotRunner;
-    readonly logger: ClientLogger;
-    private resolver: RequestResolver;
 
-    private turnNum: 0;
-    private state: ClientState;
+    private messageResolver: MessageResolver;
 
     private _onExit = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
 
-    constructor(params: ClientParams) {
-        this.connection = new Connection(params.token);
+    constructor(client: Client, bot: BotConfig) {
+        this.client = client;
+        this.messageResolver = new MessageResolver(client);
 
-        this.handleMessage = this.handleMessage.bind(this);
-        this.resolver = new RequestResolver(this.connection, this.handleMessage);
-
-
-        this.address = params.address;
-        this.botRunner = new BotRunner(params.botConfig);
-        this.logger = new ClientLogger(params.logger, params.number);
-        this.state = ClientState.CONNECTED;
-        this.turnNum = 0;
-
-        this.botRunner.onError.subscribe((err) => {
-            this._onError.dispatch(err);
-        });
-
-        this.connection.onError.subscribe((err) => {
-            this._onError.dispatch(err);
-        });
-
-        this.connection.onClose.subscribe(() => {
-            this.botRunner.killBot();
-            this._onExit.dispatch();
-        });
-    }
-
-    public run() {
-        this.connection.connect(this.address.host, this.address.port);
+        this.botRunner = new BotRunner(bot);
         this.botRunner.run();
+
+        this.messageResolver.onMessage.subscribe(({ messageId, data }) => {
+            const response = this.handleMessage(data);
+            if (response) {
+                response.then((responseData) => {
+                    console.log('sending response');
+                    this.messageResolver.sendResponse(messageId, responseData);
+                });
+            }
+        });
     }
 
     public get onExit() {
@@ -88,24 +62,7 @@ export class PwClient {
         return this._onError.asEvent();
     }
 
-    private handleMessage(data: Uint8Array): void | Promise<Uint8Array> {
-        switch (this.state) {
-            case ClientState.CONNECTING: {
-                return this.handleConnectingMessage(data);
-            }
-            case ClientState.CONNECTED: {
-                return this.handleGameMessage(data);
-            }
-        }
-    }
-
-    private handleConnectingMessage(data: Uint8Array): Promise<Uint8Array> {
-        this.state = ClientState.CONNECTED;
-        return Promise.resolve(data);
-    }
-
-    private handleGameMessage(data: Uint8Array): void | Promise<Uint8Array>
-    {
+    private handleMessage(data: Uint8Array) {
         const text = new TextDecoder('utf-8').decode(data);
         let serverMessage: ServerMessage = JSON.parse(text);
 
@@ -128,7 +85,7 @@ export class PwClient {
         return new Promise((resolve, reject) => {
             const request = JSON.stringify(state);
             this.botRunner.request(request, (response) => {
-                this.logger.log({
+                this.client.log({
                     "type": "command",
                     "content": response,
                 });
@@ -143,17 +100,14 @@ export class PwClient {
     }
 
     private logState(state: GameState) {
-        this.turnNum += 1;
-
-        this.logger.log({
+        this.client.log({
             "type": 'step',
-            "turn_number": this.turnNum,
             "state": state,
         });
     }
 
     private handlePlayerAction(action: PlayerAction) {
-        this.logger.log({
+        this.client.log({
             "type": 'player_action',
             "action": action,
         })
