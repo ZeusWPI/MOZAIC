@@ -53,8 +53,8 @@ export class Client {
         });
     }
 
-    public send_message(message: Uint8Array) {
-        this.connection.send(message);
+    public send(data: Uint8Array) {
+        this.connection.send(data);
     }
 
     public get onMessage() {

@@ -42,6 +42,7 @@ export class MessageResolver {
     public sendResponse(messageId: number, data: Uint8Array) {
         let response = ProtoMessage.Response.create({ messageId, data });
         const encoded = ProtoMessage.encode({ response }).finish();
+        this.transport.send(encoded);
     }
 
     public request(data: Uint8Array): Promise<Uint8Array> {
