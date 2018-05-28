@@ -1,5 +1,6 @@
 import { Logger, Connection } from "./index";
 import { LogRecord } from "./PwTypes";
+import { ISignal } from 'ste-signals';
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 export interface ClientParams {
@@ -59,5 +60,9 @@ export class Client {
 
     public get onMessage() {
         return this.connection.onMessage;
+    }
+
+    public get onExit() {
+        return this.connection.onClose;
     }
 }
