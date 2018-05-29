@@ -40,6 +40,10 @@ export class BotRunner {
         this.setProcess(process);
     }
 
+    public send(message: string) {
+        this.sendMessage(message);
+    }
+
     public request(query: string, handler: OutputHandler) {
         this.handlerQueue.push(handler);
         this.sendMessage(query);
