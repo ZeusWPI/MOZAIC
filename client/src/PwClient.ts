@@ -41,12 +41,10 @@ export class PwClient {
         this.messageResolver = new MessageResolver(client);
 
         this.botRunner = new BotRunner(bot);
-        this.botRunner.run();
-        // send meta
-        // TODO: make this more explicit
-        this.botRunner.send(JSON.stringify({
+        const meta = JSON.stringify({
             "player_number": client.clientId
-        }));
+        });
+        this.botRunner.run(meta);
 
         this.messageResolver.onMessage.subscribe(({ messageId, data }) => {
             const response = this.handleMessage(data);
