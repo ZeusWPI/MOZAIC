@@ -18,7 +18,8 @@ const styles = require('./Lobby.scss');
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
-  config?: Lib.WeakConfig;
+  config: Lib.StrongConfig;
+  slots: Slot[];
   // removeLocalBot(index: number): void;
 };
 
@@ -46,7 +47,7 @@ export interface RunningState {
   logFile: string;
 }
 
-export class Lobby extends React.Component<LobbyProps, LobbyState> {
+export class Lobby extends React.Component<LobbyProps> {
   private slotManager: SlotManager;
   private server?: PwClient.MatchRunner;
 
@@ -113,7 +114,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private syncSlots = (slotManager: SlotManager) => {
     this.setState({ slots: slotManager.getSlots() });
-  };
+  }
 
   private updateSlots(props: LobbyProps) {
     const { config, maps } = props;
