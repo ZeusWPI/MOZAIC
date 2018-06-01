@@ -3,31 +3,28 @@ import { clipboard } from 'electron';
 
 import * as M from '../../../database/models';
 import { Slot } from './SlotManager';
+import { PwConfig, Address } from '../../../reducers/lobby';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
 
 export interface SlotListProps {
   slots: Slot[];
-  port?: number;
-  host?: string;
+  address: Address;
   isServerRunning: boolean;
-  willBeKicked(idx: number): boolean;
   connectLocalBot(slot: Slot, playerNum: number): void;
   removeBot(botNum: number): void;
 }
 
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
-    const { slots } = this.props;
+    const { slots, address } = this.props;
     const slotItems = slots.map((slot, index) => (
       <li key={index} className={styles.slotElementWrapper}>
         <SlotElement
           slot={slot}
           index={index}
-          host={this.props.host}
-          port={this.props.port}
-          willBeKicked={this.props.willBeKicked(index)}
+          address={address}
           connectLocalBot={this.props.connectLocalBot}
           removeBot={this.props.removeBot}
           isServerRunning={this.props.isServerRunning}
@@ -41,9 +38,7 @@ export class SlotList extends React.Component<SlotListProps> {
 export interface SlotElementProps {
   slot: Slot;
   index: number;
-  willBeKicked: boolean;
-  host?: string;
-  port?: number;
+  address: Address;
   isServerRunning: boolean;
   connectLocalBot(slot: Slot, playerNum: number): void;
   removeBot(botNum: number): void;
@@ -54,7 +49,8 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const { slot, index } = this.props;
     const { token, name } = slot;
 
-    const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
+    // TODO
+    const kicked = (false) ? (styles.kicked) : '';
     return (
       <div className={`${styles.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
         <h1>Player {index + 1}</h1>
@@ -72,7 +68,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private copyFull = (): void => {
-    const { slot: { token, name }, index, port, host } = this.props;
+    const { slot: { token, name }, address: { host, port } } = this.props;
     const data = { token, name, port, host };
     clipboard.writeText(JSON.stringify(data));
   }

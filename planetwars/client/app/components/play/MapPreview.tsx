@@ -64,8 +64,7 @@ export abstract class MapView extends React.Component<MapViewProps> {
       <div className={""} >
         <svg
           className={""}
-          ref={(node: SVGSVGElement) => this.node = node
-          }
+          ref={(node: SVGSVGElement) => this.node = node}
           width={this.props.width}
           height={this.props.height}
         />
