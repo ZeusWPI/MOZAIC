@@ -10,13 +10,24 @@ import { Config } from './Config';
 import { Lobby } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { LobbyState, PwConfig, Address } from '../../reducers/lobby';
+import { Slot } from './lobby/SlotManager';
+import * as _ from 'lodash';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots, lobby } = state;
-  return { maps, bots, lobby };
+  const map = maps[lobby.config.mapId];
+  let slots: Slot[] = [];
+  if (map) {
+    slots = _.range(1, map.slots + 1).map((number) => ({
+      name: `Player ${number}`,
+      token: '',
+      connected: false,
+    }));
+  };
+  return { maps, bots, lobby, slots };
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
@@ -39,6 +50,7 @@ export interface PlayPageStateProps {
   maps: M.MapList;
   bots: M.BotList;
   lobby: LobbyState;
+  slots: Slot[];
 }
 
 export interface PlayPageDispatchProps {
@@ -49,18 +61,11 @@ export interface PlayPageDispatchProps {
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
-export interface PlayPageState {
-  config?: StrongConfig;
-  localBots: M.Bot[];
-}
-
 const alertTODO = () => { alert("TODO");}
-export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
-  public state: PlayPageState = { localBots: [] };
+export class PlayPage extends React.Component<PlayPageProps> {
 
   public render() {
     const { maps, bots, lobby } = this.props;
-    const { localBots } = this.state;
     return (
       <div className={styles.playPageContainer}>
         <div className={styles.playPage}>
@@ -70,7 +75,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
             <div className={styles.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
-                slots={[]}
+                slots={this.props.slots}
                 maps={maps}
                 state={lobby}
               />
