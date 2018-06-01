@@ -5,12 +5,11 @@ import * as M from '../../database/models';
 import * as A from '../../actions';
 import { GState } from '../../reducers';
 
-import { WeakConfig, StrongConfig } from './types';
+import { WeakConfig, StrongConfig, Slot } from './types';
 import { Config } from './Config';
 import { Lobby } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
-import { Slot } from './lobby/SlotManager';
 import * as _ from 'lodash';
 import { generateToken } from '../../utils/GameRunner';
 
@@ -22,16 +21,13 @@ function mapStateToProps(state: GState): PlayPageStateProps {
   const map = maps[lobby.config.mapId];
   let slots: Slot[] = [];
   if (map) {
-    slots = _.range(1, map.slots + 1).map((number) => ({
-      name: `Player ${number}`,
-      token: '',
-      connected: false,
-    }));
+    slots = _.times(map.slots, () => ({}));
   }
 
+
   Object.keys(lobby.players).forEach((token) => {
-    const number = lobby.players[token].number;
-    slots[number].token = token;
+    const player = lobby.players[token];
+    slots[player.number].player = player;
   });
 
   return { maps, bots, lobby, slots };
@@ -119,12 +115,13 @@ export class PlayPage extends React.Component<PlayPageProps> {
 
     // find first available slot
     let idx = 0;
-    while (this.props.slots[idx].token) {
+    while (this.props.slots[idx].player) {
       idx += 1;
     }
 
     this.props.savePlayer({
       token: generateToken(),
+      name: bot.name,
       number: idx,
     });
   }

@@ -11,7 +11,6 @@ import * as Lib from '../types';
 import Section from '../Section';
 import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
-import { SlotManager, Slot } from './SlotManager';
 import { LobbyState } from '../../../reducers/lobby';
 
 // tslint:disable-next-line:no-var-requires
@@ -20,7 +19,7 @@ const styles = require('./Lobby.scss');
 export type LobbyProps = {
   maps: M.MapList;
   state: LobbyState;
-  slots: Slot[];
+  slots: Lib.Slot[];
 };
 
 const alertTODO = () => { alert('TODO'); };

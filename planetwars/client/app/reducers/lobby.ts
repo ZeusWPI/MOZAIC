@@ -27,6 +27,7 @@ export const defaultAddress: Address = {
 
 export interface PlayerData {
   token: string;
+  name: string;
   number: number;
 }
 
