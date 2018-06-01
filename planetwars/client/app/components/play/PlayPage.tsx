@@ -27,11 +27,11 @@ function mapStateToProps(state: GState): PlayPageStateProps {
       token: '',
       connected: false,
     }));
-  };
+  }
 
   Object.keys(lobby.players).forEach((token) => {
-    const index = lobby.players[token].playerNumber - 1;
-    slots[index].token = token;
+    const number = lobby.players[token].number;
+    slots[number].token = token;
   });
 
   return { maps, bots, lobby, slots };
@@ -125,7 +125,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
 
     this.props.savePlayer({
       token: generateToken(),
-      playerNumber: idx + 1,
+      number: idx,
     });
   }
 }
