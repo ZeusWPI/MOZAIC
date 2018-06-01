@@ -5,7 +5,7 @@ import * as M from '../../database/models';
 import * as A from '../../actions';
 import { GState } from '../../reducers';
 
-import { WeakConfig } from './types';
+import { WeakConfig, StrongConfig } from './types';
 import { Config } from './Config';
 import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
@@ -58,7 +58,7 @@ export interface PlayPageDispatchProps {
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 export interface PlayPageState {
-  config?: WeakConfig;
+  config?: StrongConfig;
   localBots: M.Bot[];
 }
 
@@ -79,8 +79,9 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
             <div className={styles.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
-                config={config}
+                config={config!}
                 maps={maps}
+                slots={[]}
                 ref={(inst) => this.lobby = inst!}
                 {...this.props.lobbyDispatchProps}
               />
@@ -90,7 +91,11 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           {/* Right side*/}
           <div className={styles.rightColumn}>
             <div className={styles.configContainer}>
-              <Config maps={maps} setConfig={this.setConfig} importMap={this.props.importMap} />
+              <Config
+                maps={maps}
+                setConfig={(_: any) => { alert('todo')}}
+                importMap={this.props.importMap}
+              />
             </div>
             <div className={styles.localBotSelectorContainer}>
               <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
@@ -101,7 +106,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
     );
   }
 
-  private setConfig = (config: WeakConfig) => this.setState({ config });
+  private setConfig = (config: StrongConfig) => this.setState({ config });
 
   private addLocalBot = (id: M.BotId) => {
     const bot = this.props.bots[id];
