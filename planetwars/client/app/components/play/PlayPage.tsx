@@ -9,13 +9,14 @@ import { WeakConfig, StrongConfig } from './types';
 import { Config } from './Config';
 import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
+import { LobbyState, PwConfig, Address } from '../../reducers/lobby';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
 function mapStateToProps(state: GState): PlayPageStateProps {
-  const { maps, bots } = state;
-  return { maps, bots };
+  const { maps, bots, lobby } = state;
+  return { maps, bots, lobby };
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
@@ -39,8 +40,19 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
       dispatch(A.addNotification({title, body, type}));
     },
   };
-  const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
-  return { lobbyDispatchProps, importMap };
+
+  return {
+    lobbyDispatchProps,
+    importMap(mapMeta: M.MapMeta) {
+      dispatch(A.importMap(mapMeta))
+    },
+    setConfig(config: PwConfig) {
+      dispatch(A.setConfig(config));
+    },
+    setAddress(address: Address) {
+      dispatch(A.setAddress(address));
+    },
+  };
 }
 
 // ----------------------------------------------------------------------------
@@ -48,11 +60,14 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
 export interface PlayPageStateProps {
   maps: M.MapList;
   bots: M.BotList;
+  lobby: LobbyState;
 }
 
 export interface PlayPageDispatchProps {
   lobbyDispatchProps: LobbyDispatchProps;
   importMap: (mapMeta: M.MapMeta) => void;
+  setConfig: (config: PwConfig) => void;
+  setAddress: (address: Address) => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
@@ -68,8 +83,8 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   private lobby: Lobby;
 
   public render() {
-    const { maps, bots } = this.props;
-    const { config, localBots } = this.state;
+    const { maps, bots, lobby } = this.props;
+    const { localBots } = this.state;
     return (
       <div className={styles.playPageContainer}>
         <div className={styles.playPage}>
@@ -79,7 +94,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
             <div className={styles.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
-                config={config!}
+                config={undefined!}
                 maps={maps}
                 slots={[]}
                 ref={(inst) => this.lobby = inst!}
@@ -92,8 +107,11 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           <div className={styles.rightColumn}>
             <div className={styles.configContainer}>
               <Config
+                config={lobby.config}
+                address={lobby.address}
                 maps={maps}
-                setConfig={(_: any) => { alert('todo')}}
+                setConfig={this.props.setConfig}
+                setAddress={this.props.setAddress}
                 importMap={this.props.importMap}
               />
             </div>
