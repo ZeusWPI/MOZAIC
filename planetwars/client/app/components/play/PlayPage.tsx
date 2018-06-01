@@ -9,9 +9,10 @@ import { WeakConfig, StrongConfig } from './types';
 import { Config } from './Config';
 import { Lobby } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
-import { LobbyState, PwConfig, Address } from '../../reducers/lobby';
+import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import { Slot } from './lobby/SlotManager';
 import * as _ from 'lodash';
+import { generateToken } from '../../utils/GameRunner';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -27,6 +28,12 @@ function mapStateToProps(state: GState): PlayPageStateProps {
       connected: false,
     }));
   };
+
+  Object.keys(lobby.players).forEach((token) => {
+    const index = lobby.players[token].playerNumber - 1;
+    slots[index].token = token;
+  });
+
   return { maps, bots, lobby, slots };
 }
 
@@ -41,6 +48,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     setAddress(address: Address) {
       dispatch(A.setAddress(address));
     },
+    savePlayer(player: PlayerData) {
+      dispatch(A.savePlayer(player));
+    }
   };
 }
 
@@ -57,6 +67,7 @@ export interface PlayPageDispatchProps {
   importMap: (mapMeta: M.MapMeta) => void;
   setConfig: (config: PwConfig) => void;
   setAddress: (address: Address) => void;
+  savePlayer: (player: PlayerData) => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
@@ -95,12 +106,27 @@ export class PlayPage extends React.Component<PlayPageProps> {
               />
             </div>
             <div className={styles.localBotSelectorContainer}>
-              <LocalBotSelector bots={bots} onClick={alertTODO} />
+              <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
             </div>
           </div>
         </div>
       </div>
     );
+  }
+
+  private addLocalBot = (botId: M.BotId) => {
+    const bot = this.props.bots[botId];
+
+    // find first available slot
+    let idx = 0;
+    while (this.props.slots[idx].token) {
+      idx += 1;
+    }
+
+    this.props.savePlayer({
+      token: generateToken(),
+      playerNumber: idx + 1,
+    });
   }
 }
 

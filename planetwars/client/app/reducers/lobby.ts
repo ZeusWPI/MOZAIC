@@ -3,6 +3,7 @@ import * as PwClient from 'mozaic-client';
 import * as A from '../actions';
 import * as M from '../database/models';
 import { generateToken } from '../utils/GameRunner';
+import { Token } from '../database/models';
 
 export interface Address {
   host: string;
@@ -24,14 +25,21 @@ export const defaultAddress: Address = {
   port: 9142,
 };
 
+export interface PlayerData {
+  token: string;
+  playerNumber: number;
+}
+
 export interface LobbyState {
   config: PwConfig;
   address: Address;
+  players: { [token: string]: PlayerData };
 }
 
 export const defaultLobbyState = {
   address: defaultAddress,
   config: defaultConfig,
+  players: {},
 };
 
 export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any) {
@@ -41,6 +49,12 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
 
   if (A.setAddress.test(action)) {
     return { ...state, address: action.payload };
+  }
+
+  if (A.savePlayer.test(action)) {
+    const player = action.payload;
+    const players = { ...state.players, [player.token]: player };
+    return { ...state, players };
   }
 
   return state;
