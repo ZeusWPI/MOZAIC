@@ -120,6 +120,7 @@
     "react-router-dom": "^4.1.1",
     "react-router-redux": "^5.0.0-alpha.6",
     "redux": "^3.6.0",
+    "redux-saga": "^0.16.0",
     "redux-thunk": "^2.1.0",
     "source-map-support": "^0.5.5",
     "string-argv": "0.0.2",
