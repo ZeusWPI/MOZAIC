@@ -20,6 +20,10 @@ export type LobbyProps = {
   maps: M.MapList;
   state: LobbyState;
   slots: Lib.Slot[];
+  serverRunning: boolean;
+
+  startServer: () => void;
+  stopServer: () => void;
 };
 
 const alertTODO = () => { alert('TODO'); };
@@ -42,10 +46,10 @@ export class Lobby extends React.Component<LobbyProps> {
             isServerRunning={false}
           />
           <ServerControls
-            startServer={alertTODO}
-            stopServer={alertTODO}
+            startServer={this.props.startServer}
+            stopServer={this.props.stopServer}
             launchGame={alertTODO}
-            serverRunning={false}
+            serverRunning={this.props.serverRunning}
           />
         </div>
       </Section>

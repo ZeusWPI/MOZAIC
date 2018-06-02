@@ -16,3 +16,12 @@ interface Address {
 export const setAddress = actionCreator<Address>('SET_ADDRESS');
 export const setConfig = actionCreator<Config>('SET_CONFIG');
 export const savePlayer = actionCreator<PlayerData>('SAVE_PLAYER');
+
+export interface ServerParams {
+  matchId: string;
+  address: Address;
+}
+export const startServer = actionCreator<ServerParams>('START_SERVER');
+export const serverStarted = actionCreator<MatchId>('SERVER_STARTED');
+export const stopServer = actionCreatorVoid('STOP_SERVER');
+export const serverStopped = actionCreatorVoid('SERVER_STOPPED');

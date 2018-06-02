@@ -32,6 +32,7 @@ export interface PlayerData {
 }
 
 export interface LobbyState {
+  matchId?: M.MatchId;
   config: PwConfig;
   address: Address;
   players: { [token: string]: PlayerData };
@@ -56,6 +57,16 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
     const player = action.payload;
     const players = { ...state.players, [player.token]: player };
     return { ...state, players };
+  }
+
+  if (A.serverStarted.test(action)) {
+    const matchId = action.payload;
+    return { ...state, matchId };
+  }
+
+  if (A.serverStopped.test(action)) {
+    const matchId = undefined;
+    return { ...state, matchId };
   }
 
   return state;

@@ -3,6 +3,7 @@ import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
 import * as A from '../../actions';
+import { ServerParams } from '../../actions/lobby';
 import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
@@ -12,6 +13,7 @@ import { LocalBotSelector } from './LocalBotSelector';
 import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import * as _ from 'lodash';
 import { generateToken } from '../../utils/GameRunner';
+import { v4 as uuidv4 } from 'uuid';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
@@ -23,7 +25,6 @@ function mapStateToProps(state: GState): PlayPageStateProps {
   if (map) {
     slots = _.times(map.slots, () => ({}));
   }
-
 
   Object.keys(lobby.players).forEach((token) => {
     const player = lobby.players[token];
@@ -46,6 +47,12 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     savePlayer(player: PlayerData) {
       dispatch(A.savePlayer(player));
+    },
+    startServer(params: ServerParams) {
+      dispatch(A.startServer(params));
+    },
+    stopServer() {
+      dispatch(A.stopServer());
     }
   };
 }
@@ -64,11 +71,13 @@ export interface PlayPageDispatchProps {
   setConfig: (config: PwConfig) => void;
   setAddress: (address: Address) => void;
   savePlayer: (player: PlayerData) => void;
+  startServer: (params: ServerParams) => void;
+  stopServer: () => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
-const alertTODO = () => { alert("TODO");}
+const alertTODO = () => { alert("TODO"); }
 export class PlayPage extends React.Component<PlayPageProps> {
 
   public render() {
@@ -85,6 +94,9 @@ export class PlayPage extends React.Component<PlayPageProps> {
                 slots={this.props.slots}
                 maps={maps}
                 state={lobby}
+                startServer={this.startServer}
+                stopServer={this.stopServer}
+                serverRunning={!!lobby.matchId}
               />
             </div>
           </div>
@@ -108,6 +120,16 @@ export class PlayPage extends React.Component<PlayPageProps> {
         </div>
       </div>
     );
+  }
+
+  private startServer = () => {
+    const matchId = uuidv4();
+    const {lobby: { address } } = this.props;
+    this.props.startServer({ matchId, address });
+  }
+
+  private stopServer = () => {
+    this.props.stopServer();
   }
 
   private addLocalBot = (botId: M.BotId) => {
