@@ -15,14 +15,13 @@ export interface ConfigProps {
   maps: M.MapList;
   config: PwConfig;
   address: Address;
+  serverRunning: boolean;
   setConfig: (config: PwConfig) => void;
   setAddress: (address: Address) => void;
   importMap: (mapMeta: M.MapMeta) => void;
 }
 
 export class Config extends React.Component<ConfigProps> {
-
-
 
   public render() {
     const { address, config } = this.props;
@@ -38,8 +37,16 @@ export class Config extends React.Component<ConfigProps> {
           importMap={this.props.importMap}
         />
         <MaxTurnsField value={config.maxTurns} setMax={this.setMax} />
-        <ServerAddressField value={address.host} setServer={this.setServer} />
-        <PortField value={address.port} setPort={this.setPort} />
+        <ServerAddressField
+          value={address.host}
+          setServer={this.setServer}
+          disabled={this.props.serverRunning}
+        />
+        <PortField
+          value={address.port}
+          setPort={this.setPort}
+          disabled={this.props.serverRunning}
+        />
       </Section>
     );
   }
@@ -53,7 +60,6 @@ export class Config extends React.Component<ConfigProps> {
     const newConfig = {...this.props.config, maxTurns };
     this.props.setConfig(newConfig);
   }
-
 
   private setServer = (host: string) => {
     const newAddress = { ...this.props.address, host };
@@ -82,15 +88,20 @@ export const MaxTurnsField: React.SFC<MaxTurnProps> = (props) => {
   );
 };
 
-export interface ServerAddressProps { value: string; setServer(val: string): void; }
+export interface ServerAddressProps {
+  value: string;
+  setServer: (val: string) => void;
+  disabled: boolean;
+}
+
 export const ServerAddressField: React.SFC<ServerAddressProps> = (props) => {
   return (
     <HorizontalInput label="Address" id="address">
       <input
         className="input"
         type="text"
-        placeholder="localhost"
         value={props.value}
+        disabled={props.disabled}
         // tslint:disable-next-line:jsx-no-lambda
         onChange={(evt: any) => props.setServer(evt.target.value)}
       />
@@ -98,14 +109,19 @@ export const ServerAddressField: React.SFC<ServerAddressProps> = (props) => {
   );
 };
 
-export interface PortProps { value: number; setPort(val: number): void; }
+export interface PortProps {
+  value: number;
+  setPort: (val: number) => void;
+  disabled: boolean;
+}
+
 export const PortField: React.SFC<PortProps> = (props) => {
   return (
     <HorizontalInput label="Port" id="port">
       <input
         className="input"
         type="number"
-        placeholder="9142"
+        disabled={props.disabled}
         value={props.value}
         // tslint:disable-next-line:jsx-no-lambda
         onChange={(evt: any) => props.setPort(evt.target.value)}

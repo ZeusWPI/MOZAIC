@@ -111,6 +111,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
                 setConfig={this.props.setConfig}
                 setAddress={this.props.setAddress}
                 importMap={this.props.importMap}
+                serverRunning={!!lobby.matchId}
               />
             </div>
             <div className={styles.localBotSelectorContainer}>
