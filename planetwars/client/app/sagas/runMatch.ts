@@ -13,12 +13,7 @@ export function* runMatchSaga() {
   while (true) {
     const { payload: serverParams} = yield take(A.startServer.type);
     const runner: MatchRunner = yield call(startServer, serverParams);
-    const match: Match = {
-      control: runner.matchControl,
-      players: {},
-    };
-
-    yield fork(lobby, match);
+    yield fork(lobby, runner.matchControl);
 
     yield take(A.stopServer.type);
     runner.shutdown();
@@ -36,53 +31,42 @@ function* startServer(params: ServerParams) {
   return runner;
 }
 
-function* lobby(match: Match) {
+function* lobby(match: MatchControl) {
   yield fork(watchConnectEvents, match);
   yield fork(watchDisconnectEvents, match);
   yield fork(watchCreatePlayer, match);
 }
 
-function* watchCreatePlayer(match: Match) {
+function* watchCreatePlayer(match: MatchControl) {
   yield takeEvery(A.createPlayer.type, registerPlayer, match);
 }
 
-function* watchConnectEvents(match: Match) {
-  const channel = simpleEventChannel(match.control.onPlayerConnected);
+function* watchConnectEvents(match: MatchControl) {
+  const channel = simpleEventChannel(match.onPlayerConnected);
   yield takeEvery(channel, function*(clientId: number) {
     yield put(A.clientConnected({ clientId }));
   });
 }
 
-function* watchDisconnectEvents(match: Match) {
-  const channel = simpleEventChannel(match.control.onPlayerDisconnected);
+function* watchDisconnectEvents(match: MatchControl) {
+  const channel = simpleEventChannel(match.onPlayerDisconnected);
   yield takeEvery(channel, function*(clientId: number) {
     yield put(A.clientDisconnected({ clientId }));
   });
 }
 
-function* registerPlayer(match: Match, action: ActionWithPayload<PlayerData>) {
+function* registerPlayer(match: MatchControl, action: ActionWithPayload<PlayerData>) {
   const player = action.payload;
   const token = generateToken();
 
-  match.players[player.id] = { token };
   const tokenBuf = Buffer.from(token, 'hex');
-  const clientId = yield call([match.control, 'addPlayer'], tokenBuf);
-  match.players[player.id].clientId = clientId;
+  const clientId = yield call([match, match.addPlayer], tokenBuf);
+
   yield put(A.clientRegistered({
     playerId: player.id,
     clientId,
     token,
   }));
-}
-
-interface Match {
-  control: MatchControl;
-  players: { [playerId: string]: PlayerClientData };
-}
-
-interface PlayerClientData {
-  clientId?: number;
-  token: string;
 }
 
 function simpleEventChannel<T>(event: ISimpleEvent<T>): Channel<T> {
