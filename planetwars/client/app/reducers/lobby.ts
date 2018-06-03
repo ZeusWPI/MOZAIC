@@ -30,6 +30,7 @@ export interface PlayerData {
   name: string;
   number: number;
   clientId?: number;
+  botId?: string;
 }
 
 export interface ClientData {

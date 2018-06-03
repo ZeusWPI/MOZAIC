@@ -28,9 +28,15 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 
   Object.keys(lobby.players).forEach((playerId) => {
     const player = lobby.players[playerId];
-    slots[player.number].player = player;
+    const slot = slots[player.number];
+    slot.player = player;
+
     if (player.clientId) {
-      slots[player.number].client = lobby.clients[player.clientId];
+      slot.client = lobby.clients[player.clientId];
+    }
+
+    if (player.botId) {
+      slot.bot = bots[player.botId];
     }
   });
 
@@ -149,6 +155,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
       id: uuidv4(),
       name: bot.name,
       number: idx,
+      botId: bot.uuid,
     });
   }
 }

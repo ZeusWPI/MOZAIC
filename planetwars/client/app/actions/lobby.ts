@@ -30,6 +30,7 @@ export interface PlayerParams {
   id: string;
   name: string;
   number: number;
+  botId?: string;
 }
 
 export const createPlayer = actionCreator<PlayerParams>('CREATE_PLAYER');
