@@ -87,6 +87,34 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
     return { ...state, clients, players };
   }
 
+  if (A.clientConnected.test(action)) {
+    const { clientId } = action.payload;
+    return {
+      ...state,
+      clients: {
+        ...state.clients,
+        [clientId]: {
+          ...state.clients[clientId],
+          connected: true,
+        },
+      },
+    };
+  }
+
+  if (A.clientDisconnected.test(action)) {
+    const { clientId } = action.payload;
+    return {
+      ...state,
+      clients: {
+        ...state.clients,
+        [clientId]: {
+          ...state.clients[clientId],
+          connected: false,
+        },
+      },
+    };
+  }
+
   if (A.serverStarted.test(action)) {
     const matchId = action.payload;
     return { ...state, matchId };

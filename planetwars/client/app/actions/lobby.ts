@@ -40,3 +40,5 @@ export interface ClientRegistration {
   token: string;
 }
 export const clientRegistered = actionCreator<ClientRegistration>('CLIENT_REGISTERED');
+export const clientConnected = actionCreator<{ clientId: number }>('CLIENT_CONNECTED');
+export const clientDisconnected = actionCreator<{ clientId: number }>('CLIENT_DISCONNECTED');
