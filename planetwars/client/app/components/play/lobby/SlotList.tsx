@@ -52,7 +52,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
     let name = `Player ${index + 1}`;
 
     if (slot.player) {
-      token = slot.player.token;
+      // token = slot.player.token;
       name = slot.player.name;
     }
 
@@ -71,14 +71,15 @@ export class SlotElement extends React.Component<SlotElementProps> {
 
   private copyToken = (): void => {
     if (this.props.slot.player) {
-      clipboard.writeText(JSON.stringify(this.props.slot.player.token));
+      //clipboard.writeText(JSON.stringify(this.props.slot.player.token));
     }
   }
 
   private copyFull = (): void => {
     const { slot, address: { host, port }} = this.props;
     if (slot.player) {
-      const { name, token } = slot.player;
+      const name = slot.player.name;
+      const token = null; // TODO
       const data = { token, name, port, host };
       clipboard.writeText(JSON.stringify(data));
     }

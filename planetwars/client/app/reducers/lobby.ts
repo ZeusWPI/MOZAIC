@@ -26,7 +26,7 @@ export const defaultAddress: Address = {
 };
 
 export interface PlayerData {
-  token: string;
+  id: string;
   name: string;
   number: number;
 }
@@ -35,13 +35,14 @@ export interface LobbyState {
   matchId?: M.MatchId;
   config: PwConfig;
   address: Address;
-  players: { [token: string]: PlayerData };
+  players: { [playerId: string]: PlayerData };
 }
 
 export const defaultLobbyState = {
   address: defaultAddress,
   config: defaultConfig,
   players: {},
+  clients: {},
 };
 
 export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any) {
@@ -55,7 +56,7 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
 
   if (A.savePlayer.test(action)) {
     const player = action.payload;
-    const players = { ...state.players, [player.token]: player };
+    const players = { ...state.players, [player.id]: player };
     return { ...state, players };
   }
 

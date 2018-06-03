@@ -143,7 +143,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
     }
 
     this.props.savePlayer({
-      token: generateToken(),
+      id: uuidv4(),
       name: bot.name,
       number: idx,
     });
