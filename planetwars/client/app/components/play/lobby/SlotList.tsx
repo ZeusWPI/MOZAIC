@@ -81,36 +81,40 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private statusToClass(slot: Slot): string {
-    const connected = false; // TODO
-
-    if (slot.bot && connected) {
-      return styles.connectedInternal;
+    if (!slot.player || !slot.client) {
+      return styles.unbound;
     }
-    if (slot.bot) {
+
+    if (!slot.client.connected) {
       return styles.filled;
     }
-    if (connected) {
+
+    if (!slot.bot) {
       return styles.connected;
     }
-    return styles.unbound;
+
+    // connected === true && bot exists
+    return styles.connectedInternal;
   }
 
   private statusToFriendly(slot: Slot): string {
-    const connected = false; // TODO
+    if (!slot.player) {
+      return 'Unassigned';
+    }
 
-    if (slot.bot && connected) {
-      return 'Connected Local Bot';
+    if (!slot.client) {
+      return 'Unregistered';
     }
-    if (slot.bot) {
-      return 'Local Bot';
-    }
-    if (connected) {
-      return 'Connected external bot';
-    }
-    if (slot.player) {
+
+    if (!slot.client.connected) {
       return 'Not connected';
     }
-    return 'Unassigned';
+
+    if (!slot.bot) {
+      return 'Connected external bot';
+    }
+
+    return 'Connected internal bot';
   }
 
   private getActions(): JSX.Element[] {
@@ -151,20 +155,18 @@ export class SlotElement extends React.Component<SlotElementProps> {
       </button>
     );
 
-    const connected = false; // TODO
+    if (!slot.player) {
+      return [];
+    }
 
-    if (slot.bot && connected) {
+    if (!slot.client || slot.client.connected) {
       return [kick];
     }
+
     if (slot.bot) {
       return [kick, conn];
     }
-    if (connected) {
-      return [kick];
-    }
-    if (slot.player) {
-      return [copy, copyFull];
-    }
-    return [];
+
+    return [copy, copyFull];
   }
 }

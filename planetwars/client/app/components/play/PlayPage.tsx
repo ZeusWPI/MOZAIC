@@ -56,7 +56,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     stopServer() {
       dispatch(A.stopServer());
-    }
+    },
   };
 }
 
@@ -80,7 +80,7 @@ export interface PlayPageDispatchProps {
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
-const alertTODO = () => { alert("TODO"); }
+const alertTODO = () => { alert("TODO"); };
 export class PlayPage extends React.Component<PlayPageProps> {
 
   public render() {
