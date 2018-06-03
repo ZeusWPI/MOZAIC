@@ -29,6 +29,14 @@ export interface PlayerData {
   id: string;
   name: string;
   number: number;
+  clientId?: number;
+}
+
+export interface ClientData {
+  clientId: number;
+  playerId: string;
+  token: string;
+  connected: boolean;
 }
 
 export interface LobbyState {
@@ -36,6 +44,7 @@ export interface LobbyState {
   config: PwConfig;
   address: Address;
   players: { [playerId: string]: PlayerData };
+  clients: { [clientId: string]: ClientData };
 }
 
 export const defaultLobbyState = {
@@ -54,10 +63,28 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
     return { ...state, address: action.payload };
   }
 
-  if (A.savePlayer.test(action)) {
+  if (A.createPlayer.test(action)) {
     const player = action.payload;
     const players = { ...state.players, [player.id]: player };
     return { ...state, players };
+  }
+
+  if (A.clientRegistered.test(action)) {
+    const { clientId, playerId, token } = action.payload;
+
+    // update player data
+    const player = { ...state.players[playerId], clientId };
+    const players = { ...state.players, [playerId]: player };
+
+    // add client
+    const client = {
+      clientId,
+      playerId,
+      token,
+      connected: false,
+    };
+    const clients = { ...state.clients, [clientId]: client };
+    return { ...state, clients, players };
   }
 
   if (A.serverStarted.test(action)) {

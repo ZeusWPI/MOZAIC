@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
 import * as A from '../../actions';
-import { ServerParams } from '../../actions/lobby';
+import { ServerParams, PlayerParams } from '../../actions/lobby';
 import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
@@ -45,8 +45,8 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     setAddress(address: Address) {
       dispatch(A.setAddress(address));
     },
-    savePlayer(player: PlayerData) {
-      dispatch(A.savePlayer(player));
+    createPlayer(player: PlayerData) {
+      dispatch(A.createPlayer(player));
     },
     startServer(params: ServerParams) {
       dispatch(A.startServer(params));
@@ -70,7 +70,7 @@ export interface PlayPageDispatchProps {
   importMap: (mapMeta: M.MapMeta) => void;
   setConfig: (config: PwConfig) => void;
   setAddress: (address: Address) => void;
-  savePlayer: (player: PlayerData) => void;
+  createPlayer: (player: PlayerParams) => void;
   startServer: (params: ServerParams) => void;
   stopServer: () => void;
 }
@@ -142,7 +142,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
       idx += 1;
     }
 
-    this.props.savePlayer({
+    this.props.createPlayer({
       id: uuidv4(),
       name: bot.name,
       number: idx,

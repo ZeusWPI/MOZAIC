@@ -1,7 +1,7 @@
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { MapId, MatchId, Token } from '../database/models';
 import { MatchParams } from 'mozaic-client';
-import { PlayerData } from '../reducers/lobby';
+import { PlayerData, ClientData } from '../reducers/lobby';
 
 interface Config {
   mapId: MapId;
@@ -26,4 +26,17 @@ export const serverStarted = actionCreator<MatchId>('SERVER_STARTED');
 export const stopServer = actionCreatorVoid('STOP_SERVER');
 export const serverStopped = actionCreatorVoid('SERVER_STOPPED');
 
-export const savePlayer = actionCreator<PlayerData>('SAVE_PLAYER');
+export interface PlayerParams {
+  id: string;
+  name: string;
+  number: number;
+}
+
+export const createPlayer = actionCreator<PlayerParams>('CREATE_PLAYER');
+
+export interface ClientRegistration {
+  playerId: string;
+  clientId: number;
+  token: string;
+}
+export const clientRegistered = actionCreator<ClientRegistration>('CLIENT_REGISTERED');
