@@ -11,7 +11,7 @@ const styles = require('./Lobby.scss');
 export interface SlotListProps {
   slots: Slot[];
   address: Address;
-  connectLocalBot(slot: Slot, playerNum: number): void;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 
@@ -37,7 +37,7 @@ export interface SlotElementProps {
   slot: Slot;
   index: number;
   address: Address;
-  connectLocalBot(slot: Slot, playerNum: number): void;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
@@ -121,7 +121,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
 
     const clss = (color: string) => `button is-outlined ${color}`;
 
-    const connectLocal = () => this.props.connectLocalBot(slot, index);
+    const connectLocal = () => this.props.connectLocalBot(slot);
 
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>

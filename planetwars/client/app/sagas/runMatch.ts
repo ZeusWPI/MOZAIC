@@ -2,18 +2,22 @@ import { call, apply, take, takeEvery, put, fork } from 'redux-saga/effects';
 import { eventChannel, Channel } from 'redux-saga';
 import * as A from '../actions';
 import { Address, PlayerData, ClientData } from '../reducers/lobby';
-import { MatchRunner, MatchControl } from 'mozaic-client';
+import { MatchRunner, MatchControl, Logger, Client, PwClient } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { generateToken } from '../utils/GameRunner';
-import { ServerParams } from '../actions/lobby';
+import { ServerParams, BotParams } from '../actions/lobby';
 import { ActionWithPayload } from '../actions/helpers';
 import { ISimpleEvent } from 'ste-simple-events';
+
+// tslint:disable-next-line:no-var-requires
+const stringArgv = require('string-argv');
+
 
 export function* runMatchSaga() {
   while (true) {
     const { payload: serverParams} = yield take(A.startServer.type);
     const runner: MatchRunner = yield call(startServer, serverParams);
-    yield fork(lobby, runner.matchControl);
+    yield fork(lobby, runner);
 
     yield take(A.stopServer.type);
     runner.shutdown();
@@ -31,10 +35,11 @@ function* startServer(params: ServerParams) {
   return runner;
 }
 
-function* lobby(match: MatchControl) {
-  yield fork(watchConnectEvents, match);
-  yield fork(watchDisconnectEvents, match);
-  yield fork(watchCreatePlayer, match);
+function* lobby(runner: MatchRunner) {
+  yield fork(watchConnectEvents, runner.matchControl);
+  yield fork(watchDisconnectEvents, runner.matchControl);
+  yield fork(watchCreatePlayer, runner.matchControl);
+  yield fork(watchRunLocalBot, runner.logger);
 }
 
 function* watchCreatePlayer(match: MatchControl) {
@@ -53,6 +58,23 @@ function* watchDisconnectEvents(match: MatchControl) {
   yield takeEvery(channel, function*(clientId: number) {
     yield put(A.clientDisconnected({ clientId }));
   });
+}
+
+function* watchRunLocalBot(logger: Logger) {
+  function* runLocalBot(action: ActionWithPayload<BotParams>) {
+    const { address, token, bot } = action.payload;
+    const [command, ...args] = stringArgv(bot.command);
+    const botConfig = { command, args };
+
+    const client = yield call(Client.connect, {
+      host: address.host,
+      port: address.port,
+      token: new Buffer(token, 'hex'),
+      logger,
+    });
+    const pwClient = new PwClient(client, botConfig);
+  }
+  yield takeEvery(A.runLocalBot.type, runLocalBot);
 }
 
 function* registerPlayer(match: MatchControl, action: ActionWithPayload<PlayerData>) {

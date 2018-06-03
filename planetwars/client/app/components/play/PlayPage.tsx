@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
 import * as A from '../../actions';
-import { ServerParams, PlayerParams } from '../../actions/lobby';
+import { ServerParams, PlayerParams, BotParams } from '../../actions/lobby';
 import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
@@ -63,6 +63,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     stopServer() {
       dispatch(A.stopServer());
     },
+    runLocalBot(params: BotParams) {
+      dispatch(A.runLocalBot(params));
+    }
   };
 }
 
@@ -82,6 +85,7 @@ export interface PlayPageDispatchProps {
   createPlayer: (player: PlayerParams) => void;
   startServer: (params: ServerParams) => void;
   stopServer: () => void;
+  runLocalBot: (params: BotParams) => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
@@ -105,6 +109,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
                 state={lobby}
                 startServer={this.startServer}
                 stopServer={this.stopServer}
+                runLocalBot={this.runLocalBot}
                 serverRunning={!!lobby.matchId}
               />
             </div>
@@ -140,6 +145,17 @@ export class PlayPage extends React.Component<PlayPageProps> {
 
   private stopServer = () => {
     this.props.stopServer();
+  }
+
+  private runLocalBot = (slot: Slot) => {
+    if (!slot.client || !slot.bot) {
+      throw new Error('we suck at programming');
+    }
+    this.props.runLocalBot({
+      address: this.props.lobby.address,
+      token: slot.client.token,
+      bot: slot.bot,
+    });
   }
 
   private addLocalBot = (botId: M.BotId) => {
