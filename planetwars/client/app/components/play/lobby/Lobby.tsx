@@ -43,7 +43,6 @@ export class Lobby extends React.Component<LobbyProps> {
             address={state.address}
             connectLocalBot={alertTODO}
             removeBot={alertTODO}
-            isServerRunning={false}
           />
           <ServerControls
             startServer={this.props.startServer}

@@ -11,7 +11,6 @@ const styles = require('./Lobby.scss');
 export interface SlotListProps {
   slots: Slot[];
   address: Address;
-  isServerRunning: boolean;
   connectLocalBot(slot: Slot, playerNum: number): void;
   removeBot(botNum: number): void;
 }
@@ -27,7 +26,6 @@ export class SlotList extends React.Component<SlotListProps> {
           address={address}
           connectLocalBot={this.props.connectLocalBot}
           removeBot={this.props.removeBot}
-          isServerRunning={this.props.isServerRunning}
         />
       </li>),
     );
@@ -39,7 +37,6 @@ export interface SlotElementProps {
   slot: Slot;
   index: number;
   address: Address;
-  isServerRunning: boolean;
   connectLocalBot(slot: Slot, playerNum: number): void;
   removeBot(botNum: number): void;
 }
@@ -149,7 +146,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
         key='conn'
         className={clss('is-success')}
         onClick={connectLocal}
-        disabled={!this.props.isServerRunning}
+        disabled={!slot.client}
       >
         Connect
       </button>
