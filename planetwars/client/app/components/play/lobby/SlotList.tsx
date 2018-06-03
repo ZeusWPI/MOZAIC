@@ -48,13 +48,8 @@ export class SlotElement extends React.Component<SlotElementProps> {
   public render() {
     const { slot, index } = this.props;
 
-    let token = null;
-    let name = `Player ${index + 1}`;
-
-    if (slot.player) {
-      // token = slot.player.token;
-      name = slot.player.name;
-    }
+    const token = slot.client ? slot.client.token : null;
+    const name = slot.player ? slot.player.name : `Player ${index + 1}`;
 
     // TODO
     const kicked = (false) ? (styles.kicked) : '';
@@ -70,16 +65,16 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private copyToken = (): void => {
-    if (this.props.slot.player) {
-      //clipboard.writeText(JSON.stringify(this.props.slot.player.token));
+    if (this.props.slot.client) {
+      clipboard.writeText(JSON.stringify(this.props.slot.client.token));
     }
   }
 
   private copyFull = (): void => {
     const { slot, address: { host, port }} = this.props;
-    if (slot.player) {
+    if (slot.player && slot.client) {
       const name = slot.player.name;
-      const token = null; // TODO
+      const token = slot.client.token;
       const data = { token, name, port, host };
       clipboard.writeText(JSON.stringify(data));
     }

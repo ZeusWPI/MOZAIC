@@ -1,5 +1,5 @@
 import * as M from '../../database/models';
-import { PlayerData } from '../../reducers/lobby';
+import { PlayerData, ClientData } from '../../reducers/lobby';
 
 export function validateConfig(conf?: WeakConfig): StrongConfig | ValidationError {
   if (!conf) { return { msg: 'Please fill in config.', type: 'error' }; }
@@ -60,5 +60,6 @@ export interface ServerGameConfig {
 
 export interface Slot {
   player?: PlayerData;
+  client?: ClientData;
   bot?: M.Bot;
 }

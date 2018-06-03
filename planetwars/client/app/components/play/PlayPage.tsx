@@ -26,9 +26,12 @@ function mapStateToProps(state: GState): PlayPageStateProps {
     slots = _.times(map.slots, () => ({}));
   }
 
-  Object.keys(lobby.players).forEach((token) => {
-    const player = lobby.players[token];
+  Object.keys(lobby.players).forEach((playerId) => {
+    const player = lobby.players[playerId];
     slots[player.number].player = player;
+    if (player.clientId) {
+      slots[player.number].client = lobby.clients[player.clientId];
+    }
   });
 
   return { maps, bots, lobby, slots };
