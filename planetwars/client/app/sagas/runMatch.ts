@@ -1,4 +1,5 @@
 import { call, apply, take, takeEvery, put, fork } from 'redux-saga/effects';
+import { eventChannel, Channel } from 'redux-saga';
 import * as A from '../actions';
 import { Address, PlayerData, ClientData } from '../reducers/lobby';
 import { MatchRunner, MatchControl } from 'mozaic-client';
@@ -6,6 +7,7 @@ import { Config } from '../utils/Config';
 import { generateToken } from '../utils/GameRunner';
 import { ServerParams } from '../actions/lobby';
 import { ActionWithPayload } from '../actions/helpers';
+import { ISimpleEvent } from 'ste-simple-events';
 
 export function* runMatchSaga() {
   while (true) {
@@ -35,11 +37,27 @@ function* startServer(params: ServerParams) {
 }
 
 function* lobby(match: Match) {
+  yield fork(watchConnectEvents, match);
+  yield fork(watchDisconnectEvents, match);
   yield fork(watchCreatePlayer, match);
 }
 
 function* watchCreatePlayer(match: Match) {
   yield takeEvery(A.createPlayer.type, registerPlayer, match);
+}
+
+function* watchConnectEvents(match: Match) {
+  const channel = simpleEventChannel(match.control.onPlayerConnected);
+  yield takeEvery(channel, function*(clientId: number) {
+    yield put(A.clientConnected({ clientId }));
+  });
+}
+
+function* watchDisconnectEvents(match: Match) {
+  const channel = simpleEventChannel(match.control.onPlayerDisconnected);
+  yield takeEvery(channel, function*(clientId: number) {
+    yield put(A.clientDisconnected({ clientId }));
+  });
 }
 
 function* registerPlayer(match: Match, action: ActionWithPayload<PlayerData>) {
@@ -65,4 +83,12 @@ interface Match {
 interface PlayerClientData {
   clientId?: number;
   token: string;
+}
+
+function simpleEventChannel<T>(event: ISimpleEvent<T>): Channel<T> {
+  return eventChannel((emit) => {
+    event.subscribe(emit);
+    const unsubscribe = () => event.unsubscribe(emit);
+    return unsubscribe;
+  });
 }
