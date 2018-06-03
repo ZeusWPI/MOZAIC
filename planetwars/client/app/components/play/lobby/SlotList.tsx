@@ -82,16 +82,11 @@ export class SlotElement extends React.Component<SlotElementProps> {
       return styles.unbound;
     }
 
-    if (!slot.client.connected) {
-      return styles.filled;
-    }
-
-    if (!slot.bot) {
+    if (slot.client.connected) {
       return styles.connected;
     }
 
-    // connected === true && bot exists
-    return styles.connectedInternal;
+    return styles.filled;
   }
 
   private statusToFriendly(slot: Slot): string {
