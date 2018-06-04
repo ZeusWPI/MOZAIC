@@ -6,6 +6,8 @@ import * as M from '../../database/models';
 import { GState } from '../../reducers';
 import { Importer } from '../../utils/Importer';
 import { Join, JoinDispatchProps, JoinState, JoinStateProps } from './Join';
+import { v4 as uuidv4 } from 'uuid';
+
 
 const mapStateToProps = (state: GState) => {
   return {
@@ -16,7 +18,14 @@ const mapStateToProps = (state: GState) => {
 const mapDispatchToProps = (dispatch: any) => {
   return {
     joinMatch: (address: M.Address, bot: M.InternalBotSlot) => {
-      dispatch(A.joinMatch(address, bot));
+      const matchId = uuidv4();
+      dispatch(A.joinMatch({
+        matchId,
+        address,
+        token: bot.token,
+        name: bot.name,
+        botId: bot.botId,
+      }));
     },
   };
 };

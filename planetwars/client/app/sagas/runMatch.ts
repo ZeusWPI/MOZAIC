@@ -1,4 +1,3 @@
-
 import { eventChannel, Channel } from 'redux-saga';
 import * as A from '../actions';
 import { Address, PlayerData, ClientData, PwConfig, LobbyState } from '../reducers/lobby';

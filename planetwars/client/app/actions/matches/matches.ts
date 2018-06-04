@@ -19,6 +19,16 @@ export const importMatch = actionCreator<M.Match>('IMPORT_MATCH');
 export const saveMatch = actionCreator<M.Match>('SAVE_MATCH');
 export const matchErrored = actionCreator<M.MatchId>('MATCH_ERROR');
 
+export interface JoinMatchParams {
+  matchId: string;
+  token: string;
+  botId: M.BotId;
+  name: string;
+  address: M.Address;
+}
+
+export const joinMatch = actionCreator<JoinMatchParams>('JOIN_MATCH');
+
 function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   const matchId = uuidv4();
   const { map, players, maxTurns } = params;
@@ -37,7 +47,7 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   return match;
 }
 
-export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
+export function joinMatch_(host: M.Address, bot: M.InternalBotSlot) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
 
@@ -149,7 +159,6 @@ export function runMatch() {
     console.log("This probably doesn't work!!!!");
 
     PwClient.MatchRunner.create(Config.matchRunner, config).then((runner) => {
-      dispatch(Host.serverStarted(runner));
 
       runner.matchControl.onPlayerConnected.subscribe((clientId) => {
         dispatch(Host.playerConnected(players[clientId - 1].token));

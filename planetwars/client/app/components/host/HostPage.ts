@@ -40,7 +40,7 @@ const mapDispatchToProps = (dispatch: any) => {
       dispatch(A.sendGo());
     },
     joinMatch(address: M.Address, bot: M.InternalBotSlot) {
-      dispatch(A.joinMatch(address, bot));
+      /// dispatch(A.joinMatch(address, bot));
     },
   };
 };
