@@ -126,5 +126,9 @@ export function lobbyReducer(state: LobbyState = defaultLobbyState, action: any)
     return { ...state, matchId };
   }
 
+  if (A.resetLobby.test(action)) {
+    return defaultLobbyState;
+  }
+
   return state;
 }

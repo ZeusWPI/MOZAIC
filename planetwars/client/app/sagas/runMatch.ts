@@ -1,4 +1,4 @@
-import { call, apply, take, takeEvery, put, fork, select, cancel } from 'redux-saga/effects';
+
 import { eventChannel, Channel } from 'redux-saga';
 import * as A from '../actions';
 import { Address, PlayerData, ClientData, PwConfig } from '../reducers/lobby';
@@ -9,19 +9,46 @@ import { ServerParams, BotParams } from '../actions/lobby';
 import { ActionWithPayload } from '../actions/helpers';
 import { ISimpleEvent } from 'ste-simple-events';
 import { GState } from '../reducers';
+import {
+  call,
+  apply,
+  take,
+  takeEvery,
+  put,
+  fork,
+  select,
+  cancel,
+  race,
+  spawn,
+} from 'redux-saga/effects';
 
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
-
 
 export function* runMatchSaga() {
   while (true) {
     const { payload: serverParams} = yield take(A.startServer.type);
     const runner: MatchRunner = yield call(startServer, serverParams);
-    yield fork(runMatch, runner);
-    yield take(A.stopServer.type);
-    runner.shutdown();
-    yield put(A.serverStopped());
+
+    // start the lobby
+    const lobbyTask = yield fork(lobby, runner);
+
+    // run lobby until either the server is being shutdown, or the match
+    // is being started
+    const { stop, run } = yield race({
+      stop: take(A.stopServer.type),
+      run: take(A.startMatch.type),
+    });
+    yield cancel(lobbyTask);
+
+    if (stop) {
+      runner.shutdown();
+      yield put(A.serverStopped());
+    }
+    if (run) {
+      yield spawn(runMatch, runner.matchControl, run.payload);
+      yield put(A.resetLobby());
+    }
   }
 }
 
@@ -35,14 +62,6 @@ function* startServer(params: ServerParams) {
   return runner;
 }
 
-function* runMatch(runner: MatchRunner) {
-  const lobbyTask = yield fork(lobby, runner);
-  const action = yield take(A.startMatch.type);
-  yield cancel(lobbyTask);
-
-  yield startMatch(runner.matchControl, action.payload);
-}
-
 function* lobby(runner: MatchRunner) {
   yield fork(watchConnectEvents, runner.matchControl);
   yield fork(watchDisconnectEvents, runner.matchControl);
@@ -50,7 +69,7 @@ function* lobby(runner: MatchRunner) {
   yield fork(watchRunLocalBot, runner.logger);
 }
 
-function* startMatch(control: MatchControl, conf: PwConfig) {
+function* runMatch(control: MatchControl, conf: PwConfig) {
   const { mapId, maxTurns } = conf;
   const mapPath = yield select((state: GState) => state.maps[mapId].mapPath);
   yield call([control, control.startGame], {

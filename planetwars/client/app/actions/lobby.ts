@@ -53,3 +53,4 @@ export interface BotParams {
 export const runLocalBot = actionCreator<BotParams>('RUN_LOCAL_BOT');
 
 export const startMatch = actionCreator<PwConfig>('START_MATCH');
+export const resetLobby = actionCreatorVoid('RESET_LOBBY');
