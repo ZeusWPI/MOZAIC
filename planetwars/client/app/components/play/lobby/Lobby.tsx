@@ -25,6 +25,7 @@ export type LobbyProps = {
   startServer: () => void;
   stopServer: () => void;
   runLocalBot: (slot: Lib.Slot) => void;
+  launchGame: () => void;
 };
 
 const alertTODO = () => { alert('TODO'); };
@@ -48,7 +49,7 @@ export class Lobby extends React.Component<LobbyProps> {
           <ServerControls
             startServer={this.props.startServer}
             stopServer={this.props.stopServer}
-            launchGame={alertTODO}
+            launchGame={this.props.launchGame}
             serverRunning={this.props.serverRunning}
           />
         </div>

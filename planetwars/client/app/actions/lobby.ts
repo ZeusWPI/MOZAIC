@@ -1,7 +1,7 @@
 import { actionCreator, actionCreatorVoid } from './helpers';
 import { MapId, MatchId, Token } from '../database/models';
 import { MatchParams } from 'mozaic-client';
-import { PlayerData, ClientData } from '../reducers/lobby';
+import { PlayerData, ClientData, PwConfig } from '../reducers/lobby';
 import * as M from '../database/models';
 
 interface Config {
@@ -51,3 +51,5 @@ export interface BotParams {
   bot: M.Bot;
 }
 export const runLocalBot = actionCreator<BotParams>('RUN_LOCAL_BOT');
+
+export const startMatch = actionCreator<PwConfig>('START_MATCH');

@@ -65,6 +65,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     runLocalBot(params: BotParams) {
       dispatch(A.runLocalBot(params));
+    },
+    startMatch(config: PwConfig) {
+      dispatch(A.startMatch(config));
     }
   };
 }
@@ -86,6 +89,7 @@ export interface PlayPageDispatchProps {
   startServer: (params: ServerParams) => void;
   stopServer: () => void;
   runLocalBot: (params: BotParams) => void;
+  startMatch: (config: PwConfig) => void;
 }
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
@@ -109,6 +113,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
                 state={lobby}
                 startServer={this.startServer}
                 stopServer={this.stopServer}
+                launchGame={this.startMatch}
                 runLocalBot={this.runLocalBot}
                 serverRunning={!!lobby.matchId}
               />
@@ -156,6 +161,10 @@ export class PlayPage extends React.Component<PlayPageProps> {
       token: slot.client.token,
       bot: slot.bot,
     });
+  }
+
+  private startMatch = () => {
+    this.props.startMatch(this.props.lobby.config);
   }
 
   private addLocalBot = (botId: M.BotId) => {
