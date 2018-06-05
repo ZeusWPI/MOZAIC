@@ -29,29 +29,40 @@ const stringArgv = require('string-argv');
 
 export function* runMatchSaga() {
   while (true) {
-    const { payload: serverParams} = yield take(A.startServer.type);
-    const runner: MatchRunner = yield call(startServer, serverParams);
-
-    // start the lobby
-    const lobbyTask = yield fork(runLobby, runner);
-
-    // run lobby until either the server is being shutdown, or the match
-    // is being started
-    const { stop, run } = yield race({
-      stop: take(A.stopServer.type),
-      run: take(A.startMatch.type),
-    });
-    yield cancel(lobbyTask);
-
-    if (stop) {
-      runner.shutdown();
-      yield put(A.serverStopped());
+    try {
+      yield lobbyFlowSaga();
+    } catch (error) {
+      alert(`An error occured:\n${error}`);
     }
-    if (run) {
-      const match = yield call(assembleMatch, serverParams.matchId, run.payload);
-      yield spawn(runMatch, runner, match);
-      yield put(A.resetLobby());
-    }
+  }
+}
+
+function* lobbyFlowSaga() {
+  // start the server
+  const { payload: serverParams} = yield take(A.startServer.type);
+  const runner: MatchRunner = yield call(startServer, serverParams);
+
+  // start the lobby
+  const lobbyTask = yield fork(runLobby, runner);
+
+  // run lobby until either the server is being shutdown, or the match
+  // is being started
+  const { stop, run } = yield race({
+    stop: take(A.stopServer.type),
+    run: take(A.startMatch.type),
+  });
+  yield cancel(lobbyTask);
+
+  if (stop) {
+    // stop server and exit
+    runner.shutdown();
+    yield put(A.serverStopped());
+  }
+  if (run) {
+    // run match in background
+    const match = yield call(assembleMatch, serverParams.matchId, run.payload);
+    yield spawn(runMatch, runner, match);
+    yield put(A.resetLobby());
   }
 }
 
