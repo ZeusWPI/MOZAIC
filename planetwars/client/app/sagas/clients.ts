@@ -68,12 +68,11 @@ function* joinMatch(params: A.JoinMatchParams) {
   const event = yield take(eventChan);
   if (event === 'exit') {
     const log = parseLogFile(match.logPath, match.type);
-    const updatedMatch: M.FinishedMatch = {
-      ...match,
-      stats: calcStats(log),
-      status: M.MatchStatus.finished,
-    };
-    yield put(A.saveMatch(updatedMatch));
+    const stats = calcStats(log);
+    yield put(A.matchFinished({
+      matchId: match.uuid,
+      stats,
+    }));
   }
 }
 

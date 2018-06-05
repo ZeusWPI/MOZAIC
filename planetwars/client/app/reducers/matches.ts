@@ -12,6 +12,29 @@ export function matchesReducer(state: MatchesState = {}, action: any): MatchesSt
       const match = action.payload;
       return { ...state, [match.uuid]: match };
     }
+    case A.matchFinished.type: {
+      const { matchId, stats } = action.payload;
+      const match = state[matchId];
+      return {
+        ...state,
+        [matchId]: {
+          ...state[matchId],
+          status: M.MatchStatus.finished,
+          stats,
+        },
+      };
+    }
+    case A.matchError.type: {
+      const { matchId, error } = action.payload;
+      return {
+        ...state,
+        [matchId]: {
+          ...state[matchId],
+          status: M.MatchStatus.error,
+          error,
+        },
+      };
+    }
     default: return state;
   }
 }

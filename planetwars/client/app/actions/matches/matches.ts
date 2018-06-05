@@ -17,7 +17,6 @@ export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
 export const importMatch = actionCreator<M.Match>('IMPORT_MATCH');
 
 export const saveMatch = actionCreator<M.Match>('SAVE_MATCH');
-export const matchErrored = actionCreator<M.MatchId>('MATCH_ERROR');
 
 export interface JoinMatchParams {
   matchId: string;
@@ -26,8 +25,19 @@ export interface JoinMatchParams {
   name: string;
   address: M.Address;
 }
-
 export const joinMatch = actionCreator<JoinMatchParams>('JOIN_MATCH');
+
+export interface MatchFinished {
+  matchId: string;
+  stats: M.MatchStats;
+}
+export const matchFinished = actionCreator<MatchFinished>('MATCH_FINISHED');
+
+export interface MatchError {
+  matchId: string;
+  error: string;
+}
+export const matchError = actionCreator<MatchError>('MATCH_ERROR');
 
 function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   const matchId = uuidv4();

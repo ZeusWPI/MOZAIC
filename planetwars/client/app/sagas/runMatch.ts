@@ -159,20 +159,17 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
   const event = yield take(matchChan);
   if (event === 'complete') {
     const log = parseLogFile(match.logPath, match.type);
-    const updatedMatch: M.FinishedMatch = {
-      ...match,
-      stats: calcStats(log),
-      status: M.MatchStatus.finished,
-    };
-    yield put(A.saveMatch(updatedMatch));
+    const stats = calcStats(log);
+    yield put(A.matchFinished({
+      matchId: match.uuid,
+      stats,
+    }));
   } else {
-    const updatedMatch: M.ErroredMatch = {
-      ...match,
-      status: M.MatchStatus.error,
-      // TODO: include more information or something
-      error: event.message,
-    };
-    yield put(A.saveMatch(updatedMatch));
+    const error = event.message;
+    yield put(A.matchError({
+      matchId: match.uuid,
+      error,
+    }));
   }
 }
 
