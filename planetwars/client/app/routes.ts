@@ -7,7 +7,6 @@ import App from './App';
 import {
   BotsPage,
   HomePage,
-  HostPage,
   InfoPage,
   JoinPage,
   MatchesPage,
