@@ -23,6 +23,7 @@ import {
   race,
   spawn,
 } from 'redux-saga/effects';
+import { runPwClient } from './clients';
 
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
@@ -104,16 +105,12 @@ function* watchDisconnectEvents(match: MatchControl) {
 function* watchRunLocalBot(logger: Logger) {
   function* runLocalBot(action: ActionWithPayload<BotParams>) {
     const { address, token, bot } = action.payload;
-    const [command, ...args] = stringArgv(bot.command);
-    const botConfig = { command, args };
-
-    const client = yield call(Client.connect, {
-      host: address.host,
-      port: address.port,
-      token: new Buffer(token, 'hex'),
+    yield call(runPwClient, {
+      address,
+      token,
       logger,
+      botId: bot.uuid,
     });
-    const pwClient = new PwClient(client, botConfig);
   }
   yield takeEvery(A.runLocalBot.type, runLocalBot);
 }

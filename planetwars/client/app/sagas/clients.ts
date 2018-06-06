@@ -1,6 +1,6 @@
 import * as A from '../actions';
 import * as M from '../database/models';
-import { Client, PwClient, Logger } from 'mozaic-client';
+import { Client, PwClient, Logger, Address } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { eventChannel } from 'redux-saga';
 import { parseLogFile, calcStats } from '../lib/match';
@@ -36,13 +36,15 @@ export function* runClientSaga() {
 
 function* joinMatch(params: A.JoinMatchParams) {
   const logPath = Config.matchLogPath(params.matchId);
+  const logger = new Logger(logPath);
 
-  const client: Client = yield call(Client.connect, {
-    host: params.address.host,
-    port: params.address.port,
-    token: new Buffer(params.token, 'hex'),
-    logger: new Logger(logPath),
+  const client = yield call(runPwClient, {
+    address: params.address,
+    token: params.token,
+    botId: params.botId,
+    logger,
   });
+
   const eventChan = clientEventChannel(client);
 
   const match: M.JoinedMatch = {
@@ -62,11 +64,6 @@ function* joinMatch(params: A.JoinMatchParams) {
     },
   };
 
-  const bot = yield select((state: GState) => state.bots[params.botId]);
-  const [command, ...args] = stringArgv(bot.command);
-  const botConfig = { command, args };
-
-  const pwClient = new PwClient(client, botConfig);
   yield put(A.saveMatch(match));
 
   const event = yield take(eventChan);
@@ -78,6 +75,29 @@ function* joinMatch(params: A.JoinMatchParams) {
       stats,
     }));
   }
+}
+
+export interface ClientParams {
+  address: Address;
+  token: string;
+  logger: Logger;
+  botId: M.BotId;
+}
+
+export function* runPwClient(params: ClientParams) {
+  const client: Client = yield call(Client.connect, {
+    host: params.address.host,
+    port: params.address.port,
+    token: new Buffer(params.token, 'hex'),
+    logger: params.logger,
+  });
+
+  const bot = yield select((state: GState) => state.bots[params.botId]);
+  const [command, ...args] = stringArgv(bot.command);
+  const botConfig = { command, args };
+
+  const pwClient = new PwClient(client, botConfig);
+  return client;
 }
 
 function clientEventChannel(client: Client) {
