@@ -125,6 +125,7 @@
     "source-map-support": "^0.5.5",
     "string-argv": "0.0.2",
     "tmp": "0.0.33",
+    "typesafe-actions": "^2.0.4",
     "uuid": "^3.2.1"
   },
   "devDependencies": {
