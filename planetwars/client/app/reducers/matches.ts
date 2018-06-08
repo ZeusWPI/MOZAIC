@@ -4,7 +4,7 @@ import * as M from '../database/models';
 export type MatchesState = M.MatchList;
 export function matchesReducer(state: MatchesState = {}, action: any): MatchesState {
   switch (action.type) {
-    case A.saveMatch.type: {
+    case A.createMatch.type: {
       const match = action.payload;
       return { ...state, [match.uuid]: match };
     }

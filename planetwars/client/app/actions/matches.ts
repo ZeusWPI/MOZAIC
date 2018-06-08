@@ -5,7 +5,7 @@ export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
 export const importMatch = actionCreator<M.Match>('IMPORT_MATCH');
 
-export const saveMatch = actionCreator<M.Match>('SAVE_MATCH');
+export const createMatch = actionCreator<M.Match>('CREATE_MATCH');
 
 export interface JoinMatchParams {
   matchId: string;

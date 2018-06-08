@@ -45,8 +45,6 @@ function* joinMatch(params: A.JoinMatchParams) {
     logger,
   });
 
-  const eventChan = clientEventChannel(client);
-
   const match: M.JoinedMatch = {
     uuid: params.matchId,
     type: M.MatchType.joined,
@@ -64,8 +62,9 @@ function* joinMatch(params: A.JoinMatchParams) {
     },
   };
 
-  yield put(A.saveMatch(match));
+  yield put(A.createMatch(match));
 
+  const eventChan = clientEventChannel(client);
   const event = yield take(eventChan);
   if (event === 'exit') {
     const log = parseLogFile(match.logPath, match.type);

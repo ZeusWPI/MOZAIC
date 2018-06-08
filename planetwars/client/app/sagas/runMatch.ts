@@ -162,7 +162,7 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
     map_file: mapPath,
     max_turns: match.maxTurns,
   });
-  yield put(A.saveMatch(match));
+  yield put(A.createMatch(match));
 
   const event = yield take(matchChan);
   if (event === 'complete') {
