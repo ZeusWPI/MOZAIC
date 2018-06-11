@@ -24,5 +24,8 @@ export function botsReducer(state: BotsState = {}, action: BotsAction) {
       delete bots[uuid];
       return bots;
     }
+    default: {
+      return state;
+    }
   }
 }

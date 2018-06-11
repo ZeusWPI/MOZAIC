@@ -11,5 +11,8 @@ export function mapsReducer(state: MapsState = {}, action: MapsAction) {
       const map = action.payload;
       return { ...state, [map.uuid]: map };
     }
+    default: {
+      return state;
+    }
   }
 }
