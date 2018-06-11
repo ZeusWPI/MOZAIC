@@ -58,7 +58,7 @@ export function bindToStore(store: any): Promise<void> {
         store.dispatch(A.importBotFromDB(db.bots[uuid]));
       });
       Object.keys(db.maps).forEach((uuid) => {
-        store.dispatch(A.importMapFromDB(db.maps[uuid]));
+        store.dispatch(A.importMap(db.maps[uuid]));
       });
       Object.keys(db.matches).forEach((uuid) => {
         const matchData = db.matches[uuid];

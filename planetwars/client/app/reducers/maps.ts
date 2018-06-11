@@ -1,13 +1,15 @@
-import * as A from '../actions';
+import * as actions from '../actions/maps';
 import * as M from '../database/models';
+import { ActionType, getType } from 'typesafe-actions';
 
 export type MapsState = M.MapList;
-export function mapsReducer(state: MapsState = {}, action: any) {
-  if (A.importMapFromDB.test(action)) {
-    return { ...state, [action.payload.uuid]: action.payload };
+export type MapsAction = ActionType<typeof actions>;
+
+export function mapsReducer(state: MapsState = {}, action: MapsAction) {
+  switch (action.type) {
+    case getType(actions.importMap): {
+      const map = action.payload;
+      return { ...state, [map.uuid]: map };
+    }
   }
-  if (A.importMap.test(action)) {
-    return { ...state, [action.payload.uuid]: action.payload };
-  }
-  return state;
 }
