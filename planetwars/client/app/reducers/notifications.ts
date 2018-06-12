@@ -1,18 +1,30 @@
-import * as A from '../actions';
+import * as actions from '../actions/notifications';
 import * as M from '../database/models';
+import { ActionType, getType } from 'typesafe-actions';
 
+export type NotificationsAction = ActionType<typeof actions>;
 export type NotificationsState = M.Notification[];
-export function notificationReducer(state: NotificationsState = [], action: any) {
-  if (A.addNotification.test(action)) {
-    const newState = state.slice();
-    newState.push(action.payload);
-    return newState;
-  } else if (A.removeNotification.test(action)) {
-    const newState = state.slice();
-    newState.splice(action.payload, 1);
-    return newState;
-  } else if (A.clearNotifications.test(action)) {
-    return [];
+
+export function notificationReducer(
+  state: NotificationsState = [],
+  action: NotificationsAction,
+) {
+  switch (action.type) {
+    case getType(actions.addNotification): {
+      const newState = state.slice();
+      newState.push(action.payload);
+      return newState;
+    }
+    case getType(actions.removeNotification): {
+      const newState = state.slice();
+      newState.splice(action.payload, 1);
+      return newState;
+    }
+    case getType(actions.clearNotifications): {
+      return [];
+    }
+    default: {
+      return state;
+    }
   }
-  return state;
 }

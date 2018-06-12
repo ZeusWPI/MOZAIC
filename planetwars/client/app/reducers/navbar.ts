@@ -1,6 +1,8 @@
 import { combineReducers } from 'redux';
+import * as actions from '../actions';
+import { ActionType, getType } from 'typesafe-actions';
 
-import * as A from '../actions';
+export type Action = ActionType<typeof actions>;
 
 // TODO: Remove notificationsVisible from global store
 export interface NavbarState {
@@ -8,14 +10,20 @@ export interface NavbarState {
 }
 
 export const navbarReducer = combineReducers<NavbarState>({
-  notificationsVisible: (state = false, action) => {
-    if (A.showNotifications.test(action)) {
-      return true;
-    } else if (A.hideNotifications.test(action)) {
-      return false;
-    } else if (A.toggleNotifications.test(action)) {
-      return !state;
+  notificationsVisible: (state = false, action: Action) => {
+    switch (action.type) {
+      case getType(actions.showNotifications): {
+        return true;
+      }
+      case getType(actions.hideNotifications): {
+        return false;
+      }
+      case getType(actions.toggleNotifications): {
+        return !state;
+      }
+      default: {
+        return state;
+      }
     }
-    return state;
   },
 });

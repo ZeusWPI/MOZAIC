@@ -1,10 +1,22 @@
-import { actionCreator, actionCreatorVoid } from './helpers';
 import * as M from '../database/models';
+import { createAction } from 'typesafe-actions';
 
-// Notifications
-export const addNotification = actionCreator<M.Notification>('ADD_NOTIFICATION');
-export const removeNotification = actionCreator<number>('REMOVE_NOTIFICATION');
-export const clearNotifications = actionCreatorVoid('CLEAR_NOTIFICATION');
-export const showNotifications = actionCreatorVoid('NOTIFICATION_SHOW');
-export const hideNotifications = actionCreatorVoid('NOTIFICATION_HIDE');
-export const toggleNotifications = actionCreatorVoid('NOTIFICATION_TOGGLE');
+export const addNotification = createAction(
+  'ADD_NOTIFICATION',
+  (resolve) => {
+    return (notification: M.Notification) => resolve(notification);
+  },
+);
+
+export const removeNotification = createAction(
+  'REMOVE_NOTIFICATION',
+  (resolve) => {
+    return (idx: number) => resolve(idx);
+  },
+);
+
+export const clearNotifications = createAction('CLEAR_NOTIFICATIONS');
+
+export const showNotifications = createAction('NOTIFICATION_SHOW');
+export const hideNotifications = createAction('NOTIFICATION_HIDE');
+export const toggleNotifications = createAction('NOTIFICATION_TOGGLE');
