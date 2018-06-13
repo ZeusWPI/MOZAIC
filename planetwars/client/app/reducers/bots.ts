@@ -6,9 +6,9 @@ import * as M from '../database/models';
 import { ActionType, getType } from 'typesafe-actions';
 
 export type BotsState = M.BotList;
-export type BotsAction = ActionType<typeof actions>;
+export type Action = ActionType<typeof actions>;
 
-export function botsReducer(state: BotsState = {}, action: BotsAction) {
+export function botsReducer(state: BotsState = {}, action: Action) {
   switch (action.type) {
     case getType(actions.addBot): {
       const bot = action.payload;

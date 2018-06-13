@@ -3,9 +3,9 @@ import * as M from '../database/models';
 import { ActionType, getType } from 'typesafe-actions';
 
 export type MapsState = M.MapList;
-export type MapsAction = ActionType<typeof actions>;
+export type Action = ActionType<typeof actions>;
 
-export function mapsReducer(state: MapsState = {}, action: MapsAction) {
+export function mapsReducer(state: MapsState = {}, action: Action) {
   switch (action.type) {
     case getType(actions.importMap): {
       const map = action.payload;

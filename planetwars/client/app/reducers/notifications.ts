@@ -2,12 +2,12 @@ import * as actions from '../actions/notifications';
 import * as M from '../database/models';
 import { ActionType, getType } from 'typesafe-actions';
 
-export type NotificationsAction = ActionType<typeof actions>;
+export type Action = ActionType<typeof actions>;
 export type NotificationsState = M.Notification[];
 
 export function notificationReducer(
   state: NotificationsState = [],
-  action: NotificationsAction,
+  action: Action,
 ) {
   switch (action.type) {
     case getType(actions.addNotification): {
