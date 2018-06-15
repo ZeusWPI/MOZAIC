@@ -18,6 +18,7 @@ import {
 } from 'redux-saga/effects';
 import { GState } from '../reducers';
 import { ActionWithPayload } from '../actions/helpers';
+import { getType } from 'typesafe-actions';
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 
@@ -25,7 +26,7 @@ const stringArgv = require('string-argv');
 // TODO: handle errors
 
 export function* runClientSaga() {
-  yield takeEvery(A.joinMatch.type, function*(action: any) {
+  yield takeEvery(getType(A.joinMatch), function*(action: any) {
     try {
       yield call(joinMatch, action.payload);
     } catch (error) {
