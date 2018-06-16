@@ -62,7 +62,7 @@ export function bindToStore(store: any): Promise<void> {
       });
       Object.keys(db.matches).forEach((uuid) => {
         const matchData = db.matches[uuid];
-        store.dispatch(A.importMatchFromDB({
+        store.dispatch(A.importMatch({
           ...matchData,
           timestamp: new Date(matchData.timestamp),
         }));
