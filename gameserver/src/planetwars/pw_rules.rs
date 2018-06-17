@@ -1,4 +1,4 @@
-use super::PlayerId;
+use network::ClientId;
 
 /// The planet wars game rules.
 pub struct PlanetWars {
@@ -14,13 +14,13 @@ pub struct PlanetWars {
 
 #[derive(Debug)]
 pub struct Player {
-    pub id: PlayerId,
+    pub id: ClientId,
     pub alive: bool,
 }
 
 #[derive(Debug)]
 pub struct Fleet {
-    pub owner: Option<PlayerId>,
+    pub owner: Option<usize>,
     pub ship_count: u64,
 }
 
@@ -110,9 +110,9 @@ impl PlanetWars {
                 planet.orbit(exp.fleet);
             } else {
                 exps[i].turns_remaining -= 1;
-                if let Some(owner_id) = exps[i].fleet.owner {
+                if let Some(owner_num) = exps[i].fleet.owner {
                     // owner has an expedition in progress; this is a sign of life.
-                    self.players[owner_id.as_usize()].alive = true;
+                    self.players[owner_num].alive = true;
                 }
 
                 // proceed to next expedition
@@ -124,9 +124,9 @@ impl PlanetWars {
     fn resolve_combat(&mut self) {
         for planet in self.planets.iter_mut() {
             planet.resolve_combat();
-            if let Some(owner_id) = planet.owner() {
+            if let Some(owner_num) = planet.owner() {
                 // owner owns a planet; this is a sign of life.
-                self.players[owner_id.as_usize()].alive = true;
+                self.players[owner_num].alive = true;
             }
         }
     }
@@ -136,7 +136,7 @@ impl PlanetWars {
         return remaining < 2 || self.turn_num >= self.max_turns;
     }
 
-    pub fn living_players(&self) -> Vec<PlayerId> {
+    pub fn living_players(&self) -> Vec<ClientId> {
         self.players.iter().filter_map(|p| {
             if p.alive {
                 Some(p.id)
@@ -149,7 +149,7 @@ impl PlanetWars {
 
 
 impl Planet {
-    pub fn owner(&self) -> Option<PlayerId> {
+    pub fn owner(&self) -> Option<usize> {
         self.fleets.first().and_then(|f| f.owner)
     }
 

@@ -113,7 +113,7 @@ export class SlotManager {
   private registerSlot(slot: Slot) {
     if (this.matchRunner) {
       const token = Buffer.from(slot.token, 'hex');
-      this.matchRunner.addPlayer(token).then((clientId) => {
+      this.matchRunner.matchControl.addPlayer(token).then((clientId) => {
         slot.clientId = clientId;
         this.clients[clientId] = slot;
         this.notifyListeners();
@@ -124,7 +124,7 @@ export class SlotManager {
   private unregisterSlot(slot: Slot) {
     if (this.matchRunner && slot.clientId) {
       const clientId = slot.clientId;
-      this.matchRunner.removePlayer(slot.clientId).then(() => {
+      this.matchRunner.matchControl.removePlayer(slot.clientId).then(() => {
         delete this.clients[clientId];
         delete this.slots[slot.token];
         this.notifyListeners();

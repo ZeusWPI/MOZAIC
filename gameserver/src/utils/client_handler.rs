@@ -5,15 +5,11 @@ use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
-use network::router::RoutingTable;
+use network::router::{RoutingTable, ClientId};
 use network::connection::{Connection, ConnectionEvent};
 use super::message_handler::*;
 
 pub use super::message_handler::MessageId;
-
-
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ClientId(pub u64);
 
 pub struct ClientHandle {
     client_id: ClientId,
@@ -130,7 +126,7 @@ impl ClientHandler {
         let handler = ClientHandler {
             client_id,
 
-            connection: Connection::new(token, routing_table),
+            connection: Connection::new(token, client_id, routing_table),
 
             ctrl_chan: rcv,
 

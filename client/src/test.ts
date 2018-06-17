@@ -3,6 +3,7 @@ import { BotRunner, BotConfig } from './BotRunner';
 import { Client } from './Client';
 import { MatchParams, MatchRunner } from './MatchRunner';
 import { ClientLogger } from './Logger';
+import { PwClient } from './PwClient';
 
 
 
@@ -50,23 +51,18 @@ const params: MatchParams = {
 MatchRunner.create(bin_path, params).then((match) => {
     const addPlayers = players.map((player) => {
         const token = Buffer.from(player.token, 'hex');
-        return match.addPlayer(token).then((clientId) => {
-            console.log(clientId);
-            const connData = {
-                address: addr,
+        return match.matchControl.addPlayer(token)
+            .then((_) => Client.connect({
+                host: addr.host,
+                port: addr.port,
                 token: token,
-            };
-            const client = new Client({
-                address: addr,
-                token,
-                number: player.number,
-                botConfig: simpleBot,
                 logger: match.logger,
+            }))
+            .then((client) => {
+                new PwClient(client, player.botConfig);
             });
-            client.run();
-        });
     });
     Promise.all(addPlayers).then(() => {
-        return match.startGame(gameConfig);
+        return match.matchControl.startGame(gameConfig);
     });
 });

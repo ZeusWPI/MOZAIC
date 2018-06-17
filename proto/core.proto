@@ -14,7 +14,7 @@ message ConnectionResponse {
 }
 
 message ConnectionSuccess {
-    // for future use
+    uint64 client_id = 1;
 }
 
 message ConnectionError {
