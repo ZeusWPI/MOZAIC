@@ -2,6 +2,7 @@
 
 use futures::{Future, Poll, Async, Stream};
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
+use bytes::BytesMut;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -9,12 +10,16 @@ use network::router::{RoutingTable, ClientId};
 use network::connection::{Connection, ConnectionEvent};
 use super::message_handler::*;
 
+use protocol as proto;
+use prost::Message as ProtobufMessage;
+
+
 pub use super::message_handler::MessageId;
 
 pub struct ClientHandle {
     client_id: ClientId,
     ctrl_chan: UnboundedSender<Command>,
-    request_counter: usize,
+    event_counter: u32,
 }
 
 impl ClientHandle {
@@ -22,24 +27,39 @@ impl ClientHandle {
         self.client_id
     }
 
-    pub fn send(&mut self, data: Vec<u8>) {
-        let cmd = Command::Message { data };
+    pub fn dispatch(&mut self, type_id: u32, data: Vec<u8>) {
+        let event = self.make_event(type_id, data);
+        let cmd = Command::Event { event };
         self.send_command(cmd);
     }
 
-    pub fn request(&mut self, data: Vec<u8>, deadline: Instant) -> RequestId {
-        let request_num = self.request_counter;
-        self.request_counter += 1;
+    pub fn request(&mut self, type_id: u32, data: Vec<u8>, deadline: Instant)
+        -> ClientEventId
+    {
+        let event = self.make_event(type_id, data);
+        let event_id = event.event_id.clone();
 
-        let cmd = Command::Request { request_num, data, deadline };
+        let cmd = Command::Request { event, deadline };
         self.send_command(cmd);
 
-        return RequestId { request_num, client_id: self.client_id };
+        return event_id;
     }
 
-    pub fn respond(&mut self, message_id: MessageId, data: Vec<u8>) {
-        let cmd = Command::Response { message_id, data };
-        self.send_command(cmd);
+    fn make_event(&mut self, type_id: u32, data: Vec<u8>) -> ClientEvent {
+        let event_number = self.event_counter;
+        self.event_counter += 1;
+
+        let component_id = 3; // 3 is an acceptable random number
+
+        return ClientEvent {
+            event_id: ClientEventId { event_number, component_id },
+            type_id,
+            data,
+        }
+    }
+
+    pub fn respond(&mut self, event_id: ClientEventId, data: Vec<u8>) {
+        // TODO
     }
 
     fn send_command(&mut self, command: Command) {
@@ -80,19 +100,26 @@ pub enum ResponseError {
     Timeout,
 }
 
+#[derive(Clone)]
+pub struct ClientEventId {
+    component_id: u32,
+    event_number: u32,
+}
+
+pub struct ClientEvent {
+    event_id: ClientEventId,
+    type_id: u32,
+    data: Vec<u8>,
+}
+
 pub enum Command {
-    Message {
-        data: Vec<u8>
+    Event {
+        event: ClientEvent,
     },
     Request {
-        request_num: usize,
-        data: Vec<u8>,
+        event: ClientEvent,
         deadline: Instant,
     },
-    Response {
-        message_id: MessageId,
-        data: Vec<u8>,
-    }
 }
 
 
@@ -120,7 +147,7 @@ impl ClientHandler {
         let handle = ClientHandle {
             client_id,
             ctrl_chan: snd,
-            request_counter: 0,
+            event_counter: 0,
         };
 
         let handler = ClientHandler {
@@ -152,25 +179,13 @@ impl ClientHandler {
     fn handle_commands(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
-                Some(Command::Message { data }) => {
-                    let msg = self.message_handler.create_message(data);
-                    self.connection.send(msg);
+                Some(Command::Event { event }) => {
+                    self.send_event(event);
                 },
-                Some(Command::Request { request_num, data, deadline }) => {
-                    let msg = self.message_handler.create_request(
-                        request_num,
-                        data,
-                        deadline,
-                    );
-                    self.connection.send(msg);
+                Some(Command::Request { event, deadline }) => {
+                    self.send_event(event);
+                    // TODO: timeout
                 },
-                Some(Command::Response { message_id, data }) => {
-                    let msg = self.message_handler.create_response(
-                        message_id,
-                        data
-                    );
-                    self.connection.send(msg);
-                }
                 None => {
                     // The control channel was closed; exit.
                     // return Ok(Async::Ready(()));
@@ -178,6 +193,25 @@ impl ClientHandler {
                 }
             }
         }
+    }
+
+    fn send_event(&mut self, event: ClientEvent) {
+        let event_id = proto::EventId {
+            component_id: event.event_id.component_id,
+            number: event.event_id.event_number,
+        };
+        let proto_event = proto::Event {
+            id: Some(event_id),
+            type_id: event.type_id,
+            data: event.data,
+        };
+
+        let mut bytes = BytesMut::with_capacity(proto_event.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        proto_event.encode(&mut bytes).unwrap();
+        self.connection.send(bytes.to_vec());
     }
 
     /// Pull events from the client connection and handle them.
