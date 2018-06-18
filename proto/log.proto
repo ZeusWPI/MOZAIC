@@ -8,7 +8,7 @@ package mozaic.protocol;
 // responsibility of the client running the bot. This way, we can generate
 // detailed logs without generating lots of network bandwidth.
 // The different log components can then be merged to get the full match log.
-message LogMessage {
+message Event { 
     // Identifies the client that logged this message.
     // The game server does not log anything, it rather sends log messages back
     // to the client that controls it (the game owner). We could either choose
@@ -19,7 +19,7 @@ message LogMessage {
     // A relevant question here might be whether we want to distinguish between
     // messages logged by the gameserver and the game controller, or whether we
     // want to treat these as identical.
-    uint64 client_id = 1;
+    uint32 client_id = 1;
 
     // Identifies the type of message.
     // Using a number for the identification (rather than native protobuf types)
@@ -31,10 +31,10 @@ message LogMessage {
     // library can handle the parsing as well, provided with the type number
     // that was used.
     // The message type thus instructs how to interpret the message payload.
-    uint64 message_type = 2;
+    uint64 event_type = 3;
 
     // The actual data in the log message.
-    bytes data = 3;
+    bytes data = 4;
 
     // We probably also want to include log levels and timestamps, but these
     // are not too relevant to the discussion.

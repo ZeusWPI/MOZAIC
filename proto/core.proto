@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
+import public "client_server.proto";
+
 message ConnectionRequest {
     bytes token = 1;
 }
@@ -85,4 +87,20 @@ message LobbyMessage {
         RemovePlayerRequest remove_player = 2;
         StartGameRequest start_game = 3;
     }
+}
+
+message EventId {
+    uint32 component_id = 1;
+    uint32 number = 2;
+}
+
+message Event {
+    EventId id = 1;
+    uint32 type_id = 2;
+    bytes data = 3;
+}
+
+message Response {
+    EventId responds_to = 1;
+    bytes data = 4;
 }
