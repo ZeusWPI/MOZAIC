@@ -1,0 +1,7 @@
+message ClientConnected {
+    uint32 client_id = 1;
+}
+
+message ClientDisconnected {
+    uint32 client_id = 1;
+}
