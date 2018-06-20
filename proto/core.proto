@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
-import public "client_server.proto";
-
 message ConnectionRequest {
     bytes token = 1;
 }
