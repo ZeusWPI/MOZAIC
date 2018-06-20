@@ -7,6 +7,9 @@ mod utils;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
+    pub mod events {
+        include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
+    }
 }
 
 
