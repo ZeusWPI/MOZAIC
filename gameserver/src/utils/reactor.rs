@@ -31,6 +31,10 @@ pub trait AnyEvent: Any {
     fn type_id(&self) -> u32;
 }
 
+pub trait Handler {
+    fn handle_event(&mut self, event: &AnyEvent);
+}
+
 pub struct EventHandler<T, F>
     where F: FnMut(&T)
 {
@@ -38,11 +42,11 @@ pub struct EventHandler<T, F>
     handler: F,
 }
 
-impl<T, F> EventHandler<T, F>
+impl<T, F> Handler for EventHandler<T, F>
     where F: FnMut(&T),
-          T: EventType + 'static
+        T: EventType + 'static
 {
-    pub fn call(&mut self, event: &AnyEvent) {
+    fn handle_event(&mut self, event: &AnyEvent) {
         if let Some(evt) = event.as_any().downcast_ref() {
             (&mut self.handler)(evt);
         } else {
