@@ -30,39 +30,41 @@ pub trait AnyEvent: Any {
     fn type_id(&self) -> u32;
 }
 
-pub trait Handler {
-    fn handle_event(&mut self, event: &AnyEvent);
+pub trait Handler<S> {
+    fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
 }
 
-pub struct EventHandler<T, F>
-    where F: FnMut(&Event<T>)
+pub struct EventHandler<S, T, F>
+    where F: FnMut(&mut S, &Event<T>)
 {
+    phantom_s: PhantomData<S>,
     phantom_t: PhantomData<T>,
     handler: F,
 }
 
-impl<T, F> Handler for EventHandler<T, F>
-    where F: FnMut(&Event<T>),
-        T: EventType + 'static
+impl<S, T, F> Handler<S> for EventHandler<S, T, F>
+    where F: FnMut(&mut S, &Event<T>),
+          T: EventType + 'static
 {
-    fn handle_event(&mut self, event: &AnyEvent) {
+    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) {
         if let Some(evt) = event.as_any().downcast_ref() {
-            (&mut self.handler)(evt);
+            (&mut self.handler)(state, evt);
         } else {
             panic!("wrong argument type");
         }
     }
 }
 
-pub struct Reactor {
-    handlers: HashMap<u32, Box<Handler>>,
+pub struct Reactor<S> {
+    state: S,
+    handlers: HashMap<u32, Box<Handler<S>>>,
 }
 
-impl Reactor {
+impl<S> Reactor<S> {
     fn handle_event(&mut self, event: &AnyEvent) {
         let event_type = event.type_id();
         if let Some(handler) = self.handlers.get_mut(&event_type) {
-            handler.handle_event(event);
+            handler.handle_event(&mut self.state, event);
         }
     }
 }
