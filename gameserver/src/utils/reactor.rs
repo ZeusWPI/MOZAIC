@@ -5,10 +5,16 @@ use std::collections::HashMap;
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 
+
 pub struct Event<T>
     where T: EventType
 {
     data: T,
+}
+
+pub struct WireEvent {
+    type_id: u32,
+    data: Vec<u8>,
 }
 
 impl<T> AnyEvent for Event<T>
@@ -36,6 +42,7 @@ pub trait AnyEvent: Any {
 pub trait Handler<S> {
     fn event_type_id(&self) -> u32;
     fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
+    fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent);
 }
 
 pub struct EventHandler<S, T, F>
@@ -61,6 +68,12 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
             panic!("wrong argument type");
         }
     }
+
+    fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) {
+        let data = T::decode(&wire_event.data);
+        let event = Event { data };
+        (&mut self.handler)(state, &event);
+    }
 }
 
 pub enum ReactorCommand<S> {
@@ -82,6 +95,13 @@ impl<S> Reactor<S> {
         let event_type = event.type_id();
         if let Some(handler) = self.handlers.get_mut(&event_type) {
             handler.handle_event(&mut self.state, event);
+        }
+    }
+
+    fn handle_wire_event(&mut self, event: &WireEvent) {
+        let event_type = event.type_id;
+        if let Some(handler) = self.handlers.get_mut(&event_type) {
+            handler.handle_wire_event(&mut self.state, event);
         }
     }
 
