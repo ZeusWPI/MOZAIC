@@ -1,12 +1,11 @@
 use std::marker::PhantomData;
 use std::any::Any;
-
-
+use std::collections::HashMap;
 
 pub struct Event<T>
     where T: EventType
 {
-    payload: T,
+    data: T,
 }
 
 impl<T> AnyEvent for Event<T>
@@ -36,14 +35,14 @@ pub trait Handler {
 }
 
 pub struct EventHandler<T, F>
-    where F: FnMut(&T)
+    where F: FnMut(&Event<T>)
 {
     phantom_t: PhantomData<T>,
     handler: F,
 }
 
 impl<T, F> Handler for EventHandler<T, F>
-    where F: FnMut(&T),
+    where F: FnMut(&Event<T>),
         T: EventType + 'static
 {
     fn handle_event(&mut self, event: &AnyEvent) {
@@ -51,6 +50,19 @@ impl<T, F> Handler for EventHandler<T, F>
             (&mut self.handler)(evt);
         } else {
             panic!("wrong argument type");
+        }
+    }
+}
+
+pub struct Reactor {
+    handlers: HashMap<u32, Box<Handler>>,
+}
+
+impl Reactor {
+    fn handle_event(&mut self, event: &AnyEvent) {
+        let event_type = event.type_id();
+        if let Some(handler) = self.handlers.get_mut(&event_type) {
+            handler.handle_event(event);
         }
     }
 }
