@@ -2,8 +2,12 @@ use std::marker::PhantomData;
 use std::any::Any;
 use std::collections::HashMap;
 
+use bytes::BytesMut;
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
+use network::connection::{Connection, ConnectionEvent};
+use protocol as proto;
+use prost::Message;
 
 
 pub struct Event<T>
@@ -25,6 +29,13 @@ impl<T> AnyEvent for Event<T>
     fn type_id(&self) -> u32 {
         return T::TYPE_ID;
     }
+
+    fn to_wire_event(&self) -> WireEvent {
+        WireEvent {
+            type_id: T::TYPE_ID,
+            data: self.data.encode(),
+        }
+    }
 }
 
 pub trait EventType {
@@ -37,6 +48,7 @@ pub trait EventType {
 pub trait AnyEvent: Any {
     fn as_any(&self) -> &Any;
     fn type_id(&self) -> u32;
+    fn to_wire_event(&self) -> WireEvent;
 }
 
 pub trait Handler<S> {
@@ -88,6 +100,8 @@ pub struct Reactor<S> {
 
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand<S>>,
     event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+
+    connection: Connection,
 }
 
 impl<S> Reactor<S> {
@@ -129,6 +143,7 @@ impl<S> Reactor<S> {
             try!(self.handle_commands());
             match try_ready!(self.event_chan.poll()) {
                 Some(event) => {
+                    self.send_wire_event(event.to_wire_event());
                     self.handle_event(event.as_ref());
                 }
                 None => {
@@ -136,5 +151,35 @@ impl<S> Reactor<S> {
                 }
             }
         }
+    }
+
+    fn poll_client_connection(&mut self) -> Poll<(), ()> {
+        loop {
+            match try_ready!(self.connection.poll()) {
+                ConnectionEvent::Connected => {}
+                ConnectionEvent::Disconnected => {}
+                ConnectionEvent::Packet(data) => {
+                    let event = proto::Event::decode(&data).unwrap();
+                    let wire_event = WireEvent {
+                        type_id: event.type_id,
+                        data: event.data,
+                    };
+                    self.handle_wire_event(&wire_event);
+                }
+            }
+        }
+    }
+
+    fn send_wire_event(&mut self, event: WireEvent) {
+        let proto_event = proto::Event {
+            type_id: event.type_id,
+            data: event.data,
+        };
+        let mut buf = BytesMut::with_capacity(proto_event.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        proto_event.encode(&mut buf).unwrap();
+        self.connection.send(buf.to_vec());
     }
 }
