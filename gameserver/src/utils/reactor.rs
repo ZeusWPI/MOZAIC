@@ -108,6 +108,23 @@ pub struct Reactor<S> {
 }
 
 impl<S> Reactor<S> {
+    pub fn new(state: S, connection: Connection) -> Self {
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+        let (event_handle, event_chan) = mpsc::unbounded();
+
+        Reactor {
+            handlers: HashMap::new(),
+            state,
+
+            ctrl_handle,
+            ctrl_chan,
+            event_handle,
+            event_chan,
+
+            connection,
+        }
+    }
+
     fn handle_event(&mut self, event: &AnyEvent) {
         let event_type = event.type_id();
         if let Some(handler) = self.handlers.get_mut(&event_type) {
@@ -190,6 +207,18 @@ impl<S> Reactor<S> {
         // space.
         proto_event.encode(&mut buf).unwrap();
         self.connection.send(buf.to_vec());
+    }
+}
+
+impl<S> Future for Reactor<S> {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        try!(self.handle_commands());
+        try!(self.handle_events());
+        try!(self.poll_client_connection());
+        return Ok(Async::NotReady);
     }
 }
 
