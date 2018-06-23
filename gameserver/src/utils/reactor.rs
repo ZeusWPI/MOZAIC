@@ -99,7 +99,10 @@ pub struct Reactor<S> {
     handlers: HashMap<u32, Box<Handler<S>>>,
 
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand<S>>,
+    ctrl_handle: mpsc::UnboundedSender<ReactorCommand<S>>,
+
     event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+    event_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
 
     connection: Connection,
 }
@@ -116,6 +119,12 @@ impl<S> Reactor<S> {
         let event_type = event.type_id;
         if let Some(handler) = self.handlers.get_mut(&event_type) {
             handler.handle_wire_event(&mut self.state, event);
+        }
+    }
+
+    fn handle(&self) -> ReactorHandle {
+        ReactorHandle {
+            event_channel: self.event_handle.clone(),
         }
     }
 
@@ -181,5 +190,19 @@ impl<S> Reactor<S> {
         // space.
         proto_event.encode(&mut buf).unwrap();
         self.connection.send(buf.to_vec());
+    }
+}
+
+pub struct ReactorHandle {
+    event_channel: mpsc::UnboundedSender<Box<AnyEvent>>,
+}
+
+impl ReactorHandle {
+    fn dispatch_event<T>(&mut self, data: T)
+        where T: EventType + 'static
+    {
+        let event = Event { data };
+        self.event_channel.unbounded_send(Box::new(event))
+            .expect("event channel broke");
     }
 }
