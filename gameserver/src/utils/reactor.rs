@@ -88,18 +88,9 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
     }
 }
 
-pub enum ReactorCommand<S> {
-    InstallHandler {
-        handler: Box<Handler<S>>,
-    }
-}
-
 pub struct Reactor<S> {
     state: S,
     handlers: HashMap<u32, Box<Handler<S>>>,
-
-    ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand<S>>,
-    ctrl_handle: mpsc::UnboundedSender<ReactorCommand<S>>,
 
     event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
     event_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
@@ -109,15 +100,12 @@ pub struct Reactor<S> {
 
 impl<S> Reactor<S> {
     pub fn new(state: S, connection: Connection) -> Self {
-        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let (event_handle, event_chan) = mpsc::unbounded();
 
         Reactor {
             handlers: HashMap::new(),
             state,
 
-            ctrl_handle,
-            ctrl_chan,
             event_handle,
             event_chan,
 
@@ -150,23 +138,8 @@ impl<S> Reactor<S> {
         self.handlers.insert(type_id, handler);
     }
 
-    fn handle_commands(&mut self) -> Poll<(), ()> {
-        loop {
-            match try_ready!(self.ctrl_chan.poll()) {
-                Some(ReactorCommand::InstallHandler { handler }) => {
-                    self.add_handler(handler);
-                }
-                None => {
-                    // TODO: How should this be handled?
-                    return Ok(Async::Ready(()));
-                }
-            }
-        }
-    }
-
     fn handle_events(&mut self) -> Poll<(), ()> {
         loop {
-            try!(self.handle_commands());
             match try_ready!(self.event_chan.poll()) {
                 Some(event) => {
                     self.send_wire_event(event.to_wire_event());
@@ -215,7 +188,6 @@ impl<S> Future for Reactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        try!(self.handle_commands());
         try!(self.handle_events());
         try!(self.poll_client_connection());
         return Ok(Async::NotReady);
