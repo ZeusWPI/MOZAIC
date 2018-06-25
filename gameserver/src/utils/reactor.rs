@@ -91,25 +91,13 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
 pub struct Reactor<S> {
     state: S,
     handlers: HashMap<u32, Box<Handler<S>>>,
-
-    event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
-    event_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
-
-    connection: Connection,
 }
 
 impl<S> Reactor<S> {
-    pub fn new(state: S, connection: Connection) -> Self {
-        let (event_handle, event_chan) = mpsc::unbounded();
-
+    pub fn new(state: S) -> Self {
         Reactor {
             handlers: HashMap::new(),
             state,
-
-            event_handle,
-            event_chan,
-
-            connection,
         }
     }
 
@@ -127,23 +115,46 @@ impl<S> Reactor<S> {
         }
     }
 
+    fn set_handler(&mut self, handler: Box<Handler<S>>) {
+        let type_id = handler.event_type_id();
+        self.handlers.insert(type_id, handler);
+    }
+}
+
+pub struct ReactorDriver<S> {
+    reactor: Reactor<S>,
+
+    event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+    event_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
+    
+    connection: Connection,
+}
+
+impl<S> ReactorDriver<S> {
+    pub fn new(reactor: Reactor<S>, connection: Connection) -> Self {
+        let (event_handle, event_chan) = mpsc::unbounded();
+
+        ReactorDriver {
+            event_handle,
+            event_chan,
+            connection,
+            reactor,
+        }
+
+    }
+
     fn handle(&self) -> ReactorHandle {
         ReactorHandle {
             event_channel: self.event_handle.clone(),
         }
     }
 
-    fn add_handler(&mut self, handler: Box<Handler<S>>) {
-        let type_id = handler.event_type_id();
-        self.handlers.insert(type_id, handler);
-    }
-
-    fn handle_events(&mut self) -> Poll<(), ()> {
+    fn poll_event_channel(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.event_chan.poll()) {
                 Some(event) => {
                     self.send_wire_event(event.to_wire_event());
-                    self.handle_event(event.as_ref());
+                    self.reactor.handle_event(event.as_ref());
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -152,7 +163,7 @@ impl<S> Reactor<S> {
         }
     }
 
-    fn poll_client_connection(&mut self) -> Poll<(), ()> {
+    fn poll_connection(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.connection.poll()) {
                 ConnectionEvent::Connected => {}
@@ -163,7 +174,7 @@ impl<S> Reactor<S> {
                         type_id: event.type_id,
                         data: event.data,
                     };
-                    self.handle_wire_event(&wire_event);
+                    self.reactor.handle_wire_event(&wire_event);
                 }
             }
         }
@@ -183,16 +194,17 @@ impl<S> Reactor<S> {
     }
 }
 
-impl<S> Future for Reactor<S> {
+impl<S> Future for ReactorDriver<S> {
     type Item = ();
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        try!(self.handle_events());
-        try!(self.poll_client_connection());
+        try!(self.poll_event_channel());
+        try!(self.poll_connection());
         return Ok(Async::NotReady);
     }
 }
+
 
 pub struct ReactorHandle {
     event_channel: mpsc::UnboundedSender<Box<AnyEvent>>,
