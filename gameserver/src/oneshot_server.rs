@@ -3,14 +3,12 @@ use std::fs::File;
 use std::time::{Duration, Instant};
 
 use futures::{Future, Poll, Async};
-use hex;
-use serde::de::{Deserialize, Deserializer};
-use serde::de::Error as DeserializationError;
 use slog_json;
 use slog::{self, Drain};
 use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::timer::Delay;
+use utils::hex_serializer;
 
 use network;
 use network::connection::Connection;
@@ -21,7 +19,7 @@ use planetwars::PwMatch;
 
 #[derive(Serialize, Deserialize)]
 pub struct MatchDescription {
-    #[serde(deserialize_with="from_hex")]
+    #[serde(with="hex_serializer")]
     pub ctrl_token: Vec<u8>,
     pub address: String,
     pub log_file: String,
@@ -30,15 +28,8 @@ pub struct MatchDescription {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct PlayerConfig {
     pub name: String,
-    #[serde(deserialize_with="from_hex")]
+    #[serde(with="hex_serializer")]
     pub token: Vec<u8>,
-}
-
-fn from_hex<'de, D>(deserializer: D) -> Result<Vec<u8>, D::Error>
-    where D: Deserializer<'de>
-{
-    let s: &str = try!(Deserialize::deserialize(deserializer));
-    return hex::decode(s).map_err(D::Error::custom);
 }
 
 /// A simple future that starts a server for just one predefined game.
