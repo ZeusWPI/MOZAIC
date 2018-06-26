@@ -4,6 +4,7 @@ mod oneshot_server;
 mod planetwars;
 mod protobuf_codec;
 mod utils;
+mod reactors;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
