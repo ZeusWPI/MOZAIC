@@ -58,7 +58,7 @@ pub trait Handler<S> {
 }
 
 pub struct EventHandler<S, T, F>
-    where F: FnMut(&mut S, &Event<T>)
+    where F: FnMut(&mut S, &T)
 {
     phantom_s: PhantomData<S>,
     phantom_t: PhantomData<T>,
@@ -66,16 +66,16 @@ pub struct EventHandler<S, T, F>
 }
 
 impl<S, T, F> Handler<S> for EventHandler<S, T, F>
-    where F: FnMut(&mut S, &Event<T>),
+    where F: FnMut(&mut S, &T),
           T: EventType + 'static
 {
     fn event_type_id(&self) -> u32 {
         return T::TYPE_ID;
     }
 
-    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) {
-        if let Some(evt) = event.as_any().downcast_ref() {
-            (&mut self.handler)(state, evt);
+    fn handle_event(&mut self, state: &mut S, any_event: &AnyEvent) {
+        if let Some(evt) = any_event.as_any().downcast_ref::<Event<T>>() {
+            (&mut self.handler)(state, &evt.data);
         } else {
             panic!("wrong argument type");
         }
@@ -83,8 +83,7 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
 
     fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) {
         let data = T::decode(&wire_event.data);
-        let event = Event { data };
-        (&mut self.handler)(state, &event);
+        (&mut self.handler)(state, &data);
     }
 }
 
