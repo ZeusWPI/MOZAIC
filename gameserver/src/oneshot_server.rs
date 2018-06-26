@@ -13,7 +13,10 @@ use tokio;
 use tokio::timer::Delay;
 
 use network;
-use network::router::RoutingTable;
+use network::connection::Connection;
+use network::router::{RoutingTable, ClientId};
+use reactors::reactor::Reactor;
+use reactors::core_reactor::{CoreReactor, ReactorHandle};
 use planetwars::PwMatch;
 
 #[derive(Serialize, Deserialize)]
@@ -70,12 +73,24 @@ impl Future for OneshotServer {
 
         let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
 
-        let controller = PwMatch::new(
+        let connection = Connection::new(
+            self.config.ctrl_token.clone(),
+            // TODO: heh, maybe we want an actual client id here.
+            ClientId::new(0),
+            routing_table.clone(),
+        );
+
+        let pw_match = PwMatch::new(
             self.config.ctrl_token.clone(),
             routing_table.clone(),
             logger,
         );
-        tokio::spawn(controller.and_then(|_| {
+
+        let mut reactor = Reactor::new(pw_match);
+        // TODO: install handlers
+        let core = CoreReactor::new(reactor, connection);
+
+        tokio::spawn(core.and_then(|_| {
             println!("done");
             // wait a second for graceful exit
             let end = Instant::now() + Duration::from_secs(1);

@@ -11,16 +11,17 @@ pub trait EventType {
     const TYPE_ID: u32;
 
     fn encode(&self) -> Vec<u8>;
-    fn decode(&Vec<u8>) -> Self;
+    fn decode(&[u8]) -> Self;
 }
 
-pub trait AnyEvent: Any {
+pub trait AnyEvent: Send {
     fn data(&self) -> &Any;
     fn type_id(&self) -> u32;
     fn to_wire_event(&self) -> WireEvent;
 }
 
-pub trait Handler<S> {
+// The Send bound is required so that reactors can implement Send as well.
+pub trait Handler<S>: Send {
     fn event_type_id(&self) -> u32;
     fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
     fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent);
@@ -35,8 +36,9 @@ pub struct EventHandler<S, T, F>
 }
 
 impl<S, T, F> Handler<S> for EventHandler<S, T, F>
-    where F: FnMut(&mut S, &T),
-          T: EventType + 'static
+    where F: FnMut(&mut S, &T) + Send,
+          T: EventType + Send + 'static,
+          S: Send
 {
     fn event_type_id(&self) -> u32 {
         return T::TYPE_ID;

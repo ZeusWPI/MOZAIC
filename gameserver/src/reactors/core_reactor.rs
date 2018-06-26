@@ -99,7 +99,7 @@ pub struct ReactorHandle {
 
 impl ReactorHandle {
     fn dispatch_event<T>(&mut self, data: T)
-        where T: EventType + 'static
+        where T: EventType + Send + 'static
     {
         let event = Box::new(EventBox { data });
         self.event_channel.unbounded_send(event)
@@ -114,7 +114,7 @@ pub struct EventBox<T>
 }
 
 impl<T> AnyEvent for EventBox<T>
-    where T: EventType + 'static
+    where T: EventType + Send + 'static
 {
     fn data(&self) -> &Any { self }
     
