@@ -10,7 +10,7 @@ use protocol as proto;
 use prost::Message;
 
 
-pub struct Event<T>
+pub struct EventBox<T>
     where T: EventType
 {
     data: T,
@@ -21,10 +21,10 @@ pub struct WireEvent {
     data: Vec<u8>,
 }
 
-impl<T> AnyEvent for Event<T>
+impl<T> AnyEvent for EventBox<T>
     where T: EventType + 'static
 {
-    fn as_any(&self) -> &Any { self }
+    fn data(&self) -> &Any { self }
     
     fn type_id(&self) -> u32 {
         return T::TYPE_ID;
@@ -46,7 +46,7 @@ pub trait EventType {
 }
 
 pub trait AnyEvent: Any {
-    fn as_any(&self) -> &Any;
+    fn data(&self) -> &Any;
     fn type_id(&self) -> u32;
     fn to_wire_event(&self) -> WireEvent;
 }
@@ -73,9 +73,9 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
         return T::TYPE_ID;
     }
 
-    fn handle_event(&mut self, state: &mut S, any_event: &AnyEvent) {
-        if let Some(evt) = any_event.as_any().downcast_ref::<Event<T>>() {
-            (&mut self.handler)(state, &evt.data);
+    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) {
+        if let Some(data) = event.data().downcast_ref::<T>() {
+            (&mut self.handler)(state, &data);
         } else {
             panic!("wrong argument type");
         }
@@ -213,8 +213,8 @@ impl ReactorHandle {
     fn dispatch_event<T>(&mut self, data: T)
         where T: EventType + 'static
     {
-        let event = Event { data };
-        self.event_channel.unbounded_send(Box::new(event))
+        let event = Box::new(EventBox { data });
+        self.event_channel.unbounded_send(event)
             .expect("event channel broke");
     }
 }
