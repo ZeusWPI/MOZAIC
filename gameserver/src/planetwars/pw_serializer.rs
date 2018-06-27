@@ -34,8 +34,8 @@ impl<'a> Serializer<'a> {
     }
 
     // gets the client id for a player number
-    fn player_client_id(&self, player_num: usize) -> u64 {
-        self.state.players[player_num].id.as_u64()
+    fn player_client_id(&self, player_num: usize) -> u32 {
+        self.state.players[player_num].id.as_u32()
     }
 
     fn serialize_planet(&self, planet: &Planet) -> proto::Planet {

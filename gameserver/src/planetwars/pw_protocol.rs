@@ -7,7 +7,7 @@ pub struct Expedition {
     pub ship_count: u64,
     pub origin: String,
     pub destination: String,
-    pub owner: u64,
+    pub owner: u32,
     pub turns_remaining: u64,
 }
 
@@ -16,7 +16,7 @@ pub struct Planet {
     pub ship_count: u64,
     pub x: f64,
     pub y: f64,
-    pub owner: Option<u64>,
+    pub owner: Option<u32>,
     pub name: String,
 }
 

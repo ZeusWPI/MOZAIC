@@ -65,7 +65,7 @@ fn connection_success(client_id: ClientId) -> proto::ConnectionResponse {
         response: Some(
             proto::connection_response::Response::Success(
                 proto::ConnectionSuccess {
-                    client_id: client_id.as_u64(),
+                    client_id: client_id.as_u32(),
                 }
             )
         )

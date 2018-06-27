@@ -6,14 +6,14 @@ use protobuf_codec::MessageStream;
 use protocol;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ClientId(u64);
+pub struct ClientId(u32);
 
 impl ClientId {
-    pub fn new(num: u64) -> ClientId {
+    pub fn new(num: u32) -> ClientId {
         ClientId(num)
     }
 
-    pub fn as_u64(&self) -> u64 {
+    pub fn as_u32(&self) -> u32 {
         let ClientId(num) = *self;
         return num;
     }

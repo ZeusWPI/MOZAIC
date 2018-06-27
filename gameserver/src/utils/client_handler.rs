@@ -196,12 +196,12 @@ impl ClientHandler {
     }
 
     fn send_event(&mut self, event: ClientEvent) {
-        let event_id = proto::EventId {
-            component_id: event.event_id.component_id,
-            number: event.event_id.event_number,
-        };
+        // let event_id = proto::EventId {
+        //     component_id: event.event_id.component_id,
+        //     number: event.event_id.event_number,
+        // };
         let proto_event = proto::Event {
-            id: Some(event_id),
+            // id: Some(event_id),
             type_id: event.type_id,
             data: event.data,
         };
