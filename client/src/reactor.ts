@@ -50,7 +50,7 @@ export class STEReactor {
         this.handlers = {};
     }
 
-    getSimpleEvent<T>(eventType: EventType<T>): ISimpleEvent<T> {
+    public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
         let handler = this.handlers[eventType.typeId];
         if (!handler) {
             handler = new STEReactorHandler(eventType);

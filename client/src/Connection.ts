@@ -22,6 +22,12 @@ export interface Address {
     port: number;
 }
 
+export interface ClientParams {
+    host: string;
+    port: number;
+    token: Uint8Array;
+}
+
 enum ConnectionState {
     DISCONNECTED,
     CONNECTING,
@@ -31,18 +37,19 @@ enum ConnectionState {
 
 export class Connection {
     private state: ConnectionState;
-    private token: Uint8Array;
     private stream: ProtobufStream;
+
+    private params: ClientParams;
 
     private _onConnect = new SimpleEventDispatcher<number>();
     private _onMessage = new SimpleEventDispatcher<Uint8Array>();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
     
-    public constructor(token: Uint8Array) {
+    public constructor(params: ClientParams) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
-        this.token = token;
+        this.params = params;
 
         this.stream.onConnect.subscribe(() => {
             this.sendConnectionRequest();
@@ -71,9 +78,9 @@ export class Connection {
         return this._onClose.asEvent();
     }
     
-    public connect(host: string, port: number) {
+    public connect() {
         this.state = ConnectionState.CONNECTING;
-        this.stream.connect(host, port);
+        this.stream.connect(this.params.host, this.params.port);
 
         // Introduced in version 9.0.0, node.js has a strict politeness policy.
         // Needless to say, it would be really rude to just connect to somebody
@@ -107,7 +114,7 @@ export class Connection {
     
     // initiate connection handshake
     private sendConnectionRequest() {
-        let request = proto.ConnectionRequest.create({ token: this.token });
+        let request = { token: this.params.token };
         this.stream.write(proto.ConnectionRequest.encode(request));
     }
 

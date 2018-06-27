@@ -23,7 +23,7 @@ export class Client {
 
     public static connect(params: ClientParams): Promise<Client> {
         return new Promise((resolve, reject) => {
-            const connection = new Connection(params.token);
+            const connection = new Connection(params);
             connection.onConnect.one((clientId) => {
                 const client = new Client({
                     clientId,
@@ -36,7 +36,7 @@ export class Client {
                 reject(err);
             });
 
-            connection.connect(params.host, params.port);
+            connection.connect();
         });
     }
 
