@@ -40,8 +40,7 @@ impl<S> CoreReactor<S> {
         loop {
             match try_ready!(self.event_chan.poll()) {
                 Some(event) => {
-                    self.send_wire_event(event.to_wire_event());
-                    self.reactor.handle_event(event.as_ref());
+                    self.handle_event(event);
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -61,7 +60,7 @@ impl<S> CoreReactor<S> {
                         type_id: event.type_id,
                         data: event.data,
                     };
-                    self.reactor.handle_wire_event(&wire_event);
+                    self.handle_wire_event(wire_event);
                 }
             }
         }
@@ -78,6 +77,22 @@ impl<S> CoreReactor<S> {
         // space.
         proto_event.encode(&mut buf).unwrap();
         self.connection.send(buf.to_vec());
+    }
+
+    fn handle_event(&mut self, event: Box<AnyEvent>) {
+        self.reactor.handle_event(event.as_ref());
+        // Send the event after handling it, so that the receiver can be
+        // certain that the reactor has already handled it.
+        self.send_wire_event(event.to_wire_event());
+
+    }
+
+    fn handle_wire_event(&mut self, event: WireEvent) {
+        self.reactor.handle_wire_event(&event);
+        // Received wire events are still part of the event stream that this
+        // reactor reduces over, so they should be included in the stream we
+        // send back to the remote party.
+        self.send_wire_event(event); 
     }
 }
 
