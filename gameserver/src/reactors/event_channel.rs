@@ -6,12 +6,7 @@ use protocol as proto;
 use network::connection::{Connection, ConnectionEvent};
 use events::{Connected, Disconnected};
 
-use super::reactor::{AnyEvent, WireEvent, EventBox};
-
-pub enum SomeEvent {
-    Event(Box<AnyEvent>),
-    WireEvent(WireEvent),
-}
+use super::reactor::{SomeEvent, AnyEvent, WireEvent, EventBox};
 
 pub struct EventChannel {
     connection: Connection,
