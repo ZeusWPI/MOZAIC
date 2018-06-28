@@ -44,7 +44,11 @@ impl EventChannel {
         }
     }
 
-    pub fn send_wire_event(&mut self, wire_event: WireEvent) {
+    pub fn send_event(&mut self, event: SomeEvent) {
+        self.send_wire_event(event.into_wire_event());
+    }
+
+    fn send_wire_event(&mut self, wire_event: WireEvent) {
         let proto_event = proto::Event {
             type_id: wire_event.type_id,
             data: wire_event.data,

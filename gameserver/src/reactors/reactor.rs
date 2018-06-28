@@ -7,6 +7,19 @@ pub enum SomeEvent {
     WireEvent(WireEvent),
 }
 
+impl SomeEvent {
+    pub fn into_wire_event(self) -> WireEvent {
+        match self {
+            SomeEvent::Event(event) => {
+                event.to_wire_event()
+            }
+            SomeEvent::WireEvent(wire_event) => {
+                wire_event
+            }
+        }
+    }
+}
+
 pub struct WireEvent {
     pub type_id: u32,
     pub data: Vec<u8>,

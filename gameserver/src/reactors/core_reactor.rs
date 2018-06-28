@@ -3,44 +3,44 @@ use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 use protocol as proto;
 use prost::Message;
-use std::any::Any;
 
 use network::connection::{Connection, ConnectionEvent};
+use super::event_channel::EventChannel;
 use super::reactor::*;
 
 
 pub struct CoreReactor<S> {
     reactor: Reactor<S>,
 
-    event_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
-    event_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
+    ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+    ctrl_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
     
-    connection: Connection,
+    event_channel: EventChannel,
 }
 
 impl<S> CoreReactor<S> {
     pub fn new(reactor: Reactor<S>, connection: Connection) -> Self {
-        let (event_handle, event_chan) = mpsc::unbounded();
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
 
         CoreReactor {
-            event_handle,
-            event_chan,
-            connection,
+            ctrl_handle,
+            ctrl_chan,
+            event_channel: EventChannel::new(connection),
             reactor,
         }
     }
 
     fn handle(&self) -> ReactorHandle {
         ReactorHandle {
-            event_channel: self.event_handle.clone(),
+            event_channel: self.ctrl_handle.clone(),
         }
     }
 
-    fn poll_event_channel(&mut self) -> Poll<(), ()> {
+    fn poll_control_channel(&mut self) -> Poll<(), ()> {
         loop {
-            match try_ready!(self.event_chan.poll()) {
+            match try_ready!(self.ctrl_chan.poll()) {
                 Some(event) => {
-                    self.handle_event(event);
+                    self.handle_event(SomeEvent::Event(event));
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -49,50 +49,18 @@ impl<S> CoreReactor<S> {
         }
     }
 
-    fn poll_connection(&mut self) -> Poll<(), ()> {
+    fn poll_event_channel(&mut self) -> Poll<(), ()> {
         loop {
-            match try_ready!(self.connection.poll()) {
-                ConnectionEvent::Connected => {}
-                ConnectionEvent::Disconnected => {}
-                ConnectionEvent::Packet(data) => {
-                    let event = proto::Event::decode(&data).unwrap();
-                    let wire_event = WireEvent {
-                        type_id: event.type_id,
-                        data: event.data,
-                    };
-                    self.handle_wire_event(wire_event);
-                }
-            }
+            let some_event = try_ready!(self.event_channel.poll());
+            self.handle_event(some_event);
         }
     }
 
-    fn send_wire_event(&mut self, event: WireEvent) {
-        let proto_event = proto::Event {
-            type_id: event.type_id,
-            data: event.data,
-        };
-        let mut buf = BytesMut::with_capacity(proto_event.encoded_len());
-        // encoding can only fail because the buffer does not have
-        // enough space allocated, but we just allocated the required
-        // space.
-        proto_event.encode(&mut buf).unwrap();
-        self.connection.send(buf.to_vec());
-    }
-
-    fn handle_event(&mut self, event: Box<AnyEvent>) {
-        self.reactor.handle_event(event.as_ref());
+    fn handle_event(&mut self, event: SomeEvent) {
+        self.reactor.handle(&event);
         // Send the event after handling it, so that the receiver can be
         // certain that the reactor has already handled it.
-        self.send_wire_event(event.to_wire_event());
-
-    }
-
-    fn handle_wire_event(&mut self, event: WireEvent) {
-        self.reactor.handle_wire_event(&event);
-        // Received wire events are still part of the event stream that this
-        // reactor reduces over, so they should be included in the stream we
-        // send back to the remote party.
-        self.send_wire_event(event); 
+        self.event_channel.send_event(event);
     }
 }
 
@@ -101,8 +69,8 @@ impl<S> Future for CoreReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
+        try!(self.poll_control_channel());
         try!(self.poll_event_channel());
-        try!(self.poll_connection());
         return Ok(Async::NotReady);
     }
 }
@@ -113,34 +81,11 @@ pub struct ReactorHandle {
 }
 
 impl ReactorHandle {
-    fn dispatch_event<T>(&mut self, data: T)
+    fn dispatch_event<T>(&mut self, event: T)
         where T: EventType + Send + 'static
     {
-        let event = Box::new(EventBox { data });
-        self.event_channel.unbounded_send(event)
+        let event_box = EventBox::wrap(event);
+        self.event_channel.unbounded_send(event_box)
             .expect("event channel broke");
-    }
-}
-
-pub struct EventBox<T>
-    where T: EventType
-{
-    data: T,
-}
-
-impl<T> AnyEvent for EventBox<T>
-    where T: EventType + Send + 'static
-{
-    fn data(&self) -> &Any { self }
-    
-    fn type_id(&self) -> u32 {
-        return T::TYPE_ID;
-    }
-
-    fn to_wire_event(&self) -> WireEvent {
-        WireEvent {
-            type_id: T::TYPE_ID,
-            data: self.data.encode(),
-        }
     }
 }
