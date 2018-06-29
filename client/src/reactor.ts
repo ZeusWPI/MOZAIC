@@ -1,4 +1,3 @@
-import { TextDecoder } from 'text-encoding';
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 export interface EventType<T> {
@@ -7,36 +6,39 @@ export interface EventType<T> {
     decode: (Uint8Array) => T;
 }
 
-export interface TypedEvent<T> {
-    eventType: EventType<T>,
-    data: T,
+export interface SomeEvent {
+    handle: (Reactor) => void;
+}
+
+export class TypedEvent<T> implements SomeEvent {
+    public readonly eventType: EventType<T>;
+    public readonly data: T;
+
+    constructor(type: EventType<T>, data: T) {
+        this.eventType = type;
+        this.data = data;
+    }
+
+    public handle(reactor: Reactor) {
+        reactor.handleEvent(this);
+    }
 }
 
 export type AnyEvent = TypedEvent<any>;
 
-export interface WireEvent {
-    typeId: number;
-    data: Uint8Array;
-}
-
-export class JsonEventType<T> {
+export class WireEvent implements SomeEvent {
     public readonly typeId: number;
+    public readonly data: Uint8Array;
 
-    constructor(typeId: number) {
+    constructor(typeId: number, data: Uint8Array) {
         this.typeId = typeId;
+        this.data = data;
     }
 
-    encode(data: T): Uint8Array {
-        let json = JSON.stringify(data);
-        return Buffer.from(json, 'utf-8');
-    }
-
-    decode(data: Uint8Array): T {
-        let string = new TextDecoder('utf-8').decode(data);
-        return JSON.parse(string);
+    public handle(reactor: Reactor) {
+        reactor.handleWireEvent(this);
     }
 }
-
 
 export interface Reactor {
     handleEvent(event: AnyEvent);

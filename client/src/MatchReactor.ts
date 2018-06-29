@@ -1,7 +1,7 @@
 import * as protocol_root from './proto';
-import WireEvent = protocol_root.mozaic.protocol.Event;
+import ProtoEvent = protocol_root.mozaic.protocol.Event;
 import { ProtobufStream } from "./ProtobufStream";
-import { Reactor, STEReactor, AnyEvent, EventType } from "./reactor";
+import { Reactor, STEReactor, AnyEvent, EventType, WireEvent } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
 import { Connection, ClientParams } from './Connection';
 
@@ -14,9 +14,9 @@ export class MatchReactor {
         this.reactor = new STEReactor();
         this.connection = new Connection(clientParams);
 
-        this.connection.onMessage.subscribe((data) => {
-            const event = WireEvent.decode(data);
-            this.reactor.handleWireEvent(event);
+        this.connection.onMessage.subscribe((bytes) => {
+            const { typeId, data } = ProtoEvent.decode(bytes);
+            this.reactor.handleWireEvent(new WireEvent(typeId, data));
         });
     }
 
@@ -33,7 +33,11 @@ export class MatchReactor {
             typeId: event.eventType.typeId,
             data: event.eventType.encode(event.data),
         };
-        const data = WireEvent.encode(wireEvent).finish();
+        const data = ProtoEvent.encode(wireEvent).finish();
         this.connection.send(data);
+    }
+
+    public get onConnect() {
+        return this.connection.onConnect;
     }
 }
