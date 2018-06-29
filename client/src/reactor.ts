@@ -8,6 +8,7 @@ export interface EventType<T> {
 
 export interface SomeEvent {
     handle: (Reactor) => void;
+    toWireEvent: () => WireEvent;
 }
 
 export class TypedEvent<T> implements SomeEvent {
@@ -21,6 +22,13 @@ export class TypedEvent<T> implements SomeEvent {
 
     public handle(reactor: Reactor) {
         reactor.handleEvent(this);
+    }
+
+    public toWireEvent(): WireEvent {
+        return new WireEvent(
+            this.eventType.typeId,
+            this.eventType.encode(this.data),
+        );
     }
 }
 
@@ -37,6 +45,10 @@ export class WireEvent implements SomeEvent {
 
     public handle(reactor: Reactor) {
         reactor.handleWireEvent(this);
+    }
+
+    public toWireEvent(): WireEvent {
+        return this;
     }
 }
 
