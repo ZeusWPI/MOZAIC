@@ -4,54 +4,55 @@ use bytes::BytesMut;
 
 use protocol as proto;
 use network::connection::{Connection, ConnectionEvent};
-use events::{Connected, Disconnected};
 
-use super::reactor::{SomeEvent, AnyEvent, WireEvent, EventBox};
+use super::reactor::{WireEvent, SomeEvent};
 
-pub struct EventChannel {
+
+// TODO: oh please find a better name
+pub enum EventWireEvent  {
+    Connected,
+    Disconnected,
+    Event(WireEvent),
+}
+
+pub struct EventWire {
+    // TODO: we probably want to merge these later on
     connection: Connection,
 }
 
-impl EventChannel {
+impl EventWire {
     pub fn new(connection: Connection) -> Self {
-        EventChannel {
+        EventWire {
             connection,
         }
     }
 
-    pub fn poll(&mut self) -> Poll<SomeEvent, ()> {
-        match try_ready!(self.connection.poll()) {
+    pub fn poll(&mut self) -> Poll<EventWireEvent, ()> {
+        let event = match try_ready!(self.connection.poll()) {
             ConnectionEvent::Connected => {
-                let event_box = EventBox::wrap(Connected {});
-                let event = SomeEvent::Event(event_box);
-                return Ok(Async::Ready(event));
+                EventWireEvent::Connected
             }
             ConnectionEvent::Disconnected => {
-                let event_box = EventBox::wrap(Disconnected {});
-                let event = SomeEvent::Event(event_box);
-                return Ok(Async::Ready(event));
+                EventWireEvent::Disconnected
             }
             ConnectionEvent::Packet(data) => {
                 // TODO: don't crash here
                 let raw_event = proto::Event::decode(&data)
                     .expect("invalid event encoding");
-                let event = SomeEvent::WireEvent(WireEvent {
+                let wire_event = WireEvent {
                     type_id: raw_event.type_id,
                     data: raw_event.data,
-                });
-                return Ok(Async::Ready(event));
+                };
+                EventWireEvent::Event(wire_event)
             }
-        }
+        };
+        Ok(Async::Ready(event))
     }
 
-    pub fn send_event(&mut self, event: SomeEvent) {
-        self.send_wire_event(event.into_wire_event());
-    }
-
-    fn send_wire_event(&mut self, wire_event: WireEvent) {
+    pub fn send(&mut self, event: WireEvent) {
         let proto_event = proto::Event {
-            type_id: wire_event.type_id,
-            data: wire_event.data,
+            type_id: event.type_id,
+            data: event.data,
         };
         let mut buf = BytesMut::with_capacity(proto_event.encoded_len());
         // encoding can only fail because the buffer does not have
