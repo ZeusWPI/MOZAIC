@@ -28,7 +28,9 @@ export interface RegisterClient {
     client_id: number;
     token: string;
 }
-
 export const RegisterClient = new JsonEventType<RegisterClient>(1);
-export const Connected = new JsonEventType<{}>(2);
-export const Disconnected = new JsonEventType<{}>(3);
+
+export const LeaderConnected = new JsonEventType<{}>(10);
+export const LeaderDisconnected = new JsonEventType<{}>(11);
+export const FollowerConnected = new JsonEventType<{}>(12);
+export const FollowerDisconnected = new JsonEventType<{}>(13);

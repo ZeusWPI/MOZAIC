@@ -57,7 +57,7 @@ export interface Reactor {
     handleWireEvent(event: WireEvent);
 }
 
-export class STEReactor {
+export class STEReactor implements Reactor {
     private handlers: { [typeId: number]: STEReactorHandler<any> };
 
     constructor() {

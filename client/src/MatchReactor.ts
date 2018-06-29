@@ -1,23 +1,30 @@
-import * as protocol_root from './proto';
-import ProtoEvent = protocol_root.mozaic.protocol.Event;
 import { ProtobufStream } from "./ProtobufStream";
 import { Reactor, STEReactor, AnyEvent, EventType, WireEvent, SomeEvent } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
 import { Connection, ClientParams } from './Connection';
+import { EventChannel } from "./EventChannel";
+import { FollowerConnected, FollowerDisconnected } from "./events";
 
 
 export class MatchReactor {
-    private connection: Connection;
+    private eventChannel: EventChannel;
     private reactor: STEReactor;
 
     constructor(clientParams: ClientParams) {
         this.reactor = new STEReactor();
-        this.connection = new Connection(clientParams);
+        this.eventChannel = new EventChannel(clientParams);
 
-        this.connection.onMessage.subscribe((bytes) => {
-            const { typeId, data } = ProtoEvent.decode(bytes);
-            this.reactor.handleWireEvent(new WireEvent(typeId, data));
+        this.eventChannel.onEvent.subscribe((someEvent) => {
+            someEvent.handle(this.reactor);
         });
+
+        this.eventChannel.onConnect.subscribe((_) => {
+            this.reactor.handleEvent(FollowerConnected.create({}));
+        })
+
+        this.eventChannel.onDisconnect.subscribe(() => {
+            this.reactor.handleEvent(FollowerDisconnected.create({}));
+        })
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
@@ -25,16 +32,10 @@ export class MatchReactor {
     }
 
     public connect() {
-        this.connection.connect();
+        this.eventChannel.connect();
     }
 
     public dispatch(event: SomeEvent) {
-        let wireEvent = event.toWireEvent();
-        const encoded = ProtoEvent.encode(wireEvent).finish();
-        this.connection.send(encoded);
-    }
-
-    public get onConnect() {
-        return this.connection.onConnect;
+       this.eventChannel.dispatch(event);
     }
 }
