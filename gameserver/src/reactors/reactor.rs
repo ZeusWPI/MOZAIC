@@ -11,7 +11,7 @@ impl SomeEvent {
     pub fn into_wire_event(self) -> WireEvent {
         match self {
             SomeEvent::Event(event) => {
-                event.to_wire_event()
+                event.as_wire_event()
             }
             SomeEvent::WireEvent(wire_event) => {
                 wire_event
@@ -35,7 +35,7 @@ pub trait EventType {
 pub trait AnyEvent: Send {
     fn data(&self) -> &Any;
     fn type_id(&self) -> u32;
-    fn to_wire_event(&self) -> WireEvent;
+    fn as_wire_event(&self) -> WireEvent;
 }
 
 pub struct EventBox<T>
@@ -47,9 +47,11 @@ pub struct EventBox<T>
 impl<T> EventBox<T>
     where T: EventType + Send + 'static
 {
+    pub fn new(event: T) -> Self {
+        EventBox { event }
+    }
     pub fn wrap(event: T) -> Box<AnyEvent> {
-        let event_box = EventBox { event };
-        return Box::new(event_box);
+        return Box::new(EventBox::new(event));
     }
 }
 
@@ -62,7 +64,7 @@ impl<T> AnyEvent for EventBox<T>
         return T::TYPE_ID;
     }
 
-    fn to_wire_event(&self) -> WireEvent {
+    fn as_wire_event(&self) -> WireEvent {
         WireEvent {
             type_id: T::TYPE_ID,
             data: self.event.encode(),
@@ -156,7 +158,6 @@ impl<S> Reactor<S> {
 
     pub fn handle_event(&mut self, event: &AnyEvent) {
         let event_type = event.type_id();
-        println!("type id: {}", event_type);
         if let Some(handler) = self.handlers.get_mut(&event_type) {
             handler.handle_event(&mut self.state, event);
         }

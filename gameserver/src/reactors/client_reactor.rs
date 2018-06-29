@@ -1,8 +1,9 @@
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 
+use events;
 use network::connection::Connection;
-use super::event_channel::EventChannel;
+use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
 pub struct ClientReactor<S> {
@@ -11,7 +12,7 @@ pub struct ClientReactor<S> {
     ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
     ctrl_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
 
-    event_channel: EventChannel,
+    event_wire: EventWire,
 }
 
 impl<S> ClientReactor<S> {
@@ -22,7 +23,7 @@ impl<S> ClientReactor<S> {
             reactor,
             ctrl_chan,
             ctrl_handle,
-            event_channel: EventChannel::new(connection),
+            event_wire: EventWire::new(connection),
         }
     }
 
@@ -36,8 +37,7 @@ impl<S> ClientReactor<S> {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
                 Some(event) => {
-                    let e = SomeEvent::Event(event);
-                    self.event_channel.send_event(e);
+                    self.event_wire.send(event.as_wire_event());
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -46,10 +46,21 @@ impl<S> ClientReactor<S> {
         }
     }
 
-    pub fn poll_event_channel(&mut self) -> Poll<(), ()> {
+    fn poll_event_wire(&mut self) -> Poll<(), ()> {
         loop {
-            let some_event = try_ready!(self.event_channel.poll());
-            self.reactor.handle(&some_event);
+            match try_ready!(self.event_wire.poll()) {
+                EventWireEvent::Event(event) => {
+                    self.reactor.handle_wire_event(&event);
+                }
+                EventWireEvent::Connected => {
+                    let event_box = EventBox::new(events::FollowerConnected {});
+                    self.reactor.handle_event(&event_box);
+                }
+                EventWireEvent::Disconnected => {
+                    let event_box = EventBox::new(events::FollowerDisconnected {});
+                    self.reactor.handle_event(&event_box);
+                }
+            }
         }
     }
 }
@@ -61,7 +72,7 @@ impl<S> Future for ClientReactor<S> {
     fn poll(&mut self) -> Poll<(), ()> {
         println!("poll client reactor");
         try!(self.poll_control_channel());
-        try!(self.poll_event_channel());
+        try!(self.poll_event_wire());
         return Ok(Async::NotReady);
     }
 }

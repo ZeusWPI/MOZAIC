@@ -1,8 +1,9 @@
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 
+use events;
 use network::connection::Connection;
-use super::event_channel::EventChannel;
+use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
 
@@ -11,7 +12,7 @@ pub struct CoreReactor<S> {
 
     ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
     
-    event_channel: EventChannel,
+    event_wire: EventWire,
 }
 
 impl<S> CoreReactor<S> {
@@ -21,7 +22,7 @@ impl<S> CoreReactor<S> {
 
         CoreReactor {
             ctrl_chan,
-            event_channel: EventChannel::new(connection),
+            event_wire: EventWire::new(connection),
             reactor,
         }
     }
@@ -30,7 +31,7 @@ impl<S> CoreReactor<S> {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
                 Some(event) => {
-                    self.handle_event(SomeEvent::Event(event));
+                    self.handle_event(event.as_ref());
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -39,18 +40,36 @@ impl<S> CoreReactor<S> {
         }
     }
 
-    fn poll_event_channel(&mut self) -> Poll<(), ()> {
+    fn poll_event_wire(&mut self) -> Poll<(), ()> {
         loop {
-            let some_event = try_ready!(self.event_channel.poll());
-            self.handle_event(some_event);
+            match try_ready!(self.event_wire.poll()) {
+                EventWireEvent::Event(event) => {
+                    self.handle_wire_event(event);
+                }
+                EventWireEvent::Connected => {
+                    let event_box = EventBox::new(events::LeaderConnected {});
+                    self.handle_event(&event_box);
+                }
+                EventWireEvent::Disconnected => {
+                    let event_box = EventBox::new(events::LeaderDisconnected {});
+                    self.handle_event(&event_box);
+                }
+            }
         }
     }
 
-    fn handle_event(&mut self, event: SomeEvent) {
-        self.reactor.handle(&event);
+    fn handle_event(&mut self, event: &AnyEvent) {
+        self.reactor.handle_event(event);
         // Send the event after handling it, so that the receiver can be
         // certain that the reactor has already handled it.
-        self.event_channel.send_event(event);
+        self.event_wire.send(event.as_wire_event());
+    }
+
+    fn handle_wire_event(&mut self, event: WireEvent) {
+        self.reactor.handle_wire_event(&event);
+        // Send the event back to the follower, so that it sees the entire
+        // intact event stream in the order this reactor processed it.
+        self.event_wire.send(event);
     }
 }
 
@@ -60,7 +79,7 @@ impl<S> Future for CoreReactor<S> {
 
     fn poll(&mut self) -> Poll<(), ()> {
         try!(self.poll_control_channel());
-        try!(self.poll_event_channel());
+        try!(self.poll_event_wire());
         return Ok(Async::NotReady);
     }
 }

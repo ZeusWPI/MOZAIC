@@ -21,20 +21,34 @@ impl<T: JsonEventType> EventType for T {
         serde_json::from_slice(&bytes)
             .expect("deserialization failed")
     }
-} 
-
-#[derive(Serialize, Deserialize)]
-pub struct Connected {}
-
-impl JsonEventType for Connected {
-    const TYPE_ID: u32 = 2;
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Disconnected {}
+pub struct LeaderConnected {}
 
-impl JsonEventType for Disconnected {
-    const TYPE_ID: u32 = 3;
+impl JsonEventType for LeaderConnected {
+    const TYPE_ID: u32 = 10;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct LeaderDisconnected {}
+
+impl JsonEventType for LeaderDisconnected {
+    const TYPE_ID: u32 = 11;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FollowerConnected {}
+
+impl JsonEventType for FollowerConnected {
+    const TYPE_ID: u32 = 12;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FollowerDisconnected {}
+
+impl JsonEventType for FollowerDisconnected {
+    const TYPE_ID: u32 = 13;
 }
 
 #[derive(Serialize, Deserialize)]
