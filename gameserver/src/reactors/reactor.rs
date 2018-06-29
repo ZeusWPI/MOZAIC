@@ -56,7 +56,7 @@ impl<T> EventBox<T>
 impl<T> AnyEvent for EventBox<T>
     where T: EventType + Send + 'static
 {
-    fn data(&self) -> &Any { self }
+    fn data(&self) -> &Any { &self.event }
     
     fn type_id(&self) -> u32 {
         return T::TYPE_ID;
@@ -156,7 +156,10 @@ impl<S> Reactor<S> {
 
     pub fn handle_event(&mut self, event: &AnyEvent) {
         let event_type = event.type_id();
-
+        println!("type id: {}", event_type);
+        if let Some(handler) = self.handlers.get_mut(&event_type) {
+            handler.handle_event(&mut self.state, event);
+        }
     }
 
     pub fn handle_wire_event(&mut self, event: &WireEvent) {

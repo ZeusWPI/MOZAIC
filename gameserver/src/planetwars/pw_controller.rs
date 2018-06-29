@@ -9,17 +9,13 @@ use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
 use prost::Message as ProtobufMessage;
 use protocol::LobbyMessage;
 use protocol::lobby_message;
+use reactors::reactor::Reactor;
+use reactors::core_reactor::{CoreReactor, CoreReactorHandle};
+use reactors::client_reactor::{ClientReactor, ClientReactorHandle};
 
-use utils::client_handler::{
-    MessageId,
-    Event,
-    EventContent,
-    ClientHandle,
-    ClientHandler,
-    ResponseValue,
-    ResponseError,
-};
+use events;
 use network::router::{RoutingTable, ClientId};
+use network::connection::Connection;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
@@ -34,10 +30,19 @@ use super::pw_protocol::{
 use slog;
 use serde_json;
 
+// TODO: get rid of these structs
+/// The result of a response
+pub type ResponseValue = Result<Vec<u8>, ResponseError>;
+
+pub enum ResponseError {
+    /// Indicates that a response did not arrive in time
+    Timeout,
+}
+
 pub struct Player {
     id: ClientId,
     num: usize,
-    handle: ClientHandle,
+    handle: ClientReactorHandle,
 }
 
 impl Player {
@@ -55,19 +60,35 @@ impl Player {
 
     fn request(&mut self, msg: proto::ServerMessage, deadline: Instant) {
         let data = serde_json::to_vec(&msg).unwrap();
-        self.handle.request(data, deadline);
+        // TODO
+        // self.handle.request(data, deadline);
     }
 
     fn send(&mut self, msg: proto::ServerMessage) {
         let data = serde_json::to_vec(&msg).unwrap();
-        self.handle.send(data);
+        // TODO
+        // self.handle.send(data);
+    }
+}
+
+pub struct ClientHandler {
+    client_id: u32,
+}
+
+impl ClientHandler {
+    pub fn new(client_id: u32) -> Self {
+        ClientHandler {
+            client_id,
+        }
+    }
+
+    pub fn on_connect(&mut self, _event: &events::Connected) {
+        println!("player connected");
     }
 }
 
 pub struct PwMatch {
     state: PwMatchState,
-    event_channel_handle: UnboundedSender<Event>,
-    event_channel: UnboundedReceiver<Event>,
 }
 
 enum PwMatchState {
@@ -77,29 +98,31 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(ctrl_token: Vec<u8>,
+    pub fn new(reactor_handle: CoreReactorHandle,
                routing_table: Arc<Mutex<RoutingTable>>,
                logger: slog::Logger)
                -> Self
     {
-        let (snd, rcv) = mpsc::unbounded();
-
         let lobby = Lobby::new(
-            ctrl_token,
             routing_table,
-            snd.clone(),
+            reactor_handle,
             logger
         );
 
         return PwMatch {
             state: PwMatchState::Lobby(lobby),
-            event_channel_handle: snd,
-            event_channel: rcv,
         }
     }
 
     fn take_state(&mut self) -> PwMatchState {
         mem::replace(&mut self.state, PwMatchState::Finished)
+    }
+
+    pub fn register_client(&mut self, event: &events::RegisterClient) {
+        if let &mut PwMatchState::Lobby(ref mut lobby) = &mut self.state {
+            let client_id = ClientId::new(event.client_id);
+            lobby.add_player(client_id, event.token.clone());
+        }
     }
 }
 
@@ -109,13 +132,11 @@ impl Future for PwMatch {
 
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
-            let event = try_ready!(self.event_channel.poll())
-                .expect("event channel closed");
-
+            let event = unimplemented!();
             
             match self.take_state() {
                 PwMatchState::Lobby(mut lobby) => {
-                    lobby.handle_event(event);
+                    // lobby.handle_event(event);
                     
                     if lobby.game_data.is_some() {
                         let pw_controller = PwController::new(lobby);
@@ -126,7 +147,7 @@ impl Future for PwMatch {
                 }
 
                 PwMatchState::Playing(mut pw_controller) => {
-                    pw_controller.handle_event(event);
+                    // pw_controller.handle_event();
 
                     if pw_controller.state.is_finished() {
                         self.state = PwMatchState::Finished;
@@ -145,38 +166,26 @@ impl Future for PwMatch {
 
 pub struct Lobby {
     logger: slog::Logger,
-    ctrl_handle: ClientHandle,
 
     routing_table: Arc<Mutex<RoutingTable>>,
-    event_channel_handle: UnboundedSender<Event>,
+    reactor_handle: CoreReactorHandle,
 
     game_data: Option<Vec<u8>>,
-    players: HashMap<ClientId, ClientHandle>,
-    client_counter: u64,
+    players: HashMap<ClientId, ClientReactorHandle>,
+    client_counter: u32,
 }
 
 impl Lobby {
-    fn new(ctrl_token: Vec<u8>,
-           routing_table: Arc<Mutex<RoutingTable>>,
-           event_channel_handle: UnboundedSender<Event>,
+    fn new(routing_table: Arc<Mutex<RoutingTable>>,
+           reactor_handle: CoreReactorHandle,
            logger: slog::Logger)
            -> Self
     {
-        // open control connection
-        let (ctrl_handle, handler) = ClientHandler::new(
-            ClientId::new(0),
-            ctrl_token,
-            routing_table.clone(),
-            event_channel_handle.clone(),
-        );
-        tokio::spawn(handler);
-
         return Lobby {
             logger,
-            ctrl_handle,
 
             routing_table,
-            event_channel_handle,
+            reactor_handle,
 
             game_data: None,
             players: HashMap::new(),
@@ -191,77 +200,25 @@ impl Lobby {
         return ClientId::new(num);
     }
 
-    fn add_player(&mut self, connection_token: Vec<u8>) -> ClientId {
-        let client_id = self.generate_client_id();
-        let (handle, handler) = ClientHandler::new(
-            client_id,
+    fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
+        let connection = Connection::new(
             connection_token,
+            client_id,
             self.routing_table.clone(),
-            self.event_channel_handle.clone(),
         );
-        self.players.insert(client_id, handle);
-        tokio::spawn(handler);
-        return client_id;
+        let mut reactor = Reactor::new(ClientHandler::new(client_id.as_u32()));
+        reactor.add_handler(ClientHandler::on_connect);
+        let client_reactor = ClientReactor::new(
+            reactor,
+            connection,
+        );
+        self.players.insert(client_id, client_reactor.handle());
+        tokio::spawn(client_reactor);
+        println!("player added");
     }
 
     fn remove_player(&mut self, client_id: ClientId) {
         self.players.remove(&client_id);
-    }
-
-    fn handle_message(&mut self, message_id: MessageId, content: Vec<u8>) {
-        let message = match LobbyMessage::decode(content) {
-            Err(_) => { return; }, // skip
-            Ok(message) => message
-        };
-        match message.payload {
-            None => { } // skip
-            Some(lobby_message::Payload::AddPlayer(request)) => {
-                let client_id = self.add_player(request.token);
-                let response = lobby_message::AddPlayerResponse {
-                    client_id: client_id.as_u64(),
-                };
-                self.ctrl_handle.respond(message_id, encode_message(&response));
-            }
-            Some(lobby_message::Payload::RemovePlayer(request)) => {
-                self.remove_player(ClientId::new(request.client_id));
-                let response = lobby_message::RemovePlayerResponse {};
-                self.ctrl_handle.respond(message_id, encode_message(&response));
-            }
-            Some(lobby_message::Payload::StartGame(request)) => {
-                self.game_data = Some(request.payload);
-                let response = lobby_message::StartGameResponse {};
-                self.ctrl_handle.respond(message_id, encode_message(&response));
-            }
-        }
-    }
-
-    fn handle_event(&mut self, event: Event) {
-        match event.content {
-            EventContent::Connected => {
-                if self.players.contains_key(&event.client_id) {
-                    let msg = proto::ControlMessage::PlayerConnected {
-                        player_id: event.client_id.as_u64(),
-                    };
-                    let serialized = serde_json::to_vec(&msg).unwrap();
-                    self.ctrl_handle.send(serialized);
-                }
-            },
-            EventContent::Disconnected => {
-                if self.players.contains_key(&event.client_id) {
-                    let msg = proto::ControlMessage::PlayerDisconnected {
-                        player_id: event.client_id.as_u64(),
-                    };
-                    let serialized = serde_json::to_vec(&msg).unwrap();
-                    self.ctrl_handle.send(serialized);
-                }
-            },
-            EventContent::Message { message_id, data } => {
-                if event.client_id == self.ctrl_handle.id() {
-                    self.handle_message(message_id, data);
-                }
-            },
-            EventContent::Response { .. } => {},
-        }
     }
 }
 
@@ -269,7 +226,6 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     logger: slog::Logger,
-    ctrl_handle: ClientHandle,
 
     client_player: HashMap<ClientId, usize>,
     players: HashMap<ClientId, Player>,
@@ -313,7 +269,6 @@ impl PwController {
             players,
             client_player,
             logger: lobby.logger,
-            ctrl_handle: lobby.ctrl_handle,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
@@ -356,7 +311,8 @@ impl PwController {
         let serialized_state = serialize_state(&self.state);
         let message = proto::ControlMessage::GameState(serialized_state);
         let serialized = serde_json::to_vec(&message).unwrap();
-        self.ctrl_handle.send(serialized);
+        // TODO
+        // self.ctrl_handle.send(serialized);
     }
 
     fn prompt_players(&mut self) {
@@ -468,18 +424,13 @@ impl PwController {
         })
     }
 
-    fn handle_event(&mut self, event: Event) {
-        match event.content {
-            EventContent::Connected => {},
-            EventContent::Disconnected => {},
-            EventContent::Message { .. } => {},
-            EventContent::Response { value, .. } => {
-                // we only send requests to players, so we do not have to check
-                // whether the responder is a player
-                self.commands.insert(event.client_id, value);
-                self.waiting_for.remove(&event.client_id);
-            }
-        }
+    fn handle_event(&mut self) {
+        // EventContent::Response { value, .. } => {
+        //     // we only send requests to players, so we do not have to check
+        //     // whether the responder is a player
+        //     self.commands.insert(event.client_id, value);
+        //     self.waiting_for.remove(&event.client_id);
+        // }
 
         if self.waiting_for.is_empty() {
             let commands = mem::replace(&mut self.commands, HashMap::new());

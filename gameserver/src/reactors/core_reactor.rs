@@ -1,10 +1,7 @@
-use bytes::BytesMut;
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
-use protocol as proto;
-use prost::Message;
 
-use network::connection::{Connection, ConnectionEvent};
+use network::connection::Connection;
 use super::event_channel::EventChannel;
 use super::reactor::*;
 
@@ -13,26 +10,19 @@ pub struct CoreReactor<S> {
     reactor: Reactor<S>,
 
     ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
-    ctrl_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
     
     event_channel: EventChannel,
 }
 
 impl<S> CoreReactor<S> {
-    pub fn new(reactor: Reactor<S>, connection: Connection) -> Self {
-        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+    pub fn new(reactor: Reactor<S>,
+               ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+               connection: Connection) -> Self {
 
         CoreReactor {
-            ctrl_handle,
             ctrl_chan,
             event_channel: EventChannel::new(connection),
             reactor,
-        }
-    }
-
-    fn handle(&self) -> ReactorHandle {
-        ReactorHandle {
-            event_channel: self.ctrl_handle.clone(),
         }
     }
 
@@ -76,16 +66,23 @@ impl<S> Future for CoreReactor<S> {
 }
 
 
-pub struct ReactorHandle {
-    event_channel: mpsc::UnboundedSender<Box<AnyEvent>>,
+pub struct CoreReactorHandle {
+    inner: mpsc::UnboundedSender<Box<AnyEvent>>,
 }
 
-impl ReactorHandle {
-    fn dispatch_event<T>(&mut self, event: T)
+
+impl CoreReactorHandle {
+    pub fn new(handle: mpsc::UnboundedSender<Box<AnyEvent>>) -> Self {
+        CoreReactorHandle {
+            inner: handle,
+        }
+    }
+
+    pub fn dispatch_event<T>(&mut self, event: T)
         where T: EventType + Send + 'static
     {
         let event_box = EventBox::wrap(event);
-        self.event_channel.unbounded_send(event_box)
+        self.inner.unbounded_send(event_box)
             .expect("event channel broke");
     }
 }

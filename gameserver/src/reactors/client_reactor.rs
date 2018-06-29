@@ -59,6 +59,7 @@ impl<S> Future for ClientReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
+        println!("poll client reactor");
         try!(self.poll_control_channel());
         try!(self.poll_event_channel());
         return Ok(Async::NotReady);

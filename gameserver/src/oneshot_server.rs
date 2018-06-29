@@ -9,12 +9,14 @@ use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::timer::Delay;
 use utils::hex_serializer;
+use futures::sync::mpsc;
+
 
 use network;
 use network::connection::Connection;
 use network::router::{RoutingTable, ClientId};
 use reactors::reactor::Reactor;
-use reactors::core_reactor::{CoreReactor, ReactorHandle};
+use reactors::core_reactor::{CoreReactor, CoreReactorHandle};
 use planetwars::PwMatch;
 
 #[derive(Serialize, Deserialize)]
@@ -71,15 +73,19 @@ impl Future for OneshotServer {
             routing_table.clone(),
         );
 
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+
+
         let pw_match = PwMatch::new(
-            self.config.ctrl_token.clone(),
+            CoreReactorHandle::new(ctrl_handle),
             routing_table.clone(),
             logger,
         );
 
         let mut reactor = Reactor::new(pw_match);
         // TODO: install handlers
-        let core = CoreReactor::new(reactor, connection);
+        reactor.add_handler(PwMatch::register_client);
+        let core = CoreReactor::new(reactor, ctrl_chan, connection);
 
         tokio::spawn(core.and_then(|_| {
             println!("done");
