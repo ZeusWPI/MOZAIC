@@ -173,6 +173,12 @@ impl PwMatch {
             controller.on_step(event);
         }
     }
+
+    pub fn client_message(&mut self, event: &events::ClientMessage) {
+        if let PwMatchState::Playing(ref mut controller) = self.state {
+            controller.on_client_message(event);
+        }
+    }
 }
 
 pub struct Lobby {
@@ -249,7 +255,7 @@ pub struct PwController {
     players: HashMap<ClientId, Player>,
 
     waiting_for: HashSet<ClientId>,
-    commands: HashMap<ClientId, ResponseValue>,
+    commands: HashMap<ClientId, String>,
 }
 
 impl PwController {
@@ -298,9 +304,9 @@ impl PwController {
 
 
     /// Advance the game by one turn.
-    fn step(&mut self, messages: HashMap<ClientId, ResponseValue>) {
+    fn step(&mut self) {
         self.state.repopulate();
-        self.execute_messages(messages);
+        self.execute_commands();
         self.state.step();
 
         self.dispatch_state();
@@ -344,6 +350,16 @@ impl PwController {
         });
     }
 
+    fn on_client_message(&mut self, event: &events::ClientMessage) {
+        let client_id = ClientId::new(event.client_id);
+        self.waiting_for.remove(&client_id);
+        self.commands.insert(client_id, event.data.clone());
+
+        if self.waiting_for.is_empty() {
+            self.step();
+        }
+    }
+
     fn outcome(&self) -> Option<Vec<ClientId>> {
         if self.state.is_finished() {
             Some(self.state.living_players())
@@ -373,26 +389,32 @@ impl PwController {
         });
     }
 
-    fn execute_messages(&mut self, mut msgs: HashMap<ClientId, ResponseValue>) {
-        for (client_id, result) in msgs.drain() {
-            let player_num = self.players[&client_id].num;
-            let player_action = self.execute_action(player_num, result);
-            self.players.get_mut(&client_id).unwrap()
-                .send_action(player_action);
+    fn player_commands(&mut self) -> HashMap<usize, Option<String>> {
+        let commands = &mut self.commands;
+        return self.players.values().map(|player| {
+            let command = commands.remove(&player.id);
+            return (player.num, command);
+        }).collect();
+    }
+
+    fn execute_commands(&mut self) {
+        let mut commands = self.player_commands();
+        for (player_num, command) in commands.drain() {
+            let _player_action = self.execute_action(player_num, command);
         }
     }
 
-    fn execute_action(&mut self, player_num: usize, response: ResponseValue)
+    fn execute_action(&mut self, player_num: usize, response: Option<String>)
         -> PlayerAction
     {
         // TODO: it would be cool if this could be done with error_chain.
 
         let message = match response {
-            Err(ResponseError::Timeout) => return PlayerAction::Timeout,
-            Ok(message) => message,
+            None => return PlayerAction::Timeout,
+            Some(message) => message,
         };
 
-        let action: proto::Action = match serde_json::from_slice(&message) {
+        let action: proto::Action = match serde_json::from_str(&message) {
             Err(err) => return PlayerAction::ParseError(err.to_string()),
             Ok(action) => action,
         };
@@ -446,19 +468,5 @@ impl PwController {
             target: target_id,
             ship_count: mv.ship_count,
         })
-    }
-
-    fn handle_event(&mut self) {
-        // EventContent::Response { value, .. } => {
-        //     // we only send requests to players, so we do not have to check
-        //     // whether the responder is a player
-        //     self.commands.insert(event.client_id, value);
-        //     self.waiting_for.remove(&event.client_id);
-        // }
-
-        if self.waiting_for.is_empty() {
-            let commands = mem::replace(&mut self.commands, HashMap::new());
-            self.step(commands);
-        }
     }
 }

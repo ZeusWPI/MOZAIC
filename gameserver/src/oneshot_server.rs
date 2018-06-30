@@ -87,6 +87,7 @@ impl Future for OneshotServer {
         reactor.add_handler(PwMatch::remove_client);
         reactor.add_handler(PwMatch::start_game);
         reactor.add_handler(PwMatch::game_step);
+        reactor.add_handler(PwMatch::client_message);
         let core = CoreReactor::new(reactor, ctrl_chan, connection);
 
         tokio::spawn(core.and_then(|_| {
