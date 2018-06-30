@@ -162,17 +162,9 @@ impl Lobby {
             routing_table,
             reactor_handle,
 
-            game_data: None,
             players: HashMap::new(),
             // start counter at 1, because 0 is the control client
-            client_counter: 1,
         }
-    }
-
-    fn generate_client_id(&mut self) -> ClientId {
-        let num = self.client_counter;
-        self.client_counter += 1;
-        return ClientId::new(num);
     }
 
     fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
