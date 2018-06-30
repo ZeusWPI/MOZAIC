@@ -4,13 +4,10 @@ use std::sync::{Arc, Mutex};
 use std::mem;
 
 use tokio;
-use futures::{Future, Poll, Async, Stream};
-use futures::sync::mpsc::{self, UnboundedSender, UnboundedReceiver};
-use prost::Message as ProtobufMessage;
-use protocol::LobbyMessage;
-use protocol::lobby_message;
+use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
+
 use reactors::reactor::Reactor;
-use reactors::core_reactor::{CoreReactor, CoreReactorHandle};
+use reactors::core_reactor::{CoreReactorHandle};
 use reactors::client_reactor::{ClientReactor, ClientReactorHandle};
 
 use events;
@@ -43,32 +40,6 @@ pub struct Player {
     id: ClientId,
     num: usize,
     handle: ClientReactorHandle,
-}
-
-impl Player {
-    fn prompt(&mut self, state: proto::State, deadline: Instant) {
-        self.request(proto::ServerMessage::GameState(state), deadline);
-    }
-
-    fn send_final_state(&mut self, state: proto::State) {
-        self.send(proto::ServerMessage::FinalState(state));
-    }
-
-    fn send_action(&mut self, action: PlayerAction) {
-        self.send(proto::ServerMessage::PlayerAction(action));
-    }
-
-    fn request(&mut self, msg: proto::ServerMessage, deadline: Instant) {
-        let data = serde_json::to_vec(&msg).unwrap();
-        // TODO
-        // self.handle.request(data, deadline);
-    }
-
-    fn send(&mut self, msg: proto::ServerMessage) {
-        let data = serde_json::to_vec(&msg).unwrap();
-        // TODO
-        // self.handle.send(data);
-    }
 }
 
 pub struct ClientHandler {
@@ -178,6 +149,14 @@ impl PwMatch {
         if let PwMatchState::Playing(ref mut controller) = self.state {
             controller.on_client_message(event);
         }
+    }
+
+    pub fn game_finished(&mut self, event: &events::GameFinished) {
+        let state = self.take_state();
+        if let PwMatchState::Playing(mut controller) = state {
+            controller.on_finished(event);
+        }
+        self.state = PwMatchState::Finished;
     }
 }
 
@@ -360,32 +339,14 @@ impl PwController {
         }
     }
 
-    fn outcome(&self) -> Option<Vec<ClientId>> {
-        if self.state.is_finished() {
-            Some(self.state.living_players())
-        } else {
-            None
-        }
-    }
-
-    fn prompt_players(&mut self) {
-        let deadline = Instant::now() + Duration::from_secs(1);
-        let serialized = serialize_state(&self.state);
-
-        // these borrows are required so that the retain closure
-        // does not have to borrow self (which would create a lifetime conflict)
-
-
-    }
-
-    // TODO: ewwwww dup
-    fn finish_game(&mut self) {
-        let serialized = serialize_state(&self.state);
-
+    fn on_finished(&mut self, event: &events::GameFinished) {
         self.players.retain(|_player_id, player| {
-            player.send_final_state(serialized.clone());
-            // the game is over, we are kicking everyone.
-            return false;
+            player.handle.dispatch_event(events::GameFinished {
+                turn_num: event.turn_num,
+                state: event.state.clone(),
+            });
+            // game is over, kick everyone.
+            false
         });
     }
 
