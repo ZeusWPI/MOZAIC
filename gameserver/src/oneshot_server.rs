@@ -1,10 +1,7 @@
 use std;
-use std::fs::File;
 use std::time::{Duration, Instant};
 
 use futures::{Future, Poll, Async};
-use slog_json;
-use slog::{self, Drain};
 use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::timer::Delay;
@@ -57,13 +54,6 @@ impl Future for OneshotServer {
     // too much. We don't want oneshot servers, we want a gameserver that can
     // run multiple games in parallel.
     fn poll(&mut self) -> Poll<(), ()> {
-        let log_file = File::create(&self.config.log_file).unwrap();
-
-        let logger = slog::Logger::root( 
-            Mutex::new(slog_json::Json::default(log_file)).map(slog::Fuse),
-            o!()
-        );
-
         let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
 
         let connection = Connection::new(
@@ -78,8 +68,7 @@ impl Future for OneshotServer {
 
         let pw_match = PwMatch::new(
             CoreReactorHandle::new(ctrl_handle),
-            routing_table.clone(),
-            logger,
+            routing_table.clone()
         );
 
         let mut reactor = Reactor::new(pw_match);

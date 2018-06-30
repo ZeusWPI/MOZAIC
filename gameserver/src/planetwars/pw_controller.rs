@@ -24,7 +24,6 @@ use super::pw_protocol::{
     CommandError,
 };
 
-use slog;
 use serde_json;
 
 // TODO: get rid of these structs
@@ -87,14 +86,12 @@ enum PwMatchState {
 
 impl PwMatch {
     pub fn new(reactor_handle: CoreReactorHandle,
-               routing_table: Arc<Mutex<RoutingTable>>,
-               logger: slog::Logger)
+               routing_table: Arc<Mutex<RoutingTable>>)
                -> Self
     {
         let lobby = Lobby::new(
             routing_table,
-            reactor_handle,
-            logger
+            reactor_handle
         );
 
         return PwMatch {
@@ -132,7 +129,6 @@ impl PwMatch {
                 config,
                 lobby.reactor_handle,
                 lobby.players,
-                lobby.logger,
             ));
         } else {
             self.state = state;
@@ -161,8 +157,6 @@ impl PwMatch {
 }
 
 pub struct Lobby {
-    logger: slog::Logger,
-
     routing_table: Arc<Mutex<RoutingTable>>,
     reactor_handle: CoreReactorHandle,
 
@@ -173,13 +167,10 @@ pub struct Lobby {
 
 impl Lobby {
     fn new(routing_table: Arc<Mutex<RoutingTable>>,
-           reactor_handle: CoreReactorHandle,
-           logger: slog::Logger)
+           reactor_handle: CoreReactorHandle)
            -> Self
     {
         return Lobby {
-            logger,
-
             routing_table,
             reactor_handle,
 
@@ -228,7 +219,6 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     reactor_handle: CoreReactorHandle,
-    logger: slog::Logger,
 
     client_player: HashMap<ClientId, usize>,
     players: HashMap<ClientId, Player>,
@@ -240,8 +230,7 @@ pub struct PwController {
 impl PwController {
     pub fn new(config: Config,
                reactor_handle: CoreReactorHandle,
-               clients: HashMap<ClientId, ClientReactorHandle>,
-               logger: slog::Logger)
+               clients: HashMap<ClientId, ClientReactorHandle>)
         -> Self
     {
         // TODO: we probably want a way to fixate player order
@@ -270,7 +259,6 @@ impl PwController {
             planet_map,
             players,
             client_player,
-            logger,
             reactor_handle,
 
             waiting_for: HashSet::new(),
