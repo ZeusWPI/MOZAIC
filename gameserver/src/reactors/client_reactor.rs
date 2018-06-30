@@ -70,7 +70,6 @@ impl<S> Future for ClientReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        println!("poll client reactor");
         try!(self.poll_control_channel());
         try!(self.poll_event_wire());
         return Ok(Async::NotReady);
@@ -82,7 +81,7 @@ pub struct ClientReactorHandle {
 }
 
 impl ClientReactorHandle {
-    fn dispatch_event<T>(&mut self, event: T)
+    pub fn dispatch_event<T>(&mut self, event: T)
         where T: EventType + Send + 'static
     {
         let event_box = EventBox::wrap(event);

@@ -4,6 +4,7 @@ use serde::de::DeserializeOwned;
 use utils::hex_serializer;
 
 use reactors::reactor::EventType;
+use planetwars::pw_protocol as pw;
 
 pub trait JsonEventType : Serialize + DeserializeOwned {
     const TYPE_ID: u32;
@@ -97,4 +98,44 @@ pub struct FollowerDisconnected {}
 
 impl JsonEventType for FollowerDisconnected {
     const TYPE_ID: u32 = 13;
+}
+
+
+#[derive(Serialize, Deserialize)]
+pub struct GameStep {
+    pub turn_num: u64,
+    pub state: pw::State,
+}
+
+impl JsonEventType for GameStep {
+    const TYPE_ID: u32 = 32;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GameFinished {
+    pub turn_num: u64,
+    pub state: pw::State,
+}
+
+impl JsonEventType for GameFinished {
+    const TYPE_ID: u32 = 33;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClientSend {
+    pub data: String,
+}
+
+impl JsonEventType for ClientSend {
+    const TYPE_ID: u32 = 34;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClientMessage {
+    pub client_id: u32,
+    pub data: String,
+}
+
+impl JsonEventType for ClientMessage {
+    const TYPE_ID: u32 = 35;
 }

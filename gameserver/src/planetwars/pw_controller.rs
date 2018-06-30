@@ -95,6 +95,13 @@ impl ClientHandler {
             client_id: self.client_id,
         });
     }
+
+    pub fn on_message(&mut self, event: &events::ClientSend) {
+        self.core_handle.dispatch_event(events::ClientMessage {
+            client_id: self.client_id,
+            data: event.data.clone(),
+        });
+    }
 }
 
 pub struct PwMatch {
@@ -136,7 +143,7 @@ impl PwMatch {
     }
 
     pub fn remove_client(&mut self, event: &events::RemoveClient) {
-        if let &mut PwMatchState::Lobby(ref mut lobby) = &mut self.state {
+        if let PwMatchState::Lobby(ref mut lobby) = self.state {
             let client_id = ClientId::new(event.client_id);
             lobby.remove_player(client_id);
         }
@@ -152,11 +159,18 @@ impl PwMatch {
             };
             self.state = PwMatchState::Playing(PwController::new(
                 config,
+                lobby.reactor_handle,
                 lobby.players,
                 lobby.logger,
             ));
         } else {
             self.state = state;
+        }
+    }
+
+    pub fn game_step(&mut self, event: &events::GameStep) {
+        if let PwMatchState::Playing(ref mut controller) = self.state {
+            controller.on_step(event);
         }
     }
 }
@@ -211,13 +225,13 @@ impl Lobby {
         );
         reactor.add_handler(ClientHandler::on_connect);
         reactor.add_handler(ClientHandler::on_disconnect);
+        reactor.add_handler(ClientHandler::on_message);
         let client_reactor = ClientReactor::new(
             reactor,
             connection,
         );
         self.players.insert(client_id, client_reactor.handle());
         tokio::spawn(client_reactor);
-        println!("player added");
     }
 
     fn remove_player(&mut self, client_id: ClientId) {
@@ -228,6 +242,7 @@ impl Lobby {
 pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
+    reactor_handle: CoreReactorHandle,
     logger: slog::Logger,
 
     client_player: HashMap<ClientId, usize>,
@@ -239,6 +254,7 @@ pub struct PwController {
 
 impl PwController {
     pub fn new(config: Config,
+               reactor_handle: CoreReactorHandle,
                clients: HashMap<ClientId, ClientReactorHandle>,
                logger: slog::Logger)
         -> Self
@@ -270,20 +286,16 @@ impl PwController {
             players,
             client_player,
             logger,
+            reactor_handle,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
         };
-        controller.start_game();
+        // this initial dispatch starts the game
+        controller.dispatch_state();
         return controller;
     }
 
-
-    fn start_game(&mut self) {
-        self.log_state();
-        self.prompt_players();
-        println!("game started");
-    }
 
     /// Advance the game by one turn.
     fn step(&mut self, messages: HashMap<ClientId, ResponseValue>) {
@@ -291,13 +303,45 @@ impl PwController {
         self.execute_messages(messages);
         self.state.step();
 
-        self.log_state();
+        self.dispatch_state();
+    }
+
+    fn dispatch_state(&mut self) {
+        let turn_num = self.state.turn_num;
+        let state = serialize_state(&self.state);
 
         if self.state.is_finished() {
-            self.finish_game();
+            let event = events::GameFinished { turn_num, state };
+            self.reactor_handle.dispatch_event(event);
         } else {
-            self.prompt_players();
+            let event = events::GameStep { turn_num, state };
+            self.reactor_handle.dispatch_event(event);
         }
+    }
+
+    fn on_step(&mut self, step: &events::GameStep) {
+        let state = &self.state;
+        let waiting_for = &mut self.waiting_for;
+
+        self.players.retain(|_, player| {
+            if state.players[player.num].alive {
+                waiting_for.insert(player.id);
+                player.handle.dispatch_event(events::GameStep {
+                    turn_num: step.turn_num,
+                    state: step.state.clone(),
+                });
+                // keep this player in the game
+                return true;
+            } else {
+                player.handle.dispatch_event(events::GameFinished {
+                    turn_num: step.turn_num,
+                    state: step.state.clone(),
+                });
+                // this player is dead, kick him!
+                // TODO: shutdown the reactor
+                return false;
+            }
+        });
     }
 
     fn outcome(&self) -> Option<Vec<ClientId>> {
@@ -308,36 +352,14 @@ impl PwController {
         }
     }
 
-    fn log_state(&mut self) {
-        // TODO: add turn number
-        let serialized_state = serialize_state(&self.state);
-        let message = proto::ControlMessage::GameState(serialized_state);
-        let serialized = serde_json::to_vec(&message).unwrap();
-        // TODO
-        // self.ctrl_handle.send(serialized);
-    }
-
     fn prompt_players(&mut self) {
         let deadline = Instant::now() + Duration::from_secs(1);
         let serialized = serialize_state(&self.state);
 
         // these borrows are required so that the retain closure
         // does not have to borrow self (which would create a lifetime conflict)
-        let state = &self.state;
-        let waiting_for = &mut self.waiting_for;
 
-        self.players.retain(|_, player| {
-            if state.players[player.num].alive {
-                waiting_for.insert(player.id);
-                player.prompt(serialized.clone(), deadline);
-                // keep this player in the game
-                return true;
-            } else {
-                player.send_final_state(serialized.clone());
-                // this player is dead, kick him!
-                return false;
-            }
-        });
+
     }
 
     // TODO: ewwwww dup
@@ -439,17 +461,4 @@ impl PwController {
             self.step(commands);
         }
     }
-}
-
-/// encode a protobuf message
-// TODO: this is a general util, maybe put it somewhere nice.
-fn encode_message<M>(message: &M) -> Vec<u8>
-    where M: ProtobufMessage
-{
-    let mut bytes = Vec::with_capacity(message.encoded_len());
-    // encoding can only fail because the buffer does not have
-    // enough space allocated, but we just allocated the required
-    // space.
-    message.encode(&mut bytes).unwrap();
-    return bytes;
 }

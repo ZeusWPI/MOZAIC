@@ -1,8 +1,8 @@
 
+pub mod pw_protocol;
 mod pw_controller;
 mod pw_rules;
 mod pw_config;
-mod pw_protocol;
 mod pw_serializer;
 mod pw_client;
 
