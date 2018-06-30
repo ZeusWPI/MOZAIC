@@ -23,6 +23,7 @@ export class PwClient {
         this.reactor.on(GameFinished).subscribe((step) => {
             // TODO: actually quit
             console.log(`client ${this.clientId} quit`);
+            this.botRunner.killBot();
         });
 
     }
