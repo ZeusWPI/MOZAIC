@@ -4,6 +4,10 @@ import { Client } from './Client';
 import { MatchParams, MatchRunner } from './MatchRunner';
 import { ClientLogger } from './Logger';
 import { PwClient } from './PwClient';
+import { MatchReactor } from './MatchReactor';
+import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';
+import { ClientReactor } from './ClientReactor';
+import * as events from './events';
 
 
 
@@ -37,7 +41,7 @@ const players = [
 ];
 
 const gameConfig = {
-    "map_file": "../planetwars/maps/hex.json",
+    "map_path": "../planetwars/maps/hex.json",
     "max_turns": 100,
 }
 
@@ -48,21 +52,54 @@ const params: MatchParams = {
     logFile: "log.json",
 }
 
-MatchRunner.create(bin_path, params).then((match) => {
-    const addPlayers = players.map((player) => {
-        const token = Buffer.from(player.token, 'hex');
-        return match.matchControl.addPlayer(token)
-            .then((_) => Client.connect({
-                host: addr.host,
-                port: addr.port,
-                token: token,
-                logger: match.logger,
-            }))
-            .then((client) => {
-                new PwClient(client, player.botConfig);
-            });
-    });
-    Promise.all(addPlayers).then(() => {
-        return match.matchControl.startGame(gameConfig);
+const clients = {};
+const waiting_for = new Set();
+
+const clientParams = {
+    host: addr.host,
+    port: addr.port,
+    token: Buffer.from('abba', 'hex'),
+}
+const matchReactor = new MatchReactor(clientParams);
+
+Object.keys(events).forEach((eventName) => {
+    matchReactor.on(events[eventName]).subscribe((event) => {
+        console.log(`${eventName}: ${JSON.stringify(event)}`);
     });
 });
+
+
+matchReactor.on(FollowerConnected).subscribe((_) => {
+    players.forEach((player, idx) => {
+        const player_num = idx + 1;
+        matchReactor.dispatch(RegisterClient.create({
+            client_id: player_num,
+            token: player.token,
+        }));
+        waiting_for.add(player_num);
+    })
+});
+
+matchReactor.on(RegisterClient).subscribe((data) => {
+    if (!clients[data.client_id]) {
+        const client = new ClientReactor({
+            host: addr.host,
+            port: addr.port,
+            token: Buffer.from(data.token, 'hex'),
+        });
+        client.connect();
+    }
+});
+
+matchReactor.on(ClientConnected).subscribe(({ client_id }) => {
+    waiting_for.delete(client_id);
+    if (waiting_for.size == 0) {
+        matchReactor.dispatch(StartGame.create(gameConfig));
+    }
+});
+
+matchReactor.on(ClientDisconnected).subscribe(({ client_id }) => {
+    waiting_for.add(client_id);
+})
+
+matchReactor.connect();

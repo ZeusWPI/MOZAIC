@@ -30,6 +30,27 @@ export interface RegisterClient {
 }
 export const RegisterClient = new JsonEventType<RegisterClient>(1);
 
+export interface RemoveClient {
+    client_id: number;
+}
+export const RemoveClient = new JsonEventType<{}>(2);
+
+export interface StartGame {
+    map_path: string,
+    max_turns: number,
+}
+export const StartGame = new JsonEventType<StartGame>(3);
+
+export interface ClientConnected {
+    client_id: number;
+}
+export const ClientConnected = new JsonEventType<ClientConnected>(4);
+
+export interface ClientDisconnected {
+    client_id: number;
+}
+export const ClientDisconnected = new JsonEventType<ClientDisconnected>(5);
+
 export const LeaderConnected = new JsonEventType<{}>(10);
 export const LeaderDisconnected = new JsonEventType<{}>(11);
 export const FollowerConnected = new JsonEventType<{}>(12);
