@@ -1,5 +1,3 @@
-use erased_serde;
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Expedition {
     pub id: u64,

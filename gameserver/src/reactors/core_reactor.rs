@@ -78,9 +78,11 @@ impl<S> Future for CoreReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        try!(self.poll_control_channel());
-        try!(self.poll_event_wire());
-        return Ok(Async::NotReady);
+        match try!(self.poll_control_channel()) {
+            Async::Ready(()) => self.event_wire.poll_complete(),
+            Async::NotReady =>  self.poll_event_wire(),
+        }
+
     }
 }
 

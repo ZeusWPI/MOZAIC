@@ -49,6 +49,10 @@ impl EventWire {
         Ok(Async::Ready(event))
     }
 
+    pub fn poll_complete(&mut self) -> Poll<(), ()> {
+        return self.connection.poll_complete();
+    }
+
     pub fn send(&mut self, event: WireEvent) {
         let proto_event = proto::Event {
             type_id: event.type_id,

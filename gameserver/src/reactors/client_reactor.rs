@@ -10,27 +10,27 @@ pub struct ClientReactor<S> {
     reactor: Reactor<S>,
 
     ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
-    ctrl_handle: mpsc::UnboundedSender<Box<AnyEvent>>,
 
     event_wire: EventWire,
 }
 
 impl<S> ClientReactor<S> {
-    pub fn new(reactor: Reactor<S>, connection: Connection) -> Self {
+    pub fn new(reactor: Reactor<S>, connection: Connection)
+        -> (ClientReactorHandle, Self)
+    {
         let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
 
-        ClientReactor {
+        let reactor = ClientReactor {
             reactor,
             ctrl_chan,
-            ctrl_handle,
             event_wire: EventWire::new(connection),
-        }
-    }
+        };
 
-    pub fn handle(&self) -> ClientReactorHandle {
-        ClientReactorHandle {
-            inner: self.ctrl_handle.clone(),
-        }
+        let handle = ClientReactorHandle {
+            inner: ctrl_handle,
+        };
+
+        return (handle, reactor);
     }
 
     pub fn poll_control_channel(&mut self) -> Poll<(), ()> {
@@ -70,9 +70,10 @@ impl<S> Future for ClientReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        try!(self.poll_control_channel());
-        try!(self.poll_event_wire());
-        return Ok(Async::NotReady);
+        match try!(self.poll_control_channel()) {
+            Async::Ready(()) => self.event_wire.poll_complete(),
+            Async::NotReady =>  self.poll_event_wire(),
+        }
     }
 }
 

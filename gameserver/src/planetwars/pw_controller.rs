@@ -182,11 +182,11 @@ impl Lobby {
         reactor.add_handler(ClientHandler::on_connect);
         reactor.add_handler(ClientHandler::on_disconnect);
         reactor.add_handler(ClientHandler::on_message);
-        let client_reactor = ClientReactor::new(
+        let (handle, client_reactor) = ClientReactor::new(
             reactor,
             connection,
         );
-        self.players.insert(client_id, client_reactor.handle());
+        self.players.insert(client_id, handle);
         tokio::spawn(client_reactor);
     }
 
