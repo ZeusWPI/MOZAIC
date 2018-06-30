@@ -82,7 +82,7 @@ impl ClientHandler {
         }
     }
 
-    pub fn on_connect(&mut self, _event: &events::Connected) {
+    pub fn on_connect(&mut self, _event: &events::FollowerConnected) {
         println!("player connected");
     }
 }
@@ -124,42 +124,29 @@ impl PwMatch {
             lobby.add_player(client_id, event.token.clone());
         }
     }
-}
 
-impl Future for PwMatch {
-    type Item = ();
-    type Error = ();
+    pub fn remove_client(&mut self, event: &events::RemoveClient) {
+        if let &mut PwMatchState::Lobby(ref mut lobby) = &mut self.state {
+            let client_id = ClientId::new(event.client_id);
+            lobby.remove_player(client_id);
+        }
+    }
 
-    fn poll(&mut self) -> Poll<(), ()> {
-        loop {
-            let event = unimplemented!();
-            
-            match self.take_state() {
-                PwMatchState::Lobby(mut lobby) => {
-                    // lobby.handle_event(event);
-                    
-                    if lobby.game_data.is_some() {
-                        let pw_controller = PwController::new(lobby);
-                        self.state = PwMatchState::Playing(pw_controller);
-                    } else {
-                        self.state = PwMatchState::Lobby(lobby);
-                    }
-                }
+    pub fn start_game(&mut self, event: &events::StartGame) {
+        let state = self.take_state();
 
-                PwMatchState::Playing(mut pw_controller) => {
-                    // pw_controller.handle_event();
-
-                    if pw_controller.state.is_finished() {
-                        self.state = PwMatchState::Finished;
-                        // TODO: how do we properly handle this?
-                        return Ok(Async::Ready(()));
-                    } else {
-                        self.state = PwMatchState::Playing(pw_controller);
-                    }
-                }
-
-                PwMatchState::Finished => {}
-            }
+        if let PwMatchState::Lobby(lobby) = state {
+            let config = Config {
+                map_file: event.map_path.clone(),
+                max_turns: event.max_turns,
+            };
+            self.state = PwMatchState::Playing(PwController::new(
+                config,
+                lobby.players,
+                lobby.logger,
+            ));
+        } else {
+            self.state = state;
         }
     }
 }
@@ -235,16 +222,14 @@ pub struct PwController {
 }
 
 impl PwController {
-    pub fn new(lobby: Lobby) -> Self {
-        // TODO: neat error handling
-        let raw_conf = lobby.game_data.as_ref()
-            .expect("game data not present in lobby");
-        let conf: Config = serde_json::from_slice(raw_conf)
-            .expect("could not parse game data");
-
+    pub fn new(config: Config,
+               clients: HashMap<ClientId, ClientReactorHandle>,
+               logger: slog::Logger)
+        -> Self
+    {
         // TODO: we probably want a way to fixate player order
-        let client_ids = lobby.players.keys().cloned().collect();
-        let state = conf.create_game(client_ids);
+        let client_ids = clients.keys().cloned().collect();
+        let state = config.create_game(client_ids);
 
         let planet_map = state.planets.iter().map(|planet| {
             (planet.name.clone(), planet.id)
@@ -253,8 +238,8 @@ impl PwController {
         let mut client_player = HashMap::new();
         let mut players = HashMap::new();
 
-        let iter = lobby.players.into_iter().enumerate();
-        for (player_num, (client_id, client_handle)) in iter {
+        let clients_iter = clients.into_iter().enumerate();
+        for (player_num, (client_id, client_handle)) in clients_iter {
             client_player.insert(client_id, player_num);
             players.insert(client_id, Player {
                 id: client_id,
@@ -268,7 +253,7 @@ impl PwController {
             planet_map,
             players,
             client_player,
-            logger: lobby.logger,
+            logger,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
@@ -281,6 +266,7 @@ impl PwController {
     fn start_game(&mut self) {
         self.log_state();
         self.prompt_players();
+        println!("game started");
     }
 
     /// Advance the game by one turn.

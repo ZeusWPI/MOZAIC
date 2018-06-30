@@ -24,6 +24,36 @@ impl<T: JsonEventType> EventType for T {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct RegisterClient {
+    pub client_id: u32,
+    #[serde(with="hex_serializer")]
+    pub token: Vec<u8>,
+}
+
+impl JsonEventType for RegisterClient {
+    const TYPE_ID: u32 = 1;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct RemoveClient {
+    pub client_id: u32,
+}
+
+impl JsonEventType for RemoveClient {
+    const TYPE_ID: u32 =  2;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct StartGame {
+    pub map_path: String,
+    pub max_turns: u64,
+}
+
+impl JsonEventType for StartGame {
+    const TYPE_ID: u32 = 3;
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct LeaderConnected {}
 
 impl JsonEventType for LeaderConnected {
@@ -49,15 +79,4 @@ pub struct FollowerDisconnected {}
 
 impl JsonEventType for FollowerDisconnected {
     const TYPE_ID: u32 = 13;
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct RegisterClient {
-    pub client_id: u32,
-    #[serde(with="hex_serializer")]
-    pub token: Vec<u8>,
-}
-
-impl JsonEventType for RegisterClient {
-    const TYPE_ID: u32 = 1;
 }
