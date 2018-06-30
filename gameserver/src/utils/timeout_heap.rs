@@ -7,13 +7,14 @@ use std::time::Instant;
 
 use tokio::timer::Delay;
 
-
+#[allow(dead_code)]
 pub struct TimeoutHeap<K> {
     deadlines: BinaryHeap<Deadline<K>>,
     key_set: HashSet<K>,
     delay: Delay,
 }
 
+#[allow(dead_code)]
 impl<K> TimeoutHeap<K>
     where K: Hash + Eq + Clone
 {

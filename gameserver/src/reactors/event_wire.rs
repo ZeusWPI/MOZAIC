@@ -1,11 +1,11 @@
-use futures::{Stream, Sink, Poll, Async};
+use futures::{Poll, Async};
 use prost::Message;
 use bytes::BytesMut;
 
 use protocol as proto;
 use network::connection::{Connection, ConnectionEvent};
 
-use super::reactor::{WireEvent, SomeEvent};
+use super::reactor::WireEvent;
 
 
 // TODO: oh please find a better name

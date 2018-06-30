@@ -4,7 +4,6 @@ use std::sync::{Arc, Mutex};
 use std::mem;
 
 use tokio;
-use futures::sync::mpsc::{UnboundedSender, UnboundedReceiver};
 
 use reactors::reactor::Reactor;
 use reactors::core_reactor::{CoreReactorHandle};
@@ -25,15 +24,6 @@ use super::pw_protocol::{
 };
 
 use serde_json;
-
-// TODO: get rid of these structs
-/// The result of a response
-pub type ResponseValue = Result<Vec<u8>, ResponseError>;
-
-pub enum ResponseError {
-    /// Indicates that a response did not arrive in time
-    Timeout,
-}
 
 pub struct Player {
     id: ClientId,
@@ -160,9 +150,7 @@ pub struct Lobby {
     routing_table: Arc<Mutex<RoutingTable>>,
     reactor_handle: CoreReactorHandle,
 
-    game_data: Option<Vec<u8>>,
     players: HashMap<ClientId, ClientReactorHandle>,
-    client_counter: u32,
 }
 
 impl Lobby {

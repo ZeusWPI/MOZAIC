@@ -2,24 +2,6 @@ use std::marker::PhantomData;
 use std::any::Any;
 use std::collections::HashMap;
 
-pub enum SomeEvent {
-    Event(Box<AnyEvent>),
-    WireEvent(WireEvent),
-}
-
-impl SomeEvent {
-    pub fn into_wire_event(self) -> WireEvent {
-        match self {
-            SomeEvent::Event(event) => {
-                event.as_wire_event()
-            }
-            SomeEvent::WireEvent(wire_event) => {
-                wire_event
-            }
-        }
-    }
-}
-
 pub struct WireEvent {
     pub type_id: u32,
     pub data: Vec<u8>,
@@ -76,17 +58,6 @@ pub trait Handler<S>: Send {
     fn event_type_id(&self) -> u32;
     fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
     fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent);
-
-    fn handle(&mut self, state: &mut S, some_event: &SomeEvent) {
-        match *some_event {
-            SomeEvent::Event(ref event) => {
-                self.handle_event(state, event.as_ref());
-            }
-            SomeEvent::WireEvent(ref wire_event) => {
-                self.handle_wire_event(state, wire_event);
-            }
-        }
-    }
 }
 
 pub struct EventHandler<S, T, F>
@@ -142,17 +113,6 @@ impl<S> Reactor<S> {
         Reactor {
             handlers: HashMap::new(),
             state,
-        }
-    }
-
-    pub fn handle(&mut self, some_event: &SomeEvent) {
-        match *some_event {
-            SomeEvent::Event(ref event) => {
-                self.handle_event(event.as_ref());
-            }
-            SomeEvent::WireEvent(ref wire_event) => {
-                self.handle_wire_event(wire_event);
-            }
         }
     }
 
