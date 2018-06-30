@@ -85,6 +85,7 @@ impl<S> Future for CoreReactor<S> {
 }
 
 
+#[derive(Clone)]
 pub struct CoreReactorHandle {
     inner: mpsc::UnboundedSender<Box<AnyEvent>>,
 }

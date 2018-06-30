@@ -73,17 +73,27 @@ impl Player {
 
 pub struct ClientHandler {
     client_id: u32,
+    core_handle: CoreReactorHandle,
 }
 
 impl ClientHandler {
-    pub fn new(client_id: u32) -> Self {
+    pub fn new(client_id: u32, core_handle: CoreReactorHandle) -> Self {
         ClientHandler {
             client_id,
+            core_handle,
         }
     }
 
     pub fn on_connect(&mut self, _event: &events::FollowerConnected) {
-        println!("player connected");
+        self.core_handle.dispatch_event(events::ClientConnected {
+            client_id: self.client_id,
+        });
+    }
+
+    pub fn on_disconnect(&mut self, _event: &events::FollowerDisconnected) {
+        self.core_handle.dispatch_event(events::ClientDisconnected {
+            client_id: self.client_id,
+        });
     }
 }
 
@@ -193,8 +203,14 @@ impl Lobby {
             client_id,
             self.routing_table.clone(),
         );
-        let mut reactor = Reactor::new(ClientHandler::new(client_id.as_u32()));
+        let mut reactor = Reactor::new(
+            ClientHandler::new(
+                client_id.as_u32(),
+                self.reactor_handle.clone(),
+            ),
+        );
         reactor.add_handler(ClientHandler::on_connect);
+        reactor.add_handler(ClientHandler::on_disconnect);
         let client_reactor = ClientReactor::new(
             reactor,
             connection,

@@ -54,6 +54,24 @@ impl JsonEventType for StartGame {
 }
 
 #[derive(Serialize, Deserialize)]
+pub struct ClientConnected {
+    pub client_id: u32,
+}
+
+impl JsonEventType for ClientConnected {
+    const TYPE_ID: u32 = 4;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct ClientDisconnected {
+    pub client_id: u32,
+}
+
+impl JsonEventType for ClientDisconnected {
+    const TYPE_ID: u32 = 5;
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct LeaderConnected {}
 
 impl JsonEventType for LeaderConnected {
