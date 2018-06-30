@@ -23,7 +23,6 @@ export class JsonEventType<T> {
     }
 }
 
-
 export interface RegisterClient {
     client_id: number;
     token: string;
@@ -55,3 +54,27 @@ export const LeaderConnected = new JsonEventType<{}>(10);
 export const LeaderDisconnected = new JsonEventType<{}>(11);
 export const FollowerConnected = new JsonEventType<{}>(12);
 export const FollowerDisconnected = new JsonEventType<{}>(13);
+
+
+export interface GameStep {
+    turn_num: number,
+    state: any,
+}
+export const GameStep = new JsonEventType<GameStep>(32);
+
+export interface GameFinished {
+    turn_num: number,
+    state: any,
+}
+export const GameFinished = new JsonEventType<GameFinished>(33);
+
+export interface ClientSend {
+    data: string,
+}
+export const ClientSend = new JsonEventType<ClientSend>(34);
+
+export interface ClientMessage {
+    client_id: number,
+    data: string,
+}
+export const ClientMessage = new JsonEventType<ClientMessage>(35);

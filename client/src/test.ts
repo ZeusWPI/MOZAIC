@@ -82,12 +82,15 @@ matchReactor.on(FollowerConnected).subscribe((_) => {
 
 matchReactor.on(RegisterClient).subscribe((data) => {
     if (!clients[data.client_id]) {
-        const client = new ClientReactor({
+        const client = new PwClient({
+            clientId: data.client_id,
             host: addr.host,
             port: addr.port,
             token: Buffer.from(data.token, 'hex'),
+            botConfig: simpleBot,
         });
-        client.connect();
+        clients[data.client_id] = client;
+        client.run();
     }
 });
 
