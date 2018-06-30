@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 use tokio::net::TcpStream;
 
-use protobuf_codec::MessageStream;
+use super::protobuf_codec::MessageStream;
 use protocol;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]

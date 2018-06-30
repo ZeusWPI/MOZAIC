@@ -6,7 +6,7 @@ use tokio::net::TcpStream;
 
 
 use super::router::{RoutingTable, RoutingMessage, ClientId};
-use protobuf_codec::MessageStream;
+use super::protobuf_codec::MessageStream;
 use protocol::{Packet, packet};
 
 pub enum ConnectionEvent {

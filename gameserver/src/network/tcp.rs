@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
-use protobuf_codec::{MessageStream, ProtobufTransport};
+use super::protobuf_codec::{MessageStream, ProtobufTransport};
 use super::router::{RoutingTable, RoutingMessage, ConnectionData, ClientId};
 use protocol as proto;
 
