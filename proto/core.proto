@@ -14,7 +14,7 @@ message ConnectionResponse {
 }
 
 message ConnectionSuccess {
-    uint64 client_id = 1;
+    uint32 client_id = 1;
 }
 
 message ConnectionError {
@@ -61,11 +61,11 @@ message LobbyMessage {
     }
 
     message AddPlayerResponse {
-        uint64 client_id = 1;
+        uint32 client_id = 1;
     }
 
     message RemovePlayerRequest {
-        uint64 client_id = 1;
+        uint32 client_id = 1;
     }
 
     message RemovePlayerResponse {

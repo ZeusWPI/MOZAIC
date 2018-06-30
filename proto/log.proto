@@ -8,7 +8,7 @@ package mozaic.protocol;
 // responsibility of the client running the bot. This way, we can generate
 // detailed logs without generating lots of network bandwidth.
 // The different log components can then be merged to get the full match log.
-message Event { 
+message LogEvent { 
     // Identifies the client that logged this message.
     // The game server does not log anything, it rather sends log messages back
     // to the client that controls it (the game owner). We could either choose
