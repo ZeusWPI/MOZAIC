@@ -1,8 +1,10 @@
 use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
+use std::time::Instant;
 
 use events;
 use network::connection::Connection;
+use utils::delay_heap::DelayHeap;
 use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
@@ -10,28 +12,34 @@ use super::reactor::*;
 pub struct CoreReactor<S> {
     reactor: Reactor<S>,
 
-    ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
+    ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     
     event_wire: EventWire,
+
+    delayed_events: DelayHeap<Box<AnyEvent>>,
 }
 
 impl<S> CoreReactor<S> {
     pub fn new(reactor: Reactor<S>,
-               ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
-               connection: Connection) -> Self {
-
+               ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
+               connection: Connection) -> Self
+    {
         CoreReactor {
             ctrl_chan,
             event_wire: EventWire::new(connection),
             reactor,
+            delayed_events: DelayHeap::new(),
         }
     }
 
     fn poll_control_channel(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
-                Some(event) => {
+                Some(ReactorCommand::Emit { event }) => {
                     self.handle_event(event.as_ref());
+                }
+                Some(ReactorCommand::EmitDelayed { event, instant }) => {
+                    self.delayed_events.push(instant, event);
                 }
                 None => {
                     return Ok(Async::Ready(()));
@@ -58,6 +66,13 @@ impl<S> CoreReactor<S> {
         }
     }
 
+    fn poll_delayed(&mut self) -> Poll<(), ()> {
+        loop {
+            let event = try_ready!(self.delayed_events.poll());
+            self.handle_event(event.as_ref());
+        }
+    }
+
     fn handle_event(&mut self, event: &AnyEvent) {
         self.reactor.handle_event(event);
         // Send the event after handling it, so that the receiver can be
@@ -78,23 +93,38 @@ impl<S> Future for CoreReactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        match try!(self.poll_control_channel()) {
-            Async::Ready(()) => self.event_wire.poll_complete(),
-            Async::NotReady =>  self.poll_event_wire(),
-        }
+        // Note that the order of these statements is important!
 
+        // TODO: this could be done better
+        match try!(self.poll_control_channel()) {
+            Async::Ready(()) => return self.event_wire.poll_complete(),
+            Async::NotReady =>  {}
+        };
+        try!(self.poll_delayed());
+        try!(self.poll_event_wire());
+        return Ok(Async::NotReady);
     }
+}
+
+pub enum ReactorCommand {
+    Emit {
+        event: Box<AnyEvent>,
+    },
+    EmitDelayed {
+        event: Box<AnyEvent>,
+        instant: Instant,
+    },
 }
 
 
 #[derive(Clone)]
 pub struct CoreReactorHandle {
-    inner: mpsc::UnboundedSender<Box<AnyEvent>>,
+    inner: mpsc::UnboundedSender<ReactorCommand>,
 }
 
 
 impl CoreReactorHandle {
-    pub fn new(handle: mpsc::UnboundedSender<Box<AnyEvent>>) -> Self {
+    pub fn new(handle: mpsc::UnboundedSender<ReactorCommand>) -> Self {
         CoreReactorHandle {
             inner: handle,
         }
@@ -103,8 +133,23 @@ impl CoreReactorHandle {
     pub fn dispatch_event<T>(&mut self, event: T)
         where T: EventType + Send + 'static
     {
-        let event_box = EventBox::wrap(event);
-        self.inner.unbounded_send(event_box)
-            .expect("event channel broke");
+        self.send_command(ReactorCommand::Emit {
+            event: EventBox::wrap(event),
+        });
+
     }
+
+    pub fn emit_delayed<T>(&mut self, event: T, instant: Instant)
+        where T: EventType + Send + 'static
+    {
+        self.send_command(ReactorCommand::EmitDelayed {
+            event: EventBox::wrap(event),
+            instant,
+        });
+    }
+
+    fn send_command(&mut self, command: ReactorCommand) {
+        self.inner.unbounded_send(command)
+            .expect("event channel broke");
+    }   
 }
