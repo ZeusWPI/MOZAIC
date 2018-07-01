@@ -1,2 +1,2 @@
-pub mod timeout_heap;
+pub mod delay_heap;
 pub mod hex_serializer;
