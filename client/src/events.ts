@@ -78,3 +78,8 @@ export interface ClientMessage {
     data: string,
 }
 export const ClientMessage = new JsonEventType<ClientMessage>(35);
+
+export interface TurnTimeout {
+    turn_num: number;
+}
+export const TurnTimeout = new JsonEventType<TurnTimeout>(36);
