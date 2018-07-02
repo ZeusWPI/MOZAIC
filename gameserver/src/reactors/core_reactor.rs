@@ -136,10 +136,9 @@ impl CoreReactorHandle {
         self.send_command(ReactorCommand::Emit {
             event: EventBox::wrap(event),
         });
-
     }
 
-    pub fn emit_delayed<T>(&mut self, event: T, instant: Instant)
+    pub fn emit_delayed<T>(&mut self, instant: Instant, event: T)
         where T: EventType + Send + 'static
     {
         self.send_command(ReactorCommand::EmitDelayed {

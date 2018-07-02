@@ -144,6 +144,12 @@ impl PwMatch {
         }
         self.state = PwMatchState::Finished;
     }
+
+    pub fn timeout(&mut self, event: &events::TurnTimeout) {
+        if let PwMatchState::Playing(ref mut controller) = self.state {
+            controller.on_timeout(event);
+        }
+    }
 }
 
 pub struct Lobby {
@@ -295,6 +301,11 @@ impl PwController {
                 return false;
             }
         });
+
+        let deadline = Instant::now() + Duration::from_secs(1);
+        self.reactor_handle.emit_delayed(deadline, events::TurnTimeout {
+            turn_num: state.turn_num,
+        });
     }
 
     fn on_client_message(&mut self, event: &events::ClientMessage) {
@@ -316,6 +327,12 @@ impl PwController {
             // game is over, kick everyone.
             false
         });
+    }
+
+    fn on_timeout(&mut self, event: &events::TurnTimeout) {
+        if self.state.turn_num == event.turn_num {
+            self.step();
+        }
     }
 
     fn player_commands(&mut self) -> HashMap<usize, Option<String>> {

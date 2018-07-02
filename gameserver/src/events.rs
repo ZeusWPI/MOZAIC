@@ -139,3 +139,12 @@ pub struct ClientMessage {
 impl JsonEventType for ClientMessage {
     const TYPE_ID: u32 = 35;
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct TurnTimeout {
+    pub turn_num: u64,
+}
+
+impl JsonEventType for TurnTimeout {
+    const TYPE_ID: u32 = 36;
+}
