@@ -148,3 +148,13 @@ pub struct TurnTimeout {
 impl JsonEventType for TurnTimeout {
     const TYPE_ID: u32 = 36;
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct PlayerAction {
+    pub client_id: u32,
+    pub action: pw::PlayerAction,
+}
+
+impl JsonEventType for PlayerAction {
+    const TYPE_ID: u32 = 37;
+}
