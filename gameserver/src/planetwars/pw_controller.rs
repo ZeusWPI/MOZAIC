@@ -344,13 +344,17 @@ impl PwController {
     }
 
     fn execute_commands(&mut self) {
-        let mut commands = self.player_commands();
-        for (player_num, command) in commands.drain() {
-            let _player_action = self.execute_action(player_num, command);
+        for player in self.players.values() {
+            let command = self.commands.remove(&player.id);
+            let action = self.parse_action(player.num, command);
+            self.reactor_handle.dispatch_event(events::PlayerAction {
+                client_id: player.id.as_u32(),
+                action,
+            });
         }
     }
 
-    fn execute_action(&mut self, player_num: usize, response: Option<String>)
+    fn parse_action(&self, player_num: usize, response: Option<String>)
         -> PlayerAction
     {
         // TODO: it would be cool if this could be done with error_chain.
@@ -368,7 +372,6 @@ impl PwController {
         let commands = action.commands.into_iter().map(|command| {
             match self.parse_command(player_num, &command) {
                 Ok(dispatch) => {
-                    self.state.dispatch(&dispatch);
                     PlayerCommand {
                         command,
                         error: None,
