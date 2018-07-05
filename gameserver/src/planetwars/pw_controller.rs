@@ -335,26 +335,36 @@ impl PwController {
         }
     }
 
-    fn player_commands(&mut self) -> HashMap<usize, Option<String>> {
+    fn player_commands(&mut self) -> HashMap<ClientId, Option<String>> {
         let commands = &mut self.commands;
         return self.players.values().map(|player| {
             let command = commands.remove(&player.id);
-            return (player.num, command);
+            return (player.id, command);
         }).collect();
     }
 
     fn execute_commands(&mut self) {
-        for player in self.players.values() {
-            let command = self.commands.remove(&player.id);
-            let action = self.parse_action(player.num, command);
+        let mut commands = self.player_commands();
+
+        for (player_id, command) in commands.drain() {
+            let player_num = self.players[&player_id].num;
+            let action = self.execute_action(player_num, command);
             self.reactor_handle.dispatch_event(events::PlayerAction {
-                client_id: player.id.as_u32(),
-                action,
+                client_id: player_id.as_u32(),
+                action: action.clone(),
             });
+            self.players
+                .get_mut(&player_id)
+                .unwrap()
+                .handle
+                .dispatch_event(events::PlayerAction {
+                    client_id: player_id.as_u32(),
+                    action,
+                });
         }
     }
 
-    fn parse_action(&self, player_num: usize, response: Option<String>)
+    fn execute_action(&mut self, player_num: usize, response: Option<String>)
         -> PlayerAction
     {
         // TODO: it would be cool if this could be done with error_chain.
@@ -372,6 +382,7 @@ impl PwController {
         let commands = action.commands.into_iter().map(|command| {
             match self.parse_command(player_num, &command) {
                 Ok(dispatch) => {
+                    self.state.dispatch(&dispatch);
                     PlayerCommand {
                         command,
                         error: None,
