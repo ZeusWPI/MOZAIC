@@ -1,8 +1,6 @@
 import { Connection, Address } from './Connection';
 import { BotRunner, BotConfig } from './BotRunner';
-import { Client } from './Client';
 import { MatchParams, MatchRunner } from './MatchRunner';
-import { ClientLogger } from './Logger';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
 import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';

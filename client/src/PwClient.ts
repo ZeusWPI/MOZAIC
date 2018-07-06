@@ -40,9 +40,9 @@ export class PwClient {
     private handleGameStep(step: GameStep) {
         const query = JSON.stringify(step.state);
         this.botRunner.request(query, (response) => {
-            this.reactor.dispatch(ClientSend.create({
-                data: response,
-            }));
+            // this.reactor.dispatch(ClientSend.create({
+            //     data: response,
+            // }));
         });
     }
 }

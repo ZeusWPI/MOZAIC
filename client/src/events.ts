@@ -1,5 +1,6 @@
 import { TextDecoder } from 'text-encoding';
 import { TypedEvent } from './reactor';
+import * as Pw from './PwTypes';
 
 export class JsonEventType<T> {
     public readonly typeId: number;
@@ -83,3 +84,10 @@ export interface TurnTimeout {
     turn_num: number;
 }
 export const TurnTimeout = new JsonEventType<TurnTimeout>(36);
+
+export interface PlayerAction {
+    client_id: number;
+    action: Pw.PlayerAction;
+}
+
+export const PlayerACtion = new JsonEventType<PlayerAction>(37);
