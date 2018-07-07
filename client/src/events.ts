@@ -90,4 +90,4 @@ export interface PlayerAction {
     action: Pw.PlayerAction;
 }
 
-export const PlayerACtion = new JsonEventType<PlayerAction>(37);
+export const PlayerAction = new JsonEventType<PlayerAction>(37);
