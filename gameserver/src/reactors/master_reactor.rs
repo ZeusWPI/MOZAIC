@@ -9,7 +9,7 @@ use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
 
-pub struct CoreReactor<S> {
+pub struct MasterReactor<S> {
     reactor: Reactor<S>,
 
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
@@ -19,12 +19,12 @@ pub struct CoreReactor<S> {
     delayed_events: DelayHeap<Box<AnyEvent>>,
 }
 
-impl<S> CoreReactor<S> {
+impl<S> MasterReactor<S> {
     pub fn new(reactor: Reactor<S>,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
                connection: Connection) -> Self
     {
-        CoreReactor {
+        MasterReactor {
             ctrl_chan,
             event_wire: EventWire::new(connection),
             reactor,
@@ -88,7 +88,7 @@ impl<S> CoreReactor<S> {
     }
 }
 
-impl<S> Future for CoreReactor<S> {
+impl<S> Future for MasterReactor<S> {
     type Item = ();
     type Error = ();
 
@@ -118,14 +118,14 @@ pub enum ReactorCommand {
 
 
 #[derive(Clone)]
-pub struct CoreReactorHandle {
+pub struct MasterReactorHandle {
     inner: mpsc::UnboundedSender<ReactorCommand>,
 }
 
 
-impl CoreReactorHandle {
+impl MasterReactorHandle {
     pub fn new(handle: mpsc::UnboundedSender<ReactorCommand>) -> Self {
-        CoreReactorHandle {
+        MasterReactorHandle {
             inner: handle,
         }
     }

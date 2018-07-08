@@ -13,7 +13,7 @@ use network;
 use network::connection::Connection;
 use network::router::{RoutingTable, ClientId};
 use reactors::reactor::Reactor;
-use reactors::core_reactor::{CoreReactor, CoreReactorHandle};
+use reactors::master_reactor::{MasterReactor, MasterReactorHandle};
 use planetwars::PwMatch;
 
 #[derive(Serialize, Deserialize)]
@@ -67,7 +67,7 @@ impl Future for OneshotServer {
 
 
         let pw_match = PwMatch::new(
-            CoreReactorHandle::new(ctrl_handle),
+            MasterReactorHandle::new(ctrl_handle),
             routing_table.clone()
         );
 
@@ -79,7 +79,7 @@ impl Future for OneshotServer {
         reactor.add_handler(PwMatch::client_message);
         reactor.add_handler(PwMatch::game_finished);
         reactor.add_handler(PwMatch::timeout);
-        let core = CoreReactor::new(reactor, ctrl_chan, connection);
+        let core = MasterReactor::new(reactor, ctrl_chan, connection);
 
         tokio::spawn(core.and_then(|_| {
             println!("done");

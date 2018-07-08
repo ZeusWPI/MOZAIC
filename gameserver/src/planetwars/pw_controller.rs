@@ -6,7 +6,7 @@ use std::mem;
 use tokio;
 
 use reactors::reactor::Reactor;
-use reactors::core_reactor::{CoreReactorHandle};
+use reactors::master_reactor::{MasterReactorHandle};
 use reactors::client_reactor::{ClientReactor, ClientReactorHandle};
 
 use events;
@@ -33,11 +33,11 @@ pub struct Player {
 
 pub struct ClientHandler {
     client_id: u32,
-    core_handle: CoreReactorHandle,
+    core_handle: MasterReactorHandle,
 }
 
 impl ClientHandler {
-    pub fn new(client_id: u32, core_handle: CoreReactorHandle) -> Self {
+    pub fn new(client_id: u32, core_handle: MasterReactorHandle) -> Self {
         ClientHandler {
             client_id,
             core_handle,
@@ -75,7 +75,7 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(reactor_handle: CoreReactorHandle,
+    pub fn new(reactor_handle: MasterReactorHandle,
                routing_table: Arc<Mutex<RoutingTable>>)
                -> Self
     {
@@ -154,14 +154,14 @@ impl PwMatch {
 
 pub struct Lobby {
     routing_table: Arc<Mutex<RoutingTable>>,
-    reactor_handle: CoreReactorHandle,
+    reactor_handle: MasterReactorHandle,
 
     players: HashMap<ClientId, ClientReactorHandle>,
 }
 
 impl Lobby {
     fn new(routing_table: Arc<Mutex<RoutingTable>>,
-           reactor_handle: CoreReactorHandle)
+           reactor_handle: MasterReactorHandle)
            -> Self
     {
         return Lobby {
@@ -204,7 +204,7 @@ impl Lobby {
 pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    reactor_handle: CoreReactorHandle,
+    reactor_handle: MasterReactorHandle,
 
     client_player: HashMap<ClientId, usize>,
     players: HashMap<ClientId, Player>,
@@ -215,7 +215,7 @@ pub struct PwController {
 
 impl PwController {
     pub fn new(config: Config,
-               reactor_handle: CoreReactorHandle,
+               reactor_handle: MasterReactorHandle,
                clients: HashMap<ClientId, ClientReactorHandle>)
         -> Self
     {
