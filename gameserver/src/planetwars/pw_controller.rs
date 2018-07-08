@@ -48,19 +48,19 @@ impl ClientHandler {
     }
 
     pub fn on_connect(&mut self, _event: &events::FollowerConnected) {
-        self.core_handle.dispatch_event(events::ClientConnected {
+        self.core_handle.dispatch(events::ClientConnected {
             client_id: self.client_id,
         });
     }
 
     pub fn on_disconnect(&mut self, _event: &events::FollowerDisconnected) {
-        self.core_handle.dispatch_event(events::ClientDisconnected {
+        self.core_handle.dispatch(events::ClientDisconnected {
             client_id: self.client_id,
         });
     }
 
     pub fn on_message(&mut self, event: &events::ClientSend) {
-        self.core_handle.dispatch_event(events::ClientMessage {
+        self.core_handle.dispatch(events::ClientMessage {
             client_id: self.client_id,
             data: event.data.clone(),
         });
@@ -274,10 +274,10 @@ impl PwController {
 
         if self.state.is_finished() {
             let event = events::GameFinished { turn_num, state };
-            self.reactor_handle.dispatch_event(event);
+            self.reactor_handle.dispatch(event);
         } else {
             let event = events::GameStep { turn_num, state };
-            self.reactor_handle.dispatch_event(event);
+            self.reactor_handle.dispatch(event);
         }
     }
 
@@ -306,7 +306,7 @@ impl PwController {
         });
 
         let deadline = Instant::now() + Duration::from_secs(1);
-        self.reactor_handle.emit_delayed(deadline, events::TurnTimeout {
+        self.reactor_handle.dispatch_at(deadline, events::TurnTimeout {
             turn_num: state.turn_num,
         });
     }
@@ -352,7 +352,7 @@ impl PwController {
         for (player_id, command) in commands.drain() {
             let player_num = self.players[&player_id].num;
             let action = self.execute_action(player_num, command);
-            self.reactor_handle.dispatch_event(events::PlayerAction {
+            self.reactor_handle.dispatch(events::PlayerAction {
                 client_id: player_id.as_u32(),
                 action: action.clone(),
             });
