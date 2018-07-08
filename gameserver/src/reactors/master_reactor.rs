@@ -8,7 +8,13 @@ use utils::delay_heap::DelayHeap;
 use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
-
+/// The MasterReactor is in charge of running a match - that is, it runs the
+/// game rules and should have control over the ClientReactors that serve
+/// the clients associated with the match.
+/// It will forward all processed events over an EventWire to a client-side
+/// reactor, that can then observe match progress.
+/// The client can also send events over the wire, which will then get
+/// 'dispatched' to the reactor.
 pub struct MasterReactor<S> {
     reactor: Reactor<S>,
 

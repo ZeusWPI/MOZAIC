@@ -15,6 +15,7 @@ pub enum EventWireEvent  {
     Event(WireEvent),
 }
 
+/// An EventWire is used to pass serialized events over the network.
 pub struct EventWire {
     // TODO: we probably want to merge these later on
     connection: Connection,

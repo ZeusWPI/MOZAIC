@@ -6,6 +6,12 @@ use network::connection::Connection;
 use super::event_wire::{EventWire, EventWireEvent};
 use super::reactor::*;
 
+/// The ClientReactor is a reactor that follows client-side events.
+/// Client-side reactors send their processed event stream over an EventWire
+/// which leads to a ClientReactor. Dispatching to a ClientReactor will not
+/// cause the event to be processed, but to be forwarded to the client-side over
+/// the associated EventWire. Note that this construction is symetrical to the
+/// MasterRecator's setup.
 pub struct ClientReactor<S> {
     reactor: Reactor<S>,
 
