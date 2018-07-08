@@ -3,7 +3,7 @@ use serde::ser::Serialize;
 use serde::de::DeserializeOwned;
 use utils::hex_serializer;
 
-use reactors::reactor::EventType;
+use reactors::EventType;
 use planetwars::pw_protocol as pw;
 
 pub trait JsonEventType : Serialize + DeserializeOwned {

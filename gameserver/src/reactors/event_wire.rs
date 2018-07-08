@@ -5,7 +5,7 @@ use bytes::BytesMut;
 use protocol as proto;
 use network::connection::{Connection, ConnectionEvent};
 
-use super::reactor::WireEvent;
+use super::types::WireEvent;
 
 
 // TODO: oh please find a better name

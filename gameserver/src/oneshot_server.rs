@@ -12,8 +12,7 @@ use futures::sync::mpsc;
 use network;
 use network::connection::Connection;
 use network::router::{RoutingTable, ClientId};
-use reactors::reactor::Reactor;
-use reactors::master_reactor::{MasterReactor, MasterReactorHandle};
+use reactors::{ReactorCore, MasterReactor, MasterReactorHandle};
 use planetwars::PwMatch;
 
 #[derive(Serialize, Deserialize)]
@@ -71,17 +70,17 @@ impl Future for OneshotServer {
             routing_table.clone()
         );
 
-        let mut reactor = Reactor::new(pw_match);
-        reactor.add_handler(PwMatch::register_client);
-        reactor.add_handler(PwMatch::remove_client);
-        reactor.add_handler(PwMatch::start_game);
-        reactor.add_handler(PwMatch::game_step);
-        reactor.add_handler(PwMatch::client_message);
-        reactor.add_handler(PwMatch::game_finished);
-        reactor.add_handler(PwMatch::timeout);
-        let core = MasterReactor::new(reactor, ctrl_chan, connection);
+        let mut core = ReactorCore::new(pw_match);
+        core.add_handler(PwMatch::register_client);
+        core.add_handler(PwMatch::remove_client);
+        core.add_handler(PwMatch::start_game);
+        core.add_handler(PwMatch::game_step);
+        core.add_handler(PwMatch::client_message);
+        core.add_handler(PwMatch::game_finished);
+        core.add_handler(PwMatch::timeout);
+        let reactor = MasterReactor::new(core, ctrl_chan, connection);
 
-        tokio::spawn(core.and_then(|_| {
+        tokio::spawn(reactor.and_then(|_| {
             println!("done");
             // wait a second for graceful exit
             let end = Instant::now() + Duration::from_secs(1);

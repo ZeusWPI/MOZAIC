@@ -6,7 +6,8 @@ use events;
 use network::connection::Connection;
 use utils::delay_heap::DelayHeap;
 use super::event_wire::{EventWire, EventWireEvent};
-use super::reactor::*;
+use super::types::*;
+use super::ReactorCore;
 
 /// The MasterReactor is in charge of running a match - that is, it runs the
 /// game rules and should have control over the ClientReactors that serve
@@ -16,7 +17,7 @@ use super::reactor::*;
 /// The client can also send events over the wire, which will then get
 /// 'dispatched' to the reactor.
 pub struct MasterReactor<S> {
-    reactor: Reactor<S>,
+    core: ReactorCore<S>,
 
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     
@@ -26,14 +27,14 @@ pub struct MasterReactor<S> {
 }
 
 impl<S> MasterReactor<S> {
-    pub fn new(reactor: Reactor<S>,
+    pub fn new(core: ReactorCore<S>,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
                connection: Connection) -> Self
     {
         MasterReactor {
             ctrl_chan,
             event_wire: EventWire::new(connection),
-            reactor,
+            core,
             delayed_events: DelayHeap::new(),
         }
     }
@@ -80,14 +81,14 @@ impl<S> MasterReactor<S> {
     }
 
     fn handle_event(&mut self, event: &AnyEvent) {
-        self.reactor.handle_event(event);
+        self.core.handle_event(event);
         // Send the event after handling it, so that the receiver can be
         // certain that the reactor has already handled it.
         self.event_wire.send(event.as_wire_event());
     }
 
     fn handle_wire_event(&mut self, event: WireEvent) {
-        self.reactor.handle_wire_event(&event);
+        self.core.handle_wire_event(&event);
         // Send the event back to the follower, so that it sees the entire
         // intact event stream in the order this reactor processed it.
         self.event_wire.send(event);

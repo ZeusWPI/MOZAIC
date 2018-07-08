@@ -4,7 +4,8 @@ use futures::{Future, Poll, Async, Stream};
 use events;
 use network::connection::Connection;
 use super::event_wire::{EventWire, EventWireEvent};
-use super::reactor::*;
+use super::types::*;
+use super::reactor_core::ReactorCore;
 
 /// The ClientReactor is a reactor that follows client-side events.
 /// Client-side reactors send their processed event stream over an EventWire
@@ -13,7 +14,7 @@ use super::reactor::*;
 /// the associated EventWire. Note that this construction is symetrical to the
 /// MasterRecator's setup.
 pub struct ClientReactor<S> {
-    reactor: Reactor<S>,
+    core: ReactorCore<S>,
 
     ctrl_chan: mpsc::UnboundedReceiver<Box<AnyEvent>>,
 
@@ -21,13 +22,13 @@ pub struct ClientReactor<S> {
 }
 
 impl<S> ClientReactor<S> {
-    pub fn new(reactor: Reactor<S>, connection: Connection)
+    pub fn new(core: ReactorCore<S>, connection: Connection)
         -> (ClientReactorHandle, Self)
     {
         let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
 
         let reactor = ClientReactor {
-            reactor,
+            core,
             ctrl_chan,
             event_wire: EventWire::new(connection),
         };
@@ -56,15 +57,15 @@ impl<S> ClientReactor<S> {
         loop {
             match try_ready!(self.event_wire.poll()) {
                 EventWireEvent::Event(event) => {
-                    self.reactor.handle_wire_event(&event);
+                    self.core.handle_wire_event(&event);
                 }
                 EventWireEvent::Connected => {
                     let event_box = EventBox::new(events::FollowerConnected {});
-                    self.reactor.handle_event(&event_box);
+                    self.core.handle_event(&event_box);
                 }
                 EventWireEvent::Disconnected => {
                     let event_box = EventBox::new(events::FollowerDisconnected {});
-                    self.reactor.handle_event(&event_box);
+                    self.core.handle_event(&event_box);
                 }
             }
         }

@@ -5,9 +5,12 @@ use std::mem;
 
 use tokio;
 
-use reactors::reactor::Reactor;
-use reactors::master_reactor::{MasterReactorHandle};
-use reactors::client_reactor::{ClientReactor, ClientReactorHandle};
+use reactors::{
+    ReactorCore,
+    MasterReactorHandle,
+    ClientReactor,
+    ClientReactorHandle,
+};
 
 use events;
 use network::router::{RoutingTable, ClientId};
@@ -179,17 +182,17 @@ impl Lobby {
             client_id,
             self.routing_table.clone(),
         );
-        let mut reactor = Reactor::new(
+        let mut core = ReactorCore::new(
             ClientHandler::new(
                 client_id.as_u32(),
                 self.reactor_handle.clone(),
             ),
         );
-        reactor.add_handler(ClientHandler::on_connect);
-        reactor.add_handler(ClientHandler::on_disconnect);
-        reactor.add_handler(ClientHandler::on_message);
+        core.add_handler(ClientHandler::on_connect);
+        core.add_handler(ClientHandler::on_disconnect);
+        core.add_handler(ClientHandler::on_message);
         let (handle, client_reactor) = ClientReactor::new(
-            reactor,
+            core,
             connection,
         );
         self.players.insert(client_id, handle);
