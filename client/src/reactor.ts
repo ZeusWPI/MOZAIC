@@ -57,8 +57,10 @@ export interface Reactor {
     handleWireEvent(event: WireEvent);
 }
 
-export class STEReactor implements Reactor {
-    private handlers: { [typeId: number]: STEReactorHandler<any> };
+// Allows subscribing to individual MOZAIC events through an EventEmitter-based
+// interface.
+export class SimpleEventEmitter implements Reactor {
+    private handlers: { [typeId: number]: SimpleEventHandler<any> };
 
     constructor() {
         this.handlers = {};
@@ -67,7 +69,7 @@ export class STEReactor implements Reactor {
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
         let handler = this.handlers[eventType.typeId];
         if (!handler) {
-            handler = new STEReactorHandler(eventType);
+            handler = new SimpleEventHandler(eventType);
             this.handlers[eventType.typeId] = handler;    
         }
         return handler.asSimpleEvent();
@@ -89,7 +91,7 @@ export class STEReactor implements Reactor {
     }
 }
 
-class STEReactorHandler<T> {
+class SimpleEventHandler<T> {
     public readonly eventType: EventType<T>;
     private dispatcher = new SimpleEventDispatcher<T>();
 

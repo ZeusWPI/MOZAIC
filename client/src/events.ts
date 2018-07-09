@@ -30,7 +30,7 @@ export interface RegisterClient {
 }
 export const RegisterClient = new JsonEventType<RegisterClient>(1);
 
-export interface RemoveClient {
+export interface RemoveClient { 
     client_id: number;
 }
 export const RemoveClient = new JsonEventType<{}>(2);

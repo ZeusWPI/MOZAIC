@@ -1,27 +1,27 @@
 import { EventChannel } from "./EventChannel";
 import { ClientParams } from "./Connection";
-import { SomeEvent, STEReactor, EventType, AnyEvent } from "./reactor";
+import { SomeEvent, SimpleEventEmitter, EventType, AnyEvent } from "./reactor";
 import { ISimpleEvent } from "ste-simple-events";
 import { LeaderConnected, LeaderDisconnected } from "./events";
 
 export class ClientReactor {
     eventChannel: EventChannel;
-    private reactor: STEReactor;
+    private core: SimpleEventEmitter;
 
     constructor(params: ClientParams) {
-        this.reactor = new STEReactor();
+        this.core = new SimpleEventEmitter();
         this.eventChannel = new EventChannel(params);
 
         this.eventChannel.onEvent.subscribe((event) => {
-            event.handle(this.reactor);
+            event.handle(this.core);
         });
 
         this.eventChannel.onConnect.subscribe((_) => {
-            this.reactor.handleEvent(LeaderConnected.create({}));
+            this.core.handleEvent(LeaderConnected.create({}));
         });
 
         this.eventChannel.onDisconnect.subscribe(() => {
-            this.reactor.handleEvent(LeaderDisconnected.create({}));
+            this.core.handleEvent(LeaderDisconnected.create({}));
         });
     }
 
@@ -30,11 +30,11 @@ export class ClientReactor {
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        return this.reactor.on(eventType);
+        return this.core.on(eventType);
     }
 
     public dispatch(event: AnyEvent) {
-        this.reactor.handleEvent(event);
+        this.core.handleEvent(event);
         this.eventChannel.dispatch(event);
      }
 }
