@@ -29,10 +29,14 @@ export class ClientReactor {
         this.eventChannel.connect();
     }
 
+    public exit() {
+        this.eventChannel.disconnect();
+    }
+
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
         return this.core.on(eventType);
     }
-
+''
     public dispatch(event: AnyEvent) {
         this.core.handleEvent(event);
         this.eventChannel.dispatch(event);

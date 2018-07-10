@@ -92,6 +92,12 @@ export class Connection {
         
     }
 
+    public close() {
+        // TODO: implement this in a more reliable way
+        // i.e. don't just leave
+        this.stream.end();
+    }
+
     public send(data: Uint8Array) {
         // TODO: maybe ensure that the connection handshake has completed here
         let message = Packet.Message.create({ data });

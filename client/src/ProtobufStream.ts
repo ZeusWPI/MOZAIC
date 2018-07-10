@@ -119,6 +119,10 @@ export class ProtobufStream {
         this._socket.connect(port, host);
     }
 
+    public end() {
+        this._socket.end();
+    }
+
     public write(writer: BufferWriter) {
         const buf = writer.ldelim().finish();
         this._socket.write(buf);

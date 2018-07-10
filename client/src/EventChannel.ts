@@ -25,6 +25,10 @@ export class EventChannel {
         this.connection.connect();
     }
 
+    public disconnect() {
+        this.connection.close();
+    }
+
     public dispatch(event: SomeEvent) {
         let wireEvent = event.toWireEvent();
         const encoded = ProtoEvent.encode(wireEvent).finish();
