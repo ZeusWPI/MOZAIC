@@ -6,6 +6,7 @@ import { MatchReactor } from './MatchReactor';
 import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';
 import { ClientReactor } from './ClientReactor';
 import * as events from './events';
+import { ServerRunner } from './ServerRunner';
 
 
 
@@ -50,13 +51,16 @@ const params: MatchParams = {
     logFile: "log.json",
 }
 
+const runner = new ServerRunner(bin_path, params);
+runner.runServer()
+
 const clients = {};
 const waiting_for = new Set();
 
 const clientParams = {
     host: addr.host,
     port: addr.port,
-    token: Buffer.from('abba', 'hex'),
+    token: Buffer.from(params.ctrl_token, 'hex'),
 }
 const matchReactor = new MatchReactor(clientParams);
 
