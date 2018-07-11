@@ -1,12 +1,11 @@
 import { Connection, Address } from './Connection';
 import { BotRunner, BotConfig } from './BotRunner';
-import { MatchParams, MatchRunner } from './MatchRunner';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
 import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';
 import { ClientReactor } from './ClientReactor';
 import * as events from './events';
-import { ServerRunner } from './ServerRunner';
+import { ServerRunner, ServerParams } from './ServerRunner';
 
 
 
@@ -44,7 +43,7 @@ const gameConfig = {
     "max_turns": 100,
 }
 
-const params: MatchParams = {
+const params: ServerParams = {
     ctrl_token: "abba",
 
     address: addr,
