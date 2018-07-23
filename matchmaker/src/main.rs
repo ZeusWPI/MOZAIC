@@ -50,14 +50,14 @@ struct Planet {
     ship_count: u64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct User {
     name: String,
     id: Id,
     // maybe auth information or something
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 struct Lobby {
     map_id: Id,
     max_players: u32,
@@ -124,20 +124,21 @@ fn post_map(id: u32, map: String, map_state: State<Mutex<MapState>>) -> Result<S
 }
 
 fn write_map(id: u32, map: &Map) -> std::io::Result<()> {
-    fs::create_dir("maps");
+    fs::create_dir("maps")?;
     let mut file = File::create(format!("maps/{}.map", id))?;
     file.write_all(&ser::to_string(map).unwrap().as_bytes())?;
     Ok(())
 }
 
-#[get("/")]
-fn json() -> content::Json<&'static str> {
-    content::Json("{ 'hi': 'world' }")
+#[get("/lobby")]
+fn get_lobbies(state: State<Mutex<LobbyState>>) -> Json<Vec<Lobby>> {
+    let state = state.lock().unwrap();
+    Json(state.values().map(|x| x.clone()).collect())
 }
 
 #[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
+fn json() -> content::Json<&'static str> {
+    content::Json("{ 'hi': 'world' }")
 }
 
 #[derive(Serialize, Deserialize)]
@@ -170,8 +171,6 @@ fn fill_maps(state: &mut MapState) -> std::io::Result<()>{
                 },
                 Err(e) => println!("{:?}", e)
             }
-
-            println!("{:?}", map.file_name());
         }
     }
     Ok(())
@@ -202,5 +201,5 @@ fn main() {
     rocket::ignite()
     .manage(l_state)
     .manage(Mutex::new(m_state))
-    .mount("/", routes![files, update, post_map, post_lobby]).launch();
+    .mount("/", routes![files, update, post_map, post_lobby, get_lobbies]).launch();
 }
