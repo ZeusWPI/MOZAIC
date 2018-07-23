@@ -24,6 +24,7 @@ use std::io::prelude::*;
 use serde_json::{ser, Error};
 
 use std::sync::Mutex;
+use std::string::String;
 
 type Id = u32;
 
@@ -154,23 +155,42 @@ fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
 
-fn fill_maps(state: &mut HashMap<Id, MapState>) -> std::io::Result<()>{
+fn fill_maps(state: &mut MapState) -> std::io::Result<()>{
     for entry in Path::new("maps/").read_dir()? {
         if let Ok(map) = entry {
-            match map.file_name().into_string() {
+            match map.file_name().into_string()
+                .map_err(|_| "Something happend".to_string())
+                {
+
                 Ok(name) => {
                     match name.split(|x| x == '.').next() {
-                        Some(map) => 
-                        // this is getting ugly :(
+                        Some(id_str) => {add_map(&name, id_str, state).unwrap();},
+                        None => println!("file has no extension {:?}", name),
                     }
-                }
+                },
+                Err(e) => println!("{:?}", e)
             }
-            let name = map.file_name()
-                        .into_string()?;
-
 
             println!("{:?}", map.file_name());
         }
+    }
+    Ok(())
+}
+
+fn add_map(file_name: &str, name: &str, state: &mut MapState) -> std::io::Result<()> {
+    if let Ok(id) = name.parse::<u32>() {
+        let mut f_name = String::from("maps/");
+        f_name.push_str(file_name);
+        let mut f = File::open(f_name)?;
+        let mut buffer = String::new();
+
+        f.read_to_string(&mut buffer)?;
+
+        let map: Map  = serde_json::from_str(&buffer).unwrap();
+        println!("added map {:?} to id {:?}", map, id);
+        state.insert(id, map);
+    }else{
+        println!("couldn't parse id: {:?}", name);
     }
     Ok(())
 }
