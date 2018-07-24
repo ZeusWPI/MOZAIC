@@ -63,7 +63,7 @@ struct Lobby {
     max_players: u32,
     lobby_id: Id,
     connected_players: Vec<User>,
-    connecting_players: Vec<Id>,
+    awaiting_players: Vec<Id>,
 }
 
 impl Lobby {
@@ -75,8 +75,18 @@ impl Lobby {
             max_players,
             lobby_id,
             connected_players: Vec::new(),
-            connecting_players: player_ids,
+            awaiting_players: player_ids,
         }, lobby_id)
+    }
+
+    fn join(&mut self, user: User) -> Result<Id, String> {
+        match self.awaiting_players.pop() {
+            Some(id) => {
+                self.connected_players.push(user);
+                Ok(id)
+            },
+            None => Err(String::from("No places left")),
+        }
     }
 }
 
@@ -120,6 +130,16 @@ fn post_map(id: u32, map: String, map_state: State<Mutex<MapState>>) -> Result<S
             }
         },
         Err(_) => Err("Could not parse map".to_string()),
+    }
+}
+
+#[post("/lobby/<id>", data="<user>")]
+fn ask_join_lobby(id: u32, user: Json<User>, slobby: State<Mutex<LobbyState>>) -> Result<String, String> {
+    let mut slobby = slobby.lock().unwrap();
+
+    match slobby.get_mut(&id) {
+        Some(lobby) => lobby.join(user.0).map(|x| x.to_string()),
+        None => Err(String::from("Lobby not found")),
     }
 }
 
@@ -201,5 +221,5 @@ fn main() {
     rocket::ignite()
     .manage(l_state)
     .manage(Mutex::new(m_state))
-    .mount("/", routes![files, update, post_map, post_lobby, get_lobbies]).launch();
+    .mount("/", routes![files, update, post_map, post_lobby, get_lobbies, ask_join_lobby]).launch();
 }
