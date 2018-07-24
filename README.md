@@ -50,24 +50,28 @@ Important resources:
     * Cargo >= 0.16.0
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
-1. Run the botrunner again (still in the `gameserver` directory) with:
-    * Linux - `cargo run ../planetwars/examples/configs/stub.json`
-    * Windows - `cargo run ..\planetwars\examples\configs\stub.windows.json`
+1. Run the botrunner again (still in the `gameserver` directory) with: 
+`cargo run stub_config.json`
 1. It should have generated a log-file `log.json`.
-1. If it did, great, it works! Now run 'cargo build --release'.
 1. Check setup below for the client.
 
 ### Client
 
 **Note:** Do the setup for the gameserver first
 
-1. Install Node v8 and Yarn.
-1. Go the `planetwars\client` directory
+1. Install Node v8 or higher and Yarn.
+1. Go to the top level `/client` directory (directly under the directory containing the `.git` folder) and run:
+    * `yarn install`
+    * `yarn build`
+    * `yarn link`
+1. Go the `/planetwars/client` directory
 1. Install dependencies with `yarn install`.
 1. Go the `.\bin` dir and symlink the gameserver with:
-    * Linux -  `ln -s ../../../gameserver/target/release/mozaic_bot_driver`
-    * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
-1. Go back the `client` dir and run `yarn run dev`.
+    * Linux -  `ln -s ../../../gameserver/target/debug/mozaic_bot_driver`
+    * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\debug\mozaic_bot_driver.exe`
+1. Go back to `/planewars/cient`
+1. Link the top level client with `yarn link mozaic-client`
+1. In the same directory, run `yarn run dev`
 1. An electron client should be at your disposal!
 
 ### Publishing and packaging
