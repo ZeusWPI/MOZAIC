@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="./jquery-3.3.1.js"></script>
+
+    <title>Document</title>
+</head>
+<body>
+    <button id="button">add lobby</button>
+    <button id="button2">add map</button>
+    <input id="lobby_id" type="text" placeholder="id">
+    <button id="ask_join_lobby">Ask Join Lobby</button>
+    <button id="join_lobby">Join Lobby</button>
+    <div id="results">
+
+    </div>
+    <script>
+        async function add(text, extra = "") {
+            const t = await text;
+            
+            $("#results").html($("#results").html() + `<p>${extra + t}</p>`);
+        }
+
+        const map = `
+        {     "planets": [         {             "name": "protos",             "x": -6,             "y": 0,             "owner": 1,             "ship_count": 6         },         {             "name": "duteros",             "x": -3,             "y": 5,             "ship_count": 6         },         {             "name": "tritos",             "x": 3,             "y": 5,             "ship_count": 6         },         {             "name": "tetartos",             "x": 6,             "y": 0,             "owner": 2,             "ship_count": 6         },         {             "name": "pemptos",             "x": 3,             "y": -5,             "ship_count": 6         },         {             "name": "extos",             "x": -3,             "y": -5,             "ship_count": 6         }     ] }      
+        `;
+        $("#button").click(function() {
+            add($.ajax({
+                type: "POST",
+                url: "http://localhost:8000/games/",
+                data: `{
+                    "name": "hallo",
+                    "id": 3,
+                    "max_players": 2
+                }`,
+                contentType: "application/json"
+            }), "Lobby_id: ");
+        });
+
+        $("#button2").click(async function() {
+            add(
+                $.ajax({
+                    type: "POST",
+                    url: "http://localhost:8000/maps/3",
+                    contentType: "application/json",
+                    data: map,
+                })
+            );
+        });
+
+        $("#ask_join_lobby").click(async function() {
+            add(
+                $.ajax({
+                    type: "POST", url: "http://localhost:8000/lobby/"+$("#lobby_id").val(),
+                    contentType: "application/json",
+                    data: `{"id": 100, "name": "StayReal"}`
+                }), "Map_entry_id: "
+            )
+        });
+
+    </script>
+</body>
+</html>
+
+<!--
+    $.ajax({
+        type: "POST",
+        url: url,
+        data: data,
+        success: success,
+        dataType: dataType
+    });
+-->
