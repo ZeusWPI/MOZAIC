@@ -31,6 +31,21 @@ fn main() {
         let tokens = quote! {
             impl Event for #event_ident {
                 const TYPE_ID: u32 = #event_id;
+
+                fn encode(&self) -> Vec<u8> {
+                    let mut bytes = BytesMut::with_capacity(item.encoded_len());
+                    // encoding can only fail because the buffer does not have
+                    // enough space allocated, but we just allocated the
+                    // required space.
+                    item.encode(&mut bytes).unwrap();
+                    self.buffered = Some(bytes);
+                    Ok(AsyncSink::Ready)
+                }
+
+                fn decode(bytes: &[u8]) -> Self {
+                    <Self as Message>::decode(bytes)
+                        .expect("event deserialization failed")
+                }
             }
         };
         println!("{}", tokens);
