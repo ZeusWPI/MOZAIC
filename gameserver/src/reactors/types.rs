@@ -1,4 +1,9 @@
 use std::any::Any;
+use prost::Message;
+
+pub trait Event : Message {
+    const TYPE_ID: u32;
+}
 
 pub trait EventType {
     const TYPE_ID: u32;
