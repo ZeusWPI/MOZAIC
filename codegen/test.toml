@@ -1,4 +1,0 @@
-[events]
-
-ClientConnected = 1
-ClientDisconnected = 2
