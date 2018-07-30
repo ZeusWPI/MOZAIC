@@ -43,31 +43,52 @@ Important resources:
 
 ## Setup
 
-### Gameserver
+### Dependencies
+
+Before continuing, make sure you have the following applications installed:
 
 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt).
     * Rust >= 1.18.0
     * Cargo >= 0.16.0
 
+1. Install [Node v8][node] and [Yarn][yarn].
+
+
+### Using Make
+
+1. If this is not your first install, run `make clean`.
+1. Run `make`
+1. Go to the `planetwars/client` directory and run `yarn run dev`. 
+1. An electron client should be at your disposal!
+
+
+
+### Manual Setup
+
+#### Gameserver
+
+
+
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
-1. Run the botrunner again (still in the `gameserver` directory) with:
-    * Linux - `cargo run ../planetwars/examples/configs/stub.json`
-    * Windows - `cargo run ..\planetwars\examples\configs\stub.windows.json`
+1. Run the botrunner again (still in the `gameserver` directory) with: `cargo run stub_config.json`
 1. It should have generated a log-file `log.json`.
-1. If it did, great, it works! Now run 'cargo build --release'.
+1. If it did, great, it works! Now run `cargo build --release`.
 1. Check setup below for the client.
 
-### Client
+#### Client
 
 **Note:** Do the setup for the gameserver first
 
-1. Install Node v8 and Yarn.
-1. Go the `planetwars\client` directory
+1. Go to the `client` directory.
+1. Build the client with `yarn build`
+1. Run `yarn link`
+1. Go the `../planetwars/client` directory
 1. Install dependencies with `yarn install`.
 1. Go the `.\bin` dir and symlink the gameserver with:
     * Linux -  `ln -s ../../../gameserver/target/release/mozaic_bot_driver`
     * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
-1. Go back the `client` dir and run `yarn run dev`.
+1. Go back the `client` dir and run `yarn link mozaic-client`.
+1. Run `yarn run dev`
 1. An electron client should be at your disposal!
 
 ### Publishing and packaging
@@ -79,3 +100,6 @@ Note: when packaging an make sure the `mozaic_bot_driver` binary is an actual bi
 
 Have any questions, comments, want to contribute or are even remotely interested in this project, please get in touch!
 You can reach us by [e-mail](mailto:bottlebats@zeus.ugent.be), [Facebook](https://www.facebook.com/zeus.wpi), or any other way you prefer listed [here](https://zeus.ugent.be/about/).
+
+[yarn]: https://yarnpkg.com/lang/en/
+[node]: https://nodejs.org/en/
