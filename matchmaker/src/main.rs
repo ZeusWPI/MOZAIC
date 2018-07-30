@@ -12,7 +12,7 @@ extern crate serde_json;
 
 use rocket_contrib::{Json, Value};
 
-use rocket::response::{content, NamedFile};
+use rocket::response::{Redirect, content, NamedFile};
 use rocket::State;
 
 use std::collections::HashMap;
@@ -88,6 +88,18 @@ impl Lobby {
             None => Err(String::from("No places left")),
         }
     }
+
+    fn ready(& self) -> Json<Value> {
+        if self.awaiting_players.is_empty() {
+            Json(json!({
+                "ready": true
+            }))
+        } else {
+            Json(json!({
+                "ready": false
+            }))
+        }
+    }
 }
 
 struct AskLobby {
@@ -97,6 +109,11 @@ struct AskLobby {
 
 type LobbyState = HashMap<Id, Lobby>;
 type MapState = HashMap<Id, Map>;
+
+#[get("/")]
+fn index() -> Redirect {
+    Redirect::to("/index.html")
+}
 
 #[post("/games", data="<map_info>")]
 fn post_lobby(map_info: Json<MapInfo>, map_state: State<Mutex<MapState>>, lobby_state: State<Mutex<LobbyState>>) -> Result<Json<Id>, String> {
@@ -134,11 +151,20 @@ fn post_map(id: u32, map: String, map_state: State<Mutex<MapState>>) -> Result<S
 }
 
 #[post("/lobby/<id>", data="<user>")]
-fn ask_join_lobby(id: u32, user: Json<User>, slobby: State<Mutex<LobbyState>>) -> Result<String, String> {
+fn join_lobby(id: u32, user: Json<User>, slobby: State<Mutex<LobbyState>>) -> Result<String, String> {
     let mut slobby = slobby.lock().unwrap();
 
     match slobby.get_mut(&id) {
         Some(lobby) => lobby.join(user.0).map(|x| x.to_string()),
+        None => Err(String::from("Lobby not found")),
+    }
+}
+
+#[get("/lobby/<id>")]
+fn lobby_is_ready(id: Id, slobby: State<Mutex<LobbyState>>) -> Result<Json<Value>, String> {
+    let slobby = slobby.lock().unwrap();
+    match slobby.get(&id) {
+        Some(lobby) => Ok(lobby.ready()),
         None => Err(String::from("Lobby not found")),
     }
 }
@@ -161,17 +187,7 @@ fn json() -> content::Json<&'static str> {
     content::Json("{ 'hi': 'world' }")
 }
 
-#[derive(Serialize, Deserialize)]
-struct Message {
-   contents: String,
-}
-
-#[put("/<id>", data = "<message>")]
-fn update(id: u64, message: Json<Message>) -> Json<Value> {
-    Json(json!({ "status": "ok" }))
-}
-
-#[get("/<file..>")]
+#[get("/<file..>", rank=4)]
 fn files(file: PathBuf) -> Option<NamedFile> {
     NamedFile::open(Path::new("static/").join(file)).ok()
 }
@@ -221,5 +237,5 @@ fn main() {
     rocket::ignite()
     .manage(l_state)
     .manage(Mutex::new(m_state))
-    .mount("/", routes![files, update, post_map, post_lobby, get_lobbies, ask_join_lobby]).launch();
+    .mount("/", routes![files, post_map, post_lobby, get_lobbies, join_lobby, lobby_is_ready, index]).launch();
 }

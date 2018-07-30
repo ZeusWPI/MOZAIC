@@ -14,6 +14,7 @@
     <input id="lobby_id" type="text" placeholder="id">
     <button id="ask_join_lobby">Ask Join Lobby</button>
     <button id="join_lobby">Join Lobby</button>
+    <button id="start">Start game</button>
     <div id="results">
 
     </div>
@@ -27,6 +28,20 @@
         const map = `
         {     "planets": [         {             "name": "protos",             "x": -6,             "y": 0,             "owner": 1,             "ship_count": 6         },         {             "name": "duteros",             "x": -3,             "y": 5,             "ship_count": 6         },         {             "name": "tritos",             "x": 3,             "y": 5,             "ship_count": 6         },         {             "name": "tetartos",             "x": 6,             "y": 0,             "owner": 2,             "ship_count": 6         },         {             "name": "pemptos",             "x": 3,             "y": -5,             "ship_count": 6         },         {             "name": "extos",             "x": -3,             "y": -5,             "ship_count": 6         }     ] }      
         `;
+
+        const game_config = {
+            max_turns: 800,
+            map_file: "../planetwars/maps/hex.json"
+        };
+
+        $("#start").click(function() {
+            $.ajax({
+                type: "POST",
+                url: "http://0.0.0.0:9142/",
+                data: JSON.stringify(game_config)
+            });
+        });
+
         $("#button").click(function() {
             add($.ajax({
                 type: "POST",
