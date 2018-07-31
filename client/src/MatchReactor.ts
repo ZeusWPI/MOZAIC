@@ -1,8 +1,8 @@
 import { ProtobufStream } from "./ProtobufStream";
-import { Reactor, SimpleEventEmitter, AnyEvent, EventType, WireEvent, SomeEvent } from "./reactor";
+import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
 import { Connection, ClientParams } from './Connection';
-import { EventChannel } from "./EventChannel";
+import { EventChannel, WireEvent } from "./EventChannel";
 import { FollowerConnected, FollowerDisconnected } from "./events";
 
 
@@ -14,8 +14,8 @@ export class MatchReactor {
         this.core = new SimpleEventEmitter();
         this.eventChannel = new EventChannel(clientParams);
 
-        this.eventChannel.onEvent.subscribe((someEvent) => {
-            someEvent.handle(this.core);
+        this.eventChannel.onEvent.subscribe((wireEvent) => {
+            this.core.handleWireEvent(wireEvent);
         });
 
         this.eventChannel.onConnect.subscribe((_) => {
@@ -35,7 +35,7 @@ export class MatchReactor {
         this.eventChannel.connect();
     }
 
-    public dispatch(event: SomeEvent) {
-       this.eventChannel.dispatch(event);
+    public dispatch(event: any) {
+       this.eventChannel.sendEvent(event);
     }
 }

@@ -2,12 +2,27 @@ import { Connection, Address } from './Connection';
 import { BotRunner, BotConfig } from './BotRunner';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
+import { SimpleEventEmitter } from './reactor';
 import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';
 import { ClientReactor } from './ClientReactor';
 import * as events from './events';
 import { ServerRunner, ServerParams } from './ServerRunner';
 
+const EVENT_TYPES = require('./event_types');
 
+// console.log(EVENT_TYPES);
+// var evt = ClientConnected.create({ clientId: 1 });
+// console.log((evt.constructor as any).typeId);
+// console.log(evt);
+
+var emitter = new SimpleEventEmitter();
+emitter.on(ClientConnected).subscribe((e) => {
+    console.log('HEY IK HEB EEN EVENT');
+    console.log(e);
+});
+emitter.handleEvent(ClientConnected.create({
+    clientId: 1
+}));
 
 const tokens = ["aaaa", "bbbb"];
 
@@ -39,8 +54,8 @@ const players = [
 ];
 
 const gameConfig = {
-    "map_path": "../planetwars/maps/hex.json",
-    "max_turns": 100,
+    mapPath: "../planetwars/maps/hex.json",
+    maxTurns: 100,
 }
 
 const params: ServerParams = {
@@ -74,36 +89,36 @@ matchReactor.on(FollowerConnected).subscribe((_) => {
     players.forEach((player, idx) => {
         const player_num = idx + 1;
         matchReactor.dispatch(RegisterClient.create({
-            client_id: player_num,
-            token: player.token,
+            clientId: player_num,
+            token: Buffer.from(player.token, 'utf-8'),
         }));
         waiting_for.add(player_num);
     })
 });
 
 matchReactor.on(RegisterClient).subscribe((data) => {
-    if (!clients[data.client_id]) {
+    if (!clients[data.clientId]) {
         const client = new PwClient({
-            clientId: data.client_id,
+            clientId: data.clientId,
             host: addr.host,
             port: addr.port,
-            token: Buffer.from(data.token, 'hex'),
+            token: data.token,
             botConfig: simpleBot,
         });
-        clients[data.client_id] = client;
+        clients[data.clientId] = client;
         client.run();
     }
 });
 
-matchReactor.on(ClientConnected).subscribe(({ client_id }) => {
-    waiting_for.delete(client_id);
+matchReactor.on(ClientConnected).subscribe(({ clientId }) => {
+    waiting_for.delete(clientId);
     if (waiting_for.size == 0) {
         matchReactor.dispatch(StartGame.create(gameConfig));
     }
 });
 
-matchReactor.on(ClientDisconnected).subscribe(({ client_id }) => {
-    waiting_for.add(client_id);
+matchReactor.on(ClientDisconnected).subscribe(({ clientId }) => {
+    waiting_for.add(clientId);
 })
 
 matchReactor.connect();

@@ -1,65 +1,17 @@
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 export interface EventType<T> {
-    typeId: number;
-    encode: (T) => Uint8Array;
-    decode: (Uint8Array) => T;
+    new(): T,
 }
 
-export interface SomeEvent {
-    handle: (Reactor) => void;
-    toWireEvent: () => WireEvent;
-}
+// export interface Reactor {
+//     handleEvent(event:  );
+//     handleWireEvent(event: WireEvent);
+// }
 
-export class TypedEvent<T> implements SomeEvent {
-    public readonly eventType: EventType<T>;
-    public readonly data: T;
-
-    constructor(type: EventType<T>, data: T) {
-        this.eventType = type;
-        this.data = data;
-    }
-
-    public handle(reactor: Reactor) {
-        reactor.handleEvent(this);
-    }
-
-    public toWireEvent(): WireEvent {
-        return new WireEvent(
-            this.eventType.typeId,
-            this.eventType.encode(this.data),
-        );
-    }
-}
-
-export type AnyEvent = TypedEvent<any>;
-
-export class WireEvent implements SomeEvent {
-    public readonly typeId: number;
-    public readonly data: Uint8Array;
-
-    constructor(typeId: number, data: Uint8Array) {
-        this.typeId = typeId;
-        this.data = data;
-    }
-
-    public handle(reactor: Reactor) {
-        reactor.handleWireEvent(this);
-    }
-
-    public toWireEvent(): WireEvent {
-        return this;
-    }
-}
-
-export interface Reactor {
-    handleEvent(event: AnyEvent);
-    handleWireEvent(event: WireEvent);
-}
-
-// Allows subscribing to individual MOZAIC events through an EventEmitter-based
-// interface.
-export class SimpleEventEmitter implements Reactor {
+// // Allows subscribing to individual MOZAIC events through an EventEmitter-based
+// // interface.
+export class SimpleEventEmitter {
     private handlers: { [typeId: number]: SimpleEventHandler<any> };
 
     constructor() {
@@ -67,39 +19,42 @@ export class SimpleEventEmitter implements Reactor {
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        let handler = this.handlers[eventType.typeId];
+        let typeId = (eventType as any).typeId;
+        if (!typeId) {
+            throw new Error("not a valid event type");
+        }
+        let handler = this.handlers[typeId];
         if (!handler) {
             handler = new SimpleEventHandler(eventType);
-            this.handlers[eventType.typeId] = handler;    
+            this.handlers[typeId] = handler;    
         }
         return handler.asSimpleEvent();
     }
 
-    handleEvent(event: AnyEvent) {
-        const handler = this.handlers[event.eventType.typeId];
+    handleEvent(event) {
+        const handler = this.handlers[event.constructor.typeId];
         if (handler) {
-            handler.handleEvent(event.data);
+            handler.handleEvent(event);
         }
-
     }
 
-    handleWireEvent(event: WireEvent) {
+    handleWireEvent(event) {
         const handler = this.handlers[event.typeId];
         if (handler) {
-            handler.handleWireEvent(event.data);
+            handler.handleWireEvent(event);
         }
     }
 }
 
 class SimpleEventHandler<T> {
-    public readonly eventType: EventType<T>;
+    public readonly eventType;
     private dispatcher = new SimpleEventDispatcher<T>();
 
-    constructor(eventType: EventType<T>) {
+    constructor(eventType) {
         this.eventType = eventType;
     }
 
-    handleEvent(event: T) {
+    handleEvent(event) {
         this.dispatcher.dispatch(event);
     }
 

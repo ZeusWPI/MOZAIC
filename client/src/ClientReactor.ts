@@ -1,6 +1,6 @@
 import { EventChannel } from "./EventChannel";
 import { ClientParams } from "./Connection";
-import { SomeEvent, SimpleEventEmitter, EventType, AnyEvent } from "./reactor";
+import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from "ste-simple-events";
 import { LeaderConnected, LeaderDisconnected } from "./events";
 
@@ -13,7 +13,7 @@ export class ClientReactor {
         this.eventChannel = new EventChannel(params);
 
         this.eventChannel.onEvent.subscribe((event) => {
-            event.handle(this.core);
+            this.core.handleWireEvent(event);
         });
 
         this.eventChannel.onConnect.subscribe((_) => {
@@ -37,8 +37,8 @@ export class ClientReactor {
         return this.core.on(eventType);
     }
 ''
-    public dispatch(event: AnyEvent) {
+    public dispatch(event: any) {
         this.core.handleEvent(event);
-        this.eventChannel.dispatch(event);
+        this.eventChannel.sendEvent(event);
      }
 }

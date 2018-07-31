@@ -3,21 +3,24 @@ import ProtoEvent = protocol_root.mozaic.protocol.Event;
 
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 import { ISignal } from "ste-signals";
-import { SomeEvent, WireEvent } from "./reactor";
 import { Connection, ClientParams } from "./Connection";
+
+export interface WireEvent {
+    typeId: number,
+    data: Uint8Array,
+}
 
 export class EventChannel {
     private connection: Connection;
 
-    private _onEvent = new SimpleEventDispatcher<SomeEvent>();
+    private _onEvent = new SimpleEventDispatcher<WireEvent>();
 
     constructor(params: ClientParams) {
         this.connection = new Connection(params);
 
         this.connection.onMessage.subscribe((bytes) => {
             const { typeId, data } = ProtoEvent.decode(bytes);
-            let wireEvent = new WireEvent(typeId, data);
-            this._onEvent.dispatch(wireEvent);
+            this._onEvent.dispatch({ typeId, data });
         });
     }
 
@@ -29,9 +32,20 @@ export class EventChannel {
         this.connection.close();
     }
 
-    public dispatch(event: SomeEvent) {
-        let wireEvent = event.toWireEvent();
-        const encoded = ProtoEvent.encode(wireEvent).finish();
+    public sendEvent(event: any) {
+        const eventType = event.constructor as any;
+        const typeId = eventType.typeId;
+        if (!typeId) {
+            throw new Error("invalid event");
+        }
+        const data = eventType.encode(event).finish();
+
+        this.sendWireEvent({ typeId, data });
+    }
+
+    public sendWireEvent(event: WireEvent) {
+        let protoEvent = ProtoEvent.create(event);
+        const encoded = ProtoEvent.encode(protoEvent).finish();
         this.connection.send(encoded);
     }
 
