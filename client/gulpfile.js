@@ -10,6 +10,8 @@ const path = require('path');
 const protobuf = require('protobufjs');
 const pbts = require('protobufjs/cli/pbts');
 
+const toml = require('toml');
+
 /******************************************************************************
  * Helpers
  ******************************************************************************/
@@ -88,6 +90,19 @@ function type_protobuf() {
     });
 }
 
+function parse_events_toml() {
+    return through.obj(function(file, enc, callback) {
+        if (!file.isBuffer()) {
+            callback(new gutil.PluginError('toml', 'unsupported'));
+        }
+        var events = toml.parse(file.contents).events;
+        file.contents = Buffer.from(JSON.stringify(events));
+        file.stem = 'event_types';
+        file.extname = '.json';
+        callback(null, file);
+    });
+}
+
 /******************************************************************************
  * Tasks
  ******************************************************************************/
@@ -119,14 +134,29 @@ function type_proto() {
         .pipe(gulp.dest('generated'));
 }
 
+function make_events_json() {
+    return gulp.src("../proto/events.toml")
+        .pipe(parse_events_toml())
+        .pipe(gulp.dest('generated'));
+}
+
 const build_protobuf = gulp.series(
     gen_proto,
     type_proto,
-    copy_generated_code
 );
 
 function watch_protobuf() {
-    return gulp.watch(PROTO_SOURCES, build_protobuf);
+    return gulp.watch(PROTO_SOURCES, gulp.series(
+        build_protobuf,
+        copy_generated_code,
+    ));
+}
+
+function watch_events_toml() {
+    return gulp.watch("../proto/events.toml", gulp.series(
+        make_events_json,
+        copy_generated_code,
+    ));
 }
 
 function copy_generated_code() {
@@ -136,7 +166,9 @@ function copy_generated_code() {
 
 const build = gulp.series(
     build_protobuf,
-    compile_typescript
+    compile_typescript,
+    make_events_json,
+    copy_generated_code,
 );
 
 gulp.task('build', build);

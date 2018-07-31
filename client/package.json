@@ -19,6 +19,7 @@
     "gulp-typescript": "^4.0.1",
     "plugin-error": "^1.0.1",
     "protobufjs": "^6.8.5",
+    "toml": "^2.3.3",
     "typescript": "^2.7.2"
   },
   "dependencies": {
