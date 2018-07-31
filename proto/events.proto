@@ -2,6 +2,15 @@ syntax = "proto3";
 
 package mozaic.events;
 
+message RegisterClient {
+    uint32 client_id = 1;
+    bytes token = 2;
+}
+
+message RemoveClient {
+    uint32 client_id = 1;
+}
+
 message ClientConnected {
     uint32 client_id = 1;
 }
@@ -9,3 +18,41 @@ message ClientConnected {
 message ClientDisconnected {
     uint32 client_id = 1;
 }
+
+message StartGame {
+    string map_path = 1;
+    uint32 max_turns = 2;
+}
+
+message GameStep {
+    uint32 turn_num = 1;
+    string state = 2;
+}
+
+message GameFinished {
+    uint32 turn_num = 1;
+    string state = 2;
+}
+
+message ClientSend {
+    uint32 client_id = 1;
+    string data = 2;
+}
+
+message ClientMessage {
+    uint32 client_id = 1;
+    string data = 2;
+}
+
+message TurnTimeout {
+    uint32 turn_num =1;
+}
+
+message PlayerAction {
+    uint32 client_id = 1;
+}
+
+message FollowerConnected {}
+message FollowerDisconnected {}
+message LeaderConnected {}
+message LeaderDisconnected {}
