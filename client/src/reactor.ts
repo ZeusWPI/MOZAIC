@@ -41,7 +41,7 @@ export class SimpleEventEmitter {
     handleWireEvent(event) {
         const handler = this.handlers[event.typeId];
         if (handler) {
-            handler.handleWireEvent(event);
+            handler.handleWireEvent(event.data);
         }
     }
 }
