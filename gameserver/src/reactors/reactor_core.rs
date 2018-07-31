@@ -72,7 +72,7 @@ impl<S, T, F> EventHandler<S, T, F>
 
 impl<S, T, F> Handler<S> for EventHandler<S, T, F>
     where F: FnMut(&mut S, &T) + Send,
-          T: Event + Default + Send + 'static,
+          T: Event + Send + 'static,
           S: Send
 {
     fn event_type_id(&self) -> u32 {
