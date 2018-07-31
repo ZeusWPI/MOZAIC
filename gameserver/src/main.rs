@@ -4,13 +4,14 @@ mod oneshot_server;
 mod planetwars;
 mod utils;
 mod reactors;
-mod events;
+// mod events;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
-    pub mod events {
-        include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
-    }
+}
+
+pub mod events {
+    include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
 }
 
 
@@ -37,6 +38,8 @@ extern crate serde_derive;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
+#[macro_use]
+extern crate mozaic_derive;
 
 
 use std::error::Error;

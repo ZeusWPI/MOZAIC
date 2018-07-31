@@ -139,7 +139,7 @@ impl MasterReactorHandle {
 
     /// Dispatch an event to the reactor.
     pub fn dispatch<T>(&mut self, event: T)
-        where T: EventType + Send + 'static
+        where T: Event + Send + 'static
     {
         self.send_command(ReactorCommand::Emit {
             event: EventBox::wrap(event),
@@ -148,7 +148,7 @@ impl MasterReactorHandle {
 
     /// Schedule an event to be dispatched at the specified point in time.
     pub fn dispatch_at<T>(&mut self, instant: Instant, event: T)
-        where T: EventType + Send + 'static
+        where T: Event + Send + 'static
     {
         self.send_command(ReactorCommand::EmitDelayed {
             event: EventBox::wrap(event),

@@ -90,7 +90,7 @@ pub struct ClientReactorHandle {
 
 impl ClientReactorHandle {
     pub fn dispatch_event<T>(&mut self, event: T)
-        where T: EventType + Send + 'static
+        where T: Event + Send + 'static
     {
         let event_box = EventBox::wrap(event);
         self.inner.unbounded_send(event_box)

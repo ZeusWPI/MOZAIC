@@ -33,7 +33,7 @@ impl<S> ReactorCore<S> {
     }
 
     pub fn add_handler<F, T>(&mut self, fun: F)
-        where T: EventType + 'static + Send,
+        where T: Event + 'static + Send,
               F: FnMut(&mut S, &T) + 'static + Send,
               S: 'static + Send
     {
@@ -72,7 +72,7 @@ impl<S, T, F> EventHandler<S, T, F>
 
 impl<S, T, F> Handler<S> for EventHandler<S, T, F>
     where F: FnMut(&mut S, &T) + Send,
-          T: EventType + Send + 'static,
+          T: Event + Default + Send + 'static,
           S: Send
 {
     fn event_type_id(&self) -> u32 {
@@ -88,7 +88,7 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
     }
 
     fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) {
-        let data = T::decode(&wire_event.data);
+        let data = T::decode(&wire_event.data).expect("decoding error");
         (&mut self.handler)(state, &data);
     }
 }

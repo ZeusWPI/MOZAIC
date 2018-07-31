@@ -21,16 +21,16 @@ message ClientDisconnected {
 
 message StartGame {
     string map_path = 1;
-    uint32 max_turns = 2;
+    uint64 max_turns = 2;
 }
 
 message GameStep {
-    uint32 turn_num = 1;
+    uint64 turn_num = 1;
     string state = 2;
 }
 
 message GameFinished {
-    uint32 turn_num = 1;
+    uint64 turn_num = 1;
     string state = 2;
 }
 
@@ -45,7 +45,7 @@ message ClientMessage {
 }
 
 message TurnTimeout {
-    uint32 turn_num =1;
+    uint64 turn_num =1;
 }
 
 message PlayerAction {

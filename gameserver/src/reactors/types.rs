@@ -1,15 +1,8 @@
 use std::any::Any;
 use prost::Message;
 
-pub trait Event : Message {
+pub trait Event : Message + Default {
     const TYPE_ID: u32;
-}
-
-pub trait EventType {
-    const TYPE_ID: u32;
-
-    fn encode(&self) -> Vec<u8>;
-    fn decode(&[u8]) -> Self;
 }
 
 pub trait AnyEvent: Send {
@@ -24,13 +17,13 @@ pub struct WireEvent {
 }
 
 pub struct EventBox<T>
-    where T: EventType
+    where T: Event
 {
     event: T,
 }
 
 impl<T> EventBox<T>
-    where T: EventType + Send + 'static
+    where T: Event + Send + 'static
 {
     pub fn new(event: T) -> Self {
         EventBox { event }
@@ -41,7 +34,7 @@ impl<T> EventBox<T>
 }
 
 impl<T> AnyEvent for EventBox<T>
-    where T: EventType + Send + 'static
+    where T: Event + Send + 'static
 {
     fn data(&self) -> &Any { &self.event }
     
@@ -50,9 +43,19 @@ impl<T> AnyEvent for EventBox<T>
     }
 
     fn as_wire_event(&self) -> WireEvent {
-        WireEvent {
+        let mut buf = Vec::with_capacity(self.event.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        self.event.encode(&mut buf).unwrap();
+
+        return WireEvent {
             type_id: T::TYPE_ID,
-            data: self.event.encode(),
-        }
+            data:  buf,
+        };
     }
+}
+
+enum TestEnum {
+    ValueA = 3,
 }

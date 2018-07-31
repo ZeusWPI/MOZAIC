@@ -1,4 +1,20 @@
 [events]
 
-ClientConnected = 1
-ClientDisconnected = 2
+RegisterClient = 1
+RemoveClient = 2
+ClientConnected = 3
+ClientDisconnected = 4
+
+FollowerConnected = 5
+FollowerDisconnected = 6
+LeaderConnected = 7
+LeaderDisconnected = 8
+
+StartGame = 16
+GameStep = 17
+GameFinished = 18
+
+ClientMessage = 20
+ClientSend = 21
+TurnTimeout = 22
+PlayerAction = 23

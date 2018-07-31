@@ -116,7 +116,7 @@ impl PwMatch {
         if let PwMatchState::Lobby(lobby) = state {
             let config = Config {
                 map_file: event.map_path.clone(),
-                max_turns: event.max_turns,
+                max_turns: event.max_turns as u64,
             };
             self.state = PwMatchState::Playing(PwController::new(
                 config,
@@ -270,7 +270,8 @@ impl PwController {
 
     fn dispatch_state(&mut self) {
         let turn_num = self.state.turn_num;
-        let state = serialize_state(&self.state);
+        // TODO: fix this
+        let state = serde_json::to_string(&serialize_state(&self.state)).unwrap();
 
         if self.state.is_finished() {
             let event = events::GameFinished { turn_num, state };
@@ -354,7 +355,8 @@ impl PwController {
             let action = self.execute_action(player_num, command);
             self.reactor_handle.dispatch(events::PlayerAction {
                 client_id: player_id.as_u32(),
-                action: action.clone(),
+                // TODO
+                // action: action.clone(),
             });
             self.players
                 .get_mut(&player_id)
@@ -362,7 +364,8 @@ impl PwController {
                 .handle
                 .dispatch_event(events::PlayerAction {
                     client_id: player_id.as_u32(),
-                    action,
+                    // TODO
+                    // action,
                 });
         }
     }

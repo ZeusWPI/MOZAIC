@@ -4,7 +4,6 @@ mod pw_controller;
 mod pw_rules;
 mod pw_config;
 mod pw_serializer;
-mod pw_client;
 
 pub use self::pw_controller::PwMatch;
 pub use self::pw_rules::PlanetWars;
