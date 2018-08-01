@@ -353,10 +353,10 @@ impl PwController {
         for (player_id, command) in commands.drain() {
             let player_num = self.players[&player_id].num;
             let action = self.execute_action(player_num, command);
+            let serialized_action = serde_json::to_string(&action).unwrap();
             self.reactor_handle.dispatch(events::PlayerAction {
                 client_id: player_id.as_u32(),
-                // TODO
-                // action: action.clone(),
+                action: serialized_action.clone(),
             });
             self.players
                 .get_mut(&player_id)
@@ -364,8 +364,7 @@ impl PwController {
                 .handle
                 .dispatch_event(events::PlayerAction {
                     client_id: player_id.as_u32(),
-                    // TODO
-                    // action,
+                    action: serialized_action,
                 });
         }
     }

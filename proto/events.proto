@@ -50,6 +50,7 @@ message TurnTimeout {
 
 message PlayerAction {
     uint32 client_id = 1;
+    string action = 2;
 }
 
 message FollowerConnected {}
