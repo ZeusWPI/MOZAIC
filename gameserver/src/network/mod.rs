@@ -1,6 +1,6 @@
-pub mod connection;
-pub mod router;
+pub mod connection_handler;
+pub mod connection_table;
 pub mod tcp;
 mod protobuf_codec;
 
-pub use self::router::ClientId;
+pub use self::connection_table::ClientId;
