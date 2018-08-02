@@ -10,23 +10,24 @@ use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
 use super::protobuf_codec::{MessageStream, ProtobufTransport};
-use super::router::{RoutingTable, RoutingMessage, ConnectionData, ClientId};
+use super::connection_handler::ConnectionHandle;
+use super::connection_table::{ConnectionTable};
 use protocol as proto;
 
 
 
 pub struct Listener {
     incoming: Incoming,
-    routing_table: Arc<Mutex<RoutingTable>>,
+    connection_table: Arc<Mutex<ConnectionTable>>,
 }
 
 impl Listener {
-    pub fn new(addr: &SocketAddr, routing_table: Arc<Mutex<RoutingTable>>)
+    pub fn new(addr: &SocketAddr, connection_table: Arc<Mutex<ConnectionTable>>)
                -> io::Result<Self>
     {
         TcpListener::bind(addr).map(|tcp_listener| {
             Listener {
-                routing_table,
+                connection_table,
                 incoming: tcp_listener.incoming(),
             }
         })
@@ -38,7 +39,7 @@ impl Listener {
 
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
             let handler = ConnectionHandler::new(
-                self.routing_table.clone(),
+                self.connection_table.clone(),
                 raw_stream
             );
             tokio::spawn(handler);
@@ -60,13 +61,11 @@ impl Future for Listener {
     }
 }
 
-fn connection_success(client_id: ClientId) -> proto::ConnectionResponse {
+fn connection_success() -> proto::ConnectionResponse {
    proto::ConnectionResponse {
         response: Some(
             proto::connection_response::Response::Success(
-                proto::ConnectionSuccess {
-                    client_id: client_id.as_u32(),
-                }
+                proto::ConnectionSuccess { }
             )
         )
     }
@@ -86,12 +85,12 @@ fn connection_error(msg: String) -> proto::ConnectionResponse {
 
 struct Waiting {
     transport: ProtobufTransport<TcpStream>,
-    routing_table: Arc<Mutex<RoutingTable>>,
+    connection_table: Arc<Mutex<ConnectionTable>>,
 }
 
 enum Action {
     Accept {
-        connection_data: ConnectionData,
+        handle: ConnectionHandle,
     },
     Refuse {
         reason: String,
@@ -108,21 +107,21 @@ impl Waiting {
 
         let request = try!(proto::ConnectionRequest::decode(bytes));
 
-        let mut table = self.routing_table.lock().unwrap(); 
+        let mut table = self.connection_table.lock().unwrap(); 
         let action = match table.get(&request.token) {
             None => Action::Refuse { reason: "invalid token".to_string() },
-            Some(connection_data) => Action::Accept { connection_data },
+            Some(handle) => Action::Accept { handle },
         };
         return Ok(Async::Ready(action));
     }
 
     fn step(self, action: Action) -> HandlerState {
         match action {
-            Action::Accept { connection_data } => {
-                let response = connection_success(connection_data.client_id);
+            Action::Accept { handle } => {
+                let response = connection_success();
                 let accepting = Accepting {
                     send: self.transport.send_msg(response),
-                    handle: connection_data.routing_channel,
+                    handle,
                 };
                 return HandlerState::Accepting(accepting);
             },
@@ -141,7 +140,7 @@ impl Waiting {
 
 struct Accepting {
     send: Send<ProtobufTransport<TcpStream>>,
-    handle: UnboundedSender<RoutingMessage>,
+    handle: ConnectionHandle,
 }
 
 impl Accepting {
@@ -149,10 +148,10 @@ impl Accepting {
         self.send.poll()
     }
 
-    fn step(self, transport: ProtobufTransport<TcpStream>) -> HandlerState {
-         self.handle.unbounded_send(RoutingMessage::Connecting {
-            stream: MessageStream::new(transport)
-        }).unwrap();
+    fn step(mut self, transport: ProtobufTransport<TcpStream>)
+        -> HandlerState
+    {
+        self.handle.connect(transport);
         return HandlerState::Done;
     }
 }
@@ -184,14 +183,14 @@ pub struct ConnectionHandler {
 }
 
 impl ConnectionHandler {
-    pub fn new(routing_table: Arc<Mutex<RoutingTable>>,
+    pub fn new(connection_table: Arc<Mutex<ConnectionTable>>,
                stream: TcpStream) -> Self
     {
         let transport = ProtobufTransport::new(stream);
         ConnectionHandler {
             state: HandlerState::Waiting(Waiting {
                 transport,
-                routing_table,
+                connection_table,
             }),
         }
     }
