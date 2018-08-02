@@ -4,7 +4,7 @@ use futures::{Future, Stream, Sink, Poll, Async};
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
 
-use reactors::{WireEvent, ReactorCore};
+use reactors::{Event, WireEvent, ReactorCore};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use protocol::{Packet, packet, Event as ProtoEvent};
@@ -86,15 +86,15 @@ impl ConnectionState {
     }
 }
 
-pub struct ConnectionHandler<S> {
+pub struct ConnectionHandler<H> {
     transport_state: TransportState,
     state: ConnectionState,
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
-    core: ReactorCore<S>,
+    event_handler: H,
 }
 
-impl<S> ConnectionHandler<S> {
-    pub fn new(core: ReactorCore<S>) -> (ConnectionHandle, Self) {
+impl<H> ConnectionHandler<H> {
+    pub fn new(event_handler: H) -> (ConnectionHandle, Self) {
         let (snd, rcv) = mpsc::unbounded();
 
         let handle = ConnectionHandle { sender: snd };
@@ -103,7 +103,7 @@ impl<S> ConnectionHandler<S> {
             transport_state: TransportState::Disconnected,
             state: ConnectionState::new(),
             ctrl_chan: rcv,
-            core,
+            event_handler,
         };
 
         return (handle, handler);
@@ -128,7 +128,7 @@ impl<S> ConnectionHandler<S> {
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        let stream = match self.transport_state {
+        let mut stream = match self.transport_state {
             TransportState::Disconnected => {
                 // When the connection is not connected to a client,
                 // act as if the connection has completed. This is almost
@@ -138,7 +138,7 @@ impl<S> ConnectionHandler<S> {
                 // or something similar.
                 return Ok(Async::Ready(()));
             }
-            TransportState::Connected(stream) => stream,
+            TransportState::Connected(ref mut stream) => stream,
         };
 
         match self.state.flush_buffer(&mut stream) {
@@ -180,6 +180,23 @@ impl ConnectionHandle {
 
     pub fn connect(&mut self, transport: ProtobufTransport<TcpStream>) {
         self.send_command(ConnectionCommand::Connect(transport));
+    }
+
+    pub fn dispatch<E>(&mut self, event: E)
+        where E: Event
+    {
+        // TODO: this converting should really be abstracted somewhere
+
+        let mut buf = Vec::with_capacity(event.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        event.encode(&mut buf).unwrap();
+
+        self.send(WireEvent {
+            type_id: E::TYPE_ID,
+            data:  buf,
+        });
     }
 
     pub fn send(&mut self, event: WireEvent) {

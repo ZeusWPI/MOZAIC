@@ -56,6 +56,7 @@ impl<T> AnyEvent for EventBox<T>
     }
 }
 
-enum TestEnum {
-    ValueA = 3,
+pub trait EventHandler {
+    fn handle_event(&mut self, event: &AnyEvent);
+    fn handle_wire_event(&mut self, event: WireEvent);
 }
