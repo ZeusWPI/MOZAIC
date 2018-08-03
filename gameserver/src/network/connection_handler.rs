@@ -4,7 +4,7 @@ use futures::{Future, Stream, Sink, Poll, Async};
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
 
-use reactors::{Event, WireEvent, ReactorCore};
+use reactors::{Event, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use protocol::{Packet, packet, Event as ProtoEvent};
@@ -86,14 +86,18 @@ impl ConnectionState {
     }
 }
 
-pub struct ConnectionHandler<H> {
+pub struct ConnectionHandler<H>
+    where H: EventHandler
+{
     transport_state: TransportState,
     state: ConnectionState,
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
     event_handler: H,
 }
 
-impl<H> ConnectionHandler<H> {
+impl<H> ConnectionHandler<H>
+    where H: EventHandler
+{
     pub fn new(event_handler: H) -> (ConnectionHandle, Self) {
         let (snd, rcv) = mpsc::unbounded();
 
@@ -116,12 +120,29 @@ impl<H> ConnectionHandler<H> {
                     panic!("ctrl channel dropped!");
                 }
                 Some(ConnectionCommand::Connect(transport)) => {
-                    // TODO
-                    unimplemented!()
+                    let t = MessageStream::new(transport);
+                    self.transport_state = TransportState::Connected(t);
+                    // TODO: emit connected event
                 }
                 Some(ConnectionCommand::Send(wire_event)) => {
-                    // TODO
-                    unimplemented!()
+                    self.state.queue_send(wire_event);
+                }
+            }
+        }
+    }
+
+    fn poll_transport(&mut self) -> Poll<(), ()> {
+        let mut transport = match self.transport_state {
+            TransportState::Disconnected => return Ok(Async::NotReady),
+            TransportState::Connected(ref mut transport) => transport,
+        };
+        // TODO: this sucks
+        loop {
+            match self.state.poll(transport) {
+                Err(err) => panic!("transport error {}", err),
+                Ok(Async::NotReady) => return Ok(Async::NotReady),
+                Ok(Async::Ready(event)) => {
+                    self.event_handler.handle_wire_event(event);
                 }
             }
         }
@@ -152,7 +173,9 @@ impl<H> ConnectionHandler<H> {
     }
 }
 
-impl<S> Future for ConnectionHandler<S> {
+impl<H> Future for ConnectionHandler<H>
+    where H: EventHandler
+{
     type Item = ();
     type Error = ();
 
