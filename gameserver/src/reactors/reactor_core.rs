@@ -7,7 +7,7 @@ use super::types::*;
 /// The ReactorCore 'reduces' over the event stream.
 pub struct ReactorCore<S> {
     state: S,
-    handlers: HashMap<u32, Box<Handler<S>>>,
+    handlers: HashMap<u32, Box<SomeHandler<S>>>,
 }
 
 impl<S> ReactorCore<S> {
@@ -37,20 +37,20 @@ impl<S> ReactorCore<S> {
               F: FnMut(&mut S, &T) + 'static + Send,
               S: 'static + Send
     {
-        let handler = Box::new(EventHandler::new(fun));
+        let handler = Box::new(Handler::new(fun));
         self.handlers.insert(T::TYPE_ID, handler);
     }
 }
 
 
 // The Send bound is required so that reactors can implement Send as well.
-pub trait Handler<S>: Send {
+pub trait SomeHandler<S>: Send {
     fn event_type_id(&self) -> u32;
     fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
     fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent);
 }
 
-pub struct EventHandler<S, T, F>
+pub struct Handler<S, T, F>
     where F: FnMut(&mut S, &T)
 {
     phantom_s: PhantomData<S>,
@@ -58,11 +58,11 @@ pub struct EventHandler<S, T, F>
     handler: F,
 }
 
-impl<S, T, F> EventHandler<S, T, F>
+impl<S, T, F> Handler<S, T, F>
     where F: FnMut(&mut S, &T)
 {
     pub fn new(fun: F) -> Self {
-        EventHandler {
+        Handler {
             phantom_s: PhantomData,
             phantom_t: PhantomData,
             handler: fun,
@@ -70,7 +70,7 @@ impl<S, T, F> EventHandler<S, T, F>
     }
 }
 
-impl<S, T, F> Handler<S> for EventHandler<S, T, F>
+impl<S, T, F> SomeHandler<S> for Handler<S, T, F>
     where F: FnMut(&mut S, &T) + Send,
           T: Event + Send + 'static,
           S: Send
@@ -90,5 +90,15 @@ impl<S, T, F> Handler<S> for EventHandler<S, T, F>
     fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) {
         let data = T::decode(&wire_event.data).expect("decoding error");
         (&mut self.handler)(state, &data);
+    }
+}
+
+impl<S> EventHandler for ReactorCore<S> {
+    fn handle_event(&mut self, event: &AnyEvent) {
+        self.handle_event(event);
+    }
+
+    fn handle_wire_event(&mut self, event: WireEvent) {
+        self.handle_wire_event(&event);
     }
 }
