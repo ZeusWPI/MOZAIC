@@ -9,12 +9,15 @@ use super::types::*;
 use super::ReactorCore;
 
 /// The Reactor is in charge of running a match - that is, it runs the
-/// game rules and should have control over the ClientReactors that serve
-/// the clients associated with the match.
-/// It will forward all processed events over an EventWire to a client-side
-/// reactor, that can then observe match progress.
-/// The client can also send events over the wire, which will then get
-/// 'dispatched' to the reactor.
+/// game rules and should have control over the connections to the clients that
+/// play in the match.
+/// All events that happen in the reactor will be forwarded to the match owner,
+/// so that it can observe the match progress and subscribe to its control
+/// events.
+/// This event forwarding is required functionality for the MOZAIC game setup,
+/// but is not really inherent to the nature of a reactor. In the future,
+/// this behaviour should be implemented in the event handler running on the
+/// reactor, so that the actual reactor code will be more reusable.
 pub struct Reactor<S> {
     core: ReactorCore<S>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
