@@ -1,6 +1,6 @@
 import { BotConfig, BotRunner } from "./index";
 import { ClientReactor } from "./ClientReactor";
-import { LeaderConnected, GameStep, GameFinished, ClientSend } from "./events";
+import { Connected, GameStep, GameFinished, ClientSend } from "./events";
 import { ClientParams } from "./EventWire";
 
 export type Params = ClientParams & {

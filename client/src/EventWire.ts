@@ -107,7 +107,18 @@ export class EventWire {
         this.stream.end();
     }
 
-    public send(wireEvent: WireEvent) {
+    public send(event: any) {
+        let eventType = event.constructor as any;
+        let typeId = eventType.typeId;
+        if (!typeId) {
+            throw "invalid event";
+        }
+        let data = eventType.encode(event).finish();
+        this.sendWireEvent({ typeId, data });
+
+    }
+
+    public sendWireEvent(wireEvent: WireEvent) {
         // TODO: maybe ensure that the connection handshake has completed here
         let event = proto.Event.create(wireEvent);
         let packet = proto.Packet.create({ event });

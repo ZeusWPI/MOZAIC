@@ -3,7 +3,7 @@ import { BotRunner, BotConfig } from './BotRunner';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
 import { SimpleEventEmitter } from './reactor';
-import { RegisterClient, FollowerConnected, LeaderConnected, ClientConnected, ClientDisconnected, StartGame } from './events';
+import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './events';
 import { ClientReactor } from './ClientReactor';
 import * as events from './events';
 import { ServerRunner, ServerParams } from './ServerRunner';
@@ -85,7 +85,7 @@ Object.keys(events).forEach((eventName) => {
 });
 
 
-matchReactor.on(FollowerConnected).subscribe((_) => {
+matchReactor.on(Connected).subscribe((_) => {
     players.forEach((player, idx) => {
         const player_num = idx + 1;
         matchReactor.dispatch(RegisterClient.create({

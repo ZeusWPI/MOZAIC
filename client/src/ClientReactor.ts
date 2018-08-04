@@ -2,7 +2,7 @@ import { EventWire } from "./EventWire";
 import { ClientParams } from "./EventWire";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from "ste-simple-events";
-import { LeaderConnected, LeaderDisconnected } from "./events";
+import { Connected, Disconnected } from "./events";
 
 export class ClientReactor {
     eventWire: EventWire;
@@ -17,11 +17,11 @@ export class ClientReactor {
         });
 
         this.eventWire.onConnect.subscribe((_) => {
-            this.core.handleEvent(LeaderConnected.create({}));
+            this.core.handleEvent(Connected.create({}));
         });
 
         this.eventWire.onDisconnect.subscribe(() => {
-            this.core.handleEvent(LeaderDisconnected.create({}));
+            this.core.handleEvent(Disconnected.create({}));
         });
     }
 
@@ -39,7 +39,6 @@ export class ClientReactor {
 ''
     public dispatch(event: any) {
         this.core.handleEvent(event);
-        // TODO
         this.eventWire.send(event);
      }
 }

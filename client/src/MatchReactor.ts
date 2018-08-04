@@ -2,7 +2,7 @@ import { ProtobufStream } from "./ProtobufStream";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
 import { EventWire, ClientParams } from './EventWire';
-import { FollowerConnected, FollowerDisconnected } from "./events";
+import { Connected, Disconnected } from "./events";
 
 
 export class MatchReactor {
@@ -18,11 +18,11 @@ export class MatchReactor {
         });
 
         this.eventWire.onConnect.subscribe((_) => {
-            this.core.handleEvent(FollowerConnected.create({}));
+            this.core.handleEvent(Connected.create({}));
         })
 
         this.eventWire.onDisconnect.subscribe(() => {
-            this.core.handleEvent(FollowerDisconnected.create({}));
+            this.core.handleEvent(Disconnected.create({}));
         })
     }
 
@@ -35,7 +35,6 @@ export class MatchReactor {
     }
 
     public dispatch(event: any) {
-        // TODO
         this.eventWire.send(event);
     }
 }
