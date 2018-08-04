@@ -13,9 +13,7 @@ message ConnectionResponse {
     }
 }
 
-message ConnectionSuccess {
-    uint32 client_id = 1;
-}
+message ConnectionSuccess { }
 
 message ConnectionError {
     string message = 1;
@@ -23,76 +21,17 @@ message ConnectionError {
 
 
 message Packet {
-    message Message {
-        bytes data = 1;
-    }
-
-    message CloseConnection {
-        // for future use
-    }
-
     oneof payload {
-        Message message = 1;
+        Event event = 1;
         CloseConnection close_connection = 2;
     }
 }
 
-// TODO: this naming might be really stupid.
-message Message {
-    message Message {
-        uint64 message_id = 1;
-        bytes data = 2;
-    }
-    
-    message Response {
-        uint64 message_id = 1;
-        bytes data = 2;
-    }
-
-    oneof payload {
-        Message message = 1;
-        Response response = 2;
-    }
-}
-
-message LobbyMessage {
-    message AddPlayerRequest {
-        bytes token = 1;
-    }
-
-    message AddPlayerResponse {
-        uint32 client_id = 1;
-    }
-
-    message RemovePlayerRequest {
-        uint32 client_id = 1;
-    }
-
-    message RemovePlayerResponse {
-        // placeholder
-    }
-
-    message StartGameRequest {
-        bytes payload = 1;
-    }
-
-    message StartGameResponse {
-        // placeholder
-    }
-
-    oneof payload {
-        AddPlayerRequest add_player = 1;
-        RemovePlayerRequest remove_player = 2;
-        StartGameRequest start_game = 3;
-    }
-}
-
-message EventId {
-    uint32 component_id = 1;
-    uint32 number = 2;
-}
-
 message Event {
-    uint32 type_id = 1;
+    uint32 type_id = 1; 
     bytes data = 2;
+}
+
+message CloseConnection {
+    // for future use
 }

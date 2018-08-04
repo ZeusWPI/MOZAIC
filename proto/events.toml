@@ -1,14 +1,12 @@
 [events]
 
-RegisterClient = 1
-RemoveClient = 2
-ClientConnected = 3
-ClientDisconnected = 4
+Connected = 1
+Disconnected = 2
 
-FollowerConnected = 5
-FollowerDisconnected = 6
-LeaderConnected = 7
-LeaderDisconnected = 8
+RegisterClient = 10
+RemoveClient = 11
+ClientConnected = 12
+ClientDisconnected = 13
 
 StartGame = 16
 GameStep = 17

@@ -53,7 +53,5 @@ message PlayerAction {
     string action = 2;
 }
 
-message FollowerConnected {}
-message FollowerDisconnected {}
-message LeaderConnected {}
-message LeaderDisconnected {}
+message Connected {}
+message Disconnected {}
