@@ -4,10 +4,11 @@ use futures::{Future, Stream, Sink, Poll, Async};
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
 
-use reactors::{Event, WireEvent, EventHandler};
+use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use protocol::{Packet, packet, Event as ProtoEvent};
+use events;
 
 type PacketStream = MessageStream<TcpStream, Packet>;
 
@@ -122,7 +123,10 @@ impl<H> ConnectionHandler<H>
                 Some(ConnectionCommand::Connect(transport)) => {
                     let t = MessageStream::new(transport);
                     self.transport_state = TransportState::Connected(t);
-                    // TODO: emit connected event
+                    // TODO: can we work around this box?
+                    self.event_handler.handle_event(
+                        &EventBox::new(events::Connected {} )
+                    );
                 }
                 Some(ConnectionCommand::Send(wire_event)) => {
                     self.state.queue_send(wire_event);
@@ -132,7 +136,7 @@ impl<H> ConnectionHandler<H>
     }
 
     fn poll_transport(&mut self) -> Poll<(), ()> {
-        let mut transport = match self.transport_state {
+        let transport = match self.transport_state {
             TransportState::Disconnected => return Ok(Async::NotReady),
             TransportState::Connected(ref mut transport) => transport,
         };
@@ -180,7 +184,10 @@ impl<H> Future for ConnectionHandler<H>
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        unimplemented!()
+        try!(self.poll_ctl_chan());
+        try!(self.poll_transport());
+        // TODO: when should a handler exit?
+        return Ok(Async::NotReady);
     }
 }
 

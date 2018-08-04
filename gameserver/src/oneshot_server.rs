@@ -10,10 +10,10 @@ use futures::sync::mpsc;
 
 
 use network;
-use network::connection::Connection;
-use network::router::{RoutingTable, ClientId};
-use reactors::{ReactorCore, MasterReactor, MasterReactorHandle};
+use network::connection_table::{ConnectionTable, ClientId};
+use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
+use events;
 
 #[derive(Serialize, Deserialize)]
 pub struct MatchDescription {
@@ -29,6 +29,19 @@ pub struct PlayerConfig {
     #[serde(with="hex_serializer")]
     pub token: Vec<u8>,
 }
+
+struct Forwarder {
+    handle: ReactorHandle,
+}
+
+impl Forwarder {
+    pub fn forward<E>(&mut self, event: &E)
+        where E: Event + Clone + 'static
+    {
+        self.handle.dispatch(event.clone());
+    }
+}
+
 
 /// A simple future that starts a server for just one predefined game.
 /// This is a future so that it can be run on a tokio runtime, which allows
@@ -53,21 +66,28 @@ impl Future for OneshotServer {
     // too much. We don't want oneshot servers, we want a gameserver that can
     // run multiple games in parallel.
     fn poll(&mut self) -> Poll<(), ()> {
-        let routing_table = Arc::new(Mutex::new(RoutingTable::new()));
+        let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+        let reactor_handle = ReactorHandle::new(ctrl_handle);
 
-        let connection = Connection::new(
-            self.config.ctrl_token.clone(),
-            // TODO: heh, maybe we want an actual client id here.
-            ClientId::new(0),
-            routing_table.clone(),
+        let mut owner_core = ReactorCore::new(
+            Forwarder { handle: reactor_handle.clone() }
         );
 
-        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+        owner_core.add_handler(Forwarder::forward::<events::RegisterClient>);
+        owner_core.add_handler(Forwarder::forward::<events::RemoveClient>);
+        owner_core.add_handler(Forwarder::forward::<events::StartGame>);
+        
+
+        let match_owner = connection_table.lock().unwrap().create(
+            &self.config.ctrl_token,
+            owner_core,
+        );
 
 
         let pw_match = PwMatch::new(
-            MasterReactorHandle::new(ctrl_handle),
-            routing_table.clone()
+            reactor_handle,
+            connection_table.clone(),
         );
 
         let mut core = ReactorCore::new(pw_match);
@@ -78,7 +98,8 @@ impl Future for OneshotServer {
         core.add_handler(PwMatch::client_message);
         core.add_handler(PwMatch::game_finished);
         core.add_handler(PwMatch::timeout);
-        let reactor = MasterReactor::new(core, ctrl_chan, connection);
+
+        let reactor = Reactor::new(core, match_owner, ctrl_chan);
 
         tokio::spawn(reactor.and_then(|_| {
             println!("done");
@@ -90,7 +111,7 @@ impl Future for OneshotServer {
         }));
 
         let addr = self.config.address.parse().unwrap();
-        match network::tcp::Listener::new(&addr, routing_table.clone()) {
+        match network::tcp::Listener::new(&addr, connection_table.clone()) {
             Ok(listener) => {
                 tokio::spawn(listener);
                 return Ok(Async::Ready(()));

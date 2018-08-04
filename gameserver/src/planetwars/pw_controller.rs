@@ -5,16 +5,12 @@ use std::mem;
 
 use tokio;
 
-use reactors::{
-    ReactorCore,
-    MasterReactorHandle,
-    ClientReactor,
-    ClientReactorHandle,
-};
 
 use events;
-use network::router::{RoutingTable, ClientId};
-use network::connection::Connection;
+use network::connection_table::{ConnectionTable, ClientId};
+use network::connection_handler::{ConnectionHandler, ConnectionHandle};
+use reactors::reactor::{Reactor, ReactorHandle};
+use reactors::ReactorCore;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
@@ -31,36 +27,36 @@ use serde_json;
 pub struct Player {
     id: ClientId,
     num: usize,
-    handle: ClientReactorHandle,
+    handle: ConnectionHandle,
 }
 
 pub struct ClientHandler {
     client_id: u32,
-    core_handle: MasterReactorHandle,
+    reactor_handle: ReactorHandle,
 }
 
 impl ClientHandler {
-    pub fn new(client_id: u32, core_handle: MasterReactorHandle) -> Self {
+    pub fn new(client_id: u32, reactor_handle: ReactorHandle) -> Self {
         ClientHandler {
             client_id,
-            core_handle,
+            reactor_handle,
         }
     }
 
-    pub fn on_connect(&mut self, _event: &events::FollowerConnected) {
-        self.core_handle.dispatch(events::ClientConnected {
+    pub fn on_connect(&mut self, _event: &events::Connected) {
+        self.reactor_handle.dispatch(events::ClientConnected {
             client_id: self.client_id,
         });
     }
 
-    pub fn on_disconnect(&mut self, _event: &events::FollowerDisconnected) {
-        self.core_handle.dispatch(events::ClientDisconnected {
+    pub fn on_disconnect(&mut self, _event: &events::Disconnected) {
+        self.reactor_handle.dispatch(events::ClientDisconnected {
             client_id: self.client_id,
         });
     }
 
     pub fn on_message(&mut self, event: &events::ClientSend) {
-        self.core_handle.dispatch(events::ClientMessage {
+        self.reactor_handle.dispatch(events::ClientMessage {
             client_id: self.client_id,
             data: event.data.clone(),
         });
@@ -78,12 +74,12 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(reactor_handle: MasterReactorHandle,
-               routing_table: Arc<Mutex<RoutingTable>>)
+    pub fn new(reactor_handle: ReactorHandle,
+               connection_table: Arc<Mutex<ConnectionTable>>)
                -> Self
     {
         let lobby = Lobby::new(
-            routing_table,
+            connection_table,
             reactor_handle
         );
 
@@ -156,19 +152,19 @@ impl PwMatch {
 }
 
 pub struct Lobby {
-    routing_table: Arc<Mutex<RoutingTable>>,
-    reactor_handle: MasterReactorHandle,
+    connection_table: Arc<Mutex<ConnectionTable>>,
+    reactor_handle: ReactorHandle,
 
-    players: HashMap<ClientId, ClientReactorHandle>,
+    players: HashMap<ClientId, ConnectionHandle>,
 }
 
 impl Lobby {
-    fn new(routing_table: Arc<Mutex<RoutingTable>>,
-           reactor_handle: MasterReactorHandle)
+    fn new(connection_table: Arc<Mutex<ConnectionTable>>,
+           reactor_handle: ReactorHandle)
            -> Self
     {
         return Lobby {
-            routing_table,
+            connection_table,
             reactor_handle,
 
             players: HashMap::new(),
@@ -177,26 +173,23 @@ impl Lobby {
     }
 
     fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
-        let connection = Connection::new(
-            connection_token,
-            client_id,
-            self.routing_table.clone(),
-        );
         let mut core = ReactorCore::new(
             ClientHandler::new(
                 client_id.as_u32(),
                 self.reactor_handle.clone(),
             ),
         );
+
         core.add_handler(ClientHandler::on_connect);
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
-        let (handle, client_reactor) = ClientReactor::new(
+
+
+        let handle = self.connection_table.lock().unwrap().create(
+            &connection_token,
             core,
-            connection,
         );
         self.players.insert(client_id, handle);
-        tokio::spawn(client_reactor);
     }
 
     fn remove_player(&mut self, client_id: ClientId) {
@@ -207,7 +200,7 @@ impl Lobby {
 pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
-    reactor_handle: MasterReactorHandle,
+    reactor_handle: ReactorHandle,
 
     client_player: HashMap<ClientId, usize>,
     players: HashMap<ClientId, Player>,
@@ -218,8 +211,8 @@ pub struct PwController {
 
 impl PwController {
     pub fn new(config: Config,
-               reactor_handle: MasterReactorHandle,
-               clients: HashMap<ClientId, ClientReactorHandle>)
+               reactor_handle: ReactorHandle,
+               clients: HashMap<ClientId, ConnectionHandle>)
         -> Self
     {
         // TODO: we probably want a way to fixate player order
@@ -289,14 +282,14 @@ impl PwController {
         self.players.retain(|_, player| {
             if state.players[player.num].alive {
                 waiting_for.insert(player.id);
-                player.handle.dispatch_event(events::GameStep {
+                player.handle.dispatch(events::GameStep {
                     turn_num: step.turn_num,
                     state: step.state.clone(),
                 });
                 // keep this player in the game
                 return true;
             } else {
-                player.handle.dispatch_event(events::GameFinished {
+                player.handle.dispatch(events::GameFinished {
                     turn_num: step.turn_num,
                     state: step.state.clone(),
                 });
@@ -324,7 +317,7 @@ impl PwController {
 
     fn on_finished(&mut self, event: &events::GameFinished) {
         self.players.retain(|_player_id, player| {
-            player.handle.dispatch_event(events::GameFinished {
+            player.handle.dispatch(events::GameFinished {
                 turn_num: event.turn_num,
                 state: event.state.clone(),
             });
@@ -362,7 +355,7 @@ impl PwController {
                 .get_mut(&player_id)
                 .unwrap()
                 .handle
-                .dispatch_event(events::PlayerAction {
+                .dispatch(events::PlayerAction {
                     client_id: player_id.as_u32(),
                     action: serialized_action,
                 });
