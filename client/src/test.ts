@@ -1,4 +1,4 @@
-import { Connection, Address } from './Connection';
+import { Address } from './EventWire';
 import { BotRunner, BotConfig } from './BotRunner';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
@@ -80,7 +80,7 @@ const matchReactor = new MatchReactor(clientParams);
 
 Object.keys(events).forEach((eventName) => {
     matchReactor.on(events[eventName]).subscribe((event) => {
-        console.log(`${eventName}: ${JSON.stringify(event)}`);
+        console.log(event);
     });
 });
 

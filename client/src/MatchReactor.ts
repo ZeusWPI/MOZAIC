@@ -1,28 +1,27 @@
 import { ProtobufStream } from "./ProtobufStream";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
-import { Connection, ClientParams } from './Connection';
-import { EventChannel, WireEvent } from "./EventChannel";
+import { EventWire, ClientParams } from './EventWire';
 import { FollowerConnected, FollowerDisconnected } from "./events";
 
 
 export class MatchReactor {
-    private eventChannel: EventChannel;
+    private eventWire: EventWire;
     private core: SimpleEventEmitter;
 
     constructor(clientParams: ClientParams) {
         this.core = new SimpleEventEmitter();
-        this.eventChannel = new EventChannel(clientParams);
+        this.eventWire = new EventWire(clientParams);
 
-        this.eventChannel.onEvent.subscribe((wireEvent) => {
+        this.eventWire.onEvent.subscribe((wireEvent) => {
             this.core.handleWireEvent(wireEvent);
         });
 
-        this.eventChannel.onConnect.subscribe((_) => {
+        this.eventWire.onConnect.subscribe((_) => {
             this.core.handleEvent(FollowerConnected.create({}));
         })
 
-        this.eventChannel.onDisconnect.subscribe(() => {
+        this.eventWire.onDisconnect.subscribe(() => {
             this.core.handleEvent(FollowerDisconnected.create({}));
         })
     }
@@ -32,10 +31,11 @@ export class MatchReactor {
     }
 
     public connect() {
-        this.eventChannel.connect();
+        this.eventWire.connect();
     }
 
     public dispatch(event: any) {
-       this.eventChannel.sendEvent(event);
+        // TODO
+        this.eventWire.send(event);
     }
 }

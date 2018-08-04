@@ -1,6 +1,5 @@
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
-import Packet = proto.Packet;
 
 import * as net from 'net';
 import * as stream from 'stream';
@@ -35,14 +34,20 @@ enum ConnectionState {
     CLOSED,
 };
 
-export class Connection {
+export interface WireEvent {
+    typeId: number,
+    data: Uint8Array,
+}
+
+export class EventWire {
     private state: ConnectionState;
     private stream: ProtobufStream;
 
     private params: ClientParams;
 
-    private _onConnect = new SimpleEventDispatcher<number>();
-    private _onMessage = new SimpleEventDispatcher<Uint8Array>();
+    private _onConnect = new SignalDispatcher();
+    private _onDisconnect = new SignalDispatcher();
+    private _onEvent = new SimpleEventDispatcher<WireEvent>();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
     
@@ -65,9 +70,13 @@ export class Connection {
     public get onConnect() {
         return this._onConnect.asEvent();
     }
+
+    public get onDisconnect() {
+        return this._onDisconnect.asEvent();
+    }
     
-    public get onMessage() {
-        return this._onMessage.asEvent();
+    public get onEvent() {
+        return this._onEvent.asEvent();
     }
     
     public get onError() {
@@ -98,11 +107,11 @@ export class Connection {
         this.stream.end();
     }
 
-    public send(data: Uint8Array) {
+    public send(wireEvent: WireEvent) {
         // TODO: maybe ensure that the connection handshake has completed here
-        let message = Packet.Message.create({ data });
-        let packet = Packet.create({ message });
-        this.stream.write(Packet.encode(packet));
+        let event = proto.Event.create(wireEvent);
+        let packet = proto.Packet.create({ event });
+        this.stream.write(proto.Packet.encode(packet));
     }
 
     private handleMessage(data: Uint8Array) {
@@ -128,8 +137,7 @@ export class Connection {
         let response = proto.ConnectionResponse.decode(message);
         if (response.success) {
             this.state = ConnectionState.CONNECTED;
-            const clientId = Number(response.success.clientId)
-            this._onConnect.dispatch(clientId);
+            this._onConnect.dispatch();
         } else if (response.error) {
             // TODO: should there be a special error state?
             this.state = ConnectionState.CLOSED;;
@@ -140,10 +148,15 @@ export class Connection {
     }
 
     private handlePacket(data: Uint8Array) {
-        const packet = Packet.decode(data);
+        const packet = proto.Packet.decode(data);
 
-        if (packet.message) {
-            this._onMessage.dispatch(packet.message.data!);
+        if (packet.event) {
+            const { typeId, data } = packet.event;
+            // these values should be present according to protobuf3 spec
+            this._onEvent.dispatch({
+                typeId: typeId!,
+                data: data!
+            });
         }
         // TODO: other options
     }

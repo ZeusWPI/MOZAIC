@@ -1,36 +1,36 @@
-import { EventChannel } from "./EventChannel";
-import { ClientParams } from "./Connection";
+import { EventWire } from "./EventWire";
+import { ClientParams } from "./EventWire";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from "ste-simple-events";
 import { LeaderConnected, LeaderDisconnected } from "./events";
 
 export class ClientReactor {
-    eventChannel: EventChannel;
+    eventWire: EventWire;
     private core: SimpleEventEmitter;
 
     constructor(params: ClientParams) {
         this.core = new SimpleEventEmitter();
-        this.eventChannel = new EventChannel(params);
+        this.eventWire = new EventWire(params);
 
-        this.eventChannel.onEvent.subscribe((event) => {
+        this.eventWire.onEvent.subscribe((event) => {
             this.core.handleWireEvent(event);
         });
 
-        this.eventChannel.onConnect.subscribe((_) => {
+        this.eventWire.onConnect.subscribe((_) => {
             this.core.handleEvent(LeaderConnected.create({}));
         });
 
-        this.eventChannel.onDisconnect.subscribe(() => {
+        this.eventWire.onDisconnect.subscribe(() => {
             this.core.handleEvent(LeaderDisconnected.create({}));
         });
     }
 
     public connect() {
-        this.eventChannel.connect();
+        this.eventWire.connect();
     }
 
     public exit() {
-        this.eventChannel.disconnect();
+        this.eventWire.close();
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
@@ -39,6 +39,7 @@ export class ClientReactor {
 ''
     public dispatch(event: any) {
         this.core.handleEvent(event);
-        this.eventChannel.sendEvent(event);
+        // TODO
+        this.eventWire.send(event);
      }
 }
