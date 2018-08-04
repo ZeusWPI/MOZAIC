@@ -1,7 +1,9 @@
 import { BotConfig, BotRunner } from "./index";
-import { ClientReactor } from "./ClientReactor";
 import { Connected, GameStep, GameFinished, ClientSend } from "./events";
 import { ClientParams } from "./networking/EventWire";
+import { EventHandler, Client } from "./networking/Client";
+import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
+import { ISimpleEvent } from "ste-simple-events";
 
 export type Params = ClientParams & {
     botConfig: BotConfig,
@@ -10,17 +12,20 @@ export type Params = ClientParams & {
 
 export class PwClient {
     readonly clientId: number;
-    readonly reactor: ClientReactor;
+    readonly eventEmitter: SimpleEventEmitter;
+    readonly client: Client;
     readonly botRunner: BotRunner;
 
     constructor(params: Params) {
         this.clientId = params.clientId;
+        this.eventEmitter = new SimpleEventEmitter();
+        this.client = new Client(params, this.eventEmitter);
         this.botRunner = new BotRunner(params.botConfig);
-        this.reactor = new ClientReactor(params);
-        this.reactor.on(GameStep).subscribe((step) => {
+        
+        this.on(GameStep).subscribe((step) => {
             this.handleGameStep(step);
         });
-        this.reactor.on(GameFinished).subscribe((step) => {
+        this.on(GameFinished).subscribe((_step) => {
             // TODO: actually quit
             console.log(`client ${this.clientId} quit`);
             this.botRunner.killBot();
@@ -33,15 +38,23 @@ export class PwClient {
             "player_number": this.clientId,
         });
         this.botRunner.run(meta);
-        this.reactor.connect();
+        this.client.connect();
     }
 
 
     private handleGameStep(step: GameStep) {
         this.botRunner.request(step.state, (response) => {
-            this.reactor.dispatch(ClientSend.create({
+            this.dispatch(ClientSend.create({
                 data: response,
             }));
         });
+    }
+
+    public dispatch(event: any) {
+        this.eventEmitter.handleEvent(event);
+    }
+
+    public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
+        return this.eventEmitter.on(eventType);
     }
 }
