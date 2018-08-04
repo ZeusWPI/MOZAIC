@@ -30,7 +30,9 @@ export class PwClient {
             console.log(`client ${this.clientId} quit`);
             this.botRunner.killBot();
         });
-
+        this.on(ClientSend).subscribe((e) => {
+            this.client.send(e);
+        });
     }
 
     public run() {
