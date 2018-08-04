@@ -1,7 +1,7 @@
 import { BotConfig, BotRunner } from "./index";
 import { ClientReactor } from "./ClientReactor";
 import { Connected, GameStep, GameFinished, ClientSend } from "./events";
-import { ClientParams } from "./EventWire";
+import { ClientParams } from "./networking/EventWire";
 
 export type Params = ClientParams & {
     botConfig: BotConfig,

@@ -1,7 +1,6 @@
-import { ProtobufStream } from "./ProtobufStream";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from 'ste-simple-events';
-import { EventWire, ClientParams } from './EventWire';
+import { EventWire, ClientParams } from './networking/EventWire';
 import { Connected, Disconnected } from "./events";
 
 

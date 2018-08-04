@@ -1,10 +1,9 @@
-import { Address } from './EventWire';
-import { BotRunner, BotConfig } from './BotRunner';
+import { Address } from './networking/EventWire';
+import { BotConfig } from './BotRunner';
 import { PwClient } from './PwClient';
 import { MatchReactor } from './MatchReactor';
 import { SimpleEventEmitter } from './reactor';
 import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './events';
-import { ClientReactor } from './ClientReactor';
 import * as events from './events';
 import { ServerRunner, ServerParams } from './ServerRunner';
 

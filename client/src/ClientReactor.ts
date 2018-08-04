@@ -1,5 +1,5 @@
-import { EventWire } from "./EventWire";
-import { ClientParams } from "./EventWire";
+import { EventWire } from "./networking/EventWire";
+import { ClientParams } from "./networking/EventWire";
 import { SimpleEventEmitter, EventType } from "./reactor";
 import { ISimpleEvent } from "ste-simple-events";
 import { Connected, Disconnected } from "./events";
