@@ -4,6 +4,8 @@ import proto = protocol_root.mozaic.protocol;
 import {
     SimpleEventDispatcher,
     SignalDispatcher,
+    ISimpleEvent,
+    ISignal,
 } from 'strongly-typed-events';
 
 import { ProtobufStream } from './ProtobufStream';
