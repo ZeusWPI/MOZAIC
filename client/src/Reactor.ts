@@ -1,7 +1,9 @@
 import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
+import { EventHandler } from "./networking/Client";
+import { WireEvent } from "./networking/EventWire";
 
-export class Reactor {
+export class Reactor implements EventHandler {
     private eventEmitter: SimpleEventEmitter;
 
     constructor() {
@@ -9,10 +11,18 @@ export class Reactor {
     }
 
     public dispatch(event: any) {
-        this.eventEmitter.handleEvent(event);
+        this.handleEvent(event);
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
         return this.eventEmitter.on(eventType);
+    }
+
+    public handleEvent(event: any) {
+        this.eventEmitter.handleEvent(event);
+    }
+
+    public handleWireEvent(event: WireEvent) {
+        this.eventEmitter.handleWireEvent(event);
     }
 }

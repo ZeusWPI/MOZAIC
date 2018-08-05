@@ -4,6 +4,7 @@ import { ClientParams } from "./networking/EventWire";
 import { EventHandler, Client } from "./networking/Client";
 import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
+import { Reactor } from "./Reactor";
 
 export type Params = ClientParams & {
     botConfig: BotConfig,
@@ -12,14 +13,14 @@ export type Params = ClientParams & {
 
 export class PwClient {
     readonly clientId: number;
-    readonly eventEmitter: SimpleEventEmitter;
+    readonly reactor: Reactor;
     readonly client: Client;
     readonly botRunner: BotRunner;
 
     constructor(params: Params) {
         this.clientId = params.clientId;
-        this.eventEmitter = new SimpleEventEmitter();
-        this.client = new Client(params, this.eventEmitter);
+        this.reactor = new Reactor();
+        this.client = new Client(params, this.reactor);
         this.botRunner = new BotRunner(params.botConfig);
         
         this.on(GameStep).subscribe((step) => {
@@ -53,10 +54,10 @@ export class PwClient {
     }
 
     public dispatch(event: any) {
-        this.eventEmitter.handleEvent(event);
+        this.reactor.handleEvent(event);
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        return this.eventEmitter.on(eventType);
+        return this.reactor.on(eventType);
     }
 }
