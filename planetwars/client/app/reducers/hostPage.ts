@@ -8,7 +8,7 @@ export interface HostPageState {
   slots: M.BotSlot[];
   serverRunning: boolean;
   matchParams?: M.MatchParams;
-  runner?: PwClient.MatchRunner;
+  runner?: PwClient.MatchReactor;
 }
 
 const defaultState = { slots: [], serverRunning: false };

@@ -48,7 +48,8 @@ export interface RunningState {
 
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
   private slotManager: SlotManager;
-  private server?: PwClient.MatchRunner;
+  private server?: PwClient.ServerRunner;
+  private matchReactor?: PwClient.MatchReactor;
 
   constructor(props: LobbyProps) {
     super(props);
@@ -137,25 +138,28 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
     const { name, command: fullCommand } = bot;
     const [command, ...args] = stringArgv(bot.command);
-    const botConfig = { name, command, args };
+    const botConfig = { name , command, args };
 
-    PwClient.Client.connect({
-      token: Buffer.from(stringToken, 'hex'),
+    const client = new PwClient.PwClient({
       host: config.address.host,
       port: config.address.port,
-      logger: this.server.logger,
-    }).then((client) => {
-      const _pwClient = new PwClient.PwClient(client, botConfig);
-      console.log('connected local bot');
-    });
+      token: Buffer.from(stringToken, 'hex'),
+      botConfig: {
+        command: botConfig.command,
+        args: botConfig.args,
+      },
+      clientId: 5,
+    })
+    client.run();
+    console.log('connected local bot');
   }
 
   private removeBot = (num: number) => this.slotManager.removeBot(num);
 
   private removeExternalBot = (token: M.Token, playerNum: number, clientId: number) => {
     if (!this.validifyRunning(this.state)) { return; }
-    if (this.server) {
-      this.server.matchControl.removePlayer(clientId);
+    if (this.server && this.matchReactor) {
+      this.matchReactor.dispatch(PwClient.events.RemoveClient.create({clientId}));
       this.slotManager.disconnectClient(clientId);
       this.slotManager.removeBot(playerNum);
     }
@@ -197,60 +201,59 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const params = { ctrl_token: ctrlToken, address: config.address, logFile };
     console.log('launching server with', params);
 
-
     // callbacks should be set on the current slotmanager,
     // not the one belonging to 'this'. (It changes when a match is launched).
     const slotManager = this.slotManager;
 
-    PwClient.MatchRunner.create(Config.matchRunner, params)
-      .then((server) => {
-        console.log('test proc');
-        const slots = this.state.slots;
-        this.server = server;
-        this.slotManager.setMatchRunner(server);
-        this.server.onPlayerConnected.subscribe((clientId) => {
-          slotManager.connectClient(clientId);
-        });
-        this.server.onPlayerDisconnected.subscribe((clientId) => {
-          slotManager.connectClient(clientId);
-        });
+    this.server = new PwClient.ServerRunner(Config.matchRunner, params);
+    this.server.runServer();
 
-        this.server.onComplete.subscribe(() => {
-          this.props.sendNotification(
-            "Match ended",
-            `A match on map '${
-              this.state.type === "configuring" ?
-              "unknown" :
-              this.props.maps[this.state.config.mapId]
-            }' has ended`,
-            "Finished",
-          );
-        });
-        this.server.onError.subscribe(() => {
-          this.props.sendNotification(
-            "Match errored",
-            `A match on map '${
-              this.state.type === "configuring" ?
-              "unknown" :
-              this.props.maps[this.state.config.mapId]
-            }' has errored`,
-            "Error",
-          );
-        });
-        const newState: RunningState = {
-          type: 'running',
-          config,
-          slots,
-          matchId,
-          logFile,
-        };
-        this.setState(newState);
-      })
-      .catch((err) => {
-        this.stopServer();
-        alert(`Could not start game server: \n ${err}`);
-        console.log('Failed to start server.', err);
+    const slots = this.state.slots;
+
+    const clientParams = {
+      host: config.address.host,
+      port: config.address.port,
+      token: Buffer.from(params.ctrl_token, 'hex'),
+    }
+
+    try {
+      this.matchReactor = new PwClient.MatchReactor(clientParams);
+      this.slotManager.setMatchRunner(this.matchReactor);
+
+      this.matchReactor.on(PwClient.events.ClientConnected).subscribe((event) => {
+        slotManager.connectClient(event.clientId);
       });
+
+      this.matchReactor.on(PwClient.events.ClientDisconnected).subscribe((event) => {
+        slotManager.disconnectClient(event.clientId);
+      });
+
+      this.matchReactor.on(PwClient.events.GameFinished).subscribe(() => {
+        this.props.sendNotification(
+          "Match ended",
+          `A match on map '${
+            this.state.type === "configuring" ?
+            "unknown" :
+            this.props.maps[this.state.config.mapId]
+          }' has ended`,
+          "Finished",
+        );
+      });
+      // TODO: on error
+
+      const newState: RunningState = {
+        type: 'running',
+        config,
+        slots,
+        matchId,
+        logFile,
+      };
+      this.setState(newState);
+    } catch (err) {
+      this.stopServer();
+      alert(`Could not start game server: \n ${err}`);
+      console.log('Failed to start server.', err);
+    }
   }
 
   private stopServer = () => {
@@ -262,7 +265,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   }
 
   private launchGame = () => {
-    if (!this.server || !this.validifyRunning(this.state)) {
+    if (!this.matchReactor || !this.server || !this.validifyRunning(this.state)) {
       alert('Something went wrong');
       return;
     }
@@ -271,11 +274,11 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const gameConf = Lib.exportConfig(this.state.config, this.props.maps);
 
     // Clear old listeners from the lobby
-    this.server.onPlayerConnected.clear();
-    this.server.onPlayerDisconnected.clear();
+    this.matchReactor.on(PwClient.events.ClientConnected).clear();
+    this.matchReactor.on(PwClient.events.ClientDisconnected).clear();
 
     // Bind completion listeners
-    this.server.onComplete.subscribe(() => {
+    this.server.onExit.subscribe(() => {
       this.props.onMatchComplete(matchId);
     });
     this.server.onError.subscribe((err) => {
@@ -283,59 +286,61 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     });
 
     // Bind connection listeners
-    this.server.onPlayerDisconnected.subscribe(
-      (id: number) => this.props.onPlayerDisconnectDuringMatch(id));
-    this.server.onPlayerConnected.subscribe(
-      (id: number) => this.props.onPlayerReconnectedDuringMatch(id));
+    this.matchReactor.on(PwClient.events.ClientDisconnected).subscribe(
+      (event) => this.props.onPlayerDisconnectDuringMatch(event.clientId));
+    this.matchReactor.on(PwClient.events.ClientConnected).subscribe(
+      (event) => this.props.onPlayerReconnectedDuringMatch(event.clientId));
 
     // Start game
-    this.server.matchControl.startGame(gameConf)
-      // This gets procced when the game has actually started
-      .then(() => {
-        const { host, port, maxTurns, mapId } = this.props.config!;
-        if (!this.validifyRunning(this.state)) { return; }
-        const match: M.PlayingHostedMatch = {
-          uuid: this.state.matchId,
-          type: M.MatchType.hosted,
-          status: M.MatchStatus.playing,
-          maxTurns,
-          map: mapId!,
-          network: { host, port },
-          timestamp: new Date(),
-          logPath: this.state.logFile,
-          players: this.state.slots.map((slot) => {
-            if (slot.bot) {
-              const botSlot: M.InternalBotSlot = {
-                type: M.BotSlotType.internal,
-                token: slot.token,
-                botId: slot.bot.uuid,
-                name: slot.name,
-                connected: slot.connected,
-              };
-              return botSlot;
-            } else {
-              const botSlot: M.ExternalBotSlot = {
-                type: M.BotSlotType.external,
-                token: slot.token,
-                name: slot.name,
-                connected: slot.connected,
-              };
-              return botSlot;
-            }
-          }),
-        };
-        this.props.saveMatch(match);
-        this.resetState();
-      })
-      .catch((err) => {
-        alert('Failed to start match. See console for info.');
-        console.log(err);
-      });
+    const matchConfig = {
+      mapPath: gameConf.map_file,
+      maxTurns: gameConf.max_turns,
+    }
+    this.matchReactor.dispatch(PwClient.events.StartGame.create(matchConfig));
+    try {
+      const { host, port, maxTurns, mapId } = this.props.config!;
+      if (!this.validifyRunning(this.state)) { return; }
+      const match: M.PlayingHostedMatch = {
+        uuid: this.state.matchId,
+        type: M.MatchType.hosted,
+        status: M.MatchStatus.playing,
+        maxTurns,
+        map: mapId!,
+        network: { host, port },
+        timestamp: new Date(),
+        logPath: this.state.logFile,
+        players: this.state.slots.map((slot) => {
+          if (slot.bot) {
+            const botSlot: M.InternalBotSlot = {
+              type: M.BotSlotType.internal,
+              token: slot.token,
+              botId: slot.bot.uuid,
+              name: slot.name,
+              connected: slot.connected,
+            };
+            return botSlot;
+          } else {
+            const botSlot: M.ExternalBotSlot = {
+              type: M.BotSlotType.external,
+              token: slot.token,
+              name: slot.name,
+              connected: slot.connected,
+            };
+            return botSlot;
+          }
+        }),
+      };
+      this.props.saveMatch(match);
+      this.resetState();
+    } catch(err) {
+      alert('Failed to start match. See console for info.');
+      console.log(err);
+    }
   }
 
   private killServer() {
     if (this.server) {
-      this.server.shutdown();
+      this.server.killServer();
       this.server = undefined;
       console.log('server killed');
     }

@@ -19,7 +19,7 @@ export abstract class MatchLog {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
-  public abstract addEntry(entry: PwTypes.LogEntry): void;
+  public abstract addEntry(entry: PwTypes.PlayerAction): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -32,7 +32,8 @@ export abstract class MatchLog {
 }
 
 export class HostedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
+  // TODO: typing
+  public addEntry(entry: any) {
     switch (entry.type) {
       case "game_state": {
         const state = GameState.fromJson(entry.state);
@@ -47,7 +48,8 @@ export class HostedMatchLog extends MatchLog {
 }
 
 export class JoinedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
+  // TODO: typing
+  public addEntry(entry: any) {
     if (entry.type === 'player_entry') {
       // this should always be the case since this is a joined match
       const { player, record } = entry;
@@ -118,7 +120,8 @@ export class PlayerLog {
     this.turns = [];
   }
 
-  public addRecord(record: PwTypes.LogRecord) {
+  // TODO: typing
+  public addRecord(record: any) {
     switch (record.type) {
       case 'step': {
         this.turns.push({ state: record.state });
