@@ -11,7 +11,7 @@ export class Reactor implements EventHandler {
     }
 
     public dispatch(event: any) {
-        this.handleEvent(event);
+        this.eventEmitter.handleAsync(event);
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {

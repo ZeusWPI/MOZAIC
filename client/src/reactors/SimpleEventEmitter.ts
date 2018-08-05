@@ -27,6 +27,13 @@ export class SimpleEventEmitter {
         return handler.asSimpleEvent();
     }
 
+    handleAsync(event: any) {
+        const handler = this.handlers[event.constructor.typeId];
+        if (handler) {
+            handler.handleAsync(event);
+        }
+    }
+
     handleEvent(event: any) {
         const handler = this.handlers[event.constructor.typeId];
         if (handler) {
@@ -52,6 +59,10 @@ class SimpleEventHandler<T> {
 
     handleEvent(event) {
         this.dispatcher.dispatch(event);
+    }
+
+    handleAsync(event) {
+        this.dispatcher.dispatchAsync(event);
     }
 
     handleWireEvent(data: Uint8Array) {
