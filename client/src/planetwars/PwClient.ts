@@ -1,10 +1,10 @@
-import { BotConfig, BotRunner } from "./index";
-import { Connected, GameStep, GameFinished, ClientSend } from "./events";
-import { ClientParams } from "./networking/EventWire";
-import { EventHandler, Client } from "./networking/Client";
-import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
+import { BotConfig, BotRunner } from "../index";
+import { Connected, GameStep, GameFinished, ClientSend } from "../events";
+import { ClientParams } from "../networking/EventWire";
+import { EventHandler, Client } from "../networking/Client";
+import { SimpleEventEmitter, EventType } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
-import { Reactor } from "./Reactor";
+import { Reactor } from "../reactors/Reactor";
 
 export type Params = ClientParams & {
     botConfig: BotConfig,

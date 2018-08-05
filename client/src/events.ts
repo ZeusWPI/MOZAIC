@@ -1,6 +1,3 @@
-import { TextDecoder } from 'text-encoding';
-import * as Pw from './PwTypes';
-
 import * as protocol_root from './proto';
 const event_types = require('./event_types');
 const events = protocol_root.mozaic.events;

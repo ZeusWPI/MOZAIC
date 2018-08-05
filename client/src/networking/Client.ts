@@ -1,6 +1,4 @@
 import { EventWire, ClientParams } from "./EventWire";
-import { SimpleEventEmitter, EventType } from "../SimpleEventEmitter";
-import { ISimpleEvent } from "ste-simple-events";
 import { Connected, Disconnected } from "../events";
 
 export interface EventHandler {

@@ -1,4 +1,4 @@
-import { Address } from "./index";
+import { Address } from "../index";
 import * as tmp from 'tmp';
 import * as fs from 'fs';
 import { execFile, ChildProcess } from 'child_process';

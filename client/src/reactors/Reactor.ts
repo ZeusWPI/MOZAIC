@@ -1,7 +1,7 @@
 import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
-import { EventHandler } from "./networking/Client";
-import { WireEvent } from "./networking/EventWire";
+import { EventHandler } from "../networking/Client";
+import { WireEvent } from "../networking/EventWire";
 
 export class Reactor implements EventHandler {
     private eventEmitter: SimpleEventEmitter;

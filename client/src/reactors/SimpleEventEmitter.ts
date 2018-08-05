@@ -1,5 +1,5 @@
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
-import { WireEvent } from './networking/EventWire';
+import { WireEvent } from '../networking/EventWire';
 
 export interface EventType<T> {
     new(): T,

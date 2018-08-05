@@ -1,11 +1,11 @@
 import { Address } from './networking/EventWire';
-import { BotConfig } from './BotRunner';
-import { PwClient } from './PwClient';
-import { SimpleEventEmitter } from './SimpleEventEmitter';
+import { BotConfig } from './planetwars/BotRunner';
+import { PwClient } from './planetwars/PwClient';
+import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
 import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './events';
 import * as events from './events';
-import { ServerRunner, ServerParams } from './ServerRunner';
-import { Reactor } from './Reactor';
+import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
+import { Reactor } from './reactors/Reactor';
 import { Client } from './networking/Client';
 
 const EVENT_TYPES = require('./event_types');
