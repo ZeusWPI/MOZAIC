@@ -1,13 +1,9 @@
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
+import { WireEvent } from '../networking/EventWire';
 
 export interface EventType<T> {
     new(): T,
 }
-
-// export interface Reactor {
-//     handleEvent(event:  );
-//     handleWireEvent(event: WireEvent);
-// }
 
 // // Allows subscribing to individual MOZAIC events through an EventEmitter-based
 // // interface.
@@ -31,14 +27,21 @@ export class SimpleEventEmitter {
         return handler.asSimpleEvent();
     }
 
-    handleEvent(event) {
+    handleAsync(event: any) {
+        const handler = this.handlers[event.constructor.typeId];
+        if (handler) {
+            handler.handleAsync(event);
+        }
+    }
+
+    handleEvent(event: any) {
         const handler = this.handlers[event.constructor.typeId];
         if (handler) {
             handler.handleEvent(event);
         }
     }
 
-    handleWireEvent(event) {
+    handleWireEvent(event: WireEvent) {
         const handler = this.handlers[event.typeId];
         if (handler) {
             handler.handleWireEvent(event.data);
@@ -56,6 +59,10 @@ class SimpleEventHandler<T> {
 
     handleEvent(event) {
         this.dispatcher.dispatch(event);
+    }
+
+    handleAsync(event) {
+        this.dispatcher.dispatchAsync(event);
     }
 
     handleWireEvent(data: Uint8Array) {

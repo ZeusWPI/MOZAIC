@@ -98,7 +98,6 @@ export class SlotManager {
     this.slotList.forEach((token) => {
       const slot = this.slots[token];
       this.registerSlot(slot);
-      this.notifyListeners();
     });
   }
 
@@ -117,7 +116,6 @@ export class SlotManager {
         clientId: slot.clientId,
         token: Buffer.from(slot.token, 'utf-8'),
       }));
-      slot.clientId = slot.clientId;
       if (slot.clientId) {
         this.clients[slot.clientId] = slot;
       }
