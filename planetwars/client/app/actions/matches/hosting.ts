@@ -9,4 +9,4 @@ export const changeBotSlot = actionCreator<M.BotSlot>('CHANGE_BOT_SLOT');
 export const selectMap = actionCreator<string>('SELECT_MAP');
 export const playerConnected = actionCreator<M.Token>('PLAYER_CONNECT');
 export const playerDisconnected = actionCreator<M.Token>('PLAYER_DISCONNECT');
-export const serverStarted = actionCreator<PwClient.MatchReactor>('SERVER_STARTED');
+export const serverStarted = actionCreator<PwClient.Reactor>('SERVER_STARTED');

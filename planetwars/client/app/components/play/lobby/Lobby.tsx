@@ -49,7 +49,7 @@ export interface RunningState {
 export class Lobby extends React.Component<LobbyProps, LobbyState> {
   private slotManager: SlotManager;
   private server?: PwClient.ServerRunner;
-  private matchReactor?: PwClient.MatchReactor;
+  private matchReactor?: PwClient.Reactor;
 
   constructor(props: LobbyProps) {
     super(props);
@@ -217,7 +217,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     }
 
     try {
-      this.matchReactor = new PwClient.MatchReactor(clientParams);
+      this.matchReactor = new PwClient.Reactor();
       this.slotManager.setMatchRunner(this.matchReactor);
 
       this.matchReactor.on(PwClient.events.ClientConnected).subscribe((event) => {

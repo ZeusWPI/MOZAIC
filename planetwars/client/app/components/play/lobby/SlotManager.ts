@@ -3,7 +3,7 @@ import { Chance } from 'chance';
 import * as M from '../../../database/models';
 import { generateToken } from '../../../utils/GameRunner';
 import { WeakConfig, StrongConfig } from '../types';
-import { MatchReactor, events } from 'mozaic-client';
+import { Reactor, events, PwClient } from 'mozaic-client';
 
 export interface Slot {
   name: string;
@@ -17,7 +17,7 @@ export type Slots = { [token: string]: Slot };
 export type Clients = { [clientId: number]: Slot};
 
 export class SlotManager {
-  public matchReactor?: MatchReactor;
+  public matchReactor?: Reactor;
   public connectedClients: Set<number> = new Set();
   public slots: Slots;
   public slotList: string[];
@@ -84,14 +84,16 @@ export class SlotManager {
     this.notifyListeners();
   }
 
-  public setMatchRunner(matchReactor: MatchReactor) {
+  public setMatchRunner(matchReactor: Reactor) {
     this.matchReactor = matchReactor;
 
-    matchReactor.on(events.ClientConnected).subscribe((event) => {
+    // TODO: typing
+    matchReactor.on(events.ClientConnected).subscribe((event: any) => {
       this.connectClient(event.clientId);
     });
 
-    matchReactor.on(events.ClientDisconnected).subscribe((event) => {
+    // TODO: typing
+    matchReactor.on(events.ClientDisconnected).subscribe((event: any) => {
       this.disconnectClient(event.clientId);
     });
 

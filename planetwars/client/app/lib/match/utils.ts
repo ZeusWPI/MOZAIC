@@ -1,6 +1,5 @@
 import * as M from '../../database/models';
 import * as fs from 'fs';
-import { PwTypes } from '.';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
 
 export function emptyLog(type: M.MatchType): MatchLog {

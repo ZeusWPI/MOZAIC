@@ -1,12 +1,9 @@
-export { Address } from './EventWire';
-export { BotRunner, BotConfig } from './BotRunner';
-export { PwClient } from './PwClient';
-export { ServerRunner, ServerParams } from './ServerRunner';
-export { MatchReactor } from './MatchReactor';
-export { ClientReactor } from './ClientReactor'
+export { Address } from './networking/EventWire';
+export { BotRunner, BotConfig } from './planetwars/BotRunner';
+export { PwClient } from './planetwars/PwClient';
+export { ServerRunner, ServerParams } from './planetwars/ServerRunner';
+export { Reactor } from './reactors/Reactor'
 
-import * as PwTypes from './PwTypes';
 import * as events from './events';
 
-export { PwTypes };
 export { events };

@@ -62,7 +62,7 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
     const token = new Buffer(bot.token, 'hex');
     const clientParams = { token, host, port, botConfig, clientId: 5 };
 
-    const clientReactor = new PwClient.ClientReactor(clientParams);
+    const clientReactor = new PwClient.Reactor();
 
     clientReactor.dispatch(PwClient.events.RegisterClient.create({
       clientId: 5, // TODO: FIX THIS ASAP
@@ -151,11 +151,7 @@ export function runMatch() {
       const server = new PwClient.ServerRunner(Config.matchRunner, config);
       server.runServer();
 
-      const runner = new PwClient.MatchReactor({
-        host: params.address.host,
-        port: params.address.port,
-        token: Buffer.from(params.ctrl_token, 'hex'),
-      });
+      const runner = new PwClient.Reactor();
 
 
       dispatch(Host.serverStarted(runner));
