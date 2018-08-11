@@ -7,6 +7,7 @@ import * as events from './events';
 import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
 import { Reactor } from './reactors/Reactor';
 import { Client } from './networking/Client';
+import { PwMatch } from './planetwars/PwMatch';
 
 const EVENT_TYPES = require('./event_types');
 
@@ -68,26 +69,19 @@ const params: ServerParams = {
 const runner = new ServerRunner(bin_path, params);
 runner.runServer();
 
-
-const matchReactor = new Reactor();
-
-const ownerClientParams = {
+const match = new PwMatch({
     host: addr.host,
     port: addr.port,
     token: Buffer.from(params.ctrl_token, 'hex'),
-};
-
-// TODO: maybe this should be a class
-const ownerHandler = new SimpleEventEmitter();
-const ownerClient = new Client(ownerClientParams, ownerHandler);
+});
 
 const clients = {};
 const waiting_for = new Set();
 
-ownerHandler.on(Connected).subscribe((_) => {
+match.on(Connected).subscribe((_) => {
     players.forEach((player, idx) => {
         const player_num = idx + 1;
-        ownerClient.send(RegisterClient.create({
+        match.dispatch(RegisterClient.create({
             clientId: player_num,
             token: Buffer.from(player.token, 'utf-8'),
         }));
@@ -98,9 +92,9 @@ ownerHandler.on(Connected).subscribe((_) => {
 // TODO: this should be done in a more general way
 // print all received match events, and forward them to the matchReactor
 Object.keys(events).forEach((eventName) => {
-    ownerHandler.on(events[eventName]).subscribe((event) => {
+    match.on(events[eventName]).subscribe((event) => {
         console.log(event);
-        matchReactor.dispatch(event);
+        match.dispatch(event);
     });
 });
 
@@ -109,7 +103,7 @@ Object.keys(events).forEach((eventName) => {
 
 // MATCH LOGIC
 
-matchReactor.on(RegisterClient).subscribe((data) => {
+match.on(RegisterClient).subscribe((data) => {
     if (!clients[data.clientId]) {
         const client = new PwClient({
             clientId: data.clientId,
@@ -123,18 +117,18 @@ matchReactor.on(RegisterClient).subscribe((data) => {
     }
 });
 
-matchReactor.on(ClientConnected).subscribe(({ clientId }) => {
+match.on(ClientConnected).subscribe(({ clientId }) => {
     waiting_for.delete(clientId);
     if (waiting_for.size == 0) {
-        ownerClient.send(StartGame.create(gameConfig));
+        match.dispatch(StartGame.create(gameConfig));
     }
 });
 
-matchReactor.on(ClientDisconnected).subscribe(({ clientId }) => {
+match.on(ClientDisconnected).subscribe(({ clientId }) => {
     waiting_for.add(clientId);
 })
 
 // use a timeout to make sure that the match is running
 setTimeout(() => {
-    ownerClient.connect();
+    match.connect();
 }, 100);
