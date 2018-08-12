@@ -11,20 +11,6 @@ import { PwMatch } from './planetwars/PwMatch';
 
 const EVENT_TYPES = require('./event_types');
 
-// console.log(EVENT_TYPES);
-// var evt = ClientConnected.create({ clientId: 1 });
-// console.log((evt.constructor as any).typeId);
-// console.log(evt);
-
-var emitter = new SimpleEventEmitter();
-emitter.on(ClientConnected).subscribe((e) => {
-    console.log('HEY IK HEB EEN EVENT');
-    console.log(e);
-});
-emitter.handleEvent(ClientConnected.create({
-    clientId: 1
-}));
-
 const tokens = ["aaaa", "bbbb"];
 
 const addr: Address = {
