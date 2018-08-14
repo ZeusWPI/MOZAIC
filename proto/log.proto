@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package mozaic.protocol;
+package mozaic.log;
 
 // A log message is one record in a MOZAIC log. MOZAIC aims to implement
 // distributed logging, having each component in the system log the information
