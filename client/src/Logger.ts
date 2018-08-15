@@ -7,8 +7,8 @@ export class Logger {
     writeStream: WriteStream;
     clientId: number;
 
-    constructor(clientId: number, path: string) {
-        this.writeStream = createWriteStream(path);
+    constructor(clientId: number, sink: WriteStream) {
+        this.writeStream = sink;
         this.clientId = clientId;
     }
 

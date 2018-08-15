@@ -3,13 +3,14 @@ import { Client } from "../networking/Client";
 import { EventType } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { ClientParams } from "../networking/EventWire";
+import { Logger } from "../Logger";
 
 export class PwMatch {
     private reactor: Reactor;
     private client: Client;
 
-    constructor(params: ClientParams) {
-        this.reactor = new Reactor();
+    constructor(params: ClientParams, logger: Logger) {
+        this.reactor = new Reactor(logger);
         this.client = new Client(params, this.reactor);
     }
 

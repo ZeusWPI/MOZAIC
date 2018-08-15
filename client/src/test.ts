@@ -8,6 +8,8 @@ import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
 import { Reactor } from './reactors/Reactor';
 import { Client } from './networking/Client';
 import { PwMatch } from './planetwars/PwMatch';
+import { createWriteStream } from 'fs';
+import { Logger } from './Logger';
 
 const EVENT_TYPES = require('./event_types');
 
@@ -52,6 +54,8 @@ const params: ServerParams = {
     logFile: "log.json",
 }
 
+const logStream = createWriteStream('log.out');
+
 const runner = new ServerRunner(bin_path, params);
 runner.runServer();
 
@@ -59,7 +63,7 @@ const match = new PwMatch({
     host: addr.host,
     port: addr.port,
     token: Buffer.from(params.ctrl_token, 'hex'),
-});
+}, new Logger(0, logStream));
 
 const clients = {};
 const waiting_for = new Set();
