@@ -101,6 +101,7 @@ match.on(RegisterClient).subscribe((data) => {
             port: addr.port,
             token: data.token,
             botConfig: simpleBot,
+            logSink: logStream,
         });
         clients[data.clientId] = client;
         client.run();

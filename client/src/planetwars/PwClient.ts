@@ -5,10 +5,13 @@ import { EventHandler, Client } from "../networking/Client";
 import { SimpleEventEmitter, EventType } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { Reactor } from "../reactors/Reactor";
+import { Logger } from "../Logger";
+import { WriteStream } from "fs";
 
 export type Params = ClientParams & {
     botConfig: BotConfig,
     clientId: number;
+    logSink: WriteStream;
 }
 
 export class PwClient {
@@ -19,7 +22,8 @@ export class PwClient {
 
     constructor(params: Params) {
         this.clientId = params.clientId;
-        this.reactor = new Reactor();
+        const logger = new Logger(params.clientId, params.logSink);
+        this.reactor = new Reactor(logger);
         this.client = new Client(params, this.reactor);
         this.botRunner = new BotRunner(params.botConfig);
         
