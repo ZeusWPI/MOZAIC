@@ -79,15 +79,12 @@ match.on(Connected).subscribe((_) => {
     })
 });
 
-// TODO: this should be done in a more general way
-// print all received match events, and forward them to the matchReactor
+// print all events that happen on the match reactor
 Object.keys(events).forEach((eventName) => {
     match.on(events[eventName]).subscribe((event) => {
         console.log(event);
-        match.dispatch(event);
     });
 });
-
 
 
 
