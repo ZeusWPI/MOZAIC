@@ -71,7 +71,7 @@ const waiting_for = new Set();
 match.on(Connected).subscribe((_) => {
     players.forEach((player, idx) => {
         const player_num = idx + 1;
-        match.dispatch(RegisterClient.create({
+        match.send(RegisterClient.create({
             clientId: player_num,
             token: Buffer.from(player.token, 'utf-8'),
         }));
@@ -108,7 +108,7 @@ match.on(RegisterClient).subscribe((data) => {
 match.on(ClientConnected).subscribe(({ clientId }) => {
     waiting_for.delete(clientId);
     if (waiting_for.size == 0) {
-        match.dispatch(StartGame.create(gameConfig));
+        match.send(StartGame.create(gameConfig));
     }
 });
 

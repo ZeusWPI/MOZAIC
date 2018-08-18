@@ -18,9 +18,7 @@ export class PwMatch {
         return this.reactor.on(eventType);
     }
 
-    // TODO: maybe this should be named differently because the event
-    // is sent to the server, not handled.
-    public dispatch(event: any) {
+    public send(event: any) {
         this.client.send(event);
     }
 
