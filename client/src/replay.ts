@@ -5,6 +5,10 @@ import { SimpleEventEmitter } from "./reactors/SimpleEventEmitter";
 const { LogEvent } = protocol_root.mozaic.log;
 import * as events from './events';
 
+// TODO: this should be made into a proper class that forms the basis
+// for pull-based log parsing, with a separate stream for each clientid.
+// duality with the logger code would be really nice.
+
 
 const eventEmitter = new SimpleEventEmitter();
 
