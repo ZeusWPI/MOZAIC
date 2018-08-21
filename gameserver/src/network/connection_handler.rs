@@ -1,5 +1,4 @@
 use std::io;
-use std::sync::{Arc, Mutex};
 use futures::{Future, Stream, Sink, Poll, Async};
 use futures::sync::mpsc;
 use tokio::net::TcpStream;

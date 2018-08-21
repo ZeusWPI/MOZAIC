@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use futures::sync::mpsc::{unbounded, UnboundedSender, UnboundedReceiver};
 
 use super::connection_handler::{ConnectionHandler, ConnectionHandle};
 use reactors::ReactorCore;
