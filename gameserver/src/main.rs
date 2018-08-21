@@ -52,7 +52,10 @@ use oneshot_server::{MatchDescription, OneshotServer};
 
 // Load the config and start the game.
 fn main() {
-    let args: Vec<_> = env::args().collect();
+    run(env::args().collect());
+}
+
+pub fn run(args : Vec<String>) {
     if args.len() != 2 {
         println!("Expected 1 argument (config file). {} given.", args.len() - 1);
         std::process::exit(1)
@@ -75,7 +78,7 @@ fn main() {
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config(path: &Path)
+fn parse_config(path: &Path)
     -> Result<MatchDescription, Box<Error>>
 {
     println!("Opening config {}", path.to_str().unwrap());
