@@ -23,6 +23,7 @@ extern crate tokio_io;
 extern crate tokio_process;
 extern crate tokio;
 extern crate tokio_timer;
+extern crate tokio_codec;
 #[macro_use]
 extern crate futures;
 

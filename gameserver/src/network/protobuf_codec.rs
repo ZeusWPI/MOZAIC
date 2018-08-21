@@ -8,7 +8,8 @@ use futures::{Poll, Async, Stream, StartSend, AsyncSink};
 use futures::sink::{Sink, Send};
 use std::marker::PhantomData;
 
-use tokio_io::{codec, AsyncRead, AsyncWrite};
+use tokio_codec::{Decoder, Encoder, Framed};
+use tokio_io::{AsyncRead, AsyncWrite};
 
 pub struct MessageStream<T, M> {
     inner: ProtobufTransport<T>,
@@ -92,7 +93,7 @@ impl<T, M> Sink for MessageStream<T, M>
 }
 
 pub struct ProtobufTransport<T> {
-    inner: codec::Framed<T, LengthDelimited>,
+    inner: Framed<T, LengthDelimited>,
 }
 
 impl<T> ProtobufTransport<T>
@@ -100,7 +101,7 @@ impl<T> ProtobufTransport<T>
 {
     pub fn new(stream: T) -> Self {
         ProtobufTransport {
-            inner: stream.framed(LengthDelimited::new()),
+            inner: LengthDelimited::new().framed(stream),
         }
     }
 
@@ -205,7 +206,7 @@ impl LengthDelimited {
     }
 }
 
-impl codec::Decoder for LengthDelimited {
+impl Decoder for LengthDelimited {
     type Item = BytesMut;
     type Error = Error;
 
@@ -233,7 +234,7 @@ impl codec::Decoder for LengthDelimited {
     }
 }
 
-impl codec::Encoder for LengthDelimited {
+impl Encoder for LengthDelimited {
     type Item = BytesMut;
     type Error = Error;
 
