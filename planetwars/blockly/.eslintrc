@@ -1,0 +1,71 @@
+{
+  "parser": "babel-eslint",
+  "extends": [
+    "airbnb",
+    "prettier",
+    "prettier/react"
+  ],
+  "plugins": [
+    "babel",
+    "react",
+    "promise",
+    "prettier"
+  ],
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    }
+  },
+  "globals": {
+    "__DEV__": false
+  },
+  "rules": {
+    "global-require": "off",
+    "func-names": "off",
+    "no-console": "off",
+    "class-methods-use-this": "off",
+    "react/jsx-filename-extension": "off",
+    "jsx-a11y/no-static-element-interactions": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "no-unused-vars": "warn",
+    "prettier/prettier": [
+      "error",
+      {
+        "singleQuote": true,
+        "trailingComma": "all",
+        "printWidth": 100
+      }
+    ],
+//    TODO: turn this off at end of project and fix
+    "react/prefer-stateless-function": 0
+  },
+  "settings": {
+    "import/resolver": {
+      "webpack": {
+        "config": "./config/webpack.config.js"
+      }
+    },
+//    "react": {
+//      "createClass": "createReactClass",
+//      // Regex for Component Factory to use,
+//      // default to "createReactClass"
+//      "pragma": "React",
+//      // Pragma to use, default to "React"
+//      "version": "16.4",
+//      // React version, default to the latest React stable release
+//      "flowVersion": "0.77"
+//      // Flow version
+//    },
+    "propWrapperFunctions": [
+      "forbidExtraProps"
+    ]
+    // The names of any functions used to wrap the
+    // propTypes object, e.g. `forbidExtraProps`.
+    // If this isn't set, any propTypes wrapped in
+    // a function will be skipped.
+  }
+}
