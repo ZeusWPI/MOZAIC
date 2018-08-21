@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom';
 const MOUNT_NODE = document.getElementById('root');
 
 let render = () => {
+  // Have to use require here, or hot reloading wont work because of reasons
   const Root = require('./components/App').default;
   ReactDOM.render(<Root />, MOUNT_NODE);
 };
