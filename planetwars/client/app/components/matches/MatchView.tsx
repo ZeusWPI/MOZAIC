@@ -1,3 +1,6 @@
+import { remote } from 'electron';
+const dialog = remote.dialog;
+import * as fs from 'fs';
 import * as React from 'react';
 
 import Visualizer from '../visualizer/Visualizer';
@@ -177,12 +180,14 @@ export class MatchViewer extends React.Component<Props, State> {
 
     const showVis = () => this.showVisualizer();
     const showLog = () => this.showLog();
+    const exportLog = () => this.exportLog();
 
     return (
       <div className={styles.matchView}>
         <div className={styles.matchTitleBar}>
           <div onClick={showVis} className={styles.matchTitleBarElement}> Visualizer </div>
           <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
+          <div onClick={exportLog} className={styles.matchTitleBarElement}> Export </div>
         </div>
         <div className={styles.displayBox}>
           <MatchDisplay
@@ -226,6 +231,14 @@ export class MatchViewer extends React.Component<Props, State> {
 
   private showLog() {
     this.setState({ viewState: ViewState.LOG });
+  }
+
+  private exportLog() {
+    const {match: { logPath }} = this.props;
+    dialog.showSaveDialog({title: "Export log", defaultPath: `log.json`}, (copyDest) => {
+      const log = fs.readFileSync(logPath);
+      fs.writeFileSync(copyDest, log);
+    });
   }
 }
 
