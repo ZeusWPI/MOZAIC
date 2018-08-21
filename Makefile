@@ -9,6 +9,7 @@ planetwars: client server
 
 client: server
 	cd client ; \
+	yarn install ; \
 	yarn build ; \
 	yarn link ; \
 
