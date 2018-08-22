@@ -30,7 +30,7 @@ export class Replayer {
         return this.clientStream(0).on(eventType);
     }
 
-    private emit(logEvent: LogEvent) {
+    public emit(logEvent: LogEvent) {
         const emitter = this.emitters[logEvent.clientId];
         if (emitter) {
             emitter.handleWireEvent({
@@ -41,12 +41,11 @@ export class Replayer {
     }
 }
 
-
-const eventEmitter = new SimpleEventEmitter();
+const replayer = new Replayer();
 
 // just print all events for now
 Object.keys(events).forEach((eventName) => {
-    eventEmitter.on(events[eventName]).subscribe((event) => {
+    replayer.on(events[eventName]).subscribe((event) => {
         console.log(event);
     });
 });
@@ -57,13 +56,5 @@ const messageStream = logStream.pipe(new ProtobufReader());
 
 messageStream.on('data', (bytes: Uint8Array) => {
     const logEvent = LogEvent.decode(bytes);
-    if (logEvent.clientId != 0) {
-        // ignore player messages for now
-        return;
-    }
-
-    eventEmitter.handleWireEvent({
-        typeId: logEvent.eventType,
-        data: logEvent.data,
-    });
+    replayer.emit(logEvent);
 });
