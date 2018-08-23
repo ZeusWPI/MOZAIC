@@ -5,6 +5,7 @@ import { SimpleEventEmitter, EventType } from "./reactors/SimpleEventEmitter";
 import LogEvent = protocol_root.mozaic.log.LogEvent;
 import * as events from './events';
 import { ISimpleEvent } from "ste-simple-events";
+import { create } from "domain";
 
 // TODO: this should be made into a proper class that forms the basis
 // for pull-based log parsing, with a separate stream for each clientid.
@@ -30,7 +31,7 @@ export class Replayer {
         return this.clientStream(0).on(eventType);
     }
 
-    public emit(logEvent: LogEvent) {
+    private emit(logEvent: LogEvent) {
         const emitter = this.emitters[logEvent.clientId];
         if (emitter) {
             emitter.handleWireEvent({
@@ -38,6 +39,16 @@ export class Replayer {
                 data: logEvent.data,
             });
         }
+    }
+
+    public replayFile(path: string) {
+        const logStream = createReadStream(path);
+        const messageStream = logStream.pipe(new ProtobufReader());
+
+        messageStream.on('data', (bytes: Uint8Array) => {
+            const logEvent = LogEvent.decode(bytes);
+            this.emit(logEvent);
+        });
     }
 }
 
@@ -50,11 +61,4 @@ Object.keys(events).forEach((eventName) => {
     });
 });
 
-
-const logStream = createReadStream('log.out');
-const messageStream = logStream.pipe(new ProtobufReader());
-
-messageStream.on('data', (bytes: Uint8Array) => {
-    const logEvent = LogEvent.decode(bytes);
-    replayer.emit(logEvent);
-});
+replayer.replayFile('log.out');
