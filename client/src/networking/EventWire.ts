@@ -10,6 +10,7 @@ import {
 
 import { ProtobufStream } from './ProtobufStream';
 import { execFileSync } from 'child_process';
+import { encodeEvent } from '../reactors/utils';
 
 export interface Address {
     host: string;
@@ -103,13 +104,8 @@ export class EventWire {
     }
 
     public send(event: any) {
-        let eventType = event.constructor as any;
-        let typeId = eventType.typeId;
-        if (!typeId) {
-            throw "invalid event";
-        }
-        let data = eventType.encode(event).finish();
-        this.sendWireEvent({ typeId, data });
+        let wireEvent = encodeEvent(event);
+        this.sendWireEvent(wireEvent);
 
     }
 
