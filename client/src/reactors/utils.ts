@@ -1,4 +1,5 @@
 import { WireEvent } from "../networking/EventWire";
+import { EventType } from "./SimpleEventEmitter";
 
 // TODO: how can we type events?
 // For easy interop with redux, a discriminated union type would be nice,
@@ -10,12 +11,19 @@ import { WireEvent } from "../networking/EventWire";
 // protobuf declaration. How can we integrate those?
 // Maybe we want to use an adapter for use with redux?
 
-export function encodeEvent(event: any): WireEvent {
+export function getType<T>(event: T): EventType<T> {
     let eventType = event.constructor as any;
-    let typeId = eventType.typeId;
-    if (!typeId) {
+    if (eventType.typeId) {
+        return eventType;
+    } else {
         throw "invalid event";
     }
+}
+
+export function encodeEvent(event: any): WireEvent {
+    const eventType = getType(event);
+    const typeId = eventType.typeId;
     let data = eventType.encode(event).finish();
     return { typeId, data };
 }
+
