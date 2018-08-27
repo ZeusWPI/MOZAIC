@@ -11,6 +11,7 @@ const protobuf = require('protobufjs');
 const pbts = require('protobufjs/cli/pbts');
 
 const toml = require('toml');
+const CodeBlockWriter = require('code-block-writer').default;
 
 /******************************************************************************
  * Helpers
@@ -96,12 +97,26 @@ function parse_events_toml() {
             callback(new gutil.PluginError('toml', 'unsupported'));
         }
         var events = toml.parse(file.contents).events;
-        file.contents = Buffer.from(JSON.stringify(events));
+        const writer = new CodeBlockWriter();
+        writer.writeLine('import "./proto";');
+        writer.write('declare module "./proto"').block(() => {
+            writer.write('namespace mozaic.events').block(() => {
+                Object.keys(events).forEach((eventName) => {
+                    const typeId = events[eventName];
+                    writer.write(`namespace ${eventName}`).block(() => {
+                        writer.write(`const typeId: ${typeId};`);
+                    });
+                });
+            });
+    
+        });
+        file.contents = Buffer.from(writer.toString());
         file.stem = 'event_types';
-        file.extname = '.json';
+        file.extname = '.d.ts';
         callback(null, file);
     });
 }
+
 
 /******************************************************************************
  * Tasks
@@ -166,8 +181,8 @@ function copy_generated_code() {
 
 const build = gulp.series(
     build_protobuf,
-    compile_typescript,
     make_events_json,
+    compile_typescript,
     copy_generated_code,
 );
 
