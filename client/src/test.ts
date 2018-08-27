@@ -8,10 +8,6 @@ import { PwMatch } from './planetwars/PwMatch';
 import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
 
-console.log(events);
-
-const EVENT_TYPES = require('./event_types');
-
 const tokens = ["aaaa", "bbbb"];
 
 const addr: Address = {
