@@ -127,7 +127,7 @@ function generate_events_implementation(events) {
     return writer.toString();
 }
 
-function parse_events_toml() {
+function generate_events_module() {
     return through.obj(function(file, enc, callback) {
         if (!file.isBuffer()) {
             callback(new gutil.PluginError('toml', 'unsupported'));
@@ -184,9 +184,9 @@ function type_proto() {
         .pipe(gulp.dest('generated'));
 }
 
-function make_events_json() {
+function gen_events() {
     return gulp.src("../proto/events.toml")
-        .pipe(parse_events_toml())
+        .pipe(generate_events_module())
         .pipe(gulp.dest('generated'));
 }
 
@@ -204,7 +204,7 @@ function watch_protobuf() {
 
 function watch_events_toml() {
     return gulp.watch("../proto/events.toml", gulp.series(
-        make_events_json,
+        gen_events,
         copy_generated_code,
     ));
 }
@@ -216,7 +216,7 @@ function copy_generated_code() {
 
 const build = gulp.series(
     build_protobuf,
-    make_events_json,
+    gen_events,
     compile_typescript,
     copy_generated_code,
 );
@@ -225,7 +225,8 @@ gulp.task('build', build);
 
 gulp.task('watch', gulp.parallel(
     watch_typescript,
-    watch_protobuf
+    watch_protobuf,
+    watch_events_toml,
 ));
 
 gulp.task('default', build);
