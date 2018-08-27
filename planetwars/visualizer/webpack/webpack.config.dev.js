@@ -17,7 +17,7 @@ module.exports = merge(baseConfig, {
     ],
     devtool: "source-map",
     devServer: {
-      contentBase: path.join(__dirname, '..'),
-      port: 9000
+        contentBase: path.join(__dirname, '..'),
+        port: 8080
     },
 });

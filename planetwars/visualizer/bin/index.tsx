@@ -3,6 +3,6 @@ import { render } from 'react-dom';
 import { HelloWorld } from '../src'
 
 render(
-    <HelloWorld color=""/>, 
+    <HelloWorld color="" />,
     document.getElementById('root')
 );
