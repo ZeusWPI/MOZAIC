@@ -16,3 +16,10 @@ export function encodeEvent(event: Event): WireEvent {
     let data = event.eventType.encode(event).finish();
     return { typeId, data };
 }
+
+// For use with redux and the like.
+// TODO: unify this with wire-events.
+export type TaggedEvent<T extends Event> = {
+    typeId: T["eventType"]["typeId"],
+    data: T,
+}
