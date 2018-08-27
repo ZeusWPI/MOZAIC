@@ -1,5 +1,5 @@
 import { EventWire, ClientParams } from "./EventWire";
-import { Connected, Disconnected } from "../events";
+import { Connected, Disconnected } from "../eventTypes";
 
 export interface EventHandler {
     handleEvent: (any) => void;

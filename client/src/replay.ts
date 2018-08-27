@@ -3,9 +3,8 @@ import { ProtobufReader } from "./networking/ProtobufStream";
 import * as protocol_root from './proto';
 import { SimpleEventEmitter, EventType } from "./reactors/SimpleEventEmitter";
 import LogEvent = protocol_root.mozaic.log.LogEvent;
-import * as events from './events';
+import * as events from './eventTypes';
 import { ISimpleEvent } from "ste-simple-events";
-import { create } from "domain";
 
 // TODO: this should be made into a proper class that forms the basis
 // for pull-based log parsing, with a separate stream for each clientid.
