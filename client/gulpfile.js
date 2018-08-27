@@ -93,7 +93,8 @@ function type_protobuf() {
 
 function generate_events_declaration(events) {
     const writer = new CodeBlockWriter();
-    writer.writeLine('import "./proto";');
+    writer.writeLine('import * as proto from "./proto";');
+    writer.writeLine('export = proto.mozaic.events;');
     writer.write('declare module "./proto"').block(() => {
         writer.write('namespace mozaic.events').block(() => {
             Object.keys(events).forEach((eventName) => {
@@ -122,6 +123,7 @@ function generate_events_implementation(events) {
         writer.writeLine(`${eventType}.typeId = ${typeId};`);
         writer.writeLine(`${eventType}.prototype.eventType = ${eventType};`);
     });
+    writer.writeLine('module.exports = events;');
     return writer.toString();
 }
 
@@ -132,15 +134,17 @@ function parse_events_toml() {
         }
         var events = toml.parse(file.contents).events;
 
+        const module_name = "eventTypes";
+
         const declaration = generate_events_declaration(events);
         this.push(new Vinyl({
-            path: 'event_types.d.ts',
+            path: `${module_name}.d.ts`,
             contents: Buffer.from(declaration),
         }));
 
         const implementation = generate_events_implementation(events);
         this.push(new Vinyl({
-            path: 'event_types.js',
+            path: `${module_name}.js`,
             contents: Buffer.from(implementation),
         }));
 
