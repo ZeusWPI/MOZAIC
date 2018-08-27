@@ -1,23 +1,30 @@
 {
-    "compilerOptions": {
-      "outDir": ".",
-      "target": "es5",
-      "module": "commonjs",
-      "declaration": true,
-      "noImplicitAny": true,
-      "strictNullChecks": true,
-      "removeComments": true,
-      "sourceMap": true,
-      "jsx": "react",
-      "typeRoots": [
-        "node_modules/@types"
-      ]
-    },
-    "include": [
-      "./src/**/*.tsx",
-      "./src/**/*.ts",
+  "compilerOptions": {
+    "target": "es5",
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "sourceMap": true,
+    "outDir": ".",
+    "jsx": "react",
+    "lib": [
+      "dom",
+      "es6",
+      "dom.iterable",
+      "scripthost"
     ],
-    "exclude": [
-      "node_modules"
-    ]
-  }
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+  },
+  "include": [
+    "./src/**/*.tsx",
+    "./src/**/*.ts",
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

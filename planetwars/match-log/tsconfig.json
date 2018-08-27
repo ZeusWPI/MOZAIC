@@ -1,17 +1,23 @@
 {
   "compilerOptions": {
-    "outDir": "dist",
     "target": "es5",
+    "moduleResolution": "node",
     "module": "commonjs",
-    "declaration": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "removeComments": true,
     "sourceMap": true,
-    "jsx": "react",
-    "typeRoots": [
-      "node_modules/@types"
-    ]
+    "outDir": "dist",
+    "lib": [
+      "dom",
+      "es6",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "alwaysStrict": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
   },
   "include": [
     "./src/**/*.tsx",
