@@ -91,32 +91,60 @@ function type_protobuf() {
     });
 }
 
+function generate_events_declaration(events) {
+    const writer = new CodeBlockWriter();
+    writer.writeLine('import "./proto";');
+    writer.write('declare module "./proto"').block(() => {
+        writer.write('namespace mozaic.events').block(() => {
+            Object.keys(events).forEach((eventName) => {
+                const typeId = events[eventName];
+                writer.write(`namespace ${eventName}`).block(() => {
+                    writer.write(`const typeId: ${typeId};`);
+                });
+                writer.write(`interface ${eventName}`).block(() => {
+                    writer.write(`eventType: typeof ${eventName};`);
+                });
+            });
+        });
+
+    });
+    return writer.toString();
+}
+
+function generate_events_implementation(events) {
+    const writer = new CodeBlockWriter();
+    writer.writeLine(`const proto_root = require('./proto');`);
+    // TODO: dont hardcode this
+    writer.writeLine(`const events = proto_root.mozaic.events;`);
+    Object.keys(events).forEach((eventName) => {
+        const typeId = events[eventName];
+        const eventType = `events["${eventName}"]`;
+        writer.writeLine(`${eventType}.typeId = ${typeId};`);
+        writer.writeLine(`${eventType}.prototype.eventType = ${eventType};`);
+    });
+    return writer.toString();
+}
+
 function parse_events_toml() {
     return through.obj(function(file, enc, callback) {
         if (!file.isBuffer()) {
             callback(new gutil.PluginError('toml', 'unsupported'));
         }
         var events = toml.parse(file.contents).events;
-        const writer = new CodeBlockWriter();
-        writer.writeLine('import "./proto";');
-        writer.write('declare module "./proto"').block(() => {
-            writer.write('namespace mozaic.events').block(() => {
-                Object.keys(events).forEach((eventName) => {
-                    const typeId = events[eventName];
-                    writer.write(`namespace ${eventName}`).block(() => {
-                        writer.write(`const typeId: ${typeId};`);
-                    });
-                    writer.write(`interface ${eventName}`).block(() => {
-                        writer.write(`eventType: typeof ${eventName};`);
-                    });
-                });
-            });
-    
-        });
-        file.contents = Buffer.from(writer.toString());
-        file.stem = 'event_types';
-        file.extname = '.d.ts';
-        callback(null, file);
+
+        const declaration = generate_events_declaration(events);
+        this.push(new Vinyl({
+            path: 'event_types.d.ts',
+            contents: Buffer.from(declaration),
+        }));
+
+        const implementation = generate_events_implementation(events);
+        this.push(new Vinyl({
+            path: 'event_types.js',
+            contents: Buffer.from(implementation),
+        }));
+
+        callback();
     });
 }
 
