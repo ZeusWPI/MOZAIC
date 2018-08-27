@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as h from 'react-hyperscript';
 
 import Config from '../util/config';
-import { GameState } from '../../../../lib/match';
+import { GameState } from 'planetwars-match-log';
 import { ResourceLoader } from '../util/resourceLoader';
 import * as spaceMath from '../util/spacemath';
 import { PlanetRenderer } from '../renderers/planets';

@@ -3,6 +3,7 @@
     "target": "es5",
     "moduleResolution": "node",
     "module": "commonjs",
+    "declaration": true,
     "sourceMap": true,
     "outDir": ".",
     "jsx": "react",
@@ -14,7 +15,7 @@
     ],
     "alwaysStrict": true,
     "strictNullChecks": true,
-    "noImplicitAny": true,
+    // "noImplicitAny": true, // Yo voronoi
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "experimentalDecorators": true,

@@ -1,8 +1,8 @@
 {
-  "name": "planewars-match-log",
+  "name": "planetwars-match-log",
   "version": "0.0.1",
   "description": "Types and utility for PlanetWars match logs",
-  "main": "index.js",
+  "main": "dist/index.js",
   "repository": "https://github.com/ZeusWPI/MOZAIC",
   "author": "Zeus WPI",
   "license": "MIT",

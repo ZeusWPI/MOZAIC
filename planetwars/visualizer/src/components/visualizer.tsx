@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as React from 'react';
 
-import { MatchLog, GameState } from '../../../../lib/match';
+import { MatchLog, GameState } from 'planetwars-match-log';
 import Game from './game';
 import Scoreboard from './scoreboard';
 

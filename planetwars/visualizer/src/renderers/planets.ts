@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import Game from '../components/game';
-import { Planet } from '../../../../lib/match/types';
+import { Planet } from 'planetwars-match-log';
 import Config from '../util/config';
 
 export class PlanetRenderer {

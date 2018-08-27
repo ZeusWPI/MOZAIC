@@ -3,6 +3,7 @@
     "target": "es5",
     "moduleResolution": "node",
     "module": "commonjs",
+    "declaration": true,
     "sourceMap": true,
     "outDir": "dist",
     "lib": [

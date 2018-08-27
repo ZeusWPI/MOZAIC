@@ -2,7 +2,7 @@ import Game from "./game";
 import * as React from "react";
 import { Component } from "react";
 import * as d3 from "d3";
-import { GameState, Player, PlayerMap, MatchLog } from '../../../../lib/match';
+import { GameState, Player, PlayerMap, MatchLog } from 'planetwars-match-log';
 
 import * as h from 'react-hyperscript';
 
@@ -24,7 +24,7 @@ interface ScoreboardProps {
 }
 
 function countPlanets(players: number[], state: GameState) {
-  const counts: { [playerNum: number]: number} = {};
+  const counts: { [playerNum: number]: number } = {};
 
   players.forEach((playerNum) => {
     counts[playerNum] = 0;
@@ -40,7 +40,7 @@ function countPlanets(players: number[], state: GameState) {
 }
 
 function countShips(players: number[], state: GameState) {
-  const counts: { [playerNum: number]: number} = {};
+  const counts: { [playerNum: number]: number } = {};
 
   players.forEach((playerNum) => {
     counts[playerNum] = 0;
