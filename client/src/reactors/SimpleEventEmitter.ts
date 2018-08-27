@@ -1,8 +1,16 @@
 import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 import { WireEvent } from '../networking/EventWire';
+import * as protobufjs from 'protobufjs';
 
 export interface EventType<T> {
     new(): T,
+    typeId: number;
+    encode(T): protobufjs.Writer,
+    decode(Uint8Array): T,
+}
+
+export interface Event {
+    eventType: EventType<this>;
 }
 
 // // Allows subscribing to individual MOZAIC events through an EventEmitter-based
@@ -15,27 +23,23 @@ export class SimpleEventEmitter {
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        let typeId = (eventType as any).typeId;
-        if (!typeId) {
-            throw new Error("not a valid event type");
-        }
-        let handler = this.handlers[typeId];
+        let handler = this.handlers[eventType.typeId];
         if (!handler) {
             handler = new SimpleEventHandler(eventType);
-            this.handlers[typeId] = handler;    
+            this.handlers[eventType.typeId] = handler;    
         }
         return handler.asSimpleEvent();
     }
 
-    handleAsync(event: any) {
-        const handler = this.handlers[event.constructor.typeId];
+    handleAsync(event: Event) {
+        const handler = this.handlers[event.eventType.typeId];
         if (handler) {
             handler.handleAsync(event);
         }
     }
 
-    handleEvent(event: any) {
-        const handler = this.handlers[event.constructor.typeId];
+    handleEvent(event: Event) {
+        const handler = this.handlers[event.eventType.typeId];
         if (handler) {
             handler.handleEvent(event);
         }
@@ -50,18 +54,18 @@ export class SimpleEventEmitter {
 }
 
 class SimpleEventHandler<T> {
-    public readonly eventType;
+    public readonly eventType: EventType<T>;
     private dispatcher = new SimpleEventDispatcher<T>();
 
-    constructor(eventType) {
+    constructor(eventType: EventType<T>) {
         this.eventType = eventType;
     }
 
-    handleEvent(event) {
+    handleEvent(event: T) {
         this.dispatcher.dispatch(event);
     }
 
-    handleAsync(event) {
+    handleAsync(event: T) {
         this.dispatcher.dispatchAsync(event);
     }
 
