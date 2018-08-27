@@ -7,6 +7,7 @@ const events = protocol_root.mozaic.events;
 // TODO: how can we achieve this?
 Object.keys(event_types).forEach((name) => {
     events[name].typeId = event_types[name];
+    events[name].prototype.eventType = events[name];
 });
 
 export = events;

@@ -106,6 +106,9 @@ function parse_events_toml() {
                     writer.write(`namespace ${eventName}`).block(() => {
                         writer.write(`const typeId: ${typeId};`);
                     });
+                    writer.write(`interface ${eventName}`).block(() => {
+                        writer.write(`eventType: typeof ${eventName};`);
+                    });
                 });
             });
     
