@@ -17,8 +17,17 @@ export function encodeEvent(event: Event): WireEvent {
     return { typeId, data };
 }
 
+export function tagEvent<E extends Event>(event: E): TaggedEvent<E> {
+    return {
+        typeId: event.eventType.typeId,
+        data: event,
+    };
+}
+
 // For use with redux and the like.
 // TODO: unify this with wire-events.
+// TODO: ideally this should be JSON-compatible, meaning it should not rely
+// on T being the event class, but rather the associated interface.
 export type TaggedEvent<T extends Event> = {
     typeId: T["eventType"]["typeId"],
     data: T,
