@@ -1,4 +1,4 @@
-import { SimpleEventEmitter, EventType } from "./SimpleEventEmitter";
+import { SimpleEventEmitter, EventType, Event } from "./SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { EventHandler } from "../networking/Client";
 import { WireEvent } from "../networking/EventWire";
@@ -14,7 +14,7 @@ export class Reactor implements EventHandler {
         this.logger = logger;
     }
 
-    public dispatch(event: any) {
+    public dispatch(event: Event) {
         const wireEvent = encodeEvent(event);
         this.logger.log(wireEvent);
         this.eventEmitter.handleAsync(event);
@@ -24,7 +24,7 @@ export class Reactor implements EventHandler {
         return this.eventEmitter.on(eventType);
     }
 
-    public handleEvent(event: any) {
+    public handleEvent(event: Event) {
         const wireEvent = encodeEvent(event);
         this.logger.log(wireEvent);
         this.eventEmitter.handleEvent(event);
