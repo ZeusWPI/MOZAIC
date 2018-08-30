@@ -89,6 +89,7 @@ impl ConnectionState {
 pub struct ConnectionHandler<H>
     where H: EventHandler
 {
+    connection_id: usize,
     transport_state: TransportState,
     state: ConnectionState,
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
@@ -98,12 +99,15 @@ pub struct ConnectionHandler<H>
 impl<H> ConnectionHandler<H>
     where H: EventHandler
 {
-    pub fn new(event_handler: H) -> (ConnectionHandle, Self) {
+    pub fn new(connection_id: usize, event_handler: H)
+        -> (ConnectionHandle, Self)
+    {
         let (snd, rcv) = mpsc::unbounded();
 
         let handle = ConnectionHandle { sender: snd };
 
         let handler = ConnectionHandler {
+            connection_id,
             transport_state: TransportState::Disconnected,
             state: ConnectionState::new(),
             ctrl_chan: rcv,

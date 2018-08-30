@@ -18,13 +18,20 @@ impl ClientId {
     }
 }
 
+pub struct ConnectionData {
+    pub connection_id: usize,
+    pub handle: ConnectionHandle,
+}
+
 pub struct ConnectionTable {
+    id_counter: usize,
     connections: HashMap<Vec<u8>, ConnectionHandle>,
 }
 
 impl ConnectionTable {
     pub fn new() -> Self {
         ConnectionTable {
+            id_counter: 0,
             connections: HashMap::new(),
         }
     }
@@ -33,8 +40,12 @@ impl ConnectionTable {
         -> ConnectionHandle
         where S: Send + 'static
     {
-        let (handle, handler) = ConnectionHandler::new(core);
+        let connection_id = self.id_counter;
+        self.id_counter += 1;
+
+        let (handle, handler) = ConnectionHandler::new(connection_id, core);
         tokio::spawn(handler);
+
         self.connections.insert(token.to_vec(), handle.clone());
         return handle;
     }
