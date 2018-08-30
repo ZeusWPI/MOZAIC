@@ -46,6 +46,9 @@ impl<S> Reactor<S> {
                 Some(ReactorCommand::EmitDelayed { event, instant }) => {
                     self.delayed_events.push(instant, event);
                 }
+                Some(ReactorCommand::Quit) => {
+                    return Ok(Async::Ready(()));
+                }
                 None => {
                     return Ok(Async::Ready(()));
                 }
@@ -83,7 +86,10 @@ impl<S> Future for Reactor<S> {
         // Note that the order of these statements is important!
 
         // TODO: this could be done better
-        try!(self.poll_ctrl_chan());
+        match try!(self.poll_ctrl_chan()) {
+            Async::Ready(()) => return Ok(Async::Ready(())),
+            Async::NotReady => {},
+        };
         try!(self.poll_delayed());
         return Ok(Async::NotReady);
     }
@@ -97,6 +103,7 @@ pub enum ReactorCommand {
         event: Box<AnyEvent>,
         instant: Instant,
     },
+    Quit,
 }
 
 
@@ -130,6 +137,10 @@ impl ReactorHandle {
             event: EventBox::wrap(event),
             instant,
         });
+    }
+
+    pub fn quit(&mut self) {
+        self.send_command(ReactorCommand::Quit);
     }
 
     fn send_command(&mut self, command: ReactorCommand) {

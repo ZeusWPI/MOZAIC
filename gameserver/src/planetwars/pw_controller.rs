@@ -321,6 +321,7 @@ impl PwController {
             // game is over, kick everyone.
             false
         });
+        self.reactor_handle.quit();
     }
 
     fn on_timeout(&mut self, event: &events::TurnTimeout) {
