@@ -6,6 +6,7 @@ use std::mem;
 use events;
 use network::connection_table::{ConnectionTable, ClientId};
 use network::connection_handler::ConnectionHandle;
+use network::connection_router::GameServerRouter;
 use reactors::reactor::ReactorHandle;
 use reactors::ReactorCore;
 
@@ -72,11 +73,13 @@ enum PwMatchState {
 
 impl PwMatch {
     pub fn new(reactor_handle: ReactorHandle,
-               connection_table: Arc<Mutex<ConnectionTable>>)
+               connection_table: Arc<Mutex<ConnectionTable>>,
+               router: Arc<Mutex<GameServerRouter>>)
                -> Self
     {
         let lobby = Lobby::new(
             connection_table,
+            router,
             reactor_handle
         );
 
@@ -150,6 +153,7 @@ impl PwMatch {
 
 pub struct Lobby {
     connection_table: Arc<Mutex<ConnectionTable>>,
+    router: Arc<Mutex<GameServerRouter>>,
     reactor_handle: ReactorHandle,
 
     players: HashMap<ClientId, ConnectionHandle>,
@@ -157,11 +161,13 @@ pub struct Lobby {
 
 impl Lobby {
     fn new(connection_table: Arc<Mutex<ConnectionTable>>,
+           router: Arc<Mutex<GameServerRouter>>,
            reactor_handle: ReactorHandle)
            -> Self
     {
         return Lobby {
             connection_table,
+            router,
             reactor_handle,
 
             players: HashMap::new(),
@@ -181,11 +187,19 @@ impl Lobby {
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
 
-
-        let handle = self.connection_table.lock().unwrap().create(
-            &connection_token,
-            core,
-        );
+        let connection_id = self.connection_table
+            .lock()
+            .unwrap()
+            .create(core);
+        self.router
+            .lock()
+            .unwrap()
+            .register(connection_token, connection_id);
+        let handle = self.connection_table
+            .lock()
+            .unwrap()
+            .get(connection_id)
+            .unwrap();
         self.players.insert(client_id, handle);
     }
 

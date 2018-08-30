@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 mod network;
-mod oneshot_server;
 mod planetwars;
 mod utils;
 mod reactors;
-// mod events;
+mod server;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
@@ -49,7 +48,7 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 
-use oneshot_server::{MatchDescription, OneshotServer};
+use server::{Config as ServerConfig, Server};
 
 // Load the config and start the game.
 fn main() {
@@ -62,7 +61,7 @@ pub fn run(args : Vec<String>) {
         std::process::exit(1)
     }
 
-    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
+    let config = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
@@ -70,17 +69,15 @@ pub fn run(args : Vec<String>) {
         }
     };
 
-    let server = OneshotServer::new(match_description);
+    let server = Server::new(config);
     tokio::run(server);
 }
-
-
 
 
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
 fn parse_config(path: &Path)
-    -> Result<MatchDescription, Box<Error>>
+    -> Result<ServerConfig, Box<Error>>
 {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
@@ -90,7 +87,7 @@ fn parse_config(path: &Path)
     file.read_to_string(&mut contents)?;
 
     println!("Parsing config");
-    let config: MatchDescription = serde_json::from_str(&contents)?;
+    let config: ServerConfig = serde_json::from_str(&contents)?;
 
     println!("Config parsed succesfully");
     Ok(config)

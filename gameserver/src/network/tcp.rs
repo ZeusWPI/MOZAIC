@@ -4,7 +4,6 @@ use prost::Message;
 use std::io;
 use std::mem;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 

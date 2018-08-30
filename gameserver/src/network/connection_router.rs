@@ -1,8 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use reactors::ReactorCore;
-
 use super::connection_table::ConnectionTable;
 use super::connection_handler::ConnectionHandle;
 
