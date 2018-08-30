@@ -14,9 +14,13 @@ message Disconnected {}
 // --- SERVER CONTROL ---
 
 message CreateMatch {
-    bytes control_token = 1;
+    bytes match_uuid = 1;
+    bytes control_token = 2;
 }
 
+message MatchCreated {
+    bytes match_uuid = 1;
+}
 
 // --- MATCH CONTROL ---
 // The gameserver listens for these events. They can be emitted by the match

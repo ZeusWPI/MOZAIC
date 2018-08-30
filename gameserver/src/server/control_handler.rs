@@ -10,6 +10,8 @@ use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 
+use reactors::{EventBox, AnyEvent};
+
 
 pub struct ControlHandler {
     handle: ConnectionHandle,
@@ -73,6 +75,12 @@ impl ControlHandler {
 
         let reactor = Reactor::new(core, match_owner, ctrl_chan);
         tokio::spawn(reactor);
+        // TODO: eww.
+        self.handle.send(
+            EventBox::new(events::MatchCreated {
+                match_uuid: e.match_uuid.clone(),
+            }).as_wire_event()
+        );
     }
 }
 
