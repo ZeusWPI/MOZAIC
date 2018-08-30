@@ -1,4 +1,4 @@
-import { Address } from './networking/EventWire';
+import { Address, EventWire } from './networking/EventWire';
 import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
 import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
@@ -7,6 +7,9 @@ import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
 import { PwMatch } from './planetwars/PwMatch';
 import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
+import * as crypto from 'crypto';
+import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
+import { Client } from './networking/Client';
 
 const tokens = ["aaaa", "bbbb"];
 
@@ -51,67 +54,98 @@ const params: ServerParams = {
 
 const logStream = createWriteStream('log.out');
 
-const runner = new ServerRunner(bin_path, params);
-runner.runServer();
+// const runner = new ServerRunner(bin_path, params);
+// runner.runServer();
+// runner.onExit.subscribe(() => {
+//     console.log('server quit');
+// });
 
-const match = new PwMatch({
-    host: addr.host,
-    port: addr.port,
-    token: Buffer.from(params.ctrl_token, 'hex'),
-}, new Logger(0, logStream));
+const ownerToken = Buffer.from('cccc', 'hex');
 
-const clients = {};
-const waiting_for = new Set();
-
-match.on(Connected).subscribe((_) => {
-    players.forEach((player, idx) => {
-        const player_num = idx + 1;
-        match.send(RegisterClient.create({
-            clientId: player_num,
-            token: Buffer.from(player.token, 'utf-8'),
-        }));
-        waiting_for.add(player_num);
-    })
-});
-
-// print all events that happen on the match reactor
-Object.keys(events).forEach((eventName) => {
-    match.on(events[eventName]).subscribe((event) => {
-        console.log(event);
+function runMatch() {
+    const match = new PwMatch({
+        host: addr.host,
+        port: addr.port,
+        token: ownerToken,
+    }, new Logger(0, logStream));
+    
+    const clients = {};
+    const waiting_for = new Set();
+    
+    match.on(Connected).subscribe((_) => {
+        console.log('match connected');
+        players.forEach((player, idx) => {
+            const player_num = idx + 1;
+            match.send(RegisterClient.create({
+                clientId: player_num,
+                token: Buffer.from(player.token, 'utf-8'),
+            }));
+            waiting_for.add(player_num);
+        })
     });
-});
-
-
-
-// MATCH LOGIC
-
-match.on(RegisterClient).subscribe((data) => {
-    if (!clients[data.clientId]) {
-        const client = new PwClient({
-            clientId: data.clientId,
-            host: addr.host,
-            port: addr.port,
-            token: data.token,
-            botConfig: simpleBot,
-            logSink: logStream,
+    
+    // print all events that happen on the match reactor
+    Object.keys(events).forEach((eventName) => {
+        match.on(events[eventName]).subscribe((event) => {
+            console.log(event);
         });
-        clients[data.clientId] = client;
-        client.run();
-    }
-});
-
-match.on(ClientConnected).subscribe(({ clientId }) => {
-    waiting_for.delete(clientId);
-    if (waiting_for.size == 0) {
-        match.send(StartGame.create(gameConfig));
-    }
-});
-
-match.on(ClientDisconnected).subscribe(({ clientId }) => {
-    waiting_for.add(clientId);
-})
-
-// use a timeout to make sure that the match is running
-setTimeout(() => {
+    });
+    
+    
+    
+    // MATCH LOGIC
+    
+    match.on(RegisterClient).subscribe((data) => {
+        if (!clients[data.clientId]) {
+            const client = new PwClient({
+                clientId: data.clientId,
+                host: addr.host,
+                port: addr.port,
+                token: data.token,
+                botConfig: simpleBot,
+                logSink: logStream,
+            });
+            clients[data.clientId] = client;
+            client.run();
+        }
+    });
+    
+    match.on(ClientConnected).subscribe(({ clientId }) => {
+        waiting_for.delete(clientId);
+        if (waiting_for.size == 0) {
+            match.send(StartGame.create(gameConfig));
+        }
+    });
+    
+    match.on(ClientDisconnected).subscribe(({ clientId }) => {
+        waiting_for.add(clientId);
+    });
+    
+    console.log('connecting');
     match.connect();
-}, 100);
+}
+
+
+const emitter = new SimpleEventEmitter();
+const controlClient = new Client({
+    host: "127.0.0.1",
+    port: 9142,
+    token: Buffer.from('abba', 'hex'),
+}, emitter);
+
+const matchId = crypto.randomBytes(16);
+
+emitter.on(Connected).subscribe((_) => {
+    controlClient.send(events.CreateMatch.create({
+        controlToken: ownerToken,
+        matchUuid: matchId,
+    }));
+});
+
+emitter.on(events.MatchCreated).subscribe((e) => {
+    if (e.matchUuid.toString() == matchId.toString()) {
+        runMatch();
+    }
+});
+
+controlClient.connect();
