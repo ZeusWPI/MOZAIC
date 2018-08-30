@@ -1,3 +1,5 @@
+pub mod control_handler;
+
 use utils::hex_serializer;
 
 use futures::{Future, Poll, Async};
@@ -8,6 +10,8 @@ use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::{GameServerRouter, ConnectionRouter};
 use reactors::ReactorCore;
+
+use self::control_handler::ControlHandler;
 
 
 #[derive(Serialize, Deserialize)]
@@ -38,7 +42,12 @@ impl Future for Server {
         let router = Arc::new(Mutex::new(GameServerRouter::new()));
 
         // TODO: add some handlers
-        let core = ReactorCore::new(());
+        let handler = ControlHandler::new(
+            connection_table.clone(),
+            router.clone()
+        );
+        let mut core = ReactorCore::new(handler);
+        core.add_handler(ControlHandler::create_match);
 
         let connection_id = connection_table.lock()
             .unwrap()
