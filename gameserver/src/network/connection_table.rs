@@ -25,7 +25,7 @@ pub struct ConnectionData {
 
 pub struct ConnectionTable {
     id_counter: usize,
-    connections: HashMap<Vec<u8>, ConnectionHandle>,
+    connections: HashMap<usize, ConnectionHandle>,
 }
 
 impl ConnectionTable {
@@ -36,8 +36,8 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<S>(&mut self, token: &[u8], core: ReactorCore<S>)
-        -> ConnectionHandle
+    pub fn create<S>(&mut self, core: ReactorCore<S>)
+        -> usize
         where S: Send + 'static
     {
         let connection_id = self.id_counter;
@@ -46,17 +46,17 @@ impl ConnectionTable {
         let (handle, handler) = ConnectionHandler::new(connection_id, core);
         tokio::spawn(handler);
 
-        self.connections.insert(token.to_vec(), handle.clone());
-        return handle;
+        self.connections.insert(connection_id, handle.clone());
+        return connection_id;
     }
 
-    pub fn get(&mut self, token: &[u8])
+    pub fn get(&mut self, connection_id: usize)
         -> Option<ConnectionHandle>
     {
-        self.connections.get(token).cloned()
+        self.connections.get(&connection_id).cloned()
     }
 
-    pub fn remove(&mut self, token: &[u8]) {
-        self.connections.remove(token);
+    pub fn remove(&mut self, connection_id: usize) {
+        self.connections.remove(&connection_id);
     }
 }

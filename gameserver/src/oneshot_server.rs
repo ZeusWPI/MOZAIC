@@ -11,6 +11,7 @@ use futures::sync::mpsc;
 
 use network;
 use network::connection_table::ConnectionTable;
+use network::connection_router::{GameServerRouter, ConnectionRouter};
 use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
@@ -67,6 +68,7 @@ impl Future for OneshotServer {
     // run multiple games in parallel.
     fn poll(&mut self) -> Poll<(), ()> {
         let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
+        let router = Arc::new(Mutex::new(GameServerRouter::new()));
         let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
@@ -77,13 +79,19 @@ impl Future for OneshotServer {
         owner_core.add_handler(Forwarder::forward::<events::RegisterClient>);
         owner_core.add_handler(Forwarder::forward::<events::RemoveClient>);
         owner_core.add_handler(Forwarder::forward::<events::StartGame>);
-        
 
-        let match_owner = connection_table.lock().unwrap().create(
-            &self.config.ctrl_token,
-            owner_core,
-        );
+        let connection_id = connection_table.lock()
+            .unwrap()
+            .create(owner_core);
+        router.lock()
+            .unwrap()
+            .register(self.config.ctrl_token.clone(), connection_id);
 
+        let match_owner = connection_table
+            .lock()
+            .unwrap()
+            .get(connection_id)
+            .unwrap();
 
         let pw_match = PwMatch::new(
             reactor_handle,
@@ -111,7 +119,10 @@ impl Future for OneshotServer {
         }));
 
         let addr = self.config.address.parse().unwrap();
-        match network::tcp::Listener::new(&addr, connection_table.clone()) {
+
+        let connection_router = ConnectionRouter { router, connection_table };
+
+        match network::tcp::Listener::new(&addr, connection_router) {
             Ok(listener) => {
                 tokio::spawn(listener);
                 return Ok(Async::Ready(()));
