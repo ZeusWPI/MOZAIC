@@ -190,7 +190,7 @@ impl Lobby {
         let connection_id = self.connection_table
             .lock()
             .unwrap()
-            .create(core);
+            .create(|_| core);
         self.router
             .lock()
             .unwrap()

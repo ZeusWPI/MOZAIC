@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::connection_handler::{ConnectionHandler, ConnectionHandle};
-use reactors::ReactorCore;
+use reactors::EventHandler;
 use tokio;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
@@ -36,14 +36,15 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<S>(&mut self, core: ReactorCore<S>)
+    pub fn create<H, F>(&mut self, creator: F)
         -> usize
-        where S: Send + 'static
+        where F: FnOnce(ConnectionHandle) -> H,
+              H: EventHandler + Send + 'static
     {
         let connection_id = self.id_counter;
         self.id_counter += 1;
 
-        let (handle, handler) = ConnectionHandler::new(connection_id, core);
+        let (handle, handler) = ConnectionHandler::create(connection_id, creator);
         tokio::spawn(handler);
 
         self.connections.insert(connection_id, handle.clone());

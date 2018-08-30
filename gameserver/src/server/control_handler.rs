@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 use tokio;
 use futures::sync::mpsc;
 
+use network::connection_handler::ConnectionHandle;
 use network::connection_table::ConnectionTable;
 use network::connection_router::GameServerRouter;
 use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
@@ -11,16 +12,19 @@ use events;
 
 
 pub struct ControlHandler {
+    handle: ConnectionHandle,
     connection_table: Arc<Mutex<ConnectionTable>>,
     router: Arc<Mutex<GameServerRouter>>,
 }
 
 impl ControlHandler {
-    pub fn new(connection_table: Arc<Mutex<ConnectionTable>>,
-           router: Arc<Mutex<GameServerRouter>>)
-           -> Self
+    pub fn new(handle: ConnectionHandle,
+               connection_table: Arc<Mutex<ConnectionTable>>,
+               router: Arc<Mutex<GameServerRouter>>)
+               -> Self
     {
         ControlHandler {
+            handle,
             connection_table,
             router,
         }
@@ -41,7 +45,7 @@ impl ControlHandler {
 
         let connection_id = self.connection_table.lock()
             .unwrap()
-            .create(owner_core);
+            .create(|_| owner_core);
         self.router.lock()
             .unwrap()
             .register(e.control_token.clone(), connection_id);

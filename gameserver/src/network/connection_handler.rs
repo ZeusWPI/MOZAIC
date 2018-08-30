@@ -102,9 +102,18 @@ impl<H> ConnectionHandler<H>
     pub fn new(connection_id: usize, event_handler: H)
         -> (ConnectionHandle, Self)
     {
+        Self::create(connection_id, |_| event_handler)
+    }
+
+    pub fn create<F>(connection_id: usize, creator: F)
+        -> (ConnectionHandle, Self)
+        where F: FnOnce(ConnectionHandle) -> H
+    {
         let (snd, rcv) = mpsc::unbounded();
 
         let handle = ConnectionHandle { sender: snd };
+
+        let event_handler = creator(handle.clone());
 
         let handler = ConnectionHandler {
             connection_id,

@@ -41,25 +41,24 @@ impl Future for Server {
         let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
         let router = Arc::new(Mutex::new(GameServerRouter::new()));
 
-        // TODO: add some handlers
-        let handler = ControlHandler::new(
-            connection_table.clone(),
-            router.clone()
-        );
-        let mut core = ReactorCore::new(handler);
-        core.add_handler(ControlHandler::create_match);
+        let connection_id = connection_table.lock().unwrap().create(|handle| {
+            let handler = ControlHandler::new(
+                handle,
+                connection_table.clone(),
+                router.clone()
+            );
+            let mut core = ReactorCore::new(handler);
+            core.add_handler(ControlHandler::create_match);
+            return core;
+        });
 
-        let connection_id = connection_table.lock()
-            .unwrap()
-            .create(core);
         router.lock()
             .unwrap()
             .register(self.config.ctrl_token.clone(), connection_id);
 
-                let addr = self.config.address.parse().unwrap();
 
+        let addr = self.config.address.parse().unwrap();
         let connection_router = ConnectionRouter { router, connection_table };
-
         match network::tcp::Listener::new(&addr, connection_router) {
             Ok(listener) => {
                 tokio::spawn(listener);
