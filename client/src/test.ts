@@ -1,17 +1,12 @@
 import { Address } from './networking/EventWire';
 import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
-import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
-import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './events';
-import * as events from './events';
+import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
+import * as events from './eventTypes';
 import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
-import { Reactor } from './reactors/Reactor';
-import { Client } from './networking/Client';
 import { PwMatch } from './planetwars/PwMatch';
 import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
-
-const EVENT_TYPES = require('./event_types');
 
 const tokens = ["aaaa", "bbbb"];
 
