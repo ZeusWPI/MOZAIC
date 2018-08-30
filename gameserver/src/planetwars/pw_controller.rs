@@ -3,13 +3,10 @@ use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
 use std::mem;
 
-use tokio;
-
-
 use events;
 use network::connection_table::{ConnectionTable, ClientId};
-use network::connection_handler::{ConnectionHandler, ConnectionHandle};
-use reactors::reactor::{Reactor, ReactorHandle};
+use network::connection_handler::ConnectionHandle;
+use reactors::reactor::ReactorHandle;
 use reactors::ReactorCore;
 
 use super::Config;

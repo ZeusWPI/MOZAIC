@@ -10,7 +10,7 @@ use futures::sync::mpsc;
 
 
 use network;
-use network::connection_table::{ConnectionTable, ClientId};
+use network::connection_table::ConnectionTable;
 use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;

@@ -20,6 +20,7 @@ tokio = "0.1.5"
 tokio-core = "0.1.14"
 tokio-io = "0.1.6"
 tokio-process = "0.1.5"
+tokio-codec = "0.1.0"
 mozaic-derive = { path = "../mozaic-derive" }
 
 [build-dependencies]

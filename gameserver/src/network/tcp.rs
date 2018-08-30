@@ -1,6 +1,5 @@
 use futures::{Future, Poll, Async, Stream};
 use futures::sink::Send;
-use futures::sync::mpsc::UnboundedSender;
 use prost::Message;
 use std::io;
 use std::mem;
@@ -9,7 +8,7 @@ use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
-use super::protobuf_codec::{MessageStream, ProtobufTransport};
+use super::protobuf_codec::ProtobufTransport;
 use super::connection_handler::ConnectionHandle;
 use super::connection_table::{ConnectionTable};
 use protocol as proto;
