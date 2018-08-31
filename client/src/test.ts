@@ -3,15 +3,12 @@ import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
 import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
 import * as events from './eventTypes';
-import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
 import { PwMatch } from './planetwars/PwMatch';
 import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
 import * as crypto from 'crypto';
 import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
 import { Client } from './networking/Client';
-
-const tokens = ["aaaa", "bbbb"];
 
 const addr: Address = {
     host: "127.0.0.1",
@@ -23,18 +20,18 @@ const simpleBot: BotConfig = {
     args: ["../planetwars/bots/simplebot/simple.py"],
 }
 
-const bin_path = "../gameserver/target/debug/mozaic_bot_driver";
+const BIN_PATH = "../gameserver/target/debug/mozaic_bot_driver";
 
 const players = [
     {
         name: 'timp',
-        token: "aaaa",
+        token: crypto.randomBytes(16).toString('hex'),
         botConfig: simpleBot,
         number: 1,
     },
     {
         name: 'bert',
-        token: "bbbb",
+        token: crypto.randomBytes(16).toString('hex'),
         botConfig: simpleBot,
         number: 2,
     }
@@ -45,20 +42,7 @@ const gameConfig = {
     maxTurns: 100,
 }
 
-const params: ServerParams = {
-    ctrl_token: "abba",
-
-    address: addr,
-    logFile: "log.json",
-}
-
 const logStream = createWriteStream('log.out');
-
-// const runner = new ServerRunner(bin_path, params);
-// runner.runServer();
-// runner.onExit.subscribe(() => {
-//     console.log('server quit');
-// });
 
 const ownerToken = Buffer.from('cccc', 'hex');
 
@@ -121,15 +105,13 @@ function runMatch() {
         waiting_for.add(clientId);
     });
     
-    console.log('connecting');
     match.connect();
 }
 
 
 const emitter = new SimpleEventEmitter();
 const controlClient = new Client({
-    host: "127.0.0.1",
-    port: 9142,
+    ...addr,
     token: Buffer.from('abba', 'hex'),
 }, emitter);
 
@@ -145,6 +127,7 @@ emitter.on(Connected).subscribe((_) => {
 emitter.on(events.MatchCreated).subscribe((e) => {
     if (e.matchUuid.toString() == matchId.toString()) {
         runMatch();
+        controlClient.exit();
     }
 });
 
