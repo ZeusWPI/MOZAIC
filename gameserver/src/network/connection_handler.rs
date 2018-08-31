@@ -148,27 +148,15 @@ impl<H> ConnectionHandler<H>
         }
     }
 
-    fn poll_transport(&mut self) -> Poll<(), ()> {
+    fn poll_transport(&mut self) -> Poll<(), io::Error> {
         let transport = match self.transport_state {
             TransportState::Disconnected => return Ok(Async::NotReady),
             TransportState::Connected(ref mut transport) => transport,
         };
-        // TODO: this sucks
+
         loop {
-            match self.state.poll(transport) {
-                Ok(Async::NotReady) => return Ok(Async::NotReady),
-                Ok(Async::Ready(event)) => {
-                    self.event_handler.handle_wire_event(event);
-                }
-                Err(_err) => {
-                    // TODO: include error in disconnected event
-                    // TODO: can we work around this box?
-                    self.event_handler.handle_event(
-                        &EventBox::new(events::Disconnected {} )
-                    );
-                    return Ok(Async::NotReady);
-                }
-            }
+            let event = try_ready!(self.state.poll(transport));
+            self.event_handler.handle_wire_event(event);
         }
     }
 
@@ -209,7 +197,14 @@ impl<H> Future for ConnectionHandler<H>
                 self.poll_complete()
             }
             Async::NotReady => {
-                try!(self.poll_transport());
+                if let Err(_) =  self.poll_transport() {
+                    // TODO: include error in disconnected event
+                    // TODO: can we work around this box?
+                    self.event_handler.handle_event(
+                        &EventBox::new(events::Disconnected {} )
+                    );
+                    self.transport_state = TransportState::Disconnected;
+                }
                 Ok(Async::NotReady)
             }
         }
