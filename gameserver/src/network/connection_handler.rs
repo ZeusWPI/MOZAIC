@@ -156,10 +156,17 @@ impl<H> ConnectionHandler<H>
         // TODO: this sucks
         loop {
             match self.state.poll(transport) {
-                Err(err) => panic!("transport error {}", err),
                 Ok(Async::NotReady) => return Ok(Async::NotReady),
                 Ok(Async::Ready(event)) => {
                     self.event_handler.handle_wire_event(event);
+                }
+                Err(_err) => {
+                    // TODO: include error in disconnected event
+                    // TODO: can we work around this box?
+                    self.event_handler.handle_event(
+                        &EventBox::new(events::Disconnected {} )
+                    );
+
                 }
             }
         }
