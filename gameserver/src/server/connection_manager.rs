@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use network::{ConnectionTable, ConnectionHandle};
+use network::{ConnectionTable, ConnectionHandle, Router};
 use reactors::EventHandler;
 
 use super::GameServerRouter;
@@ -32,5 +32,12 @@ impl ConnectionManager {
         let connection_id = table.create(creator);
         router.register(token, connection_id);
         return table.get(connection_id).unwrap();
+    }
+
+    pub fn unregister(&mut self, connection_id: usize) {
+        let mut router = self.router.lock().unwrap();
+        router.unregister(connection_id);
+        let mut table = self.connection_table.lock().unwrap();
+        table.remove(connection_id);
     }
 }

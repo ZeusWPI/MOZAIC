@@ -114,6 +114,7 @@ impl PwMatch {
             self.state = PwMatchState::Playing(PwController::new(
                 config,
                 lobby.reactor_handle,
+                lobby.connection_manager,
                 lobby.players,
             ));
         } else {
@@ -196,6 +197,7 @@ pub struct PwController {
     state: PlanetWars,
     planet_map: HashMap<String, usize>,
     reactor_handle: ReactorHandle,
+    connection_manager: ConnectionManager,
 
     client_player: HashMap<ClientId, usize>,
     players: HashMap<ClientId, Player>,
@@ -207,6 +209,7 @@ pub struct PwController {
 impl PwController {
     pub fn new(config: Config,
                reactor_handle: ReactorHandle,
+               connection_manager: ConnectionManager,
                clients: HashMap<ClientId, ConnectionHandle>)
         -> Self
     {
@@ -237,6 +240,7 @@ impl PwController {
             players,
             client_player,
             reactor_handle,
+            connection_manager,
 
             waiting_for: HashSet::new(),
             commands: HashMap::new(),
@@ -273,6 +277,7 @@ impl PwController {
     fn on_step(&mut self, step: &events::GameStep) {
         let state = &self.state;
         let waiting_for = &mut self.waiting_for;
+        let connection_manager = &mut self.connection_manager;
 
         self.players.retain(|_, player| {
             if state.players[player.num].alive {
@@ -290,6 +295,7 @@ impl PwController {
                 });
                 // this player is dead, kick him!
                 // TODO: shutdown the reactor
+                connection_manager.unregister(player.handle.id());
                 return false;
             }
         });
@@ -311,11 +317,13 @@ impl PwController {
     }
 
     fn on_finished(&mut self, event: &events::GameFinished) {
+        let connection_manager = &mut self.connection_manager;
         self.players.retain(|_player_id, player| {
             player.handle.dispatch(events::GameFinished {
                 turn_num: event.turn_num,
                 state: event.state.clone(),
             });
+            connection_manager.unregister(player.handle.id());
             // game is over, kick everyone.
             false
         });
