@@ -327,6 +327,7 @@ impl PwController {
             // game is over, kick everyone.
             false
         });
+        println!("everybody has been kicked");
         self.reactor_handle.quit();
     }
 

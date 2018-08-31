@@ -4,6 +4,9 @@ use std::time::Instant;
 
 use network::connection_handler::ConnectionHandle;
 use utils::delay_heap::DelayHeap;
+use server::ConnectionManager;
+
+
 use super::types::*;
 use super::ReactorCore;
 
@@ -21,18 +24,22 @@ pub struct Reactor<S> {
     core: ReactorCore<S>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     delayed_events: DelayHeap<Box<AnyEvent>>,
+    // TODO: this manager and connection should not be here ...
+    connection_manager: ConnectionManager,
     match_owner: ConnectionHandle,
 }
 
 impl<S> Reactor<S> {
     pub fn new(core: ReactorCore<S>,
                match_owner: ConnectionHandle,
-               ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,) -> Self
+               connection_manager: ConnectionManager,
+               ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>) -> Self
     {
         Reactor {
             ctrl_chan,
             core,
             match_owner,
+            connection_manager,
             delayed_events: DelayHeap::new(),
         }
     }
@@ -87,7 +94,10 @@ impl<S> Future for Reactor<S> {
 
         // TODO: this could be done better
         match try!(self.poll_ctrl_chan()) {
-            Async::Ready(()) => return Ok(Async::Ready(())),
+            Async::Ready(()) => {
+                self.connection_manager.unregister(self.match_owner.id());
+                return Ok(Async::Ready(()));
+            }
             Async::NotReady => {},
         };
         try!(self.poll_delayed());

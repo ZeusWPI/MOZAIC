@@ -58,8 +58,13 @@ impl ControlHandler {
         core.add_handler(PwMatch::game_finished);
         core.add_handler(PwMatch::timeout);
 
-        let reactor = Reactor::new(core, match_owner, ctrl_chan);
-        tokio::spawn(reactor);
+        tokio::spawn(Reactor::new(
+            core,
+            match_owner,
+            self.connection_manager.clone(),
+            ctrl_chan,
+        ));
+
         // TODO: eww.
         self.handle.send(
             EventBox::new(events::MatchCreated {
