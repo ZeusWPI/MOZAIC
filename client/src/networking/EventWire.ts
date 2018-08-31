@@ -58,6 +58,7 @@ export class EventWire {
         });
         this.stream.onClose.subscribe(() => {
             this._onClose.dispatch();
+            this._onDisconnect.dispatch();
         });
         this.stream.onMessage.subscribe((data) => {
             this.handleMessage(data);
