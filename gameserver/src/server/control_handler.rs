@@ -1,34 +1,29 @@
-use std::sync::{Arc, Mutex};
-
 use tokio;
 use futures::sync::mpsc;
 
 use network::connection_handler::ConnectionHandle;
-use network::connection_table::ConnectionTable;
-use network::connection_router::GameServerRouter;
 use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 
 use reactors::{EventBox, AnyEvent};
 
+use super::ConnectionManager;
+
 
 pub struct ControlHandler {
     handle: ConnectionHandle,
-    connection_table: Arc<Mutex<ConnectionTable>>,
-    router: Arc<Mutex<GameServerRouter>>,
+    connection_manager: ConnectionManager,
 }
 
 impl ControlHandler {
     pub fn new(handle: ConnectionHandle,
-               connection_table: Arc<Mutex<ConnectionTable>>,
-               router: Arc<Mutex<GameServerRouter>>)
+               connection_manager: ConnectionManager)
                -> Self
     {
         ControlHandler {
             handle,
-            connection_table,
-            router,
+            connection_manager,
         }
     }
 
@@ -45,23 +40,13 @@ impl ControlHandler {
         owner_core.add_handler(Forwarder::forward::<events::RemoveClient>);
         owner_core.add_handler(Forwarder::forward::<events::StartGame>);
 
-        let connection_id = self.connection_table.lock()
-            .unwrap()
-            .create(|_| owner_core);
-        self.router.lock()
-            .unwrap()
-            .register(e.control_token.clone(), connection_id);
-
-        let match_owner = self.connection_table
-            .lock()
-            .unwrap()
-            .get(connection_id)
-            .unwrap();
+        let token = e.control_token.clone();
+        let match_owner = self.connection_manager
+            .create_connection(token, |_| owner_core);
 
         let pw_match = PwMatch::new(
             reactor_handle,
-            self.connection_table.clone(),
-            self.router.clone(),
+            self.connection_manager.clone(),
         );
 
         let mut core = ReactorCore::new(pw_match);

@@ -1,14 +1,13 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
-use std::sync::{Arc, Mutex};
 use std::mem;
 
 use events;
-use network::connection_table::{ConnectionTable, ClientId};
+use network::connection_table::{ClientId};
 use network::connection_handler::ConnectionHandle;
-use network::connection_router::GameServerRouter;
 use reactors::reactor::ReactorHandle;
 use reactors::ReactorCore;
+use server::ConnectionManager;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
@@ -73,13 +72,11 @@ enum PwMatchState {
 
 impl PwMatch {
     pub fn new(reactor_handle: ReactorHandle,
-               connection_table: Arc<Mutex<ConnectionTable>>,
-               router: Arc<Mutex<GameServerRouter>>)
+               connection_manager: ConnectionManager)
                -> Self
     {
         let lobby = Lobby::new(
-            connection_table,
-            router,
+            connection_manager,
             reactor_handle
         );
 
@@ -152,22 +149,19 @@ impl PwMatch {
 }
 
 pub struct Lobby {
-    connection_table: Arc<Mutex<ConnectionTable>>,
-    router: Arc<Mutex<GameServerRouter>>,
+    connection_manager: ConnectionManager,
     reactor_handle: ReactorHandle,
 
     players: HashMap<ClientId, ConnectionHandle>,
 }
 
 impl Lobby {
-    fn new(connection_table: Arc<Mutex<ConnectionTable>>,
-           router: Arc<Mutex<GameServerRouter>>,
+    fn new(connection_manager: ConnectionManager,
            reactor_handle: ReactorHandle)
            -> Self
     {
         return Lobby {
-            connection_table,
-            router,
+            connection_manager,
             reactor_handle,
 
             players: HashMap::new(),
@@ -187,19 +181,9 @@ impl Lobby {
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
 
-        let connection_id = self.connection_table
-            .lock()
-            .unwrap()
-            .create(|_| core);
-        self.router
-            .lock()
-            .unwrap()
-            .register(connection_token, connection_id);
-        let handle = self.connection_table
-            .lock()
-            .unwrap()
-            .get(connection_id)
-            .unwrap();
+        let handle = self.connection_manager
+            .create_connection(connection_token, |_| core);
+
         self.players.insert(client_id, handle);
     }
 

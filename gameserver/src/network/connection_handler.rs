@@ -111,7 +111,7 @@ impl<H> ConnectionHandler<H>
     {
         let (snd, rcv) = mpsc::unbounded();
 
-        let handle = ConnectionHandle { sender: snd };
+        let handle = ConnectionHandle { connection_id, sender: snd };
 
         let event_handler = creator(handle.clone());
 
@@ -210,6 +210,7 @@ pub enum ConnectionCommand {
 
 #[derive(Clone)]
 pub struct ConnectionHandle {
+    connection_id: usize,
     sender: mpsc::UnboundedSender<ConnectionCommand>,
 }
 
@@ -218,6 +219,10 @@ impl ConnectionHandle {
         self.sender
             .unbounded_send(cmd)
             .expect("control channel dropped");
+    }
+
+    pub fn id(&self) -> usize {
+        self.connection_id
     }
 
     pub fn connect(&mut self, transport: ProtobufTransport<TcpStream>) {

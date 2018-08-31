@@ -1,4 +1,10 @@
 pub mod control_handler;
+pub mod router;
+pub mod connection_manager;
+
+
+pub use self::router::GameServerRouter;
+pub use self::connection_manager::ConnectionManager;
 
 use utils::hex_serializer;
 
@@ -8,7 +14,7 @@ use tokio;
 
 use network;
 use network::connection_table::ConnectionTable;
-use network::connection_router::{GameServerRouter, ConnectionRouter};
+use network::connection_router::ConnectionRouter;
 use reactors::ReactorCore;
 
 use self::control_handler::ControlHandler;
@@ -41,11 +47,15 @@ impl Future for Server {
         let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
         let router = Arc::new(Mutex::new(GameServerRouter::new()));
 
+        let connection_manager = ConnectionManager::new(
+            connection_table.clone(),
+            router.clone()
+        );
+
         let connection_id = connection_table.lock().unwrap().create(|handle| {
             let handler = ControlHandler::new(
                 handle,
-                connection_table.clone(),
-                router.clone()
+                connection_manager.clone(),
             );
             let mut core = ReactorCore::new(handler);
             core.add_handler(ControlHandler::create_match);
