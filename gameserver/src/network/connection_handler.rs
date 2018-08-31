@@ -126,11 +126,12 @@ impl<H> ConnectionHandler<H>
         return (handle, handler);
     }
 
-    fn poll_ctl_chan(&mut self) -> Poll<(), ()> {
+    fn poll_ctrl_chan(&mut self) -> Poll<(), ()> {
         loop {
             match try_ready!(self.ctrl_chan.poll()) {
                 None => {
-                    panic!("ctrl channel dropped!");
+                    // TODO: properly communicate that we are quiting
+                    return Ok(Async::Ready(()));
                 }
                 Some(ConnectionCommand::Connect(transport)) => {
                     let t = MessageStream::new(transport);
@@ -196,10 +197,13 @@ impl<H> Future for ConnectionHandler<H>
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        try!(self.poll_ctl_chan());
-        try!(self.poll_transport());
-        // TODO: when should a handler exit?
-        return Ok(Async::NotReady);
+        match try!(self.poll_ctrl_chan()) {
+            Async::Ready(()) => Ok(Async::Ready(())),
+            Async::NotReady => {
+                try!(self.poll_transport());
+                Ok(Async::NotReady)
+            }
+        }
     }
 }
 
