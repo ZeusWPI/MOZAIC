@@ -166,7 +166,7 @@ impl<H> ConnectionHandler<H>
                     self.event_handler.handle_event(
                         &EventBox::new(events::Disconnected {} )
                     );
-
+                    return Ok(Async::NotReady);
                 }
             }
         }
@@ -205,7 +205,9 @@ impl<H> Future for ConnectionHandler<H>
 
     fn poll(&mut self) -> Poll<(), ()> {
         match try!(self.poll_ctrl_chan()) {
-            Async::Ready(()) => Ok(Async::Ready(())),
+            Async::Ready(()) => {
+                self.poll_complete()
+            }
             Async::NotReady => {
                 try!(self.poll_transport());
                 Ok(Async::NotReady)
