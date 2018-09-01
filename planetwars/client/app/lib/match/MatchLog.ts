@@ -1,5 +1,4 @@
-import { PwTypes } from 'mozaic-client';
-import { PlanetList, Expedition, Player } from './types';
+import { PlanetList, Expedition, Player, JsonExpedition, JsonPlanet } from './types';
 import * as _ from 'lodash';
 
 export abstract class MatchLog {
@@ -19,7 +18,8 @@ export abstract class MatchLog {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
-  public abstract addEntry(entry: PwTypes.LogEntry): void;
+  // TODO: typing
+  public abstract addEntry(entry: any /*PlayerAction*/): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -32,7 +32,8 @@ export abstract class MatchLog {
 }
 
 export class HostedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
+  // TODO: typing
+  public addEntry(entry: any) {
     switch (entry.type) {
       case "game_state": {
         const state = GameState.fromJson(entry.state);
@@ -47,7 +48,8 @@ export class HostedMatchLog extends MatchLog {
 }
 
 export class JoinedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
+  // TODO: typing
+  public addEntry(entry: any) {
     if (entry.type === 'player_entry') {
       // this should always be the case since this is a joined match
       const { player, record } = entry;
@@ -70,9 +72,10 @@ export class GameState {
     this.expeditions = expeditions;
   }
 
-  public static fromJson(json: PwTypes.GameState) {
+  // TODO: typing
+  public static fromJson(json: any) {
     const planets: PlanetList = {};
-    json.planets.forEach((p) => {
+    json.planets.forEach((p: JsonPlanet) => {
       planets[p.name] = {
         name: p.name,
         x: p.x,
@@ -82,7 +85,7 @@ export class GameState {
       };
     });
 
-    const expeditions = json.expeditions.map((e) => {
+    const expeditions = json.expeditions.map((e: JsonExpedition) => {
       return {
         id: e.id,
         origin: planets[e.origin],
@@ -118,7 +121,8 @@ export class PlayerLog {
     this.turns = [];
   }
 
-  public addRecord(record: PwTypes.LogRecord) {
+  // TODO: typing
+  public addRecord(record: any) {
     switch (record.type) {
       case 'step': {
         this.turns.push({ state: record.state });
@@ -137,9 +141,9 @@ export class PlayerLog {
 }
 
 export interface PlayerTurn {
-  state: PwTypes.GameState;
+  state: GameState;
   command?: string;
-  action?: PwTypes.PlayerAction;
+  action?: any /*PlayerAction*/;
 }
 
 export interface PlayerMap<T> {

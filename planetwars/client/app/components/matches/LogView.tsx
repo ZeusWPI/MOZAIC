@@ -4,7 +4,6 @@ import {
   MatchLog,
   GameState,
   Player,
-  PwTypes,
 } from '../../lib/match';
 
 import * as classNames from 'classnames';
@@ -118,6 +117,9 @@ export const PlayerTurnView: SFC<{ turn: PlayerTurn }> = ({ turn }) => {
     case 'commands': {
       return <CommandsView commands={action.value}/>;
     }
+    default: {
+      return <div>"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa"</div>;
+    }
   }
 };
 
@@ -143,9 +145,10 @@ export const ParseErrorView: SFC<ParseErrorViewProps> = (props) => {
   );
 };
 
-export interface CommandsViewProps { commands: PwTypes.PlayerCommand[]; }
+// TODO: typing
+export interface CommandsViewProps { commands: any/*PlayerCommand[]*/; }
 export const CommandsView: SFC<CommandsViewProps> = (props) => {
-  const dispatches = props.commands.map((cmd, idx) => {
+  const dispatches = props.commands.map((cmd: any , idx: number) => {
     const isWarning = { [styles.warning]: !!cmd.error };
     return (
       <li className={classNames(styles.playerOutput, isWarning)} key={idx}>
@@ -171,7 +174,7 @@ export const DispatchError: SFC<{ error?: string }> = ({ error }) => {
   }
 };
 
-export const DispatchView: SFC<{ cmd: PwTypes.Command }> = ({ cmd }) => {
+export const DispatchView: SFC<{ cmd: any /*Command*/ }> = ({ cmd }) => {
   const { ship_count, origin, destination } = cmd;
   return (
     <div className={styles.dispatch}>

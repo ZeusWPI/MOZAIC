@@ -1,6 +1,5 @@
 import * as M from '../../database/models';
 import * as fs from 'fs';
-import { PwTypes } from '.';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
 
 export function emptyLog(type: M.MatchType): MatchLog {
@@ -12,7 +11,8 @@ export function emptyLog(type: M.MatchType): MatchLog {
   }
 }
 
-export function logFileEntries(path: string): PwTypes.LogEntry[] {
+// TODO: typing
+export function logFileEntries(path: string): any[] {
   const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
   return lines.map((line: string) => JSON.parse(line));
 }
