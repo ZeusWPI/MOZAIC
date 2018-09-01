@@ -9,6 +9,7 @@ import { Logger } from './Logger';
 import * as crypto from 'crypto';
 import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
 import { Client } from './networking/Client';
+import { ServerControl } from './ServerControl';
 
 const addr: Address = {
     host: "127.0.0.1",
@@ -108,27 +109,25 @@ function runMatch() {
     match.connect();
 }
 
-
-const emitter = new SimpleEventEmitter();
-const controlClient = new Client({
+const serverControl = new ServerControl({
     ...addr,
     token: Buffer.from('abba', 'hex'),
-}, emitter);
+});
 
 const matchId = crypto.randomBytes(16);
 
-emitter.on(Connected).subscribe((_) => {
-    controlClient.send(events.CreateMatch.create({
+serverControl.on(Connected).subscribe((_) => {
+    serverControl.send(events.CreateMatch.create({
         controlToken: ownerToken,
         matchUuid: matchId,
     }));
 });
 
-emitter.on(events.MatchCreated).subscribe((e) => {
+serverControl.on(events.MatchCreated).subscribe((e) => {
     if (e.matchUuid.toString() == matchId.toString()) {
         runMatch();
-        controlClient.exit();
+        serverControl.disconnect();
     }
 });
 
-controlClient.connect();
+serverControl.connect();
