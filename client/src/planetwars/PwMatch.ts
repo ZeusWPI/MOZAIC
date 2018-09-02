@@ -5,6 +5,11 @@ import { ISimpleEvent } from "ste-simple-events";
 import { ClientParams } from "../networking/EventWire";
 import { Logger } from "../Logger";
 
+import * as protocol_root from '../proto';
+import proto = protocol_root.mozaic.protocol;
+
+// TODO: create matchclient base class
+// TODO: create match owner base class
 export class PwMatch {
     private reactor: Reactor;
     private client: Client;
@@ -22,7 +27,13 @@ export class PwMatch {
         this.client.send(event);
     }
 
-    public connect() {
-        this.client.connect();
+    public connect(matchUuid: Uint8Array) {
+        let message = proto.GameserverConnect.encode({
+            client: {
+                clientId: 0,
+                matchUuid: matchUuid,
+            }
+        }).finish();
+        this.client.connect(message);
     }
 }

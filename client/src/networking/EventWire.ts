@@ -53,9 +53,6 @@ export class EventWire {
         this.stream = new ProtobufStream();
         this.params = params;
 
-        this.stream.onConnect.subscribe(() => {
-            this.sendConnectionRequest();
-        });
         this.stream.onClose.subscribe(() => {
             this._onClose.dispatch();
             this._onDisconnect.dispatch();
@@ -85,9 +82,14 @@ export class EventWire {
         return this._onClose.asEvent();
     }
     
-    public connect() {
+    public connect(message: Uint8Array) {
         this.state = ConnectionState.CONNECTING;
         this.stream.connect(this.params.host, this.params.port);
+
+        this.stream.onConnect.one(() => {
+            this.sendConnectionRequest(message);
+        });
+
 
         // Introduced in version 9.0.0, node.js has a strict politeness policy.
         // Needless to say, it would be really rude to just connect to somebody
@@ -132,9 +134,12 @@ export class EventWire {
     }
     
     // initiate connection handshake
-    private sendConnectionRequest() {
-        let request = { token: this.params.token };
-        this.stream.write(proto.ConnectionRequest.encode(request));
+    private sendConnectionRequest(message: Uint8Array) {
+        let connRequest = {
+            message,
+            token: this.params.token,
+        };
+        this.stream.write(proto.ConnectionRequest.encode(connRequest));
     }
 
     private handleConnectionResponse(message: Uint8Array) {

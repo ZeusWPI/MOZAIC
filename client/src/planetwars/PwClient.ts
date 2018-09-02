@@ -1,27 +1,33 @@
 import { BotConfig, BotRunner } from "../index";
-import { Connected, GameStep, GameFinished, ClientSend } from "../eventTypes";
+import { GameStep, GameFinished, ClientSend } from "../eventTypes";
 import { ClientParams } from "../networking/EventWire";
-import { EventHandler, Client } from "../networking/Client";
-import { SimpleEventEmitter, EventType } from "../reactors/SimpleEventEmitter";
+import { Client } from "../networking/Client";
+import { EventType } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { Reactor } from "../reactors/Reactor";
 import { Logger } from "../Logger";
 import { WriteStream } from "fs";
+import * as protocol_root from '../proto';
+import proto = protocol_root.mozaic.protocol;
+
 
 export type Params = ClientParams & {
     botConfig: BotConfig,
     clientId: number;
+    matchUuid: Uint8Array;
     logSink: WriteStream;
 }
 
 export class PwClient {
     readonly clientId: number;
+    readonly matchUuid: Uint8Array;
     readonly reactor: Reactor;
     readonly client: Client;
     readonly botRunner: BotRunner;
 
     constructor(params: Params) {
         this.clientId = params.clientId;
+        this.matchUuid = params.matchUuid;
         const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
         this.client = new Client(params, this.reactor);
@@ -45,7 +51,14 @@ export class PwClient {
             "player_number": this.clientId,
         });
         this.botRunner.run(meta);
-        this.client.connect();
+
+        let message = proto.GameserverConnect.encode({
+            client: {
+                clientId: this.clientId,
+                matchUuid: this.matchUuid,
+            }
+        }).finish();
+        this.client.connect(message);
     }
 
 

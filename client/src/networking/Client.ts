@@ -28,8 +28,8 @@ export class Client {
         });
     }
 
-    public connect() {
-        this.eventWire.connect();
+    public connect(message: Uint8Array) {
+        this.eventWire.connect(message);
     }
 
     public exit() {

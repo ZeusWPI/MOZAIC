@@ -3,6 +3,10 @@ import { ClientParams } from "./networking/EventWire";
 import { SimpleEventEmitter, EventType, Event } from "./reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 
+import * as protocol_root from './proto';
+import proto = protocol_root.mozaic.protocol;
+
+
 export class ServerControl {
     private client: Client;
     private handler: SimpleEventEmitter;
@@ -21,7 +25,10 @@ export class ServerControl {
     }
 
     public connect() {
-        this.client.connect();
+        let message = proto.GameserverConnect.encode({
+            serverControl: {}
+        }).finish();
+        this.client.connect(message);
     }
 
     public disconnect() {

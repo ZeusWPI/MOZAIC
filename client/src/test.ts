@@ -84,6 +84,7 @@ function runMatch() {
         if (!clients[data.clientId]) {
             const client = new PwClient({
                 clientId: data.clientId,
+                matchUuid,
                 host: addr.host,
                 port: addr.port,
                 token: data.token,
@@ -106,7 +107,7 @@ function runMatch() {
         waiting_for.add(clientId);
     });
     
-    match.connect();
+    match.connect(matchUuid);
 }
 
 const serverControl = new ServerControl({
@@ -114,17 +115,17 @@ const serverControl = new ServerControl({
     token: Buffer.from('abba', 'hex'),
 });
 
-const matchId = crypto.randomBytes(16);
+const matchUuid = crypto.randomBytes(16);
 
 serverControl.on(Connected).subscribe((_) => {
     serverControl.send(events.CreateMatch.create({
         controlToken: ownerToken,
-        matchUuid: matchId,
+        matchUuid: matchUuid,
     }));
 });
 
 serverControl.on(events.MatchCreated).subscribe((e) => {
-    if (e.matchUuid.toString() == matchId.toString()) {
+    if (e.matchUuid.toString() == matchUuid.toString()) {
         runMatch();
         serverControl.disconnect();
     }
