@@ -41,10 +41,17 @@ impl ControlHandler {
         owner_core.add_handler(Forwarder::forward::<events::StartGame>);
 
         let token = e.control_token.clone();
-        let match_owner = self.connection_manager
-            .create_connection(token, |_| owner_core);
+        let match_uuid = e.match_uuid.clone();
+
+        let match_owner = self.connection_manager.create_connection(
+            match_uuid.clone(),
+            0, // owner is always client-id 0. Is this how we want it?
+            token,
+            |_| owner_core
+        );
 
         let pw_match = PwMatch::new(
+            match_uuid,
             reactor_handle,
             self.connection_manager.clone(),
         );

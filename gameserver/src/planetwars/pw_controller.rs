@@ -71,11 +71,13 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(reactor_handle: ReactorHandle,
+    pub fn new(match_uuid: Vec<u8>,
+               reactor_handle: ReactorHandle,
                connection_manager: ConnectionManager)
                -> Self
     {
         let lobby = Lobby::new(
+            match_uuid,
             connection_manager,
             reactor_handle
         );
@@ -150,6 +152,7 @@ impl PwMatch {
 }
 
 pub struct Lobby {
+    match_uuid: Vec<u8>,
     connection_manager: ConnectionManager,
     reactor_handle: ReactorHandle,
 
@@ -157,11 +160,13 @@ pub struct Lobby {
 }
 
 impl Lobby {
-    fn new(connection_manager: ConnectionManager,
+    fn new(match_uuid: Vec<u8>,
+           connection_manager: ConnectionManager,
            reactor_handle: ReactorHandle)
            -> Self
     {
         return Lobby {
+            match_uuid,
             connection_manager,
             reactor_handle,
 
@@ -182,8 +187,12 @@ impl Lobby {
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
 
-        let handle = self.connection_manager
-            .create_connection(connection_token, |_| core);
+        let handle = self.connection_manager.create_connection(
+            self.match_uuid.clone(),
+            client_id.as_u32(),
+            connection_token,
+            |_| core
+        );
 
         self.players.insert(client_id, handle);
     }

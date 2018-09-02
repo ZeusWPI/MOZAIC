@@ -52,15 +52,18 @@ impl Future for Server {
             router.clone()
         );
 
-        let connection_id = connection_table.lock().unwrap().create(|handle| {
-            let handler = ControlHandler::new(
-                handle,
-                connection_manager.clone(),
-            );
-            let mut core = ReactorCore::new(handler);
-            core.add_handler(ControlHandler::create_match);
-            return core;
-        });
+        let connection_id = connection_table.lock().unwrap().create(
+            self.config.ctrl_token.clone(),
+            |handle| {
+                let handler = ControlHandler::new(
+                    handle,
+                    connection_manager.clone(),
+                );
+                let mut core = ReactorCore::new(handler);
+                core.add_handler(ControlHandler::create_match);
+                return core;
+            }
+        );
 
         router.lock()
             .unwrap()
