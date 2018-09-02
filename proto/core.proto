@@ -2,8 +2,26 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
+message ClientConnect {
+    bytes match_uuid = 1;
+    uint32 client_id = 2;
+}
+
+message ServerControlConnect {}
+
+message GameserverConnect {
+    oneof connect {
+        ClientConnect client = 1;
+        ServerControlConnect server_control = 2;
+    }
+}
+
 message ConnectionRequest {
-    bytes token = 1;
+    // TODO: maybe we want to include some headers here
+
+    // This message should identify the connecting client with the
+    // server.
+    bytes message = 1;
 }
 
 message ConnectionResponse {

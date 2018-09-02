@@ -9,6 +9,7 @@ use tokio::net::{Incoming, TcpListener, TcpStream};
 
 use super::protobuf_codec::ProtobufTransport;
 use super::connection_handler::ConnectionHandle;
+use super::connection_table::ConnectionData;
 use super::connection_router::{Router, ConnectionRouter};
 use protocol as proto;
 
@@ -93,7 +94,7 @@ struct Waiting<R: Router> {
 
 enum Action {
     Accept {
-        handle: ConnectionHandle,
+        data: ConnectionData,
     },
     Refuse {
         reason: String,
@@ -110,20 +111,20 @@ impl<R: Router> Waiting<R> {
 
         let request = try!(proto::ConnectionRequest::decode(bytes));
 
-        let action = match self.router.route(&request.token) {
+        let action = match self.router.route(&request.message) {
             Err(()) => Action::Refuse { reason: "invalid token".to_string() },
-            Ok(handle) => Action::Accept { handle },
+            Ok(data) => Action::Accept { data },
         };
         return Ok(Async::Ready(action));
     }
 
     fn step(self, action: Action) -> HandlerState<R> {
         match action {
-            Action::Accept { handle } => {
+            Action::Accept { data } => {
                 let response = connection_success();
                 let accepting = Accepting {
                     send: self.transport.send_msg(response),
-                    handle,
+                    handle: data.handle,
                 };
                 return HandlerState::Accepting(accepting);
             },

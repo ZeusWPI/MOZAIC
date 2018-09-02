@@ -18,14 +18,16 @@ impl ClientId {
     }
 }
 
+#[derive(Clone)]
 pub struct ConnectionData {
     pub connection_id: usize,
     pub handle: ConnectionHandle,
+    pub token: Vec<u8>,
 }
 
 pub struct ConnectionTable {
     id_counter: usize,
-    connections: HashMap<usize, ConnectionHandle>,
+    connections: HashMap<usize, ConnectionData>,
 }
 
 impl ConnectionTable {
@@ -36,7 +38,7 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<H, F>(&mut self, creator: F)
+    pub fn create<H, F>(&mut self, token: Vec<u8>, creator: F)
         -> usize
         where F: FnOnce(ConnectionHandle) -> H,
               H: EventHandler + Send + 'static
@@ -47,14 +49,19 @@ impl ConnectionTable {
         let (handle, handler) = ConnectionHandler::create(connection_id, creator);
         tokio::spawn(handler);
 
-        self.connections.insert(connection_id, handle.clone());
+
+        self.connections.insert(connection_id, ConnectionData {
+            connection_id,
+            handle: handle.clone(),
+            token,
+        });
         return connection_id;
     }
 
-    pub fn get(&mut self, connection_id: usize)
-        -> Option<ConnectionHandle>
+    pub fn get<'a>(&'a mut self, connection_id: usize)
+        -> Option<&'a ConnectionData>
     {
-        self.connections.get(&connection_id).cloned()
+        self.connections.get(&connection_id)
     }
 
     pub fn remove(&mut self, connection_id: usize) {
