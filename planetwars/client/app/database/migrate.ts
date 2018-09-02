@@ -86,6 +86,7 @@ function upgradeV3(db: V3.DbSchema): V4.DbSchema {
       connected: true,
       botId: player,
       name: newBots[player].name,
+      clientid: -1,
     }});
     const matchParams: V4.HostedMatchProps = {
       type: V4.MatchType.hosted,

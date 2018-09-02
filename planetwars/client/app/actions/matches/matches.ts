@@ -66,8 +66,8 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
       host,
       port,
       botConfig,
-      clientId: 5, // FIX QUICK
-      logSink: createWriteStream(match.logPath)
+      clientId: bot.clientid,
+      logSink: createWriteStream(match.logPath),
     };
     const logger = new PwClient.Logger(clientParams.clientId, createWriteStream(match.logPath));
     const clientReactor = new PwClient.Reactor(logger);

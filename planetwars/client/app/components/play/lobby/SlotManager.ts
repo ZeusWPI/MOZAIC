@@ -35,6 +35,7 @@ export class SlotManager {
   public update(map: M.MapMeta) {
     while (this.slotList.length < map.slots) {
       const slot = this.createSlot();
+      slot.clientId = this.slotList.length + 1;
       this.slotList.push(slot.token);
     }
 

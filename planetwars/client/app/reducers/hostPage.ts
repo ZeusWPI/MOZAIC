@@ -31,6 +31,7 @@ export function hostReducer(state: HostPageState = defaultState, action: any) {
         name: 'Player ' + i,
         token: generateToken(),
         connected: false,
+        clientid: i,
       });
     }
 

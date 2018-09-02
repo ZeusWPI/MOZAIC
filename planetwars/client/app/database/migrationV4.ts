@@ -155,6 +155,7 @@ export interface BotSlotProps {
   type: BotSlotType;
   token: Token;
   connected: boolean; // Maybe more info?
+  clientid: number;
 }
 
 export type ExternalBotSlot = BotSlotProps & {

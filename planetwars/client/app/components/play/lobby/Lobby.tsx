@@ -135,7 +135,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const slotManager = this.slotManager;
 
     const { config } = this.state;
-    const { bot, token: stringToken } = slot;
+    const { bot, token: stringToken, clientId } = slot;
 
     const { name, command: fullCommand } = bot;
     const [command, ...args] = stringArgv(bot.command);
@@ -150,7 +150,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         args: botConfig.args,
       },
       logSink: createWriteStream(this.state.logFile),
-      clientId: 5,
+      clientId,
     })
     client.run();
     console.log('connected local bot');
@@ -319,6 +319,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
               botId: slot.bot.uuid,
               name: slot.name,
               connected: slot.connected,
+              clientid: slot.clientId || 0,
             };
             return botSlot;
           } else {
@@ -327,6 +328,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
               token: slot.token,
               name: slot.name,
               connected: slot.connected,
+              clientid: slot.clientId || 0,
             };
             return botSlot;
           }
