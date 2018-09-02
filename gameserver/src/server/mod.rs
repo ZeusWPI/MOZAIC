@@ -52,7 +52,7 @@ impl Future for Server {
             router.clone()
         );
 
-        let connection_id = connection_table.lock().unwrap().create(
+        let control_connection = connection_table.lock().unwrap().create(
             self.config.ctrl_token.clone(),
             |handle| {
                 let handler = ControlHandler::new(
@@ -67,8 +67,7 @@ impl Future for Server {
 
         router.lock()
             .unwrap()
-            .register(self.config.ctrl_token.clone(), connection_id);
-
+            .register_control_connection(control_connection);
 
         let addr = self.config.address.parse().unwrap();
         let connection_router = ConnectionRouter { router, connection_table };

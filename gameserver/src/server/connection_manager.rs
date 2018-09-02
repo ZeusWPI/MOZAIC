@@ -36,7 +36,7 @@ impl ConnectionManager {
         let mut table = self.connection_table.lock().unwrap();
         let mut router = self.router.lock().unwrap();
         let connection_id = table.create(token.clone(), creator);
-        router.register(token, connection_id);
+        router.register_client(match_uuid, client_id, connection_id);
         return table.get(connection_id).unwrap().handle.clone();
     }
 

@@ -112,7 +112,7 @@ impl<R: Router> Waiting<R> {
         let request = try!(proto::ConnectionRequest::decode(bytes));
 
         let action = match self.router.route(&request.message) {
-            Err(()) => Action::Refuse { reason: "invalid token".to_string() },
+            Err(err) => Action::Refuse { reason: err.to_string() },
             Ok(data) => Action::Accept { data },
         };
         return Ok(Async::Ready(action));
