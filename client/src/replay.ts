@@ -50,14 +50,3 @@ export class Replayer {
         });
     }
 }
-
-const replayer = new Replayer();
-
-// just print all events for now
-Object.keys(events).forEach((eventName) => {
-    replayer.on(events[eventName]).subscribe((event) => {
-        console.log(event);
-    });
-});
-
-replayer.replayFile('log.out');

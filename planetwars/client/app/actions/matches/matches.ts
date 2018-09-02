@@ -11,6 +11,7 @@ import { Config } from '../../utils/Config';
 import * as Notify from '../notifications';
 import * as Host from './hosting';
 import { actionCreator } from '../helpers';
+import { createWriteStream } from 'fs';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -60,12 +61,19 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
     const host = address.host;
     const port = address.port;
     const token = new Buffer(bot.token, 'hex');
-    const clientParams = { token, host, port, botConfig, clientId: 5 };
-
-    const clientReactor = new PwClient.Reactor();
+    const clientParams = {
+      token,
+      host,
+      port,
+      botConfig,
+      clientId: 5, // FIX QUICK
+      logSink: createWriteStream(match.logPath)
+    };
+    const logger = new PwClient.Logger(clientParams.clientId, createWriteStream(match.logPath));
+    const clientReactor = new PwClient.Reactor(logger);
 
     clientReactor.dispatch(PwClient.events.RegisterClient.create({
-      clientId: 5, // TODO: FIX THIS ASAP
+      clientId: clientParams.clientId,
       token: new Buffer(bot.token, 'hex'),
     }));
     try {
@@ -151,7 +159,7 @@ export function runMatch() {
       const server = new PwClient.ServerRunner(Config.matchRunner, config);
       server.runServer();
 
-      const runner = new PwClient.Reactor();
+      const runner = new PwClient.Reactor(new PwClient.Logger(0, createWriteStream(match.logPath)));
 
 
       dispatch(Host.serverStarted(runner));

@@ -12,6 +12,7 @@ import Section from '../Section';
 import { SlotList } from './SlotList';
 import { ServerControls } from './ServerControls';
 import { SlotManager, Slot } from './SlotManager';
+import { createWriteStream } from 'fs';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Lobby.scss');
@@ -148,6 +149,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
         command: botConfig.command,
         args: botConfig.args,
       },
+      logSink: createWriteStream(this.state.logFile),
       clientId: 5,
     })
     client.run();
@@ -217,7 +219,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     }
 
     try {
-      this.matchReactor = new PwClient.Reactor();
+      this.matchReactor = new PwClient.Reactor(new PwClient.Logger(0, createWriteStream(logFile)));
       this.slotManager.setMatchRunner(this.matchReactor);
 
       this.matchReactor.on(PwClient.events.ClientConnected).subscribe((event) => {
