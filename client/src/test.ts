@@ -47,7 +47,7 @@ const logStream = createWriteStream('log.out');
 
 const ownerToken = Buffer.from('cccc', 'hex');
 
-function runMatch(matchUuid) {
+function runMatch(matchUuid: Uint8Array) {
     const match = new PwMatch({
         host: addr.host,
         port: addr.port,
@@ -117,8 +117,8 @@ const serverControl = new ServerControl({
 });
 
 serverControl.on(Connected).subscribe((_) => {
-    serverControl.createMatch(ownerToken).then((matchUuid) => {
-        runMatch(matchUuid);
+    serverControl.createMatch(ownerToken).then((e) => {
+        runMatch(e.matchUuid);
         serverControl.disconnect();
     });
 });

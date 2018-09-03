@@ -4,13 +4,11 @@ import { SimpleEventEmitter, EventType, Event } from "./reactors/SimpleEventEmit
 import { ISimpleEvent } from "ste-simple-events";
 
 import * as events from './eventTypes';
-import * as crypto from 'crypto';
 
 
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
-import { PwMatch } from "./planetwars/PwMatch";
-import { resolve } from "url";
+import { RequestHandler } from "./reactors/utils";
 
 
 export class ServerControl {
@@ -18,20 +16,14 @@ export class ServerControl {
     private handler: SimpleEventEmitter;
 
     private requestCounter: number;
-    private creationCallbacks: {[requestId: number ]: Function};
+    creationHandler: RequestHandler<events.MatchCreated>;
 
     constructor(params: ClientParams) {
         this.handler = new SimpleEventEmitter();
         this.client = new Client(params, this.handler);
-        this.creationCallbacks = {};
+        this.creationHandler = new RequestHandler(events.MatchCreated);
+        this.creationHandler.register(this.handler);
         this.requestCounter = 0;
-
-        this.on(events.MatchCreated).subscribe((e) => {
-            const callback = this.creationCallbacks[e.requestId];
-            if (callback) {
-                callback(e.matchUuid);
-            }
-        });
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
@@ -53,7 +45,7 @@ export class ServerControl {
         this.client.exit();
     }
 
-    public createMatch(controlToken: Uint8Array): Promise<Uint8Array> {
+    public createMatch(controlToken: Uint8Array): Promise<events.MatchCreated> {
         this.requestCounter += 1;
         const requestId = this.requestCounter;
 
@@ -61,10 +53,7 @@ export class ServerControl {
             requestId,
             controlToken,
         });
-
-        return new Promise((resolve, reject) => {
-            this.send(event);
-            this.creationCallbacks[requestId] = resolve;
-        });
+        this.send(event);
+        return this.creationHandler.responseFor(requestId);
     }
 }

@@ -1,5 +1,5 @@
 import { WireEvent } from "../networking/EventWire";
-import { EventType, Event } from "./SimpleEventEmitter";
+import { EventType, Event, SimpleEventEmitter } from "./SimpleEventEmitter";
 
 // TODO: how can we type events?
 // For easy interop with redux, a discriminated union type would be nice,
@@ -31,4 +31,36 @@ export function tagEvent<E extends Event>(event: E): TaggedEvent<E> {
 export type TaggedEvent<T extends Event> = {
     typeId: T["eventType"]["typeId"],
     data: T,
+}
+
+export interface HasRequestId {
+    requestId: number;
+}
+
+export class RequestHandler<E extends Event & HasRequestId> {
+    eventType: EventType<E>;
+    callbacks: {[requestId: number]: (E) => void};
+
+    constructor(type: EventType<E>) {
+        this.eventType = type;
+        this.callbacks = {};
+    }
+
+    public register(emitter: SimpleEventEmitter) {
+        emitter.on(this.eventType).subscribe((e) => this.handleEvent(e));
+    }
+
+    public handleEvent(event: E) {
+        const handler = this.callbacks[event.requestId];
+        if (handler) {
+            handler(event);
+            delete this.callbacks[event.requestId];
+        }
+    }
+
+    public responseFor(requestId: number): Promise<E> {
+        return new Promise((resolve) => {
+            this.callbacks[requestId] = resolve;
+        });
+    }
 }
