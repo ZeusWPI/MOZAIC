@@ -3,8 +3,13 @@ import { ClientParams } from "./networking/EventWire";
 import { SimpleEventEmitter, EventType, Event } from "./reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 
+import * as events from './eventTypes';
+import * as crypto from 'crypto';
+
+
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
+import { PwMatch } from "./planetwars/PwMatch";
 
 
 export class ServerControl {

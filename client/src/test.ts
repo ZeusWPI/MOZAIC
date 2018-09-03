@@ -52,6 +52,7 @@ function runMatch() {
         host: addr.host,
         port: addr.port,
         token: ownerToken,
+        matchUuid,
     }, new Logger(0, logStream));
     
     const clients = {};
@@ -107,7 +108,7 @@ function runMatch() {
         waiting_for.add(clientId);
     });
     
-    match.connect(matchUuid);
+    match.connect();
 }
 
 const serverControl = new ServerControl({
