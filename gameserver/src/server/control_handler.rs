@@ -2,7 +2,7 @@ use tokio;
 use futures::sync::mpsc;
 
 use network::connection_handler::ConnectionHandle;
-use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
+use reactors::{ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 use rand::{thread_rng, Rng};
@@ -10,6 +10,7 @@ use rand::{thread_rng, Rng};
 use reactors::{EventBox, AnyEvent};
 
 use super::ConnectionManager;
+use super::match_handler::MatchHandler;
 
 
 pub struct ControlHandler {
@@ -33,14 +34,6 @@ impl ControlHandler {
                 let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
-        let mut owner_core = ReactorCore::new(
-            Forwarder { handle: reactor_handle.clone() }
-        );
-
-        owner_core.add_handler(Forwarder::forward::<events::RegisterClient>);
-        owner_core.add_handler(Forwarder::forward::<events::RemoveClient>);
-        owner_core.add_handler(Forwarder::forward::<events::StartGame>);
-
         let token = e.control_token.clone();
         let mut match_uuid = vec![0u8; 16];
         thread_rng().fill(&mut match_uuid[..]);
@@ -49,7 +42,18 @@ impl ControlHandler {
             match_uuid.clone(),
             0, // owner is always client-id 0. Is this how we want it?
             token,
-            |_| owner_core
+            |conn_handle| {
+                let mut core = ReactorCore::new(
+                    MatchHandler::new(
+                        reactor_handle.clone(),
+                        conn_handle,
+                    )
+                );
+                core.add_handler(MatchHandler::create_client);
+                core.add_handler(MatchHandler::remove_client);
+                core.add_handler(MatchHandler::start_game);
+                return core;
+            }
         );
 
         let pw_match = PwMatch::new(
@@ -81,17 +85,5 @@ impl ControlHandler {
                 match_uuid: match_uuid,
             }).as_wire_event()
         );
-    }
-}
-
-struct Forwarder {
-    handle: ReactorHandle,
-}
-
-impl Forwarder {
-    pub fn forward<E>(&mut self, event: &E)
-        where E: Event + Clone + 'static
-    {
-        self.handle.dispatch(event.clone());
     }
 }

@@ -1,6 +1,7 @@
 pub mod control_handler;
 pub mod router;
 pub mod connection_manager;
+pub mod match_handler;
 
 
 pub use self::router::GameServerRouter;

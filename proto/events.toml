@@ -18,6 +18,7 @@ TurnTimeout = 22
 PlayerAction = 23
 
 
-
 CreateMatch = 128
 MatchCreated = 129
+CreateClient = 130
+CreateClientResponse = 131
