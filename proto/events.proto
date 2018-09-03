@@ -54,6 +54,11 @@ message StartGame {
     uint64 max_turns = 2;
 }
 
+message MatchEvent {
+    uint32 type_id = 1;
+    bytes data = 2;
+}
+
 // --- CLIENT EVENTS ---
 
 // A client sends some data to the server.
