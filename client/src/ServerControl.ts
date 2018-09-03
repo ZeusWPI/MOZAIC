@@ -8,22 +8,17 @@ import * as events from './eventTypes';
 
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
-import { RequestHandler } from "./reactors/utils";
+import { ResponseEmitter } from "./reactors/ResponseEmitter";
 
 
 export class ServerControl {
     private client: Client;
-    private handler: SimpleEventEmitter;
+    private handler: ResponseEmitter;
 
-    private requestCounter: number;
-    creationHandler: RequestHandler<events.MatchCreated>;
 
     constructor(params: ClientParams) {
-        this.handler = new SimpleEventEmitter();
+        this.handler = new ResponseEmitter();
         this.client = new Client(params, this.handler);
-        this.creationHandler = new RequestHandler(events.MatchCreated);
-        this.creationHandler.register(this.handler);
-        this.requestCounter = 0;
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
@@ -46,14 +41,14 @@ export class ServerControl {
     }
 
     public createMatch(controlToken: Uint8Array): Promise<events.MatchCreated> {
-        this.requestCounter += 1;
-        const requestId = this.requestCounter;
+        const requestId = this.client.nextRequestId();;
 
-        const event = events.CreateMatch.create({
+        this.send(events.CreateMatch.create({
             requestId,
             controlToken,
-        });
-        this.send(event);
-        return this.creationHandler.responseFor(requestId);
+        }));
+        return this.handler
+            .resolver(events.MatchCreated)
+            .responseFor(requestId);
     }
 }

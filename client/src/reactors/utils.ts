@@ -32,35 +32,3 @@ export type TaggedEvent<T extends Event> = {
     typeId: T["eventType"]["typeId"],
     data: T,
 }
-
-export interface HasRequestId {
-    requestId: number;
-}
-
-export class RequestHandler<E extends Event & HasRequestId> {
-    eventType: EventType<E>;
-    callbacks: {[requestId: number]: (E) => void};
-
-    constructor(type: EventType<E>) {
-        this.eventType = type;
-        this.callbacks = {};
-    }
-
-    public register(emitter: SimpleEventEmitter) {
-        emitter.on(this.eventType).subscribe((e) => this.handleEvent(e));
-    }
-
-    public handleEvent(event: E) {
-        const handler = this.callbacks[event.requestId];
-        if (handler) {
-            handler(event);
-            delete this.callbacks[event.requestId];
-        }
-    }
-
-    public responseFor(requestId: number): Promise<E> {
-        return new Promise((resolve) => {
-            this.callbacks[requestId] = resolve;
-        });
-    }
-}

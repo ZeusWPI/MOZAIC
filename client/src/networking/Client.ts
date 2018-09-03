@@ -10,10 +10,12 @@ export interface EventHandler {
 export class Client {
     private eventWire: EventWire;
     public handler: EventHandler;
+    private requestCounter: number;
 
     constructor(params: ClientParams, handler: EventHandler) {
         this.handler = handler;
         this.eventWire = new EventWire(params);
+        this.requestCounter = 0;
 
         this.eventWire.onEvent.subscribe((event) => {
             this.handler.handleWireEvent(event);
@@ -38,5 +40,10 @@ export class Client {
 
     public send(event: Event) {
         this.eventWire.send(event);
-     }
+    }
+
+    public nextRequestId(): number {
+        this.requestCounter += 1;
+        return this.requestCounter;
+    }
 }
