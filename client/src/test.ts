@@ -58,15 +58,26 @@ function runMatch(matchUuid: Uint8Array) {
     const clients = {};
     const waiting_for = new Set();
     
-    match.on(Connected).subscribe((_) => {
+    match.onClient(Connected).subscribe((_) => {
         console.log('match connected');
         players.forEach((player, idx) => {
             const player_num = idx + 1;
-            match.send(RegisterClient.create({
-                clientId: player_num,
-                token: Buffer.from(player.token, 'utf-8'),
-            }));
             waiting_for.add(player_num);
+            const token = Buffer.from(player.token, 'utf-8');
+            match.createClient(token).then(({ clientId }) => {
+                const client = new PwClient({
+                    clientId: clientId,
+                    token,
+                    matchUuid,
+                    host: addr.host,
+                    port: addr.port,
+                    botConfig: simpleBot,
+                    logSink: logStream,
+                });
+                clients[clientId] = client;
+                client.run();
+    
+            });
         })
     });
     
@@ -78,24 +89,7 @@ function runMatch(matchUuid: Uint8Array) {
     });
     
     
-    
     // MATCH LOGIC
-    
-    match.on(RegisterClient).subscribe((data) => {
-        if (!clients[data.clientId]) {
-            const client = new PwClient({
-                clientId: data.clientId,
-                matchUuid,
-                host: addr.host,
-                port: addr.port,
-                token: data.token,
-                botConfig: simpleBot,
-                logSink: logStream,
-            });
-            clients[data.clientId] = client;
-            client.run();
-        }
-    });
     
     match.on(ClientConnected).subscribe(({ clientId }) => {
         waiting_for.delete(clientId);
@@ -106,6 +100,11 @@ function runMatch(matchUuid: Uint8Array) {
     
     match.on(ClientDisconnected).subscribe(({ clientId }) => {
         waiting_for.add(clientId);
+    });
+
+    // TODO: remove me
+    match.on(events.GameFinished).subscribe((_) => {
+        match.client.exit();
     });
     
     match.connect();
