@@ -5,6 +5,7 @@ use network::connection_handler::ConnectionHandle;
 use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
+use rand::{thread_rng, Rng};
 
 use reactors::{EventBox, AnyEvent};
 
@@ -41,7 +42,8 @@ impl ControlHandler {
         owner_core.add_handler(Forwarder::forward::<events::StartGame>);
 
         let token = e.control_token.clone();
-        let match_uuid = e.match_uuid.clone();
+        let mut match_uuid = vec![0u8; 16];
+        thread_rng().fill(&mut match_uuid[..]);
 
         let match_owner = self.connection_manager.create_connection(
             match_uuid.clone(),
@@ -51,7 +53,7 @@ impl ControlHandler {
         );
 
         let pw_match = PwMatch::new(
-            match_uuid,
+            match_uuid.clone(),
             reactor_handle,
             self.connection_manager.clone(),
         );
@@ -75,7 +77,8 @@ impl ControlHandler {
         // TODO: eww.
         self.handle.send(
             EventBox::new(events::MatchCreated {
-                match_uuid: e.match_uuid.clone(),
+                request_id: e.request_id,
+                match_uuid: match_uuid,
             }).as_wire_event()
         );
     }
