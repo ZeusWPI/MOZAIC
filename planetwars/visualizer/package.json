@@ -10,14 +10,16 @@
   "scripts": {
     "dev": "webpack-dev-server --hot --config=webpack/webpack.config.dev.js",
     "build": "rm -rf dist && webpack --config=webpack/webpack.config.prod.js",
-    "prepublish": "yarn run build"
+    "prepare": "yarn run build"
   },
   "peerDependencies": {
     "react": "^16.3.0",
     "react-dom": "^16.3.0"
   },
   "dependencies": {
+    "bulma": "^0.7.1",
     "d3": "^5.7.0",
+    "hyperscript-helpers": "^3.0.3",
     "planetwars-match-log": "file:../match-log",
     "react-hyperscript": "^3.2.0"
   },
@@ -28,8 +30,8 @@
     "@types/react-hyperscript": "^3.0.3",
     "copy-webpack-plugin": "^4.5.2",
     "css-loader": "^1.0.0",
-    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "file-loader": "^2.0.0",
+    "mini-css-extract-plugin": "^0.4.2",
     "node-sass": "^4.9.3",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",

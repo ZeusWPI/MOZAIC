@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import { PwTypes, MatchType, MatchStats } from '.';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
 
@@ -11,14 +10,13 @@ export function emptyLog(type: MatchType): MatchLog {
   }
 }
 
-export function logFileEntries(path: string): PwTypes.LogEntry[] {
-  const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
-  return lines.map((line: string) => JSON.parse(line));
+export function logFileEntries(logFileContent: string): PwTypes.LogEntry[] {
+  return logFileContent.trim().split('\n').map((line: string) => JSON.parse(line));
 }
 
-export function parseLogFile(path: string, type: MatchType): MatchLog {
-  const log = emptyLog(type);
-  logFileEntries(path).forEach((entry) => {
+export function parseLog(logFileContent: string, type: MatchType): MatchLog {
+  const log = emptyLog(type)
+  logFileEntries(logFileContent).forEach((entry) => {
     log.addEntry(entry);
   });
   return log;

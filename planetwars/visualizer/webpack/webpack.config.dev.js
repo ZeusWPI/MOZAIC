@@ -20,4 +20,28 @@ module.exports = merge(baseConfig, {
         contentBase: path.join(__dirname, '..'),
         port: 8080
     },
+    module: {
+        rules: [{
+                test: /\.global\.scss$/,
+                use: ['style-loader', 'css-loader?sourceMap', 'sass-loader']
+            },
+            // Compile all other .scss files and pipe it to style.css
+            {
+                test: /^((?!\.global).)*\.scss$/,
+                use: [
+                    'style-loader',
+                    {
+                        loader: 'css-loader',
+                        options: {
+                            modules: true,
+                            sourceMap: true,
+                            importLoaders: 1,
+                            localIdentName: '[name]__[local]__[hash:base64:5]',
+                        }
+                    },
+                    'sass-loader',
+                ]
+            },
+        ]
+    }
 });

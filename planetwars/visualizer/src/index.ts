@@ -1,1 +1,3 @@
-export { HelloWorld, HelloWorldProps } from './HelloWorld';
+import './app.global.scss'
+
+export { Visualizer } from './components/visualizer';

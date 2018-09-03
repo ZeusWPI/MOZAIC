@@ -5,4 +5,5 @@ export * from './types';
 export * from './utils';
 
 // TODO: this is not exactly ideal
-export { PwTypes } from 'mozaic-client';
+import * as PwTypes from './mozaic-types';
+export { PwTypes };

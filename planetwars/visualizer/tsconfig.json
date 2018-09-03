@@ -14,7 +14,7 @@
       "scripthost"
     ],
     "alwaysStrict": true,
-    "strictNullChecks": true,
+    // "strictNullChecks": true,
     // "noImplicitAny": true, // Yo voronoi
     "noImplicitReturns": true,
     "noImplicitThis": true,
@@ -23,7 +23,8 @@
   },
   "include": [
     "./src/**/*.tsx",
-    "./src/**/*.ts",
+    "./src/**/*.ts", 
+    "./bin/**/*.ts",
   ],
   "exclude": [
     "node_modules"
