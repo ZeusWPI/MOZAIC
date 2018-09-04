@@ -6,10 +6,16 @@ use tokio::net::TcpStream;
 use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
-use protocol::{Packet, packet, Event as ProtoEvent};
+use protocol::{Packet, packet, Request, Response};
 use events;
 
 type PacketStream = MessageStream<TcpStream, Packet>;
+
+// TODO: implement errors
+pub enum ConnectionEvent {
+    Request(Request),
+    Response(Response),
+}
 
 pub enum TransportState {
     Disconnected,
@@ -17,28 +23,35 @@ pub enum TransportState {
 }
 
 pub struct ConnectionState {
+    seq_num: u32,
     buffer: Vec<packet::Payload>,
 }
 
 impl ConnectionState {
     fn new() -> Self {
         ConnectionState {
+            seq_num: 0,
             buffer: Vec::new(),
         }
     }
 
-    fn queue_send(&mut self, wire_event: WireEvent) {
-        let payload = packet::Payload::Event(
-            ProtoEvent {
+    fn queue_send(&mut self, wire_event: WireEvent) -> u32 {
+        let seq_num = self.seq_num;
+        self.seq_num += 1;
+
+        let payload = packet::Payload::Request(
+            Request {
+                seq_num,
                 type_id: wire_event.type_id,
                 data: wire_event.data,
             }
         );
         self.buffer.push(payload);
+        return seq_num;
     }
 
     fn poll(&mut self, stream: &mut PacketStream)
-        -> Poll<WireEvent, io::Error>
+        -> Poll<ConnectionEvent, io::Error>
     {
         try!(self.flush_buffer(stream));
         return self.poll_message(stream);
@@ -60,7 +73,7 @@ impl ConnectionState {
     }
 
     fn poll_message(&mut self, stream: &mut PacketStream)
-        -> Poll<WireEvent, io::Error>
+        -> Poll<ConnectionEvent, io::Error>
     {
         loop {
             let packet = match try_ready!(stream.poll()) {
@@ -70,12 +83,20 @@ impl ConnectionState {
 
             if let Some(payload) = packet.payload {
                 match payload {
-                    packet::Payload::Event(event) => {
-                        return Ok(Async::Ready(WireEvent {
-                            type_id: event.type_id,
-                            data: event.data,
-                        }));
+                    packet::Payload::Request(request) => {
+                        return Ok(
+                            Async::Ready(
+                                ConnectionEvent::Request(request)
+                            )
+                        );
                     },
+                    packet::Payload::Response(response) => {
+                        return Ok(
+                            Async::Ready(
+                                ConnectionEvent::Response(response)
+                            )
+                        );
+                    }
                     packet::Payload::CloseConnection(_) => {
                         // TODO
                         println!("connection closed");
@@ -156,7 +177,19 @@ impl<H> ConnectionHandler<H>
 
         loop {
             let event = try_ready!(self.state.poll(transport));
-            self.event_handler.handle_wire_event(event);
+            match event {
+                ConnectionEvent::Request(request) => {
+                    self.event_handler.handle_wire_event(
+                        WireEvent {
+                            type_id: request.type_id,
+                            data: request.data,
+                        }
+                    );
+                }
+                ConnectionEvent::Response(_response) => {
+                    unimplemented!()
+                }
+            }
         }
     }
 

@@ -40,14 +40,22 @@ message ConnectionError {
 
 message Packet {
     oneof payload {
-        Event event = 1;
-        CloseConnection close_connection = 2;
+        Request request = 1;
+        Response response = 2;
+        CloseConnection close_connection = 3;
     }
 }
 
-message Event {
-    uint32 type_id = 1; 
-    bytes data = 2;
+message Request {
+    uint32 seq_num = 1;
+    uint32 type_id = 2; 
+    bytes data = 3;
+}
+
+message Response {
+    uint32 seq_num = 1;
+    uint32 type_id = 2;
+    bytes data = 3;
 }
 
 message CloseConnection {
