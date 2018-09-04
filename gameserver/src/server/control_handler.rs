@@ -1,8 +1,9 @@
 use tokio;
 use futures::sync::mpsc;
+use std::io;
 
 use network::connection_handler::ConnectionHandle;
-use reactors::{RequestHandler, ReactorCore, Reactor, ReactorHandle};
+use reactors::{WireEvent, RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 use rand::{thread_rng, Rng};
@@ -30,7 +31,9 @@ impl ControlHandler {
     }
 
     // TODO: oh please clean this up
-    pub fn create_match(&mut self, e: &events::CreateMatch) {
+    pub fn create_match(&mut self, e: &events::CreateMatch)
+        -> io::Result<WireEvent>
+    {
                 let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
@@ -78,12 +81,11 @@ impl ControlHandler {
             ctrl_chan,
         ));
 
-        // TODO: eww.
-        self.handle.send(
+        Ok(
             EventBox::new(events::MatchCreated {
                 request_id: e.request_id,
                 match_uuid: match_uuid,
             }).as_wire_event()
-        );
+        )
     }
 }

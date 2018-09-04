@@ -15,7 +15,7 @@ use tokio;
 use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::ConnectionRouter;
-use reactors::{RequestHandler, ReactorCore};
+use reactors::RequestHandler;
 
 use self::control_handler::ControlHandler;
 

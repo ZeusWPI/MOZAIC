@@ -20,15 +20,17 @@ impl<S, R> ReactorCore<S, R> {
 
     pub fn handle_event(&mut self, event: &AnyEvent) -> Option<R> {
         let event_type = event.type_id();
+        let state = &mut self.state;
         self.handlers.get_mut(&event_type).map(|handler| {
-            handler.handle_event(&mut self.state, event)
+            handler.handle_event(state, event)
         })
     }
 
     pub fn handle_wire_event(&mut self, event: &WireEvent) -> Option<R> {
         let event_type = event.type_id;
+        let state = &mut self.state;
         self.handlers.get_mut(&event_type).map(|handler| {
-            handler.handle_wire_event(&mut self.state, event)
+            handler.handle_wire_event(state, event)
         })
     }
 

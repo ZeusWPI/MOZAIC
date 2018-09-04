@@ -1,4 +1,6 @@
-use reactors::ReactorHandle;
+use std::io;
+
+use reactors::{EventBox, WireEvent, AnyEvent, ReactorHandle};
 use network::connection_handler::ConnectionHandle;
 
 use events;
@@ -24,7 +26,9 @@ impl MatchHandler {
         }
     }
 
-    pub fn create_client(&mut self, e: &events::CreateClient) {
+    pub fn create_client(&mut self, e: &events::CreateClient)
+        -> io::Result<WireEvent>
+    {
         // TODO: make this german tank resistant
         let client_id = self.client_counter;
         self.client_counter += 1;
@@ -36,17 +40,26 @@ impl MatchHandler {
         // TODO: it would be better to actually open the connection here,
         // so that it certainly exists when the client receives this
         // response.
-        self.connection_handle.dispatch(events::CreateClientResponse {
-            request_id: e.request_id,
-            client_id,
-        });
+        Ok(
+            EventBox::new(
+                events::CreateClientResponse {
+                    request_id: e.request_id,
+                    client_id,
+            }).as_wire_event()
+        )
     }
 
-    pub fn remove_client(&mut self, e: &events::RemoveClient) {
+    pub fn remove_client(&mut self, e: &events::RemoveClient)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(e.clone());
+        Ok(WireEvent::null())
     }
 
-    pub fn start_game(&mut self, e: &events::StartGame) {
+    pub fn start_game(&mut self, e: &events::StartGame)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(e.clone());
+        Ok(WireEvent::null())
     }
 }

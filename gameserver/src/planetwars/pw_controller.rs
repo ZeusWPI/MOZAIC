@@ -1,12 +1,13 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use std::mem;
+use std::io;
 
 use events;
 use network::connection_table::{ClientId};
 use network::connection_handler::ConnectionHandle;
 use reactors::reactor::ReactorHandle;
-use reactors::RequestHandler;
+use reactors::{WireEvent, RequestHandler};
 use server::ConnectionManager;
 
 use super::Config;
@@ -40,23 +41,32 @@ impl ClientHandler {
         }
     }
 
-    pub fn on_connect(&mut self, _event: &events::Connected) {
+    pub fn on_connect(&mut self, _event: &events::Connected)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientConnected {
             client_id: self.client_id,
         });
+        Ok(WireEvent::null())
     }
 
-    pub fn on_disconnect(&mut self, _event: &events::Disconnected) {
+    pub fn on_disconnect(&mut self, _event: &events::Disconnected)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientDisconnected {
             client_id: self.client_id,
         });
+        Ok(WireEvent::null())
     }
 
-    pub fn on_message(&mut self, event: &events::ClientSend) {
+    pub fn on_message(&mut self, event: &events::ClientSend)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientMessage {
             client_id: self.client_id,
             data: event.data.clone(),
         });
+        Ok(WireEvent::null())
     }
 }
 

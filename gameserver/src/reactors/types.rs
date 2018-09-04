@@ -16,6 +16,15 @@ pub struct WireEvent {
     pub data: Vec<u8>,
 }
 
+impl WireEvent {
+    pub fn null() -> Self {
+        WireEvent {
+            type_id: 0,
+            data: vec![],
+        }
+    }
+}
+
 pub struct EventBox<T>
     where T: Event
 {
