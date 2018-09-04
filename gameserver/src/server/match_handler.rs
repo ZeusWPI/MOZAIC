@@ -11,7 +11,6 @@ pub struct MatchHandler {
     client_counter: u32,
     reactor_handle: ReactorHandle,
     connection_handle: ConnectionHandle,
-
 }
 
 impl MatchHandler {
@@ -26,7 +25,7 @@ impl MatchHandler {
         }
     }
 
-    pub fn create_client(&mut self, e: &events::CreateClient)
+    pub fn create_client(&mut self, e: &events::CreateClientRequest)
         -> io::Result<WireEvent>
     {
         // TODO: make this german tank resistant
@@ -43,7 +42,6 @@ impl MatchHandler {
         Ok(
             EventBox::new(
                 events::CreateClientResponse {
-                    request_id: e.request_id,
                     client_id,
             }).as_wire_event()
         )

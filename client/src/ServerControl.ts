@@ -39,12 +39,12 @@ export class ServerControl {
         this.client.exit();
     }
 
-    public createMatch(controlToken: Uint8Array): Promise<events.MatchCreated>
+    public createMatch(controlToken: Uint8Array)
+        : Promise<events.CreateMatchResponse>
     {
-        const event = events.CreateMatch.create({
-            requestId: 0,
+        const request = events.CreateMatchRequest.create({
             controlToken,
         });
-        return this.client.request(event, events.MatchCreated);
+        return this.client.request(request, events.CreateMatchResponse);
     }
 }

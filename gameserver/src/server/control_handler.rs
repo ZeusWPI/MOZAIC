@@ -31,7 +31,7 @@ impl ControlHandler {
     }
 
     // TODO: oh please clean this up
-    pub fn create_match(&mut self, e: &events::CreateMatch)
+    pub fn create_match(&mut self, e: &events::CreateMatchRequest)
         -> io::Result<WireEvent>
     {
                 let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
@@ -82,8 +82,7 @@ impl ControlHandler {
         ));
 
         Ok(
-            EventBox::new(events::MatchCreated {
-                request_id: e.request_id,
+            EventBox::new(events::CreateMatchResponse {
                 match_uuid: match_uuid,
             }).as_wire_event()
         )

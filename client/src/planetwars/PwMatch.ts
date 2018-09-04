@@ -57,10 +57,9 @@ export class PwMatch {
 
     public createClient(token: Uint8Array): Promise<events.CreateClientResponse>
     {
-        const event = events.CreateClient.create({
-            requestId: 0,
+        const request = events.CreateClientRequest.create({
             token
         });
-        return this.client.request(event, events.CreateClientResponse);
+        return this.client.request(request, events.CreateClientResponse);
     }
 }
