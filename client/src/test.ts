@@ -1,15 +1,12 @@
 import { Address } from './networking/EventWire';
 import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
-import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
-import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './events';
-import * as events from './events';
+import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
+import * as events from './eventTypes';
 import { ServerRunner, ServerParams } from './planetwars/ServerRunner';
-import { Reactor } from './reactors/Reactor';
-import { Client } from './networking/Client';
 import { PwMatch } from './planetwars/PwMatch';
-
-const EVENT_TYPES = require('./event_types');
+import { createWriteStream } from 'fs';
+import { Logger } from './Logger';
 
 const tokens = ["aaaa", "bbbb"];
 
@@ -52,6 +49,8 @@ const params: ServerParams = {
     logFile: "log.json",
 }
 
+const logStream = createWriteStream('log.out');
+
 const runner = new ServerRunner(bin_path, params);
 runner.runServer();
 
@@ -59,7 +58,7 @@ const match = new PwMatch({
     host: addr.host,
     port: addr.port,
     token: Buffer.from(params.ctrl_token, 'hex'),
-});
+}, new Logger(0, logStream));
 
 const clients = {};
 const waiting_for = new Set();
@@ -67,7 +66,7 @@ const waiting_for = new Set();
 match.on(Connected).subscribe((_) => {
     players.forEach((player, idx) => {
         const player_num = idx + 1;
-        match.dispatch(RegisterClient.create({
+        match.send(RegisterClient.create({
             clientId: player_num,
             token: Buffer.from(player.token, 'utf-8'),
         }));
@@ -75,15 +74,12 @@ match.on(Connected).subscribe((_) => {
     })
 });
 
-// TODO: this should be done in a more general way
-// print all received match events, and forward them to the matchReactor
+// print all events that happen on the match reactor
 Object.keys(events).forEach((eventName) => {
     match.on(events[eventName]).subscribe((event) => {
         console.log(event);
-        match.dispatch(event);
     });
 });
-
 
 
 
@@ -97,6 +93,7 @@ match.on(RegisterClient).subscribe((data) => {
             port: addr.port,
             token: data.token,
             botConfig: simpleBot,
+            logSink: logStream,
         });
         clients[data.clientId] = client;
         client.run();
@@ -106,7 +103,7 @@ match.on(RegisterClient).subscribe((data) => {
 match.on(ClientConnected).subscribe(({ clientId }) => {
     waiting_for.delete(clientId);
     if (waiting_for.size == 0) {
-        match.dispatch(StartGame.create(gameConfig));
+        match.send(StartGame.create(gameConfig));
     }
 });
 

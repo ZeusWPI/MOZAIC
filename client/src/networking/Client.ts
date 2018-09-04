@@ -1,5 +1,6 @@
 import { EventWire, ClientParams } from "./EventWire";
-import { Connected, Disconnected } from "../events";
+import { Connected, Disconnected } from "../eventTypes";
+import { Event } from "../reactors/SimpleEventEmitter";
 
 export interface EventHandler {
     handleEvent: (any) => void;
@@ -35,7 +36,7 @@ export class Client {
         this.eventWire.close();
     }
 
-    public send(event: any) {
+    public send(event: Event) {
         this.eventWire.send(event);
      }
 }
