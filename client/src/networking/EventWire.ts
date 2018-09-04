@@ -11,7 +11,8 @@ import {
 import { ProtobufStream } from './ProtobufStream';
 import { execFileSync } from 'child_process';
 import { encodeEvent } from '../reactors/utils';
-import { Event } from '../reactors/SimpleEventEmitter';
+import { Event, EventType } from '../reactors/SimpleEventEmitter';
+import { resolve } from 'path';
 
 export interface Address {
     host: string;
@@ -39,6 +40,9 @@ export interface WireEvent {
 export class EventWire {
     private state: ConnectionState;
     private stream: ProtobufStream;
+    private seqNum: number;
+
+    private responseHandlers: { [seq_num: number]: ResponseHandler<any>};
 
     private params: ClientParams;
 
@@ -51,7 +55,10 @@ export class EventWire {
     public constructor(params: ClientParams) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
+        this.seqNum = 0;
         this.params = params;
+
+        this.responseHandlers = {};
 
         this.stream.onClose.subscribe(() => {
             this._onClose.dispatch();
@@ -108,16 +115,38 @@ export class EventWire {
     }
 
     public send(event: Event) {
-        let wireEvent = encodeEvent(event);
+        const wireEvent = encodeEvent(event);
         this.sendWireEvent(wireEvent);
-
     }
 
-    public sendWireEvent(wireEvent: WireEvent) {
+    public request<T>(event: Event, responseType: EventType<T>): Promise<T> {
+        const wireEvent = encodeEvent(event);
+        return this.requestWire(wireEvent, responseType);
+    }
+
+    public requestWire<T>(wireEvent: WireEvent, responseType: EventType<T>)
+        : Promise<T>
+    {
+        return new Promise((resolve, reject) => {
+            const seqNum = this.sendWireEvent(wireEvent);
+            const handler = new ResponseHandler(responseType, resolve, reject);
+            this.responseHandlers[seqNum] = handler;
+        });
+    }
+
+    public sendWireEvent(wireEvent: WireEvent): number {
         // TODO: maybe ensure that the connection handshake has completed here
-        let event = proto.Event.create(wireEvent);
-        let packet = proto.Packet.create({ event });
+        const seqNum = this.seqNum;
+        this.seqNum += 1;
+
+        const { typeId, data } = wireEvent;
+
+        let packet = proto.Packet.create({
+            request: { seqNum, typeId, data }
+        });
         this.stream.write(proto.Packet.encode(packet));
+
+        return seqNum;
     }
 
     private handleMessage(data: Uint8Array) {
@@ -159,14 +188,46 @@ export class EventWire {
     private handlePacket(data: Uint8Array) {
         const packet = proto.Packet.decode(data);
 
-        if (packet.event) {
-            const { typeId, data } = packet.event;
+        if (packet.request) {
+            const { typeId, data } = packet.request;
             // these values should be present according to protobuf3 spec
             this._onEvent.dispatch({
                 typeId: typeId!,
                 data: data!
             });
+        } else if (packet.response) {
+            const seqNum = packet.response.seqNum!;
+            const handler = this.responseHandlers[seqNum];
+            if (handler) {
+                handler.handleResponse(packet.response);
+                delete this.responseHandlers[seqNum];
+            }
         }
         // TODO: other options
+    }
+}
+
+export class ResponseHandler<T> {
+    private eventType: EventType<T>;
+    private resolve: (response: T) => void;
+    private reject: (err: Error) => void;
+
+    constructor(
+        eventType: EventType<T>,
+        resolve: (response: T) => void,
+        reject: (err: Error) => void,
+    ) {
+        this.eventType = eventType;
+        this.resolve = resolve;
+        this.reject = reject;
+    }
+
+    public handleResponse(response: proto.IResponse) {
+        const event = this.eventType.decode(response.data);
+        this.resolve(event);
+    }
+
+    public handleError(err: Error) {
+        this.reject(err);
     }
 }
