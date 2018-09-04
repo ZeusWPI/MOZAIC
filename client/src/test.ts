@@ -102,11 +102,6 @@ function runMatch(matchUuid: Uint8Array) {
         waiting_for.add(clientId);
     });
 
-    // TODO: remove me
-    match.on(events.GameFinished).subscribe((_) => {
-        match.client.exit();
-    });
-    
     match.connect();
 }
 

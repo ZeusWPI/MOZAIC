@@ -34,29 +34,25 @@ impl ControlHandler {
     pub fn create_match(&mut self, e: &events::CreateMatchRequest)
         -> io::Result<WireEvent>
     {
-                let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
         let token = e.control_token.clone();
         let mut match_uuid = vec![0u8; 16];
         thread_rng().fill(&mut match_uuid[..]);
 
+        let mut core = RequestHandler::new(
+            MatchHandler::new(reactor_handle.clone())
+        );
+        core.add_handler(MatchHandler::create_client);
+        core.add_handler(MatchHandler::remove_client);
+        core.add_handler(MatchHandler::start_game);
+
         let match_owner = self.connection_manager.create_connection(
             match_uuid.clone(),
             0, // owner is always client-id 0. Is this how we want it?
             token,
-            |conn_handle| {
-                let mut core = RequestHandler::new(
-                    MatchHandler::new(
-                        reactor_handle.clone(),
-                        conn_handle,
-                    )
-                );
-                core.add_handler(MatchHandler::create_client);
-                core.add_handler(MatchHandler::remove_client);
-                core.add_handler(MatchHandler::start_game);
-                return core;
-            }
+            |_| core
         );
 
         let pw_match = PwMatch::new(

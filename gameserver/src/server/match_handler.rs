@@ -1,7 +1,6 @@
 use std::io;
 
 use reactors::{EventBox, WireEvent, AnyEvent, ReactorHandle};
-use network::connection_handler::ConnectionHandle;
 
 use events;
 
@@ -10,18 +9,13 @@ use events;
 pub struct MatchHandler {
     client_counter: u32,
     reactor_handle: ReactorHandle,
-    connection_handle: ConnectionHandle,
 }
 
 impl MatchHandler {
-    pub fn new(reactor_handle: ReactorHandle,
-               connection_handle: ConnectionHandle)
-               -> Self
-    {
+    pub fn new(reactor_handle: ReactorHandle) -> Self {
         MatchHandler {
             client_counter: 1,
             reactor_handle,
-            connection_handle
         }
     }
 
