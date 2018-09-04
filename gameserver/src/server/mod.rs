@@ -3,7 +3,6 @@ pub mod router;
 pub mod connection_manager;
 pub mod match_handler;
 
-
 pub use self::router::GameServerRouter;
 pub use self::connection_manager::ConnectionManager;
 
@@ -16,7 +15,7 @@ use tokio;
 use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::ConnectionRouter;
-use reactors::ReactorCore;
+use reactors::{RequestHandler, ReactorCore};
 
 use self::control_handler::ControlHandler;
 
@@ -60,7 +59,7 @@ impl Future for Server {
                     handle,
                     connection_manager.clone(),
                 );
-                let mut core = ReactorCore::new(handler);
+                let mut core = RequestHandler::new(handler);
                 core.add_handler(ControlHandler::create_match);
                 return core;
             }

@@ -5,12 +5,12 @@ use super::types::*;
 
 /// The combination of a state and a set of handlers that act upon that state.
 /// The ReactorCore 'reduces' over the event stream.
-pub struct ReactorCore<S> {
+pub struct ReactorCore<S, R> {
     state: S,
-    handlers: HashMap<u32, Box<SomeHandler<S, ()>>>,
+    handlers: HashMap<u32, Box<SomeHandler<S, R>>>,
 }
 
-impl<S> ReactorCore<S> {
+impl<S, R> ReactorCore<S, R> {
     pub fn new(state: S) -> Self {
         ReactorCore {
             handlers: HashMap::new(),
@@ -18,24 +18,25 @@ impl<S> ReactorCore<S> {
         }
     }
 
-    pub fn handle_event(&mut self, event: &AnyEvent) {
+    pub fn handle_event(&mut self, event: &AnyEvent) -> Option<R> {
         let event_type = event.type_id();
-        if let Some(handler) = self.handlers.get_mut(&event_type) {
-            handler.handle_event(&mut self.state, event);
-        }
+        self.handlers.get_mut(&event_type).map(|handler| {
+            handler.handle_event(&mut self.state, event)
+        })
     }
 
-    pub fn handle_wire_event(&mut self, event: &WireEvent) {
+    pub fn handle_wire_event(&mut self, event: &WireEvent) -> Option<R> {
         let event_type = event.type_id;
-        if let Some(handler) = self.handlers.get_mut(&event_type) {
-            handler.handle_wire_event(&mut self.state, event);
-        }
+        self.handlers.get_mut(&event_type).map(|handler| {
+            handler.handle_wire_event(&mut self.state, event)
+        })
     }
 
     pub fn add_handler<F, T>(&mut self, fun: F)
         where T: Event + 'static + Send,
-              F: FnMut(&mut S, &T) + 'static + Send,
-              S: 'static + Send
+              F: FnMut(&mut S, &T) -> R + 'static + Send,
+              S: 'static + Send,
+              R: 'static + Send
     {
         let handler = Box::new(Handler::new(fun));
         self.handlers.insert(T::TYPE_ID, handler);
@@ -97,12 +98,14 @@ impl<S, T, F, R> SomeHandler<S, R> for Handler<S, T, F, R>
     }
 }
 
-impl<S> EventHandler for ReactorCore<S> {
-    fn handle_event(&mut self, event: &AnyEvent) {
-        self.handle_event(event);
+impl<S, R> EventHandler for ReactorCore<S, R> {
+    type Output = Option<R>;
+
+    fn handle_event(&mut self, event: &AnyEvent) -> Option<R> {
+        self.handle_event(event)
     }
 
-    fn handle_wire_event(&mut self, event: WireEvent) {
-        self.handle_wire_event(&event);
+    fn handle_wire_event(&mut self, event: WireEvent) -> Option<R> {
+        self.handle_wire_event(&event)
     }
 }

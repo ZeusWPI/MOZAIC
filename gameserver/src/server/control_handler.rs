@@ -2,7 +2,7 @@ use tokio;
 use futures::sync::mpsc;
 
 use network::connection_handler::ConnectionHandle;
-use reactors::{ReactorCore, Reactor, ReactorHandle};
+use reactors::{RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 use rand::{thread_rng, Rng};
@@ -43,7 +43,7 @@ impl ControlHandler {
             0, // owner is always client-id 0. Is this how we want it?
             token,
             |conn_handle| {
-                let mut core = ReactorCore::new(
+                let mut core = RequestHandler::new(
                     MatchHandler::new(
                         reactor_handle.clone(),
                         conn_handle,

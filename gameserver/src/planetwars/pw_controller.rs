@@ -6,7 +6,7 @@ use events;
 use network::connection_table::{ClientId};
 use network::connection_handler::ConnectionHandle;
 use reactors::reactor::ReactorHandle;
-use reactors::ReactorCore;
+use reactors::RequestHandler;
 use server::ConnectionManager;
 
 use super::Config;
@@ -176,7 +176,7 @@ impl Lobby {
     }
 
     fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
-        let mut core = ReactorCore::new(
+        let mut core = RequestHandler::new(
             ClientHandler::new(
                 client_id.as_u32(),
                 self.reactor_handle.clone(),

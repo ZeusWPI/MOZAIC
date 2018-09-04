@@ -50,6 +50,11 @@ impl ConnectionState {
         return seq_num;
     }
 
+    fn queue_response(&mut self, response: Response) {
+        let payload = packet::Payload::Response(response);
+        self.buffer.push(payload);
+    }
+
     fn poll(&mut self, stream: &mut PacketStream)
         -> Poll<ConnectionEvent, io::Error>
     {
@@ -108,7 +113,7 @@ impl ConnectionState {
 }
 
 pub struct ConnectionHandler<H>
-    where H: EventHandler
+    where H: EventHandler<Output = io::Result<WireEvent>>
 {
     connection_id: usize,
     transport_state: TransportState,
@@ -118,7 +123,7 @@ pub struct ConnectionHandler<H>
 }
 
 impl<H> ConnectionHandler<H>
-    where H: EventHandler
+    where H: EventHandler<Output = io::Result<WireEvent>>
 {
     pub fn new(connection_id: usize, event_handler: H)
         -> (ConnectionHandle, Self)
@@ -179,12 +184,24 @@ impl<H> ConnectionHandler<H>
             let event = try_ready!(self.state.poll(transport));
             match event {
                 ConnectionEvent::Request(request) => {
-                    self.event_handler.handle_wire_event(
+                    let res = self.event_handler.handle_wire_event(
                         WireEvent {
                             type_id: request.type_id,
                             data: request.data,
                         }
                     );
+                    match res {
+                        Ok(wire_event) => {
+                            self.state.queue_response(Response {
+                                seq_num: request.seq_num,
+                                type_id: wire_event.type_id,
+                                data: wire_event.data,
+                            });
+                        }
+                        Err(err) => {
+                            panic!("handler error: {}", err);
+                        }
+                    }
                 }
                 ConnectionEvent::Response(_response) => {
                     unimplemented!()
@@ -219,7 +236,7 @@ impl<H> ConnectionHandler<H>
 }
 
 impl<H> Future for ConnectionHandler<H>
-    where H: EventHandler
+    where H: EventHandler<Output = io::Result<WireEvent>>
 {
     type Item = ();
     type Error = ();

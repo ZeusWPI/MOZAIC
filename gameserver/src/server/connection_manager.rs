@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
+use std::io;
 
 use network::{ConnectionTable, ConnectionHandle, Router};
-use reactors::EventHandler;
+use reactors::{WireEvent, EventHandler};
 
 use super::GameServerRouter;
 
@@ -31,7 +32,8 @@ impl ConnectionManager {
         creator: F
     ) -> ConnectionHandle
         where F: FnOnce(ConnectionHandle) -> H,
-              H: EventHandler + Send + 'static
+              H: EventHandler<Output = io::Result<WireEvent>>,
+              H: Send + 'static
     {
         let mut table = self.connection_table.lock().unwrap();
         let mut router = self.router.lock().unwrap();

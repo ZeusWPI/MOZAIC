@@ -57,6 +57,8 @@ impl<T> AnyEvent for EventBox<T>
 }
 
 pub trait EventHandler {
-    fn handle_event(&mut self, event: &AnyEvent);
-    fn handle_wire_event(&mut self, event: WireEvent);
+    type Output;
+
+    fn handle_event(&mut self, event: &AnyEvent) -> Self::Output;
+    fn handle_wire_event(&mut self, event: WireEvent) -> Self::Output;
 }

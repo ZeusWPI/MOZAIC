@@ -22,7 +22,7 @@ use super::ReactorCore;
 /// this behaviour should be implemented in the event handler running on the
 /// reactor, so that the actual reactor code will be more reusable.
 pub struct Reactor<S> {
-    core: ReactorCore<S>,
+    core: ReactorCore<S, ()>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     delayed_events: DelayHeap<Box<AnyEvent>>,
     // TODO: this manager and connection should not be here ...
@@ -31,7 +31,7 @@ pub struct Reactor<S> {
 }
 
 impl<S> Reactor<S> {
-    pub fn new(core: ReactorCore<S>,
+    pub fn new(core: ReactorCore<S, ()>,
                match_owner: ConnectionHandle,
                connection_manager: ConnectionManager,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>) -> Self
