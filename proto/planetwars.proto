@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package mozaic.planetwars;
+
+message Expedition {
+    uint64 id = 1;
+    uint64 ship_count = 2;
+    string origin = 3;
+    string destination = 4;
+    uint32 owner = 5;
+    uint64 turns_remaining = 6;
+}
+
+message Planet {
+    uint64 ship_count = 1;
+    double x = 2;
+    double y = 3;
+    option uint32 owner = 4;
+    string name = 5;
+}
+
+message Action {
+    repeated Command commands = 1;
+}
+
+message Command {
+    string origin = 1;
+    string destination = 2;
+    uint64 ship_count = 3;
+}
+
+message Map {
+    repeated Planet planets;
+}
+
+message State {
+    repeated Planet planets = 1;
+    repeated Expedition expeditions = 2;
+}
+
+message GameInfo {
+    repeated string players;
+}
+
+enum CommandError {
+    NOT_ENOUGH_SHIPS = 0;
+    ORIGIN_NOT_OWNED = 1;
+    ZERO_SHIP_MOVE = 2;
+    ORIGIN_DOES_NOT_EXIST = 3;
+    DESTINATION_DOES_NOT_EXIST = 4;
+}
+
+message PlayerCommand {
+    Command command = 1;
+    option CommandError error = 2;
+}
+
+message PlayerAction {
+    oneof {
+        Timeout timeout = 1;
+        string parseerror = 2;
+        repeated Command commands = 3;
+    }
+}
+
+message ServerMessage {
+    oneof data {
+        State gamestate = 1;
+        PlayerAction action = 2;
+        State finalstate = 3;
+    }
+}
+
+message ControlMessage {
+    oneof {
+        PlayerConnected playerconnected = 1;
+        PlayerDisconnected playerdisconnected = 2;
+        State gamestate = 3;
+    }
+}
+
+message PlayerConnected {
+    uint64 player_id = 1;
+}
+
+message PlayerDisconnected {
+    uint64 player_id = 1;
+}
+
+message LobbyCommand {
+    // start match
+}
+
