@@ -1,6 +1,6 @@
 import { Reactor } from "../reactors/Reactor";
 import { Client } from "../networking/Client";
-import { EventType, Event } from "../reactors/SimpleEventEmitter";
+import { EventType, Event, SimpleEventEmitter } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { ClientParams } from "../networking/EventWire";
 import { Logger } from "../Logger";
@@ -8,7 +8,6 @@ import * as events from "../eventTypes";
 
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
-import { ResponseEmitter } from "../reactors/ResponseEmitter";
 
 export type MatchParams = ClientParams & {
     matchUuid: Uint8Array;
@@ -18,13 +17,13 @@ export type MatchParams = ClientParams & {
 // TODO: create match owner base class
 export class PwMatch {
     private reactor: Reactor;
-    private handler: ResponseEmitter;
+    private handler: SimpleEventEmitter;
     readonly client: Client;
     private matchUuid: Uint8Array;
 
     constructor(params: MatchParams, logger: Logger) {
         this.reactor = new Reactor(logger);
-        this.handler = new ResponseEmitter();
+        this.handler = new SimpleEventEmitter();
         this.client = new Client(params, this.handler);
         this.matchUuid = params.matchUuid;
 
@@ -58,13 +57,10 @@ export class PwMatch {
 
     public createClient(token: Uint8Array): Promise<events.CreateClientResponse>
     {
-        const requestId = this.client.nextRequestId();
-        this.send(events.CreateClient.create({
-            requestId,
-            token,
-        }));
-        return this.handler
-            .resolver(events.CreateClientResponse)
-            .responseFor(requestId);
+        const event = events.CreateClient.create({
+            requestId: 0,
+            token
+        });
+        return this.client.request(event, events.CreateClientResponse);
     }
 }
