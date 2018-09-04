@@ -7,7 +7,7 @@ use super::types::*;
 /// The ReactorCore 'reduces' over the event stream.
 pub struct ReactorCore<S> {
     state: S,
-    handlers: HashMap<u32, Box<SomeHandler<S>>>,
+    handlers: HashMap<u32, Box<SomeHandler<S, ()>>>,
 }
 
 impl<S> ReactorCore<S> {
@@ -44,52 +44,56 @@ impl<S> ReactorCore<S> {
 
 
 // The Send bound is required so that reactors can implement Send as well.
-pub trait SomeHandler<S>: Send {
+pub trait SomeHandler<S, R>: Send {
     fn event_type_id(&self) -> u32;
-    fn handle_event(&mut self, state: &mut S, event: &AnyEvent);
-    fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent);
+    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) -> R;
+    fn handle_wire_event(&mut self, state: &mut S, event: &WireEvent) -> R;
 }
 
-pub struct Handler<S, T, F>
-    where F: FnMut(&mut S, &T)
+pub struct Handler<S, T, F, R>
+    where F: FnMut(&mut S, &T) -> R
 {
     phantom_s: PhantomData<S>,
     phantom_t: PhantomData<T>,
+    phantom_r: PhantomData<R>,
     handler: F,
 }
 
-impl<S, T, F> Handler<S, T, F>
-    where F: FnMut(&mut S, &T)
+impl<S, T, F, R> Handler<S, T, F, R>
+    where F: FnMut(&mut S, &T) -> R
 {
     pub fn new(fun: F) -> Self {
         Handler {
             phantom_s: PhantomData,
             phantom_t: PhantomData,
+            phantom_r: PhantomData,
             handler: fun,
         }
     }
 }
 
-impl<S, T, F> SomeHandler<S> for Handler<S, T, F>
-    where F: FnMut(&mut S, &T) + Send,
+impl<S, T, F, R> SomeHandler<S, R> for Handler<S, T, F, R>
+    where F: FnMut(&mut S, &T) -> R + Send,
           T: Event + Send + 'static,
-          S: Send
+          S: Send,
+          R: Send
 {
     fn event_type_id(&self) -> u32 {
         return T::TYPE_ID;
     }
 
-    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) {
+    fn handle_event(&mut self, state: &mut S, event: &AnyEvent) -> R{
         if let Some(data) = event.data().downcast_ref::<T>() {
-            (&mut self.handler)(state, &data);
+            (&mut self.handler)(state, &data)
         } else {
             panic!("wrong argument type");
         }
     }
 
-    fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) {
+    fn handle_wire_event(&mut self, state: &mut S, wire_event: &WireEvent) -> R
+    {
         let data = T::decode(&wire_event.data).expect("decoding error");
-        (&mut self.handler)(state, &data);
+        (&mut self.handler)(state, &data)
     }
 }
 
