@@ -3,7 +3,7 @@ const dialog = remote.dialog;
 import * as fs from 'fs';
 import * as React from 'react';
 
-import Visualizer from '../visualizer/Visualizer';
+import { Visualizer } from 'planetwars-visualizer';
 import * as Comp from './types';
 import { emptyLog, parseLogFile, MatchLog } from '../../lib/match';
 import { LogView } from './LogView';
@@ -211,7 +211,7 @@ export class MatchViewer extends React.Component<Props, State> {
       }
       case M.MatchType.hosted: {
         match.players.forEach((player, idx) => {
-          playerNames[idx + 1] = player.name; 
+          playerNames[idx + 1] = player.name;
         });
       }
     }
@@ -234,8 +234,8 @@ export class MatchViewer extends React.Component<Props, State> {
   }
 
   private exportLog() {
-    const {match: { logPath }} = this.props;
-    dialog.showSaveDialog({title: "Export log", defaultPath: `log.json`}, (copyDest) => {
+    const { match: { logPath } } = this.props;
+    dialog.showSaveDialog({ title: "Export log", defaultPath: `log.json` }, (copyDest) => {
       const log = fs.readFileSync(logPath);
       fs.writeFileSync(copyDest, log);
     });

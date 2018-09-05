@@ -12,8 +12,8 @@ import { initialState } from './reducers/index';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 
-import './app.global.scss';
-import './fontawesome.global.scss';
+import 'Styles/app.global.scss';
+import 'Styles/lib.global.scss';
 
 log.info('[STARTUP] Renderer modules loaded');
 

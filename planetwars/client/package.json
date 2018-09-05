@@ -110,6 +110,8 @@
     "mkdirp": "^0.5.1",
     "moment": "^2.22.1",
     "mozaic-client": "file:../../client",
+    "planetwars-visualizer": "file:../visualizer",
+    "planetwars-match-log": "file:../match-log",
     "react": "^16.3.0",
     "react-dom": "^16.3.0",
     "react-helpers": "0.0.1",

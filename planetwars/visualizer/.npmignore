@@ -1,3 +1,9 @@
-webpack/*
+webpack/
 .eslintrc
 .gitignore
+index.html
+yarn.lock
+tsconfig.json
+src/
+bin/
+.git/
