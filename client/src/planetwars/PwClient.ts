@@ -30,20 +30,23 @@ export class PwClient {
         this.matchUuid = params.matchUuid;
         const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
-        this.client = new Client(params, this.reactor);
+        this.client = new Client(params);
         this.botRunner = new BotRunner(params.botConfig);
         
-        this.on(GameStep).subscribe((step) => {
+        this.reactor.on(GameStep).subscribe((step) => {
             this.handleGameStep(step);
         });
-        this.on(GameFinished).subscribe((_step) => {
+        this.reactor.on(GameFinished).subscribe((_step) => {
             // TODO: actually quit
             console.log(`client ${this.clientId} quit`);
             this.botRunner.killBot();
         });
-        this.on(ClientSend).subscribe((e) => {
+        this.reactor.on(ClientSend).subscribe((e) => {
             this.client.send(e);
         });
+
+        this.client.on(GameStep, (e) => this.reactor.dispatch(e));
+        this.client.on(GameFinished, (e) => this.reactor.dispatch(e));
     }
 
     public run() {
@@ -72,9 +75,5 @@ export class PwClient {
 
     public dispatch(event: any) {
         this.reactor.handleEvent(event);
-    }
-
-    public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        return this.reactor.on(eventType);
     }
 }

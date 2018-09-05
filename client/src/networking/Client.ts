@@ -1,6 +1,7 @@
 import { EventWire, ClientParams } from "./EventWire";
 import { Connected, Disconnected } from "../eventTypes";
 import { Event, EventType } from "../reactors/SimpleEventEmitter";
+import { RequestHandler, Handler } from "../reactors/RequestHandler";
 
 export interface EventHandler {
     handleEvent: (any) => void;
@@ -9,10 +10,10 @@ export interface EventHandler {
 
 export class Client {
     private eventWire: EventWire;
-    public handler: EventHandler;
+    public handler: RequestHandler;
 
-    constructor(params: ClientParams, handler: EventHandler) {
-        this.handler = handler;
+    constructor(params: ClientParams) {
+        this.handler = new RequestHandler;
         this.eventWire = new EventWire(params);
 
         this.eventWire.onEvent.subscribe((event) => {
@@ -26,6 +27,10 @@ export class Client {
         this.eventWire.onDisconnect.subscribe(() => {
             this.handler.handleEvent(Disconnected.create({}));
         });
+    }
+
+    public on<T>(eventType: EventType<T>, handler: Handler<T>) {
+        this.handler.on(eventType, handler);
     }
 
     public connect(message: Uint8Array) {

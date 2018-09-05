@@ -8,20 +8,19 @@ import * as events from './eventTypes';
 
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
+import { Handler } from "./reactors/RequestHandler";
 
 
 export class ServerControl {
     private client: Client;
-    private handler: SimpleEventEmitter;
 
 
     constructor(params: ClientParams) {
-        this.handler = new SimpleEventEmitter();
-        this.client = new Client(params, this.handler);
+        this.client = new Client(params);
     }
 
-    public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        return this.handler.on(eventType);
+    public on<T>(eventType: EventType<T>, handler: Handler<T>) {
+        this.client.on(eventType, handler);
     }
 
     public send(event: Event) {

@@ -1,14 +1,12 @@
 import { Address, EventWire } from './networking/EventWire';
 import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
-import { RegisterClient, Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
+import { Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';
 import * as events from './eventTypes';
 import { PwMatch } from './planetwars/PwMatch';
 import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
 import * as crypto from 'crypto';
-import { SimpleEventEmitter } from './reactors/SimpleEventEmitter';
-import { Client } from './networking/Client';
 import { ServerControl } from './ServerControl';
 
 const addr: Address = {
@@ -58,7 +56,7 @@ function runMatch(matchUuid: Uint8Array) {
     const clients = {};
     const waiting_for = new Set();
     
-    match.onClient(Connected).subscribe((_) => {
+    match.client.on(Connected, (_) => {
         console.log('match connected');
         players.forEach((player, idx) => {
             const player_num = idx + 1;
@@ -110,7 +108,7 @@ const serverControl = new ServerControl({
     token: Buffer.from('abba', 'hex'),
 });
 
-serverControl.on(Connected).subscribe((_) => {
+serverControl.on(Connected, (_) => {
     serverControl.createMatch(ownerToken).then((e) => {
         runMatch(e.matchUuid);
         serverControl.disconnect();

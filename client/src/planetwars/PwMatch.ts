@@ -17,28 +17,21 @@ export type MatchParams = ClientParams & {
 // TODO: create match owner base class
 export class PwMatch {
     private reactor: Reactor;
-    private handler: SimpleEventEmitter;
     readonly client: Client;
     private matchUuid: Uint8Array;
 
     constructor(params: MatchParams, logger: Logger) {
         this.reactor = new Reactor(logger);
-        this.handler = new SimpleEventEmitter();
-        this.client = new Client(params, this.handler);
+        this.client = new Client(params);
         this.matchUuid = params.matchUuid;
 
-        this.handler.on(events.MatchEvent).subscribe((e) => {
+        this.client.on(events.MatchEvent, (e) => {
             this.reactor.handleWireEvent(e);
         });
     }
 
     public on<T>(eventType: EventType<T>): ISimpleEvent<T> {
         return this.reactor.on(eventType);
-    }
-
-    // TODO: remove me, I am an ugly hotfix
-    public onClient<T>(eventType: EventType<T>): ISimpleEvent<T> {
-        return this.handler.on(eventType);
     }
 
     public send(event: Event) {
