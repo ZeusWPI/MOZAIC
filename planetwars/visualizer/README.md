@@ -8,7 +8,8 @@ You can test this module with the code in the `bin` directory, which you can run
 
 ## TODO
 
-- Make Bulma peer dependency
+- Fix styling
+- Add customizable variables
 - Fix global Sass
-- Fix global Bulma variables
 - Add font awesome as peer dependency
+- Add color props

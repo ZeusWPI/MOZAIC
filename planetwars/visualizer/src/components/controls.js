@@ -40,7 +40,7 @@ class Controls extends React.Component {
   }
 
   render() {
-    return div(`.${styles.controlBar}`, [
+    return div(`.${styles.controls}`, [
       input(`.${styles.turnSlider}`, {
         type: 'range',
         value: this.props.turnNum,

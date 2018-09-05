@@ -72,18 +72,16 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
 
   public render() {
     const controls = (
-      <div className={styles.control}>
-        <Controls
-          turnNum={this.state.turnNum}
-          numTurns={this.props.matchLog.gameStates.length - 1}
-          playing={this.state.playing}
-          speed={this.state.speed}
-          setPlaying={this.setPlaying}
-          setTurn={this.setTurn}
-          setSpeed={this.setSpeed}
-        />
-      </div>
-    );
+      <Controls
+        turnNum={this.state.turnNum}
+        numTurns={this.props.matchLog.gameStates.length - 1}
+        playing={this.state.playing}
+        speed={this.state.speed}
+        setPlaying={this.setPlaying}
+        setTurn={this.setTurn}
+        setSpeed={this.setSpeed}
+      />
+    )
 
     if (!this.game) {
       return (

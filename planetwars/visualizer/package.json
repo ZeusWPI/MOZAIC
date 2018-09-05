@@ -17,7 +17,6 @@
     "react-dom": "^16.3.0"
   },
   "dependencies": {
-    "bulma": "^0.7.1",
     "d3": "^5.7.0",
     "hyperscript-helpers": "^3.0.3",
     "planetwars-match-log": "file:../match-log",
