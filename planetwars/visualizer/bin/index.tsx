@@ -50,8 +50,8 @@ export class VisualizerWrapper extends Component<{ log?: Log.MatchLog }> {
 export class NoLog extends Component {
   public render() {
     return (
-      <div>
-        No log selected.
+      <div className="no-log">
+        No log selected
       </div>
     )
   }

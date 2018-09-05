@@ -6,6 +6,7 @@ body {
 }
 
 #root {
+  font-family: Sans-Serif;
   width: 100%;
   height: 100%;
 
@@ -27,6 +28,9 @@ body {
       .visualizer-wrapper {
         height: 100%;
         width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
       }
     }
   }
@@ -34,6 +38,10 @@ body {
 
 input[type="file"] {
   display: none;
+}
+
+.no-log {
+  font-size: 30px;
 }
 
 .file-upload-fab {

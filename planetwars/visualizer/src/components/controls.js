@@ -75,10 +75,10 @@ class Controls extends React.Component {
               onClick: e => this.props.setTurn(this.props.numTurns)
             }, [fa_icon('fast-forward')]
           ),
-          p(`.${styles.turnProgress}`, `${this.props.turnNum} / ${this.props.numTurns}`)
+          div(`.${styles.turnProgress}`, [p(`${this.props.turnNum} / ${this.props.numTurns}`)])
         ]),
         div(`.${styles.speedControls}`, [
-          p(`.${styles.speed}`, `Speed x${this.props.speed}`),
+          div(`.${styles.speed}`, [p(`Speed x${this.props.speed}`)]),
           button(
             `.${styles.button}`, {
               title: 'Decrease speed',

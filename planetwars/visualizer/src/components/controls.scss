@@ -1,136 +1,82 @@
-@import '../app.global.scss';
-$altBackground: lighten($background, 5);
-$sliderBg: lighten($background, 15);
-// TODO: try to put this in some global style
-$sliderFg: #1f77b4;
+@import '../lib.global.scss';
+@import './controlSlider.scss';
+
+input[type=range] {
+    @include input-type-range;
+}
 
 .controls {
-  position: absolute;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  // height: 8vh;
-  bottom: 0%;
-
-  .turnSlider {
-    width: 95%;
-  }
-
-  .controlButtons {
+    position: absolute;
+    width: 100%;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    width: 95%;
+    bottom: 0%;
 
-    .turnControls {
-      display: flex;
-      min-width: 220px;
-      justify-content: space-between;
-      align-items: center;
-      width: 25%;
+    .turnSlider {
+        width: 95%;
     }
 
-    .speedControls {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      float: right;
-      width: 15%;
+    .controlButtons {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 95%;
+
+        .button {
+            width: 15%;
+            height: 40px;
+            width: 40px;
+            // font-size: 1vw;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: $ctrl-button-color;
+            color: $ctrl-button-text-color;
+
+            @include on-event {
+                background-color: $ctrl-button-color-hover;
+                color: $ctrl-button-text-color-hover;
+            }
+        }
+
+        .turnControls {
+            display: flex;
+            min-width: 250px;
+            justify-content: space-between;
+            align-items: center;
+
+            >* {
+                margin-right: 3px;
+            }
+        }
+
+        .speedControls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            >* {
+                margin-left: 3px;
+            }
+        }
+
+        .turnProgress,
+        .speed {
+            background-color: $ctrl-info-color;
+            color: $ctrl-info-text-color;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 5px;
+
+            p {
+                padding: 0;
+                margin: 0;
+            }
+        }
     }
-
-    .button {
-      width: 15%;
-      height: 40px;
-      min-width: 30px;
-      font-size: 1vw;
-      border-width: 0;
-    }
-
-    .button:focus {
-      border-width: 0;
-      background-color: $background;
-      color: $text;
-      box-shadow: none;
-    }
-
-    .speed {
-      padding-right: 10px;
-    }
-
-    .turnProgress,
-    .speed {
-      line-height: 40px;
-    }
-  }
-}
-
-/* Slider should prob use a lib for this but I lack self respect */
-input[type=range] {
-  -webkit-appearance: none;
-  width: 100%;
-  margin: 13.8px 0;
-}
-
-input[type=range]:focus {
-  outline: none;
-}
-
-input[type=range]::-webkit-slider-runnable-track {
-  width: 100%;
-  height: 5px;
-  cursor: pointer;
-  background: $sliderBg;
-  border-radius: 2.5px;
-}
-
-input[type=range]::-moz-range-track {
-  width: 100%;
-  height: 5px;
-  cursor: pointer;
-  background: $sliderBg;
-  border-radius: 2.5px;
-}
-
-input[type=range]::-webkit-slider-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: $sliderFg;
-  cursor: pointer;
-  -webkit-appearance: none;
-  margin-top: -7.5px;
-}
-
-input[type=range]::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: $sliderFg;
-  cursor: pointer;
-  margin-top: -7.5px;
-}
-
-input[type=range]:hover::-webkit-slider-runnable-track {
-  height: 8px;
-}
-
-input[type=range]:hover::-moz-range-track {
-  height: 8px;
-}
-
-input[type=range]:hover::-webkit-slider-thumb {
-  width: 25px;
-  height: 25px;
-  margin-top: -8.5px;
-  border-radius: 12.5px;
-}
-
-input[type=range]:hover::-moz-range-thumb {
-  width: 25px;
-  height: 25px;
-  margin-top: -8.5px;
-  border-radius: 12.5px;
 }
