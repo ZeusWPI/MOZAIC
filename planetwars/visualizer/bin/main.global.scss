@@ -1,15 +1,49 @@
+html,
+body {
+  width: 100vw;
+  height: 100vh;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+
+  .main {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .visualizer-container {
+      width: 90%;
+      height: 90%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 1px solid #ccc;
+
+      .visualizer-wrapper {
+        height: 100%;
+        width: 100%;
+      }
+    }
+  }
+}
+
 input[type="file"] {
   display: none;
 }
 
-.custom-file-upload {
-  border: 1px solid #ccc;
-  display: inline-block;
-  padding: 6px 12px;
-  cursor: pointer;
-}
+.file-upload-fab {
+  position: fixed;
+  left: 5px;
+  top: 5px;
 
-.visualizer-frame {
-  height: 100%;
-  width: 100%;
+  label {
+    border: 1px solid #ccc;
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+  }
 }
