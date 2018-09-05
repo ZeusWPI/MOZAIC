@@ -1,4 +1,4 @@
-import { GameState, Player, MatchLog } from 'planetwars-match-log';
+import { MatchLog } from 'planetwars-match-log';
 
 import Config from '../util/config';
 

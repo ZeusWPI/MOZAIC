@@ -1,8 +1,8 @@
 import * as d3 from 'd3';
-import Config from '../util/config';
-import Game from '../components/game';
 
 import { Expedition } from 'planetwars-match-log';
+
+import Game from '../components/game';
 import * as space_math from '../util/spacemath';
 
 export class ExpeditionRenderer {

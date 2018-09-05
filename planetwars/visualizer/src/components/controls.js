@@ -1,6 +1,3 @@
-const d3 = require('d3');
-const Config = require('../util/config');
-const uuidv4 = require('uuid/v4')
 const React = require('react');
 const h = require('react-hyperscript');
 const {

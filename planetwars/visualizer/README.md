@@ -8,7 +8,4 @@ You can test this module with the code in the `bin` directory, which you can run
 
 ## TODO
 
-- Fix styling
-- Add customizable variables
-- Fix global Sass
 - Add color props

@@ -1,12 +1,8 @@
-// import { remote } from 'electron';
 import * as path from 'path';
+
 import Config from './config';
 
-// const prefix = (process.env.NODE_ENV === 'development') ?
-//   path.resolve('app') :
-//   path.resolve(remote.app.getAppPath(), 'app');
-
-// const resourcePath = path.resolve(prefix, 'components', 'visualizer', 'lib', 'assets', 'images');
+const resourcePath = path.resolve('assets', 'images');
 
 export class ResourceLoader {
   public svg: any;
@@ -37,7 +33,7 @@ export class ResourceLoader {
       .append("image")
       .attr("width", width)
       .attr("height", height)
-      .attr("preserveAspectRation", "none");
-    // .attr("xlink:href", path.resolve(resourcePath, name));
+      .attr("preserveAspectRation", "none")
+      .attr("xlink:href", path.resolve(resourcePath, name));
   }
 }

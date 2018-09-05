@@ -1,26 +1,15 @@
 import * as d3 from 'd3';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as React from 'react';
 
-import { MatchLog, GameState } from 'planetwars-match-log';
+import { MatchLog } from 'planetwars-match-log';
 import Game from './game';
 import Scoreboard from './scoreboard';
 
-// tslint:disable-next-line:no-var-requires
 const Controls = require('./controls');
-// tslint:disable-next-line:no-var-requires
-const ReactUtils = require('../util/react_utils');
-const HideableComponent = ReactUtils.HideableComponent;
-const ControlButton = ReactUtils.ControlButton;
 import { Renderer } from './renderer';
 
-// tslint:disable-next-line:no-var-requires
 const styles = require('./visualizer.scss');
 
-interface PlayerData {
-  players: string[];
-}
 
 interface VisualizerProps {
   playerName: (playerNum: number) => string;

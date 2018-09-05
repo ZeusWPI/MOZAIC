@@ -1,8 +1,6 @@
 import Game from "./game";
-import * as React from "react";
 import { Component } from "react";
-import * as d3 from "d3";
-import { GameState, Player, PlayerMap, MatchLog } from 'planetwars-match-log';
+import { GameState } from 'planetwars-match-log';
 
 import * as h from 'react-hyperscript';
 
