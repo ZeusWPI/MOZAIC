@@ -14,7 +14,7 @@ export class LogManager extends React.Component<{}, LogManagerState> {
     const button = <FileUploadButton id="log-upload" onLoad={this.onLoad.bind(this)} />;
     if (this.state.log) {
       return (
-        <div>
+        <div className="visualizer-frame">
           <Visualizer
             playerName={this.playerNames.bind(this)}
             matchLog={this.state.log} />

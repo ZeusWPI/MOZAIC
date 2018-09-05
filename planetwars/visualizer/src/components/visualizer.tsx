@@ -110,7 +110,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
     );
 
     return (
-      <div className={styles.visualizerRootNode}>
+      <div className={styles.visualizer}>
         {controls}
         {scoreboard}
         {renderer}
