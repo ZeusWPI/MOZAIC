@@ -22,7 +22,7 @@ module.exports = {
         exclude: /node_modules/
       },
       {
-        test: /\.(png|svg|jpg|gif)$/,
+        test: /\.(png|svg|jpg|gif|woff|woff2|eot|ttf)(\?.*$|$)/,
         use: [{
           loader: 'url-loader',
           options: {
