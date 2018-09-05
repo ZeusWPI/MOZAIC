@@ -10,11 +10,19 @@ import { PlanetRenderer } from '../renderers/planets';
 import { ExpeditionRenderer } from '../renderers/expeditions';
 
 import Voronoi = require('./voronoi.js');
+import Game from './game';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./renderer.scss');
 
-export class Renderer extends React.Component<any> {
+export interface RendererProps {
+  game: Game,
+  turnNum: number,
+  speed: number,
+  assetPrefix?: string
+}
+
+export class Renderer extends React.Component<RendererProps> {
   private svg: any;
   private voronoiContainer: any;
   private container: any;
@@ -94,7 +102,7 @@ export class Renderer extends React.Component<any> {
 
   private loadResources() {
     // TODO: improve API
-    new ResourceLoader(d3.select(this.svg)).setupPatterns();
+    new ResourceLoader(d3.select(this.svg), this.props.assetPrefix).setupPatterns();
   }
 
   private createZoom() {

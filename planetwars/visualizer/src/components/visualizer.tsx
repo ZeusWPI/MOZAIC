@@ -14,6 +14,7 @@ const styles = require('./visualizer.scss');
 interface VisualizerProps {
   playerName: (playerNum: number) => string;
   matchLog: MatchLog;
+  assetPrefix?: string;
 }
 
 interface VisualizerState {
@@ -93,6 +94,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
         game={this.game}
         turnNum={this.state.turnNum}
         speed={this.state.speed}
+        assetPrefix={this.props.assetPrefix}
       />
     );
 

@@ -2,13 +2,15 @@ import * as path from 'path';
 
 import Config from './config';
 
-const resourcePath = path.resolve('assets', 'images');
+
 
 export class ResourceLoader {
   public svg: any;
+  public resourcePath: string;
 
-  constructor(svg: any) {
+  constructor(svg: any, assetPrefix?: string) {
     this.svg = svg;
+    this.resourcePath = path.resolve(assetPrefix || "", 'assets', 'images');
   }
 
   public setupPatterns() {
@@ -23,6 +25,7 @@ export class ResourceLoader {
   }
 
   public setupPattern(name: any, width: any, height: any, id: any) {
+    console.log(this.resourcePath);
     this.svg.select("defs")
       .append("pattern")
       .attr("id", id)
@@ -34,6 +37,6 @@ export class ResourceLoader {
       .attr("width", width)
       .attr("height", height)
       .attr("preserveAspectRation", "none")
-      .attr("xlink:href", path.resolve(resourcePath, name));
+      .attr("xlink:href", path.resolve(this.resourcePath, name));
   }
 }
