@@ -1,7 +1,5 @@
-import * as _ from 'lodash';
-
-import { PlanetList, Expedition, Player } from './types';
-import * as PwTypes from './mozaic-types';
+import { PlanetList, Expedition } from './types';
+import * as PwTypes from './mozaic_types';
 
 export abstract class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;

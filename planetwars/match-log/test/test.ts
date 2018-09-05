@@ -2,8 +2,8 @@ import * as fs from 'fs';
 
 import * as M from '../src';
 
-const HOSTED_SMALL = "./examples/hosted-small.log";
-const HOSTED_FULL = "./examples/hosted-full.log";
+const HOSTED_SMALL = "./examples/hosted_small.log";
+const HOSTED_FULL = "./examples/hosted_full.log";
 
 test('can read full hosted match from disk without crashing', () => {
   const log = parseLogFile(HOSTED_FULL, M.MatchType.hosted);

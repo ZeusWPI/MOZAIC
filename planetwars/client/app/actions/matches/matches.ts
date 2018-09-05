@@ -1,10 +1,11 @@
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
+import * as fs from 'fs';
 import * as PwClient from 'mozaic-client';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as M from '../../database/models';
-import { parseLogFile, calcStats } from '../../lib/match';
+import { parseLog, calcStats } from 'planetwars-match-log';
 import { GState } from '../../reducers/index';
 import { Config } from '../../utils/Config';
 
@@ -206,7 +207,8 @@ export function completeMatch(matchId: M.MatchId) {
       players = [match.bot];
     }
 
-    const log = parseLogFile(match.logPath, match.type);
+    const logContent = fs.readFileSync(match.logPath, 'utf-8');
+    const log = parseLog(logContent, match.type);
 
     const updatedMatch: M.FinishedMatch = {
       ...match,

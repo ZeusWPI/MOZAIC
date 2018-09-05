@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Types and utility for PlanetWars match logs",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "repository": "https://github.com/ZeusWPI/MOZAIC",
   "author": "Zeus WPI",
   "license": "MIT",
@@ -15,6 +16,7 @@
   "devDependencies": {
     "@types/jest": "^23.3.1",
     "@types/lodash": "^4.14.116",
+    "@types/node": "^10.9.4",
     "eslint": "^5.4.0",
     "jest": "^23.5.0",
     "ts-jest": "^23.1.4",

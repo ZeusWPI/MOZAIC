@@ -1,5 +1,5 @@
 import { actionCreator, actionCreatorVoid } from './helpers';
-import { PwTypes } from '../lib/match';
+import { PwTypes } from 'planetwars-match-log';
 
 export const createLog = actionCreator<string>('CREATE_LOG');
 

@@ -1,7 +1,7 @@
 import * as A from '../actions';
 import * as M from '../database/models';
 import { List } from 'immutable';
-import { PwTypes } from '../lib/match';
+import { PwTypes } from 'planetwars-match-log';
 
 export interface LogList {
   [matchId: string]: Log;
