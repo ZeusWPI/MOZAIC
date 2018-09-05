@@ -204,7 +204,7 @@ impl<H> ConnectionHandler<H>
                     }
                 }
                 ConnectionEvent::Response(_response) => {
-                    unimplemented!()
+                    // discard responses for now
                 }
             }
         }
