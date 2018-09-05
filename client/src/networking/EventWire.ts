@@ -4,15 +4,15 @@ import proto = protocol_root.mozaic.protocol;
 import {
     SimpleEventDispatcher,
     SignalDispatcher,
-    ISimpleEvent,
     ISignal,
+    ISimpleEvent
 } from 'strongly-typed-events';
 
 import { ProtobufStream } from './ProtobufStream';
 import { execFileSync } from 'child_process';
 import { encodeEvent } from '../reactors/utils';
 import { Event, EventType } from '../reactors/SimpleEventEmitter';
-import { resolve } from 'path';
+import { RequestHandler } from '../reactors/RequestHandler';
 
 export interface Address {
     host: string;
@@ -48,15 +48,17 @@ export class EventWire {
 
     private _onConnect = new SignalDispatcher();
     private _onDisconnect = new SignalDispatcher();
-    private _onEvent = new SimpleEventDispatcher<WireEvent>();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
+
+    private requestHandler: RequestHandler;
     
-    public constructor(params: ClientParams) {
+    public constructor(params: ClientParams, handler: RequestHandler) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
         this.seqNum = 0;
         this.params = params;
+        this.requestHandler = handler;
 
         this.responseHandlers = {};
 
@@ -76,11 +78,7 @@ export class EventWire {
     public get onDisconnect() {
         return this._onDisconnect.asEvent();
     }
-    
-    public get onEvent() {
-        return this._onEvent.asEvent();
-    }
-    
+        
     public get onError() {
         return this._onError.asEvent();
     }
@@ -189,12 +187,28 @@ export class EventWire {
         const packet = proto.Packet.decode(data);
 
         if (packet.request) {
-            const { typeId, data } = packet.request;
             // these values should be present according to protobuf3 spec
-            this._onEvent.dispatch({
-                typeId: typeId!,
-                data: data!
+            const seqNum = packet.request.seqNum!;
+            const typeId = packet.request.typeId!;
+            const data = packet.request.data!;
+
+            const responseEvent = this.requestHandler.handleWireEvent({
+                typeId,
+                data
             });
+
+            let response: proto.IResponse;
+            if (responseEvent) {
+                response = {
+                    seqNum,
+                    typeId: responseEvent.eventType.typeId,
+                    data: responseEvent.eventType.encode(responseEvent).finish(),
+                };
+            } else {
+                // send back an empty event
+                response = { seqNum };
+            }
+            this.stream.write(proto.Packet.encode({ response }));
         } else if (packet.response) {
             const seqNum = packet.response.seqNum!;
             const handler = this.responseHandlers[seqNum];

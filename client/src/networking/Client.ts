@@ -14,11 +14,7 @@ export class Client {
 
     constructor(params: ClientParams) {
         this.handler = new RequestHandler;
-        this.eventWire = new EventWire(params);
-
-        this.eventWire.onEvent.subscribe((event) => {
-            this.handler.handleWireEvent(event);
-        });
+        this.eventWire = new EventWire(params, this.handler);
 
         this.eventWire.onConnect.subscribe((_) => {
             this.handler.handleEvent(Connected.create({}));
