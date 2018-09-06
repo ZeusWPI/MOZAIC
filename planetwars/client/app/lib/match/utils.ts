@@ -1,6 +1,7 @@
 import * as M from '../../database/models';
 import * as fs from 'fs';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
+import { Replayer, events } from "mozaic-client";
 
 export function emptyLog(type: M.MatchType): MatchLog {
   switch (type) {
@@ -19,9 +20,17 @@ export function logFileEntries(path: string): any[] {
 
 export function parseLogFile(path: string, type: M.MatchType): MatchLog {
   const log = emptyLog(type);
-  logFileEntries(path).forEach((entry) => {
-    log.addEntry(entry);
+  const replayer = new Replayer();
+
+  replayer.on(events.GameStep).subscribe((event) => {
+    log.addEntry(event);
   });
+
+  replayer.on(events.PlayerAction).subscribe((event) => {
+    log.addEntry(event);
+  });
+
+  replayer.replayFile(path);
   return log;
 }
 

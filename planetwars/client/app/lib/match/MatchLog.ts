@@ -1,5 +1,6 @@
 import { PlanetList, Expedition, Player, JsonExpedition, JsonPlanet } from './types';
 import * as _ from 'lodash';
+import { events } from "mozaic-client";
 
 export abstract class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;
@@ -19,7 +20,7 @@ export abstract class MatchLog {
   }
 
   // TODO: typing
-  public abstract addEntry(entry: any /*PlayerAction*/): void;
+  public abstract addEntry(entry: any /* event */): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -34,14 +35,14 @@ export abstract class MatchLog {
 export class HostedMatchLog extends MatchLog {
   // TODO: typing
   public addEntry(entry: any) {
-    switch (entry.type) {
-      case "game_state": {
-        const state = GameState.fromJson(entry.state);
+    switch (entry.eventType) {
+      case events.GameStep: {
+        const {state} = entry;
         this.gameStates.push(state);
         break;
       }
-      case "player_entry": {
-        this.getPlayerLog(entry.player).addRecord(entry.record);
+      case events.PlayerAction: {
+        this.getPlayerLog(entry.clientId).addRecord(entry.action);
       }
     }
   }
@@ -50,14 +51,15 @@ export class HostedMatchLog extends MatchLog {
 export class JoinedMatchLog extends MatchLog {
   // TODO: typing
   public addEntry(entry: any) {
-    if (entry.type === 'player_entry') {
+    console.log(entry);
+    if (entry.eventType === events.PlayerAction) {
       // this should always be the case since this is a joined match
-      const { player, record } = entry;
+      const { player, action } = entry;
 
-      this.getPlayerLog(player).addRecord(record);
+      this.getPlayerLog(player).addRecord(action);
 
-      if (player === 1 && record.type === 'step') {
-        this.gameStates.push(GameState.fromJson(record.state));
+      if (player === 1 && action.type === 'step') {
+        this.gameStates.push(GameState.fromJson(action.state));
       }
     }
   }

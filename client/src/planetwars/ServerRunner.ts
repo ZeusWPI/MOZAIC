@@ -76,6 +76,7 @@ export class ServerRunner {
     private writeConfigFile() {
         // TODO: maybe doing this async would be better
         const file = tmp.fileSync();
+        console.log(file);
         const json = JSON.stringify(this.configJSON());
         fs.writeFileSync(file.fd, json);
         return file.name;

@@ -1,3 +1,10 @@
+// ----------TEMP DEBUG TESTING----------
+
+import {parseLogFile} from "../../lib/match/index";
+import { MatchType } from "../../database/models";
+
+// ----------TEMP DEBUG TESTING----------
+
 import * as React from 'react';
 import { shell } from 'electron';
 
@@ -18,6 +25,12 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
   }
 
   public render() {
+    // ----------TEMP DEBUG TESTING----------
+
+    parseLogFile("", MatchType.hosted);
+
+    // ----------TEMP DEBUG TESTING----------
+
     const Readme = () => (
       <a onClick={this.launchReadme}>
         README

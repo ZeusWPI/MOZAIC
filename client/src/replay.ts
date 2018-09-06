@@ -1,4 +1,4 @@
-import { createReadStream } from "fs";
+import { createReadStream, ReadStream } from "fs";
 import { ProtobufReader } from "./networking/ProtobufStream";
 import * as protocol_root from './proto';
 import { SimpleEventEmitter, EventType } from "./reactors/SimpleEventEmitter";
@@ -42,6 +42,10 @@ export class Replayer {
 
     public replayFile(path: string) {
         const logStream = createReadStream(path);
+        this.replayReadStream(logStream);
+    }
+
+    public replayReadStream(logStream: ReadStream) {
         const messageStream = logStream.pipe(new ProtobufReader());
 
         messageStream.on('data', (bytes: Uint8Array) => {
