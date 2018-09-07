@@ -30,6 +30,10 @@ export function parseLogFile(path: string, type: M.MatchType): MatchLog {
     log.addEntry(event);
   });
 
+  replayer.on(events.RegisterClient).subscribe((event) => {
+    log.addEntry(event);
+  });
+
   replayer.replayFile(path);
   return log;
 }

@@ -1,6 +1,6 @@
 import { PlanetList, Expedition, Player, JsonExpedition, JsonPlanet } from './types';
 import * as _ from 'lodash';
-import { events } from "mozaic-client";
+import { events, Event, PwTypes } from "mozaic-client";
 
 export abstract class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;
@@ -19,8 +19,7 @@ export abstract class MatchLog {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
-  // TODO: typing
-  public abstract addEntry(entry: any /* event */): void;
+  public abstract addEntry(entry: Event): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -33,35 +32,40 @@ export abstract class MatchLog {
 }
 
 export class HostedMatchLog extends MatchLog {
-  // TODO: typing
-  public addEntry(entry: any) {
+  public addEntry(entry: Event) {
     switch (entry.eventType) {
-      case events.GameStep: {
-        const {state} = entry;
-        this.gameStates.push(state);
+      case events.PlayerAction: {
+        const entryPA = entry as events.PlayerAction;
+
+        this.getPlayerLog(entryPA.clientId).addRecord(entry);
+
         break;
       }
-      case events.PlayerAction: {
-        this.getPlayerLog(entry.clientId).addRecord(entry.action);
+      case events.GameStep: {
+        const entryGS = entry as events.GameStep;
+
+        Object.keys(this.playerLogs).forEach((clientIdStr) => {
+          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
+        });
+
+        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+
+        break;
+      }
+      case events.RegisterClient: {
+        const entryRC = entry as events.RegisterClient;
+
+        this.getPlayerLog(entryRC.clientId);
+
+        break;
       }
     }
   }
 }
 
 export class JoinedMatchLog extends MatchLog {
-  // TODO: typing
-  public addEntry(entry: any) {
-    console.log(entry);
-    if (entry.eventType === events.PlayerAction) {
-      // this should always be the case since this is a joined match
-      const { player, action } = entry;
-
-      this.getPlayerLog(player).addRecord(action);
-
-      if (player === 1 && action.type === 'step') {
-        this.gameStates.push(GameState.fromJson(action.state));
-      }
-    }
+  public addEntry(entry: Event) {
+    // TODO
   }
 }
 
@@ -74,8 +78,7 @@ export class GameState {
     this.expeditions = expeditions;
   }
 
-  // TODO: typing
-  public static fromJson(json: any) {
+  public static fromJson(json: PwTypes.GameState) {
     const planets: PlanetList = {};
     json.planets.forEach((p: JsonPlanet) => {
       planets[p.name] = {
@@ -123,21 +126,22 @@ export class PlayerLog {
     this.turns = [];
   }
 
-  // TODO: typing
-  public addRecord(record: any) {
-    switch (record.type) {
-      case 'step': {
-        this.turns.push({ state: record.state });
+  public addRecord(record: Event) {
+    switch (record.eventType) {
+      case events.GameStep: {
+        const recordGS = record as events.GameStep;
+        this.turns.push({ state: JSON.parse(recordGS.state) });
         break;
       }
-      case 'command': {
-        this.turns[this.turns.length - 1].command = record.content;
+      case events.PlayerAction: {
+        const recordPA = record as events.PlayerAction;
+        this.turns[this.turns.length - 1].command = recordPA.action;
         break;
       }
-      case 'player_action': {
-        this.turns[this.turns.length - 1].action = record.action;
-        break;
-      }
+      // case 'command': {
+      //   this.turns[this.turns.length - 1].action = record.action;
+      //   break;
+      // }
     }
   }
 }
@@ -145,7 +149,7 @@ export class PlayerLog {
 export interface PlayerTurn {
   state: GameState;
   command?: string;
-  action?: any /*PlayerAction*/;
+  action?: PwTypes.PlayerAction;
 }
 
 export interface PlayerMap<T> {
