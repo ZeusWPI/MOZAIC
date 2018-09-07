@@ -216,8 +216,12 @@ export class EventWire {
                 handler.handleResponse(packet.response);
                 delete this.responseHandlers[seqNum];
             }
+        } else if (packet.closeConnection) {
+            const closeConnection = proto.CloseConnection.create({});
+            const packet = proto.Packet.encode({ closeConnection });
+            this.stream.write(packet);
+            this.stream.end();
         }
-        // TODO: other options
     }
 }
 
