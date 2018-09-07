@@ -57,7 +57,6 @@ function runMatch(matchUuid: Uint8Array) {
     const waiting_for = new Set();
     
     match.client.on(Connected, (_) => {
-        console.log('match connected');
         players.forEach((player, idx) => {
             const player_num = idx + 1;
             waiting_for.add(player_num);
