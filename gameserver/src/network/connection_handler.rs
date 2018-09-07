@@ -16,20 +16,71 @@ type PacketStream = MessageStream<TcpStream, Packet>;
 
 pub enum TransportState {
     Disconnected,
-    Connected(PacketStream),
+    Connected(Transport),
+}
+
+pub struct Transport {
+    stream: PacketStream,
+    send_pos: usize,
+}
+
+impl Transport {
+    fn send_messages(&mut self, state: &mut ConnectionState)
+        -> Poll<(), io::Error> {
+        while self.send_pos < state.pos() {
+            try_ready!(self.stream.poll_complete());
+            let payload = state.get_message(self.send_pos);
+            self.send_pos += 1;
+            let packet = Packet {
+                seq_num: self.send_pos as u32,
+                ack_num: state.ack_num,
+                payload: Some(payload),
+            };
+            let res = try!(self.stream.start_send(packet));
+            assert!(res.is_ready(), "writing to PacketStream blocked");
+        }
+        return self.stream.poll_complete();
+    }
+
+    fn receive_message(&mut self, state: &mut ConnectionState)
+        -> Poll<NetworkMessage, io::Error>
+    {
+        loop {
+            let packet = match try_ready!(self.stream.poll()) {
+                None => bail!(io::ErrorKind::ConnectionAborted),
+                Some(packet) => packet,
+            };
+
+            state.receive(&packet);
+
+            match packet.payload {
+                Some(payload) => return Ok(Async::Ready(NetworkMessage {
+                    seq_num: packet.seq_num,
+                    payload,
+                })),
+                None => {},
+            }
+        }
+
+    }
+
+    fn poll(&mut self, state: &mut ConnectionState)
+        -> Poll<NetworkMessage, io::Error>
+    {
+        try!(self.send_messages(state));
+        return self.receive_message(state);
+    }
 }
 
 pub struct ConnectionState {
     status: ConnectionStatus,
 
-    /// how many messages have already been flushed from the message buffer
-    message_offset: usize,
+    /// how many messages have already been flushed from the buffer
+    seq_offset: usize,
 
     /// the send window
-    buffer: Vec<NetworkMessage>,
+    buffer: Vec<Payload>,
 
-    /// sequence number counter for packets that we will send
-    seq_num: u32,
     /// ack number for packets that we send
     ack_num: u32,
 }
@@ -43,29 +94,27 @@ pub enum ConnectionStatus {
     Closed,
 }
 
-pub struct NetworkMessage {
-    seq_num: u32,
-    payload: Payload,
-}
-
 impl ConnectionState {
     fn new() -> Self {
         ConnectionState {
             status: ConnectionStatus::Open,
-            message_offset: 0,
-            seq_num: 0,
+            seq_offset: 0,
             ack_num: 0,
             buffer: Vec::new(),
         }
     }
 
-    fn buffer_message(&mut self, payload: Payload) -> u32 {
-        let seq_num = self.seq_num;
-        self.seq_num += 1;
+    fn pos(&self) -> usize {
+        self.seq_offset + (self.buffer.len())
+    }
 
-        let message = NetworkMessage { seq_num, payload };
-        self.buffer.push(message);
-        return seq_num;
+    fn get_message(&self, seq_num: usize) -> Payload {
+        // TODO: can this clone be avoided?
+        self.buffer[seq_num - self.seq_offset].clone()
+    }
+
+    fn buffer_message(&mut self, payload: Payload) {
+        self.buffer.push(payload);
     }
 
     fn send_request(&mut self, wire_event: WireEvent) -> u32 {
@@ -74,62 +123,36 @@ impl ConnectionState {
                 type_id: wire_event.type_id,
                 data: wire_event.data,
             }
-        ))
+        ));
+        return self.pos() as u32;
     }
 
-    fn send_response(&mut self, response: Response) -> u32 {
+    fn send_response(&mut self, response: Response) {
         self.buffer_message(Payload::Response(response))
     }
 
     /// close this end of the connection
-    fn close(&mut self) -> u32 {
+    fn close(&mut self) {
         self.status = ConnectionStatus::Closing;
         let close = CloseConnection {};
-        return self.buffer_message(Payload::CloseConnection(close));
+        self.buffer_message(Payload::CloseConnection(close));
     }
 
-    fn poll(&mut self, stream: &mut PacketStream)
-        -> Poll<NetworkMessage, io::Error>
-    {
-        try!(self.flush_buffer(stream));
-        return self.poll_message(stream);
-    }
+    fn receive(&mut self, packet: &Packet) {
+        self.ack_num = packet.seq_num + 1;
 
-    pub fn flush_buffer(&mut self, stream: &mut PacketStream)
-        -> Poll<(), io::Error>
-    {
-        while !self.buffer.is_empty() {
-            try_ready!(stream.poll_complete());
-            let message = self.buffer.remove(0);
-            let packet = Packet {
-                seq_num: message.seq_num,
-                ack_num: self.ack_num,
-                payload: Some(message.payload),
-            };
-            let res = try!(stream.start_send(packet));
-            assert!(res.is_ready(), "writing to PacketStream blocked");
-        }
-        return stream.poll_complete();
-    }
+        let ack_num = packet.ack_num as usize;
 
-    fn poll_message(&mut self, stream: &mut PacketStream)
-        -> Poll<NetworkMessage, io::Error>
-    {
-        loop {
-            let packet = match try_ready!(stream.poll()) {
-                None => bail!(io::ErrorKind::ConnectionAborted),
-                Some(packet) => packet,
-            };
-
-            match packet.payload {
-                Some(payload) => return Ok(Async::Ready(NetworkMessage {
-                    seq_num: packet.seq_num,
-                    payload,
-                })),
-                None => {},
-            }
+        if ack_num > self.seq_offset {
+            self.buffer.drain(0..(ack_num - self.seq_offset));
+            self.seq_offset = ack_num;
         }
     }
+}
+
+pub struct NetworkMessage {
+    seq_num: u32,
+    payload: Payload,
 }
 
 pub struct ConnectionHandler<H>
@@ -179,8 +202,12 @@ impl<H> ConnectionHandler<H>
                     // TODO: properly communicate that we are quiting
                     return Ok(Async::Ready(()));
                 }
-                Some(ConnectionCommand::Connect(transport)) => {
-                    let t = MessageStream::new(transport);
+                Some(ConnectionCommand::Connect(conn)) => {
+                    let t = Transport {
+                        // TODO: properly get this somewhere
+                        send_pos: self.state.seq_offset,
+                        stream: MessageStream::new(conn),
+                    };
                     self.transport_state = TransportState::Connected(t);
                     // TODO: can we work around this box?
                     self.event_handler.handle_event(
@@ -216,7 +243,7 @@ impl<H> ConnectionHandler<H>
         };
 
         loop {
-            let message = try_ready!(self.state.poll(transport));
+            let message = try_ready!(transport.poll(&mut self.state));
             match message.payload {
                 Payload::Request(request) => {
                     let res = self.event_handler.handle_wire_event(
@@ -249,7 +276,7 @@ impl<H> ConnectionHandler<H>
     }
 
     fn poll_complete(&mut self) -> Poll<(), ()> {
-        let mut stream = match self.transport_state {
+        let transport = match self.transport_state {
             TransportState::Disconnected => {
                 // When the connection is not connected to a client,
                 // act as if the connection has completed. This is almost
@@ -259,10 +286,10 @@ impl<H> ConnectionHandler<H>
                 // or something similar.
                 return Ok(Async::Ready(()));
             }
-            TransportState::Connected(ref mut stream) => stream,
+            TransportState::Connected(ref mut transport) => transport,
         };
 
-        match self.state.flush_buffer(&mut stream) {
+        match transport.send_messages(&mut self.state) {
             Ok(async) => return Ok(async),
             Err(_err) => {
                 // ignore the error and act as if the stream has completed.
