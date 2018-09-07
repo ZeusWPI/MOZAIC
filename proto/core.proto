@@ -39,21 +39,22 @@ message ConnectionError {
 
 
 message Packet {
+    uint32 seq_num = 1;
+    uint32 ack_num = 2;
     oneof payload {
-        Request request = 1;
-        Response response = 2;
-        CloseConnection close_connection = 3;
+        Request request = 3;
+        Response response = 4;
+        CloseConnection close_connection = 5;
     }
 }
 
 message Request {
-    uint32 seq_num = 1;
-    uint32 type_id = 2; 
-    bytes data = 3;
+    uint32 type_id = 1; 
+    bytes data = 2;
 }
 
 message Response {
-    uint32 seq_num = 1;
+    uint32 request_seq_num = 1;
     uint32 type_id = 2;
     bytes data = 3;
 }

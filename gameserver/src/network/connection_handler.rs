@@ -9,15 +9,10 @@ use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use protocol::{Packet, packet, Request, Response, CloseConnection};
+use protocol::packet::Payload;
 use events;
 
 type PacketStream = MessageStream<TcpStream, Packet>;
-
-// TODO: implement errors
-pub enum ConnectionEvent {
-    Request(Request),
-    Response(Response),
-}
 
 pub enum TransportState {
     Disconnected,
@@ -26,8 +21,17 @@ pub enum TransportState {
 
 pub struct ConnectionState {
     status: ConnectionStatus,
+
+    /// how many messages have already been flushed from the message buffer
+    message_offset: usize,
+
+    /// the send window
+    buffer: Vec<NetworkMessage>,
+
+    /// sequence number counter for packets that we will send
     seq_num: u32,
-    buffer: Vec<packet::Payload>,
+    /// ack number for packets that we send
+    ack_num: u32,
 }
 
 pub enum ConnectionStatus {
@@ -39,43 +43,53 @@ pub enum ConnectionStatus {
     Closed,
 }
 
+pub struct NetworkMessage {
+    seq_num: u32,
+    payload: Payload,
+}
+
 impl ConnectionState {
     fn new() -> Self {
         ConnectionState {
             status: ConnectionStatus::Open,
+            message_offset: 0,
             seq_num: 0,
+            ack_num: 0,
             buffer: Vec::new(),
         }
     }
 
-    fn queue_send(&mut self, wire_event: WireEvent) -> u32 {
+    fn buffer_message(&mut self, payload: Payload) -> u32 {
         let seq_num = self.seq_num;
         self.seq_num += 1;
 
-        let payload = packet::Payload::Request(
-            Request {
-                seq_num,
-                type_id: wire_event.type_id,
-                data: wire_event.data,
-            }
-        );
-        self.buffer.push(payload);
+        let message = NetworkMessage { seq_num, payload };
+        self.buffer.push(message);
         return seq_num;
     }
 
-    fn queue_response(&mut self, response: Response) {
-        let payload = packet::Payload::Response(response);
-        self.buffer.push(payload);
+    fn send_request(&mut self, wire_event: WireEvent) -> u32 {
+        self.buffer_message(Payload::Request(
+            Request {
+                type_id: wire_event.type_id,
+                data: wire_event.data,
+            }
+        ))
     }
 
-    fn start_close(&mut self) {
-        let payload = packet::Payload::CloseConnection(CloseConnection {});
-        self.buffer.push(payload);
+    fn send_response(&mut self, response: Response) -> u32 {
+        self.buffer_message(Payload::Response(response))
+    }
+
+    /// close this end of the connection
+    fn close(&mut self) -> u32 {
         self.status = ConnectionStatus::Closing;
+        let close = CloseConnection {};
+        return self.buffer_message(Payload::CloseConnection(close));
     }
 
     fn poll(&mut self, stream: &mut PacketStream)
-        -> Poll<ConnectionEvent, io::Error>
+        -> Poll<NetworkMessage, io::Error>
     {
         try!(self.flush_buffer(stream));
         return self.poll_message(stream);
@@ -86,9 +100,11 @@ impl ConnectionState {
     {
         while !self.buffer.is_empty() {
             try_ready!(stream.poll_complete());
-            let payload = self.buffer.remove(0);
+            let message = self.buffer.remove(0);
             let packet = Packet {
-                payload: Some(payload),
+                seq_num: message.seq_num,
+                ack_num: self.ack_num,
+                payload: Some(message.payload),
             };
             let res = try!(stream.start_send(packet));
             assert!(res.is_ready(), "writing to PacketStream blocked");
@@ -97,7 +113,7 @@ impl ConnectionState {
     }
 
     fn poll_message(&mut self, stream: &mut PacketStream)
-        -> Poll<ConnectionEvent, io::Error>
+        -> Poll<NetworkMessage, io::Error>
     {
         loop {
             let packet = match try_ready!(stream.poll()) {
@@ -105,29 +121,14 @@ impl ConnectionState {
                 Some(packet) => packet,
             };
 
-            if let Some(payload) = packet.payload {
-                match payload {
-                    packet::Payload::Request(request) => {
-                        return Ok(
-                            Async::Ready(
-                                ConnectionEvent::Request(request)
-                            )
-                        );
-                    },
-                    packet::Payload::Response(response) => {
-                        return Ok(
-                            Async::Ready(
-                                ConnectionEvent::Response(response)
-                            )
-                        );
-                    }
-                    packet::Payload::CloseConnection(_) => {
-                        self.status = ConnectionStatus::Closed;
-                        // TODO: this should be more solid ...
-                    }
-                }
+            match packet.payload {
+                Some(payload) => return Ok(Async::Ready(NetworkMessage {
+                    seq_num: packet.seq_num,
+                    payload,
+                })),
+                None => {},
             }
-        };
+        }
     }
 }
 
@@ -187,7 +188,7 @@ impl<H> ConnectionHandler<H>
                     );
                 }
                 Some(ConnectionCommand::Send(wire_event)) => {
-                    self.state.queue_send(wire_event);
+                    self.state.send_request(wire_event);
                 }
             }
         }
@@ -215,9 +216,9 @@ impl<H> ConnectionHandler<H>
         };
 
         loop {
-            let event = try_ready!(self.state.poll(transport));
-            match event {
-                ConnectionEvent::Request(request) => {
+            let message = try_ready!(self.state.poll(transport));
+            match message.payload {
+                Payload::Request(request) => {
                     let res = self.event_handler.handle_wire_event(
                         WireEvent {
                             type_id: request.type_id,
@@ -226,8 +227,8 @@ impl<H> ConnectionHandler<H>
                     );
                     match res {
                         Ok(wire_event) => {
-                            self.state.queue_response(Response {
-                                seq_num: request.seq_num,
+                            self.state.send_response(Response {
+                                request_seq_num: message.seq_num,
                                 type_id: wire_event.type_id,
                                 data: wire_event.data,
                             });
@@ -237,8 +238,11 @@ impl<H> ConnectionHandler<H>
                         }
                     }
                 }
-                ConnectionEvent::Response(_response) => {
+                Payload::Response(_response) => {
                     // discard responses for now
+                }
+                Payload::CloseConnection(_) => {
+                    self.state.status = ConnectionStatus::Closed;
                 }
             }
         }
@@ -280,7 +284,7 @@ impl<H> Future for ConnectionHandler<H>
             match self.state.status {
                 ConnectionStatus::Open => {
                     if try!(self.poll_ctrl_chan()).is_ready() {
-                        self.state.start_close();
+                        self.state.close();
                     }
                     try_ready!(self.receive_packets());
                 }
