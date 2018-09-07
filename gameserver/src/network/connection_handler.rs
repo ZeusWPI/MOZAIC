@@ -122,8 +122,8 @@ impl ConnectionState {
                         );
                     }
                     packet::Payload::CloseConnection(_) => {
-                        // TODO
-                        println!("connection closed");
+                        self.status = ConnectionStatus::Closed;
+                        // TODO: this should be more solid ...
                     }
                 }
             }

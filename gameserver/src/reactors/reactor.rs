@@ -165,7 +165,15 @@ impl ReactorHandle {
     }
 
     fn send_command(&mut self, command: ReactorCommand) {
-        self.inner.unbounded_send(command)
-            .expect("event channel broke");
+        // TODO IMPORTANT
+        // currently ignore send errors here to deal with 'dangling clients'.
+        // This is almost certainly not how we want this handled!
+        // How do we decide on the lifetime of a match? When a client keeps
+        // active after a match has ended (decided on its result), do we also
+        // keep the match alive, or do we leave the client in some 'dangling'
+        // state where its input will be ignored? Is this something that a 
+        // connection handler should implement, or do we implement it in the
+        // reactor code?
+        let _res = self.inner.unbounded_send(command);
     }   
 }
