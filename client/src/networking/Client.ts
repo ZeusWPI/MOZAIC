@@ -1,7 +1,9 @@
-import { EventWire, ClientParams } from "./EventWire";
-import { Connected, Disconnected } from "../eventTypes";
+import { ClientParams } from "./EventWire";
 import { Event, EventType } from "../reactors/SimpleEventEmitter";
-import { RequestHandler, Handler } from "../reactors/RequestHandler";
+import { Handler } from "../reactors/RequestHandler";
+import { Connection } from "./Connection";
+import { Transport } from "./Transport";
+import { encodeEvent } from "../reactors/utils";
 
 export interface EventHandler {
     handleEvent: (any) => void;
@@ -9,39 +11,34 @@ export interface EventHandler {
 }
 
 export class Client {
-    private eventWire: EventWire;
-    public handler: RequestHandler;
+    private transport: Transport;
+    private connection: Connection;
 
     constructor(params: ClientParams) {
-        this.handler = new RequestHandler;
-        this.eventWire = new EventWire(params, this.handler);
-
-        this.eventWire.onConnect.subscribe((_) => {
-            this.handler.handleEvent(Connected.create({}));
-        });
-
-        this.eventWire.onDisconnect.subscribe(() => {
-            this.handler.handleEvent(Disconnected.create({}));
-        });
+        this.connection = new Connection();
+        this.transport = new Transport(params, this.connection);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
-        this.handler.on(eventType, handler);
+        this.connection.on(eventType, handler);
     }
 
     public connect(message: Uint8Array) {
-        this.eventWire.connect(message);
+        this.transport.connect(message);
     }
 
     public exit() {
-        this.eventWire.close();
+        // TODO: clean termination
+        this.transport.exit();
     }
 
     public send(event: Event) {
-        this.eventWire.send(event);
+        const request = encodeEvent(event);
+        this.connection.request(request);
     }
 
     public request<T>(event: Event, responseType: EventType<T>): Promise<T> {
-        return this.eventWire.request(event, responseType);
+        const request = encodeEvent(event);
+        return this.connection.request(request, responseType);
     }
 }

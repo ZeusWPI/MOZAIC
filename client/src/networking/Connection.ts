@@ -1,9 +1,10 @@
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
-import { RequestHandler } from '../reactors/RequestHandler';
+import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
 import { Transport } from './Transport';
 import { WireEvent } from './EventWire';
+import { Disconnected, Connected } from '../eventTypes';
 
 export type Payload = {
     request?: proto.IRequest,
@@ -47,6 +48,17 @@ export class Connection {
         return seqNum;
     }
 
+    public connect(transport: Transport) {
+        console.log('connected');
+        this.transport = transport;
+        this.requestHandler.handleEvent(Connected.create());
+    }
+
+    public disconnect() {
+        this.requestHandler.handleEvent(Disconnected.create());
+        this.transport = undefined;
+    }
+
     public request(request: proto.IRequest);
     public request<T>(request: proto.IRequest, responseType: EventType<T>) : Promise<T>;
     public request<T>(request: proto.IRequest, responseType?: EventType<T>): Promise<T> | void
@@ -63,13 +75,19 @@ export class Connection {
         }
     }
 
+    public on<T>(eventType: EventType<T>, handler: Handler<T>) {
+        this.requestHandler.on(eventType, handler);
+    }
+
     handlePacket(packet: proto.Packet) {
         this.ackNum = packet.seqNum + 1;
 
         if (packet.ackNum > this.seqOffset) {
+            console.log(`flushing ${packet.ackNum - this.seqOffset} packets`);
             this.buffer.splice(0, packet.ackNum - this.seqOffset);
             this.seqOffset = packet.ackNum;
         }
+        console.log(`buffer has ${this.buffer.length} items`);
 
         
         if (packet.request) {

@@ -1,4 +1,4 @@
-import { Address, EventWire } from './networking/EventWire';
+import { Address } from './networking/EventWire';
 import { BotConfig } from './planetwars/BotRunner';
 import { PwClient } from './planetwars/PwClient';
 import { Connected, ClientConnected, ClientDisconnected, StartGame } from './eventTypes';

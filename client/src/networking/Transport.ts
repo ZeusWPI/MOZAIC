@@ -4,11 +4,11 @@ import { Connection, Payload } from "./Connection";
 
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
-import { SignalDispatcher } from "ste-signals";
-import { SimpleEventDispatcher } from "ste-simple-events";
+import { SignalDispatcher, ISignal } from "ste-signals";
+import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
 
-enum ConnectionState {
+export enum ConnectionState {
     DISCONNECTED,
     CONNECTING,
     CONNECTED,
@@ -33,12 +33,12 @@ export class Transport {
 
 
     // TODO: dont use clientparams
-    constructor(params: ClientParams) {
+    constructor(params: ClientParams, connection: Connection) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
         this.seqNum = 0;
 
-        this.connection = new Connection();
+        this.connection = connection;
 
         this.params = params;
 
@@ -57,6 +57,7 @@ export class Transport {
     }
 
     public send(packet: proto.Packet) {
+        console.log(`sending ${JSON.stringify(packet.toJSON())}`);
         this.stream.write(proto.Packet.encode(packet));
     }
 
@@ -76,6 +77,10 @@ export class Transport {
         return this._onClose.asEvent();
     }
 
+    public exit() {
+        this.stream.end();
+    }
+
     // initiate connection handshake
     private sendConnectionRequest(message: Uint8Array) {
         let connRequest = {
@@ -89,7 +94,7 @@ export class Transport {
         let response = proto.ConnectionResponse.decode(message);
         if (response.success) {
             this.state = ConnectionState.CONNECTED;
-            this._onConnect.dispatch();
+            this.connection.connect(this);
         } else if (response.error) {
             // TODO: should there be a special error state?
             this.state = ConnectionState.CLOSED;;
@@ -107,6 +112,7 @@ export class Transport {
             }
             case ConnectionState.CONNECTED: {
                 const packet = proto.Packet.decode(data);
+                console.log(`received ${JSON.stringify(packet.toJSON())}`);
                 this.connection.handlePacket(packet);
                 break;
             }
