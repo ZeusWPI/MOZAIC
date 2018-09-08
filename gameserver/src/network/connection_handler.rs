@@ -270,6 +270,10 @@ impl<H> ConnectionHandler<H>
                 }
                 Payload::CloseConnection(_) => {
                     self.state.status = ConnectionStatus::Closed;
+                    // return ready to trigger the state change
+                    // TODO: this is a bit of a hack, this should be implemented
+                    // better!
+                    return Ok(Async::Ready(()));
                 }
             }
         }
