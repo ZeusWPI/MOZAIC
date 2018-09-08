@@ -30,7 +30,6 @@ impl Transport {
         while self.send_pos < state.pos() {
             try_ready!(self.stream.poll_complete());
             let payload = state.get_message(self.send_pos);
-            self.send_pos += 1;
             let packet = Packet {
                 seq_num: self.send_pos as u32,
                 ack_num: state.ack_num,
@@ -38,6 +37,7 @@ impl Transport {
             };
             let res = try!(self.stream.start_send(packet));
             assert!(res.is_ready(), "writing to PacketStream blocked");
+            self.send_pos += 1;
         }
         return self.stream.poll_complete();
     }
