@@ -14,8 +14,9 @@ export type Payload = {
 
 export class Connection {
     private buffer: Payload[];
-    private seqOffset: number;
-    private ackNum: number;
+
+    private numFlushed: number;
+    private numReceived: number;
 
     private requestHandler: RequestHandler;
     private responseHandlers: { [seq_num: number]: ResponseHandler<any>};
@@ -24,24 +25,20 @@ export class Connection {
 
     constructor() {
         this.buffer = [];
-        this.seqOffset = 0;
-        this.ackNum = 0;
+        this.numFlushed = 0;
+        this.numReceived = 0;
 
         this.requestHandler = new RequestHandler();
         this.responseHandlers = {};
     }
 
-    getPayload(seqNum: number) {
-        return this.buffer[seqNum - this.seqOffset];
-    }
-
     sendPayload(payload: Payload): number {
-        const seqNum = this.seqOffset + this.buffer.length;
         this.buffer.push(payload);
+        const seqNum = this.numFlushed + this.buffer.length;
         if (this.transport) {
             this.transport.send(proto.Packet.create({
                 seqNum,
-                ackNum: this.ackNum,
+                ackNum: this.numReceived,
                 ...payload,
             }));
         }
@@ -57,6 +54,10 @@ export class Connection {
     public disconnect() {
         this.requestHandler.handleEvent(Disconnected.create());
         this.transport = undefined;
+    }
+
+    public isFinished(): boolean {
+        return this.buffer.length == 0;
     }
 
     public request(request: proto.IRequest);
@@ -80,12 +81,12 @@ export class Connection {
     }
 
     handlePacket(packet: proto.Packet) {
-        this.ackNum = packet.seqNum + 1;
+        this.numReceived = packet.seqNum;
 
-        if (packet.ackNum > this.seqOffset) {
-            console.log(`flushing ${packet.ackNum - this.seqOffset} packets`);
-            this.buffer.splice(0, packet.ackNum - this.seqOffset);
-            this.seqOffset = packet.ackNum;
+        if (packet.ackNum > this.numFlushed) {
+            console.log(`flushing ${packet.ackNum - this.numFlushed} packets`);
+            this.buffer.splice(0, packet.ackNum - this.numFlushed);
+            this.numFlushed = packet.ackNum;
         }
         console.log(`buffer has ${this.buffer.length} items`);
 

@@ -54,6 +54,13 @@ export class Transport {
         this.stream.onConnect.one(() => {
             this.sendConnectionRequest(message);
         });
+
+        this.stream.onClose.one(() => {
+            console.log('disconnect');
+            if (!this.connection.isFinished()) {
+                console.log('CONNECTION WAS NOT FINISHED');
+            }
+        });
     }
 
     public send(packet: proto.Packet) {
