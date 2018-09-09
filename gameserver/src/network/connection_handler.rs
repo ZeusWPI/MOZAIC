@@ -8,7 +8,7 @@ use tokio::net::TcpStream;
 use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
-use protocol::{Packet, packet, Request, Response, CloseConnection};
+use protocol::{Packet, Request, Response, CloseConnection};
 use protocol::packet::Payload;
 use events;
 
@@ -21,25 +21,48 @@ pub enum TransportState {
 
 pub struct Transport {
     stream: PacketStream,
-    send_pos: usize,
+    last_seq_sent: u32,
+    last_ack_sent: u32,
 }
 
 impl Transport {
     fn send_messages(&mut self, state: &mut ConnectionState)
         -> Poll<(), io::Error> {
-        while self.send_pos < state.pos() {
-            try_ready!(self.stream.poll_complete());
-            let payload = state.get_message(self.send_pos);
+        while self.last_seq_sent < state.pos() as u32 {
+            let next_seq = self.last_seq_sent + 1;
+            let payload = state.get_message(next_seq);
             let packet = Packet {
-                seq_num: self.send_pos as u32,
-                ack_num: state.ack_num,
+                seq_num: next_seq,
+                ack_num: state.num_received,
                 payload: Some(payload),
             };
-            let res = try!(self.stream.start_send(packet));
-            assert!(res.is_ready(), "writing to PacketStream blocked");
-            self.send_pos += 1;
+            try_ready!(self.send_packet(packet));
         }
+
+        if self.last_ack_sent < state.num_received {
+            try_ready!(self.send_ack(state));
+        }
+
         return self.stream.poll_complete();
+    }
+
+    fn send_ack(&mut self, state: &mut ConnectionState) -> Poll<(), io::Error> {
+        println!("SENDING ACK");
+        let ack = Packet {
+            seq_num: self.last_seq_sent,
+            ack_num: state.num_received,
+            payload: None,
+        };
+        return self.send_packet(ack);
+    }
+
+    fn send_packet(&mut self, packet: Packet) -> Poll<(), io::Error> {
+        try_ready!(self.stream.poll_complete());
+        self.last_seq_sent = packet.seq_num;
+        self.last_ack_sent = packet.ack_num;
+        let res = try!(self.stream.start_send(packet));
+        assert!(res.is_ready(), "writing to PacketStream blocked");
+        return Ok(Async::Ready(()));
     }
 
     fn receive_message(&mut self, state: &mut ConnectionState)
@@ -75,14 +98,14 @@ impl Transport {
 pub struct ConnectionState {
     status: ConnectionStatus,
 
-    /// how many messages have already been flushed from the buffer
-    seq_offset: usize,
+    /// how many packets have been flushed from the buffer
+    num_flushed: usize,
 
     /// the send window
     buffer: Vec<Payload>,
 
-    /// ack number for packets that we send
-    ack_num: u32,
+    /// how many messages we already received
+    num_received: u32,
 }
 
 pub enum ConnectionStatus {
@@ -98,19 +121,19 @@ impl ConnectionState {
     fn new() -> Self {
         ConnectionState {
             status: ConnectionStatus::Open,
-            seq_offset: 0,
-            ack_num: 0,
+            num_flushed: 0,
+            num_received: 0,
             buffer: Vec::new(),
         }
     }
 
     fn pos(&self) -> usize {
-        self.seq_offset + (self.buffer.len())
+        self.num_flushed + self.buffer.len()
     }
 
-    fn get_message(&self, seq_num: usize) -> Payload {
+    fn get_message(&self, seq_num: u32) -> Payload {
         // TODO: can this clone be avoided?
-        self.buffer[seq_num - self.seq_offset].clone()
+        self.buffer[seq_num as usize - self.num_flushed - 1].clone()
     }
 
     fn buffer_message(&mut self, payload: Payload) {
@@ -139,13 +162,13 @@ impl ConnectionState {
     }
 
     fn receive(&mut self, packet: &Packet) {
-        self.ack_num = packet.seq_num + 1;
+        self.num_received = packet.seq_num;
 
         let ack_num = packet.ack_num as usize;
 
-        if ack_num > self.seq_offset {
-            self.buffer.drain(0..(ack_num - self.seq_offset));
-            self.seq_offset = ack_num;
+        if ack_num > self.num_flushed {
+            self.buffer.drain(0..(ack_num - self.num_flushed));
+            self.num_flushed = ack_num;
         }
     }
 }
@@ -205,7 +228,9 @@ impl<H> ConnectionHandler<H>
                 Some(ConnectionCommand::Connect(conn)) => {
                     let t = Transport {
                         // TODO: properly get this somewhere
-                        send_pos: self.state.seq_offset,
+                        last_seq_sent: self.state.num_flushed as u32,
+                        // TODO: what should this value be?
+                        last_ack_sent: 0,
                         stream: MessageStream::new(conn),
                     };
                     self.transport_state = TransportState::Connected(t);
@@ -323,7 +348,7 @@ impl<H> Future for ConnectionHandler<H>
                     try_ready!(self.receive_packets());
                 }
                 ConnectionStatus::Closed => {
-                    return Ok(Async::Ready(()));
+                    return self.poll_complete();
                 }
             }
         }
