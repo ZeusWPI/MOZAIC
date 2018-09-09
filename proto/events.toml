@@ -2,6 +2,7 @@
 
 Connected = 1
 Disconnected = 2
+ConnectionClosed = 3
 
 RegisterClient = 10
 RemoveClient = 11

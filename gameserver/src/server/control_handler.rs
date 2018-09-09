@@ -15,7 +15,7 @@ use super::match_handler::MatchHandler;
 
 
 pub struct ControlHandler {
-    handle: ConnectionHandle,
+    handle: Option<ConnectionHandle>,
     connection_manager: ConnectionManager,
 }
 
@@ -25,7 +25,7 @@ impl ControlHandler {
                -> Self
     {
         ControlHandler {
-            handle,
+            handle: Some(handle),
             connection_manager,
         }
     }
@@ -82,5 +82,14 @@ impl ControlHandler {
                 match_uuid: match_uuid,
             }).as_wire_event()
         )
+    }
+
+    pub fn quit(&mut self, _e: &events::ConnectionClosed)
+        -> io::Result<WireEvent>
+    {
+        println!("CONTROL CONNECItON CLOSED");
+        let handle = self.handle.take().unwrap();
+        self.connection_manager.unregister(handle.id());
+        return Ok(WireEvent::null());
     }
 }

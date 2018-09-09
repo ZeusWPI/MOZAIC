@@ -11,6 +11,9 @@ message Connected {}
 // A connection has been broken.
 message Disconnected {}
 
+// The remote party has terminated the connection.
+message ConnectionClosed {}
+
 // --- SERVER CONTROL ---
 
 message CreateMatchRequest {

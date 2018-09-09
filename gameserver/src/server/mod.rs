@@ -61,6 +61,7 @@ impl Future for Server {
                 );
                 let mut core = RequestHandler::new(handler);
                 core.add_handler(ControlHandler::create_match);
+                core.add_handler(ControlHandler::quit);
                 return core;
             }
         );
