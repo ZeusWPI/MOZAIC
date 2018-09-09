@@ -96,8 +96,6 @@ impl Transport {
 }
 
 pub struct ConnectionState {
-    status: ConnectionStatus,
-
     /// how many packets have been flushed from the buffer
     num_flushed: usize,
 
@@ -108,19 +106,21 @@ pub struct ConnectionState {
     num_received: u32,
 }
 
+#[derive(Debug)]
 pub enum ConnectionStatus {
     /// operating normally
     Open,
-    /// connection is being closed by the server
-    Closing,
-    /// connection has finished being connected
+    /// We are requesting to close the connection
+    RequestingClose,
+    /// Remote party is requsting to close the connection,
+    RemoteRequestingClose,
+    /// The connection is considered closed
     Closed,
 }
 
 impl ConnectionState {
     fn new() -> Self {
         ConnectionState {
-            status: ConnectionStatus::Open,
             num_flushed: 0,
             num_received: 0,
             buffer: Vec::new(),
@@ -154,14 +154,12 @@ impl ConnectionState {
         self.buffer_message(Payload::Response(response))
     }
 
-    /// close this end of the connection
-    fn close(&mut self) {
-        self.status = ConnectionStatus::Closing;
-        let close = CloseConnection {};
-        self.buffer_message(Payload::CloseConnection(close));
+    fn send_close_request(&mut self) {
+        self.buffer_message(Payload::CloseConnection(CloseConnection {}));
     }
 
     fn receive(&mut self, packet: &Packet) {
+        println!("received {:?}", packet);
         self.num_received = packet.seq_num;
 
         let ack_num = packet.ack_num as usize;
@@ -170,6 +168,7 @@ impl ConnectionState {
             self.buffer.drain(0..(ack_num - self.num_flushed));
             self.num_flushed = ack_num;
         }
+        println!("buffer has {} elems", self.buffer.len());
     }
 }
 
@@ -183,6 +182,7 @@ pub struct ConnectionHandler<H>
 {
     connection_id: usize,
     transport_state: TransportState,
+    status: ConnectionStatus,
     state: ConnectionState,
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
     event_handler: H,
@@ -210,6 +210,7 @@ impl<H> ConnectionHandler<H>
         let handler = ConnectionHandler {
             connection_id,
             transport_state: TransportState::Disconnected,
+            status: ConnectionStatus::Open,
             state: ConnectionState::new(),
             ctrl_chan: rcv,
             event_handler,
@@ -261,6 +262,22 @@ impl<H> ConnectionHandler<H>
         }
     }
 
+    fn request_close(&mut self) {
+        match self.status {
+            ConnectionStatus::Open => {
+                self.status = ConnectionStatus::RequestingClose;
+                self.state.send_close_request();
+            }
+            ConnectionStatus::RemoteRequestingClose => {
+                self.status = ConnectionStatus::Closed;
+                self.state.send_close_request();
+            }
+            _ => {
+                panic!("Calling request_close in illegal state");
+            }
+        }
+    }
+
     fn poll_transport(&mut self) -> Poll<(), io::Error> {
         let transport = match self.transport_state {
             TransportState::Disconnected => return Ok(Async::NotReady),
@@ -294,10 +311,28 @@ impl<H> ConnectionHandler<H>
                     // discard responses for now
                 }
                 Payload::CloseConnection(_) => {
-                    self.state.status = ConnectionStatus::Closed;
-                    // return ready to trigger the state change
+                    // TODO: un-nest this
+                    match self.status {
+                        ConnectionStatus::Open => {
+                            // TODO: can we work around this box?
+                            self.event_handler.handle_event(
+                                &EventBox::new(events::ConnectionClosed {} )
+                            );
+                            self.status = ConnectionStatus::RemoteRequestingClose;
+                        }
+                        ConnectionStatus::RequestingClose => {
+                            // TODO: should we emit an event here?
+                            self.status = ConnectionStatus::Closed;
+                        }
+                        _ => {
+                            // TODO: dont panic
+                            panic!("illegal close received");
+                        }
+                    }
+                    // return ready to trigger state changes
                     // TODO: this is a bit of a hack, this should be implemented
                     // better!
+
                     return Ok(Async::Ready(()));
                 }
             }
@@ -337,14 +372,15 @@ impl<H> Future for ConnectionHandler<H>
 
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
-            match self.state.status {
-                ConnectionStatus::Open => {
+            println!("{:?}", self.status);
+            match self.status {
+                ConnectionStatus::Open | ConnectionStatus::RemoteRequestingClose=> {
                     if try!(self.poll_ctrl_chan()).is_ready() {
-                        self.state.close();
+                        self.request_close();
                     }
                     try_ready!(self.receive_packets());
                 }
-                ConnectionStatus::Closing => {
+                ConnectionStatus::RequestingClose => {
                     try_ready!(self.receive_packets());
                 }
                 ConnectionStatus::Closed => {
