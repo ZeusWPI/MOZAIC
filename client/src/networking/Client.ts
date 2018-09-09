@@ -29,7 +29,7 @@ export class Client {
 
     public exit() {
         // TODO: clean termination
-        this.transport.exit();
+        this.connection.requestClose();
     }
 
     public send(event: Event) {

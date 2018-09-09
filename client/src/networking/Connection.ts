@@ -3,7 +3,6 @@ import proto = protocol_root.mozaic.protocol;
 import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
 import { Transport } from './Transport';
-import { WireEvent } from './EventWire';
 import { Disconnected, Connected } from '../eventTypes';
 
 export type Payload = {
@@ -12,7 +11,20 @@ export type Payload = {
     closeConnection?: proto.ICloseConnection,
 }
 
+enum ConnectionState {
+    // operating normally
+    OPEN,
+    // we are requesting to close the connection
+    REQUESTING_CLOSE,
+    // remote party is requesting to close the connection
+    REMOTE_REQUESTING_CLOSE,
+    // the connection has been closed
+    CLOSED,
+}
+
 export class Connection {
+    private state: ConnectionState;
+
     private buffer: Payload[];
 
     private numFlushed: number;
@@ -24,6 +36,7 @@ export class Connection {
     private transport?: Transport;
 
     constructor() {
+        this.state = ConnectionState.OPEN;
         this.buffer = [];
         this.numFlushed = 0;
         this.numReceived = 0;
@@ -58,6 +71,11 @@ export class Connection {
 
     public isFinished(): boolean {
         return this.buffer.length == 0;
+    }
+
+    public requestClose() {
+        const closeConnection = proto.CloseConnection.create({});
+        this.sendPayload({ closeConnection });
     }
 
     public request(request: proto.IRequest);
@@ -122,10 +140,22 @@ export class Connection {
                 delete this.responseHandlers[seqNum];
             }
         } else if (packet.closeConnection) {
-            const closeConnection = proto.CloseConnection.create({});
-            const packet = proto.Packet.encode({ closeConnection });
-            this.sendPayload({ closeConnection });
-            // TODO: actually close connection
+            switch (this.state) {
+                case ConnectionState.OPEN: {
+                    // TODO: implement the option to keep the connection open
+                    const closeConnection = proto.CloseConnection.create({});
+                    this.sendPayload({ closeConnection });
+                    this.state = ConnectionState.CLOSED;
+                    break;
+                }
+                case ConnectionState.REQUESTING_CLOSE: {
+                    this.state = ConnectionState.CLOSED;
+                    break;
+                }
+                default: {
+                    throw new Error("illegal close received")
+                }
+            }
         }
 
     }
