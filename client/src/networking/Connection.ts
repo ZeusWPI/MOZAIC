@@ -4,6 +4,7 @@ import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
 import { Transport } from './Transport';
 import { Disconnected, Connected } from '../eventTypes';
+import { timingSafeEqual } from 'crypto';
 
 export type Payload = {
     request?: proto.IRequest,
@@ -74,8 +75,21 @@ export class Connection {
     }
 
     public requestClose() {
-        const closeConnection = proto.CloseConnection.create({});
-        this.sendPayload({ closeConnection });
+        switch (this.state) {
+            case ConnectionState.OPEN: {
+                this.sendPayload({ closeConnection: {} });
+                this.state = ConnectionState.REQUESTING_CLOSE;
+                break;
+            }
+            case ConnectionState.REMOTE_REQUESTING_CLOSE: {
+                this.sendPayload({ closeConnection: {} });
+                this.state = ConnectionState.CLOSED;
+                break;
+            }
+            default: {
+                throw new Error("called requestClose in illegal state");
+            }
+        }
     }
 
     public request(request: proto.IRequest);
@@ -151,9 +165,7 @@ export class Connection {
             switch (this.state) {
                 case ConnectionState.OPEN: {
                     // TODO: implement the option to keep the connection open
-                    const closeConnection = proto.CloseConnection.create({});
-                    this.sendPayload({ closeConnection });
-                    this.state = ConnectionState.CLOSED;
+                    this.requestClose();
                     break;
                 }
                 case ConnectionState.REQUESTING_CLOSE: {
