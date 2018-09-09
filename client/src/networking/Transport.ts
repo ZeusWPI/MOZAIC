@@ -22,7 +22,8 @@ export class Transport {
 
     connection: Connection;
 
-    seqNum: number;
+    lastSeqSent: number;
+    lastAckSent: number;
 
     params: ClientParams;
 
@@ -36,7 +37,8 @@ export class Transport {
     constructor(params: ClientParams, connection: Connection) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
-        this.seqNum = 0;
+        this.lastSeqSent = 0;
+        this.lastAckSent = 0;
 
         this.connection = connection;
 
@@ -65,7 +67,17 @@ export class Transport {
 
     public send(packet: proto.Packet) {
         console.log(`sending ${JSON.stringify(packet.toJSON())}`);
+        this.lastSeqSent = packet.seqNum;
+        this.lastAckSent = packet.ackNum;
         this.stream.write(proto.Packet.encode(packet));
+    }
+
+    public sendAck() {
+        const packet = proto.Packet.create({
+            seqNum: this.connection.seqNum,
+            ackNum: this.connection.ackNum,
+        });
+        this.send(packet);
     }
 
     public get onConnect() {
@@ -121,6 +133,12 @@ export class Transport {
                 const packet = proto.Packet.decode(data);
                 console.log(`received ${JSON.stringify(packet.toJSON())}`);
                 this.connection.handlePacket(packet);
+                
+                if (this.lastSeqSent == this.connection.seqNum
+                    && this.lastAckSent < this.connection.ackNum)
+                {
+                    this.sendAck();
+                }
                 break;
             }
         }

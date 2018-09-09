@@ -98,7 +98,15 @@ export class Connection {
         this.requestHandler.on(eventType, handler);
     }
 
-    handlePacket(packet: proto.Packet) {
+    public get seqNum() {
+        return this.numFlushed + this.buffer.length;
+    }
+
+    public get ackNum() {
+        return this.numReceived;
+    }
+
+    public handlePacket(packet: proto.Packet) {
         this.numReceived = packet.seqNum;
 
         if (packet.ackNum > this.numFlushed) {
