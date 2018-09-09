@@ -47,7 +47,6 @@ impl Transport {
     }
 
     fn send_ack(&mut self, state: &mut ConnectionState) -> Poll<(), io::Error> {
-        println!("SENDING ACK");
         let ack = Packet {
             seq_num: self.last_seq_sent,
             ack_num: state.num_received,
@@ -159,7 +158,6 @@ impl ConnectionState {
     }
 
     fn receive(&mut self, packet: &Packet) {
-        println!("received {:?}", packet);
         self.num_received = packet.seq_num;
 
         let ack_num = packet.ack_num as usize;
@@ -168,7 +166,6 @@ impl ConnectionState {
             self.buffer.drain(0..(ack_num - self.num_flushed));
             self.num_flushed = ack_num;
         }
-        println!("buffer has {} elems", self.buffer.len());
     }
 }
 
@@ -372,7 +369,6 @@ impl<H> Future for ConnectionHandler<H>
 
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
-            println!("{:?}", self.status);
             match self.status {
                 ConnectionStatus::Open | ConnectionStatus::RemoteRequestingClose=> {
                     if try!(self.poll_ctrl_chan()).is_ready() {
