@@ -8,7 +8,7 @@ import { SignalDispatcher, ISignal } from "ste-signals";
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
 
 
-export enum ConnectionState {
+export enum TransportState {
     DISCONNECTED,
     CONNECTING,
     CONNECTED,
@@ -17,7 +17,7 @@ export enum ConnectionState {
 
 
 export class Transport {
-    state: ConnectionState;
+    state: TransportState;
     stream: ProtobufStream;
 
     connection: Connection;
@@ -35,7 +35,7 @@ export class Transport {
 
     // TODO: dont use clientparams
     constructor(params: ClientParams, connection: Connection) {
-        this.state = ConnectionState.DISCONNECTED;
+        this.state = TransportState.DISCONNECTED;
         this.stream = new ProtobufStream();
         this.lastSeqSent = 0;
         this.lastAckSent = 0;
@@ -50,7 +50,7 @@ export class Transport {
     }
         
     public connect(message: Uint8Array) {
-        this.state = ConnectionState.CONNECTING;
+        this.state = TransportState.CONNECTING;
         this.stream.connect(this.params.host, this.params.port);
 
         this.stream.onConnect.one(() => {
@@ -112,11 +112,11 @@ export class Transport {
     private handleConnectionResponse(message: Uint8Array) {
         let response = proto.ConnectionResponse.decode(message);
         if (response.success) {
-            this.state = ConnectionState.CONNECTED;
+            this.state = TransportState.CONNECTED;
             this.connection.connect(this);
         } else if (response.error) {
             // TODO: should there be a special error state?
-            this.state = ConnectionState.CLOSED;;
+            this.state = TransportState.CLOSED;;
             // TODO this is not particulary nice
             const err = new Error(response.error.message!);
             this._onError.dispatch(err);
@@ -125,11 +125,11 @@ export class Transport {
 
     private handleMessage(data: Uint8Array) {
         switch (this.state) {
-            case ConnectionState.CONNECTING: {
+            case TransportState.CONNECTING: {
                 this.handleConnectionResponse(data);
                 break;
             }
-            case ConnectionState.CONNECTED: {
+            case TransportState.CONNECTED: {
                 const packet = proto.Packet.decode(data);
                 console.log(`received ${JSON.stringify(packet.toJSON())}`);
                 this.connection.handlePacket(packet);
