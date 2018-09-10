@@ -73,14 +73,27 @@ impl Transport {
                 Some(packet) => packet,
             };
 
-            state.receive(&packet);
-
-            match packet.payload {
-                Some(payload) => return Ok(Async::Ready(NetworkMessage {
-                    seq_num: packet.seq_num,
-                    payload,
-                })),
-                None => {},
+            // TODO: how should these faulty cases be handled?
+            // TODO: maybe this logic should be moved to ConnectionState
+            if packet.seq_num < state.num_received {
+                eprintln!("got retransmitted packet");
+            } else if packet.seq_num == state.num_received {
+                // this is an ack packet
+                state.receive(&packet);
+            } else if packet.seq_num == state.num_received + 1 {
+                // this is the next packet in the stream
+                state.receive(&packet);
+                match packet.payload {
+                    Some(payload) => return Ok(Async::Ready(NetworkMessage {
+                        seq_num: packet.seq_num,
+                        payload,
+                    })),
+                    None => {
+                        eprintln!("packet has no payload");
+                    },
+                }
+            } else {
+                eprintln!("got out-of-order packet");
             }
         }
 
@@ -94,17 +107,6 @@ impl Transport {
     }
 }
 
-pub struct ConnectionState {
-    /// how many packets have been flushed from the buffer
-    num_flushed: usize,
-
-    /// the send window
-    buffer: Vec<Payload>,
-
-    /// how many messages we already received
-    num_received: u32,
-}
-
 #[derive(Debug)]
 pub enum ConnectionStatus {
     /// operating normally
@@ -115,6 +117,17 @@ pub enum ConnectionStatus {
     RemoteRequestingClose,
     /// The connection is considered closed
     Closed,
+}
+
+pub struct ConnectionState {
+    /// how many packets have been flushed from the buffer
+    num_flushed: usize,
+
+    /// the send window
+    buffer: Vec<Payload>,
+
+    /// how many messages we already received
+    num_received: u32,
 }
 
 impl ConnectionState {
@@ -160,7 +173,12 @@ impl ConnectionState {
     fn receive(&mut self, packet: &Packet) {
         self.num_received = packet.seq_num;
 
-        let ack_num = packet.ack_num as usize;
+        let mut ack_num = packet.ack_num as usize;
+
+        if ack_num > self.pos() {
+            eprintln!("Got ack for packet that was not sent yet");
+            ack_num = self.pos();
+        }
 
         if ack_num > self.num_flushed {
             self.buffer.drain(0..(ack_num - self.num_flushed));
