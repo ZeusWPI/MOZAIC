@@ -121,12 +121,26 @@ export class Connection {
     }
 
     public handlePacket(packet: proto.Packet) {
-        this.numReceived = packet.seqNum;
+        if (packet.seqNum < this.numReceived) {
+            console.error("got retransmitted packet");
+            return;
+        }
+        if (packet.seqNum > this.numReceived + 1) {
+            console.error("got out of order packet");
+            return;
+        }
 
-        if (packet.ackNum > this.numFlushed) {
-            console.log(`flushing ${packet.ackNum - this.numFlushed} packets`);
-            this.buffer.splice(0, packet.ackNum - this.numFlushed);
-            this.numFlushed = packet.ackNum;
+        this.numReceived = packet.seqNum;
+        let ackNum = packet.ackNum;
+
+        if (ackNum > this.seqNum) {
+            ackNum = this.seqNum;
+        }
+
+        if (ackNum > this.numFlushed) {
+            console.log(`flushing ${ackNum - this.numFlushed} packets`);
+            this.buffer.splice(0, ackNum - this.numFlushed);
+            this.numFlushed = ackNum;
         }
         console.log(`buffer has ${this.buffer.length} items`);
 
