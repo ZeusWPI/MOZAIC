@@ -12,7 +12,7 @@ export type Payload = {
     closeConnection?: proto.ICloseConnection,
 }
 
-enum ConnectionState {
+enum ConnectionStatus {
     // operating normally
     OPEN,
     // we are requesting to close the connection
@@ -24,7 +24,7 @@ enum ConnectionState {
 }
 
 export class Connection {
-    private state: ConnectionState;
+    private status: ConnectionStatus;
 
     private buffer: Payload[];
 
@@ -37,7 +37,7 @@ export class Connection {
     private transport?: Transport;
 
     constructor() {
-        this.state = ConnectionState.OPEN;
+        this.status = ConnectionStatus.OPEN;
         this.buffer = [];
         this.numFlushed = 0;
         this.numReceived = 0;
@@ -75,15 +75,15 @@ export class Connection {
     }
 
     public requestClose() {
-        switch (this.state) {
-            case ConnectionState.OPEN: {
+        switch (this.status) {
+            case ConnectionStatus.OPEN: {
                 this.sendPayload({ closeConnection: {} });
-                this.state = ConnectionState.REQUESTING_CLOSE;
+                this.status = ConnectionStatus.REQUESTING_CLOSE;
                 break;
             }
-            case ConnectionState.REMOTE_REQUESTING_CLOSE: {
+            case ConnectionStatus.REMOTE_REQUESTING_CLOSE: {
                 this.sendPayload({ closeConnection: {} });
-                this.state = ConnectionState.CLOSED;
+                this.status = ConnectionStatus.CLOSED;
                 break;
             }
             default: {
@@ -162,14 +162,14 @@ export class Connection {
                 delete this.responseHandlers[seqNum];
             }
         } else if (packet.closeConnection) {
-            switch (this.state) {
-                case ConnectionState.OPEN: {
+            switch (this.status) {
+                case ConnectionStatus.OPEN: {
                     // TODO: implement the option to keep the connection open
                     this.requestClose();
                     break;
                 }
-                case ConnectionState.REQUESTING_CLOSE: {
-                    this.state = ConnectionState.CLOSED;
+                case ConnectionStatus.REQUESTING_CLOSE: {
+                    this.status = ConnectionStatus.CLOSED;
                     break;
                 }
                 default: {
