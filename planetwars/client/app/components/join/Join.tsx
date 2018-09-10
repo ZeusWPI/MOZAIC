@@ -111,7 +111,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
     if (this.state.lastClipboard !== clipBoardtext) {
       try {
         const {host, port, name, token, clientId } = JSON.parse(clipBoardtext);
-        if (host && port && name && token) {
+        if (host && port && name && token && clientId) {
           this.setState({ import: { host, port, name, token, clientId } });
         } else {
           this.setState({ import: undefined });

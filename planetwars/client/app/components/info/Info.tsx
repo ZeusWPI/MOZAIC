@@ -28,7 +28,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
     // ----------TEMP DEBUG TESTING----------
 
     // console.log(parseLogFile("/home/robbe/log.out", MatchType.hosted));
-    console.log(parseLogFile("/home/robbe/log.out", MatchType.joined));
+    console.log(parseLogFile("/home/robbe/joined_1.out", MatchType.joined));
 
     // ----------TEMP DEBUG TESTING----------
 

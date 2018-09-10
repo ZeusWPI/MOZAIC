@@ -65,7 +65,27 @@ export class HostedMatchLog extends MatchLog {
 
 export class JoinedMatchLog extends MatchLog {
   public addEntry(entry: Event) {
-    // TODO
+    console.log(entry)
+    switch (entry.eventType) {
+      case events.PlayerAction: {
+        const entryPA = entry as events.PlayerAction;
+
+        this.getPlayerLog(entryPA.clientId).addRecord(entry);
+
+        break;
+      }
+      case events.GameStep: {
+        const entryGS = entry as events.GameStep;
+
+        Object.keys(this.playerLogs).forEach((clientIdStr) => {
+          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
+        });
+
+        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+
+        break;
+      }
+    }
   }
 }
 

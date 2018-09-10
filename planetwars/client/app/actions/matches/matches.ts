@@ -60,7 +60,7 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
     const botConfig = { command, args };
     const host = address.host;
     const port = address.port;
-    const token = new Buffer(bot.token, 'hex');
+    const token = Buffer.from(bot.token, 'utf-8');
     const clientParams = {
       token,
       host,
@@ -69,22 +69,16 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
       clientId: bot.clientid,
       logSink: createWriteStream(match.logPath),
     };
-    const logger = new PwClient.Logger(clientParams.clientId, createWriteStream(match.logPath));
-    const clientReactor = new PwClient.Reactor(logger);
-
-    clientReactor.dispatch(PwClient.events.RegisterClient.create({
-      clientId: clientParams.clientId,
-      token: new Buffer(bot.token, 'hex'),
-    }));
     try {
       const pwClient = new PwClient.PwClient(clientParams);
-      clientReactor.on(PwClient.events.GameFinished).subscribe(() => {
+      pwClient.on(PwClient.events.GameFinished).subscribe(() => {
         dispatch(completeMatch(match.uuid));
         const title = 'Match ended';
         const body = `A remote match has ended`;
         const link = `/matches/${match.uuid}`;
         dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
       });
+      pwClient.run();
     } catch (err) {
       console.log(err);
       dispatch(handleMatchError(match.uuid, err));
