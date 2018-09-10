@@ -8,7 +8,7 @@ use tokio::net::TcpStream;
 use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
-use protocol::{Packet, Request, Response, CloseConnection};
+use protocol::{Packet, Request, Response, CloseRequest};
 use protocol::packet::Payload;
 use events;
 
@@ -154,7 +154,7 @@ impl ConnectionState {
     }
 
     fn send_close_request(&mut self) {
-        self.buffer_message(Payload::CloseConnection(CloseConnection {}));
+        self.buffer_message(Payload::CloseRequest(CloseRequest {}));
     }
 
     fn receive(&mut self, packet: &Packet) {
@@ -307,7 +307,7 @@ impl<H> ConnectionHandler<H>
                 Payload::Response(_response) => {
                     // discard responses for now
                 }
-                Payload::CloseConnection(_) => {
+                Payload::CloseRequest(_) => {
                     // TODO: un-nest this
                     match self.status {
                         ConnectionStatus::Open => {

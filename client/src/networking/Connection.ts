@@ -9,7 +9,7 @@ import { timingSafeEqual } from 'crypto';
 export type Payload = {
     request?: proto.IRequest,
     response?: proto.IResponse,
-    closeConnection?: proto.ICloseConnection,
+    closeRequest?: proto.ICloseRequest,
 }
 
 enum ConnectionStatus {
@@ -77,12 +77,12 @@ export class Connection {
     public requestClose() {
         switch (this.status) {
             case ConnectionStatus.OPEN: {
-                this.sendPayload({ closeConnection: {} });
+                this.sendPayload({ closeRequest: {} });
                 this.status = ConnectionStatus.REQUESTING_CLOSE;
                 break;
             }
             case ConnectionStatus.REMOTE_REQUESTING_CLOSE: {
-                this.sendPayload({ closeConnection: {} });
+                this.sendPayload({ closeRequest: {} });
                 this.status = ConnectionStatus.CLOSED;
                 break;
             }
@@ -161,7 +161,7 @@ export class Connection {
                 handler.handleResponse(packet.response);
                 delete this.responseHandlers[seqNum];
             }
-        } else if (packet.closeConnection) {
+        } else if (packet.closeRequest) {
             switch (this.status) {
                 case ConnectionStatus.OPEN: {
                     // TODO: implement the option to keep the connection open

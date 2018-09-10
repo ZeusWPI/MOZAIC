@@ -44,7 +44,7 @@ message Packet {
     oneof payload {
         Request request = 3;
         Response response = 4;
-        CloseConnection close_connection = 5;
+        CloseRequest close_request = 5;
     }
 }
 
@@ -59,6 +59,6 @@ message Response {
     bytes data = 3;
 }
 
-message CloseConnection {
+message CloseRequest {
     // for future use
 }
