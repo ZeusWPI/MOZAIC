@@ -37,6 +37,11 @@ message ConnectionError {
     string message = 1;
 }
 
+message Frame {
+    uint32 channel_num = 1;
+    bytes data = 2;
+}
+
 
 message Packet {
     uint32 seq_num = 1;

@@ -1,17 +1,13 @@
 use std::io;
 use futures::{Stream, Sink, Poll, Async};
 
-use network::protobuf_codec::{ProtobufTransport, MessageStream};
-use tokio::net::TcpStream;
+use prost::Message as ProtobufMessage;
 
+use network::tcp::Channel;
 use protocol::Packet;
 use protocol::packet::Payload;
-
 use super::connection_state::ConnectionState;
 
-
-
-type PacketStream = MessageStream<TcpStream, Packet>;
 
 pub struct NetworkMessage {
     pub seq_num: u32,
@@ -19,20 +15,20 @@ pub struct NetworkMessage {
 }
 
 pub struct Transport {
-    stream: PacketStream,
+    channel: Channel,
     last_seq_sent: u32,
     last_ack_sent: u32,
 }
 
 impl Transport {
-    pub fn new(stream: ProtobufTransport<TcpStream>, state: &ConnectionState)
+    pub fn new(channel: Channel, state: &ConnectionState)
         -> Self
     {
         Transport {
             last_seq_sent: state.num_flushed as u32,
             // TODO: what should this value be?
             last_ack_sent: 0,
-            stream: MessageStream::new(stream),
+            channel,
         }
     }
 
@@ -53,7 +49,7 @@ impl Transport {
             try_ready!(self.send_ack(state));
         }
 
-        return self.stream.poll_complete();
+        return self.channel.poll_complete();
     }
 
     fn send_ack(&mut self, state: &mut ConnectionState) -> Poll<(), io::Error> {
@@ -66,11 +62,18 @@ impl Transport {
     }
 
     fn send_packet(&mut self, packet: Packet) -> Poll<(), io::Error> {
-        try_ready!(self.stream.poll_complete());
+        try_ready!(self.channel.poll_complete());
         self.last_seq_sent = packet.seq_num;
         self.last_ack_sent = packet.ack_num;
-        let res = try!(self.stream.start_send(packet));
-        assert!(res.is_ready(), "writing to PacketStream blocked");
+
+        let mut bytes = Vec::with_capacity(packet.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        packet.encode(&mut bytes).unwrap();
+
+        let res = try!(self.channel.start_send(bytes));
+        assert!(res.is_ready(), "writing to channel blocked");
         return Ok(Async::Ready(()));
     }
 
@@ -78,9 +81,9 @@ impl Transport {
         -> Poll<NetworkMessage, io::Error>
     {
         loop {
-            let packet = match try_ready!(self.stream.poll()) {
+            let packet = match try_ready!(self.channel.poll()) {
                 None => bail!(io::ErrorKind::ConnectionAborted),
-                Some(packet) => packet,
+                Some(bytes) => try!(Packet::decode(&bytes)),
             };
 
             // TODO: how should these faulty cases be handled?

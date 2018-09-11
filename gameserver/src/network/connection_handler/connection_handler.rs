@@ -3,14 +3,13 @@
 use std::io;
 use futures::{Future, Stream, Poll, Async};
 use futures::sync::mpsc;
-use tokio::net::TcpStream;
 
 use reactors::{Event, EventBox, WireEvent, EventHandler};
 
 use protocol::Response;
 use protocol::packet::Payload;
 use events;
-use network::protobuf_codec::ProtobufTransport;
+use network::tcp::Channel;
 
 
 use super::transport::Transport;
@@ -71,8 +70,8 @@ impl<H> ConnectionHandler<H>
                     // TODO: properly communicate that we are quiting
                     return Ok(Async::Ready(()));
                 }
-                Some(ConnectionCommand::Connect(stream)) => {
-                    let t = Transport::new(stream, &self.state);
+                Some(ConnectionCommand::Connect(channel)) => {
+                    let t = Transport::new(channel, &self.state);
                     self.transport_state = TransportState::Connected(t);
                     // TODO: can we work around this box?
                     self.request_handler.handle_event(
@@ -215,7 +214,7 @@ impl<H> Future for ConnectionHandler<H>
 }
 
 pub enum ConnectionCommand {
-    Connect(ProtobufTransport<TcpStream>),
+    Connect(Channel),
     Send(WireEvent),
 }
 
@@ -236,8 +235,8 @@ impl ConnectionHandle {
         self.connection_id
     }
 
-    pub fn connect(&mut self, transport: ProtobufTransport<TcpStream>) {
-        self.send_command(ConnectionCommand::Connect(transport));
+    pub fn connect(&mut self, channel: Channel) {
+        self.send_command(ConnectionCommand::Connect(channel));
     }
 
     pub fn dispatch<E>(&mut self, event: E)

@@ -323,7 +323,7 @@ impl Accepting {
         -> HandlerState<R>
     {
         // TODO
-        // self.handle.connect(channel);
+        self.handle.connect(channel);
         return HandlerState::Done;
     }
 }
