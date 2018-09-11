@@ -79,7 +79,7 @@ struct TcpStreamHandler<R>
 }
 
 impl<R> TcpStreamHandler<R>
-    where R: Router
+    where R: Router + Send + 'static
 {
     pub fn new(router: ConnectionRouter<R>, stream: TcpStream) -> Self {
         // TODO: what channel size should we use?
@@ -92,6 +92,48 @@ impl<R> TcpStreamHandler<R>
             snd,
         }
     }
+
+    pub fn poll_stream(&mut self) -> Poll<(), io::Error> {
+        loop {
+            let frame = match try_ready!(self.stream.poll()) {
+                Some(frame) => frame,
+                None => return Ok(Async::Ready(())),
+            };
+
+            // take references to satisfy the borrow checker
+            let snd = &self.snd;
+            let router = &self.router;
+
+            let sender = self.connections.entry(frame.channel_num)
+                .or_insert_with(|| {
+                    let (sender, channel) = Channel::create(
+                        frame.channel_num,
+                        snd.clone(),
+                    );
+                    let handler = ConnectionHandler::new(
+                        router.clone(),
+                        channel,
+                    );
+                    tokio::spawn(handler);
+                    return sender;
+                });
+            // TODO: handle this cleanly
+            let res = sender.start_send(frame.data);
+            assert!(res == Ok(AsyncSink::Ready));
+        }
+    }
+
+    pub fn poll_channels(&mut self) -> Poll<(), io::Error> {
+        loop {
+            try_ready!(self.stream.poll_complete());
+            let frame = match self.recv.poll().unwrap() {
+                Async::Ready(frame) => frame.unwrap(),
+                Async::NotReady => return Ok(Async::NotReady),
+            };
+            let res = try!(self.stream.start_send(frame));
+            assert!(res.is_ready(), "writing to MessageStream blocked");
+        }
+    }
 }
 
 impl<R> Future for TcpStreamHandler<R>
@@ -101,26 +143,9 @@ impl<R> Future for TcpStreamHandler<R>
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        loop {
-            let frame = match try_ready!(self.stream.poll()) {
-                Some(frame) => frame,
-                None => return Ok(Async::Ready(())),
-            };
-
-            let sender = self.connections.entry(frame.channel_num)
-                .or_insert_with(|| {
-                    let (sender, channel) = Channel::create(
-                        frame.channel_num,
-                        self.snd.clone(),
-                    );
-                    let handler = ConnectionHandler::new(
-                        self.router.clone(),
-                        channel,
-                    );
-                    tokio::spawn(handler);
-                    return sender;
-                });
-            sender.send(frame.data);
+        match self.poll_stream() {
+            Ok(_) => Ok(Async::NotReady),
+            Err(_) => Ok(Async::Ready(())),
         }
     }
 }
@@ -181,8 +206,8 @@ impl Sink for Channel {
     type SinkError = io::Error;
 
     fn start_send(&mut self, item: Vec<u8>) -> StartSend<Vec<u8>, io::Error> {
-        match try!(self.poll_ready()) {
-            Async::Ready(()) => {
+        match self.poll_ready() {
+            Ok(Async::Ready(())) => {
                 let frame = proto::Frame {
                     channel_num: self.channel_num,
                     data: item,
@@ -191,8 +216,11 @@ impl Sink for Channel {
                 assert!(poll.is_ready());
                 return Ok(AsyncSink::Ready);
             }
-            Async::NotReady => {
+            Ok(Async::NotReady) => {
                 return Ok(AsyncSink::NotReady(item));
+            }
+            Err(()) => {
+                bail!(io::ErrorKind::ConnectionAborted)
             }
         }
     }
@@ -294,7 +322,8 @@ impl Accepting {
     fn step<R: Router>(mut self, channel: Channel)
         -> HandlerState<R>
     {
-        self.handle.connect(channel);
+        // TODO
+        // self.handle.connect(channel);
         return HandlerState::Done;
     }
 }
