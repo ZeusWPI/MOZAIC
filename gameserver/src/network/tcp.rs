@@ -1,13 +1,16 @@
-use futures::{Future, Poll, Async, Stream};
+use futures::{Future, Poll, Async, Stream, Sink, StartSend, AsyncSink};
 use futures::sink;
+use futures::sync::mpsc;
 use prost::Message;
 use std::io;
 use std::mem;
 use std::net::SocketAddr;
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
+use std::collections::HashMap;
+use bytes::BytesMut;
 
-use super::protobuf_codec::ProtobufTransport;
+use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use super::connection_handler::ConnectionHandle;
 use super::connection_table::ConnectionData;
 use super::connection_router::{Router, ConnectionRouter};
@@ -40,7 +43,7 @@ impl<R> Listener<R>
         println!("Olivier is een letterlijke god");
 
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
-            let handler = ConnectionHandler::new(
+            let handler = TcpStreamHandler::new(
                 self.router.clone(),
                 raw_stream
             );
@@ -61,6 +64,143 @@ impl<R> Future for Listener<R>
             Ok(async) => return Ok(async),
             // TODO: gracefully handle this
             Err(e) => panic!("error: {}", e),
+        }
+    }
+}
+
+struct TcpStreamHandler<R>
+    where R: Router
+{
+    stream: MessageStream<TcpStream, proto::Frame>,
+    recv: mpsc::Receiver<proto::Frame>,
+    snd: mpsc::Sender<proto::Frame>,
+    connections: HashMap<u32, mpsc::Sender<Vec<u8>>>,
+    router: ConnectionRouter<R>,
+}
+
+impl<R> TcpStreamHandler<R>
+    where R: Router
+{
+    pub fn new(router: ConnectionRouter<R>, stream: TcpStream) -> Self {
+        // TODO: what channel size should we use?
+        let (snd, recv) = mpsc::channel(32);
+        TcpStreamHandler {
+            stream: MessageStream::new(ProtobufTransport::new(stream)),
+            connections: HashMap::new(),
+            router,
+            recv,
+            snd,
+        }
+    }
+}
+
+impl<R> Future for TcpStreamHandler<R>
+    where R: Router + Send + 'static
+{
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        loop {
+            let frame = match try_ready!(self.stream.poll()) {
+                Some(frame) => frame,
+                None => return Ok(Async::Ready(())),
+            };
+
+            let sender = self.connections.entry(frame.channel_num)
+                .or_insert_with(|| {
+                    let (sender, channel) = Channel::create(
+                        frame.channel_num,
+                        self.snd.clone(),
+                    );
+                    let handler = ConnectionHandler::new(
+                        self.router.clone(),
+                        channel,
+                    );
+                    tokio::spawn(handler);
+                    return sender;
+                });
+            sender.send(frame.data);
+        }
+    }
+}
+
+pub struct Channel {
+    channel_num: u32,
+    sender: mpsc::Sender<proto::Frame>,
+    receiver: mpsc::Receiver<Vec<u8>>,
+}
+
+impl Channel {
+    pub fn create(channel_num: u32, sender: mpsc::Sender<proto::Frame>)
+        -> (mpsc::Sender<Vec<u8>>, Self)
+    {
+        // TODO: what channel size to pick?
+        let (s, receiver) = mpsc::channel(32);
+
+        let channel = Channel {
+            channel_num,
+            sender,
+            receiver,
+        };
+
+        return (s, channel);
+    }
+
+    pub fn poll_ready(&mut self) -> Poll<(), ()> {
+        let poll = self.sender.poll_ready().unwrap();
+        return Ok(poll);
+    }
+
+    pub fn send_protobuf<M>(self, msg: M) -> sink::Send<Self>
+        where M: Message
+    {
+        let mut bytes = BytesMut::with_capacity(msg.encoded_len());
+        // encoding can only fail because the buffer does not have
+        // enough space allocated, but we just allocated the required
+        // space.
+        msg.encode(&mut bytes).unwrap();
+        return self.send(bytes.to_vec());
+    }
+}
+
+impl Stream for Channel {
+    type Item = Vec<u8>;
+    type Error = io::Error;
+
+    fn poll(&mut self) -> Poll<Option<Vec<u8>>, io::Error> {
+        match self.receiver.poll() {
+            Ok(async) => Ok(async),
+            Err(()) => bail!(io::ErrorKind::ConnectionAborted),
+        }
+    }
+}
+
+impl Sink for Channel {
+    type SinkItem = Vec<u8>;
+    type SinkError = io::Error;
+
+    fn start_send(&mut self, item: Vec<u8>) -> StartSend<Vec<u8>, io::Error> {
+        match try!(self.poll_ready()) {
+            Async::Ready(()) => {
+                let frame = proto::Frame {
+                    channel_num: self.channel_num,
+                    data: item,
+                };
+                let poll = self.sender.start_send(frame).unwrap();
+                assert!(poll.is_ready());
+                return Ok(AsyncSink::Ready);
+            }
+            Async::NotReady => {
+                return Ok(AsyncSink::NotReady(item));
+            }
+        }
+    }
+
+    fn poll_complete(&mut self) -> Poll<(), io::Error> {
+        match self.sender.poll_complete() {
+            Ok(async) => Ok(async),
+            Err(_) => bail!(io::ErrorKind::ConnectionAborted),
         }
     }
 }
@@ -88,7 +228,7 @@ fn connection_error(msg: String) -> proto::ConnectionResponse {
 }
 
 struct Waiting<R: Router> {
-    transport: ProtobufTransport<TcpStream>,
+    channel: Channel,
     router: ConnectionRouter<R>,
 }
 
@@ -104,9 +244,9 @@ enum Action {
 impl<R: Router> Waiting<R> {
     fn poll(&mut self) -> Poll<Action, io::Error>
     {
-        let bytes = match try_ready!(self.transport.poll()) {
+        let bytes = match try_ready!(self.channel.poll()) {
             None => bail!(io::ErrorKind::ConnectionAborted),
-            Some(bytes) => bytes.freeze(),
+            Some(bytes) => bytes,
         };
 
         let request = try!(proto::ConnectionRequest::decode(bytes));
@@ -123,7 +263,7 @@ impl<R: Router> Waiting<R> {
             Action::Accept { data } => {
                 let response = connection_success();
                 let accepting = Accepting {
-                    send: self.transport.send_msg(response),
+                    send: self.channel.send_protobuf(response),
                     handle: data.handle,
                 };
                 return HandlerState::Accepting(accepting);
@@ -132,7 +272,7 @@ impl<R: Router> Waiting<R> {
                 let response = connection_error(reason);
 
                 let refusing = Refusing {
-                    send: self.transport.send_msg(response),
+                    send: self.channel.send_protobuf(response),
                 };
                 return HandlerState::Refusing(refusing);
             }
@@ -142,25 +282,25 @@ impl<R: Router> Waiting<R> {
 
 
 struct Accepting {
-    send: sink::Send<ProtobufTransport<TcpStream>>,
+    send: sink::Send<Channel>,
     handle: ConnectionHandle,
 }
 
 impl Accepting {
-    fn poll(&mut self) -> Poll<ProtobufTransport<TcpStream>, io::Error> {
+    fn poll(&mut self) -> Poll<Channel, io::Error> {
         self.send.poll()
     }
 
-    fn step<R: Router>(mut self, transport: ProtobufTransport<TcpStream>)
+    fn step<R: Router>(mut self, channel: Channel)
         -> HandlerState<R>
     {
-        self.handle.connect(transport);
+        self.handle.connect(channel);
         return HandlerState::Done;
     }
 }
 
 struct Refusing {
-    send: sink::Send<ProtobufTransport<TcpStream>>,
+    send: sink::Send<Channel>,
 }
 
 impl Refusing {
@@ -187,12 +327,11 @@ pub struct ConnectionHandler<R: Router> {
 
 impl<R: Router> ConnectionHandler<R> {
     pub fn new(router: ConnectionRouter<R>,
-               stream: TcpStream) -> Self
+               channel: Channel) -> Self
     {
-        let transport = ProtobufTransport::new(stream);
         ConnectionHandler {
             state: HandlerState::Waiting(Waiting {
-                transport,
+                channel,
                 router,
             }),
         }
