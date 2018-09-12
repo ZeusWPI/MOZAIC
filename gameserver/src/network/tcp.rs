@@ -119,7 +119,9 @@ impl<R> TcpStreamHandler<R>
                 });
             // TODO: handle this cleanly
             let res = sender.start_send(frame.data);
-            assert!(res == Ok(AsyncSink::Ready));
+            if res != Ok(AsyncSink::Ready) {
+                eprintln!("handler is {:?}", res);
+            }
         }
     }
 
@@ -134,6 +136,11 @@ impl<R> TcpStreamHandler<R>
             assert!(res.is_ready(), "writing to MessageStream blocked");
         }
     }
+
+    pub fn poll_(&mut self) -> Poll<(), io::Error> {
+        try!(self.poll_channels());
+        return self.poll_stream();
+    }
 }
 
 impl<R> Future for TcpStreamHandler<R>
@@ -143,8 +150,8 @@ impl<R> Future for TcpStreamHandler<R>
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        match self.poll_stream() {
-            Ok(_) => Ok(Async::NotReady),
+        match self.poll_() {
+            Ok(async) => Ok(async),
             Err(_) => Ok(Async::Ready(())),
         }
     }
@@ -191,13 +198,10 @@ impl Channel {
 
 impl Stream for Channel {
     type Item = Vec<u8>;
-    type Error = io::Error;
+    type Error = ();
 
-    fn poll(&mut self) -> Poll<Option<Vec<u8>>, io::Error> {
-        match self.receiver.poll() {
-            Ok(async) => Ok(async),
-            Err(()) => bail!(io::ErrorKind::ConnectionAborted),
-        }
+    fn poll(&mut self) -> Poll<Option<Vec<u8>>, ()> {
+        self.receiver.poll()
     }
 }
 
@@ -272,9 +276,10 @@ enum Action {
 impl<R: Router> Waiting<R> {
     fn poll(&mut self) -> Poll<Action, io::Error>
     {
-        let bytes = match try_ready!(self.channel.poll()) {
-            None => bail!(io::ErrorKind::ConnectionAborted),
-            Some(bytes) => bytes,
+        let bytes = match self.channel.poll().unwrap() {
+            Async::NotReady => return Ok(Async::NotReady),
+            Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
+            Async::Ready(Some(bytes)) => bytes,
         };
 
         let request = try!(proto::ConnectionRequest::decode(bytes));

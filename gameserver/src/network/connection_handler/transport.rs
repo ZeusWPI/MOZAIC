@@ -81,9 +81,10 @@ impl Transport {
         -> Poll<NetworkMessage, io::Error>
     {
         loop {
-            let packet = match try_ready!(self.channel.poll()) {
-                None => bail!(io::ErrorKind::ConnectionAborted),
-                Some(bytes) => try!(Packet::decode(&bytes)),
+            let packet = match self.channel.poll().unwrap() {
+                Async::NotReady => return Ok(Async::NotReady),
+                Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
+                Async::Ready(Some(bytes)) => try!(Packet::decode(&bytes)),
             };
 
             // TODO: how should these faulty cases be handled?
