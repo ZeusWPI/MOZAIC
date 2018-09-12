@@ -49,7 +49,14 @@ impl Transport {
             try_ready!(self.send_ack(state));
         }
 
-        return self.channel.poll_complete();
+        try_ready!(self.channel.poll_complete());
+
+        // TODO: does this check belong here?
+        if state.buffer.len() == 0 {
+            return Ok(Async::Ready(()))
+        } else {
+            return Ok(Async::NotReady);
+        }
     }
 
     fn send_ack(&mut self, state: &mut ConnectionState) -> Poll<(), io::Error> {
