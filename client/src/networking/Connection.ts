@@ -4,7 +4,6 @@ import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
 import { Transport } from './Transport';
 import { Disconnected, Connected } from '../eventTypes';
-import { timingSafeEqual } from 'crypto';
 
 export type Payload = {
     request?: proto.IRequest,

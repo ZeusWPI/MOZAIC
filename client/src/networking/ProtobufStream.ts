@@ -143,5 +143,4 @@ export class ProtobufStream {
     public get onMessage() {
         return this._onData.asEvent();
     }
-
 }

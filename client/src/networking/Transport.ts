@@ -45,8 +45,18 @@ export class Transport {
         this.params = params;
 
         this.stream.onMessage.subscribe((data) => {
-            this.handleMessage(data);
+            const frame = proto.Frame.decode(data);
+            this.handleMessage(frame.data);
         });
+    }
+
+    // Quick and dirty workaround
+    write(data: Uint8Array) {
+        const frame = proto.Frame.encode({
+            channelNum: 0,
+            data,
+        });
+        this.stream.write(frame);
     }
         
     public connect(message: Uint8Array) {
@@ -69,7 +79,7 @@ export class Transport {
         console.log(`sending ${JSON.stringify(packet.toJSON())}`);
         this.lastSeqSent = packet.seqNum;
         this.lastAckSent = packet.ackNum;
-        this.stream.write(proto.Packet.encode(packet));
+        this.write(proto.Packet.encode(packet).finish());
     }
 
     public sendAck() {
@@ -106,7 +116,7 @@ export class Transport {
             message,
             token: this.params.token,
         };
-        this.stream.write(proto.ConnectionRequest.encode(connRequest));
+        this.write(proto.ConnectionRequest.encode(connRequest).finish());
     }
 
     private handleConnectionResponse(message: Uint8Array) {
