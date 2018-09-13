@@ -68,12 +68,22 @@ impl<R> Future for Listener<R>
     }
 }
 
+pub enum TransportInstruction {
+    Send {
+        channel_num: u32,
+        data: Vec<u8>,
+    },
+    Close {
+        channel_num: u32,
+    }
+}
+
 struct TcpStreamHandler<R>
     where R: Router
 {
     stream: MessageStream<TcpStream, proto::Frame>,
-    recv: mpsc::Receiver<proto::Frame>,
-    snd: mpsc::Sender<proto::Frame>,
+    recv: mpsc::Receiver<TransportInstruction>,
+    snd: mpsc::Sender<TransportInstruction>,
     connections: HashMap<u32, mpsc::Sender<Vec<u8>>>,
     router: ConnectionRouter<R>,
 }
@@ -125,20 +135,29 @@ impl<R> TcpStreamHandler<R>
         }
     }
 
-    pub fn poll_channels(&mut self) -> Poll<(), io::Error> {
+    pub fn poll_instructions(&mut self) -> Poll<(), io::Error> {
         loop {
             try_ready!(self.stream.poll_complete());
-            let frame = match self.recv.poll().unwrap() {
-                Async::Ready(frame) => frame.unwrap(),
+            let instruction = match self.recv.poll().unwrap() {
+                Async::Ready(msg) => msg.unwrap(),
                 Async::NotReady => return Ok(Async::NotReady),
             };
-            let res = try!(self.stream.start_send(frame));
-            assert!(res.is_ready(), "writing to MessageStream blocked");
+            match instruction {
+                TransportInstruction::Send { channel_num, data } => {
+                    let frame = proto::Frame { channel_num, data };
+                    let res = try!(self.stream.start_send(frame));
+                    assert!(res.is_ready(), "writing to MessageStream blocked");
+
+                }
+                TransportInstruction::Close { channel_num } => {
+                    self.connections.remove(&channel_num);
+                }
+            }
         }
     }
 
     pub fn poll_(&mut self) -> Poll<(), io::Error> {
-        try!(self.poll_channels());
+        try!(self.poll_instructions());
         return self.poll_stream();
     }
 }
@@ -157,14 +176,19 @@ impl<R> Future for TcpStreamHandler<R>
     }
 }
 
+
 pub struct Channel {
     channel_num: u32,
-    sender: mpsc::Sender<proto::Frame>,
     receiver: mpsc::Receiver<Vec<u8>>,
+    sender: mpsc::Sender<TransportInstruction>,
+    /// Sender that is reserved for sending the drop instruction.
+    /// Since senders have one guaranteed slot sending this instruction
+    /// can not fail given that we did not use the sender before.
+    drop_sender: mpsc::Sender<TransportInstruction>,
 }
 
 impl Channel {
-    pub fn create(channel_num: u32, sender: mpsc::Sender<proto::Frame>)
+    pub fn create(channel_num: u32, sender: mpsc::Sender<TransportInstruction>)
         -> (mpsc::Sender<Vec<u8>>, Self)
     {
         // TODO: what channel size to pick?
@@ -172,6 +196,7 @@ impl Channel {
 
         let channel = Channel {
             channel_num,
+            drop_sender: sender.clone(),
             sender,
             receiver,
         };
@@ -194,6 +219,16 @@ impl Channel {
         msg.encode(&mut bytes).unwrap();
         return self.send(bytes.to_vec());
     }
+
+    pub fn send_close(&mut self) -> Poll<(), ()> {
+        let instruction = TransportInstruction::Close {
+            channel_num: self.channel_num,
+        };
+        match self.sender.start_send(instruction).unwrap() {
+            AsyncSink::NotReady(_ins) => Ok(Async::NotReady),
+            AsyncSink::Ready => Ok(Async::Ready(())),
+        }
+    }
 }
 
 impl Stream for Channel {
@@ -212,11 +247,11 @@ impl Sink for Channel {
     fn start_send(&mut self, item: Vec<u8>) -> StartSend<Vec<u8>, io::Error> {
         match self.poll_ready() {
             Ok(Async::Ready(())) => {
-                let frame = proto::Frame {
+                let instruction = TransportInstruction::Send {
                     channel_num: self.channel_num,
                     data: item,
                 };
-                let poll = self.sender.start_send(frame).unwrap();
+                let poll = self.sender.start_send(instruction).unwrap();
                 assert!(poll.is_ready());
                 return Ok(AsyncSink::Ready);
             }
@@ -234,6 +269,15 @@ impl Sink for Channel {
             Ok(async) => Ok(async),
             Err(_) => bail!(io::ErrorKind::ConnectionAborted),
         }
+    }
+}
+
+impl Drop for Channel {
+    fn drop(&mut self) {
+        let channel_num = self.channel_num;
+        self.drop_sender
+            .try_send(TransportInstruction::Close { channel_num })
+            .expect("failed to send drop");
     }
 }
 
