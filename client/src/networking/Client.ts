@@ -28,6 +28,9 @@ export class Client {
     public connect(message: Uint8Array) {
         this.tcpHandler.onConnect.one(() => {
             this.tcpHandler.openChannel(message, this.connection);
+            this.connection.onClose.one(() => {
+                this.tcpHandler.exit();
+            });
         })
         this.tcpHandler.connect();
     }

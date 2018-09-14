@@ -2,13 +2,15 @@ import { TcpStreamHandler } from "./TcpStreamHandler";
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 import { Connection } from "./Connection";
+import { SignalDispatcher, ISignal } from "ste-signals";
 
 
 export enum TransportState {
     DISCONNECTED,
     CONNECTING,
     CONNECTED,
-    CLOSED,
+    FINISHED,
+    ERROR,
 };
 
 export class Transport {
@@ -19,6 +21,8 @@ export class Transport {
     lastSeqSent: number;
     lastAckSent: number;
     connection: Connection;
+
+    private _onFinish = new SignalDispatcher();
 
 
     constructor(
@@ -71,15 +75,13 @@ export class Transport {
             this.state = TransportState.CONNECTED;
             this.connection.connect(this);
         } else if (response.error) {
-            // TODO: should there be a special error state?
-            this.state = TransportState.CLOSED;;
+            this.state = TransportState.ERROR;;
             // TODO this is not particulary nice
             throw new Error(response.error.message!);
         }
     }
 
     public handleMessage(data: Uint8Array) {
-        console.log('got message');
         switch (this.state) {
             case TransportState.CONNECTING: {
                 this.handleConnectionResponse(data);
@@ -98,9 +100,19 @@ export class Transport {
                 break;
             }
         }
+        
+        if (this.connection.isFinished()) {
+            this.finish();
+        }
     }
 
+    public close() {
+        this.stream.closeChannel(this.channelNum);
+    }
 
+    public get onFinish(): ISignal {
+        return this._onFinish.asEvent();
+    }
 
     private sendFrame(data: Uint8Array) {
         this.stream.sendFrame({
@@ -109,4 +121,9 @@ export class Transport {
         });
     }
 
+    private finish() {
+        this.state = TransportState.FINISHED;
+        this.stream.closeChannel(this.channelNum);
+        this._onFinish.dispatch();
+    }
 }

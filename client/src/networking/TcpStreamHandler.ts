@@ -49,6 +49,10 @@ export class TcpStreamHandler {
         channel.connect(message, this.params.token);
     }
 
+    public closeChannel(channelNum: number) {
+        delete this.channels[channelNum];
+    }
+
     public sendFrame(frame: proto.IFrame) {
         this.stream.write(proto.Frame.encode(frame));
         console.log('sent frame');

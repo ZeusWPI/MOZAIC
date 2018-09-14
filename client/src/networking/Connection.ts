@@ -4,6 +4,7 @@ import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
 import { Disconnected, Connected } from '../eventTypes';
 import { Transport } from './Transport';
+import { SignalDispatcher, ISignal } from 'ste-signals';
 
 export type Payload = {
     request?: proto.IRequest,
@@ -35,6 +36,8 @@ export class Connection {
 
     private transport?: Transport;
 
+    private _onClose = new SignalDispatcher();
+
     constructor() {
         this.status = ConnectionStatus.OPEN;
         this.buffer = [];
@@ -59,8 +62,12 @@ export class Connection {
     }
 
     public connect(transport: Transport) {
-        console.log('connected');
         this.transport = transport;
+        this.transport.onFinish.one(() => {
+            if (this.isFinished()) {
+                this._onClose.dispatch();
+            }
+        });
         this.requestHandler.handleEvent(Connected.create());
     }
 
@@ -70,7 +77,8 @@ export class Connection {
     }
 
     public isFinished(): boolean {
-        return this.buffer.length == 0;
+        return this.status == ConnectionStatus.CLOSED
+            && this.buffer.length == 0;
     }
 
     public requestClose() {
@@ -117,6 +125,10 @@ export class Connection {
 
     public get ackNum() {
         return this.numReceived;
+    }
+
+    public getBufferedPacket(seqNum: number): Payload {
+        return this.buffer[seqNum - this.numFlushed - 1];
     }
 
     public handlePacket(packet: proto.Packet) {
@@ -177,6 +189,7 @@ export class Connection {
         } else if (packet.closeRequest) {
             switch (this.status) {
                 case ConnectionStatus.OPEN: {
+                    this.status = ConnectionStatus.REMOTE_REQUESTING_CLOSE;
                     // TODO: implement the option to keep the connection open
                     this.requestClose();
                     break;
@@ -190,7 +203,10 @@ export class Connection {
                 }
             }
         }
+    }
 
+    public get onClose(): ISignal {
+        return this._onClose.asEvent();
     }
 }
 
