@@ -219,16 +219,6 @@ impl Channel {
         msg.encode(&mut bytes).unwrap();
         return self.send(bytes.to_vec());
     }
-
-    pub fn send_close(&mut self) -> Poll<(), ()> {
-        let instruction = TransportInstruction::Close {
-            channel_num: self.channel_num,
-        };
-        match self.sender.start_send(instruction).unwrap() {
-            AsyncSink::NotReady(_ins) => Ok(Async::NotReady),
-            AsyncSink::Ready => Ok(Async::Ready(())),
-        }
-    }
 }
 
 impl Stream for Channel {
@@ -275,9 +265,14 @@ impl Sink for Channel {
 impl Drop for Channel {
     fn drop(&mut self) {
         let channel_num = self.channel_num;
-        self.drop_sender
-            .try_send(TransportInstruction::Close { channel_num })
-            .expect("failed to send drop");
+        let res = self.drop_sender.try_send(
+            TransportInstruction::Close { channel_num }
+        );
+        if let Err(err) = res {
+            if err.is_full() {
+                panic!("could not send close because channel was full");
+            }
+        }
     }
 }
 
