@@ -18,6 +18,10 @@ export class TcpStreamHandler {
     private params: ClientParams;
     private channelCounter = 0;
 
+    // whether to keep the connection open when all channels have been closed.
+    private keepAlive: boolean;
+    private numChannels: number;
+
     private _onDisconnect = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
@@ -29,6 +33,9 @@ export class TcpStreamHandler {
         this.stream = new ProtobufStream();
 
         this.params = params;
+        // TODO: set this to true maybe?
+        this.keepAlive = false;
+        this.numChannels = 0;
 
         this.stream.onMessage.subscribe((data) => {
             const frame = proto.Frame.decode(data);
@@ -45,11 +52,16 @@ export class TcpStreamHandler {
         const channel = new Transport(this, this.channelCounter, connection);
         this.channels[this.channelCounter] = channel;
         this.channelCounter += 1;
+        this.numChannels += 1;
         channel.connect(message, this.params.token);
     }
 
     public closeChannel(channelNum: number) {
         delete this.channels[channelNum];
+        this.numChannels -= 1;
+        if (this.numChannels == 0 && !this.keepAlive) {
+            this.stream.end();
+        }
     }
 
     public sendFrame(frame: proto.IFrame) {
