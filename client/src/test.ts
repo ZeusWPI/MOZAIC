@@ -8,6 +8,7 @@ import { createWriteStream } from 'fs';
 import { Logger } from './Logger';
 import * as crypto from 'crypto';
 import { ServerControl } from './ServerControl';
+import { TcpStreamHandler } from './networking/TcpStreamHandler';
 
 const addr: Address = {
     host: "127.0.0.1",
@@ -45,13 +46,18 @@ const logStream = createWriteStream('log.out');
 
 const ownerToken = Buffer.from('cccc', 'hex');
 
+const tcpStream = new TcpStreamHandler({
+    host: addr.host,
+    port: addr.port,
+    token: new Buffer(0),
+});
+
 function runMatch(matchUuid: Uint8Array) {
-    const match = new PwMatch({
-        host: addr.host,
-        port: addr.port,
-        token: ownerToken,
-        matchUuid,
-    }, new Logger(0, logStream));
+    const match = new PwMatch(
+        tcpStream,
+        { matchUuid },
+        new Logger(0, logStream)
+    );
     
     const clients = {};
     const waiting_for = new Set();
@@ -62,15 +68,14 @@ function runMatch(matchUuid: Uint8Array) {
             waiting_for.add(player_num);
             const token = Buffer.from(player.token, 'utf-8');
             match.createClient(token).then(({ clientId }) => {
-                const client = new PwClient({
+                const clientParams = {
                     clientId: clientId,
-                    token,
                     matchUuid,
-                    host: addr.host,
-                    port: addr.port,
                     botConfig: simpleBot,
                     logSink: logStream,
-                });
+                };
+
+                const client = new PwClient(tcpStream, clientParams);
                 clients[clientId] = client;
                 client.run();
     
@@ -102,16 +107,17 @@ function runMatch(matchUuid: Uint8Array) {
     match.connect();
 }
 
-const serverControl = new ServerControl({
-    ...addr,
-    token: Buffer.from('abba', 'hex'),
-});
+tcpStream.onConnect.one(() => {
+    const serverControl = new ServerControl(tcpStream);
 
-serverControl.on(Connected, (_) => {
-    serverControl.createMatch(ownerToken).then((e) => {
-        runMatch(e.matchUuid);
-        serverControl.disconnect();
+    serverControl.on(Connected, (_) => {
+        serverControl.createMatch(ownerToken).then((e) => {
+            runMatch(e.matchUuid);
+            serverControl.disconnect();
+        });
     });
+
+    serverControl.connect();
 });
 
-serverControl.connect();
+tcpStream.connect();

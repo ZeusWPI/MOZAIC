@@ -8,8 +8,9 @@ import * as events from "../eventTypes";
 
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
+import { TcpStreamHandler } from "../networking/TcpStreamHandler";
 
-export type MatchParams = ClientParams & {
+export type MatchParams = {
     matchUuid: Uint8Array;
 }
 
@@ -20,9 +21,9 @@ export class PwMatch {
     readonly client: Client;
     private matchUuid: Uint8Array;
 
-    constructor(params: MatchParams, logger: Logger) {
+    constructor(tcpStream: TcpStreamHandler, params: MatchParams, logger: Logger) {
         this.reactor = new Reactor(logger);
-        this.client = new Client(params);
+        this.client = new Client(tcpStream);
         this.matchUuid = params.matchUuid;
 
         this.client.on(events.MatchEvent, (e) => {

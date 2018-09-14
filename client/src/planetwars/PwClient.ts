@@ -9,9 +9,10 @@ import { Logger } from "../Logger";
 import { WriteStream } from "fs";
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
+import { TcpStreamHandler } from "../networking/TcpStreamHandler";
 
 
-export type Params = ClientParams & {
+export type Params = {
     botConfig: BotConfig,
     clientId: number;
     matchUuid: Uint8Array;
@@ -25,12 +26,12 @@ export class PwClient {
     readonly client: Client;
     readonly botRunner: BotRunner;
 
-    constructor(params: Params) {
+    constructor(tcpStream: TcpStreamHandler, params: Params) {
         this.clientId = params.clientId;
         this.matchUuid = params.matchUuid;
         const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
-        this.client = new Client(params);
+        this.client = new Client(tcpStream);
         this.botRunner = new BotRunner(params.botConfig);
         
         this.reactor.on(GameStep).subscribe((step) => {

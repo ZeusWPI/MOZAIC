@@ -18,14 +18,13 @@ export class TcpStreamHandler {
     private params: ClientParams;
     private channelCounter = 0;
 
-    private _onConnect = new SignalDispatcher();
     private _onDisconnect = new SignalDispatcher();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
 
 
     // TODO: dont use clientparams
-    constructor(params: ClientParams, connection: Connection) {
+    constructor(params: ClientParams) {
         this.channels = {};
         this.stream = new ProtobufStream();
 

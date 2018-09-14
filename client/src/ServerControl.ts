@@ -9,14 +9,15 @@ import * as events from './eventTypes';
 import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
 import { Handler } from "./reactors/RequestHandler";
+import { TcpStreamHandler } from "./networking/TcpStreamHandler";
 
 
 export class ServerControl {
     private client: Client;
 
 
-    constructor(params: ClientParams) {
-        this.client = new Client(params);
+    constructor(tcpStream: TcpStreamHandler) {
+        this.client = new Client(tcpStream);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
