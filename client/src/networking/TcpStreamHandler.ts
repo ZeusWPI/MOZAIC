@@ -16,7 +16,7 @@ export enum TransportState {
 };
 
 
-export class Transport {
+export class TcpStreamHandler {
     state: TransportState;
     stream: ProtobufStream;
 
@@ -57,7 +57,7 @@ export class Transport {
             data,
         });
         this.stream.write(frame);
-    }
+    }   
         
     public connect(message: Uint8Array) {
         this.state = TransportState.CONNECTING;

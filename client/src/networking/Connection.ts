@@ -2,7 +2,7 @@ import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 import { RequestHandler, Handler } from '../reactors/RequestHandler';
 import { EventType, Event } from '../reactors/SimpleEventEmitter';
-import { Transport } from './Transport';
+import { TcpStreamHandler } from './TcpStreamHandler';
 import { Disconnected, Connected } from '../eventTypes';
 
 export type Payload = {
@@ -33,7 +33,7 @@ export class Connection {
     private requestHandler: RequestHandler;
     private responseHandlers: { [seq_num: number]: ResponseHandler<any>};
 
-    private transport?: Transport;
+    private transport?: TcpStreamHandler;
 
     constructor() {
         this.status = ConnectionStatus.OPEN;
@@ -58,7 +58,7 @@ export class Connection {
         return seqNum;
     }
 
-    public connect(transport: Transport) {
+    public connect(transport: TcpStreamHandler) {
         console.log('connected');
         this.transport = transport;
         this.requestHandler.handleEvent(Connected.create());

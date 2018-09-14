@@ -2,7 +2,7 @@ import { ClientParams } from "./EventWire";
 import { Event, EventType } from "../reactors/SimpleEventEmitter";
 import { Handler } from "../reactors/RequestHandler";
 import { Connection } from "./Connection";
-import { Transport } from "./Transport";
+import { TcpStreamHandler } from "./TcpStreamHandler";
 import { encodeEvent } from "../reactors/utils";
 
 export interface EventHandler {
@@ -11,12 +11,12 @@ export interface EventHandler {
 }
 
 export class Client {
-    private transport: Transport;
+    private tcpHandler: TcpStreamHandler;
     private connection: Connection;
 
     constructor(params: ClientParams) {
         this.connection = new Connection();
-        this.transport = new Transport(params, this.connection);
+        this.tcpHandler = new TcpStreamHandler(params, this.connection);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
@@ -24,7 +24,7 @@ export class Client {
     }
 
     public connect(message: Uint8Array) {
-        this.transport.connect(message);
+        this.tcpHandler.connect(message);
     }
 
     public exit() {
