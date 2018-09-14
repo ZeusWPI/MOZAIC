@@ -1,31 +1,22 @@
-    import { ProtobufStream } from "./ProtobufStream";
+import { ProtobufStream } from "./ProtobufStream";
 import { ClientParams } from "./EventWire";
-import { Connection, Payload } from "./Connection";
+import { Connection } from "./Connection";
 
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { SimpleEventDispatcher, ISimpleEvent } from "ste-simple-events";
+import { Transport } from "./Transport";
 
 
-export enum TransportState {
-    DISCONNECTED,
-    CONNECTING,
-    CONNECTED,
-    CLOSED,
-};
+
 
 
 export class TcpStreamHandler {
-    state: TransportState;
-    stream: ProtobufStream;
-
-    connection: Connection;
-
-    lastSeqSent: number;
-    lastAckSent: number;
-
-    params: ClientParams;
+    private stream: ProtobufStream;
+    private channels: { [channelNum: number]: Transport };
+    private params: ClientParams;
+    private channelCounter = 0;
 
     private _onConnect = new SignalDispatcher();
     private _onDisconnect = new SignalDispatcher();
@@ -35,63 +26,44 @@ export class TcpStreamHandler {
 
     // TODO: dont use clientparams
     constructor(params: ClientParams, connection: Connection) {
-        this.state = TransportState.DISCONNECTED;
+        this.channels = {};
         this.stream = new ProtobufStream();
-        this.lastSeqSent = 0;
-        this.lastAckSent = 0;
-
-        this.connection = connection;
 
         this.params = params;
 
         this.stream.onMessage.subscribe((data) => {
             const frame = proto.Frame.decode(data);
-            this.handleMessage(frame.data);
-        });
-    }
-
-    // Quick and dirty workaround
-    write(data: Uint8Array) {
-        const frame = proto.Frame.encode({
-            channelNum: 0,
-            data,
-        });
-        this.stream.write(frame);
-    }   
-        
-    public connect(message: Uint8Array) {
-        this.state = TransportState.CONNECTING;
-        this.stream.connect(this.params.host, this.params.port);
-
-        this.stream.onConnect.one(() => {
-            this.sendConnectionRequest(message);
-        });
-
-        this.stream.onClose.one(() => {
-            console.log('disconnect');
-            if (!this.connection.isFinished()) {
-                console.log('CONNECTION WAS NOT FINISHED');
+            const transport = this.channels[frame.channelNum];
+            if (transport) {
+                transport.handleMessage(frame.data);
+            } else {
+                console.log('message has no channel');
             }
         });
     }
 
-    public send(packet: proto.Packet) {
-        console.log(`sending ${JSON.stringify(packet.toJSON())}`);
-        this.lastSeqSent = packet.seqNum;
-        this.lastAckSent = packet.ackNum;
-        this.write(proto.Packet.encode(packet).finish());
+    public openChannel(message: Uint8Array, connection: Connection) {
+        const channel = new Transport(this, this.channelCounter, connection);
+        this.channels[this.channelCounter] = channel;
+        this.channelCounter += 1;
+        channel.connect(message, this.params.token);
     }
 
-    public sendAck() {
-        const packet = proto.Packet.create({
-            seqNum: this.connection.seqNum,
-            ackNum: this.connection.ackNum,
-        });
-        this.send(packet);
+    public sendFrame(frame: proto.IFrame) {
+        this.stream.write(proto.Frame.encode(frame));
+        console.log('sent frame');
     }
+
+    public connect() {
+        this.stream.connect(this.params.host, this.params.port);
+        this.stream.onClose.one(() => {
+            console.log('disconnect');
+        });
+    }
+        
 
     public get onConnect() {
-        return this._onConnect.asEvent();
+        return this.stream.onConnect;
     }
 
     public get onDisconnect() {
@@ -108,49 +80,5 @@ export class TcpStreamHandler {
 
     public exit() {
         this.stream.end();
-    }
-
-    // initiate connection handshake
-    private sendConnectionRequest(message: Uint8Array) {
-        let connRequest = {
-            message,
-            token: this.params.token,
-        };
-        this.write(proto.ConnectionRequest.encode(connRequest).finish());
-    }
-
-    private handleConnectionResponse(message: Uint8Array) {
-        let response = proto.ConnectionResponse.decode(message);
-        if (response.success) {
-            this.state = TransportState.CONNECTED;
-            this.connection.connect(this);
-        } else if (response.error) {
-            // TODO: should there be a special error state?
-            this.state = TransportState.CLOSED;;
-            // TODO this is not particulary nice
-            const err = new Error(response.error.message!);
-            this._onError.dispatch(err);
-        }
-    }
-
-    private handleMessage(data: Uint8Array) {
-        switch (this.state) {
-            case TransportState.CONNECTING: {
-                this.handleConnectionResponse(data);
-                break;
-            }
-            case TransportState.CONNECTED: {
-                const packet = proto.Packet.decode(data);
-                console.log(`received ${JSON.stringify(packet.toJSON())}`);
-                this.connection.handlePacket(packet);
-                
-                if (this.lastSeqSent == this.connection.seqNum
-                    && this.lastAckSent < this.connection.ackNum)
-                {
-                    this.sendAck();
-                }
-                break;
-            }
-        }
     }
 }

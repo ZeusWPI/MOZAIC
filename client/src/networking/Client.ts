@@ -13,9 +13,11 @@ export interface EventHandler {
 export class Client {
     private tcpHandler: TcpStreamHandler;
     private connection: Connection;
+    private params: ClientParams;
 
     constructor(params: ClientParams) {
         this.connection = new Connection();
+        this.params = params;
         this.tcpHandler = new TcpStreamHandler(params, this.connection);
     }
 
@@ -24,7 +26,10 @@ export class Client {
     }
 
     public connect(message: Uint8Array) {
-        this.tcpHandler.connect(message);
+        this.tcpHandler.onConnect.one(() => {
+            this.tcpHandler.openChannel(message, this.connection);
+        })
+        this.tcpHandler.connect();
     }
 
     public exit() {
