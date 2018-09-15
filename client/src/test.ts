@@ -54,7 +54,6 @@ const tcpStream = new TcpStreamHandler({
 
 function runMatch(matchUuid: Uint8Array) {
     const match = new PwMatch(
-        tcpStream,
         { matchUuid },
         new Logger(0, logStream)
     );
@@ -75,9 +74,9 @@ function runMatch(matchUuid: Uint8Array) {
                     logSink: logStream,
                 };
 
-                const client = new PwClient(tcpStream, clientParams);
+                const client = new PwClient(clientParams);
                 clients[clientId] = client;
-                client.run();
+                client.run(tcpStream);
     
             });
         })
@@ -104,20 +103,21 @@ function runMatch(matchUuid: Uint8Array) {
         waiting_for.add(clientId);
     });
 
-    match.connect();
+    match.connect(tcpStream);
 }
 
-tcpStream.onConnect.one(() => {
-    const serverControl = new ServerControl(tcpStream);
+const serverControl = new ServerControl();
 
-    serverControl.on(Connected, (_) => {
-        serverControl.createMatch(ownerToken).then((e) => {
-            runMatch(e.matchUuid);
-            serverControl.disconnect();
-        });
+serverControl.on(Connected, (_) => {
+    serverControl.createMatch(ownerToken).then((e) => {
+        runMatch(e.matchUuid);
+        serverControl.disconnect();
     });
+});
 
-    serverControl.connect();
+
+tcpStream.onConnect.one(() => {
+    serverControl.connect(tcpStream);
 });
 
 tcpStream.connect();

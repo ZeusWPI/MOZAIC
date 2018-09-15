@@ -11,20 +11,19 @@ export interface EventHandler {
 }
 
 export class Client {
-    private tcpStream: TcpStreamHandler;
     private connection: Connection;
 
-    constructor(tcpStream: TcpStreamHandler) {
+    constructor() {
         this.connection = new Connection();
-        this.tcpStream = tcpStream;
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
         this.connection.on(eventType, handler);
     }
 
-    public connect(message: Uint8Array) {
-        this.tcpStream.openChannel(message, this.connection);
+    // TODO: should this be a method on Client?
+    public connect(tcpStream: TcpStreamHandler, message: Uint8Array) {
+        tcpStream.openChannel(message, this.connection);
     }
 
     public exit() {

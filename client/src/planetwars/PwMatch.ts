@@ -21,9 +21,9 @@ export class PwMatch {
     readonly client: Client;
     private matchUuid: Uint8Array;
 
-    constructor(tcpStream: TcpStreamHandler, params: MatchParams, logger: Logger) {
+    constructor(params: MatchParams, logger: Logger) {
         this.reactor = new Reactor(logger);
-        this.client = new Client(tcpStream);
+        this.client = new Client();
         this.matchUuid = params.matchUuid;
 
         this.client.on(events.MatchEvent, (e) => {
@@ -39,14 +39,14 @@ export class PwMatch {
         this.client.send(event);
     }
 
-    public connect() {
+    public connect(tcpStream: TcpStreamHandler) {
         let message = proto.GameserverConnect.encode({
             client: {
                 clientId: 0,
                 matchUuid: this.matchUuid,
             }
         }).finish();
-        this.client.connect(message);
+        this.client.connect(tcpStream, message);
     }
 
     public createClient(token: Uint8Array): Promise<events.CreateClientResponse>

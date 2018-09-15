@@ -26,12 +26,12 @@ export class PwClient {
     readonly client: Client;
     readonly botRunner: BotRunner;
 
-    constructor(tcpStream: TcpStreamHandler, params: Params) {
+    constructor(params: Params) {
         this.clientId = params.clientId;
         this.matchUuid = params.matchUuid;
         const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
-        this.client = new Client(tcpStream);
+        this.client = new Client();
         this.botRunner = new BotRunner(params.botConfig);
         
         this.reactor.on(GameStep).subscribe((step) => {
@@ -50,7 +50,7 @@ export class PwClient {
         this.client.on(GameFinished, (e) => this.reactor.dispatch(e));
     }
 
-    public run() {
+    public run(tcpStream: TcpStreamHandler, ) {
         const meta = JSON.stringify({
             "player_number": this.clientId,
         });
@@ -62,7 +62,7 @@ export class PwClient {
                 matchUuid: this.matchUuid,
             }
         }).finish();
-        this.client.connect(message);
+        this.client.connect(tcpStream, message);
     }
 
 

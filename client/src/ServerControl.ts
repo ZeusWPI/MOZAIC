@@ -16,8 +16,8 @@ export class ServerControl {
     private client: Client;
 
 
-    constructor(tcpStream: TcpStreamHandler) {
-        this.client = new Client(tcpStream);
+    constructor() {
+        this.client = new Client();
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
@@ -28,11 +28,11 @@ export class ServerControl {
         this.client.send(event);
     }
 
-    public connect() {
+    public connect(tcpStream: TcpStreamHandler) {
         let message = proto.GameserverConnect.encode({
             serverControl: {}
         }).finish();
-        this.client.connect(message);
+        this.client.connect(tcpStream, message);
     }
 
     public disconnect() {
