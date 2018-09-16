@@ -23,7 +23,7 @@ impl ClientId {
 pub struct ConnectionData {
     pub connection_id: usize,
     pub handle: ConnectionHandle,
-    pub token: Vec<u8>,
+    pub public_key: Vec<u8>,
 }
 
 pub struct ConnectionTable {
@@ -39,7 +39,7 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<H, F>(&mut self, token: Vec<u8>, creator: F)
+    pub fn create<H, F>(&mut self, public_key: Vec<u8>, creator: F)
         -> usize
         where F: FnOnce(ConnectionHandle) -> H,
               H: EventHandler<Output = io::Result<WireEvent>>,
@@ -55,7 +55,7 @@ impl ConnectionTable {
         self.connections.insert(connection_id, ConnectionData {
             connection_id,
             handle: handle.clone(),
-            token,
+            public_key,
         });
         return connection_id;
     }

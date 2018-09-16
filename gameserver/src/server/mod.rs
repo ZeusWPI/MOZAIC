@@ -22,9 +22,12 @@ use self::control_handler::ControlHandler;
 
 #[derive(Serialize, Deserialize)]
 pub struct Config {
-    #[serde(with="hex_serializer")]
-    pub ctrl_token: Vec<u8>,
     pub address: String,
+
+    #[serde(with="hex_serializer")]
+    pub public_key: Vec<u8>,
+    #[serde(with="hex_serializer")]
+    pub private_key: Vec<u8>,
 }
 
 pub struct Server {
@@ -53,7 +56,7 @@ impl Future for Server {
         );
 
         let control_connection = connection_table.lock().unwrap().create(
-            self.config.ctrl_token.clone(),
+            self.config.public_key.clone(),
             |handle| {
                 let handler = ControlHandler::new(
                     handle,

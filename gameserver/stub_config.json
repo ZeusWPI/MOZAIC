@@ -1,5 +1,5 @@
 {
-    "log_file": "log.json",
-    "ctrl_token": "abba",
-    "address": "0.0.0.0:9142"
+    "address": "0.0.0.0:9142",
+    "public_key": "da969f456ba9c9565190d8badb1086617b53b2f6a8b0f50872b4cebb9110de9d",
+    "private_key": "ea0d1f3d3051c83073d1ea77fcd2d5c7058c134d8b2d8291732e0793268c9127da969f456ba9c9565190d8badb1086617b53b2f6a8b0f50872b4cebb9110de9d"
 }
