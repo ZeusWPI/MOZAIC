@@ -218,6 +218,14 @@ impl Channel {
         msg.encode(&mut bytes).unwrap();
         return self.send(bytes.to_vec());
     }
+
+    pub fn poll_frame(&mut self) -> Poll<Vec<u8>, io::Error> {
+        match self.poll().unwrap() {
+            Async::NotReady => Ok(Async::NotReady),
+            Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
+            Async::Ready(Some(bytes)) => Ok(Async::Ready(bytes)),
+        }
+    }
 }
 
 impl Stream for Channel {

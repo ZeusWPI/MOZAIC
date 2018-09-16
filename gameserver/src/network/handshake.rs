@@ -1,15 +1,41 @@
-use futures::{Future, Poll, Async, Stream};
+use futures::{Future, Poll, Async};
 use futures::sink;
 use prost::Message;
 use std::io;
 use std::mem;
 
 use super::connection_handler::ConnectionHandle;
-use super::connection_table::ConnectionData;
 use super::connection_router::{Router, ConnectionRouter};
 use super::tcp::Channel;
 use protocol as proto;
 
+enum Step<State, Next> {
+    NotReady(State),
+    Ready(Next),
+}
+
+impl<State, Next> Step<State, Next> {
+    fn map_not_ready<F, R>(self, fun: F) -> Step<R, Next>
+        where F: FnOnce(State) -> R
+    {
+        match self {
+            Step::Ready(next) => Step::Ready(next),
+            Step::NotReady(state) => Step::NotReady(fun(state)),
+        }
+    }
+}
+
+macro_rules! try_ready_or {
+    ($default:expr, $e:expr) => (
+        match $e {
+            Err(err) => return Err(err),
+            Ok(Async::NotReady) => return Ok(Step::NotReady($default)),
+            Ok(Async::Ready(item)) => item,
+        }
+    );
+}
+
+type HandlerStep<S, R> = Result<Step<S, HandlerState<R>>, io::Error>;
 
 
 fn connection_success() -> proto::ConnectionResponse {
@@ -39,55 +65,33 @@ struct Waiting<R: Router> {
     router: ConnectionRouter<R>,
 }
 
-enum Action {
-    Accept {
-        data: ConnectionData,
-    },
-    Refuse {
-        reason: String,
-    }
-}
-
 impl<R: Router> Waiting<R> {
-    fn poll(&mut self) -> Poll<Action, io::Error>
+    fn step(mut self) -> HandlerStep<Self, R>
     {
-        let bytes = match self.channel.poll().unwrap() {
-            Async::NotReady => return Ok(Async::NotReady),
-            Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
-            Async::Ready(Some(bytes)) => bytes,
-        };
-
+        let bytes = try_ready_or!(self, self.channel.poll_frame());
         let request = try!(proto::ConnectionRequest::decode(bytes));
 
-        let action = match self.router.route(&request.message) {
-            Err(err) => Action::Refuse { reason: err.to_string() },
-            Ok(data) => Action::Accept { data },
-        };
-        return Ok(Async::Ready(action));
-    }
+        match self.router.route(&request.message) {
+            Err(err) => {
+                let response = connection_error(err.to_string());
 
-    fn step(self, action: Action) -> HandlerState<R> {
-        match action {
-            Action::Accept { data } => {
+                let refusing = Refusing {
+                    send: self.channel.send_protobuf(response),
+                };
+                return Ok(Step::Ready(HandlerState::Refusing(refusing)));
+
+            }
+            Ok(data) => {
                 let response = connection_success();
                 let accepting = Accepting {
                     send: self.channel.send_protobuf(response),
                     handle: data.handle,
                 };
-                return HandlerState::Accepting(accepting);
-            },
-            Action::Refuse { reason } => {
-                let response = connection_error(reason);
-
-                let refusing = Refusing {
-                    send: self.channel.send_protobuf(response),
-                };
-                return HandlerState::Refusing(refusing);
+                return Ok(Step::Ready(HandlerState::Accepting(accepting)));
             }
-        }
+        };
     }
 }
-
 
 struct Accepting {
     send: sink::Send<Channel>,
@@ -95,16 +99,10 @@ struct Accepting {
 }
 
 impl Accepting {
-    fn poll(&mut self) -> Poll<Channel, io::Error> {
-        self.send.poll()
-    }
-
-    fn step<R: Router>(mut self, channel: Channel)
-        -> HandlerState<R>
-    {
-        // TODO
+    fn step<R: Router>(mut self) -> HandlerStep<Self, R> {
+        let channel = try_ready_or!(self, self.send.poll());
         self.handle.connect(channel);
-        return HandlerState::Done;
+        return Ok(Step::Ready(HandlerState::Done));
     }
 }
 
@@ -113,13 +111,9 @@ struct Refusing {
 }
 
 impl Refusing {
-    fn poll(&mut self) -> Poll<(), io::Error> {
-        try_ready!(self.send.poll());
-        return Ok(Async::Ready(()));
-    }
-
-    fn step<R: Router>(self) -> HandlerState<R> {
-        return HandlerState::Done;
+    fn step<R: Router>(mut self) -> HandlerStep<Self, R> {
+        let _channel = try_ready_or!(self, self.send.poll());
+        return Ok(Step::Ready(HandlerState::Done));
     }
 }
 
@@ -128,6 +122,51 @@ enum HandlerState<R: Router> {
     Accepting(Accepting),
     Refusing(Refusing),
     Done,
+}
+
+impl<R: Router> From<Waiting<R>> for HandlerState<R> {
+    fn from(waiting: Waiting<R>) -> Self {
+        HandlerState::Waiting(waiting)
+    }
+}
+
+impl<R: Router> From<Accepting> for HandlerState<R> {
+    fn from(accepting: Accepting) -> Self {
+        HandlerState::Accepting(accepting)
+    }
+}
+
+impl<R: Router> From<Refusing> for HandlerState<R> {
+    fn from(refusing: Refusing) -> Self {
+        HandlerState::Refusing(refusing)
+    }
+}
+
+impl<R: Router> From<()> for HandlerState<R> {
+    fn from(_: ()) -> Self {
+        HandlerState::Done
+    }
+}
+
+macro_rules! try_step {
+    ($e:expr) => (
+        match $e.step() {
+            Err(err) => Err(err),
+            Ok(Step::Ready(state)) => Ok(Step::Ready(state.into())),
+            Ok(Step::NotReady(state)) => Ok(Step::NotReady(state.into())),
+        }
+    )
+}
+
+impl<R: Router> HandlerState<R> {
+    fn step(self) -> Result<Step<Self, Self>, io::Error> {
+        match self {
+            HandlerState::Waiting(waiting) => try_step!(waiting),
+            HandlerState::Accepting(accepting) => try_step!(accepting),
+            HandlerState::Refusing(refusing) => try_step!(refusing),
+            HandlerState::Done => panic!("stepping done"),
+        }
+    }
 }
 
 pub struct Handshake<R: Router> {
@@ -150,44 +189,19 @@ impl<R: Router> Handshake<R> {
 impl<R: Router> Handshake<R> {
     // TODO: can we get rid of this boilerplate?
     fn step(&mut self) -> Poll<(), io::Error> {
+        let mut state = mem::replace(&mut self.state, HandlerState::Done);
         loop {
-            let state = mem::replace(&mut self.state, HandlerState::Done);
-            match state {
-                HandlerState::Waiting(mut waiting) => {
-                    match try!(waiting.poll()) {
-                        Async::NotReady => {
-                            self.state = HandlerState::Waiting(waiting);
-                            return Ok(Async::NotReady);
-                        }
-                        Async::Ready(action) => {
-                            self.state = waiting.step(action);
-                        }
-                    }
+            if let HandlerState::Done = state {
+                return Ok(Async::Ready(()));
+            };
+
+            match try!(state.step()) {
+                Step::NotReady(state) => {
+                    self.state = state;
+                    return Ok(Async::NotReady);
                 }
-                HandlerState::Accepting(mut accepting) => {
-                    match try!(accepting.poll()) {
-                        Async::NotReady => {
-                            self.state = HandlerState::Accepting(accepting);
-                            return Ok(Async::NotReady);
-                        }
-                        Async::Ready(transport) => {
-                            self.state = accepting.step(transport);
-                        }
-                    }
-                }
-                HandlerState::Refusing(mut refusing) => {
-                    match try!(refusing.poll()) {
-                        Async::NotReady => {
-                            self.state = HandlerState::Refusing(refusing);
-                            return Ok(Async::NotReady);
-                        }
-                        Async::Ready(()) => {
-                            self.state = refusing.step();
-                        }
-                    }
-                }
-                HandlerState::Done => {
-                    return Ok(Async::Ready(()));
+                Step::Ready(next_state) => {
+                    state = next_state;
                 }
             }
         }
