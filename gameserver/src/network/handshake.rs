@@ -35,7 +35,7 @@ macro_rules! try_ready_or {
     );
 }
 
-type HandlerStep<S, R> = Result<Step<S, HandlerState<R>>, io::Error>;
+type HandshakeStep<S, R> = Result<Step<S, HandshakeState<R>>, io::Error>;
 
 
 fn connection_success() -> proto::ConnectionResponse {
@@ -66,7 +66,7 @@ struct Waiting<R: Router> {
 }
 
 impl<R: Router> Waiting<R> {
-    fn step(mut self) -> HandlerStep<Self, R>
+    fn step(mut self) -> HandshakeStep<Self, R>
     {
         let bytes = try_ready_or!(self, self.channel.poll_frame());
         let request = try!(proto::ConnectionRequest::decode(bytes));
@@ -78,7 +78,7 @@ impl<R: Router> Waiting<R> {
                 let refusing = Refusing {
                     send: self.channel.send_protobuf(response),
                 };
-                return Ok(Step::Ready(HandlerState::Refusing(refusing)));
+                return Ok(Step::Ready(HandshakeState::Refusing(refusing)));
 
             }
             Ok(data) => {
@@ -87,7 +87,7 @@ impl<R: Router> Waiting<R> {
                     send: self.channel.send_protobuf(response),
                     handle: data.handle,
                 };
-                return Ok(Step::Ready(HandlerState::Accepting(accepting)));
+                return Ok(Step::Ready(HandshakeState::Accepting(accepting)));
             }
         };
     }
@@ -99,10 +99,10 @@ struct Accepting {
 }
 
 impl Accepting {
-    fn step<R: Router>(mut self) -> HandlerStep<Self, R> {
+    fn step<R: Router>(mut self) -> HandshakeStep<Self, R> {
         let channel = try_ready_or!(self, self.send.poll());
         self.handle.connect(channel);
-        return Ok(Step::Ready(HandlerState::Done));
+        return Ok(Step::Ready(HandshakeState::Done));
     }
 }
 
@@ -111,40 +111,40 @@ struct Refusing {
 }
 
 impl Refusing {
-    fn step<R: Router>(mut self) -> HandlerStep<Self, R> {
+    fn step<R: Router>(mut self) -> HandshakeStep<Self, R> {
         let _channel = try_ready_or!(self, self.send.poll());
-        return Ok(Step::Ready(HandlerState::Done));
+        return Ok(Step::Ready(HandshakeState::Done));
     }
 }
 
-enum HandlerState<R: Router> {
+enum HandshakeState<R: Router> {
     Waiting(Waiting<R>),
     Accepting(Accepting),
     Refusing(Refusing),
     Done,
 }
 
-impl<R: Router> From<Waiting<R>> for HandlerState<R> {
+impl<R: Router> From<Waiting<R>> for HandshakeState<R> {
     fn from(waiting: Waiting<R>) -> Self {
-        HandlerState::Waiting(waiting)
+        HandshakeState::Waiting(waiting)
     }
 }
 
-impl<R: Router> From<Accepting> for HandlerState<R> {
+impl<R: Router> From<Accepting> for HandshakeState<R> {
     fn from(accepting: Accepting) -> Self {
-        HandlerState::Accepting(accepting)
+        HandshakeState::Accepting(accepting)
     }
 }
 
-impl<R: Router> From<Refusing> for HandlerState<R> {
+impl<R: Router> From<Refusing> for HandshakeState<R> {
     fn from(refusing: Refusing) -> Self {
-        HandlerState::Refusing(refusing)
+        HandshakeState::Refusing(refusing)
     }
 }
 
-impl<R: Router> From<()> for HandlerState<R> {
+impl<R: Router> From<()> for HandshakeState<R> {
     fn from(_: ()) -> Self {
-        HandlerState::Done
+        HandshakeState::Done
     }
 }
 
@@ -158,19 +158,19 @@ macro_rules! try_step {
     )
 }
 
-impl<R: Router> HandlerState<R> {
+impl<R: Router> HandshakeState<R> {
     fn step(self) -> Result<Step<Self, Self>, io::Error> {
         match self {
-            HandlerState::Waiting(waiting) => try_step!(waiting),
-            HandlerState::Accepting(accepting) => try_step!(accepting),
-            HandlerState::Refusing(refusing) => try_step!(refusing),
-            HandlerState::Done => panic!("stepping done"),
+            HandshakeState::Waiting(waiting) => try_step!(waiting),
+            HandshakeState::Accepting(accepting) => try_step!(accepting),
+            HandshakeState::Refusing(refusing) => try_step!(refusing),
+            HandshakeState::Done => panic!("stepping done"),
         }
     }
 }
 
 pub struct Handshake<R: Router> {
-    state: HandlerState<R>,
+    state: HandshakeState<R>,
 }
 
 impl<R: Router> Handshake<R> {
@@ -178,7 +178,7 @@ impl<R: Router> Handshake<R> {
                channel: Channel) -> Self
     {
         Handshake {
-            state: HandlerState::Waiting(Waiting {
+            state: HandshakeState::Waiting(Waiting {
                 channel,
                 router,
             }),
@@ -189,9 +189,9 @@ impl<R: Router> Handshake<R> {
 impl<R: Router> Handshake<R> {
     // TODO: can we get rid of this boilerplate?
     fn step(&mut self) -> Poll<(), io::Error> {
-        let mut state = mem::replace(&mut self.state, HandlerState::Done);
+        let mut state = mem::replace(&mut self.state, HandshakeState::Done);
         loop {
-            if let HandlerState::Done = state {
+            if let HandshakeState::Done = state {
                 return Ok(Async::Ready(()));
             };
 
