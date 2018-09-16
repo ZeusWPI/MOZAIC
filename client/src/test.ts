@@ -63,8 +63,6 @@ function runMatch(matchUuid: Uint8Array) {
     
     match.client.on(Connected, (_) => {
         players.forEach((player, idx) => {
-            const player_num = idx + 1;
-            waiting_for.add(player_num);
             const token = Buffer.from(player.token, 'utf-8');
             match.createClient(token).then(({ clientId }) => {
                 const clientParams = {
@@ -76,6 +74,7 @@ function runMatch(matchUuid: Uint8Array) {
 
                 const client = new PwClient(clientParams);
                 clients[clientId] = client;
+                waiting_for.add(clientId);
                 client.run(tcpStream);
     
             });
