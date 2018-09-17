@@ -5,10 +5,13 @@ import * as sodium from 'libsodium-wrappers';
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 
+const NONCE_NUM_BYTES: number = 32;
 
 export class Handshaker {
     private connection: Connection;
     private transport: Transport;
+
+    private clientNonce: Uint8Array;
 
     private _resolve?: () => void;
     private _reject?: (Error) => void;
@@ -16,6 +19,8 @@ export class Handshaker {
     constructor(transport: Transport, connection: Connection) {
         this.transport = transport;
         this.connection = connection;
+
+        this.clientNonce = sodium.randombytes_buf(NONCE_NUM_BYTES);
     }
 
     public initiate(message: Uint8Array): Promise<void> {
@@ -40,31 +45,39 @@ export class Handshaker {
                 throw new Error("invalid signature");
             }
         }
+
+        let serverMessage = proto.HandshakeServerMessage.decode(signedMessage.data);
+
+        if (!sodium.memcmp(this.clientNonce, serverMessage.clientNonce)) {
+            throw new Error("invalid nonce");
+        }
         
-        let response = proto.HandshakeServerMessage.decode(signedMessage.data);
-        if (response.challenge) {
-            this.sendChallengeResponse(response.challenge.nonce!);
-        } else if (response.connectionAccepted) {
+        if (serverMessage.challenge) {
+            this.sendChallengeResponse(serverMessage.challenge.serverNonce!);
+        } else if (serverMessage.connectionAccepted) {
             // TODO this is not particulary nice
             if (this._resolve) {
                 this._resolve();
             }
-        } else if (response.connectionRefused) {
+        } else if (serverMessage.connectionRefused) {
             // TODO this is not particulary nice either
             if (this._reject) {
-                let err = new Error(response.connectionRefused.message!);
+                let err = new Error(serverMessage.connectionRefused.message!);
                 this._reject(err);
             }
         }
     }
 
     private sendConnectionRequest(message: Uint8Array) {
-        let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();
+        let encodedRequest = proto.ConnectionRequest.encode({
+            clientNonce: this.clientNonce,
+            message,
+        }).finish();
         this.sendSignedMessage(encodedRequest);
     }
 
-    private sendChallengeResponse(nonce: Uint8Array) {
-        let encodedResponse = proto.ChallengeResponse.encode({ nonce }).finish();
+    private sendChallengeResponse(serverNonce: Uint8Array) {
+        let encodedResponse = proto.ChallengeResponse.encode({ serverNonce }).finish();
         this.sendSignedMessage(encodedResponse);
     }
 
@@ -77,5 +90,4 @@ export class Handshaker {
         }).finish();
         this.transport.sendFrame(encodedMessage);
     }
-
 }
