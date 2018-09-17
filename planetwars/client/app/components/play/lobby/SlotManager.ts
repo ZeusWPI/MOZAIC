@@ -22,6 +22,7 @@ export class SlotManager {
   public slots: Slots;
   public slotList: string[];
   public clients: Clients;
+  private lastClientId: number = 0;
 
   private onSlotChange: (self: SlotManager) => void;
 
@@ -35,7 +36,6 @@ export class SlotManager {
   public update(map: M.MapMeta) {
     while (this.slotList.length < map.slots) {
       const slot = this.createSlot();
-      slot.clientId = this.slotList.length + 1;
       this.slotList.push(slot.token);
     }
 
@@ -143,9 +143,15 @@ export class SlotManager {
       name: new Chance().name({ prefix: true, nationality: 'it' }),
       token: generateToken(),
       connected: false,
+      clientId: this.createClientId(),
     };
     this.slots[slot.token] = slot;
     this.registerSlot(slot);
     return slot;
+  }
+
+  private createClientId() {
+    this.lastClientId += 1;
+    return this.lastClientId;
   }
 }
