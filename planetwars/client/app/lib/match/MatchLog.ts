@@ -1,5 +1,4 @@
 import { PlanetList, Expedition, Player, JsonExpedition, JsonPlanet } from './types';
-import * as _ from 'lodash';
 import { events, Event, PwTypes } from "mozaic-client";
 
 export abstract class MatchLog {
@@ -17,6 +16,11 @@ export abstract class MatchLog {
 
   public getWinners(): Set<number> {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
+  }
+
+  // This may be a hack...
+  public addPlayer(clientId: number) {
+    this.getPlayerLog(clientId);
   }
 
   public abstract addEntry(entry: Event): void;
@@ -65,7 +69,6 @@ export class HostedMatchLog extends MatchLog {
 
 export class JoinedMatchLog extends MatchLog {
   public addEntry(entry: Event) {
-    console.log(entry)
     switch (entry.eventType) {
       case events.PlayerAction: {
         const entryPA = entry as events.PlayerAction;
