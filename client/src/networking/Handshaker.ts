@@ -16,11 +16,14 @@ export class Handshaker {
     private _resolve?: () => void;
     private _reject?: (Error) => void;
 
+    private kx_keypair: sodium.KeyPair;
+
     constructor(transport: Transport, connection: Connection) {
         this.transport = transport;
         this.connection = connection;
 
         this.clientNonce = sodium.randombytes_buf(NONCE_NUM_BYTES);
+        this.kx_keypair = sodium.crypto_kx_keypair();
     }
 
     public initiate(message: Uint8Array): Promise<void> {
@@ -77,7 +80,10 @@ export class Handshaker {
     }
 
     private sendChallengeResponse(serverNonce: Uint8Array) {
-        let encodedResponse = proto.ChallengeResponse.encode({ serverNonce }).finish();
+        let encodedResponse = proto.ChallengeResponse.encode({
+            serverNonce,
+            kxClientPk: this.kx_keypair.publicKey,
+        }).finish();
         this.sendSignedMessage(encodedResponse);
     }
 

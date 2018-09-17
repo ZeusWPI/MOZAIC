@@ -19,6 +19,7 @@ use sodiumoxide::crypto::sign;
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
 use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::utils::memcmp;
+use sodiumoxide::crypto::kx;
 
 mod errors {
     error_chain! { }
@@ -225,12 +226,15 @@ impl<R: Router> Identifying<R> {
         self.channel.send_protobuf(challenge_msg)
             .chain_err(|| "send failed")?;
 
+        let kx_keypair = KxKeypair::gen();
+
         let challenging = Challenging {
             channel: self.channel,
             connection_data: connection_data,
             client_nonce: request.client_nonce,
             server_nonce,
             secret_key,
+            kx_keypair,
         };
         return Ok(Step::Ready(challenging.into()));
     }
@@ -248,6 +252,8 @@ struct Challenging {
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
     server_nonce: Vec<u8>,
+
+    kx_keypair: KxKeypair,
 }
 
 impl Challenging {
@@ -280,10 +286,13 @@ impl Challenging {
             bail!("invalid nonce");
         }
 
+        let session_keys = self.session_keys(&response.kx_client_pk)?;
+
         // succesfully completed challenge, accept connection.
         let accepted = ServerMessage::ConnectionAccepted(
-            ConnectionAccepted {}
+            ConnectionAccepted { }
         );
+
         let message = encode_server_message(
             accepted,
             &self.client_nonce,
@@ -296,8 +305,16 @@ impl Challenging {
         let accepting = Accepting {
             channel: self.channel,
             connection_data: self.connection_data,
+            session_keys,
         };
-        return Ok(Step::Ready(HandshakeState::Accepting(accepting)));
+        return Ok(Step::Ready(accepting.into()));
+    }
+
+    fn session_keys(&self, kx_client_pk: &[u8]) -> Result<SessionKeys> {
+        match kx::PublicKey::from_slice(kx_client_pk) {
+            Some(key) => self.kx_keypair.server_session_keys(&key),
+            None => bail!("invalid kx public key received")
+        }
     }
 }
 
@@ -311,6 +328,7 @@ impl<R: Router> From<Challenging> for HandshakeState<R> {
 struct Accepting {
     channel: Channel,
     connection_data: ConnectionData,
+    session_keys: SessionKeys,
 }
 
 impl Accepting {
@@ -352,4 +370,45 @@ impl<R: Router> From<Refusing> for HandshakeState<R> {
     fn from(refusing: Refusing) -> Self {
         HandshakeState::Refusing(refusing)
     }
+}
+
+
+
+
+// crypto helpers
+
+struct KxKeypair {
+    secret_key: kx::SecretKey,
+    public_key: kx::PublicKey,
+}
+
+impl KxKeypair {
+    fn gen() -> Self {
+        let (public_key, secret_key) = kx::gen_keypair();
+
+        return KxKeypair {
+            public_key,
+            secret_key,
+        }
+    }
+
+    fn server_session_keys(&self, client_pk: &kx::PublicKey) 
+        -> Result<SessionKeys>
+    {
+        let res = kx::server_session_keys(
+            &self.public_key,
+            &self.secret_key,
+            client_pk
+        );
+
+        match res {
+            Ok((rx, tx)) => Ok(SessionKeys { rx, tx }),
+            Err(()) => bail!("bad public key"),
+        }
+    }
+}
+
+struct SessionKeys {
+    rx: kx::SessionKey,
+    tx: kx::SessionKey,
 }

@@ -36,6 +36,7 @@ message ConnectionRequest {
 
 message ChallengeResponse {
     bytes server_nonce = 1;
+    bytes kx_client_pk = 2;
 }
 
 message HandshakeServerMessage {
@@ -51,7 +52,7 @@ message ServerChallenge {
     bytes server_nonce = 1;
 }
 
-message ConnectionAccepted {}
+message ConnectionAccepted { }
 
 message ConnectionRefused {
     string message = 1;
