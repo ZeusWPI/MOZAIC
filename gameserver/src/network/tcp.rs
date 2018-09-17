@@ -11,7 +11,7 @@ use bytes::BytesMut;
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use super::connection_router::{Router, ConnectionRouter};
-use super::handshake::Handshake;
+use super::handshake::Handshaker;
 
 use protocol as proto;
 
@@ -119,7 +119,7 @@ impl<R> TcpStreamHandler<R>
                         frame.channel_num,
                         snd.clone(),
                     );
-                    let handshake = Handshake::new(
+                    let handshake = Handshaker::new(
                         router.clone(),
                         channel,
                     );
@@ -208,15 +208,21 @@ impl Channel {
         return Ok(poll);
     }
 
-    pub fn send_protobuf<M>(self, msg: M) -> sink::Send<Self>
+
+    /// make sure sink is ready before calling this
+    pub fn send_protobuf<M>(&mut self, msg: M) -> io::Result<()>
         where M: Message
     {
-        let mut bytes = BytesMut::with_capacity(msg.encoded_len());
+        let mut bytes = Vec::with_capacity(msg.encoded_len());
         // encoding can only fail because the buffer does not have
         // enough space allocated, but we just allocated the required
         // space.
         msg.encode(&mut bytes).unwrap();
-        return self.send(bytes.to_vec());
+
+        match try!(self.start_send(bytes)) {
+            AsyncSink::Ready => Ok(()),
+            AsyncSink::NotReady(_) => panic!("sink was not ready"),
+        }
     }
 
     pub fn poll_frame(&mut self) -> Poll<Vec<u8>, io::Error> {
