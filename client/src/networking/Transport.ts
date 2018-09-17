@@ -62,35 +62,44 @@ export class Transport {
         this.send(packet);
     }
 
-    private sendConnectionRequest(message: Uint8Array) {
-        let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();
-        let signature = sodium.crypto_sign_detached(
-            encodedRequest,
-            this.connection.secretKey
-        );
-        let encodedMessage = proto.SignedMessage.encode({
-            data: encodedRequest,
+    private sendSignedMessage(data: Uint8Array) {
+        const key = this.connection.secretKey;
+        const signature = sodium.crypto_sign_detached(data, key);
+        const encodedMessage = proto.SignedMessage.encode({
+            data,
             signature,
         }).finish();
         this.sendFrame(encodedMessage);
     }
 
-    private handleConnectionResponse(message: Uint8Array) {
-        let response = proto.ConnectionResponse.decode(message);
-        if (response.success) {
+    private sendConnectionRequest(message: Uint8Array) {
+        let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();
+        this.sendSignedMessage(encodedRequest);
+    }
+
+    private sendChallengeResponse(nonce: Uint8Array) {
+        let encodedResponse = proto.ChallengeResponse.encode({ nonce }).finish();
+        this.sendSignedMessage(encodedResponse);
+    }
+
+    private handleHandshakeMessage(message: Uint8Array) {
+        let response = proto.HandshakeServerMessage.decode(message);
+        if (response.challenge) {
+            this.sendChallengeResponse(response.challenge.nonce!);
+        } else if (response.connectionAccepted) {
             this.state = TransportState.CONNECTED;
             this.connection.connect(this);
-        } else if (response.error) {
+        } else if (response.connectionRefused) {
             this.state = TransportState.ERROR;;
             // TODO this is not particulary nice
-            throw new Error(response.error.message!);
+            throw new Error(response.connectionRefused.message!);
         }
     }
 
     public handleMessage(data: Uint8Array) {
         switch (this.state) {
             case TransportState.CONNECTING: {
-                this.handleConnectionResponse(data);
+                this.handleHandshakeMessage(data);
                 break;
             }
             case TransportState.CONNECTED: {
