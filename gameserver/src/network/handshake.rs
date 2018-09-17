@@ -6,6 +6,7 @@ use std::mem;
 use super::connection_router::{Router, ConnectionRouter};
 use super::connection_table::ConnectionData;
 use super::tcp::Channel;
+use super::crypto::{KxKeypair, SessionKeys};
 
 use protocol::{
     HandshakeServerMessage,
@@ -19,9 +20,10 @@ use sodiumoxide::crypto::sign;
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
 use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::utils::memcmp;
+
 use sodiumoxide::crypto::kx;
 
-mod errors {
+pub mod errors {
     error_chain! { }
 }
 
@@ -370,45 +372,4 @@ impl<R: Router> From<Refusing> for HandshakeState<R> {
     fn from(refusing: Refusing) -> Self {
         HandshakeState::Refusing(refusing)
     }
-}
-
-
-
-
-// crypto helpers
-
-struct KxKeypair {
-    secret_key: kx::SecretKey,
-    public_key: kx::PublicKey,
-}
-
-impl KxKeypair {
-    fn gen() -> Self {
-        let (public_key, secret_key) = kx::gen_keypair();
-
-        return KxKeypair {
-            public_key,
-            secret_key,
-        }
-    }
-
-    fn server_session_keys(&self, client_pk: &kx::PublicKey) 
-        -> Result<SessionKeys>
-    {
-        let res = kx::server_session_keys(
-            &self.public_key,
-            &self.secret_key,
-            client_pk
-        );
-
-        match res {
-            Ok((rx, tx)) => Ok(SessionKeys { rx, tx }),
-            Err(()) => bail!("bad public key"),
-        }
-    }
-}
-
-struct SessionKeys {
-    rx: kx::SessionKey,
-    tx: kx::SessionKey,
 }

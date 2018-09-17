@@ -4,6 +4,7 @@ pub mod connection_router;
 pub mod connection_handler;
 mod protobuf_codec;
 mod handshake;
+mod crypto;
 
 pub use self::connection_table::ClientId;
 pub use self::connection_table::ConnectionTable;
