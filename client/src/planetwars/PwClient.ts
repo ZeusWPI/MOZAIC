@@ -17,6 +17,7 @@ export type Params = {
     clientId: number;
     matchUuid: Uint8Array;
     logSink: WriteStream;
+    secretKey: Uint8Array
 }
 
 export class PwClient {
@@ -31,7 +32,7 @@ export class PwClient {
         this.matchUuid = params.matchUuid;
         const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
-        this.client = new Client();
+        this.client = new Client(params.secretKey);
         this.botRunner = new BotRunner(params.botConfig);
         
         this.reactor.on(GameStep).subscribe((step) => {

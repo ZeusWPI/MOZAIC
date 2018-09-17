@@ -35,14 +35,17 @@ export class Connection {
     private responseHandlers: { [seq_num: number]: ResponseHandler<any>};
 
     private transport?: Transport;
+    private _secretKey: Uint8Array;
 
     private _onClose = new SignalDispatcher();
 
-    constructor() {
+
+    constructor(secretKey: Uint8Array) {
         this.status = ConnectionStatus.OPEN;
         this.buffer = [];
         this.numFlushed = 0;
         this.numReceived = 0;
+        this._secretKey = secretKey;
 
         this.requestHandler = new RequestHandler();
         this.responseHandlers = {};
@@ -117,6 +120,10 @@ export class Connection {
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
         this.requestHandler.on(eventType, handler);
+    }
+
+    public get secretKey() {
+        return this._secretKey;
     }
 
     public get seqNum() {

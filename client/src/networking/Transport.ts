@@ -3,6 +3,7 @@ import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 import { Connection } from "./Connection";
 import { SignalDispatcher, ISignal } from "ste-signals";
+import * as sodium from 'libsodium-wrappers';
 
 
 export enum TransportState {
@@ -41,9 +42,9 @@ export class Transport {
         this.lastAckSent = 0;
     }
 
-    public connect(message: Uint8Array, token: Uint8Array) {
+    public connect(message: Uint8Array) {
         this.state = TransportState.CONNECTING;
-        this.sendConnectionRequest(message, token);
+        this.sendConnectionRequest(message);
     }
 
     public send(packet: proto.Packet) {
@@ -61,12 +62,17 @@ export class Transport {
         this.send(packet);
     }
 
-    private sendConnectionRequest(message: Uint8Array, token: Uint8Array) {
-        let connRequest = {
-            message,
-            token,
-        };
-        this.sendFrame(proto.ConnectionRequest.encode(connRequest).finish());
+    private sendConnectionRequest(message: Uint8Array) {
+        let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();
+        let signature = sodium.crypto_sign_detached(
+            encodedRequest,
+            this.connection.secretKey
+        );
+        let encodedMessage = proto.SignedMessage.encode({
+            data: encodedRequest,
+            signature,
+        }).finish();
+        this.sendFrame(encodedMessage);
     }
 
     private handleConnectionResponse(message: Uint8Array) {

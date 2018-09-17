@@ -12,6 +12,7 @@ import { TcpStreamHandler } from "../networking/TcpStreamHandler";
 
 export type MatchParams = {
     matchUuid: Uint8Array;
+    secretKey: Uint8Array;
 }
 
 // TODO: create matchclient base class
@@ -23,7 +24,7 @@ export class PwMatch {
 
     constructor(params: MatchParams, logger: Logger) {
         this.reactor = new Reactor(logger);
-        this.client = new Client();
+        this.client = new Client(params.secretKey);
         this.matchUuid = params.matchUuid;
 
         this.client.on(events.MatchEvent, (e) => {
@@ -49,10 +50,10 @@ export class PwMatch {
         this.client.connect(tcpStream, message);
     }
 
-    public createClient(token: Uint8Array): Promise<events.CreateClientResponse>
+    public createClient(publicKey: Uint8Array): Promise<events.CreateClientResponse>
     {
         const request = events.CreateClientRequest.create({
-            token
+            publicKey
         });
         return this.client.request(request, events.CreateClientResponse);
     }

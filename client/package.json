@@ -11,6 +11,7 @@
   "author": "Zeus WPI",
   "license": "MIT",
   "devDependencies": {
+    "@types/libsodium-wrappers": "^0.7.0",
     "@types/bluebird": "^3.5.20",
     "@types/node": "^9.4.6",
     "@types/split2": "^2.1.6",
@@ -26,6 +27,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.1",
+    "libsodium-wrappers": "^0.7.3",
     "split2": "^2.2.0",
     "strongly-typed-events": "^1.4.3",
     "text-encoding": "^0.6.4",

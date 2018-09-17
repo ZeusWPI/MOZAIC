@@ -16,6 +16,13 @@ message GameserverConnect {
     }
 }
 
+// HANDSHAKE
+
+message SignedMessage {
+    bytes data = 1;
+    bytes signature = 2;
+}
+
 message ConnectionRequest {
     // TODO: maybe we want to include some headers here
 
@@ -23,6 +30,7 @@ message ConnectionRequest {
     // server.
     bytes message = 1;
 }
+
 
 message ConnectionResponse {
     oneof response {

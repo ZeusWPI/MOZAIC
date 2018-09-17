@@ -16,8 +16,8 @@ export class ServerControl {
     private client: Client;
 
 
-    constructor() {
-        this.client = new Client();
+    constructor(privateKey: Uint8Array) {
+        this.client = new Client(privateKey);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
@@ -39,11 +39,11 @@ export class ServerControl {
         this.client.exit();
     }
 
-    public createMatch(controlToken: Uint8Array)
+    public createMatch(ownerPublicKey: Uint8Array)
         : Promise<events.CreateMatchResponse>
     {
         const request = events.CreateMatchRequest.create({
-            controlToken,
+            ownerPublicKey,
         });
         return this.client.request(request, events.CreateMatchResponse);
     }

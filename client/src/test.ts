@@ -10,6 +10,12 @@ import * as crypto from 'crypto';
 import { ServerControl } from './ServerControl';
 import { TcpStreamHandler } from './networking/TcpStreamHandler';
 
+import * as sodium from 'libsodium-wrappers';
+
+const publicKey = Buffer.from("da969f456ba9c9565190d8badb1086617b53b2f6a8b0f50872b4cebb9110de9d", 'hex');
+const secretKey = Buffer.from("ea0d1f3d3051c83073d1ea77fcd2d5c7058c134d8b2d8291732e0793268c9127da969f456ba9c9565190d8badb1086617b53b2f6a8b0f50872b4cebb9110de9d", 'hex');
+
+
 const addr: Address = {
     host: "127.0.0.1",
     port: 9142
@@ -25,13 +31,11 @@ const BIN_PATH = "../gameserver/target/debug/mozaic_bot_driver";
 const players = [
     {
         name: 'timp',
-        token: crypto.randomBytes(16).toString('hex'),
         botConfig: simpleBot,
         number: 1,
     },
     {
         name: 'bert',
-        token: crypto.randomBytes(16).toString('hex'),
         botConfig: simpleBot,
         number: 2,
     }
@@ -44,7 +48,6 @@ const gameConfig = {
 
 const logStream = createWriteStream('log.out');
 
-const ownerToken = Buffer.from('cccc', 'hex');
 
 const tcpStream = new TcpStreamHandler({
     host: addr.host,
@@ -52,9 +55,31 @@ const tcpStream = new TcpStreamHandler({
     token: new Buffer(0),
 });
 
+sodium.ready.then(() => {
+    run();
+});
+
+function run() {
+    const serverControl = new ServerControl(secretKey);
+
+    serverControl.on(Connected, (_) => {
+        serverControl.createMatch(publicKey).then((e) => {
+            runMatch(e.matchUuid);
+            serverControl.disconnect();
+        });
+    });
+
+
+    tcpStream.onConnect.one(() => {
+        serverControl.connect(tcpStream);
+    });
+
+    tcpStream.connect();
+}
+
 function runMatch(matchUuid: Uint8Array) {
     const match = new PwMatch(
-        { matchUuid },
+        { matchUuid, secretKey },
         new Logger(0, logStream)
     );
     
@@ -63,13 +88,13 @@ function runMatch(matchUuid: Uint8Array) {
     
     match.client.on(Connected, (_) => {
         players.forEach((player, idx) => {
-            const token = Buffer.from(player.token, 'utf-8');
-            match.createClient(token).then(({ clientId }) => {
+            match.createClient(publicKey).then(({ clientId }) => {
                 const clientParams = {
                     clientId: clientId,
                     matchUuid,
                     botConfig: simpleBot,
                     logSink: logStream,
+                    secretKey,
                 };
 
                 const client = new PwClient(clientParams);
@@ -104,19 +129,3 @@ function runMatch(matchUuid: Uint8Array) {
 
     match.connect(tcpStream);
 }
-
-const serverControl = new ServerControl();
-
-serverControl.on(Connected, (_) => {
-    serverControl.createMatch(ownerToken).then((e) => {
-        runMatch(e.matchUuid);
-        serverControl.disconnect();
-    });
-});
-
-
-tcpStream.onConnect.one(() => {
-    serverControl.connect(tcpStream);
-});
-
-tcpStream.connect();

@@ -53,7 +53,7 @@ export class TcpStreamHandler {
         this.channels[this.channelCounter] = channel;
         this.channelCounter += 1;
         this.numChannels += 1;
-        channel.connect(message, this.params.token);
+        channel.connect(message);
     }
 
     public closeChannel(channelNum: number) {
