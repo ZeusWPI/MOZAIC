@@ -31,17 +31,25 @@ message ConnectionRequest {
     bytes message = 1;
 }
 
+message ChallengeResponse {
+    bytes nonce = 1;
+}
 
-message ConnectionResponse {
-    oneof response {
-        ConnectionSuccess success = 1;
-        ConnectionError error = 2;
+message HandshakeServerMessage {
+    oneof payload {
+        ServerChallenge challenge = 1;
+        ConnectionAccepted connection_accepted = 2;
+        ConnectionRefused connection_refused = 3;
     }
 }
 
-message ConnectionSuccess { }
+message ServerChallenge {
+    bytes nonce = 1;
+}
 
-message ConnectionError {
+message ConnectionAccepted { }
+
+message ConnectionRefused {
     string message = 1;
 }
 
