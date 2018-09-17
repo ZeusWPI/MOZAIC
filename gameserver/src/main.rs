@@ -41,6 +41,7 @@ extern crate prost;
 extern crate prost_derive;
 #[macro_use]
 extern crate mozaic_derive;
+extern crate sodiumoxide;
 
 
 use std::error::Error;
@@ -57,6 +58,7 @@ fn main() {
 }
 
 pub fn run(args : Vec<String>) {
+    sodiumoxide::init().expect("failed to initialize libsodium");
     if args.len() != 2 {
         println!("Expected 1 argument (config file). {} given.", args.len() - 1);
         std::process::exit(1)
