@@ -7,8 +7,6 @@ use super::connection_router::{Router, ConnectionRouter};
 use super::connection_table::ConnectionData;
 use super::tcp::Channel;
 
-use protocol as proto;
-
 use protocol::{
     HandshakeServerMessage,
     SignedMessage,
@@ -57,10 +55,13 @@ fn verify_message(message: &SignedMessage, key: &PublicKey) -> bool {
     return sign::verify_detached(&signature, &message.data, key);
 }
 
-fn encode_server_message(message: ServerMessage, key: &SecretKey)
-    -> SignedMessage
+fn encode_server_message(message: ServerMessage,
+                         client_nonce: &[u8],
+                         key: &SecretKey)
+                         -> SignedMessage
 {
     let server_message = HandshakeServerMessage {
+        client_nonce: client_nonce.to_vec(),
         payload: Some(message),
     };
     let mut buffer = Vec::with_capacity(server_message.encoded_len());
@@ -170,51 +171,9 @@ impl<R: Router> Identifying<R> {
 
         let frame = try_ready_or!(self, self.channel.poll_frame());
 
-        match self.handle_request(frame) {
-            Err(err) => {
-                let refused = ServerMessage::ConnectionRefused(
-                    ConnectionRefused {
-                        message: err.to_string(),
-                    }
-                );
-                let response = encode_server_message(
-                    refused,
-                    &self.router.secret_key
-                );
-                try!(self.channel.send_protobuf(response));
-
-                let refusing = Refusing {
-                    channel: self.channel
-                };
-                return Ok(Step::Ready(HandshakeState::Refusing(refusing)));
-
-            }
-            Ok(data) => {
-                let nonce = randombytes(NONCE_NUM_BYTES);
-
-                let challenge = ServerMessage::Challenge(
-                    ServerChallenge {
-                        nonce: nonce.clone(),
-                    }
-                );
-                let secret_key = self.router.secret_key.clone();
-                let challenge_msg = encode_server_message(challenge, &secret_key);
-                try!(self.channel.send_protobuf(challenge_msg));
-                let challenging = Challenging {
-                    server_nonce: nonce,
-                    channel: self.channel,
-                    connection_data: data,
-                    secret_key,
-                };
-                return Ok(Step::Ready(challenging.into()));            }
-        };
-    }
-
-    fn handle_request(&mut self, frame: Vec<u8>)
-        -> io::Result<ConnectionData>
-    {
         let signed_msg = try!(SignedMessage::decode(&frame));
         let request = try!(ConnectionRequest::decode(&signed_msg.data));
+
 
         let conn_data = try!(self.router.route(&request.message));
 
@@ -226,7 +185,30 @@ impl<R: Router> Identifying<R> {
             ));
         }
 
-        return Ok(conn_data);
+        let server_nonce = randombytes(NONCE_NUM_BYTES);
+
+        let challenge = ServerMessage::Challenge(
+            ServerChallenge {
+                server_nonce: server_nonce.clone(),
+            }
+        );
+
+        let secret_key = self.router.secret_key.clone();
+        let challenge_msg = encode_server_message(
+            challenge,
+            &request.client_nonce,
+            &secret_key
+        );
+
+        try!(self.channel.send_protobuf(challenge_msg));
+        let challenging = Challenging {
+            channel: self.channel,
+            connection_data: conn_data,
+            client_nonce: request.client_nonce,
+            server_nonce,
+            secret_key,
+        };
+        return Ok(Step::Ready(challenging.into()));
     }
 }
 
@@ -240,6 +222,7 @@ struct Challenging {
     channel: Channel,
     connection_data: ConnectionData,
     secret_key: SecretKey,
+    client_nonce: Vec<u8>,
     server_nonce: Vec<u8>,
 }
 
@@ -263,7 +246,7 @@ impl Challenging {
 
         let response = try!(ChallengeResponse::decode(&signed_msg.data));
 
-        if !memcmp(&self.server_nonce, &response.nonce) {
+        if !memcmp(&self.server_nonce, &response.server_nonce) {
             return Err(io::Error::new(
                 io::ErrorKind::Other,
                 "invalid nonce"
@@ -274,7 +257,11 @@ impl Challenging {
         let accepted = ServerMessage::ConnectionAccepted(
             ConnectionAccepted {}
         );
-        let response = encode_server_message(accepted, &self.secret_key);
+        let response = encode_server_message(
+            accepted,
+            &self.client_nonce,
+            &self.secret_key
+        );
         try!(self.channel.send_protobuf(response));
         let accepting = Accepting {
             channel: self.channel,

@@ -26,28 +26,32 @@ message SignedMessage {
 message ConnectionRequest {
     // TODO: maybe we want to include some headers here
 
+
+    bytes client_nonce = 1;
+
     // This message should identify the connecting client with the
     // server.
-    bytes message = 1;
+    bytes message = 2;
 }
 
 message ChallengeResponse {
-    bytes nonce = 1;
+    bytes server_nonce = 1;
 }
 
 message HandshakeServerMessage {
+    bytes client_nonce = 1;
     oneof payload {
-        ServerChallenge challenge = 1;
-        ConnectionAccepted connection_accepted = 2;
-        ConnectionRefused connection_refused = 3;
+        ServerChallenge challenge = 2;
+        ConnectionAccepted connection_accepted = 3;
+        ConnectionRefused connection_refused = 4;
     }
 }
 
 message ServerChallenge {
-    bytes nonce = 1;
+    bytes server_nonce = 1;
 }
 
-message ConnectionAccepted { }
+message ConnectionAccepted {}
 
 message ConnectionRefused {
     string message = 1;
@@ -57,7 +61,6 @@ message Frame {
     uint32 channel_num = 1;
     bytes data = 2;
 }
-
 
 message Packet {
     uint32 seq_num = 1;
