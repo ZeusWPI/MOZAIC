@@ -3,12 +3,12 @@ import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 import { Connection } from "./Connection";
 import { SignalDispatcher, ISignal } from "ste-signals";
-import * as sodium from 'libsodium-wrappers';
+import { Handshaker } from "./Handshaker";
 
 
 export enum TransportState {
     DISCONNECTED,
-    CONNECTING,
+    HANDSHAKING,
     CONNECTED,
     FINISHED,
     ERROR,
@@ -18,6 +18,8 @@ export class Transport {
     private channelNum: number;
     private state: TransportState;
     private stream: TcpStreamHandler;
+
+    private handshaker: Handshaker;
 
     lastSeqSent: number;
     lastAckSent: number;
@@ -40,11 +42,22 @@ export class Transport {
         // TODO: properly get these values or something
         this.lastSeqSent = 0;
         this.lastAckSent = 0;
+
+        // TODO: get rid of this
+        this.handshaker = new Handshaker(this, connection);
     }
 
     public connect(message: Uint8Array) {
-        this.state = TransportState.CONNECTING;
-        this.sendConnectionRequest(message);
+        this.state = TransportState.HANDSHAKING;
+        this.handshaker.initiate(message)
+            .then(() => {
+                this.state = TransportState.CONNECTED;
+                this.connection.connect(this);
+            })
+            .catch((err) => {
+                this.state = TransportState.ERROR;
+                throw err;
+            })
     }
 
     public send(packet: proto.Packet) {
@@ -62,44 +75,10 @@ export class Transport {
         this.send(packet);
     }
 
-    private sendSignedMessage(data: Uint8Array) {
-        const key = this.connection.secretKey;
-        const signature = sodium.crypto_sign_detached(data, key);
-        const encodedMessage = proto.SignedMessage.encode({
-            data,
-            signature,
-        }).finish();
-        this.sendFrame(encodedMessage);
-    }
-
-    private sendConnectionRequest(message: Uint8Array) {
-        let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();
-        this.sendSignedMessage(encodedRequest);
-    }
-
-    private sendChallengeResponse(nonce: Uint8Array) {
-        let encodedResponse = proto.ChallengeResponse.encode({ nonce }).finish();
-        this.sendSignedMessage(encodedResponse);
-    }
-
-    private handleHandshakeMessage(message: Uint8Array) {
-        let response = proto.HandshakeServerMessage.decode(message);
-        if (response.challenge) {
-            this.sendChallengeResponse(response.challenge.nonce!);
-        } else if (response.connectionAccepted) {
-            this.state = TransportState.CONNECTED;
-            this.connection.connect(this);
-        } else if (response.connectionRefused) {
-            this.state = TransportState.ERROR;;
-            // TODO this is not particulary nice
-            throw new Error(response.connectionRefused.message!);
-        }
-    }
-
     public handleMessage(data: Uint8Array) {
         switch (this.state) {
-            case TransportState.CONNECTING: {
-                this.handleHandshakeMessage(data);
+            case TransportState.HANDSHAKING: {
+                this.handshaker.handleMessage(data);
                 break;
             }
             case TransportState.CONNECTED: {
@@ -129,7 +108,7 @@ export class Transport {
         return this._onFinish.asEvent();
     }
 
-    private sendFrame(data: Uint8Array) {
+    public sendFrame(data: Uint8Array) {
         this.stream.sendFrame({
             channelNum: this.channelNum,
             data,

@@ -75,7 +75,6 @@ export class TcpStreamHandler {
             console.log('disconnect');
         });
     }
-        
 
     public get onConnect() {
         return this.stream.onConnect;
