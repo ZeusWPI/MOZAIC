@@ -15,7 +15,8 @@ use protocol::{
     ConnectionRequest,
     ChallengeResponse
 };
-use protocol::handshake_server_message::Payload as HandshakeServerPayload;
+use protocol::handshake_server_message::Payload as ServerMessage;
+use protocol::{ServerChallenge, ConnectionAccepted, ConnectionRefused};
 use sodiumoxide::crypto::sign;
 use sodiumoxide::crypto::sign::{PublicKey, Signature};
 use sodiumoxide::randombytes::randombytes;
@@ -56,38 +57,18 @@ fn verify_message(message: &SignedMessage, key: &PublicKey) -> bool {
     return sign::verify_detached(&signature, &message.data, key);
 }
 
-fn connection_accepted() -> HandshakeServerMessage {
-   HandshakeServerMessage {
-        payload: Some(
-            HandshakeServerPayload::ConnectionAccepted(
-                proto::ConnectionAccepted { }
-            )
-        )
-    }
-}
+fn encode_server_message(message: ServerMessage) -> SignedMessage
+{
+    let server_message = HandshakeServerMessage {
+        payload: Some(message),
+    };
+    let mut buffer = Vec::with_capacity(server_message.encoded_len());
+    server_message.encode(&mut buffer).unwrap();
 
-fn connection_refused(msg: String) -> HandshakeServerMessage {
-    HandshakeServerMessage {
-        payload: Some(
-            HandshakeServerPayload::ConnectionRefused(
-                proto::ConnectionRefused {
-                    message: msg,
-                }
-            )
-        )
-    }
-}
-
-fn challenge_msg(nonce: Vec<u8>) -> HandshakeServerMessage {
-    HandshakeServerMessage {
-        payload: Some(
-            HandshakeServerPayload::Challenge(
-                proto::ServerChallenge {
-                    nonce,
-                }
-            )
-        )
-    }
+    return SignedMessage {
+        data: buffer,
+        signature: Vec::new(),
+    };
 }
 
 macro_rules! try_step {
@@ -188,7 +169,12 @@ impl<R: Router> Identifying<R> {
 
         match self.handle_request(frame) {
             Err(err) => {
-                let response = connection_refused(err.to_string());
+                let refused = ServerMessage::ConnectionRefused(
+                    ConnectionRefused {
+                        message: err.to_string(),
+                    }
+                );
+                let response = encode_server_message(refused);
                 try!(self.channel.send_protobuf(response));
 
                 let refusing = Refusing {
@@ -199,8 +185,14 @@ impl<R: Router> Identifying<R> {
             }
             Ok(data) => {
                 let nonce = randombytes(NONCE_NUM_BYTES);
-                let msg = challenge_msg(nonce.clone());
-                try!(self.channel.send_protobuf(msg));
+
+                let challenge = ServerMessage::Challenge(
+                    ServerChallenge {
+                        nonce: nonce.clone(),
+                    }
+                );
+                let challenge_msg = encode_server_message(challenge);
+                try!(self.channel.send_protobuf(challenge_msg));
                 let challenging = Challenging {
                     server_nonce: nonce,
                     channel: self.channel,
@@ -270,7 +262,10 @@ impl Challenging {
         }
 
         // succesfully completed challenge, accept connection.
-        let response = connection_accepted();
+        let accepted = ServerMessage::ConnectionAccepted(
+            ConnectionAccepted {}
+        );
+        let response = encode_server_message(accepted);
         try!(self.channel.send_protobuf(response));
         let accepting = Accepting {
             channel: self.channel,
