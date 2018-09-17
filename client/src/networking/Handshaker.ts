@@ -13,20 +13,21 @@ export class Handshaker {
 
     private clientNonce: Uint8Array;
 
-    private _resolve?: () => void;
-    private _reject?: (Error) => void;
+    private _resolve?: (sessionKeys: sodium.CryptoKX) => void;
+    private _reject?: (err: Error) => void;
 
-    private kx_keypair: sodium.KeyPair;
+    private kxKeypair: sodium.KeyPair;
+    private sessionKeys?: sodium.CryptoKX;
 
     constructor(transport: Transport, connection: Connection) {
         this.transport = transport;
         this.connection = connection;
 
         this.clientNonce = sodium.randombytes_buf(NONCE_NUM_BYTES);
-        this.kx_keypair = sodium.crypto_kx_keypair();
+        this.kxKeypair = sodium.crypto_kx_keypair();
     }
 
-    public initiate(message: Uint8Array): Promise<void> {
+    public initiate(message: Uint8Array): Promise<sodium.CryptoKX> {
         return new Promise((resolve, reject) => {
             this._resolve = resolve;
             this._reject = reject;
@@ -56,11 +57,16 @@ export class Handshaker {
         }
         
         if (serverMessage.challenge) {
+            this.sessionKeys = sodium.crypto_kx_client_session_keys(
+                this.kxKeypair.publicKey,
+                this.kxKeypair.privateKey,
+                serverMessage.challenge.kxServerPk!,
+            );
             this.sendChallengeResponse(serverMessage.challenge.serverNonce!);
         } else if (serverMessage.connectionAccepted) {
             // TODO this is not particulary nice
             if (this._resolve) {
-                this._resolve();
+                this._resolve(this.sessionKeys!);
             }
         } else if (serverMessage.connectionRefused) {
             // TODO this is not particulary nice either
@@ -82,7 +88,7 @@ export class Handshaker {
     private sendChallengeResponse(serverNonce: Uint8Array) {
         let encodedResponse = proto.ChallengeResponse.encode({
             serverNonce,
-            kxClientPk: this.kx_keypair.publicKey,
+            kxClientPk: this.kxKeypair.publicKey,
         }).finish();
         this.sendSignedMessage(encodedResponse);
     }

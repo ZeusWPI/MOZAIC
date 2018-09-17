@@ -208,10 +208,12 @@ impl<R: Router> Identifying<R> {
         }
 
         let server_nonce = randombytes(NONCE_NUM_BYTES);
+        let kx_keypair = KxKeypair::gen();
 
         let challenge = ServerMessage::Challenge(
             ServerChallenge {
                 server_nonce: server_nonce.clone(),
+                kx_server_pk: kx_keypair.public_key.as_ref().to_vec(),
             }
         );
 
@@ -225,8 +227,6 @@ impl<R: Router> Identifying<R> {
 
         self.channel.send_protobuf(challenge_msg)
             .chain_err(|| "send failed")?;
-
-        let kx_keypair = KxKeypair::gen();
 
         let challenging = Challenging {
             channel: self.channel,

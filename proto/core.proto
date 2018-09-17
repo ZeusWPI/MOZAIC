@@ -50,6 +50,7 @@ message HandshakeServerMessage {
 
 message ServerChallenge {
     bytes server_nonce = 1;
+    bytes kx_server_pk = 2;
 }
 
 message ConnectionAccepted { }
