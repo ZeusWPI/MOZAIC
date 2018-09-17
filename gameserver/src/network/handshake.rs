@@ -18,7 +18,7 @@ use protocol::{
 use protocol::handshake_server_message::Payload as ServerMessage;
 use protocol::{ServerChallenge, ConnectionAccepted, ConnectionRefused};
 use sodiumoxide::crypto::sign;
-use sodiumoxide::crypto::sign::{PublicKey, Signature};
+use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
 use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::utils::memcmp;
 
@@ -57,7 +57,8 @@ fn verify_message(message: &SignedMessage, key: &PublicKey) -> bool {
     return sign::verify_detached(&signature, &message.data, key);
 }
 
-fn encode_server_message(message: ServerMessage) -> SignedMessage
+fn encode_server_message(message: ServerMessage, key: &SecretKey)
+    -> SignedMessage
 {
     let server_message = HandshakeServerMessage {
         payload: Some(message),
@@ -65,9 +66,11 @@ fn encode_server_message(message: ServerMessage) -> SignedMessage
     let mut buffer = Vec::with_capacity(server_message.encoded_len());
     server_message.encode(&mut buffer).unwrap();
 
+    let signature = sign::sign_detached(&buffer, key);
+
     return SignedMessage {
         data: buffer,
-        signature: Vec::new(),
+        signature: signature.as_ref().to_vec(),
     };
 }
 
@@ -174,7 +177,10 @@ impl<R: Router> Identifying<R> {
                         message: err.to_string(),
                     }
                 );
-                let response = encode_server_message(refused);
+                let response = encode_server_message(
+                    refused,
+                    &self.router.secret_key
+                );
                 try!(self.channel.send_protobuf(response));
 
                 let refusing = Refusing {
@@ -191,12 +197,14 @@ impl<R: Router> Identifying<R> {
                         nonce: nonce.clone(),
                     }
                 );
-                let challenge_msg = encode_server_message(challenge);
+                let secret_key = self.router.secret_key.clone();
+                let challenge_msg = encode_server_message(challenge, &secret_key);
                 try!(self.channel.send_protobuf(challenge_msg));
                 let challenging = Challenging {
                     server_nonce: nonce,
                     channel: self.channel,
                     connection_data: data,
+                    secret_key,
                 };
                 return Ok(Step::Ready(challenging.into()));            }
         };
@@ -231,6 +239,7 @@ impl<R: Router> From<Identifying<R>> for HandshakeState<R> {
 struct Challenging {
     channel: Channel,
     connection_data: ConnectionData,
+    secret_key: SecretKey,
     server_nonce: Vec<u8>,
 }
 
@@ -265,7 +274,7 @@ impl Challenging {
         let accepted = ServerMessage::ConnectionAccepted(
             ConnectionAccepted {}
         );
-        let response = encode_server_message(accepted);
+        let response = encode_server_message(accepted, &self.secret_key);
         try!(self.channel.send_protobuf(response));
         let accepting = Accepting {
             channel: self.channel,

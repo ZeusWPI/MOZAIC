@@ -1,5 +1,6 @@
 use std::io;
 use std::sync::{Arc, Mutex};
+use sodiumoxide::crypto::sign::SecretKey;
 
 use super::connection_table::{ConnectionTable, ConnectionData};
 
@@ -11,6 +12,8 @@ pub trait Router {
 pub struct ConnectionRouter<R: Router> {
     pub router: Arc<Mutex<R>>,
     pub connection_table: Arc<Mutex<ConnectionTable>>,
+    pub secret_key: SecretKey,
+
 }
 
 impl<R: Router> Clone for ConnectionRouter<R> {
@@ -18,6 +21,7 @@ impl<R: Router> Clone for ConnectionRouter<R> {
         ConnectionRouter {
             router: self.router.clone(),
             connection_table: self.connection_table.clone(),
+            secret_key: self.secret_key.clone(),
         }
     }
 }

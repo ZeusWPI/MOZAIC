@@ -58,6 +58,8 @@ impl Future for Server {
 
         let control_pubkey = PublicKey::from_slice(&self.config.public_key)
             .expect("invalid public key");
+        let secret_key = SecretKey::from_slice(&self.config.private_key)
+            .expect("invalid secret key");
 
         let control_connection = connection_table.lock().unwrap().create(
             control_pubkey,
@@ -78,7 +80,11 @@ impl Future for Server {
             .register_control_connection(control_connection);
 
         let addr = self.config.address.parse().unwrap();
-        let connection_router = ConnectionRouter { router, connection_table };
+        let connection_router = ConnectionRouter {
+            router,
+            connection_table,
+            secret_key,
+        };
         match network::tcp::Listener::new(&addr, connection_router) {
             Ok(listener) => {
                 tokio::spawn(listener);
