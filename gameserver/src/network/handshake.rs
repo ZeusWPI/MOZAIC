@@ -9,7 +9,9 @@ use super::tcp::Channel;
 
 use protocol as proto;
 
-use protocol::ConnectionRequest;
+use protocol::{SignedMessage, ConnectionRequest};
+use sodiumoxide::crypto::sign;
+use sodiumoxide::crypto::sign::{PublicKey, Signature};
 
 enum Step<State, Next> {
     NotReady(State),
@@ -39,6 +41,10 @@ macro_rules! try_ready_or {
 
 type HandshakeStep<S, R> = Result<Step<S, HandshakeState<R>>, io::Error>;
 
+fn verify_message(message: &SignedMessage, key: &PublicKey) -> bool {
+    let signature = Signature::from_slice(&message.signature).unwrap();
+    return sign::verify_detached(&signature, &message.data, key);
+}
 
 fn connection_success() -> proto::ConnectionResponse {
    proto::ConnectionResponse {
@@ -61,15 +67,6 @@ fn connection_error(msg: String) -> proto::ConnectionResponse {
         )
     }
 }
-
-
-
-
-// impl<R: Router> From<()> for HandshakerState<R> {
-//     fn from(_: ()) -> Self {
-//         HandshakerState::Done
-//     }
-// }
 
 macro_rules! try_step {
     ($e:expr) => (
@@ -165,9 +162,8 @@ impl<R: Router> Identifying<R> {
         }
 
         let frame = try_ready_or!(self, self.channel.poll_frame());
-        let request = try!(ConnectionRequest::decode(&frame));
 
-        match self.router.route(&request.message) {
+        match self.handle_request(frame) {
             Err(err) => {
                 let response = connection_error(err.to_string());
                 try!(self.channel.send_protobuf(response));
@@ -188,7 +184,25 @@ impl<R: Router> Identifying<R> {
                 return Ok(Step::Ready(HandshakeState::Accepting(accepting)));
             }
         };
+    }
 
+    fn handle_request(&mut self, frame: Vec<u8>)
+        -> io::Result<ConnectionData>
+    {
+        let signed_msg = try!(SignedMessage::decode(&frame));
+        let request = try!(ConnectionRequest::decode(&signed_msg.data));
+
+        let conn_data = try!(self.router.route(&request.message));
+
+        // TODO: properly handle this
+        if !verify_message(&signed_msg, &conn_data.public_key) {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "invalid signature"
+            ));
+        }
+
+        return Ok(conn_data);
     }
 }
 

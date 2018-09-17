@@ -28,7 +28,7 @@ impl MatchHandler {
 
         self.reactor_handle.dispatch(events::RegisterClient {
             client_id,
-            token: e.token.clone(),
+            public_key: e.public_key.clone(),
         });
         // TODO: it would be better to actually open the connection here,
         // so that it certainly exists when the client receives this

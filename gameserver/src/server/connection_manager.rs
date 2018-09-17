@@ -3,6 +3,7 @@ use std::io;
 
 use network::{ConnectionTable, ConnectionHandle, Router};
 use reactors::{WireEvent, EventHandler};
+use sodiumoxide::crypto::sign::PublicKey;
 
 use super::GameServerRouter;
 
@@ -28,7 +29,7 @@ impl ConnectionManager {
         &mut self,
         match_uuid: Vec<u8>,
         client_id: u32,
-        token: Vec<u8>,
+        public_key: PublicKey,
         creator: F
     ) -> ConnectionHandle
         where F: FnOnce(ConnectionHandle) -> H,
@@ -37,7 +38,7 @@ impl ConnectionManager {
     {
         let mut table = self.connection_table.lock().unwrap();
         let mut router = self.router.lock().unwrap();
-        let connection_id = table.create(token.clone(), creator);
+        let connection_id = table.create(public_key.clone(), creator);
         router.register_client(match_uuid, client_id, connection_id);
         return table.get(connection_id).unwrap().handle.clone();
     }

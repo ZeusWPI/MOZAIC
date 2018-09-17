@@ -9,6 +9,7 @@ use network::connection_handler::ConnectionHandle;
 use reactors::reactor::ReactorHandle;
 use reactors::{WireEvent, RequestHandler};
 use server::ConnectionManager;
+use sodiumoxide::crypto::sign::PublicKey;
 
 use super::Config;
 use super::pw_rules::{PlanetWars, Dispatch};
@@ -104,7 +105,8 @@ impl PwMatch {
     pub fn register_client(&mut self, event: &events::RegisterClient) {
         if let &mut PwMatchState::Lobby(ref mut lobby) = &mut self.state {
             let client_id = ClientId::new(event.client_id);
-            lobby.add_player(client_id, event.token.clone());
+            let key = PublicKey::from_slice(&event.public_key).unwrap();
+            lobby.add_player(client_id, key);
         }
     }
 
@@ -185,7 +187,7 @@ impl Lobby {
         }
     }
 
-    fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
+    fn add_player(&mut self, client_id: ClientId, public_key: PublicKey) {
         let mut core = RequestHandler::new(
             ClientHandler::new(
                 client_id.as_u32(),
@@ -200,7 +202,7 @@ impl Lobby {
         let handle = self.connection_manager.create_connection(
             self.match_uuid.clone(),
             client_id.as_u32(),
-            connection_token,
+            public_key,
             |_| core
         );
 

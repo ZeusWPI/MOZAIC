@@ -4,6 +4,7 @@ use super::connection_handler::{ConnectionHandler, ConnectionHandle};
 use reactors::{WireEvent, EventHandler};
 use std::io;
 use tokio;
+use sodiumoxide::crypto::sign::PublicKey;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct ClientId(u32);
@@ -23,7 +24,7 @@ impl ClientId {
 pub struct ConnectionData {
     pub connection_id: usize,
     pub handle: ConnectionHandle,
-    pub public_key: Vec<u8>,
+    pub public_key: PublicKey,
 }
 
 pub struct ConnectionTable {
@@ -39,7 +40,7 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<H, F>(&mut self, public_key: Vec<u8>, creator: F)
+    pub fn create<H, F>(&mut self, public_key: PublicKey, creator: F)
         -> usize
         where F: FnOnce(ConnectionHandle) -> H,
               H: EventHandler<Output = io::Result<WireEvent>>,

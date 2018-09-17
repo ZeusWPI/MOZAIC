@@ -7,6 +7,7 @@ use reactors::{WireEvent, RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
 use rand::{thread_rng, Rng};
+use sodiumoxide::crypto::sign::PublicKey;
 
 use reactors::{EventBox, AnyEvent};
 
@@ -37,7 +38,8 @@ impl ControlHandler {
         let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
-        let token = e.control_token.clone();
+        // TODO: dont panic on invalid key
+        let owner_key = PublicKey::from_slice(&e.owner_public_key).unwrap();
         let mut match_uuid = vec![0u8; 16];
         thread_rng().fill(&mut match_uuid[..]);
 
@@ -51,7 +53,7 @@ impl ControlHandler {
         let match_owner = self.connection_manager.create_connection(
             match_uuid.clone(),
             0, // owner is always client-id 0. Is this how we want it?
-            token,
+            owner_key,
             |_| core
         );
 

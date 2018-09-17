@@ -16,6 +16,7 @@ use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::ConnectionRouter;
 use reactors::RequestHandler;
+use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
 
 use self::control_handler::ControlHandler;
 
@@ -55,8 +56,11 @@ impl Future for Server {
             router.clone()
         );
 
+        let control_pubkey = PublicKey::from_slice(&self.config.public_key)
+            .expect("invalid public key");
+
         let control_connection = connection_table.lock().unwrap().create(
-            self.config.public_key.clone(),
+            control_pubkey,
             |handle| {
                 let handler = ControlHandler::new(
                     handle,
