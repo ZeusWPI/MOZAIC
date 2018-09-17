@@ -60,7 +60,7 @@ sodium.ready.then(() => {
 });
 
 function run() {
-    const serverControl = new ServerControl(secretKey);
+    const serverControl = new ServerControl(secretKey, publicKey);
 
     serverControl.on(Connected, (_) => {
         serverControl.createMatch(publicKey).then((e) => {

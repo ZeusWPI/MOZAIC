@@ -36,16 +36,18 @@ export class Connection {
 
     private transport?: Transport;
     private _secretKey: Uint8Array;
+    private _remotePublicKey?: Uint8Array;
 
     private _onClose = new SignalDispatcher();
 
 
-    constructor(secretKey: Uint8Array) {
+    constructor(secretKey: Uint8Array, remotePublicKey?: Uint8Array) {
         this.status = ConnectionStatus.OPEN;
         this.buffer = [];
         this.numFlushed = 0;
         this.numReceived = 0;
         this._secretKey = secretKey;
+        this._remotePublicKey = remotePublicKey;
 
         this.requestHandler = new RequestHandler();
         this.responseHandlers = {};
@@ -124,6 +126,10 @@ export class Connection {
 
     public get secretKey() {
         return this._secretKey;
+    }
+
+    public get remotePublicKey() {
+        return this._remotePublicKey;
     }
 
     public get seqNum() {

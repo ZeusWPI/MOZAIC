@@ -16,8 +16,8 @@ export class ServerControl {
     private client: Client;
 
 
-    constructor(privateKey: Uint8Array) {
-        this.client = new Client(privateKey);
+    constructor(privateKey: Uint8Array, remotePublicKey?: Uint8Array) {
+        this.client = new Client(privateKey, remotePublicKey);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {

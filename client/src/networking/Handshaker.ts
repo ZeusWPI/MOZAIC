@@ -9,7 +9,6 @@ import proto = protocol_root.mozaic.protocol;
 export class Handshaker {
     private connection: Connection;
     private transport: Transport;
-    private server_nonce?: Uint8Array;
 
     private _resolve?: () => void;
     private _reject?: (Error) => void;
@@ -30,7 +29,18 @@ export class Handshaker {
 
     public handleMessage(data: Uint8Array) {
         let signedMessage = proto.SignedMessage.decode(data);
-        // TODO: verify signature
+
+        if (this.connection.remotePublicKey) {
+            let valid = sodium.crypto_sign_verify_detached(
+                signedMessage.signature,
+                signedMessage.data,
+                this.connection.remotePublicKey,
+            );
+            if (!valid) {
+                throw new Error("invalid signature");
+            }
+        }
+        
         let response = proto.HandshakeServerMessage.decode(signedMessage.data);
         if (response.challenge) {
             this.sendChallengeResponse(response.challenge.nonce!);
@@ -47,7 +57,6 @@ export class Handshaker {
             }
         }
     }
-
 
     private sendConnectionRequest(message: Uint8Array) {
         let encodedRequest = proto.ConnectionRequest.encode({ message }).finish();

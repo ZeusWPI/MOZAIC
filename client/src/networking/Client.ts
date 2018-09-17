@@ -13,8 +13,8 @@ export interface EventHandler {
 export class Client {
     private connection: Connection;
 
-    constructor(secretKey: Uint8Array) {
-        this.connection = new Connection(secretKey);
+    constructor(secretKey: Uint8Array, remotePublicKey?: Uint8Array) {
+        this.connection = new Connection(secretKey, remotePublicKey);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
