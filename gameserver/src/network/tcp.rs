@@ -1,5 +1,4 @@
 use futures::{Future, Poll, Async, Stream, Sink, StartSend, AsyncSink};
-use futures::sink;
 use futures::sync::mpsc;
 use prost::Message;
 use std::io;
@@ -7,7 +6,6 @@ use std::net::SocketAddr;
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 use std::collections::HashMap;
-use bytes::BytesMut;
 
 use super::protobuf_codec::{ProtobufTransport, MessageStream};
 use super::connection_router::{Router, ConnectionRouter};

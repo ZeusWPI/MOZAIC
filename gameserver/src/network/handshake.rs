@@ -14,11 +14,18 @@ use protocol::{
     ChallengeResponse
 };
 use protocol::handshake_server_message::Payload as ServerMessage;
-use protocol::{ServerChallenge, ConnectionAccepted, ConnectionRefused};
+use protocol::{ServerChallenge, ConnectionAccepted};
 use sodiumoxide::crypto::sign;
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
 use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::utils::memcmp;
+
+mod errors {
+    error_chain! { }
+}
+
+use self::errors::*;
+
 
 const NONCE_NUM_BYTES: usize = 32;
 
@@ -38,6 +45,8 @@ impl<State, Next> Step<State, Next> {
     }
 }
 
+type HandshakeStep<S, R> = io::Result<Step<S, HandshakeState<R>>>;
+
 macro_rules! try_ready_or {
     ($default:expr, $e:expr) => (
         match $e {
@@ -48,11 +57,13 @@ macro_rules! try_ready_or {
     );
 }
 
-type HandshakeStep<S, R> = Result<Step<S, HandshakeState<R>>, io::Error>;
-
-fn verify_message(message: &SignedMessage, key: &PublicKey) -> bool {
-    let signature = Signature::from_slice(&message.signature).unwrap();
-    return sign::verify_detached(&signature, &message.data, key);
+fn verify_signature(message: &SignedMessage, key: &PublicKey) -> bool {
+    if let Some(signature) = Signature::from_slice(&message.signature) {
+        if sign::verify_detached(&signature, &message.data, key) {
+            return true;
+        }
+    }
+    return false;
 }
 
 fn encode_server_message(message: ServerMessage,
@@ -64,6 +75,7 @@ fn encode_server_message(message: ServerMessage,
         client_nonce: client_nonce.to_vec(),
         payload: Some(message),
     };
+
     let mut buffer = Vec::with_capacity(server_message.encoded_len());
     server_message.encode(&mut buffer).unwrap();
 
@@ -86,7 +98,7 @@ macro_rules! try_step {
 }
 
 impl<R: Router> HandshakeState<R> {
-    fn step(self) -> Result<Step<Self, Self>, io::Error> {
+    fn step(self) -> Result<Step<Self, Self>> {
         match self {
             HandshakeState::Identifying(identifying) => try_step!(identifying),
             HandshakeState::Challenging(challenging) => try_step!(challenging),
@@ -115,8 +127,7 @@ impl<R: Router> Handshaker<R> {
 }
 
 impl<R: Router> Handshaker<R> {
-    // TODO: can we get rid of this boilerplate?
-    fn step(&mut self) -> Poll<(), io::Error> {
+    fn step(&mut self) -> Poll<(), Error> {
         let mut state = mem::replace(&mut self.state, HandshakeState::Done);
         loop {
             if let HandshakeState::Done = state {
@@ -142,9 +153,16 @@ impl<R: Router> Future for Handshaker<R> {
 
     fn poll(&mut self) -> Poll<(), ()> {
         match self.step() {
-            // TODO: handle this case gracefully
-            Err(err) => panic!("error: {}", err),
             Ok(poll) => Ok(poll),
+            Err(ref err) => {
+                eprintln!("handshake failed: {}", err);
+
+                for e in err.iter().skip(1) {
+                    eprintln!("    caused by: {}", e);
+                }
+
+                return Err(());
+            },
         }
     }
 }
@@ -163,26 +181,29 @@ struct Identifying<R: Router> {
 }
 
 impl<R: Router> Identifying<R> {
-    fn step(mut self) -> io::Result<Step<Self, HandshakeState<R>>> {
+    fn step(mut self) -> Result<Step<Self, HandshakeState<R>>> {
         // make sure channel is ready for writing a response
         if self.channel.poll_ready().unwrap().is_not_ready() {
             return Ok(Step::NotReady(self));
         }
 
-        let frame = try_ready_or!(self, self.channel.poll_frame());
+        let frame = try_ready_or!(
+            self,
+            self.channel
+                .poll_frame()
+                .chain_err(|| "failed to receive frame")
+        );
 
-        let signed_msg = try!(SignedMessage::decode(&frame));
-        let request = try!(ConnectionRequest::decode(&signed_msg.data));
+        let signed_msg = SignedMessage::decode(&frame)
+            .chain_err(|| "failed to decode SignedMessage")?;
+        let request = ConnectionRequest::decode(&signed_msg.data)
+            .chain_err(|| "failed to decode ConnectionRequest")?;
 
+        let connection_data = self.router.route(&request.message)
+            .chain_err(|| "routing failed")?;
 
-        let conn_data = try!(self.router.route(&request.message));
-
-        // TODO: properly handle this
-        if !verify_message(&signed_msg, &conn_data.public_key) {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "invalid signature"
-            ));
+        if !verify_signature(&signed_msg, &connection_data.public_key) {
+            bail!("invalid signature");
         }
 
         let server_nonce = randombytes(NONCE_NUM_BYTES);
@@ -194,16 +215,19 @@ impl<R: Router> Identifying<R> {
         );
 
         let secret_key = self.router.secret_key.clone();
+
         let challenge_msg = encode_server_message(
             challenge,
             &request.client_nonce,
             &secret_key
         );
 
-        try!(self.channel.send_protobuf(challenge_msg));
+        self.channel.send_protobuf(challenge_msg)
+            .chain_err(|| "send failed")?;
+
         let challenging = Challenging {
             channel: self.channel,
-            connection_data: conn_data,
+            connection_data: connection_data,
             client_nonce: request.client_nonce,
             server_nonce,
             secret_key,
@@ -227,7 +251,7 @@ struct Challenging {
 }
 
 impl Challenging {
-    fn step<R>(mut self) -> io::Result<Step<Self, HandshakeState<R>>>
+    fn step<R>(mut self) -> Result<Step<Self, HandshakeState<R>>>
         where R: Router
     {
         // make sure channel is ready for writing a response
@@ -235,34 +259,40 @@ impl Challenging {
             return Ok(Step::NotReady(self));
         }
 
-        let frame = try_ready_or!(self, self.channel.poll_frame());
-        let signed_msg = try!(SignedMessage::decode(&frame));
-        if !verify_message(&signed_msg, &self.connection_data.public_key) {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "invalid signature"
-            ));
+        let frame = try_ready_or!(
+            self,
+            self.channel
+                .poll_frame()
+                .chain_err(|| "failed to receive frame")
+        );
+
+        let signed_msg = SignedMessage::decode(&frame)
+            .chain_err(|| "failed to decode SignedMessage")?;
+
+        if !verify_signature(&signed_msg, &self.connection_data.public_key) {
+            bail!("invalid signature");
         }
 
-        let response = try!(ChallengeResponse::decode(&signed_msg.data));
+        let response = ChallengeResponse::decode(&signed_msg.data)
+            .chain_err(|| "failed to decode ChallengeResponse")?;
 
         if !memcmp(&self.server_nonce, &response.server_nonce) {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "invalid nonce"
-            ));
+            bail!("invalid nonce");
         }
 
         // succesfully completed challenge, accept connection.
         let accepted = ServerMessage::ConnectionAccepted(
             ConnectionAccepted {}
         );
-        let response = encode_server_message(
+        let message = encode_server_message(
             accepted,
             &self.client_nonce,
             &self.secret_key
         );
-        try!(self.channel.send_protobuf(response));
+
+        self.channel.send_protobuf(message)
+            .chain_err(|| "failed to send ConnectionAccepted")?;
+
         let accepting = Accepting {
             channel: self.channel,
             connection_data: self.connection_data,
@@ -284,8 +314,13 @@ struct Accepting {
 }
 
 impl Accepting {
-    fn step<R: Router>(mut self) -> HandshakeStep<Self, R> {
-        try_ready_or!(self, self.channel.poll_complete());
+    fn step<R: Router>(mut self) -> Result<Step<Self, HandshakeState<R>>> {
+        try_ready_or!(
+            self,
+            self.channel
+                .poll_complete()
+                .chain_err(|| "failed to send ConnectionAccepted")
+        );
         self.connection_data.handle.connect(self.channel);
         return Ok(Step::Ready(HandshakeState::Done));
     }
@@ -302,8 +337,13 @@ struct Refusing {
 }
 
 impl Refusing {
-    fn step<R: Router>(mut self) -> HandshakeStep<Self, R> {
-        try_ready_or!(self, self.channel.poll_complete());
+    fn step<R: Router>(mut self) -> Result<Step<Self, HandshakeState<R>>> {
+        try_ready_or!(
+            self,
+            self.channel
+                .poll_complete()
+                .chain_err(|| "failed to send ConnectionRefused")
+        );
         return Ok(Step::Ready(HandshakeState::Done));
     }
 }
