@@ -2,62 +2,9 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
-message ClientConnect {
-    bytes match_uuid = 1;
-    uint32 client_id = 2;
-}
-
-message ServerControlConnect {}
-
-message GameserverConnect {
-    oneof connect {
-        ClientConnect client = 1;
-        ServerControlConnect server_control = 2;
-    }
-}
-
-// HANDSHAKE
-
-message SignedMessage {
-    bytes data = 1;
-    bytes signature = 2;
-}
-
-message ConnectionRequest {
-    // TODO: maybe we want to include some headers here
-
-
-    bytes client_nonce = 1;
-
-    // This message should identify the connecting client with the
-    // server.
-    bytes message = 2;
-}
-
-message ChallengeResponse {
-    bytes server_nonce = 1;
-    bytes kx_client_pk = 2;
-}
-
-message HandshakeServerMessage {
-    bytes client_nonce = 1;
-    oneof payload {
-        ServerChallenge challenge = 2;
-        ConnectionAccepted connection_accepted = 3;
-        ConnectionRefused connection_refused = 4;
-    }
-}
-
-message ServerChallenge {
-    bytes server_nonce = 1;
-    bytes kx_server_pk = 2;
-}
-
-message ConnectionAccepted { }
-
-message ConnectionRefused {
-    string message = 1;
-}
+// ******************************
+// *          NETWORK           *
+// ******************************
 
 message Frame {
     uint32 channel_num = 1;
@@ -90,6 +37,94 @@ message Response {
     bytes data = 3;
 }
 
-message CloseRequest {
-    // for future use
+message CloseRequest {}
+
+
+// ******************************
+// *         HANDSHAKE          *
+// ******************************
+
+
+// All messages exchanged in the handshake are signed, and put into
+// this enveloppe. This way, we can be sure that all handshake messages
+// are authentic and trusted.
+message SignedMessage {
+    bytes data = 1;
+    bytes signature = 2;
 }
+
+// The client sends a ConnectionRequest to initiate the connection.
+// TODO: maybe we want to include some headers here, such as version information
+message ConnectionRequest {
+    // The client picks a nonce and shares it with the server. The server will
+    // then include this nonce in each handshake message it sends, ensuring to
+    // the client that the messages are fresh, and we are not being bamboozled
+    // with some kind of replay attack.
+    bytes client_nonce = 1;
+
+    // A message that allows the server to route this request to a conneciton.
+    // (for an example, see the 'routing' section in this file).
+    bytes message = 2;
+}
+
+message HandshakeServerMessage {
+    // The nonce that the client shared with us to protect against replay
+    // attacks.
+    bytes client_nonce = 1;
+    // message contents
+    oneof payload {
+        ServerChallenge challenge = 2;
+        ConnectionAccepted connection_accepted = 3;
+        ConnectionRefused connection_refused = 4;
+    }
+}
+
+// Share a 
+message ServerChallenge {
+    // The server picks a nonce and shares it with the client, who will
+    // have to include it in its challenge response, authenticating the
+    // client. 
+    bytes server_nonce = 1;
+    
+    // The public key that the server is offering for key exchange.
+    bytes kx_server_pk = 2;
+}
+
+message ChallengeResponse {
+    // The server nonce, for authentication.
+    bytes server_nonce = 1;
+    // The public key the client is offering for key exchange.
+    bytes kx_client_pk = 2;
+}
+
+
+// The connection was accepted, yay!
+message ConnectionAccepted { }
+
+// Something went wrong.
+message ConnectionRefused {
+    string message = 1;
+}
+
+
+// ******************************
+// *          ROUTING           *
+// ******************************
+
+// A routing message for a MOZAIC gameserver.
+// (this is put in the 'message' field in a ConnectionRequest)
+message GameserverConnect {
+    oneof connect {
+        // connect as a a game client
+        ClientConnect client = 1;
+        // connect as a server owner
+        ServerControlConnect server_control = 2;
+    }
+}
+
+message ClientConnect {
+    bytes match_uuid = 1;
+    uint32 client_id = 2;
+}
+
+message ServerControlConnect {}
