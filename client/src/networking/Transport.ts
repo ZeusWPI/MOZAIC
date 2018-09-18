@@ -66,7 +66,6 @@ export class Transport {
     }
 
     public send(packet: proto.Packet) {
-        console.log(`sending ${JSON.stringify(packet.toJSON())}`);
         this.lastSeqSent = packet.seqNum;
         this.lastAckSent = packet.ackNum;
 
@@ -90,7 +89,6 @@ export class Transport {
             }
             case TransportState.CONNECTED: {
                 const packet = this.encryptor!.decrypt_packet(data);
-                console.log(`received ${JSON.stringify(packet.toJSON())}`);
                 this.connection.handlePacket(packet);
                 
                 if (this.lastSeqSent == this.connection.seqNum

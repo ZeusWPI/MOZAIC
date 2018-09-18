@@ -162,11 +162,9 @@ export class Connection {
         }
 
         if (ackNum > this.numFlushed) {
-            console.log(`flushing ${ackNum - this.numFlushed} packets`);
             this.buffer.splice(0, ackNum - this.numFlushed);
             this.numFlushed = ackNum;
         }
-        console.log(`buffer has ${this.buffer.length} items`);
 
         
         if (packet.request) {

@@ -43,7 +43,7 @@ export class TcpStreamHandler {
             if (transport) {
                 transport.handleMessage(frame.data);
             } else {
-                console.log('message has no channel');
+                console.error('message has no channel');
             }
         });
     }
@@ -66,14 +66,10 @@ export class TcpStreamHandler {
 
     public sendFrame(frame: proto.IFrame) {
         this.stream.write(proto.Frame.encode(frame));
-        console.log('sent frame');
     }
 
     public connect() {
         this.stream.connect(this.params.host, this.params.port);
-        this.stream.onClose.one(() => {
-            console.log('disconnect');
-        });
     }
 
     public get onConnect() {
