@@ -4,13 +4,11 @@ use futures::{Stream, Sink, Poll, Async};
 use prost::Message as ProtobufMessage;
 
 use network::tcp::Channel;
-use network::crypto::SessionKeys;
+use network::crypto::{SessionKeys, Encryptor};
 
-use protocol::{Packet, EncryptedPacket};
+use protocol::Packet;
 use protocol::packet::Payload;
 use super::connection_state::ConnectionState;
-
-use sodiumoxide::crypto::aead;
 
 
 pub struct NetworkMessage {
@@ -22,11 +20,7 @@ pub struct Transport {
     channel: Channel,
     last_seq_sent: u32,
     last_ack_sent: u32,
-
-    tx: aead::Key,
-    rx: aead::Key,
-
-    nonce: aead::Nonce,
+    encryptor: Encryptor
 }
 
 impl Transport {
@@ -37,11 +31,8 @@ impl Transport {
             last_seq_sent: state.num_flushed as u32,
             // TODO: what should this value be?
             last_ack_sent: 0,
+            encryptor: Encryptor::from_keys(&keys),
             channel,
-            
-            nonce: aead::gen_nonce(),
-            tx: aead::Key::from_slice(&keys.tx[..]).unwrap(),
-            rx: aead::Key::from_slice(&keys.rx[..]).unwrap(),
         }
     }
 
@@ -83,32 +74,16 @@ impl Transport {
 
     fn send_packet(&mut self, packet: Packet) -> Poll<(), io::Error> {
         try_ready!(self.channel.poll_complete());
+
         self.last_seq_sent = packet.seq_num;
         self.last_ack_sent = packet.ack_num;
 
         let mut data_buffer = Vec::with_capacity(packet.encoded_len());
-        // encoding can only fail because the buffer does not have
-        // enough space allocated, but we just allocated the required
-        // space.
         packet.encode(&mut data_buffer).unwrap();
 
+        let encrypted = self.encryptor.encrypt(&data_buffer);
 
-        let data = aead::seal(
-            &data_buffer,
-            None,
-            &self.nonce,
-            &self.tx,
-        );
-
-        let nonce = self.nonce[..].to_vec();
-        self.nonce.increment_le_inplace();
-
-
-        let encrypted = EncryptedPacket { nonce, data };
-        let mut buffer = Vec::with_capacity(encrypted.encoded_len());
-        encrypted.encode(&mut buffer).unwrap();
-
-        let res = try!(self.channel.start_send(buffer));
+        let res = try!(self.channel.start_send(encrypted));
         assert!(res.is_ready(), "writing to channel blocked");
         return Ok(Async::Ready(()));
     }
@@ -156,24 +131,8 @@ impl Transport {
         return self.receive_message(state);
     }
 
-    fn decode_packet(&self, bytes: &[u8]) -> io::Result<Packet> {
-        let encrypted = try!(EncryptedPacket::decode(bytes));
-        let nonce = match aead::Nonce::from_slice(&encrypted.nonce) {
-            None => panic!("invalid nonce"),
-            Some(nonce) => nonce,
-        };
-
-        let res = aead::open(
-            &encrypted.data,
-            None,
-            &nonce,
-            &self.rx,
-        );
-        let data = match res {
-            Ok(data) => data,
-            Err(()) => panic!("decrypetion failed"),
-        };
-
+    fn decode_packet(&mut self, bytes: &[u8]) -> io::Result<Packet> {
+        let data = try!(self.encryptor.decrypt(bytes));
         let packet = try!(Packet::decode(&data));
         return Ok(packet);
     }
