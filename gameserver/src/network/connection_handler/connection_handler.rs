@@ -10,7 +10,7 @@ use protocol::Response;
 use protocol::packet::Payload;
 use events;
 use network::tcp::Channel;
-
+use network::crypto::SessionKeys;
 
 use super::transport::Transport;
 use super::connection_state::{ConnectionState, ConnectionStatus};
@@ -70,8 +70,8 @@ impl<H> ConnectionHandler<H>
                     // TODO: properly communicate that we are quiting
                     return Ok(Async::Ready(()));
                 }
-                Some(ConnectionCommand::Connect(channel)) => {
-                    let t = Transport::new(channel, &self.state);
+                Some(ConnectionCommand::Connect { channel, keys }) => {
+                    let t = Transport::new(channel, keys, &self.state);
                     self.transport_state = TransportState::Connected(t);
                     // TODO: can we work around this box?
                     self.request_handler.handle_event(
@@ -214,7 +214,10 @@ impl<H> Future for ConnectionHandler<H>
 }
 
 pub enum ConnectionCommand {
-    Connect(Channel),
+    Connect {
+        channel: Channel,
+        keys: SessionKeys,
+    },
     Send(WireEvent),
 }
 
@@ -235,8 +238,8 @@ impl ConnectionHandle {
         self.connection_id
     }
 
-    pub fn connect(&mut self, channel: Channel) {
-        self.send_command(ConnectionCommand::Connect(channel));
+    pub fn connect(&mut self, channel: Channel, keys: SessionKeys) {
+        self.send_command(ConnectionCommand::Connect { channel, keys });
     }
 
     pub fn dispatch<E>(&mut self, event: E)

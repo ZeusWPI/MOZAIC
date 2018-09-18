@@ -341,7 +341,7 @@ impl Accepting {
                 .poll_complete()
                 .chain_err(|| "failed to send ConnectionAccepted")
         );
-        self.connection_data.handle.connect(self.channel);
+        self.connection_data.handle.connect(self.channel, self.session_keys);
         return Ok(Step::Ready(HandshakeState::Done));
     }
 }

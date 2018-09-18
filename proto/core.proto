@@ -64,6 +64,11 @@ message Frame {
     bytes data = 2;
 }
 
+message EncryptedPacket {
+    bytes nonce = 1;
+    bytes data = 2;
+}
+
 message Packet {
     uint32 seq_num = 1;
     uint32 ack_num = 2;

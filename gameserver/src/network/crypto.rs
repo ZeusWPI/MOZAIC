@@ -35,6 +35,6 @@ impl KxKeypair {
 }
 
 pub struct SessionKeys {
-    rx: kx::SessionKey,
-    tx: kx::SessionKey,
+    pub rx: kx::SessionKey,
+    pub tx: kx::SessionKey,
 }
