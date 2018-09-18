@@ -5,6 +5,8 @@ import { Connection } from "./Connection";
 import { SignalDispatcher, ISignal } from "ste-signals";
 import { Handshaker } from "./Handshaker";
 
+import * as sodium from 'libsodium-wrappers';
+
 
 export enum TransportState {
     DISCONNECTED,
@@ -14,12 +16,14 @@ export enum TransportState {
     ERROR,
 };
 
+// TODO: split this into a handshaking and transport step
 export class Transport {
     private channelNum: number;
     private state: TransportState;
     private stream: TcpStreamHandler;
 
     private handshaker: Handshaker;
+    private encryptor?: Encryptor;
 
     lastSeqSent: number;
     lastAckSent: number;
@@ -50,8 +54,9 @@ export class Transport {
     public connect(message: Uint8Array) {
         this.state = TransportState.HANDSHAKING;
         this.handshaker.initiate(message)
-            .then(() => {
+            .then((sessionKeys) => {
                 this.state = TransportState.CONNECTED;
+                this.encryptor = new Encryptor(sessionKeys);
                 this.connection.connect(this);
             })
             .catch((err) => {
@@ -64,7 +69,9 @@ export class Transport {
         console.log(`sending ${JSON.stringify(packet.toJSON())}`);
         this.lastSeqSent = packet.seqNum;
         this.lastAckSent = packet.ackNum;
-        this.sendFrame(proto.Packet.encode(packet).finish());
+
+        let bytes = this.encryptor!.encrypt_packet(packet);
+        this.sendFrame(bytes);
     }
 
     public sendAck() {
@@ -82,7 +89,7 @@ export class Transport {
                 break;
             }
             case TransportState.CONNECTED: {
-                const packet = proto.Packet.decode(data);
+                const packet = this.encryptor!.decrypt_packet(data);
                 console.log(`received ${JSON.stringify(packet.toJSON())}`);
                 this.connection.handlePacket(packet);
                 
@@ -119,5 +126,50 @@ export class Transport {
         this.state = TransportState.FINISHED;
         this.stream.closeChannel(this.channelNum);
         this._onFinish.dispatch();
+    }
+}
+
+// TODO: document this better
+export class Encryptor {
+    private keys: sodium.CryptoKX;
+    private sendNonce: Uint8Array;
+
+    constructor(keys: sodium.CryptoKX) {
+        this.keys = keys;
+        this.sendNonce = sodium.randombytes_buf(
+            sodium.crypto_aead_chacha20poly1305_ietf_NPUBBYTES
+        );
+    }
+
+    public encrypt_packet(packet: proto.Packet): Uint8Array {
+        let data = proto.Packet.encode(packet).finish();
+
+        // make sure the nonce is fresh
+        sodium.increment(this.sendNonce);
+
+        let encrypted = sodium.crypto_aead_chacha20poly1305_ietf_encrypt(
+            data,                           // data
+            null,                           // additional data
+            null,                           // secret nonce (not used)
+            this.sendNonce,                 // public nonce
+            this.keys.sharedTx,             // key
+        );
+        
+        return proto.EncryptedPacket.encode({
+            nonce: this.sendNonce,
+            data: encrypted,
+        }).finish();
+    }
+
+    public decrypt_packet(data: Uint8Array) : proto.Packet {
+        let encryptedPacket = proto.EncryptedPacket.decode(data);
+        let decrypted = sodium.crypto_aead_chacha20poly1305_ietf_decrypt(
+            null,                           // secret nonce (not used)
+            encryptedPacket.data,           // data
+            null,                           // additional data
+            encryptedPacket.nonce,          // public nonce
+            this.keys.sharedRx,             // key
+        );
+        return proto.Packet.decode(decrypted);
     }
 }
