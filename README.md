@@ -48,6 +48,8 @@ Important resources:
 1. Install rust and cargo (take look [here](https://rustup.rs/) if you're using an older software repository such as Ubuntu apt).
     * Rust >= 1.18.0
     * Cargo >= 0.16.0
+    * Clang >= 3.9
+    * Libsodium 1.0.16 ([installation][https://download.libsodium.org/doc/installation])
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
 1. Run the botrunner again (still in the `gameserver` directory) with:
