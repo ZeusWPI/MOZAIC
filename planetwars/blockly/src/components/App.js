@@ -1,11 +1,14 @@
 import React from 'react';
-import Test from 'components/Test';
-import BlocklyEditor from 'components/BlocklyEditor';
+import classNames from 'classnames/bind';
+import styleIdentifiers from './app.scss';
+import mainstyles from './main.scss';
+
+const styles = classNames.bind(styleIdentifiers);
 
 export default function App() {
   return (
-    <div>
-      <BlocklyEditor />
+    <div className={styles('app')}>
+      <div id="blockly" className={styles('blockly')} />
     </div>
   );
 }

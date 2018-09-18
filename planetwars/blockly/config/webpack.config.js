@@ -31,7 +31,9 @@ const developmentConfig = merge([
     entry: {
       main: projConf.inProjectSrc(projConf.main),
     },
+    devtool: 'eval-source-map',
   },
+
   parts.outputPath(),
   parts.loadCSS({ useStyleLoader: true }),
   {

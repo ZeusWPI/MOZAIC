@@ -1,8 +1,9 @@
 import React from 'react';
-import Blockly from 'node-blockly';
 
-const Blocks = require('./src/blocks');
-const PlanetWars = require('./src/planetwars');
+const Blockly = require('node-blockly/browser');
+
+const Blocks = require('./blocks');
+const PlanetWars = require('./planetwars');
 
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
@@ -87,8 +88,6 @@ function inject(div_id) {
   return new PlanetWarsBlockly(workspace);
 }
 
-console.log(Blockly.Blocks);
-
 class PlanetWarsBlockly {
   constructor(workspace) {
     this.workspace = workspace;
@@ -118,19 +117,14 @@ class PlanetWarsBlockly {
   }
 }
 
-module.exports = {
-  inject,
-};
-
-class BlocklyEditor extends React.Component {
-  constructor(props) {
-    super(props);
-    this.ws = new Blockly.Workspace();
-  }
-
-  render() {
-    return <div>{Blockly.JavaScript.workspaceToCode(this.ws)}</div>;
-  }
-}
-
-export default BlocklyEditor;
+export default inject;
+//
+// export default class BlocklyEditor extends React.Component {
+//   constructor(props) {
+//     super(props);
+//   }
+//
+//   render() {
+//     return <div>{inject('blockly')}</div>;
+//   }
+// }
