@@ -9,6 +9,7 @@ import { h } from 'react-hyperscript-helpers';
 import Root from './Root';
 import { FatalErrorView } from './components';
 import { initialState } from './reducers/index';
+import { rootSaga } from './sagas';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 
@@ -22,6 +23,9 @@ const { configureStore, history } = require('./store/configureStore');
 export const store = configureStore(initialState);
 
 log.info('[STARTUP] Store configured');
+
+store.runSaga(rootSaga);
+log.info('[STARTUP] Root saga started');
 
 // Config the global Bluebird Promise
 // We should still 'import * as Promise from bluebird' everywhere to have it at

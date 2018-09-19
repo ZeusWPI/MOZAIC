@@ -6,46 +6,70 @@ import Section from './Section';
 import { MapPreview, ImportMap } from './MapPreview';
 import { remote } from 'electron';
 import { Importer } from '../../utils/Importer';
+import { PwConfig, Address } from '../../reducers/lobby';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./PlayPage.scss');
 
 export interface ConfigProps {
-  importMap: (mapMeta: M.MapMeta) => void;
   maps: M.MapList;
-  setConfig(conf: WeakConfig): void;
+  config: PwConfig;
+  address: Address;
+  serverRunning: boolean;
+  setConfig: (config: PwConfig) => void;
+  setAddress: (address: Address) => void;
+  importMap: (mapMeta: M.MapMeta) => void;
 }
 
-export type ConfigState = WeakConfig & {};
-
 export class Config extends React.Component<ConfigProps> {
-  public state: ConfigState = {
-    type: 'weak',
-    mapId: undefined,
-    maxTurns: 500,
-    host: '127.0.0.1',
-    port: 9142,
-  };
 
   public render() {
-    const { mapId, maxTurns, host, port } = this.state;
+    const { address, config } = this.props;
     const maps = Object.keys(this.props.maps).map((id) => this.props.maps[id]);
-    const map = (mapId) ? this.props.maps[mapId] : undefined;
+    const map = (config.mapId) ? this.props.maps[config.mapId] : undefined;
 
     return (
       <Section header={"Config"}>
-        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={mapId} importMap={this.props.importMap}/>
-        <MaxTurnsField value={maxTurns} setMax={this.setMax} />
-        <ServerAddressField value={host} setServer={this.setServer} />
-        <PortField value={port} setPort={this.setPort} />
+        <MapSelector
+          maps={maps}
+          selectMap={this.selectMap}
+          selectedMap={config.mapId}
+          importMap={this.props.importMap}
+        />
+        <MaxTurnsField value={config.maxTurns} setMax={this.setMax} />
+        <ServerAddressField
+          value={address.host}
+          setServer={this.setServer}
+          disabled={this.props.serverRunning}
+        />
+        <PortField
+          value={address.port}
+          setPort={this.setPort}
+          disabled={this.props.serverRunning}
+        />
       </Section>
     );
   }
-  private selectMap = (mapId: M.MapId) => this.setState({ mapId }, this.callBack);
-  private setMax = (maxTurns: number) => this.setState({ maxTurns }, this.callBack);
-  private setServer = (host: string) => this.setState({ host }, this.callBack);
-  private setPort = (port: number) => this.setState({ port }, this.callBack);
-  private callBack = () => this.props.setConfig(this.state);
+
+  private selectMap = (mapId: M.MapId) => {
+    const newConfig = {... this.props.config, mapId };
+    this.props.setConfig(newConfig);
+  }
+
+  private setMax = (maxTurns: number) => {
+    const newConfig = {...this.props.config, maxTurns };
+    this.props.setConfig(newConfig);
+  }
+
+  private setServer = (host: string) => {
+    const newAddress = { ...this.props.address, host };
+    this.props.setAddress(newAddress);
+  }
+
+  private setPort = (port: number) => {
+    const newAddress = { ...this.props.address, port };
+    this.props.setAddress(newAddress);
+  }
 }
 
 export interface MaxTurnProps { value: number; setMax(val: number): void; }
@@ -64,15 +88,20 @@ export const MaxTurnsField: React.SFC<MaxTurnProps> = (props) => {
   );
 };
 
-export interface ServerAddressProps { value: string; setServer(val: string): void; }
+export interface ServerAddressProps {
+  value: string;
+  setServer: (val: string) => void;
+  disabled: boolean;
+}
+
 export const ServerAddressField: React.SFC<ServerAddressProps> = (props) => {
   return (
     <HorizontalInput label="Address" id="address">
       <input
         className="input"
         type="text"
-        placeholder="localhost"
         value={props.value}
+        disabled={props.disabled}
         // tslint:disable-next-line:jsx-no-lambda
         onChange={(evt: any) => props.setServer(evt.target.value)}
       />
@@ -80,14 +109,19 @@ export const ServerAddressField: React.SFC<ServerAddressProps> = (props) => {
   );
 };
 
-export interface PortProps { value: number; setPort(val: number): void; }
+export interface PortProps {
+  value: number;
+  setPort: (val: number) => void;
+  disabled: boolean;
+}
+
 export const PortField: React.SFC<PortProps> = (props) => {
   return (
     <HorizontalInput label="Port" id="port">
       <input
         className="input"
         type="number"
-        placeholder="9142"
+        disabled={props.disabled}
         value={props.value}
         // tslint:disable-next-line:jsx-no-lambda
         onChange={(evt: any) => props.setPort(evt.target.value)}

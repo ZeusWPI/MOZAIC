@@ -20,8 +20,8 @@ import { MatchesState, matchesReducer } from './matches';
 import { NotificationsState, notificationReducer } from './notifications';
 import { MapsState, mapsReducer } from './maps';
 
-import { HostPageState, hostReducer } from './hostPage';
 import { NavbarState, navbarReducer } from './navbar';
+import { LobbyState, lobbyReducer, defaultLobbyState } from './lobby';
 
 export interface GState {
   readonly routing: RouterState;
@@ -30,8 +30,8 @@ export interface GState {
   readonly matches: MatchesState;
   readonly notifications: NotificationsState;
   readonly maps: MapsState;
+  readonly lobby: LobbyState;
 
-  readonly host: HostPageState;
   readonly navbar: NavbarState;
 }
 
@@ -42,11 +42,8 @@ export const initialState: GState = {
   bots: {},
   matches: {},
   maps: {},
+  lobby: defaultLobbyState,
   notifications: [],
-  host: {
-    slots: [],
-    serverRunning: false,
-  },
 };
 
 export const rootReducer = combineReducers<GState>({
@@ -56,7 +53,7 @@ export const rootReducer = combineReducers<GState>({
   matches: matchesReducer,
   maps: mapsReducer,
   notifications: notificationReducer,
+  lobby: lobbyReducer,
 
-  host: hostReducer,
   navbar: navbarReducer,
 });
