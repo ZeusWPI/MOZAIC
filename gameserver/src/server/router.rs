@@ -3,7 +3,7 @@ use prost::Message;
 use protocol as proto;
 use std::io::{Error, ErrorKind};
 
-use network::connection_router::Router;
+use network::connection_router::{Router, Routing};
 
 struct ConnectionData {
     match_uuid: Vec<u8>,
@@ -48,7 +48,7 @@ impl GameServerRouter {
 }
 
 impl Router for GameServerRouter {
-    fn route(&mut self, message: &[u8]) -> Result<usize, Error> {
+    fn route(&self, message: &[u8]) -> Result<Routing<Self>, Error> {
         let connect = try!(proto::GameserverConnect::decode(message));
         match connect.connect.unwrap() {
             proto::gameserver_connect::Connect::Client(c) => {
@@ -57,7 +57,7 @@ impl Router for GameServerRouter {
                     .and_then(|match_clients| {
                         match_clients.get(&c.client_id)
                     })
-                    .cloned()
+                    .map(|&conn_id| Routing::Connection(conn_id))
                     .ok_or_else(|| Error::new(
                         ErrorKind::Other, 
                         "unknown client")
@@ -65,6 +65,7 @@ impl Router for GameServerRouter {
             }
             proto::gameserver_connect::Connect::ServerControl(_) => {
                 self.control_connection
+                    .map(|conn_id| Routing::Connection(conn_id))
                     .ok_or_else(|| Error::new(
                         ErrorKind::Other,
                         "no control connection registered")
