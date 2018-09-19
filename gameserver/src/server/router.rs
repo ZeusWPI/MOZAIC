@@ -107,7 +107,15 @@ impl Router for GameServerRouter {
                 } else {
                     // TODO: THIS IS AN ACTUAL SPAWN OF SATAN
 
-                    let creator = ConnectionCreator::new(move |handle, router: &mut GameServerRouter| {            
+                    let creator = ConnectionCreator::new(move |handle, router: &mut GameServerRouter| {
+                        router.control_connections.insert(
+                            c.uuid.clone(),
+                            handle.id()
+                        );
+                        router.connections.insert(
+                            handle.id(),
+                            ConnectionData::Control { uuid: c.uuid.clone() },
+                        );           
                         let conn_manager = ConnectionManager::new(
                             router.connection_table.clone(),
                             router.self_reference.upgrade().unwrap(),
