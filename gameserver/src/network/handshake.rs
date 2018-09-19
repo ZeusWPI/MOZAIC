@@ -3,8 +3,7 @@ use prost::Message;
 use std::io;
 use std::mem;
 
-use super::connection_router::{Router, ConnectionRouter};
-use super::connection_table::ConnectionData;
+use super::connection_router::{Router, ConnectionRouter, ConnectionRouting};
 use super::tcp::Channel;
 use super::crypto::{KxKeypair, SessionKeys};
 
@@ -100,7 +99,9 @@ macro_rules! try_step {
     )
 }
 
-impl<R: Router> HandshakeState<R> {
+impl<R> HandshakeState<R>
+    where R: Router + Send + 'static
+{
     fn step(self) -> Result<Step<Self, Self>> {
         match self {
             HandshakeState::Identifying(identifying) => try_step!(identifying),
@@ -129,7 +130,9 @@ impl<R: Router> Handshaker<R> {
     }
 }
 
-impl<R: Router> Handshaker<R> {
+impl<R> Handshaker<R>
+    where R: Router + Send + 'static
+{
     fn step(&mut self) -> Poll<(), Error> {
         let mut state = mem::replace(&mut self.state, HandshakeState::Done);
         loop {
@@ -150,7 +153,9 @@ impl<R: Router> Handshaker<R> {
     }
 }
 
-impl<R: Router> Future for Handshaker<R> {
+impl<R> Future for Handshaker<R>
+    where R: Router + Send + 'static
+{
     type Item = ();
     type Error = ();
 
@@ -172,9 +177,9 @@ impl<R: Router> Future for Handshaker<R> {
 
 enum HandshakeState<R: Router> {
     Identifying(Identifying<R>),
-    Challenging(Challenging),
+    Challenging(Challenging<R>),
     Refusing(Refusing),
-    Accepting(Accepting),
+    Accepting(Accepting<R>),
     Done,
 }
 
@@ -202,10 +207,10 @@ impl<R: Router> Identifying<R> {
         let request = ConnectionRequest::decode(&signed_msg.data)
             .chain_err(|| "failed to decode ConnectionRequest")?;
 
-        let connection_data = self.router.route(&request.message)
+        let routing = self.router.route(&request.message)
             .chain_err(|| "routing failed")?;
 
-        if !verify_signature(&signed_msg, &connection_data.public_key) {
+        if !verify_signature(&signed_msg, routing.public_key()) {
             bail!("invalid signature");
         }
 
@@ -232,7 +237,7 @@ impl<R: Router> Identifying<R> {
 
         let challenging = Challenging {
             channel: self.channel,
-            connection_data: connection_data,
+            routing,
             client_nonce: request.client_nonce,
             server_nonce,
             secret_key,
@@ -248,9 +253,11 @@ impl<R: Router> From<Identifying<R>> for HandshakeState<R> {
     }
 }
 
-struct Challenging {
+struct Challenging<R>
+    where R: Router
+{
     channel: Channel,
-    connection_data: ConnectionData,
+    routing: ConnectionRouting<R>,
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
     server_nonce: Vec<u8>,
@@ -258,9 +265,10 @@ struct Challenging {
     kx_keypair: KxKeypair,
 }
 
-impl Challenging {
-    fn step<R>(mut self) -> Result<Step<Self, HandshakeState<R>>>
-        where R: Router
+impl<R> Challenging<R>
+    where R: Router
+{
+    fn step(mut self) -> Result<Step<Self, HandshakeState<R>>>
     {
         // make sure channel is ready for writing a response
         if self.channel.poll_ready().unwrap().is_not_ready() {
@@ -277,7 +285,7 @@ impl Challenging {
         let signed_msg = SignedMessage::decode(&frame)
             .chain_err(|| "failed to decode SignedMessage")?;
 
-        if !verify_signature(&signed_msg, &self.connection_data.public_key) {
+        if !verify_signature(&signed_msg, &self.routing.public_key()) {
             bail!("invalid signature");
         }
 
@@ -306,7 +314,7 @@ impl Challenging {
 
         let accepting = Accepting {
             channel: self.channel,
-            connection_data: self.connection_data,
+            routing: self.routing,
             session_keys,
         };
         return Ok(Step::Ready(accepting.into()));
@@ -320,34 +328,38 @@ impl Challenging {
     }
 }
 
-impl<R: Router> From<Challenging> for HandshakeState<R> {
-    fn from(challenging: Challenging) -> Self {
+impl<R: Router> From<Challenging<R>> for HandshakeState<R> {
+    fn from(challenging: Challenging<R>) -> Self {
         HandshakeState::Challenging(challenging)
     }
 }
 
 // TODO: is this step required?
-struct Accepting {
+struct Accepting<R>
+    where R: Router
+{
     channel: Channel,
-    connection_data: ConnectionData,
+    routing: ConnectionRouting<R>,
     session_keys: SessionKeys,
 }
 
-impl Accepting {
-    fn step<R: Router>(mut self) -> Result<Step<Self, HandshakeState<R>>> {
+impl<R> Accepting<R>
+    where R: Router + Send + 'static
+{
+    fn step(mut self) -> Result<Step<Self, HandshakeState<R>>> {
         try_ready_or!(
             self,
             self.channel
                 .poll_complete()
                 .chain_err(|| "failed to send ConnectionAccepted")
         );
-        self.connection_data.handle.connect(self.channel, self.session_keys);
+        self.routing.connect(self.channel, self.session_keys);
         return Ok(Step::Ready(HandshakeState::Done));
     }
 }
 
-impl<R: Router> From<Accepting> for HandshakeState<R> {
-    fn from(accepting: Accepting) -> Self {
+impl<R: Router> From<Accepting<R>> for HandshakeState<R> {
+    fn from(accepting: Accepting<R>) -> Self {
         HandshakeState::Accepting(accepting)
     }
 }
