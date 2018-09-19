@@ -54,8 +54,6 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const { slot, index } = this.props;
     const { token, name, clientId } = slot;
 
-    console.log(slot);
-
     const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
     return (
       <div className={`${styles.slotElement} ${this.statusToClass(slot)} ${kicked}`}>

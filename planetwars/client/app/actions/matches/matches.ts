@@ -60,7 +60,7 @@ export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
     const botConfig = { command, args };
     const host = address.host;
     const port = address.port;
-    const token = Buffer.from(bot.token, 'utf-8');
+    const token = Buffer.from(bot.token, 'hex');
     const clientParams = {
       token,
       host,

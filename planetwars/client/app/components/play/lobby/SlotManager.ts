@@ -3,7 +3,7 @@ import { Chance } from 'chance';
 import * as M from '../../../database/models';
 import { generateToken } from '../../../utils/GameRunner';
 import { WeakConfig, StrongConfig } from '../types';
-import { Reactor, events, PwClient } from 'mozaic-client';
+import { PwMatch, events, PwClient } from 'mozaic-client';
 
 export interface Slot {
   name: string;
@@ -17,7 +17,7 @@ export type Slots = { [token: string]: Slot };
 export type Clients = { [clientId: number]: Slot};
 
 export class SlotManager {
-  public matchReactor?: Reactor;
+  public match?: PwMatch;
   public connectedClients: Set<number> = new Set();
   public slots: Slots;
   public slotList: string[];
@@ -85,17 +85,20 @@ export class SlotManager {
     this.notifyListeners();
   }
 
-  public setMatchRunner(matchReactor: Reactor) {
-    this.matchReactor = matchReactor;
+  public setMatch(match: PwMatch) {
+    this.match = match;
 
-    // TODO: typing
-    matchReactor.on(events.ClientConnected).subscribe((event: any) => {
+    match.on(events.ClientConnected).subscribe((event: events.ClientConnected) => {
+      console.log("Got ClientConnected for " + event.clientId);
       this.connectClient(event.clientId);
     });
 
-    // TODO: typing
-    matchReactor.on(events.ClientDisconnected).subscribe((event: any) => {
+    match.on(events.ClientDisconnected).subscribe((event: events.ClientDisconnected) => {
       this.disconnectClient(event.clientId);
+    });
+
+    match.on(events.RegisterClient).subscribe((evt: events.RegisterClient) => {
+      console.log("Got RegisterClient for " + evt.clientId);
     });
 
     this.slotList.forEach((token) => {
@@ -113,11 +116,11 @@ export class SlotManager {
   }
 
   private registerSlot(slot: Slot) {
-    if (this.matchReactor) {
+    if (this.match) {
       const token = Buffer.from(slot.token, 'hex');
-      this.matchReactor.dispatch(events.RegisterClient.create({
+      this.match.send(events.RegisterClient.create({
         clientId: slot.clientId,
-        token: Buffer.from(slot.token, 'utf-8'),
+        token,
       }));
       if (slot.clientId) {
         this.clients[slot.clientId] = slot;
@@ -127,9 +130,9 @@ export class SlotManager {
   }
 
   private unregisterSlot(slot: Slot) {
-    if (this.matchReactor && slot.clientId) {
+    if (this.match && slot.clientId) {
       const clientId = slot.clientId;
-      this.matchReactor.dispatch(events.RemoveClient.create({
+      this.match.send(events.RemoveClient.create({
         clientId: slot.clientId,
       }));
       delete this.clients[clientId];
