@@ -13,6 +13,9 @@ use sodiumoxide::crypto::sign::PublicKey;
 use super::control_handler::ControlHandler;
 use super::connection_manager::ConnectionManager;
 
+// length requirement for control tokens
+const CONTROL_TOKEN_NUM_BYTES: usize = 64;
+
 enum ConnectionData {
     Client {
         match_uuid: Vec<u8>,
@@ -102,6 +105,12 @@ impl Router for GameServerRouter {
                     )
             }
             proto::gameserver_connect::Connect::Control(c) => {
+                if c.uuid.len() != CONTROL_TOKEN_NUM_BYTES {
+                    return Err(Error::new(
+                        ErrorKind::Other,
+                        "invalid token",
+                    ));
+                }
                 if let Some(&conn_id) = self.control_connections.get(&c.uuid) {
                     return Ok(Routing::Connect(conn_id));
                 } else {

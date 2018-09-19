@@ -12,6 +12,8 @@ import proto = protocol_root.mozaic.protocol;
 import { Handler } from "./reactors/RequestHandler";
 import { TcpStreamHandler } from "./networking/TcpStreamHandler";
 
+const CONTROL_TOKEN_NUM_BYTES = 64;
+
 
 export class ServerControl {
     private client: Client;
@@ -20,7 +22,7 @@ export class ServerControl {
 
     constructor(privateKey: Uint8Array, remotePublicKey?: Uint8Array) {
         this.client = new Client(privateKey, remotePublicKey);
-        this.connectionUuid = crypto.randomBytes(32);
+        this.connectionUuid = crypto.randomBytes(CONTROL_TOKEN_NUM_BYTES);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
