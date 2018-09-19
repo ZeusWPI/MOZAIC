@@ -8,7 +8,7 @@ export interface HostPageState {
   slots: M.BotSlot[];
   serverRunning: boolean;
   matchParams?: M.MatchParams;
-  runner?: PwClient.MatchRunner;
+  runner?: PwClient.Reactor;
 }
 
 const defaultState = { slots: [], serverRunning: false };
@@ -31,6 +31,7 @@ export function hostReducer(state: HostPageState = defaultState, action: any) {
         name: 'Player ' + i,
         token: generateToken(),
         connected: false,
+        clientid: i,
       });
     }
 

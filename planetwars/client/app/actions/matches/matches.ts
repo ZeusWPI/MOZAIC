@@ -11,6 +11,7 @@ import { Config } from '../../utils/Config';
 import * as Notify from '../notifications';
 import * as Host from './hosting';
 import { actionCreator } from '../helpers';
+import { createWriteStream } from 'fs';
 
 export const importMatchFromDB = actionCreator<M.Match>('IMPORT_MATCH_FROM_DB');
 export const importMatchError = actionCreator<string>('IMPORT_MATCH_ERROR');
@@ -37,7 +38,7 @@ function createHostedMatch(params: M.MatchParams): M.HostedMatch {
   return match;
 }
 
-export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
+export function joinMatch(address: M.Address, bot: M.InternalBotSlot) {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
 
@@ -48,7 +49,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       type: M.MatchType.joined,
       status: M.MatchStatus.playing,
       timestamp: new Date(),
-      network: host,
+      network: address,
       logPath: Config.matchLogPath(matchId),
       bot,
     };
@@ -57,36 +58,36 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
 
     const [command, ...args] = stringArgv(state.bots[bot.botId].command);
     const botConfig = { command, args };
-    const address = host;
-    const number = 1;
-    const token = new Buffer(bot.token, 'hex');
-    const connectionData = { token, address: host };
-    const logger = new PwClient.Logger(match.logPath);
-    const clientParams = { token, address, logger, number, botConfig };
-
-    PwClient.Client.connect({
-      host: address.host,
-      port: address.port,
-      token: new Buffer(bot.token, 'hex'),
-      logger: new PwClient.Logger(match.logPath),
-    }).then((client) => {
-      const pwClient = new PwClient.PwClient(client, botConfig);
-      pwClient.onExit.subscribe(() => {
+    const host = address.host;
+    const port = address.port;
+    const token = Buffer.from(bot.token, 'hex');
+    const clientParams = {
+      token,
+      host,
+      port,
+      botConfig,
+      clientId: bot.clientid,
+      logSink: createWriteStream(match.logPath),
+    };
+    try {
+      const pwClient = new PwClient.PwClient(clientParams);
+      pwClient.on(PwClient.events.GameFinished).subscribe(() => {
         dispatch(completeMatch(match.uuid));
         const title = 'Match ended';
         const body = `A remote match has ended`;
         const link = `/matches/${match.uuid}`;
         dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
       });
-    }).catch((error) => {
-      console.log(error);
-      dispatch(handleMatchError(match.uuid, error));
+      pwClient.run();
+    } catch (err) {
+      console.log(err);
+      dispatch(handleMatchError(match.uuid, err));
       const title = 'Match errored';
       const body = `A remote match on map has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
-    });
-  };
+    }
+  }
 }
 
 // https://github.com/ZeusWPI/MOZAIC/blob/1f9ab238e96028e3306bfe6b27920f70f9fba430/client/src/test.ts#L38
@@ -97,13 +98,13 @@ export function sendGo() {
     if (!matchParams) { throw Error('Under construction'); }
 
     const config = {
-      max_turns: matchParams.maxTurns,
-      map_file: state.maps[matchParams.map].mapPath,
+      maxTurns: matchParams.maxTurns,
+      mapPath: state.maps[matchParams.map].mapPath,
     };
 
     if (runner) {
       console.log("running");
-      runner.matchControl.startGame(config);
+      runner.dispatch(PwClient.events.StartGame.create(config));
     }
   };
 }
@@ -140,7 +141,7 @@ export function runMatch() {
       };
     });
 
-    const config: PwClient.MatchParams = {
+    const config: PwClient.ServerParams = {
       address: params.address,
       logFile: match.logPath,
       ctrl_token: params.ctrl_token,
@@ -148,31 +149,36 @@ export function runMatch() {
 
     console.log("This probably doesn't work!!!!");
 
-    PwClient.MatchRunner.create(Config.matchRunner, config).then((runner) => {
+    try {
+      const server = new PwClient.ServerRunner(Config.matchRunner, config);
+      server.runServer();
+
+      const runner = new PwClient.Reactor(new PwClient.Logger(0, createWriteStream(match.logPath)));
+
+
       dispatch(Host.serverStarted(runner));
 
-      runner.matchControl.onPlayerConnected.subscribe((clientId) => {
-        dispatch(Host.playerConnected(players[clientId - 1].token));
+      runner.on(PwClient.events.ClientConnected).subscribe((event) => {
+        dispatch(Host.playerConnected(players[event.clientId - 1].token));
       });
-      runner.matchControl.onPlayerDisconnected.subscribe((clientId) => {
-        dispatch(Host.playerDisconnected(players[clientId - 1].token));
+      runner.on(PwClient.events.ClientDisconnected).subscribe((event) => {
+        dispatch(Host.playerDisconnected(players[event.clientId - 1].token));
       });
-      runner.onComplete.subscribe(() => {
+      server.onExit.subscribe(() => {
         dispatch(completeMatch(match.uuid));
         const title = 'Match ended';
         const body = `A match on map '${state.maps[params.map].name}' has ended`;
         const link = `/matches/${match.uuid}`;
         dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
       });
-    })
-    .catch((error) => {
+    } catch (error) {
       dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
       const body = `A match on map '${state.maps[params.map].name}' has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
-    });
-  };
+    }
+  }
 }
 
 export function completeMatch(matchId: M.MatchId) {

@@ -52,7 +52,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
 
   public render() {
     const { slot, index } = this.props;
-    const { token, name } = slot;
+    const { token, name, clientId } = slot;
 
     const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
     return (
@@ -61,6 +61,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
         <p>{token}</p>
         <p>Status: {this.statusToFriendly(slot)}</p>
         <p>Name: {name}</p>
+        <p>Client ID: {clientId}</p>
         <div>
           {this.getActions()}
         </div>
@@ -72,8 +73,8 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private copyFull = (): void => {
-    const { slot: { token, name }, index, port, host } = this.props;
-    const data = { token, name, port, host };
+    const { slot: { token, name, clientId }, index, port, host } = this.props;
+    const data = { token, name, port, host, clientId };
     clipboard.writeText(JSON.stringify(data));
   }
 

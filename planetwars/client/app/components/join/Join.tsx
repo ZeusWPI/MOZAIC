@@ -24,6 +24,7 @@ export interface ImportCopy {
   name: string;
   host: string;
   port: number;
+  clientId: number;
 }
 
 export interface JoinState {
@@ -32,6 +33,7 @@ export interface JoinState {
   token: string;
   lastClipboard: string;
   import?: ImportCopy;
+  clientId?: number;
 }
 
 export class Join extends React.Component<JoinProps, JoinState> {
@@ -47,6 +49,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
     };
     this.setAddress = this.setAddress.bind(this);
     this.setToken = this.setToken.bind(this);
+    this.setClientid = this.setClientid.bind(this);
     this.setBotId = this.setBotId.bind(this);
     this.joinGame = this.joinGame.bind(this);
   }
@@ -61,6 +64,10 @@ export class Join extends React.Component<JoinProps, JoinState> {
 
           <HorizontalInput id="token" label="Token">
             <input type="text" onChange={this.setToken} value={this.state.token}/>
+          </HorizontalInput>
+
+          <HorizontalInput id="clientid" label="Client ID">
+            <input type="number" onChange={this.setClientid} value={this.state.clientId}/>
           </HorizontalInput>
 
           <BotSelector
@@ -84,7 +91,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
                   <a className={"button is-link"} onClick={this.importConfig}>
                     Import "{this.state.import.name}" from clipboard
                   </a>
-                </div> ):
+                </div> ) :
                 undefined
               }
           </div>
@@ -95,17 +102,17 @@ export class Join extends React.Component<JoinProps, JoinState> {
 
   private importConfig = () => {
     if (!this.state.import) { return; }
-    const {host, port, name, token} = this.state.import;
-    this.setState({ address: {host, port}, token });
+    const {host, port, name, token, clientId } = this.state.import;
+    this.setState({ address: {host, port}, token, clientId });
   }
 
   private checkClipboard = () => {
     const clipBoardtext = clipboard.readText();
     if (this.state.lastClipboard !== clipBoardtext) {
       try {
-        const {host, port, name, token} = JSON.parse(clipBoardtext);
-        if (host && port && name && token) {
-          this.setState({ import: { host, port, name, token } });
+        const {host, port, name, token, clientId } = JSON.parse(clipBoardtext);
+        if (host && port && name && token && clientId) {
+          this.setState({ import: { host, port, name, token, clientId } });
         } else {
           this.setState({ import: undefined });
         }
@@ -118,7 +125,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
   }
 
   private isValid() {
-    return this.state.botId && this.state.token;
+    return this.state.botId && this.state.token && this.state.clientId;
   }
 
   private setAddress(address: M.Address) {
@@ -133,6 +140,12 @@ export class Join extends React.Component<JoinProps, JoinState> {
     });
   }
 
+  private setClientid(evt: React.FormEvent<HTMLInputElement>) {
+    this.setState({
+      clientId: parseInt(evt.currentTarget.value, 10),
+    });
+  }
+
   private setBotId(botId: M.BotId) {
     this.setState({ botId });
   }
@@ -144,6 +157,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
       botId: this.state.botId!,
       name: this.props.allBots[this.state.botId!].name,
       connected: true,
+      clientid: this.state.clientId!,
     };
     this.props.joinMatch(this.state.address, bot);
   }

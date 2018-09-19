@@ -3,7 +3,7 @@ import { Chance } from 'chance';
 import * as M from '../../../database/models';
 import { generateToken } from '../../../utils/GameRunner';
 import { WeakConfig, StrongConfig } from '../types';
-import { MatchRunner } from 'mozaic-client';
+import { PwMatch, events, PwClient } from 'mozaic-client';
 
 export interface Slot {
   name: string;
@@ -17,11 +17,12 @@ export type Slots = { [token: string]: Slot };
 export type Clients = { [clientId: number]: Slot};
 
 export class SlotManager {
-  public matchRunner?: MatchRunner;
+  public match?: PwMatch;
   public connectedClients: Set<number> = new Set();
   public slots: Slots;
   public slotList: string[];
   public clients: Clients;
+  private lastClientId: number = 0;
 
   private onSlotChange: (self: SlotManager) => void;
 
@@ -84,21 +85,25 @@ export class SlotManager {
     this.notifyListeners();
   }
 
-  public setMatchRunner(matchRunner: MatchRunner) {
-    this.matchRunner = matchRunner;
+  public setMatch(match: PwMatch) {
+    this.match = match;
 
-    matchRunner.onPlayerConnected.subscribe((clientId) => {
-      this.connectClient(clientId);
+    match.on(events.ClientConnected).subscribe((event: events.ClientConnected) => {
+      console.log("Got ClientConnected for " + event.clientId);
+      this.connectClient(event.clientId);
     });
 
-    matchRunner.onPlayerDisconnected.subscribe((clientId) => {
-      this.disconnectClient(clientId);
+    match.on(events.ClientDisconnected).subscribe((event: events.ClientDisconnected) => {
+      this.disconnectClient(event.clientId);
+    });
+
+    match.on(events.RegisterClient).subscribe((evt: events.RegisterClient) => {
+      console.log("Got RegisterClient for " + evt.clientId);
     });
 
     this.slotList.forEach((token) => {
       const slot = this.slots[token];
       this.registerSlot(slot);
-      this.notifyListeners();
     });
   }
 
@@ -111,24 +116,28 @@ export class SlotManager {
   }
 
   private registerSlot(slot: Slot) {
-    if (this.matchRunner) {
+    if (this.match) {
       const token = Buffer.from(slot.token, 'hex');
-      this.matchRunner.matchControl.addPlayer(token).then((clientId) => {
-        slot.clientId = clientId;
-        this.clients[clientId] = slot;
-        this.notifyListeners();
-      });
+      this.match.send(events.RegisterClient.create({
+        clientId: slot.clientId,
+        token,
+      }));
+      if (slot.clientId) {
+        this.clients[slot.clientId] = slot;
+      }
+      this.notifyListeners();
     }
   }
 
   private unregisterSlot(slot: Slot) {
-    if (this.matchRunner && slot.clientId) {
+    if (this.match && slot.clientId) {
       const clientId = slot.clientId;
-      this.matchRunner.matchControl.removePlayer(slot.clientId).then(() => {
-        delete this.clients[clientId];
-        delete this.slots[slot.token];
-        this.notifyListeners();
-      });
+      this.match.send(events.RemoveClient.create({
+        clientId: slot.clientId,
+      }));
+      delete this.clients[clientId];
+      delete this.slots[slot.token];
+      this.notifyListeners();
     }
   }
 
@@ -137,9 +146,15 @@ export class SlotManager {
       name: new Chance().name({ prefix: true, nationality: 'it' }),
       token: generateToken(),
       connected: false,
+      clientId: this.createClientId(),
     };
     this.slots[slot.token] = slot;
     this.registerSlot(slot);
     return slot;
+  }
+
+  private createClientId() {
+    this.lastClientId += 1;
+    return this.lastClientId;
   }
 }
