@@ -7,6 +7,7 @@ import * as events from './eventTypes';
 
 
 import * as protocol_root from './proto';
+import * as crypto from 'crypto';
 import proto = protocol_root.mozaic.protocol;
 import { Handler } from "./reactors/RequestHandler";
 import { TcpStreamHandler } from "./networking/TcpStreamHandler";
@@ -14,10 +15,12 @@ import { TcpStreamHandler } from "./networking/TcpStreamHandler";
 
 export class ServerControl {
     private client: Client;
+    private connectionUuid: Uint8Array;
 
 
     constructor(privateKey: Uint8Array, remotePublicKey?: Uint8Array) {
         this.client = new Client(privateKey, remotePublicKey);
+        this.connectionUuid = crypto.randomBytes(32);
     }
 
     public on<T>(eventType: EventType<T>, handler: Handler<T>) {
@@ -30,7 +33,7 @@ export class ServerControl {
 
     public connect(tcpStream: TcpStreamHandler) {
         let message = proto.GameserverConnect.encode({
-            serverControl: {}
+            control: { uuid: this.connectionUuid }
         }).finish();
         this.client.connect(tcpStream, message);
     }

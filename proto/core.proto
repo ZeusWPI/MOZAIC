@@ -117,8 +117,9 @@ message GameserverConnect {
     oneof connect {
         // connect as a a game client
         ClientConnect client = 1;
-        // connect as a server owner
-        ServerControlConnect server_control = 2;
+
+        // connect to an existing control channel
+        ControlChannelConnect control = 2;
     }
 }
 
@@ -127,4 +128,6 @@ message ClientConnect {
     uint32 client_id = 2;
 }
 
-message ServerControlConnect {}
+message ControlChannelConnect {
+    bytes uuid = 1;
+}
