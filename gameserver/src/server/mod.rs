@@ -77,7 +77,7 @@ impl Future for Server {
 
         router.lock()
             .unwrap()
-            .register_control_connection(control_connection);
+            .register_control_connection(control_connection.id());
 
         let addr = self.config.address.parse().unwrap();
         let connection_router = ConnectionRouter {

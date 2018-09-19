@@ -38,9 +38,9 @@ impl ConnectionManager {
     {
         let mut table = self.connection_table.lock().unwrap();
         let mut router = self.router.lock().unwrap();
-        let connection_id = table.create(public_key.clone(), creator);
-        router.register_client(match_uuid, client_id, connection_id);
-        return table.get(connection_id).unwrap().handle.clone();
+        let handle = table.create(public_key.clone(), creator);
+        router.register_client(match_uuid, client_id, handle.id());
+        return handle;
     }
 
     pub fn unregister(&mut self, connection_id: usize) {

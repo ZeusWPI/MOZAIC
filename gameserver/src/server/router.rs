@@ -57,7 +57,7 @@ impl Router for GameServerRouter {
                     .and_then(|match_clients| {
                         match_clients.get(&c.client_id)
                     })
-                    .map(|&conn_id| Routing::Connection(conn_id))
+                    .map(|&conn_id| Routing::Connect(conn_id))
                     .ok_or_else(|| Error::new(
                         ErrorKind::Other, 
                         "unknown client")
@@ -65,7 +65,7 @@ impl Router for GameServerRouter {
             }
             proto::gameserver_connect::Connect::ServerControl(_) => {
                 self.control_connection
-                    .map(|conn_id| Routing::Connection(conn_id))
+                    .map(|conn_id| Routing::Connect(conn_id))
                     .ok_or_else(|| Error::new(
                         ErrorKind::Other,
                         "no control connection registered")

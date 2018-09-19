@@ -41,7 +41,7 @@ impl ConnectionTable {
     }
 
     pub fn create<H, F>(&mut self, public_key: PublicKey, creator: F)
-        -> usize
+        -> ConnectionHandle
         where F: FnOnce(ConnectionHandle) -> H,
               H: EventHandler<Output = io::Result<WireEvent>>,
               H: Send + 'static
@@ -58,13 +58,19 @@ impl ConnectionTable {
             handle: handle.clone(),
             public_key,
         });
-        return connection_id;
+        return handle;
     }
 
     pub fn get<'a>(&'a mut self, connection_id: usize)
         -> Option<&'a ConnectionData>
     {
         self.connections.get(&connection_id)
+    }
+
+    pub fn get_mut<'a>(&'a mut self, connection_id: usize)
+        -> Option<&'a mut ConnectionData>
+    {
+        self.connections.get_mut(&connection_id)
     }
 
     pub fn remove(&mut self, connection_id: usize) {
