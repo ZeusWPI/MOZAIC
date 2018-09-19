@@ -1,12 +1,13 @@
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use std::mem;
+use std::io;
 
 use events;
 use network::connection_table::{ClientId};
 use network::connection_handler::ConnectionHandle;
 use reactors::reactor::ReactorHandle;
-use reactors::ReactorCore;
+use reactors::{WireEvent, RequestHandler};
 use server::ConnectionManager;
 
 use super::Config;
@@ -40,23 +41,32 @@ impl ClientHandler {
         }
     }
 
-    pub fn on_connect(&mut self, _event: &events::Connected) {
+    pub fn on_connect(&mut self, _event: &events::Connected)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientConnected {
             client_id: self.client_id,
         });
+        Ok(WireEvent::null())
     }
 
-    pub fn on_disconnect(&mut self, _event: &events::Disconnected) {
+    pub fn on_disconnect(&mut self, _event: &events::Disconnected)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientDisconnected {
             client_id: self.client_id,
         });
+        Ok(WireEvent::null())
     }
 
-    pub fn on_message(&mut self, event: &events::ClientSend) {
+    pub fn on_message(&mut self, event: &events::ClientSend)
+        -> io::Result<WireEvent>
+    {
         self.reactor_handle.dispatch(events::ClientMessage {
             client_id: self.client_id,
             data: event.data.clone(),
         });
+        Ok(WireEvent::null())
     }
 }
 
@@ -71,11 +81,13 @@ enum PwMatchState {
 }
 
 impl PwMatch {
-    pub fn new(reactor_handle: ReactorHandle,
+    pub fn new(match_uuid: Vec<u8>,
+               reactor_handle: ReactorHandle,
                connection_manager: ConnectionManager)
                -> Self
     {
         let lobby = Lobby::new(
+            match_uuid,
             connection_manager,
             reactor_handle
         );
@@ -150,6 +162,7 @@ impl PwMatch {
 }
 
 pub struct Lobby {
+    match_uuid: Vec<u8>,
     connection_manager: ConnectionManager,
     reactor_handle: ReactorHandle,
 
@@ -157,11 +170,13 @@ pub struct Lobby {
 }
 
 impl Lobby {
-    fn new(connection_manager: ConnectionManager,
+    fn new(match_uuid: Vec<u8>,
+           connection_manager: ConnectionManager,
            reactor_handle: ReactorHandle)
            -> Self
     {
         return Lobby {
+            match_uuid,
             connection_manager,
             reactor_handle,
 
@@ -171,7 +186,7 @@ impl Lobby {
     }
 
     fn add_player(&mut self, client_id: ClientId, connection_token: Vec<u8>) {
-        let mut core = ReactorCore::new(
+        let mut core = RequestHandler::new(
             ClientHandler::new(
                 client_id.as_u32(),
                 self.reactor_handle.clone(),
@@ -182,8 +197,12 @@ impl Lobby {
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
 
-        let handle = self.connection_manager
-            .create_connection(connection_token, |_| core);
+        let handle = self.connection_manager.create_connection(
+            self.match_uuid.clone(),
+            client_id.as_u32(),
+            connection_token,
+            |_| core
+        );
 
         self.players.insert(client_id, handle);
     }

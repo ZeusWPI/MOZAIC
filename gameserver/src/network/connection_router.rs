@@ -1,10 +1,10 @@
+use std::io;
 use std::sync::{Arc, Mutex};
 
-use super::connection_table::ConnectionTable;
-use super::connection_handler::ConnectionHandle;
+use super::connection_table::{ConnectionTable, ConnectionData};
 
 pub trait Router {
-    fn route(&mut self, &[u8]) -> Result<usize, ()>;
+    fn route(&mut self, &[u8]) -> Result<usize, io::Error>;
     fn unregister(&mut self, usize);
 }
 
@@ -23,11 +23,12 @@ impl<R: Router> Clone for ConnectionRouter<R> {
 }
 
 impl<R: Router> ConnectionRouter<R> {
-    pub fn route(&mut self, msg: &[u8]) -> Result<ConnectionHandle, ()> {
+    pub fn route(&mut self, msg: &[u8]) -> Result<ConnectionData, io::Error>
+    {
         let mut router = self.router.lock().unwrap();
         let connection_id = try!(router.route(msg));
         let mut connection_table = self.connection_table.lock().unwrap();
-        let handle = connection_table.get(connection_id).unwrap();
-        return Ok(handle);
+        let data = connection_table.get(connection_id).unwrap().clone();
+        return Ok(data);
     }
 }

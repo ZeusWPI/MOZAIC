@@ -13,18 +13,25 @@ message Disconnected {}
 
 // --- SERVER CONTROL ---
 
-message CreateMatch {
-    bytes match_uuid = 1;
-    bytes control_token = 2;
+message CreateMatchRequest {
+    bytes control_token = 1;
 }
 
-message MatchCreated {
+message CreateMatchResponse {
     bytes match_uuid = 1;
 }
 
 // --- MATCH CONTROL ---
 // The gameserver listens for these events. They can be emitted by the match
 // owner.
+
+message CreateClientRequest {
+    bytes token = 1;
+}
+
+message CreateClientResponse {
+    uint32 client_id = 1;
+}
 
 // Add a player to the game.
 message RegisterClient {
@@ -41,6 +48,11 @@ message RemoveClient {
 message StartGame {
     string map_path = 1;
     uint64 max_turns = 2;
+}
+
+message MatchEvent {
+    uint32 type_id = 1;
+    bytes data = 2;
 }
 
 // --- CLIENT EVENTS ---

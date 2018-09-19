@@ -6,6 +6,7 @@ use network::connection_handler::ConnectionHandle;
 use utils::delay_heap::DelayHeap;
 use server::ConnectionManager;
 
+use events::MatchEvent;
 
 use super::types::*;
 use super::ReactorCore;
@@ -21,7 +22,7 @@ use super::ReactorCore;
 /// this behaviour should be implemented in the event handler running on the
 /// reactor, so that the actual reactor code will be more reusable.
 pub struct Reactor<S> {
-    core: ReactorCore<S>,
+    core: ReactorCore<S, ()>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     delayed_events: DelayHeap<Box<AnyEvent>>,
     // TODO: this manager and connection should not be here ...
@@ -30,7 +31,7 @@ pub struct Reactor<S> {
 }
 
 impl<S> Reactor<S> {
-    pub fn new(core: ReactorCore<S>,
+    pub fn new(core: ReactorCore<S, ()>,
                match_owner: ConnectionHandle,
                connection_manager: ConnectionManager,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>) -> Self
@@ -74,14 +75,24 @@ impl<S> Reactor<S> {
         self.core.handle_event(event);
         // Send the event after handling it, so that the receiver can be
         // certain that the reactor has already handled it.
-        self.match_owner.send(event.as_wire_event());
+        self.send_to_owner(event.as_wire_event());
     }
 
     fn handle_wire_event(&mut self, event: WireEvent) {
         self.core.handle_wire_event(&event);
         // Send the event back to the follower, so that it sees the entire
         // intact event stream in the order this reactor processed it.
-        self.match_owner.send(event);
+        self.send_to_owner(event);
+    }
+
+    fn send_to_owner(&mut self, event: WireEvent) {
+        let e = EventBox::new(
+            MatchEvent {
+                type_id: event.type_id,
+                data: event.data,
+            }
+        );
+        self.match_owner.send(e.as_wire_event());
     }
 }
 
@@ -154,7 +165,15 @@ impl ReactorHandle {
     }
 
     fn send_command(&mut self, command: ReactorCommand) {
-        self.inner.unbounded_send(command)
-            .expect("event channel broke");
+        // TODO IMPORTANT
+        // currently ignore send errors here to deal with 'dangling clients'.
+        // This is almost certainly not how we want this handled!
+        // How do we decide on the lifetime of a match? When a client keeps
+        // active after a match has ended (decided on its result), do we also
+        // keep the match alive, or do we leave the client in some 'dangling'
+        // state where its input will be ignored? Is this something that a 
+        // connection handler should implement, or do we implement it in the
+        // reactor code?
+        let _res = self.inner.unbounded_send(command);
     }   
 }

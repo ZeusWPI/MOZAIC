@@ -1,7 +1,7 @@
 pub mod control_handler;
 pub mod router;
 pub mod connection_manager;
-
+pub mod match_handler;
 
 pub use self::router::GameServerRouter;
 pub use self::connection_manager::ConnectionManager;
@@ -15,7 +15,7 @@ use tokio;
 use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::ConnectionRouter;
-use reactors::ReactorCore;
+use reactors::RequestHandler;
 
 use self::control_handler::ControlHandler;
 
@@ -52,20 +52,22 @@ impl Future for Server {
             router.clone()
         );
 
-        let connection_id = connection_table.lock().unwrap().create(|handle| {
-            let handler = ControlHandler::new(
-                handle,
-                connection_manager.clone(),
-            );
-            let mut core = ReactorCore::new(handler);
-            core.add_handler(ControlHandler::create_match);
-            return core;
-        });
+        let control_connection = connection_table.lock().unwrap().create(
+            self.config.ctrl_token.clone(),
+            |handle| {
+                let handler = ControlHandler::new(
+                    handle,
+                    connection_manager.clone(),
+                );
+                let mut core = RequestHandler::new(handler);
+                core.add_handler(ControlHandler::create_match);
+                return core;
+            }
+        );
 
         router.lock()
             .unwrap()
-            .register(self.config.ctrl_token.clone(), connection_id);
-
+            .register_control_connection(control_connection);
 
         let addr = self.config.address.parse().unwrap();
         let connection_router = ConnectionRouter { router, connection_table };

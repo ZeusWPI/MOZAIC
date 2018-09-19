@@ -17,7 +17,9 @@ ClientSend = 21
 TurnTimeout = 22
 PlayerAction = 23
 
+MatchEvent = 64
 
-
-CreateMatch = 128
-MatchCreated = 129
+CreateMatchRequest = 128
+CreateMatchResponse = 129
+CreateClientRequest = 130
+CreateClientResponse = 131

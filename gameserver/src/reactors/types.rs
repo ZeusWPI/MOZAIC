@@ -16,6 +16,15 @@ pub struct WireEvent {
     pub data: Vec<u8>,
 }
 
+impl WireEvent {
+    pub fn null() -> Self {
+        WireEvent {
+            type_id: 0,
+            data: vec![],
+        }
+    }
+}
+
 pub struct EventBox<T>
     where T: Event
 {
@@ -57,6 +66,8 @@ impl<T> AnyEvent for EventBox<T>
 }
 
 pub trait EventHandler {
-    fn handle_event(&mut self, event: &AnyEvent);
-    fn handle_wire_event(&mut self, event: WireEvent);
+    type Output;
+
+    fn handle_event(&mut self, event: &AnyEvent) -> Self::Output;
+    fn handle_wire_event(&mut self, event: WireEvent) -> Self::Output;
 }

@@ -1,5 +1,5 @@
 import { WireEvent } from "../networking/EventWire";
-import { EventType, Event } from "./SimpleEventEmitter";
+import { EventType, Event, SimpleEventEmitter } from "./SimpleEventEmitter";
 
 // TODO: how can we type events?
 // For easy interop with redux, a discriminated union type would be nice,

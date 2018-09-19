@@ -25,6 +25,7 @@ extern crate tokio_timer;
 extern crate tokio_codec;
 #[macro_use]
 extern crate futures;
+extern crate rand;
 
 extern crate serde;
 extern crate serde_json;

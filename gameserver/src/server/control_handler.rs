@@ -1,14 +1,17 @@
 use tokio;
 use futures::sync::mpsc;
+use std::io;
 
 use network::connection_handler::ConnectionHandle;
-use reactors::{Event, ReactorCore, Reactor, ReactorHandle};
+use reactors::{WireEvent, RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
+use rand::{thread_rng, Rng};
 
 use reactors::{EventBox, AnyEvent};
 
 use super::ConnectionManager;
+use super::match_handler::MatchHandler;
 
 
 pub struct ControlHandler {
@@ -28,23 +31,32 @@ impl ControlHandler {
     }
 
     // TODO: oh please clean this up
-    pub fn create_match(&mut self, e: &events::CreateMatch) {
-                let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
+    pub fn create_match(&mut self, e: &events::CreateMatchRequest)
+        -> io::Result<WireEvent>
+    {
+        let (ctrl_handle, ctrl_chan) = mpsc::unbounded();
         let reactor_handle = ReactorHandle::new(ctrl_handle);
 
-        let mut owner_core = ReactorCore::new(
-            Forwarder { handle: reactor_handle.clone() }
+        let token = e.control_token.clone();
+        let mut match_uuid = vec![0u8; 16];
+        thread_rng().fill(&mut match_uuid[..]);
+
+        let mut core = RequestHandler::new(
+            MatchHandler::new(reactor_handle.clone())
+        );
+        core.add_handler(MatchHandler::create_client);
+        core.add_handler(MatchHandler::remove_client);
+        core.add_handler(MatchHandler::start_game);
+
+        let match_owner = self.connection_manager.create_connection(
+            match_uuid.clone(),
+            0, // owner is always client-id 0. Is this how we want it?
+            token,
+            |_| core
         );
 
-        owner_core.add_handler(Forwarder::forward::<events::RegisterClient>);
-        owner_core.add_handler(Forwarder::forward::<events::RemoveClient>);
-        owner_core.add_handler(Forwarder::forward::<events::StartGame>);
-
-        let token = e.control_token.clone();
-        let match_owner = self.connection_manager
-            .create_connection(token, |_| owner_core);
-
         let pw_match = PwMatch::new(
+            match_uuid.clone(),
             reactor_handle,
             self.connection_manager.clone(),
         );
@@ -65,23 +77,10 @@ impl ControlHandler {
             ctrl_chan,
         ));
 
-        // TODO: eww.
-        self.handle.send(
-            EventBox::new(events::MatchCreated {
-                match_uuid: e.match_uuid.clone(),
+        Ok(
+            EventBox::new(events::CreateMatchResponse {
+                match_uuid: match_uuid,
             }).as_wire_event()
-        );
-    }
-}
-
-struct Forwarder {
-    handle: ReactorHandle,
-}
-
-impl Forwarder {
-    pub fn forward<E>(&mut self, event: &E)
-        where E: Event + Clone + 'static
-    {
-        self.handle.dispatch(event.clone());
+        )
     }
 }
