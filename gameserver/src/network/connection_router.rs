@@ -29,15 +29,16 @@ pub enum Routing<R>
 }
 
 pub struct ConnectionCreator<R: ?Sized> {
-    spawner: Box<ConnectionSpawner<R>>,
+    spawner: Box<ConnectionSpawner<R> + Send>,
 }
 
-impl<R> ConnectionCreator<R> {
+impl<R> ConnectionCreator<R>
+    where R: Send + 'static
+{
     pub fn new<H, F>(func: F) -> Self
         where H: EventHandler<Output = io::Result<WireEvent>>,
-              F: FnMut(ConnectionHandle, &mut R) -> H + 'static,
+              F: FnMut(ConnectionHandle, &mut R) -> H + Send + 'static,
               H: Send + 'static,
-              R: 'static
 
     {
         ConnectionCreator {
@@ -97,6 +98,7 @@ impl<R, H, F> CreateConnectionWrapper<R, H, F>
 impl<R, H, F> ConnectionSpawner<R> for CreateConnectionWrapper<R, H, F>
     where H: EventHandler<Output = io::Result<WireEvent>>,
           F: FnMut(ConnectionHandle, &mut R) -> H,
+          R: Send + 'static,
           H: Send + 'static
 {
     fn create_connection(
@@ -136,7 +138,7 @@ impl<R: Router> ConnectionRouter<R> {
     pub fn route(&mut self, msg: &[u8])
         -> Result<ConnectionRouting<R>, io::Error>
     {
-        let mut router = self.router.lock().unwrap();
+        let router = self.router.lock().unwrap();
         let routing = try!(router.route(msg));
         let conn_routing = match routing {
             Routing::Connect(conn_id) => {
@@ -172,11 +174,19 @@ enum RoutingTarget<R> {
     NewConnection(ConnectionCreator<R>),
 }
 
-
 impl<R> ConnectionRouting<R>
     where R: Router
 {
-    pub fn connect(mut self, channel: Channel, keys: SessionKeys) {
+    pub fn public_key<'a>(&'a self) -> &'a PublicKey {
+        &self.public_key
+    }
+}
+
+
+impl<R> ConnectionRouting<R>
+    where R: Router + 'static + Send
+{
+    pub fn connect(self, channel: Channel, keys: SessionKeys) {
         let mut conn_table = self.router.connection_table.lock().unwrap();
 
         match self.target {
@@ -186,7 +196,7 @@ impl<R> ConnectionRouting<R>
                     .handle
                     .connect(channel, keys);
             }
-            RoutingTarget::NewConnection(creator) => {
+            RoutingTarget::NewConnection(mut creator) => {
                 let mut router = self.router.router.lock().unwrap();
                 creator.create_connection(
                     self.public_key,
@@ -195,9 +205,5 @@ impl<R> ConnectionRouting<R>
                 ).connect(channel, keys);
             }
         }
-    }
-
-    pub fn public_key<'a>(&'a self) -> &'a PublicKey {
-        &self.public_key
     }
 }
