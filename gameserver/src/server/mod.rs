@@ -15,10 +15,7 @@ use tokio;
 use network;
 use network::connection_table::ConnectionTable;
 use network::connection_router::ConnectionRouter;
-use reactors::RequestHandler;
 use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
-
-use self::control_handler::ControlHandler;
 
 
 #[derive(Serialize, Deserialize)]
@@ -48,36 +45,16 @@ impl Future for Server {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
-        let router = Arc::new(Mutex::new(GameServerRouter::new()));
-
-        let connection_manager = ConnectionManager::new(
-            connection_table.clone(),
-            router.clone()
-        );
-
         let control_pubkey = PublicKey::from_slice(&self.config.public_key)
             .expect("invalid public key");
         let secret_key = SecretKey::from_slice(&self.config.private_key)
             .expect("invalid secret key");
 
-        let control_connection = connection_table.lock().unwrap().create(
-            control_pubkey,
-            |handle| {
-                let handler = ControlHandler::new(
-                    handle,
-                    connection_manager.clone(),
-                );
-                let mut core = RequestHandler::new(handler);
-                core.add_handler(ControlHandler::create_match);
-                core.add_handler(ControlHandler::quit);
-                return core;
-            }
+        let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
+        let router = GameServerRouter::create(
+            connection_table.clone(),
+            control_pubkey
         );
-
-        router.lock()
-            .unwrap()
-            .register_control_connection(control_connection.id());
 
         let addr = self.config.address.parse().unwrap();
         let connection_router = ConnectionRouter {
@@ -85,6 +62,7 @@ impl Future for Server {
             connection_table,
             secret_key,
         };
+
         match network::tcp::Listener::new(&addr, connection_router) {
             Ok(listener) => {
                 tokio::spawn(listener);
