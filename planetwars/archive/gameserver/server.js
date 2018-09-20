@@ -33,7 +33,7 @@ app.post('/bot', function(req, res) {
   var name = req.body.name || "bert";
   var opponent = req.body.opponent || getRandomPlayer();
   var opponent = createOpponent(opponent);
-  console.log(name, req.body.opponent);
+  console.log(name, opponent);
   // Make sure names are unique for visualizer
   if (opponent.name === name) {
     opponent.name += "2";
@@ -65,6 +65,9 @@ app.post('/bot', function(req, res) {
         number: 2,
       }
   ];
+
+  console.log("Players are ", players)
+
   // var config = {
   //   players: [{
   //       name: name,

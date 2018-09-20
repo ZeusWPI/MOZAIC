@@ -31,7 +31,20 @@ class Executor {
   }
 
   writeCode(code) {
-    fs.writeFileSync(this.code_file, code);
+    code = code || ""
+    const code_file = this.code_file;
+    fs.readFile("../template.js", 'utf8', function (err,data) {
+      if (err) {
+        return console.log(err);
+      }
+      var result = data.replace(/CODEHEREPLZ/g, code);
+
+      console.log("Writing code to " + code_file)
+
+      fs.writeFile(code_file, result, 'utf8', function (err) {
+        if (err) return console.log(err);
+      });
+    });
   }
 
   setPlayers(players) {

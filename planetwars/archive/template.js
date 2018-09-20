@@ -1,7 +1,33 @@
 var readline = require('readline');
+var fs = require("fs");
 
 let dispatches = [];
 let hasMeta = false;
+
+function minimum_by(list, fun) {
+    let idx = list.map(fun).reduce((acc, x, i, arr) => x < arr[acc] ? i : acc, 0);
+    return list[idx];
+  }
+  
+  function maximum_by(list, fun) {
+    let idx = list.map(fun).reduce((acc, x, i, arr) => x > arr[acc] ? i : acc, 0);
+    return list[idx];
+  }
+  
+  function sort_by(list, fun) {
+    var mapped = list.map( (elem, i) => {
+      return { index: i, value: fun(elem)};
+    });
+    mapped.sort((a, b) => a.value - b.value);
+    return mapped.map(elem => list[elem.index]);
+  }
+  
+  function distance(p1, p2) {
+    let dx = p1['x'] - p2['x'];
+    let dy = p1['y'] - p2['y'];
+    let dist = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+    return Math.ceil(dist);
+  }
 
 function getPlayer() {
     return this.player
@@ -47,12 +73,17 @@ function dispatch(num_ships_, origin, target) {
 function parseMeta(line) {
     const meta = JSON.parse(line)
     this.player = meta.player_number
+    hasMeta = true
 }
 
 function parseState(line) {
     this.lastState = JSON.parse(line)
 
-    // HERE BE CODE
+    CODEHEREPLZ
+
+    console.log(JSON.stringify({ moves: dispatches }))
+
+    dispatches = []
 }
 
 const rl = readline.createInterface({
