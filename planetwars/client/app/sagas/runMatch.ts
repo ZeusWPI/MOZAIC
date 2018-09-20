@@ -182,8 +182,12 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
 
   const event = yield take(matchChan);
   if (event === 'complete') {
+    // TODO: dont do this
+    // wait 500 ms for clean termination
+    setTimeout(() => {
+      runner.serverRunner.killServer();
+    }, 500);
     const log = yield call(parseLogFile, match.logPath, match.type);
-    console.log(log);
     const stats = calcStats(log);
     yield put(A.matchFinished({
       matchId: match.uuid,
