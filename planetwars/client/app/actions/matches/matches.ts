@@ -66,16 +66,21 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
     const logger = new PwClient.Logger(match.logPath);
     const clientParams = { token, address, logger, number, botConfig };
 
-    const runner = new PwClient.Client(clientParams);
-    runner.onExit.subscribe(() => {
-      dispatch(completeMatch(match.uuid));
-      const title = 'Match ended';
-      const body = `A remote match has ended`;
-      const link = `/matches/${match.uuid}`;
-      dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
-    });
-
-    runner.onError.subscribe((error: Error) => {
+    PwClient.Client.connect({
+      host: address.host,
+      port: address.port,
+      token: new Buffer(bot.token, 'hex'),
+      logger: new PwClient.Logger(match.logPath),
+    }).then((client) => {
+      const pwClient = new PwClient.PwClient(client, botConfig);
+      pwClient.onExit.subscribe(() => {
+        dispatch(completeMatch(match.uuid));
+        const title = 'Match ended';
+        const body = `A remote match has ended`;
+        const link = `/matches/${match.uuid}`;
+        dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
+      });
+    }).catch((error) => {
       console.log(error);
       dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
@@ -83,15 +88,6 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
     });
-
-    logger.onEntry.subscribe((entry) => {
-      dispatch(addLogEntry({
-        matchId: match.uuid,
-        entry,
-      }));
-    });
-
-    runner.run();
   };
 }
 
@@ -109,7 +105,7 @@ export function sendGo() {
 
     if (runner) {
       console.log("running");
-      runner.startGame(config);
+      runner.matchControl.startGame(config);
     }
   };
 }
@@ -155,41 +151,30 @@ export function runMatch() {
 
     console.log("This probably doesn't work!!!!");
 
-    const runner = new PwClient.MatchRunner(Config.matchRunner, config);
-    runner.onComplete.subscribe(() => {
-      dispatch(completeMatch(match.uuid));
-      const title = 'Match ended';
-      const body = `A match on map '${state.maps[params.map].name}' has ended`;
-      const link = `/matches/${match.uuid}`;
-      dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
-    });
+    PwClient.MatchRunner.create(Config.matchRunner, config).then((runner) => {
+      dispatch(Host.serverStarted(runner));
 
-    runner.onError.subscribe((error) => {
+      runner.matchControl.onPlayerConnected.subscribe((clientId) => {
+        dispatch(Host.playerConnected(players[clientId - 1].token));
+      });
+      runner.matchControl.onPlayerDisconnected.subscribe((clientId) => {
+        dispatch(Host.playerDisconnected(players[clientId - 1].token));
+      });
+      runner.onComplete.subscribe(() => {
+        dispatch(completeMatch(match.uuid));
+        const title = 'Match ended';
+        const body = `A match on map '${state.maps[params.map].name}' has ended`;
+        const link = `/matches/${match.uuid}`;
+        dispatch(Notify.addNotification({ title, body, link, type: 'Finished' }));
+      });
+    })
+    .catch((error) => {
       dispatch(handleMatchError(match.uuid, error));
       const title = 'Match errored';
       const body = `A match on map '${state.maps[params.map].name}' has errored`;
       const link = `/matches/${match.uuid}`;
       dispatch(Notify.addNotification({ title, body, link, type: 'Error' }));
     });
-
-    runner.onPlayerConnected.subscribe((playerNumber) => {
-      dispatch(Host.playerConnected(players[playerNumber - 1].token));
-    });
-
-    runner.onPlayerDisconnected.subscribe((playerNumber) => {
-      dispatch(Host.playerDisconnected(players[playerNumber - 1].token));
-    });
-
-    runner.logger.onEntry.subscribe((entry) => {
-      dispatch(addLogEntry({
-        matchId: match.uuid,
-        entry,
-      }));
-    });
-
-
-    runner.run();
-    dispatch(Host.serverStarted(runner));
   };
 }
 

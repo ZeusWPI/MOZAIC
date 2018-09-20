@@ -1,12 +1,16 @@
 #![allow(dead_code)]
 mod network;
-mod oneshot_server;
 mod planetwars;
-mod protobuf_codec;
 mod utils;
+mod reactors;
+mod server;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
+}
+
+pub mod events {
+    include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
 }
 
 
@@ -18,8 +22,10 @@ extern crate tokio_io;
 extern crate tokio_process;
 extern crate tokio;
 extern crate tokio_timer;
+extern crate tokio_codec;
 #[macro_use]
 extern crate futures;
+extern crate rand;
 
 extern crate serde;
 extern crate serde_json;
@@ -30,14 +36,11 @@ extern crate error_chain;
 #[macro_use]
 extern crate serde_derive;
 
-
-#[macro_use]
-extern crate slog;
-extern crate slog_json;
-
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
+#[macro_use]
+extern crate mozaic_derive;
 
 
 use std::error::Error;
@@ -46,17 +49,20 @@ use std::env;
 use std::path::Path;
 use std::fs::File;
 
-use oneshot_server::{MatchDescription, OneshotServer};
+use server::{Config as ServerConfig, Server};
 
 // Load the config and start the game.
 fn main() {
-    let args: Vec<_> = env::args().collect();
+    run(env::args().collect());
+}
+
+pub fn run(args : Vec<String>) {
     if args.len() != 2 {
         println!("Expected 1 argument (config file). {} given.", args.len() - 1);
         std::process::exit(1)
     }
 
-    let match_description: MatchDescription = match parse_config(Path::new(&args[1])) {
+    let config = match parse_config(Path::new(&args[1])) {
         Ok(config) => config,
         Err(e) => {
             println!("{}", e);
@@ -64,17 +70,15 @@ fn main() {
         }
     };
 
-    let server = OneshotServer::new(match_description);
+    let server = Server::new(config);
     tokio::run(server);
 }
 
 
-
-
 // Parse a config passed to the program as an command-line argument.
 // Return the parsed config.
-pub fn parse_config(path: &Path)
-    -> Result<MatchDescription, Box<Error>>
+fn parse_config(path: &Path)
+    -> Result<ServerConfig, Box<Error>>
 {
     println!("Opening config {}", path.to_str().unwrap());
     let mut file = File::open(path)?;
@@ -84,7 +88,7 @@ pub fn parse_config(path: &Path)
     file.read_to_string(&mut contents)?;
 
     println!("Parsing config");
-    let config: MatchDescription = serde_json::from_str(&contents)?;
+    let config: ServerConfig = serde_json::from_str(&contents)?;
 
     println!("Config parsed succesfully");
     Ok(config)

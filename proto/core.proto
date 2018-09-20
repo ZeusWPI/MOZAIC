@@ -2,8 +2,26 @@ syntax = "proto3";
 
 package mozaic.protocol;
 
+message ClientConnect {
+    bytes match_uuid = 1;
+    uint32 client_id = 2;
+}
+
+message ServerControlConnect {}
+
+message GameserverConnect {
+    oneof connect {
+        ClientConnect client = 1;
+        ServerControlConnect server_control = 2;
+    }
+}
+
 message ConnectionRequest {
-    bytes token = 1;
+    // TODO: maybe we want to include some headers here
+
+    // This message should identify the connecting client with the
+    // server.
+    bytes message = 1;
 }
 
 message ConnectionResponse {
@@ -13,9 +31,7 @@ message ConnectionResponse {
     }
 }
 
-message ConnectionSuccess {
-    // for future use
-}
+message ConnectionSuccess { }
 
 message ConnectionError {
     string message = 1;
@@ -23,66 +39,25 @@ message ConnectionError {
 
 
 message Packet {
-    message Message {
-        bytes data = 1;
-    }
-
-    message CloseConnection {
-        // for future use
-    }
-
     oneof payload {
-        Message message = 1;
-        CloseConnection close_connection = 2;
-    }
-}
-
-// TODO: this naming might be really stupid.
-message Message {
-    message Message {
-        uint64 message_id = 1;
-        bytes data = 2;
-    }
-    
-    message Response {
-        uint64 message_id = 1;
-        bytes data = 2;
-    }
-
-    oneof payload {
-        Message message = 1;
+        Request request = 1;
         Response response = 2;
+        CloseConnection close_connection = 3;
     }
 }
 
-message LobbyMessage {
-    message AddPlayerRequest {
-        bytes token = 1;
-    }
+message Request {
+    uint32 seq_num = 1;
+    uint32 type_id = 2; 
+    bytes data = 3;
+}
 
-    message AddPlayerResponse {
-        uint64 client_id = 1;
-    }
+message Response {
+    uint32 seq_num = 1;
+    uint32 type_id = 2;
+    bytes data = 3;
+}
 
-    message RemovePlayerRequest {
-        uint64 client_id = 1;
-    }
-
-    message RemovePlayerResponse {
-        // placeholder
-    }
-
-    message StartGameRequest {
-        bytes payload = 1;
-    }
-
-    message StartGameResponse {
-        // placeholder
-    }
-
-    oneof payload {
-        AddPlayerRequest add_player = 1;
-        RemovePlayerRequest remove_player = 2;
-        StartGameRequest start_game = 3;
-    }
+message CloseConnection {
+    // for future use
 }

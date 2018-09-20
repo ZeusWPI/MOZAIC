@@ -141,16 +141,15 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const [command, ...args] = stringArgv(bot.command);
     const botConfig = { name, command, args };
 
-    const client = new PwClient.Client({
+    PwClient.Client.connect({
       token: Buffer.from(stringToken, 'hex'),
-      address: config.address,
-      number: playerNum + 1, // number is 1-based
-      botConfig,
+      host: config.address.host,
+      port: config.address.port,
       logger: this.server.logger,
+    }).then((client) => {
+      const _pwClient = new PwClient.PwClient(client, botConfig);
+      console.log('connected local bot');
     });
-    client.run();
-
-    console.log('connected local bot');
   }
 
   private removeBot = (num: number) => this.slotManager.removeBot(num);
@@ -158,7 +157,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
   private removeExternalBot = (token: M.Token, playerNum: number, clientId: number) => {
     if (!this.validifyRunning(this.state)) { return; }
     if (this.server) {
-      this.server.removePlayer(clientId);
+      this.server.matchControl.removePlayer(clientId);
       this.slotManager.disconnectClient(clientId);
       this.slotManager.removeBot(playerNum);
     }
@@ -277,7 +276,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const gameConf = Lib.exportConfig(this.state.config, this.props.maps);
 
     // Clear old listeners from the lobby
-    this.server.onConnect.clear();
     this.server.onPlayerConnected.clear();
     this.server.onPlayerDisconnected.clear();
 
@@ -296,7 +294,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       (id: number) => this.props.onPlayerReconnectedDuringMatch(id));
 
     // Start game
-    this.server.startGame(gameConf)
+    this.server.matchControl.startGame(gameConf)
       // This gets procced when the game has actually started
       .then(() => {
         const { host, port, maxTurns, mapId } = this.props.config!;

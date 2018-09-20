@@ -1,41 +1,27 @@
-import * as stream from 'stream';
-import { LogEntry, LogRecord } from './PwTypes';
-import * as fs from 'fs';
-import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
+import { WriteStream, createWriteStream } from "fs";
+import * as protocol_root from './proto';
+import { WireEvent } from "./networking/EventWire";
+const { LogEvent } = protocol_root.mozaic.log;
 
+// TODO: split this into a log sink and a client-specific logger object
+// TODO: add an eventemitter for records?
 export class Logger {
-    private sink: stream.Writable;
-    private _onEntry = new SimpleEventDispatcher<LogEntry>();
+    writeStream: WriteStream;
+    clientId: number;
 
-    constructor(logFile: string) {
-        this.sink = fs.createWriteStream(logFile)
+    constructor(clientId: number, sink: WriteStream) {
+        this.writeStream = sink;
+        this.clientId = clientId;
     }
 
-    public log(entry: LogEntry) {
-        let str = JSON.stringify(entry) + '\n';
-        this.sink.write(str);
-        this._onEntry.dispatch(entry);
-    }
-
-    public get onEntry() {
-        return this._onEntry.asEvent();
-    }
-}
-
-export class ClientLogger {
-    private logger: Logger;
-    readonly player: number;
-
-    constructor(logger: Logger, player: number) {
-        this.logger = logger;
-        this.player = player;
-    }
-
-    public log(record: LogRecord) {
-        this.logger.log({
-            type: "player_entry",
-            player: this.player,
-            record
+    public log(event: WireEvent) {
+        // TODO: should clientId be optional?
+        const logEvent = LogEvent.create({
+            clientId: this.clientId,
+            eventType: event.typeId,
+            data: event.data,
         });
+        const bytes = LogEvent.encodeDelimited(logEvent).finish();
+        this.writeStream.write(bytes);
     }
 }

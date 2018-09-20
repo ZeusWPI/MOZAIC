@@ -10,6 +10,9 @@ const path = require('path');
 const protobuf = require('protobufjs');
 const pbts = require('protobufjs/cli/pbts');
 
+const toml = require('toml');
+const CodeBlockWriter = require('code-block-writer').default;
+
 /******************************************************************************
  * Helpers
  ******************************************************************************/
@@ -88,6 +91,68 @@ function type_protobuf() {
     });
 }
 
+function generate_events_declaration(events) {
+    const writer = new CodeBlockWriter();
+    writer.writeLine('import * as proto from "./proto";');
+    writer.writeLine('export = proto.mozaic.events;');
+    writer.write('declare module "./proto"').block(() => {
+        writer.write('namespace mozaic.events').block(() => {
+            Object.keys(events).forEach((eventName) => {
+                const typeId = events[eventName];
+                writer.write(`namespace ${eventName}`).block(() => {
+                    writer.write(`const typeId: ${typeId};`);
+                });
+                writer.write(`interface ${eventName}`).block(() => {
+                    writer.write(`eventType: typeof ${eventName};`);
+                });
+            });
+        });
+
+    });
+    return writer.toString();
+}
+
+function generate_events_implementation(events) {
+    const writer = new CodeBlockWriter();
+    writer.writeLine(`const proto_root = require('./proto');`);
+    // TODO: dont hardcode this
+    writer.writeLine(`const events = proto_root.mozaic.events;`);
+    Object.keys(events).forEach((eventName) => {
+        const typeId = events[eventName];
+        const eventType = `events["${eventName}"]`;
+        writer.writeLine(`${eventType}.typeId = ${typeId};`);
+        writer.writeLine(`${eventType}.prototype.eventType = ${eventType};`);
+    });
+    writer.writeLine('module.exports = events;');
+    return writer.toString();
+}
+
+function generate_events_module() {
+    return through.obj(function(file, enc, callback) {
+        if (!file.isBuffer()) {
+            callback(new gutil.PluginError('toml', 'unsupported'));
+        }
+        var events = toml.parse(file.contents).events;
+
+        const module_name = "eventTypes";
+
+        const declaration = generate_events_declaration(events);
+        this.push(new Vinyl({
+            path: `${module_name}.d.ts`,
+            contents: Buffer.from(declaration),
+        }));
+
+        const implementation = generate_events_implementation(events);
+        this.push(new Vinyl({
+            path: `${module_name}.js`,
+            contents: Buffer.from(implementation),
+        }));
+
+        callback();
+    });
+}
+
+
 /******************************************************************************
  * Tasks
  ******************************************************************************/
@@ -119,14 +184,29 @@ function type_proto() {
         .pipe(gulp.dest('generated'));
 }
 
+function gen_events() {
+    return gulp.src("../proto/events.toml")
+        .pipe(generate_events_module())
+        .pipe(gulp.dest('generated'));
+}
+
 const build_protobuf = gulp.series(
     gen_proto,
     type_proto,
-    copy_generated_code
 );
 
 function watch_protobuf() {
-    return gulp.watch(PROTO_SOURCES, build_protobuf);
+    return gulp.watch(PROTO_SOURCES, gulp.series(
+        build_protobuf,
+        copy_generated_code,
+    ));
+}
+
+function watch_events_toml() {
+    return gulp.watch("../proto/events.toml", gulp.series(
+        gen_events,
+        copy_generated_code,
+    ));
 }
 
 function copy_generated_code() {
@@ -136,14 +216,17 @@ function copy_generated_code() {
 
 const build = gulp.series(
     build_protobuf,
-    compile_typescript
+    gen_events,
+    compile_typescript,
+    copy_generated_code,
 );
 
 gulp.task('build', build);
 
 gulp.task('watch', gulp.parallel(
     watch_typescript,
-    watch_protobuf
+    watch_protobuf,
+    watch_events_toml,
 ));
 
 gulp.task('default', build);

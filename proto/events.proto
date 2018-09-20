@@ -1,0 +1,115 @@
+syntax = "proto3";
+
+package mozaic.events;
+
+// --- NETWORK EVENTS ---
+// These are emitted by the networking code.
+
+// A connection has been established.
+message Connected {}
+
+// A connection has been broken.
+message Disconnected {}
+
+// --- SERVER CONTROL ---
+
+message CreateMatchRequest {
+    bytes control_token = 1;
+}
+
+message CreateMatchResponse {
+    bytes match_uuid = 1;
+}
+
+// --- MATCH CONTROL ---
+// The gameserver listens for these events. They can be emitted by the match
+// owner.
+
+message CreateClientRequest {
+    bytes token = 1;
+}
+
+message CreateClientResponse {
+    uint32 client_id = 1;
+}
+
+// Add a player to the game.
+message RegisterClient {
+    uint32 client_id = 1;
+    bytes token = 2;
+}
+
+// Remove a player from the game.
+message RemoveClient {
+    uint32 client_id = 1;
+}
+
+// Start the game.
+message StartGame {
+    string map_path = 1;
+    uint64 max_turns = 2;
+}
+
+message MatchEvent {
+    uint32 type_id = 1;
+    bytes data = 2;
+}
+
+// --- CLIENT EVENTS ---
+
+// A client sends some data to the server.
+// This event is dispatched by a client.
+message ClientSend {
+    string data = 1;
+}
+
+// A message was received from a client.
+// This event is emitted by a client handler when it recieves a ClientSend.
+message ClientMessage {
+    uint32 client_id = 1;
+    string data = 2;
+}
+
+// A client has connected.
+// Emitted by the client handler.
+message ClientConnected {
+    uint32 client_id = 1;
+}
+
+// A client had disconnected.
+// Emitted by the client handler.
+message ClientDisconnected {
+    uint32 client_id = 1;
+}
+
+
+// --- MATCH EVENTS ---
+
+// A turn time-out has occured.
+// Note that this does not mean the turn timed out
+// (it could already have passed)
+message TurnTimeout {
+    uint64 turn_num = 1;
+}
+
+// The game has stepped to a new state.
+// This event is also sent to all living players to signal that a new turn
+// has begun.
+message GameStep {
+    uint64 turn_num = 1;
+    string state = 2;
+}
+
+// The game has finished.
+// Sent as a 'final state' before disconnecting a client, both when the match
+// ends or when a player dies (which is the 'match end' for that player).
+message GameFinished {
+    uint64 turn_num = 1;
+    string state = 2;
+}
+
+// Noties a client of the result of the action it took.
+message PlayerAction {
+    uint32 client_id = 1;
+    string action = 2;
+}

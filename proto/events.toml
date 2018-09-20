@@ -1,0 +1,25 @@
+[events]
+
+Connected = 1
+Disconnected = 2
+
+RegisterClient = 10
+RemoveClient = 11
+ClientConnected = 12
+ClientDisconnected = 13
+
+StartGame = 16
+GameStep = 17
+GameFinished = 18
+
+ClientMessage = 20
+ClientSend = 21
+TurnTimeout = 22
+PlayerAction = 23
+
+MatchEvent = 64
+
+CreateMatchRequest = 128
+CreateMatchResponse = 129
+CreateClientRequest = 130
+CreateClientResponse = 131

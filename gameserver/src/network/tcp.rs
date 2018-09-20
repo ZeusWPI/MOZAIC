@@ -1,32 +1,35 @@
 use futures::{Future, Poll, Async, Stream};
-use futures::sink::Send;
-use futures::sync::mpsc::UnboundedSender;
+use futures::sink;
 use prost::Message;
 use std::io;
 use std::mem;
 use std::net::SocketAddr;
-use std::sync::{Arc, Mutex};
 use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 
-use protobuf_codec::{MessageStream, ProtobufTransport};
-use super::router::{RoutingTable, RoutingMessage};
+use super::protobuf_codec::ProtobufTransport;
+use super::connection_handler::ConnectionHandle;
+use super::connection_table::ConnectionData;
+use super::connection_router::{Router, ConnectionRouter};
 use protocol as proto;
 
 
-
-pub struct Listener {
+pub struct Listener<R>
+    where R: Router
+{
     incoming: Incoming,
-    routing_table: Arc<Mutex<RoutingTable>>,
+    router: ConnectionRouter<R>,
 }
 
-impl Listener {
-    pub fn new(addr: &SocketAddr, routing_table: Arc<Mutex<RoutingTable>>)
-               -> io::Result<Self>
+impl<R> Listener<R>
+    where R: Router + Send + 'static
+{
+    pub fn new(addr: &SocketAddr, router: ConnectionRouter<R>)
+        -> io::Result<Self>
     {
         TcpListener::bind(addr).map(|tcp_listener| {
             Listener {
-                routing_table,
+                router,
                 incoming: tcp_listener.incoming(),
             }
         })
@@ -38,7 +41,7 @@ impl Listener {
 
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
             let handler = ConnectionHandler::new(
-                self.routing_table.clone(),
+                self.router.clone(),
                 raw_stream
             );
             tokio::spawn(handler);
@@ -47,7 +50,9 @@ impl Listener {
     }
 }
 
-impl Future for Listener {
+impl<R> Future for Listener<R>
+    where R: Router + Send + 'static
+{
     type Item = ();
     type Error = ();
 
@@ -64,7 +69,7 @@ fn connection_success() -> proto::ConnectionResponse {
    proto::ConnectionResponse {
         response: Some(
             proto::connection_response::Response::Success(
-                proto::ConnectionSuccess {}
+                proto::ConnectionSuccess { }
             )
         )
     }
@@ -82,21 +87,21 @@ fn connection_error(msg: String) -> proto::ConnectionResponse {
     }
 }
 
-struct Waiting {
+struct Waiting<R: Router> {
     transport: ProtobufTransport<TcpStream>,
-    routing_table: Arc<Mutex<RoutingTable>>,
+    router: ConnectionRouter<R>,
 }
 
 enum Action {
     Accept {
-        handle: UnboundedSender<RoutingMessage>,
+        data: ConnectionData,
     },
     Refuse {
         reason: String,
     }
 }
 
-impl Waiting {
+impl<R: Router> Waiting<R> {
     fn poll(&mut self) -> Poll<Action, io::Error>
     {
         let bytes = match try_ready!(self.transport.poll()) {
@@ -106,21 +111,20 @@ impl Waiting {
 
         let request = try!(proto::ConnectionRequest::decode(bytes));
 
-        let mut table = self.routing_table.lock().unwrap(); 
-        let action = match table.get(&request.token) {
-            None => Action::Refuse { reason: "invalid token".to_string() },
-            Some(handle) => Action::Accept { handle },
+        let action = match self.router.route(&request.message) {
+            Err(err) => Action::Refuse { reason: err.to_string() },
+            Ok(data) => Action::Accept { data },
         };
         return Ok(Async::Ready(action));
     }
 
-    fn step(self, action: Action) -> HandlerState {
+    fn step(self, action: Action) -> HandlerState<R> {
         match action {
-            Action::Accept { handle } => {
+            Action::Accept { data } => {
                 let response = connection_success();
                 let accepting = Accepting {
                     send: self.transport.send_msg(response),
-                    handle,
+                    handle: data.handle,
                 };
                 return HandlerState::Accepting(accepting);
             },
@@ -138,8 +142,8 @@ impl Waiting {
 
 
 struct Accepting {
-    send: Send<ProtobufTransport<TcpStream>>,
-    handle: UnboundedSender<RoutingMessage>,
+    send: sink::Send<ProtobufTransport<TcpStream>>,
+    handle: ConnectionHandle,
 }
 
 impl Accepting {
@@ -147,16 +151,16 @@ impl Accepting {
         self.send.poll()
     }
 
-    fn step(self, transport: ProtobufTransport<TcpStream>) -> HandlerState {
-         self.handle.unbounded_send(RoutingMessage::Connecting {
-            stream: MessageStream::new(transport)
-        }).unwrap();
+    fn step<R: Router>(mut self, transport: ProtobufTransport<TcpStream>)
+        -> HandlerState<R>
+    {
+        self.handle.connect(transport);
         return HandlerState::Done;
     }
 }
 
 struct Refusing {
-    send: Send<ProtobufTransport<TcpStream>>,
+    send: sink::Send<ProtobufTransport<TcpStream>>,
 }
 
 impl Refusing {
@@ -165,37 +169,37 @@ impl Refusing {
         return Ok(Async::Ready(()));
     }
 
-    fn step(self) -> HandlerState {
+    fn step<R: Router>(self) -> HandlerState<R> {
         return HandlerState::Done;
     }
 }
 
-enum HandlerState {
-    Waiting(Waiting),
+enum HandlerState<R: Router> {
+    Waiting(Waiting<R>),
     Accepting(Accepting),
     Refusing(Refusing),
     Done,
 }
 
-pub struct ConnectionHandler {
-    state: HandlerState,
+pub struct ConnectionHandler<R: Router> {
+    state: HandlerState<R>,
 }
 
-impl ConnectionHandler {
-    pub fn new(routing_table: Arc<Mutex<RoutingTable>>,
+impl<R: Router> ConnectionHandler<R> {
+    pub fn new(router: ConnectionRouter<R>,
                stream: TcpStream) -> Self
     {
         let transport = ProtobufTransport::new(stream);
         ConnectionHandler {
             state: HandlerState::Waiting(Waiting {
                 transport,
-                routing_table,
+                router,
             }),
         }
     }
 }
 
-impl ConnectionHandler {
+impl<R: Router> ConnectionHandler<R> {
     // TODO: can we get rid of this boilerplate?
     fn step(&mut self) -> Poll<(), io::Error> {
         loop {
@@ -242,7 +246,7 @@ impl ConnectionHandler {
     }
 }
 
-impl Future for ConnectionHandler {
+impl<R: Router> Future for ConnectionHandler<R> {
     type Item = ();
     type Error = ();
 
