@@ -14,6 +14,7 @@ export interface ContainerProps {
 }
 
 export interface MatchViewState {
+  matchLog?: MatchLog,
   error?: {
     error: any;
     info: any;
@@ -25,6 +26,16 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
   public constructor(props: ContainerProps) {
     super(props);
     this.state = {};
+  }
+
+  public componentDidUpdate(prevProps: ContainerProps) {
+    if (!this.props.match) {
+      return;
+    }
+    if (!this.state.matchLog || prevProps.match !== this.props.match) {
+      parseLogFile(this.props.match.logPath, this.props.match.type)
+        .then((matchLog) => this.setState({ matchLog }));
+    }
   }
 
   // Catch the visualizer throwing errors so your whole app isn't broken
@@ -47,10 +58,13 @@ export class MatchView extends React.Component<ContainerProps, MatchViewState> {
     }
     switch (match.status) {
       case M.MatchStatus.finished: {
-        const log = parseLogFile(match.logPath, match.type);
+        let viewer;
+        if (this.state.matchLog) {
+          viewer = <MatchViewer match={match} matchLog={this.state.matchLog} />;
+        }
         return (
           <div className={styles.matchViewContainer}>
-            <MatchViewer match={match} matchLog={log} />
+            {viewer}
           </div>
         );
       }

@@ -68,7 +68,7 @@ function* joinMatch(params: A.JoinMatchParams) {
   const eventChan = clientEventChannel(client);
   const event = yield take(eventChan);
   if (event === 'exit') {
-    const log = parseLogFile(match.logPath, match.type);
+    const log = yield call(parseLogFile, match.logPath, match.type);
     const stats = calcStats(log);
     yield put(A.matchFinished({
       matchId: match.uuid,

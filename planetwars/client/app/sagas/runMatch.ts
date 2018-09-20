@@ -9,7 +9,6 @@ import { ISimpleEvent } from 'ste-simple-events';
 import * as M from '../database/models';
 import { GState } from '../reducers';
 import { parseLogFile, calcStats } from '../lib/match';
-import { createWriteStream, WriteStream } from 'fs';
 import {
   ServerRunner,
   PwMatch,
@@ -54,7 +53,6 @@ function* lobbyFlowSaga() {
 
   const runner: MatchRunner = yield call(matchRunner, serverParams);
   yield put(A.serverStarted(serverParams.matchId));
-  console.log('started');
 
   // start the lobby
   const lobbyTask = yield fork(runLobby, runner);
@@ -178,13 +176,14 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
     PwEvents.StartGame.create({
       mapPath,
       maxTurns: match.maxTurns,
-    })
+    }),
   );
   yield put(A.createMatch(match));
 
   const event = yield take(matchChan);
   if (event === 'complete') {
-    const log = parseLogFile(match.logPath, match.type);
+    const log = yield call(parseLogFile, match.logPath, match.type);
+    console.log(log);
     const stats = calcStats(log);
     yield put(A.matchFinished({
       matchId: match.uuid,

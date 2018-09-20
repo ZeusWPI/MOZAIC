@@ -18,7 +18,9 @@ export function logFileEntries(path: string): any[] {
   return lines.map((line: string) => JSON.parse(line));
 }
 
-export function parseLogFile(path: string, type: M.MatchType): MatchLog {
+export function parseLogFile(path: string, type: M.MatchType)
+  : Promise<MatchLog>
+{
   const log = emptyLog(type);
   const replayer = new Replayer();
 
@@ -29,8 +31,7 @@ export function parseLogFile(path: string, type: M.MatchType): MatchLog {
     registerStreamToLog(log, replayer.clientStream(clientId));
   });
 
-  replayer.replayFile(path);
-  return log;
+  return replayer.replayFile(path).then(() => log);
 }
 
 function registerStreamToLog(log: MatchLog, stream: Replayer | SimpleEventEmitter) {

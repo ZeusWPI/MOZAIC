@@ -41,17 +41,22 @@ export class Replayer {
         });
     }
 
-    public replayFile(path: string) {
+    public replayFile(path: string): Promise<void> {
         const logStream = createReadStream(path);
-        this.replayReadStream(logStream);
+        return this.replayReadStream(logStream);
     }
 
-    public replayReadStream(logStream: ReadStream) {
-        const messageStream = logStream.pipe(new ProtobufReader());
+    public replayReadStream(logStream: ReadStream): Promise<void> {
+        return new Promise((resolve, reject) => {
+            const messageStream = logStream.pipe(new ProtobufReader());
 
-        messageStream.on('data', (bytes: Uint8Array) => {
-            const logEvent = LogEvent.decode(bytes);
-            this.emit(logEvent);
+            messageStream.on('data', (bytes: Uint8Array) => {
+                const logEvent = LogEvent.decode(bytes);
+                this.emit(logEvent);
+            });
+
+            messageStream.on('error', reject);
+            messageStream.on('end', resolve);
         });
     }
 }
