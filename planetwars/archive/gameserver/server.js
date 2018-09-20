@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const crypto = require("crypto");
 
 const Executor = require('./executor');
 
@@ -15,6 +16,7 @@ const GAME_CONFIG_DEFAULT = {
 };
 
 const BOT_MAP = "./bots";
+var executor = new Executor();
 
 // serve client
 const client_dir = path.normalize(path.join(__dirname, '..', 'client'));
@@ -26,7 +28,6 @@ app.use(express.static(client_dir));
 app.post('/bot', function(req, res) {
   console.log("==================================")
   var code = req.body.code;
-  var executor = new Executor();
   executor.writeCode(code);
 
   var name = req.body.name || "bert";
@@ -44,24 +45,43 @@ app.post('/bot', function(req, res) {
   game_config.player_map[name] = "player_1";
   game_config.player_map[opponent.name] = "player_2";
 
-
-  var config = {
-    players: [{
+  const players = [
+      {
         name: name,
-        command: 'node',
-        args: ['../blockly/runner.js', executor.code_file]
+        token: crypto.randomBytes(16).toString('hex'),
+        botConfig: {
+          command: "node",
+          args: [executor.code_file],
+        },
+        number: 1,
       },
       {
         name: opponent.name,
-        command: 'node',
-        args: ['../blockly/runner.js', opponent.path]
+        token: crypto.randomBytes(16).toString('hex'),
+        botConfig: {
+          command: "node",
+          args: [opponent.path],
+        },
+        number: 2,
       }
-    ],
-    game_config: game_config,
-    log_file: executor.log_file
-  };
+  ];
+  // var config = {
+  //   players: [{
+  //       name: name,
+  //       command: 'node',
+  //       args: ['../blockly/runner.js', executor.code_file]
+  //     },
+  //     {
+  //       name: opponent.name,
+  //       command: 'node',
+  //       args: ['../blockly/runner.js', opponent.path]
+  //     }
+  //   ],
+  //   game_config: game_config,
+  //   log_file: executor.log_file
+  // };
 
-  executor.writeConfig(config);
+  executor.setPlayers(players);
 
   executor.run((err, stdout, stderr) => {
 

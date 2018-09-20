@@ -3,6 +3,7 @@
 const { minimum_by, maximum_by, distance, sort_by } = require('./utils');
 
 function eval_code(code, pw) {
+  console.log("eval code " + code)
 
   // define closures
   function getPlayer() {
