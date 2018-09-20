@@ -8,7 +8,7 @@ let render = () => {
   // Have to use require here, or hot reloading wont work because of reasons
   const Root = require('./components/App').default;
   ReactDOM.render(<Root />, MOUNT_NODE);
-  inject('blockly');
+  // inject('blockly');
 };
 
 // Development Tools

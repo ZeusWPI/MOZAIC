@@ -117,14 +117,18 @@ class PlanetWarsBlockly {
   }
 }
 
-export default inject;
-//
-// export default class BlocklyEditor extends React.Component {
-//   constructor(props) {
-//     super(props);
-//   }
-//
-//   render() {
-//     return <div>{inject('blockly')}</div>;
-//   }
-// }
+// export default inject;
+
+export default class BlocklyEditor extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  componentDidMount() {
+    this.workspace = inject('blockly');
+  }
+
+  render() {
+    return <div />;
+  }
+}

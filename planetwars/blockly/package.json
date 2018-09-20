@@ -48,6 +48,7 @@
   "dependencies": {
     "classnames": "^2.2.6",
     "node-blockly": "https://github.com/eyz/node-blockly.git",
+    "planetwars-visualizer": "file:../visualizer",
     "react": "^16.4.2",
     "react-dom": "^16.4.2"
   }
