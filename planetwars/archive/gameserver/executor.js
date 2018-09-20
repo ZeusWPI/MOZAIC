@@ -1,18 +1,15 @@
 const temp = require('temp');
 const fs = require('fs');
-const { exec } = require('child_process');
 const mozaic = require("mozaic-client");
 const { createWriteStream } = require("fs");
 
-const BOT_DRIVER_PATH = './bot_driver';
+const addr = {
+  host: "127.0.0.1",
+  port: 9142,
+};
 
 class Executor {
   constructor(player) {
-    const addr = {
-      host: "127.0.0.1",
-      port: 9142
-    };
-
     this.code_file = temp.path({suffix: '.js'});
     this.log_file = temp.path({suffix: '.log'});
 
@@ -31,7 +28,10 @@ class Executor {
 
   writeCode(code) {
     code = code || ""
-    const code_file = this.code_file;
+    this.saveInTemplate(code, this.code_file)
+  }
+
+  saveInTemplate(code, code_file) {
     fs.readFile("../template.js", 'utf8', function (err,data) {
       if (err) {
         return console.log(err);
@@ -65,11 +65,6 @@ class Executor {
   }
 
   runMatch(matchUuid, ownerToken, callback) {
-    const addr = {
-      host: "127.0.0.1",
-      port: 9142
-    };
-
     console.log("logging to ", this.log_file)
 
     const logStream = createWriteStream(this.log_file);

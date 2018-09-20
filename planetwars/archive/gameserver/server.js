@@ -101,6 +101,16 @@ app.get('/players', function(req, res) {
   });
 });
 
+app.post('/upload', (req, res) => {
+  console.log("Got request to upload ", req.body)
+  if (!req.body.code || !req.body.name) {
+    res.send("Missing code or name")
+    return;
+  }
+  executor.saveInTemplate(req.body.code, BOT_MAP + "/" + req.body.name + ".js")
+  res.send("Saved " + req.body.name + " succesfully")
+})
+
 function createOpponent(opponent) {
   return {
     "path": BOT_MAP + '/' + opponent + '.js',
