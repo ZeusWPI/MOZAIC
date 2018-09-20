@@ -54,6 +54,7 @@ function* lobbyFlowSaga() {
 
   const runner: MatchRunner = yield call(matchRunner, serverParams);
   yield put(A.serverStarted(serverParams.matchId));
+  console.log('started');
 
   // start the lobby
   const lobbyTask = yield fork(runLobby, runner);
@@ -130,7 +131,7 @@ function* registerPlayer(match: PwMatch, action: ActionWithPayload<PlayerData>) 
   const token = generateToken();
 
   const tokenBuf = Buffer.from(token, 'hex');
-  const clientId = yield call([match, match.createClient], tokenBuf);
+  const { clientId } = yield call([match, match.createClient], tokenBuf);
 
   yield put(A.clientRegistered({
     playerId: player.id,
@@ -292,6 +293,8 @@ function matchRunner(serverParams: ServerParams): Promise<MatchRunner> {
             matchUuid,
           });
         });
+
+        matchControl.connect();
       });
     });
 
