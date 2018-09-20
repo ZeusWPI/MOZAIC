@@ -1,0 +1,82 @@
+@import '../lib.global.scss';
+@import './controlSlider.scss';
+
+input[type=range] {
+    @include input-type-range;
+}
+
+.controls {
+    position: absolute;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    bottom: 0%;
+
+    .turnSlider {
+        width: 95%;
+    }
+
+    .controlButtons {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        width: 95%;
+
+        .button {
+            width: 15%;
+            height: 40px;
+            width: 40px;
+            // font-size: 1vw;
+            border-width: 0;
+            margin: 0;
+            padding: 0;
+            background-color: $ctrl-button-color;
+            color: $ctrl-button-text-color;
+
+            @include on-event {
+                background-color: $ctrl-button-color-hover;
+                color: $ctrl-button-text-color-hover;
+            }
+        }
+
+        .turnControls {
+            display: flex;
+            min-width: 250px;
+            justify-content: space-between;
+            align-items: center;
+
+            >* {
+                margin-right: 3px;
+            }
+        }
+
+        .speedControls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            >* {
+                margin-left: 3px;
+            }
+        }
+
+        .turnProgress,
+        .speed {
+            background-color: $ctrl-info-color;
+            color: $ctrl-info-text-color;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0 5px;
+
+            p {
+                padding: 0;
+                margin: 0;
+            }
+        }
+    }
+}

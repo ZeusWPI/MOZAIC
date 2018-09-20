@@ -1,0 +1,27 @@
+//------------------------------------------------------------------------------
+// Variables
+//------------------------------------------------------------------------------
+
+$background: #201f1d;
+$altBackground: lighten($background, 5);
+$primary: #de8d47;
+$secondary: #de8d47;
+$tertiary: #868685;
+
+//------------------------------------------------------------------------------
+// Bulma
+//------------------------------------------------------------------------------
+
+@import "~bulma/sass/utilities/initial-variables";
+
+$body-background-color: $background;
+$text: #ffffff;
+$dark: $background;
+$red: #DE4B47;
+$green: #9ECE43;
+
+$navbar-background-color: $background;
+$navbar-item-hover-background-color: lighten($background, 5);
+$navbar-item-color: $text;
+
+$link: $primary;

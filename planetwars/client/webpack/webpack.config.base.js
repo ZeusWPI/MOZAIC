@@ -47,6 +47,9 @@ module.exports = {
   // https://webpack.github.io/docs/configuration.html#resolve
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.json'],
+    alias: {
+      'Styles': path.resolve(__dirname, '..', 'app', 'styles')
+    },
     modules: [
       path.join(__dirname, 'app'),
       'node_modules',

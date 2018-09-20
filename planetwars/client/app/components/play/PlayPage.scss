@@ -1,144 +1,167 @@
-@import '../../app.global.scss';
+@import '~Styles/lib.global';
 
 .playPageContainer {
-  width: 100%; // height: 100%;
-  flex: auto;
-  display: flex;
-  .playPage {
-    width: 100%;
-    flex-grow: 1;
-    height: inherit;
+    width: 100%; // height: 100%;
+    flex: auto;
     display: flex;
-    flex-direction: row;
-    .leftColumn {
-      width: 50%;
-      flex-grow: 1;
-      height: 100%;
-      padding-right: 5px;
-      .lobbyContainer {
+
+    .playPage {
         width: 100%;
-        height: 100%;
-        margin-bottom: 1px;
-      }
-      .serverControlsContainer {
-        width: 100%;
-        height: 25%;
-      }
-    }
-    .rightColumn {
-      flex-grow: 1;
-      height: 100%;
-      width: 50%;
-      display: flex;
-      overflow-y: scroll;
-      flex-direction: column;
-      .configContainer {
-        width: 100%;
-        height: 50%; // TODO Solve this decently
-        min-height: 350px;
-        margin-bottom: 1px;
-      }
-      .localBotSelectorContainer {
-        min-height: 150px;
         flex-grow: 1;
-        height: 50%;
-        width: 100%;
-      }
+        height: inherit;
+        display: flex;
+        flex-direction: row;
+
+        .leftColumn {
+            width: 50%;
+            flex-grow: 1;
+            height: 100%;
+            padding-right: 5px;
+
+            .lobbyContainer {
+                width: 100%;
+                height: 100%;
+                margin-bottom: 1px;
+            }
+
+            .serverControlsContainer {
+                width: 100%;
+                height: 25%;
+            }
+        }
+
+        .rightColumn {
+            flex-grow: 1;
+            height: 100%;
+            width: 50%;
+            display: flex;
+            overflow-y: scroll;
+            flex-direction: column;
+
+            .configContainer {
+                width: 100%;
+                height: 50%; // TODO Solve this decently
+                min-height: 350px;
+                margin-bottom: 1px;
+            }
+
+            .localBotSelectorContainer {
+                min-height: 150px;
+                flex-grow: 1;
+                height: 50%;
+                width: 100%;
+            }
+        }
     }
-  }
 }
 
 .sectionWithHeader {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  .sectionHeader {
-    padding: 3px 5px;
-    background-color: $secondary;
-  }
-  .verticalGrowAndScroll {
-    flex: 1 1 auto;
-    width: 100%;
-    overflow-y: scroll;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    >* {
-      width: 100%;
+    height: 100%;
+
+    .sectionHeader {
+        padding: 3px 5px;
+        background-color: $secondary;
     }
-  }
+
+    .verticalGrowAndScroll {
+        flex: 1 1 auto;
+        width: 100%;
+        overflow-y: scroll;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+
+        >* {
+            width: 100%;
+        }
+    }
 }
 
 .mapSelector {
-  display: flex;
-  flex-flow: row;
-  overflow-y: scroll;
-  .mapPreview {
     display: flex;
-    justify-content: center;
-    margin: 20px 20px;
-    .map {
-      width: 100px;
-      height: 100px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      .importCircle {
-        color: $primary;
-        font-size: 75px;
-      }
+    flex-flow: row;
+    overflow-y: scroll;
+
+    .mapPreview {
+        display: flex;
+        justify-content: center;
+        margin: 20px 20px;
+
+        .map {
+            width: 100px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            .importCircle {
+                color: $primary;
+                font-size: 75px;
+            }
+        }
+
+        .selectedText {
+            fill: $green;
+            font-family: FontAwesome;
+            font-size: 30px;
+        }
+
+        .emptyPlanet {
+            fill: $tertiary;
+        }
     }
-    .selectedText {
-      fill: $green;
-      font-family: FontAwesome;
-      font-size: 30px;
+
+    .notSelectedMap {
+        border: 3px solid $primary;
     }
-    .emptyPlanet {
-      fill: $tertiary;
+
+    .selectedMap {
+        border: 3px solid $green;
     }
-  }
-  .notSelectedMap {
-    border: 3px solid $primary;
-  }
-  .selectedMap {
-    border: 3px solid $green;
-  }
 }
 
 .localBotSelector {
-  flex: 1 1 auto;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: scroll;
-  .localBot {
-    margin: 5px 0;
-    padding: 8px;
+    flex: 1 1 auto;
     width: 100%;
-    border-left: 4px solid transparent;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    .botInfo {
-      flex: 1 1 auto;
-      width: 80%;
-      .botCommand {
-        color: $tertiary;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-      }
+    flex-direction: column;
+    overflow-y: scroll;
+
+    .localBot {
+        margin: 5px 0;
+        padding: 8px;
+        width: 100%;
+        border-left: 4px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        .botInfo {
+            flex: 1 1 auto;
+            width: 80%;
+
+            .botCommand {
+                color: $tertiary;
+                text-overflow: ellipsis;
+                overflow: hidden;
+                white-space: nowrap;
+            }
+        }
+
+        .botAdder {
+            min-width: 50px;
+            height: 100%;
+        }
+
+        &.selected {
+            border-left: 4px solid $primary;
+        }
+
+        &:hover {
+            background-color: $altBackground;
+        }
     }
-    .botAdder {
-      min-width: 50px;
-      height: 100%;
-    }
-    &.selected {
-      border-left: 4px solid $primary;
-    }
-    &:hover {
-      background-color: $altBackground;
-    }
-  }
 }

@@ -5,10 +5,11 @@ import {
   GameState,
   Player,
   PwTypes,
-} from '../../lib/match';
+  PlayerMap,
+  PlayerTurn,
+} from 'planetwars-match-log';
 
 import * as classNames from 'classnames';
-import { PlayerMap, PlayerTurn } from '../../lib/match/MatchLog';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require("./LogView.scss");
@@ -92,7 +93,7 @@ interface PlayerViewProps { playerName: string; turn: PlayerTurn; }
 export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
   const isError = turn.action && turn.action.type !== 'commands';
   return (
-    <li className={classNames(styles.player, {[styles.error]: isError})}>
+    <li className={classNames(styles.player, { [styles.error]: isError })}>
       <div>
         <p className={styles.playerName}>{playerName}</p>
       </div>
@@ -110,13 +111,13 @@ export const PlayerTurnView: SFC<{ turn: PlayerTurn }> = ({ turn }) => {
 
   switch (action.type) {
     case 'timeout': {
-      return <Timeout/>;
+      return <Timeout />;
     }
     case 'parse_error': {
       return <ParseErrorView command={turn.command} error={action.value} />;
     }
     case 'commands': {
-      return <CommandsView commands={action.value}/>;
+      return <CommandsView commands={action.value} />;
     }
   }
 };
@@ -149,7 +150,7 @@ export const CommandsView: SFC<CommandsViewProps> = (props) => {
     const isWarning = { [styles.warning]: !!cmd.error };
     return (
       <li className={classNames(styles.playerOutput, isWarning)} key={idx}>
-        <DispatchError error={cmd.error}/>
+        <DispatchError error={cmd.error} />
         <DispatchView cmd={cmd.command} />
       </li>
     );

@@ -1,0 +1,42 @@
+{
+  "name": "planetwars-match-log",
+  "version": "0.0.1",
+  "description": "Types and utility for PlanetWars match logs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": "https://github.com/ZeusWPI/MOZAIC",
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "private": false,
+  "scripts": {
+    "test": "jest",
+    "build": "rm -rf dist && tsc",
+    "prepublish": "yarn run build"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.1",
+    "@types/lodash": "^4.14.116",
+    "@types/node": "^10.9.4",
+    "eslint": "^5.4.0",
+    "jest": "^23.5.0",
+    "ts-jest": "^23.1.4",
+    "typescript": "^2.8.3"
+  },
+  "dependencies": {
+    "lodash": "^4.17.10"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "(/__tests__/.*|(\\.|/)(test|spec))\\.(jsx?|tsx?)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "jsx",
+      "json",
+      "node"
+    ]
+  }
+}
