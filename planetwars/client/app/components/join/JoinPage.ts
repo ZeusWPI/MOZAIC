@@ -25,6 +25,7 @@ const mapDispatchToProps = (dispatch: any) => {
         token: bot.token,
         name: bot.name,
         botId: bot.botId,
+        clientid: bot.clientid,
       }));
     },
   };

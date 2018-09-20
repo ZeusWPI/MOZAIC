@@ -1,9 +1,10 @@
 import * as A from '../actions';
 import * as M from '../database/models';
-import { Client, PwClient, Logger, Address } from 'mozaic-client';
+import { Client, PwClient, Logger, Address, events } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { eventChannel } from 'redux-saga';
 import { parseLogFile, calcStats } from '../lib/match';
+import { createWriteStream } from "fs";
 import {
   call,
   apply,
@@ -36,7 +37,7 @@ export function* runClientSaga() {
 
 function* joinMatch(params: A.JoinMatchParams) {
   const logPath = Config.matchLogPath(params.matchId);
-  const logger = new Logger(logPath);
+  const logger = new Logger(params.clientid, createWriteStream(logPath));
 
   const client = yield call(runPwClient, {
     address: params.address,
@@ -56,7 +57,7 @@ function* joinMatch(params: A.JoinMatchParams) {
       type: M.BotSlotType.internal,
       botId: params.botId,
       name: params.name,
-      number: client.clientId,
+      clientid: client.clientId,
       token: params.token,
       connected: true,
     },
@@ -84,7 +85,7 @@ export interface ClientParams {
 }
 
 export function* runPwClient(params: ClientParams) {
-  const client: Client = yield call(Client.connect, {
+  const client: Client = yield call(Client.call, {
     host: params.address.host,
     port: params.address.port,
     token: new Buffer(params.token, 'hex'),
@@ -95,7 +96,7 @@ export function* runPwClient(params: ClientParams) {
   const [command, ...args] = stringArgv(bot.command);
   const botConfig = { command, args };
 
-  const pwClient = new PwClient(client, botConfig);
+  // const pwClient = new PwClient({client, botConfig});
   return client;
 }
 
@@ -103,9 +104,9 @@ function clientEventChannel(client: Client) {
   return eventChannel((emit) => {
     const exitHandler = () => emit('exit');
 
-    client.onExit.subscribe(exitHandler);
+    client.on(events.Disconnected, exitHandler);
     const unsubscribe = () => {
-      client.onExit.unsubscribe(exitHandler);
+      client.on(events.Disconnected, () => {});
     };
     return unsubscribe;
   });

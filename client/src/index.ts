@@ -6,8 +6,9 @@ export { Reactor } from "./reactors/Reactor";
 export { ServerRunner, ServerParams } from "./planetwars/ServerRunner";
 export { Logger } from "./Logger";
 export { Event, SimpleEventEmitter } from "./reactors/SimpleEventEmitter"
-export { PwMatch } from "./planetwars/PwMatch"
+export { PwMatch, MatchParams } from "./planetwars/PwMatch"
 export { Client } from "./networking/Client"
+export { ServerControl } from "./ServerControl"
 
 import * as events from "./eventTypes";
 import * as PwTypes from './planetwars/PwTypes';

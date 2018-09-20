@@ -13,6 +13,7 @@ export interface JoinMatchParams {
   botId: M.BotId;
   name: string;
   address: M.Address;
+  clientid: number;
 }
 export const joinMatch = actionCreator<JoinMatchParams>('JOIN_MATCH');
 
