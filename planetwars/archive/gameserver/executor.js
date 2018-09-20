@@ -13,7 +13,6 @@ class Executor {
       port: 9142
     };
 
-    this.config_file = temp.path({suffix: '.json'});
     this.code_file = temp.path({suffix: '.js'});
     this.log_file = temp.path({suffix: '.log'});
 
@@ -61,11 +60,11 @@ class Executor {
       matchUuid = e.matchUuid;
       console.log("Got uuid ", matchUuid)
     }).then(() => {
-      this.runMatch(matchUuid, ownerToken)
+      this.runMatch(matchUuid, ownerToken, callback);
     })
   }
 
-  runMatch(matchUuid, ownerToken) {
+  runMatch(matchUuid, ownerToken, callback) {
     const addr = {
       host: "127.0.0.1",
       port: 9142
@@ -132,17 +131,21 @@ class Executor {
 
     match.on(mozaic.events.ClientDisconnected).subscribe(({ clientId }) => {
       console.log("Player " + clientId + " disconnected")
-        waiting_for.add(clientId);
     });
+
+    match.on(mozaic.events.GameFinished).subscribe(() => {
+      console.log("calling callback")
+      callback()
+    })
 
     match.connect();
   }
 
   // remove temp files
   clean() {
-    fs.unlinkSync(this.config_file);
-    fs.unlinkSync(this.code_file);
-    fs.unlinkSync(this.log_file);
+    // What temp files?
+    // fs.unlinkSync(this.code_file);
+    // fs.unlinkSync(this.log_file);
   }
 }
 

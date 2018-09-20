@@ -86,28 +86,11 @@ app.post('/bot', function(req, res) {
 
   executor.setPlayers(players);
 
-  executor.run((err, stdout, stderr) => {
-
-    console.log(`stdout: ${stdout}`);
-    console.log(`stderr: ${stderr}`);
-
-    var winner = getWinnerFromBotDriverOutput(stdout);
-    console.log("Winner: " + winner);
-    if (winner && winner == name) {
-      writeWinningBot(name, code)
-    }
-
-    if (err) {
-      res.send(err);
-      executor.clean();
-      return;
-    }
-
+  executor.run(() => {
     fs.readFile(executor.log_file, (err, log) => {
       res.send(log);
       executor.clean();
     })
-
   });
 });
 
