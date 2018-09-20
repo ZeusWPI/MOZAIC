@@ -2,14 +2,15 @@ import { SimpleEventEmitter, EventType, Event } from "./SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { EventHandler } from "../networking/Client";
 import { WireEvent } from "../networking/EventWire";
-import { Logger } from "../Logger";
+import { ClientLogger } from "../Logger";
 import { encodeEvent } from "./utils";
 
 export class Reactor implements EventHandler {
     private eventEmitter: SimpleEventEmitter;
-    private logger: Logger;
+    // TODO: use an interface instead of ClientLogger
+    private logger: ClientLogger;
 
-    constructor(logger: Logger) {
+    constructor(logger: ClientLogger) {
         this.eventEmitter = new SimpleEventEmitter();
         this.logger = logger;
     }
