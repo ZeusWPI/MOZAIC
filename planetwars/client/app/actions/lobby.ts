@@ -45,12 +45,11 @@ export const clientRegistered = actionCreator<ClientRegistration>('CLIENT_REGIST
 export const clientConnected = actionCreator<{ clientId: number }>('CLIENT_CONNECTED');
 export const clientDisconnected = actionCreator<{ clientId: number }>('CLIENT_DISCONNECTED');
 
-export interface BotParams {
-  address: Address;
-  token: string;
+export interface RunLocalBot {
+  clientId: number;
   bot: M.Bot;
 }
-export const runLocalBot = actionCreator<BotParams>('RUN_LOCAL_BOT');
+export const runLocalBot = actionCreator<RunLocalBot>('RUN_LOCAL_BOT');
 
 export const startMatch = actionCreator<PwConfig>('START_MATCH');
 export const resetLobby = actionCreatorVoid('RESET_LOBBY');

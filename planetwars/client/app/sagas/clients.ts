@@ -4,7 +4,7 @@ import { Client, PwClient, Logger, Address, events } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { eventChannel } from 'redux-saga';
 import { parseLogFile, calcStats } from '../lib/match';
-import { createWriteStream } from "fs";
+import { createWriteStream, WriteStream } from "fs";
 import {
   call,
   apply,
@@ -37,7 +37,7 @@ export function* runClientSaga() {
 
 function* joinMatch(params: A.JoinMatchParams) {
   const logPath = Config.matchLogPath(params.matchId);
-  const logger = new Logger(params.clientid, createWriteStream(logPath));
+  const logger = new Logger(logPath);
 
   const client = yield call(runPwClient, {
     address: params.address,
@@ -78,6 +78,8 @@ function* joinMatch(params: A.JoinMatchParams) {
 }
 
 export interface ClientParams {
+  clientId: number;
+  matchUuid: Uint8Array;
   address: Address;
   token: string;
   logger: Logger;
@@ -85,19 +87,25 @@ export interface ClientParams {
 }
 
 export function* runPwClient(params: ClientParams) {
-  const client: Client = yield call(Client.call, {
-    host: params.address.host,
-    port: params.address.port,
-    token: new Buffer(params.token, 'hex'),
-    logger: params.logger,
-  });
-
   const bot = yield select((state: GState) => state.bots[params.botId]);
   const [command, ...args] = stringArgv(bot.command);
   const botConfig = { command, args };
 
-  // const pwClient = new PwClient({client, botConfig});
-  return client;
+  const pwClient = new PwClient({
+    host: params.address.host,
+    port: params.address.port,
+
+    matchUuid: params.matchUuid,
+    clientId: params.clientId,
+
+    token: new Buffer(params.token, 'hex'),
+    logger: params.logger,
+
+    botConfig,
+  });
+
+  pwClient.run();
+  return pwClient;
 }
 
 function clientEventChannel(client: Client) {

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 
 import * as M from '../../database/models';
 import * as A from '../../actions';
-import { ServerParams, PlayerParams, BotParams } from '../../actions/lobby';
+import { ServerParams, PlayerParams, RunLocalBot } from '../../actions/lobby';
 import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
@@ -63,7 +63,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     stopServer() {
       dispatch(A.stopServer());
     },
-    runLocalBot(params: BotParams) {
+    runLocalBot(params: RunLocalBot) {
       dispatch(A.runLocalBot(params));
     },
     startMatch(config: PwConfig) {
@@ -88,7 +88,7 @@ export interface PlayPageDispatchProps {
   createPlayer: (player: PlayerParams) => void;
   startServer: (params: ServerParams) => void;
   stopServer: () => void;
-  runLocalBot: (params: BotParams) => void;
+  runLocalBot: (params: RunLocalBot) => void;
   startMatch: (config: PwConfig) => void;
 }
 
@@ -157,8 +157,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
       throw new Error('we suck at programming');
     }
     this.props.runLocalBot({
-      address: this.props.lobby.address,
-      token: slot.client.token,
+      clientId: slot.client.clientId,
       bot: slot.bot,
     });
   }

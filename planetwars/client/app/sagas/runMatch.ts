@@ -3,7 +3,7 @@ import * as A from '../actions';
 import { Address, PlayerData, ClientData, PwConfig, LobbyState } from '../reducers/lobby';
 import { Config } from '../utils/Config';
 import { generateToken } from '../utils/GameRunner';
-import { ServerParams, BotParams } from '../actions/lobby';
+import { ServerParams, RunLocalBot } from '../actions/lobby';
 import { ActionWithPayload } from '../actions/helpers';
 import { ISimpleEvent } from 'ste-simple-events';
 import * as M from '../database/models';
@@ -32,7 +32,7 @@ import {
   race,
   spawn,
 } from 'redux-saga/effects';
-import { runPwClient } from './clients';
+import { runPwClient, ClientParams } from './clients';
 import { Connected } from '../../../../client/dist/eventTypes';
 
 // tslint:disable-next-line:no-var-requires
@@ -83,7 +83,7 @@ function* runLobby(runner: MatchRunner) {
   yield fork(watchConnectEvents, runner.matchControl);
   yield fork(watchDisconnectEvents, runner.matchControl);
   yield fork(watchCreatePlayer, runner.matchControl);
-  yield fork(watchRunLocalBot, runner.logSink);
+  yield fork(watchRunLocalBot, runner);
 }
 
 function* watchCreatePlayer(match: PwMatch) {
@@ -104,16 +104,23 @@ function* watchDisconnectEvents(match: PwMatch) {
   });
 }
 
-function* watchRunLocalBot(logSink: WriteStream) {
-  function* runLocalBot(action: ActionWithPayload<BotParams>) {
+function* watchRunLocalBot(runner: MatchRunner) {
+  function* runLocalBot(action: ActionWithPayload<RunLocalBot>) {
+    const { clientId, bot } = action.payload;
+
+    const client: ClientData = yield select(
+      (state: GState) => state.lobby.clients[clientId]
+    );
     // TODO
-    const { address, token, bot } = action.payload;
-    yield call(runPwClient, {
-      address,
-      token,
-      logSink,
+    const params: ClientParams = {
+      clientId,
+      matchUuid: runner.matchUuid,
+      token: client.token,
+      address: runner.serverRunner.address,
+      logger: runner.logger,
       botId: bot.uuid,
-    });
+    };
+    yield call(runPwClient, params);
   }
   yield takeEvery(A.runLocalBot.type, runLocalBot);
 }
@@ -142,15 +149,19 @@ function simpleEventChannel<T>(event: ISimpleEvent<T>): Channel<T> {
 
 function matchEventChannel(runner: MatchRunner) {
   return eventChannel((emit) => {
+    const onFinished = runner.matchControl.on(PwEvents.GameFinished);
+    // TODO: how to get errors? this is not really the ideal way
+    const onError = runner.serverRunner.onError;
+
     const completeHandler = () => emit('complete');
     const errorHandler = (err: Error) => emit(err);
 
-    runner.onComplete.subscribe(completeHandler);
-    runner.onError.subscribe(errorHandler);
+    onFinished.subscribe(completeHandler);
+    onError.subscribe(errorHandler);
 
     const unsubscribe = () => {
-      runner.onComplete.unsubscribe(completeHandler);
-      runner.onError.unsubscribe(errorHandler);
+      onFinished.unsubscribe(completeHandler);
+      onError.unsubscribe(errorHandler);
     };
 
     return unsubscribe;
@@ -161,10 +172,13 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
   const mapPath = yield select((state: GState) => state.maps[match.map].mapPath);
   const matchChan = matchEventChannel(runner);
 
-  yield call([runner.matchControl, runner.matchControl.startGame], {
-    map_file: mapPath,
-    max_turns: match.maxTurns,
-  });
+  yield call(
+    [runner.matchControl, runner.matchControl.send],
+    PwEvents.StartGame.create({
+      mapPath,
+      maxTurns: match.maxTurns,
+    })
+  );
   yield put(A.createMatch(match));
 
   const event = yield take(matchChan);
@@ -232,7 +246,8 @@ interface MatchRunner {
   serverRunner: ServerRunner;
   serverControl: ServerControl;
   matchControl: PwMatch;
-  logSink: WriteStream;
+  matchUuid: Uint8Array;
+  logger: Logger;
 }
 
 function matchRunner(serverParams: ServerParams): Promise<MatchRunner> {
@@ -241,8 +256,7 @@ function matchRunner(serverParams: ServerParams): Promise<MatchRunner> {
     const matchToken = generateToken();
 
     const logPath =  Config.matchLogPath(serverParams.matchId);
-    const logSink = createWriteStream(logPath);
-
+    const logger = new Logger(logPath);
 
     // SET UP SERVER RUNNER
 
@@ -260,18 +274,22 @@ function matchRunner(serverParams: ServerParams): Promise<MatchRunner> {
 
     serverControl.on(PwEvents.Connected, (_) => {
       serverControl.createMatch(Buffer.from(matchToken, 'hex')).then((e) => {
+        const matchUuid = e.matchUuid;
+
         const matchControl = new PwMatch({
           ...serverParams.address,
           token: Buffer.from(matchToken, 'hex'),
-          matchUuid: e.matchUuid,
-        }, new Logger(0, logSink));
+          matchUuid,
+          logger,
+        });
 
         matchControl.client.on(Connected, (_) => {
           resolve({
             serverRunner,
             serverControl,
             matchControl,
-            logSink,
+            logger,
+            matchUuid,
           });
         });
       });
