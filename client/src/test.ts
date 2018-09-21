@@ -41,7 +41,7 @@ const gameConfig = {
     maxTurns: 100,
 }
 
-const logger = new Logger('log.out');
+const logStream = createWriteStream('log.out');
 
 const ownerToken = Buffer.from('cccc', 'hex');
 
@@ -51,8 +51,7 @@ function runMatch(matchUuid: Uint8Array) {
         port: addr.port,
         token: ownerToken,
         matchUuid,
-        logger,
-    });
+    }, new Logger(0, logStream));
     
     const clients = {};
     const waiting_for = new Set();
@@ -70,10 +69,11 @@ function runMatch(matchUuid: Uint8Array) {
                     host: addr.host,
                     port: addr.port,
                     botConfig: simpleBot,
-                    logger,
+                    logSink: logStream,
                 });
                 clients[clientId] = client;
                 client.run();
+    
             });
         })
     });

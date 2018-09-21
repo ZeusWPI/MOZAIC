@@ -1,5 +1,7 @@
-import { PwTypes, MatchType, MatchStats } from '.';
+import { MatchType, MatchStats } from '.';
+import * as fs from 'fs';
 import { MatchLog, HostedMatchLog, JoinedMatchLog } from './MatchLog';
+import { Replayer, SimpleEventEmitter, events } from "mozaic-client";
 
 export function emptyLog(type: MatchType): MatchLog {
   switch (type) {
@@ -10,16 +12,40 @@ export function emptyLog(type: MatchType): MatchLog {
   }
 }
 
-export function logFileEntries(logFileContent: string): PwTypes.LogEntry[] {
-  return logFileContent.trim().split('\n').map((line: string) => JSON.parse(line));
+// TODO: typing
+export function logFileEntries(path: string): any[] {
+  const lines = fs.readFileSync(path, 'utf-8').trim().split('\n');
+  return lines.map((line: string) => JSON.parse(line));
 }
 
-export function parseLog(logFileContent: string, type: MatchType): MatchLog {
-  const log = emptyLog(type)
-  logFileEntries(logFileContent).forEach((entry) => {
-    log.addEntry(entry);
+export function parseLogFile(path: string, type: MatchType)
+  : Promise<MatchLog>
+{
+  const log = emptyLog(type);
+  const replayer = new Replayer();
+
+  registerStreamToLog(log, replayer);
+
+  replayer.clientSpottedDispatcher.subscribe((clientId) => {
+    log.addPlayer(clientId);
+    registerStreamToLog(log, replayer.clientStream(clientId));
   });
-  return log;
+
+  return replayer.replayFile(path).then(() => log);
+}
+
+function registerStreamToLog(log: MatchLog, stream: Replayer | SimpleEventEmitter) {
+  stream.on(events.GameStep).subscribe((event) => {
+    log.addEntry(event);
+  });
+
+  stream.on(events.PlayerAction).subscribe((event) => {
+    log.addEntry(event);
+  });
+
+  stream.on(events.RegisterClient).subscribe((event) => {
+    log.addEntry(event);
+  });
 }
 
 export function calcStats(log: MatchLog): MatchStats {
@@ -29,9 +55,8 @@ export function calcStats(log: MatchLog): MatchStats {
   };
 }
 
-type Scores = { [playerNum: number]: number }
-export function calcScores(log: MatchLog): Scores {
-  const scores: Scores = {};
+export function calcScores(log: MatchLog) {
+  const scores: { [playerNum: number]: number } = {};
 
   // initialize scores
   Array.from(log.getPlayers()).forEach((p) => {

@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const crypto = require("crypto");
+const PwLog = require("planetwars-match-log")
 
 const Executor = require('./executor');
 
@@ -74,30 +75,19 @@ app.post('/bot', function(req, res) {
 
   console.log("Players are ", players)
 
-  // var config = {
-  //   players: [{
-  //       name: name,
-  //       command: 'node',
-  //       args: ['../blockly/runner.js', executor.code_file]
-  //     },
-  //     {
-  //       name: opponent.name,
-  //       command: 'node',
-  //       args: ['../blockly/runner.js', opponent.path]
-  //     }
-  //   ],
-  //   game_config: game_config,
-  //   log_file: executor.log_file
-  // };
-
   executor.setPlayers(players);
 
   executor.run(() => {
-    fs.readFile(executor.log_file, (err, log) => {
-      res.send(log);
+    const gameLog = PwLog.parseLogFile(executor.log_file, PwLog.MatchType.hosted).then((log) => {
+      const reply = {
+        gameStates: log.gameStates,
+        playerLogs: log.playerLogs,
+      };
+      res.send(JSON.stringify(reply));
       executor.clean();
     })
-  });
+
+    });
 });
 
 app.get('/players', function(req, res) {

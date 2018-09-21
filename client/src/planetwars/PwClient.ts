@@ -5,7 +5,8 @@ import { Client } from "../networking/Client";
 import { EventType } from "../reactors/SimpleEventEmitter";
 import { ISimpleEvent } from "ste-simple-events";
 import { Reactor } from "../reactors/Reactor";
-import { Logger, ClientLogger } from "../Logger";
+import { Logger } from "../Logger";
+import { WriteStream } from "fs";
 import * as protocol_root from '../proto';
 import proto = protocol_root.mozaic.protocol;
 
@@ -14,7 +15,7 @@ export type Params = ClientParams & {
     botConfig: BotConfig,
     clientId: number;
     matchUuid: Uint8Array;
-    logger: Logger;
+    logSink: WriteStream;
 }
 
 export class PwClient {
@@ -27,7 +28,7 @@ export class PwClient {
     constructor(params: Params) {
         this.clientId = params.clientId;
         this.matchUuid = params.matchUuid;
-        const logger = new ClientLogger(params.logger, params.clientId);
+        const logger = new Logger(params.clientId, params.logSink);
         this.reactor = new Reactor(logger);
         this.client = new Client(params);
         this.botRunner = new BotRunner(params.botConfig);

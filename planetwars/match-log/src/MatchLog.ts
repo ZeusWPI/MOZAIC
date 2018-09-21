@@ -1,5 +1,5 @@
-import { PlanetList, Expedition } from './types';
-import * as PwTypes from './mozaic_types';
+import { PlanetList, Expedition, Player, JsonExpedition, JsonPlanet } from './types';
+import { events, Event, PwTypes } from "mozaic-client";
 
 export abstract class MatchLog {
   public playerLogs: PlayerMap<PlayerLog>;
@@ -18,7 +18,12 @@ export abstract class MatchLog {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
   }
 
-  public abstract addEntry(entry: PwTypes.LogEntry): void;
+  // This may be a hack...
+  public addPlayer(clientId: number) {
+    this.getPlayerLog(clientId);
+  }
+
+  public abstract addEntry(entry: Event): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -31,30 +36,57 @@ export abstract class MatchLog {
 }
 
 export class HostedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
-    switch (entry.type) {
-      case "game_state": {
-        const state = GameState.fromJson(entry.state);
-        this.gameStates.push(state);
+  public addEntry(entry: Event) {
+    switch (entry.eventType) {
+      case events.PlayerAction: {
+        const entryPA = entry as events.PlayerAction;
+
+        this.getPlayerLog(entryPA.clientId).addRecord(entry);
+
         break;
       }
-      case "player_entry": {
-        this.getPlayerLog(entry.player).addRecord(entry.record);
+      case events.GameStep: {
+        const entryGS = entry as events.GameStep;
+
+        Object.keys(this.playerLogs).forEach((clientIdStr) => {
+          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
+        });
+
+        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+
+        break;
+      }
+      case events.RegisterClient: {
+        const entryRC = entry as events.RegisterClient;
+
+        this.getPlayerLog(entryRC.clientId);
+
+        break;
       }
     }
   }
 }
 
 export class JoinedMatchLog extends MatchLog {
-  public addEntry(entry: PwTypes.LogEntry) {
-    if (entry.type === 'player_entry') {
-      // this should always be the case since this is a joined match
-      const { player, record } = entry;
+  public addEntry(entry: Event) {
+    switch (entry.eventType) {
+      case events.PlayerAction: {
+        const entryPA = entry as events.PlayerAction;
 
-      this.getPlayerLog(player).addRecord(record);
+        this.getPlayerLog(entryPA.clientId).addRecord(entry);
 
-      if (player === 1 && record.type === 'step') {
-        this.gameStates.push(GameState.fromJson(record.state));
+        break;
+      }
+      case events.GameStep: {
+        const entryGS = entry as events.GameStep;
+
+        Object.keys(this.playerLogs).forEach((clientIdStr) => {
+          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
+        });
+
+        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+
+        break;
       }
     }
   }
@@ -71,7 +103,7 @@ export class GameState {
 
   public static fromJson(json: PwTypes.GameState) {
     const planets: PlanetList = {};
-    json.planets.forEach((p) => {
+    json.planets.forEach((p: JsonPlanet) => {
       planets[p.name] = {
         name: p.name,
         x: p.x,
@@ -81,7 +113,7 @@ export class GameState {
       };
     });
 
-    const expeditions = json.expeditions.map((e) => {
+    const expeditions = json.expeditions.map((e: JsonExpedition) => {
       return {
         id: e.id,
         origin: planets[e.origin],
@@ -117,26 +149,28 @@ export class PlayerLog {
     this.turns = [];
   }
 
-  public addRecord(record: PwTypes.LogRecord) {
-    switch (record.type) {
-      case 'step': {
-        this.turns.push({ state: record.state });
+  public addRecord(record: Event) {
+    switch (record.eventType) {
+      case events.GameStep: {
+        const recordGS = record as events.GameStep;
+        this.turns.push({ state: JSON.parse(recordGS.state) });
         break;
       }
-      case 'command': {
-        this.turns[this.turns.length - 1].command = record.content;
+      case events.PlayerAction: {
+        const recordPA = record as events.PlayerAction;
+        this.turns[this.turns.length - 1].command = recordPA.action;
         break;
       }
-      case 'player_action': {
-        this.turns[this.turns.length - 1].action = record.action;
-        break;
-      }
+      // case 'command': {
+      //   this.turns[this.turns.length - 1].action = record.action;
+      //   break;
+      // }
     }
   }
 }
 
 export interface PlayerTurn {
-  state: PwTypes.GameState;
+  state: GameState;
   command?: string;
   action?: PwTypes.PlayerAction;
 }
