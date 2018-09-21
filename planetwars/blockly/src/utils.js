@@ -1,5 +1,20 @@
 const { MatchLog } = require('./MatchLog');
 
+export async function uploadBot(code, name) {
+  const data = {
+    code,
+    name,
+  };
+
+  await fetch('http://localhost:3000/upload', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+    },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function callServerMatch(code, name, opponent) {
   const data = {
     code,
