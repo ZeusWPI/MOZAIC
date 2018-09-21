@@ -7,12 +7,22 @@ import mainstyles from './main.scss';
 
 const styles = classNames.bind(styleIdentifiers);
 
-export default function App() {
-  return (
-    <div className={styles('app')}>
-      <div id="blockly" className={styles('blockly')} />
-      <BlocklyEditor />
-      <button>Save code</button>
-    </div>
-  );
+export default class App extends React.Component {
+  constructor(props) {
+    super(props);
+    this.setLoaded = this.setLoaded.bind(this);
+    this.state = { loaded: false };
+  }
+
+  setLoaded() {
+    this.setState({ loaded: true });
+  }
+
+  render() {
+    return (
+      <div className={styles('app')}>
+        <BlocklyEditor loaded={this.state.loaded} setLoaded={this.setLoaded} />
+      </div>
+    );
+  }
 }
