@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { Match, MapId, MatchId } from '../database/models';
 
-export const appPath = (process.env.NODE_ENV === 'development') ?
+const appPath = (process.env.NODE_ENV === 'development') ?
   p.resolve('.') :
   p.resolve(remote.app.getAppPath());
 

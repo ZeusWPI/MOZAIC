@@ -3,25 +3,36 @@ import * as protocol_root from './proto';
 import { WireEvent } from "./networking/EventWire";
 const { LogEvent } = protocol_root.mozaic.log;
 
+export class Logger {
+    sink: WriteStream;
+
+    constructor(sinkPath: string) {
+        this.sink = createWriteStream(sinkPath);
+    }
+
+    public log(clientId: number, event: WireEvent) {
+        const logEvent = LogEvent.create({
+            eventType: event.typeId,
+            data: event.data,
+            clientId,
+        });
+        const bytes = LogEvent.encodeDelimited(logEvent).finish();
+        this.sink.write(bytes);
+    }
+}
+
 // TODO: split this into a log sink and a client-specific logger object
 // TODO: add an eventemitter for records?
-export class Logger {
-    writeStream: WriteStream;
-    clientId: number;
+export class ClientLogger {
+    private logger: Logger;
+    private clientId: number;
 
-    constructor(clientId: number, sink: WriteStream) {
-        this.writeStream = sink;
+    constructor(logger: Logger, clientId: number) {
+        this.logger = logger;
         this.clientId = clientId;
     }
 
     public log(event: WireEvent) {
-        // TODO: should clientId be optional?
-        const logEvent = LogEvent.create({
-            clientId: this.clientId,
-            eventType: event.typeId,
-            data: event.data,
-        });
-        const bytes = LogEvent.encodeDelimited(logEvent).finish();
-        this.writeStream.write(bytes);
+        this.logger.log(this.clientId, event);
     }
 }
