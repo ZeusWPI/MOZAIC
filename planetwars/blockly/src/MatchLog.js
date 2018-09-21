@@ -21,6 +21,17 @@ export class GameState {
   }
 }
 
+
+export class PlayerLog {
+  constructor() {
+    this.turns = [];
+  }
+
+  setTurns(turns) {
+    this.turns = turns;
+  }
+}
+
 export class MatchLog {
   constructor() {
     this.gameStates = [];
@@ -32,7 +43,13 @@ export class MatchLog {
   }
 
   setPlayerLogs(playerLogs) {
-    this.playerLogs = playerLogs;
+    this.playerLogs = Object.keys(playerLogs).map(player => {
+      const playerLog = new PlayerLog();
+
+      playerLog.setTurns(playerLogs[player].turns);
+
+      return playerLog;
+    });
   }
 
   getPlayers() {
@@ -41,6 +58,15 @@ export class MatchLog {
 
   getWinners() {
     return this.gameStates[this.gameStates.length - 1].livingPlayers();
+  }
+
+  getPlayerLog(playerNum) {
+    let playerLog = this.playerLogs[playerNum];
+    if (!playerLog) {
+      playerLog = new PlayerLog();
+      this.playerLogs[playerNum] = playerLog;
+    }
+    return playerLog;
   }
 
   // This may be a hack...
