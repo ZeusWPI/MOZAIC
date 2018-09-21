@@ -23,7 +23,7 @@ export abstract class MatchLog {
     this.getPlayerLog(clientId);
   }
 
-  public abstract addEntry(entry: Event): void;
+  public abstract addEntry(entry: Event, clientId: number): void;
 
   protected getPlayerLog(playerNum: number) {
     let playerLog = this.playerLogs[playerNum];
@@ -36,7 +36,7 @@ export abstract class MatchLog {
 }
 
 export class HostedMatchLog extends MatchLog {
-  public addEntry(entry: Event) {
+  public addEntry(entry: Event, clientId: number) {
     switch (entry.eventType) {
       case events.PlayerAction: {
         const entryPA = entry as events.PlayerAction;
@@ -48,11 +48,11 @@ export class HostedMatchLog extends MatchLog {
       case events.GameStep: {
         const entryGS = entry as events.GameStep;
 
-        Object.keys(this.playerLogs).forEach((clientIdStr) => {
-          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
-        });
-
-        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+        if (clientId === 0) {
+          this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+        } else {
+          this.getPlayerLog(clientId).addRecord(entryGS)
+        }
 
         break;
       }
@@ -68,7 +68,7 @@ export class HostedMatchLog extends MatchLog {
 }
 
 export class JoinedMatchLog extends MatchLog {
-  public addEntry(entry: Event) {
+  public addEntry(entry: Event, clientId: number) {
     switch (entry.eventType) {
       case events.PlayerAction: {
         const entryPA = entry as events.PlayerAction;
@@ -80,11 +80,11 @@ export class JoinedMatchLog extends MatchLog {
       case events.GameStep: {
         const entryGS = entry as events.GameStep;
 
-        Object.keys(this.playerLogs).forEach((clientIdStr) => {
-          this.playerLogs[parseInt(clientIdStr, 10)].addRecord(entryGS);
-        });
-
-        this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+        if (clientId === 0) {
+          this.gameStates.push(GameState.fromJson(JSON.parse(entryGS.state)));
+        } else {
+          this.getPlayerLog(clientId).addRecord(entryGS)
+        }
 
         break;
       }

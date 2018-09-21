@@ -24,27 +24,27 @@ export function parseLogFile(path: string, type: MatchType)
   const log = emptyLog(type);
   const replayer = new Replayer();
 
-  registerStreamToLog(log, replayer);
+  registerStreamToLog(log, replayer, 0);
 
   replayer.clientSpottedDispatcher.subscribe((clientId) => {
     log.addPlayer(clientId);
-    registerStreamToLog(log, replayer.clientStream(clientId));
+    registerStreamToLog(log, replayer.clientStream(clientId), clientId);
   });
 
   return replayer.replayFile(path).then(() => log);
 }
 
-function registerStreamToLog(log: MatchLog, stream: Replayer | SimpleEventEmitter) {
+function registerStreamToLog(log: MatchLog, stream: Replayer | SimpleEventEmitter, clientId: number) {
   stream.on(events.GameStep).subscribe((event) => {
-    log.addEntry(event);
+    log.addEntry(event, clientId);
   });
 
   stream.on(events.PlayerAction).subscribe((event) => {
-    log.addEntry(event);
+    log.addEntry(event, clientId);
   });
 
   stream.on(events.RegisterClient).subscribe((event) => {
-    log.addEntry(event);
+    log.addEntry(event, clientId);
   });
 }
 
