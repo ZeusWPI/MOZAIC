@@ -9,6 +9,8 @@ const Blockly = require("node-blockly/browser");
 const Blocks = require("./blocks");
 const PlanetWars = require("./planetwars");
 
+const Utils = require("../utils");
+
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
 Blockly.HSV_VALUE = 0.6;
@@ -137,10 +139,16 @@ export default class BlocklyEditor extends React.Component {
   }
 
   componentWillReceiveProps() {
+
   }
 
   saveCode() {
-    console.log(this.state.ws.getCode());
+    const code = this.ws.getCode();
+    console.log(code);
+    const gameLog = Utils.runMatch(code, "your bot").then(gameLog => {
+      console.log(gameLog);
+      return gameLog;
+    });
   }
 
   render() {
