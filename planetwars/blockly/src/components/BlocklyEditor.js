@@ -1,15 +1,16 @@
-import React from "react";
-import classNames from "classnames/bind";
-import styleIdentifiers from "./blocklyEditor.scss";
+import React from 'react';
+import classNames from 'classnames/bind';
+import styleIdentifiers from './blocklyEditor.scss';
 
 const styles = classNames.bind(styleIdentifiers);
 
-const Blockly = require("node-blockly/browser");
+const Blockly = require('node-blockly/browser');
+const { Visualizer } = require('planetwars-visualizer');
 
-const Blocks = require("./blocks");
-const PlanetWars = require("./planetwars");
+const Blocks = require('./blocks');
+const PlanetWars = require('./planetwars');
 
-const Utils = require("../utils");
+const Utils = require('../utils');
 
 // happier colours
 Blockly.HSV_SATURATION = 0.6;
@@ -26,65 +27,65 @@ Blocks.inject(Blockly);
 
 const toolbox = {
   entities: [
-    "entities_planets",
-    "entities_expeditions",
-    "entities_players",
-    "entities_player",
-    "entities_nobody"
+    'entities_planets',
+    'entities_expeditions',
+    'entities_players',
+    'entities_player',
+    'entities_nobody',
   ],
   functions: [
-    "functions_owner",
-    "functions_ship_count",
-    "functions_origin",
-    "functions_target",
-    "functions_turns_remaining",
-    "functions_distance",
-    "functions_dispatch",
-    "functions_progn"
+    'functions_owner',
+    'functions_ship_count',
+    'functions_origin',
+    'functions_target',
+    'functions_turns_remaining',
+    'functions_distance',
+    'functions_dispatch',
+    'functions_progn',
   ],
   lists: [
-    "lists_isEmpty",
-    "lists_length",
-    "lists_filter",
-    "lists_minmax",
-    "lists_forEach",
-    "lists_sort"
+    'lists_isEmpty',
+    'lists_length',
+    'lists_filter',
+    'lists_minmax',
+    'lists_forEach',
+    'lists_sort',
   ],
   logic: [
-    "logic_boolean",
-    "logic_compare",
-    "logic_null",
-    "logic_operation",
-    "logic_ternary",
-    "controls_if"
+    'logic_boolean',
+    'logic_compare',
+    'logic_null',
+    'logic_operation',
+    'logic_ternary',
+    'controls_if',
   ],
-  variables: ["variables_set", "variables_get", "math_change"],
+  variables: ['variables_set', 'variables_get', 'math_change'],
   math: [
-    "math_arithmetic",
-    "math_constant",
-    "math_constrain",
-    "math_modulo",
-    "math_number",
-    "math_number_property",
-    "math_on_list",
-    "math_random_int",
-    "math_round",
-    "math_single"
-  ]
+    'math_arithmetic',
+    'math_constant',
+    'math_constrain',
+    'math_modulo',
+    'math_number',
+    'math_number_property',
+    'math_on_list',
+    'math_random_int',
+    'math_round',
+    'math_single',
+  ],
 };
 
 // construct toolbox xml
 function toolbox_xml(toolbox) {
-  let toolbox_str = "<xml>";
+  let toolbox_str = '<xml>';
   Object.entries(toolbox).forEach(([cat_name, cat_entries]) => {
     const colour = Blockly.Blocks[cat_name].HUE;
     toolbox_str += `<category name="${cat_name}" colour="${colour}">`;
     cat_entries.forEach(block_name => {
       toolbox_str += `<block type="${block_name}"></block>`;
     });
-    toolbox_str += "</category>";
+    toolbox_str += '</category>';
   });
-  toolbox_str += "</xml>";
+  toolbox_str += '</xml>';
   return toolbox_str;
 }
 
@@ -129,38 +130,45 @@ export default class BlocklyEditor extends React.Component {
   constructor(props) {
     super(props);
     this.saveCode = this.saveCode.bind(this);
-    this.state = { renders: 0 };
+    this.state = { showVisualizer: false };
   }
 
   componentDidMount() {
     this.ws = inject(this.blocklyDiv);
-    console.log("blockly");
+    console.log('blockly');
     this.forceUpdate();
   }
 
-  componentWillReceiveProps() {
-
-  }
+  componentWillReceiveProps() {}
 
   saveCode() {
     const code = this.ws.getCode();
     console.log(code);
-    const gameLog = Utils.runMatch(code, "your bot").then(gameLog => {
-      console.log(gameLog);
-      return gameLog;
+    Utils.runMatch(code, 'your bot').then(matchLog => {
+      console.log(matchLog);
+
+      this.setState({ matchLog, showVisualizer: true });
     });
   }
 
   render() {
-    console.log("render");
-    return (
+    console.log('render');
+    const playerName = playerNum => `Player ${playerNum}`;
+    const { showVisualizer, matchLog } = this.state;
+    return showVisualizer ? (
+      <Visualizer
+        playerName={playerName}
+        matchLog={matchLog}
+        assetPrefix="./node_modules/planetwars-visualizer"
+      />
+    ) : (
       <React.Fragment>
         <div
           id="blockly"
           ref={blocklyDiv => {
             this.blocklyDiv = blocklyDiv;
           }}
-          className={styles("blockly")}
+          className={styles('blockly')}
         />
         {<button onClick={this.saveCode}>PLAY!</button>}
       </React.Fragment>
