@@ -1,56 +1,15 @@
-#![allow(dead_code)]
-mod network;
-mod planetwars;
-mod utils;
-mod reactors;
-mod server;
-
-pub mod protocol {
-    include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
-}
-
-pub mod events {
-    include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
-}
-
-
-extern crate bytes;
-extern crate hex;
-
-extern crate tokio_core;
-extern crate tokio_io;
-extern crate tokio_process;
-extern crate tokio;
-extern crate tokio_timer;
-extern crate tokio_codec;
-#[macro_use]
-extern crate futures;
-extern crate rand;
-
-extern crate serde;
-extern crate serde_json;
-extern crate erased_serde;
-#[macro_use]
-extern crate error_chain;
-
-#[macro_use]
-extern crate serde_derive;
-
-extern crate prost;
-#[macro_use]
-extern crate prost_derive;
-#[macro_use]
-extern crate mozaic_derive;
-extern crate sodiumoxide;
-
-
 use std::error::Error;
 use std::io::{Read};
 use std::env;
 use std::path::Path;
 use std::fs::File;
 
-use server::{Config as ServerConfig, Server};
+extern crate sodiumoxide;
+extern crate serde_json;
+extern crate tokio;
+extern crate mozaic;
+
+use mozaic::server::{Config as ServerConfig, Server};
 
 // Load the config and start the game.
 fn main() {

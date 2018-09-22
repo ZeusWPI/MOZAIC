@@ -3,6 +3,11 @@ name = "mozaic_bot_driver"
 version = "0.0.0"
 authors = ["Zeus WPI"]
 
+
+[lib]
+name = "mozaic"
+path = "src/lib.rs"
+
 [dependencies]
 bytes = "0.4.6"
 erased-serde = "0.3"
