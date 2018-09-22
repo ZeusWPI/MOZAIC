@@ -75,24 +75,18 @@ const toolbox = {
 };
 
 // construct toolbox xml
-function toolbox_xml(toolbox) {
-  let toolbox_str = '<xml>';
-  Object.entries(toolbox).forEach(([cat_name, cat_entries]) => {
-    const colour = Blockly.Blocks[cat_name].HUE;
-    toolbox_str += `<category name="${cat_name}" colour="${colour}">`;
-    cat_entries.forEach(block_name => {
-      toolbox_str += `<block type="${block_name}"></block>`;
+function toolboxXml(toolboxP) {
+  let toolboxStr = '<xml>';
+  Object.entries(toolboxP).forEach(([catName, catEntries]) => {
+    const colour = Blockly.Blocks[catName].HUE;
+    toolboxStr += `<category name="${catName}" colour="${colour}">`;
+    catEntries.forEach(blockName => {
+      toolboxStr += `<block type="${blockName}"></block>`;
     });
-    toolbox_str += '</category>';
+    toolboxStr += '</category>';
   });
-  toolbox_str += '</xml>';
-  return toolbox_str;
-}
-
-function inject(div_id) {
-  const tb = toolbox_xml(toolbox);
-  const workspace = Blockly.inject(div_id, { toolbox: tb });
-  return new PlanetWarsBlockly(workspace);
+  toolboxStr += '</xml>';
+  return toolboxStr;
 }
 
 class PlanetWarsBlockly {
@@ -106,12 +100,12 @@ class PlanetWarsBlockly {
 
   getXml() {
     const xml = Blockly.Xml.workspaceToDom(this.workspace);
-    const xml_text = Blockly.Xml.domToText(xml);
-    return xml_text;
+    const xmlRext = Blockly.Xml.domToText(xml);
+    return xmlRext;
   }
 
-  loadXml(xml_text) {
-    const xml = Blockly.Xml.textToDom(xml_text);
+  loadXml(xmlRext) {
+    const xml = Blockly.Xml.textToDom(xmlRext);
     Blockly.Xml.domToWorkspace(xml, this.workspace);
   }
 
@@ -122,6 +116,12 @@ class PlanetWarsBlockly {
   addChangeListener(fun) {
     this.workspace.addChangeListener(fun);
   }
+}
+
+function inject(divId) {
+  const tb = toolboxXml(toolbox);
+  const workspace = Blockly.inject(divId, { toolbox: tb });
+  return new PlanetWarsBlockly(workspace);
 }
 
 // export default inject;
@@ -141,7 +141,7 @@ export default class BlocklyEditor extends React.Component {
 
   componentWillReceiveProps() {}
 
-  saveCode() {
+  saveCode = () => {
     const code = this.ws.getCode();
     console.log(code);
     Utils.runMatch(code, 'your bot').then(matchLog => {
@@ -149,18 +149,29 @@ export default class BlocklyEditor extends React.Component {
 
       this.setState({ matchLog, showVisualizer: true });
     });
-  }
+  };
+
+  resetVis = () => {
+    this.setState({ showVisualizer: false, matchLog: undefined });
+  };
 
   render() {
     console.log('render');
     const playerName = playerNum => `Player ${playerNum}`;
     const { showVisualizer, matchLog } = this.state;
     return showVisualizer ? (
-      <Visualizer
-        playerName={playerName}
-        matchLog={matchLog}
-        assetPrefix="./node_modules/planetwars-visualizer"
-      />
+      <div>
+        <Visualizer
+          playerName={playerName}
+          matchLog={matchLog}
+          assetPrefix="./node_modules/planetwars-visualizer"
+        />
+        {
+          <button onClick={this.resetVis} type="button">
+            back
+          </button>
+        }
+      </div>
     ) : (
       <React.Fragment>
         <div
@@ -170,7 +181,11 @@ export default class BlocklyEditor extends React.Component {
           }}
           className={styles('blockly')}
         />
-        {<button onClick={this.saveCode}>PLAY!</button>}
+        {
+          <button onClick={this.saveCode} type="button">
+            PLAY!
+          </button>
+        }
       </React.Fragment>
     );
   }
