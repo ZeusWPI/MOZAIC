@@ -79,7 +79,9 @@ function parseMeta(line) {
 function parseState(line) {
     this.lastState = JSON.parse(line)
 
-    CODEHEREPLZ
+    try {
+        CODEHEREPLZ
+    } catch {}
 
     console.log(JSON.stringify({ moves: dispatches }))
 
