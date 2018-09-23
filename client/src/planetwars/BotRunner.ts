@@ -36,7 +36,11 @@ export class BotRunner {
      */
     public run(meta: string) {
         const config = this.config;
-        let process = execFile(config.command, config.args);
+        let process = execFile(config.command, config.args, (error) => {
+            if (error) {
+                this._onError.dispatch(error);
+            }
+          });
         this.setProcess(process);
         this.sendMessage(meta);
     }
