@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::connection_handler::{ConnectionHandler, ConnectionHandle};
+use network::lib::connection_handler::{ConnectionHandler, ConnectionHandle};
 use reactors::{WireEvent, EventHandler};
 use std::io;
 use tokio;

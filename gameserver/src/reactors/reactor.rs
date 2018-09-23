@@ -2,7 +2,7 @@ use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 use std::time::Instant;
 
-use network::connection_handler::ConnectionHandle;
+use network::lib::ConnectionHandle;
 use utils::delay_heap::DelayHeap;
 use server::ConnectionManager;
 

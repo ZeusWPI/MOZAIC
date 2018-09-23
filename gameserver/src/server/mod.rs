@@ -13,8 +13,8 @@ use std::sync::{Arc, Mutex};
 use tokio;
 
 use network;
-use network::connection_table::ConnectionTable;
-use network::connection_router::ConnectionRouter;
+use network::server::connection_table::ConnectionTable;
+use network::server::connection_router::ConnectionRouter;
 use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
 
 
@@ -63,7 +63,7 @@ impl Future for Server {
             secret_key,
         };
 
-        match network::tcp::Listener::new(&addr, connection_router) {
+        match network::server::tcp::Listener::new(&addr, connection_router) {
             Ok(listener) => {
                 tokio::spawn(listener);
                 return Ok(Async::Ready(()));

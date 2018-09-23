@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::io;
 
-use network::{ConnectionTable, ConnectionHandle, Router};
+use network::server::{ConnectionTable, Router};
+use network::lib::ConnectionHandle;
 use reactors::{WireEvent, EventHandler};
 use sodiumoxide::crypto::sign::PublicKey;
 

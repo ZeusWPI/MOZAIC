@@ -6,7 +6,9 @@ use serde_json;
 
 use super::pw_protocol as proto;
 use super::pw_rules::*;
-use network::ClientId;
+
+// TODO
+use network::server::ClientId;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

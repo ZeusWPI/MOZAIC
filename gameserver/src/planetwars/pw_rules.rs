@@ -1,4 +1,4 @@
-use network::ClientId;
+use network::server::ClientId;
 
 /// The planet wars game rules.
 pub struct PlanetWars {

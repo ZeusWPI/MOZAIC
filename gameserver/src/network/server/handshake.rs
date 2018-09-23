@@ -4,8 +4,8 @@ use std::io;
 use std::mem;
 
 use super::connection_router::{Router, ConnectionRouter, ConnectionRouting};
-use super::channel::Channel;
-use super::crypto::{KxKeypair, SessionKeys};
+use network::lib::channel::Channel;
+use network::lib::crypto::{KxKeypair, SessionKeys};
 
 use protocol::{
     HandshakeServerMessage,

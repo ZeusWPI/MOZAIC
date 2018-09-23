@@ -6,9 +6,9 @@ use tokio;
 use tokio::net::{Incoming, TcpListener, TcpStream};
 use std::collections::HashMap;
 
-use super::protobuf_codec::{ProtobufTransport, MessageStream};
+use network::lib::protobuf_codec::{ProtobufTransport, MessageStream};
+use network::lib::channel::{TransportInstruction, Channel};
 use super::connection_router::{Router, ConnectionRouter};
-use super::channel::{TransportInstruction, Channel};
 use super::handshake::Handshaker;
 
 use protocol as proto;

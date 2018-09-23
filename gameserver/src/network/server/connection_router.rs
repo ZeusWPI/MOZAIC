@@ -4,9 +4,9 @@ use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
 use reactors::{WireEvent, EventHandler};
 use std::marker::PhantomData;
 
-use super::ConnectionHandle;
-use super::channel::Channel;
-use super::crypto::SessionKeys;
+use network::lib::ConnectionHandle;
+use network::lib::channel::Channel;
+use network::lib::crypto::SessionKeys;
 use super::connection_table::ConnectionTable;
 
 

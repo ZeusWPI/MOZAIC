@@ -2,7 +2,7 @@ use tokio;
 use futures::sync::mpsc;
 use std::io;
 
-use network::connection_handler::ConnectionHandle;
+use network::lib::ConnectionHandle;
 use reactors::{WireEvent, RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;

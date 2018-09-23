@@ -5,8 +5,8 @@ use std::io::{Error, ErrorKind};
 use std::sync::{Arc, Weak, Mutex};
 
 use reactors::RequestHandler;
-use network::ConnectionTable;
-use network::connection_router::{Router, Routing, ConnectionCreator};
+use network::server::ConnectionTable;
+use network::server::connection_router::{Router, Routing, ConnectionCreator};
 
 use sodiumoxide::crypto::sign::PublicKey;
 

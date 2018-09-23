@@ -1,7 +1,7 @@
 use sodiumoxide::crypto::kx;
 
 // TODO: provide own crypto errors module
-use super::handshake::errors::Result;
+use network::server::handshake::errors::Result;
 use std::io;
 
 use sodiumoxide::crypto::aead;

@@ -4,8 +4,8 @@ use std::mem;
 use std::io;
 
 use events;
-use network::connection_table::{ClientId};
-use network::connection_handler::ConnectionHandle;
+use network::server::connection_table::{ClientId};
+use network::lib::connection_handler::ConnectionHandle;
 use reactors::reactor::ReactorHandle;
 use reactors::{WireEvent, RequestHandler};
 use server::ConnectionManager;
