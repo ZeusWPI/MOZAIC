@@ -157,7 +157,7 @@ export default class BlocklyEditor extends React.Component {
 
   render() {
     console.log('render');
-    const playerName = playerNum => `Player ${playerNum}`;
+    const playerName = playerNum => (playerNum === 1 ? 'You' : 'The enemy');
     const { showVisualizer, matchLog } = this.state;
     return showVisualizer ? (
       <div>
