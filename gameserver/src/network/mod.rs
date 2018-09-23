@@ -2,9 +2,10 @@ pub mod connection_table;
 pub mod tcp;
 pub mod connection_router;
 pub mod connection_handler;
-mod protobuf_codec;
+mod channel;
 mod handshake;
 mod crypto;
+mod protobuf_codec;
 
 pub use self::connection_table::ClientId;
 pub use self::connection_table::ConnectionTable;

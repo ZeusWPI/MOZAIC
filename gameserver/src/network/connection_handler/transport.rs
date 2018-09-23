@@ -3,7 +3,7 @@ use futures::{Stream, Sink, Poll, Async};
 
 use prost::Message as ProtobufMessage;
 
-use network::tcp::Channel;
+use network::channel::Channel;
 use network::crypto::{SessionKeys, Encryptor};
 
 use protocol::Packet;

@@ -9,8 +9,8 @@ use reactors::{Event, EventBox, WireEvent, EventHandler};
 use protocol::Response;
 use protocol::packet::Payload;
 use events;
-use network::tcp::Channel;
 use network::crypto::SessionKeys;
+use network::channel::Channel;
 
 use super::transport::Transport;
 use super::connection_state::{ConnectionState, ConnectionStatus};

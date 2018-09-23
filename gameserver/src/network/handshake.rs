@@ -4,7 +4,7 @@ use std::io;
 use std::mem;
 
 use super::connection_router::{Router, ConnectionRouter, ConnectionRouting};
-use super::tcp::Channel;
+use super::channel::Channel;
 use super::crypto::{KxKeypair, SessionKeys};
 
 use protocol::{
