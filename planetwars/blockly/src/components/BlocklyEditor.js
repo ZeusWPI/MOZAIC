@@ -1,11 +1,11 @@
 import React from 'react';
 import classNames from 'classnames/bind';
+import PropTypes from 'prop-types';
 import styleIdentifiers from './blocklyEditor.scss';
 
 const styles = classNames.bind(styleIdentifiers);
 
 const Blockly = require('node-blockly/browser');
-const { Visualizer } = require('planetwars-visualizer');
 
 const Blocks = require('./blocks');
 const PlanetWars = require('./planetwars');
@@ -127,10 +127,14 @@ function inject(divId) {
 // export default inject;
 
 export default class BlocklyEditor extends React.Component {
+  static propTypes = {
+    startVisualizer: PropTypes.func.isRequired,
+  };
+
   constructor(props) {
     super(props);
     this.saveCode = this.saveCode.bind(this);
-    this.state = { showVisualizer: false };
+    this.state = {};
   }
 
   componentDidMount() {
@@ -143,43 +147,25 @@ export default class BlocklyEditor extends React.Component {
 
   saveCode = () => {
     const code = this.ws.getCode();
+    const { startVisualizer } = this.props;
     console.log(code);
     Utils.runMatch(code, 'your bot').then(matchLog => {
       console.log(matchLog);
-
-      this.setState({ matchLog, showVisualizer: true });
+      startVisualizer(matchLog);
     });
-  };
-
-  resetVis = () => {
-    this.setState({ showVisualizer: false, matchLog: undefined });
   };
 
   render() {
     console.log('render');
-    const playerName = playerNum => (playerNum === 1 ? 'You' : 'The enemy');
-    const { showVisualizer, matchLog } = this.state;
-    return showVisualizer ? (
-      <div>
-        <Visualizer
-          playerName={playerName}
-          matchLog={matchLog}
-          assetPrefix="./node_modules/planetwars-visualizer"
-        />
-        {
-          <button onClick={this.resetVis} type="button">
-            back
-          </button>
-        }
-      </div>
-    ) : (
+    const { showVisualizer } = this.props;
+    return (
       <React.Fragment>
         <div
           id="blockly"
           ref={blocklyDiv => {
             this.blocklyDiv = blocklyDiv;
           }}
-          className={styles('blockly')}
+          className={styles('blockly') + (showVisualizer ? styles('hidden') : '')}
         />
         {
           <button onClick={this.saveCode} type="button">

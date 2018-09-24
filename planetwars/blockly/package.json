@@ -50,6 +50,7 @@
     "node-blockly": "https://github.com/eyz/node-blockly.git",
     "planetwars-visualizer": "file:../visualizer",
     "react": "^16.4.2",
-    "react-dom": "^16.4.2"
+    "react-dom": "^16.4.2",
+    "react-modal": "^3.5.1"
   }
 }
