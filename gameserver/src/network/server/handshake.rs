@@ -22,6 +22,10 @@ use sodiumoxide::utils::memcmp;
 
 use sodiumoxide::crypto::kx;
 
+#[macro_use]
+use network::utils;
+use network::utils::Step;
+
 pub mod errors {
     error_chain! { }
 }
@@ -31,33 +35,9 @@ use self::errors::*;
 
 const NONCE_NUM_BYTES: usize = 32;
 
-enum Step<State, Next> {
-    NotReady(State),
-    Ready(Next),
-}
-
-impl<State, Next> Step<State, Next> {
-    fn map_not_ready<F, R>(self, fun: F) -> Step<R, Next>
-        where F: FnOnce(State) -> R
-    {
-        match self {
-            Step::Ready(next) => Step::Ready(next),
-            Step::NotReady(state) => Step::NotReady(fun(state)),
-        }
-    }
-}
 
 type HandshakeStep<S, R> = io::Result<Step<S, HandshakeState<R>>>;
 
-macro_rules! try_ready_or {
-    ($default:expr, $e:expr) => (
-        match $e {
-            Err(err) => return Err(err),
-            Ok(Async::NotReady) => return Ok(Step::NotReady($default)),
-            Ok(Async::Ready(item)) => item,
-        }
-    );
-}
 
 fn verify_signature(message: &SignedMessage, key: &PublicKey) -> bool {
     if let Some(signature) = Signature::from_slice(&message.signature) {
