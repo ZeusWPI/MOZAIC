@@ -4,9 +4,41 @@ use sodiumoxide::crypto::kx;
 use network::server::handshake::errors::Result;
 use std::io;
 
+use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::crypto::aead;
-use protocol::EncryptedPacket;
+use sodiumoxide::crypto::sign;
+use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
+use protocol::{SignedMessage, EncryptedPacket};
 use prost::Message;
+
+/// How many bytes to use for the authentication nonces
+pub const NONCE_NUM_BYTES: usize = 32;
+
+pub fn handshake_nonce() -> Vec<u8> {
+    randombytes(NONCE_NUM_BYTES)
+}
+
+pub fn sign_message(data: Vec<u8>, key: &SecretKey)
+    -> SignedMessage
+{
+    let signature = sign::sign_detached(&data, key)
+        .as_ref()
+        .to_vec();
+
+    return SignedMessage { signature, data };
+}
+
+pub fn verify_signed_message(message: &SignedMessage, key: &PublicKey)
+    -> bool
+{
+    if let Some(signature) = Signature::from_slice(&message.signature) {
+        if sign::verify_detached(&signature, &message.data, key) {
+            return true;
+        }
+    }
+    return false;
+}
+
 
 pub struct KxKeypair {
     pub secret_key: kx::SecretKey,

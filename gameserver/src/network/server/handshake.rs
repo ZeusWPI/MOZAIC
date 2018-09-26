@@ -5,6 +5,7 @@ use std::mem;
 
 use super::connection_router::{Router, ConnectionRouter, ConnectionRouting};
 use network::lib::channel::Channel;
+use network::lib::crypto;
 use network::lib::crypto::{KxKeypair, SessionKeys};
 
 use protocol::{
@@ -15,9 +16,7 @@ use protocol::{
 };
 use protocol::handshake_server_message::Payload as ServerMessage;
 use protocol::{ServerChallenge, ConnectionAccepted};
-use sodiumoxide::crypto::sign;
-use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
-use sodiumoxide::randombytes::randombytes;
+use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
 use sodiumoxide::utils::memcmp;
 
 use sodiumoxide::crypto::kx;
@@ -33,20 +32,7 @@ pub mod errors {
 use self::errors::*;
 
 
-const NONCE_NUM_BYTES: usize = 32;
-
-
 type HandshakeStep<S, R> = io::Result<Step<S, HandshakeState<R>>>;
-
-
-fn verify_signature(message: &SignedMessage, key: &PublicKey) -> bool {
-    if let Some(signature) = Signature::from_slice(&message.signature) {
-        if sign::verify_detached(&signature, &message.data, key) {
-            return true;
-        }
-    }
-    return false;
-}
 
 fn encode_server_message(message: ServerMessage,
                          client_nonce: &[u8],
@@ -61,22 +47,7 @@ fn encode_server_message(message: ServerMessage,
     let mut buffer = Vec::with_capacity(server_message.encoded_len());
     server_message.encode(&mut buffer).unwrap();
 
-    let signature = sign::sign_detached(&buffer, key);
-
-    return SignedMessage {
-        data: buffer,
-        signature: signature.as_ref().to_vec(),
-    };
-}
-
-macro_rules! try_step {
-    ($e:expr) => (
-        match $e.step() {
-            Err(err) => Err(err),
-            Ok(Step::Ready(state)) => Ok(Step::Ready(state.into())),
-            Ok(Step::NotReady(state)) => Ok(Step::NotReady(state.into())),
-        }
-    )
+    return crypto::sign_message(buffer, key);
 }
 
 impl<R> HandshakeState<R>
@@ -190,11 +161,11 @@ impl<R: Router> Identifying<R> {
         let routing = self.router.route(&request.message)
             .chain_err(|| "routing failed")?;
 
-        if !verify_signature(&signed_msg, routing.public_key()) {
+        if !crypto::verify_signed_message(&signed_msg, routing.public_key()) {
             bail!("invalid signature");
         }
 
-        let server_nonce = randombytes(NONCE_NUM_BYTES);
+        let server_nonce = crypto::handshake_nonce();
         let kx_keypair = KxKeypair::gen();
 
         let challenge = ServerMessage::Challenge(
@@ -265,7 +236,7 @@ impl<R> Challenging<R>
         let signed_msg = SignedMessage::decode(&frame)
             .chain_err(|| "failed to decode SignedMessage")?;
 
-        if !verify_signature(&signed_msg, &self.routing.public_key()) {
+        if !crypto::verify_signed_message(&signed_msg, &self.routing.public_key()) {
             bail!("invalid signature");
         }
 
