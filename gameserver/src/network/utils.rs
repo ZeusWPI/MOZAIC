@@ -24,3 +24,14 @@ macro_rules! try_ready_or {
         }
     );
 }
+
+#[macro_export]
+macro_rules! try_step {
+    ($e:expr) => (
+        match $e.step() {
+            Err(err) => Err(err),
+            Ok(Step::Ready(state)) => Ok(Step::Ready(state.into())),
+            Ok(Step::NotReady(state)) => Ok(Step::NotReady(state.into())),
+        }
+    )
+}

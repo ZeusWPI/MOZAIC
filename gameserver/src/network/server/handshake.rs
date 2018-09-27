@@ -16,23 +16,16 @@ use protocol::{
 };
 use protocol::handshake_server_message::Payload as ServerMessage;
 use protocol::{ServerChallenge, ConnectionAccepted};
-use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
+use sodiumoxide::crypto::sign::SecretKey;
 use sodiumoxide::utils::memcmp;
 
 use sodiumoxide::crypto::kx;
 
-#[macro_use]
-use network::utils;
 use network::utils::Step;
 
-pub mod errors {
-    error_chain! { }
-}
 
-use self::errors::*;
+use network::lib::errors::*;
 
-
-type HandshakeStep<S, R> = io::Result<Step<S, HandshakeState<R>>>;
 
 fn encode_server_message(message: ServerMessage,
                          client_nonce: &[u8],

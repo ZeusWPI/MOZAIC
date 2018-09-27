@@ -1,7 +1,6 @@
 use sodiumoxide::crypto::kx;
 
-// TODO: provide own crypto errors module
-use network::server::handshake::errors::Result;
+use network::lib::errors::*;
 use std::io;
 
 use sodiumoxide::randombytes::randombytes;
