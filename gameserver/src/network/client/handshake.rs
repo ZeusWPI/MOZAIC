@@ -28,6 +28,29 @@ fn decode_server_message(bytes: &[u8]) -> Result<ServerMessage> {
     }
 }
 
+struct Handshake {
+    channel: Channel,
+    state: HandshakeState,
+}
+
+impl Handshake {
+    pub fn new(channel: Channel, secret_key: SecretKey, message: Vec<u8>)
+        -> Self
+    {
+        let client_nonce = crypto::handshake_nonce();
+        let connecting = Connecting {
+            secret_key,
+            client_nonce,
+            message,
+        };
+
+        return Handshake {
+            channel,
+            state: connecting.into()
+        };
+    }
+}
+
 enum HandshakeState {
     Starting(Starting),
     Connecting(Connecting),
@@ -35,6 +58,29 @@ enum HandshakeState {
     Done,
 }
 
+impl HandshakeState {
+    fn receive_message(mut self, msg: ServerMessage)
+        -> Result<HandshakeState>
+    {
+        match self {
+            HandshakeState::Connecting(connecting) => {
+                connecting.receive_message(msg)
+            }
+            _ => unimplemented!()
+        }
+    }
+
+    fn encode_message(&self) -> Vec<u8> {
+        match self {
+            HandshakeState::Connecting(connecting) => {
+                connecting.encode_message()
+            }
+            _ => unimplemented!()
+        }
+    }
+}
+
+// TODO: get rid of this
 struct Starting {
     channel: Channel,
     secret_key: SecretKey,
@@ -62,8 +108,6 @@ impl Starting {
 
         self.channel.send_protobuf(message)
             .chain_err(|| "send failed")?;
-        
-        
 
         let connecting = Connecting {
             channel: self.channel,
@@ -81,12 +125,51 @@ impl From<Starting> for HandshakeState {
 }
 
 struct Connecting {
-    channel: Channel,
-    secret_key: SecretKey,
+    message: Vec<u8>,
     client_nonce: Vec<u8>,
+    secret_key: SecretKey,
+}
+
+struct Authenticating {
+    client_nonce: Vec<u8>,
+    server_nonce: Vec<u8>,
+}
+
+impl From<Authenticating> for HandshakeState {
+    fn from(authenticating: Authenticating) -> Self {
+        HandshakeState::Authenticating(authenticating)
+    }
 }
 
 impl Connecting {
+    fn receive_message(mut self, msg: ServerMessage)
+        -> Result<HandshakeState>
+    {
+        match msg {
+            ServerMessage::Challenge(challenge) => {
+                let auth = Authenticating {
+                    client_nonce: self.client_nonce,
+                    server_nonce: challenge.server_nonce,
+                };
+                return Ok(auth.into())
+            }
+            _ => unimplemented!()
+        }
+        unimplemented!()
+    }
+
+    fn encode_message(&self) -> Vec<u8> {
+        let conn_request = ConnectionRequest {
+            client_nonce: self.client_nonce.clone(),
+            message: self.message.clone(),
+        };
+
+        let mut buffer = Vec::with_capacity(conn_request.encoded_len());
+        conn_request.encode(&mut buffer).unwrap();
+
+        return buffer;
+    }
+
     fn step(mut self) -> Result<Step<Self, HandshakeState>> {
         // make sure channel is ready for writing
         if self.channel.poll_ready().unwrap().is_not_ready() {
@@ -118,7 +201,6 @@ impl Connecting {
             kx_client_pk: keypair.public_key[..].to_vec(),
         };
 
-
         let mut buffer = Vec::with_capacity(response.encoded_len());
         response.encode(&mut buffer).unwrap();
 
@@ -137,7 +219,9 @@ impl From<Connecting> for HandshakeState {
     }
 }
 
-struct Authenticating {
+
+
+struct AwaitingConfirm {
     channel: Channel,
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
