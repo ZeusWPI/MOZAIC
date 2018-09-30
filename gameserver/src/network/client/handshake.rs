@@ -1,5 +1,8 @@
 use prost::Message;
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
+use sodiumoxide::crypto::kx;
+use futures::{Future, Poll, Async, Sink, AsyncSink};
+use std::io;
 
 use protocol::{
     HandshakeServerMessage,
@@ -28,9 +31,27 @@ fn decode_server_message(bytes: &[u8]) -> Result<ServerMessage> {
     }
 }
 
+struct HandshakeData {
+    secret_key: SecretKey,
+    client_nonce: Vec<u8>,
+    message: Vec<u8>,
+}
+
+struct ServerData {
+    server_nonce: Vec<u8>,
+    kx_server_pk: kx::PublicKey,
+}
+
 struct Handshake {
     channel: Channel,
+    send_buf: Option<Vec<u8>>,
+    data: HandshakeData,
     state: HandshakeState,
+}
+
+enum HandshakeState {
+    Connecting,
+    Authenticating(ServerData),
 }
 
 impl Handshake {
@@ -38,7 +59,8 @@ impl Handshake {
         -> Self
     {
         let client_nonce = crypto::handshake_nonce();
-        let connecting = Connecting {
+
+        let data = HandshakeData {
             secret_key,
             client_nonce,
             message,
@@ -46,122 +68,16 @@ impl Handshake {
 
         return Handshake {
             channel,
-            state: connecting.into()
+            send_buf: None,
+            data,
+            state: HandshakeState::Connecting,
         };
     }
-}
 
-enum HandshakeState {
-    Starting(Starting),
-    Connecting(Connecting),
-    Authenticating(Authenticating),
-    Done,
-}
-
-impl HandshakeState {
-    fn receive_message(mut self, msg: ServerMessage)
-        -> Result<HandshakeState>
-    {
-        match self {
-            HandshakeState::Connecting(connecting) => {
-                connecting.receive_message(msg)
-            }
-            _ => unimplemented!()
-        }
-    }
-
-    fn encode_message(&self) -> Vec<u8> {
-        match self {
-            HandshakeState::Connecting(connecting) => {
-                connecting.encode_message()
-            }
-            _ => unimplemented!()
-        }
-    }
-}
-
-// TODO: get rid of this
-struct Starting {
-    channel: Channel,
-    secret_key: SecretKey,
-    message: Vec<u8>,
-}
-
-impl Starting {
-    fn step(mut self) -> Result<Step<Self, HandshakeState>> {
-        // make sure channel is ready for writing
-        if self.channel.poll_ready().unwrap().is_not_ready() {
-            return Ok(Step::NotReady(self));
-        }
-
-        let client_nonce = crypto::handshake_nonce();
-
+    fn encode_connection_request(&self) -> Vec<u8> {
         let conn_request = ConnectionRequest {
-            client_nonce: client_nonce.clone(),
-            message: self.message,
-        };
-
-        let mut buffer = Vec::with_capacity(conn_request.encoded_len());
-        conn_request.encode(&mut buffer).unwrap();
-
-        let message = crypto::sign_message(buffer, &self.secret_key);
-
-        self.channel.send_protobuf(message)
-            .chain_err(|| "send failed")?;
-
-        let connecting = Connecting {
-            channel: self.channel,
-            secret_key: self.secret_key,
-            client_nonce,
-        };
-        return Ok(Step::Ready(connecting.into()));
-    }
-}
-
-impl From<Starting> for HandshakeState {
-    fn from(starting: Starting) -> Self {
-        HandshakeState::Starting(starting)
-    }
-}
-
-struct Connecting {
-    message: Vec<u8>,
-    client_nonce: Vec<u8>,
-    secret_key: SecretKey,
-}
-
-struct Authenticating {
-    client_nonce: Vec<u8>,
-    server_nonce: Vec<u8>,
-}
-
-impl From<Authenticating> for HandshakeState {
-    fn from(authenticating: Authenticating) -> Self {
-        HandshakeState::Authenticating(authenticating)
-    }
-}
-
-impl Connecting {
-    fn receive_message(mut self, msg: ServerMessage)
-        -> Result<HandshakeState>
-    {
-        match msg {
-            ServerMessage::Challenge(challenge) => {
-                let auth = Authenticating {
-                    client_nonce: self.client_nonce,
-                    server_nonce: challenge.server_nonce,
-                };
-                return Ok(auth.into())
-            }
-            _ => unimplemented!()
-        }
-        unimplemented!()
-    }
-
-    fn encode_message(&self) -> Vec<u8> {
-        let conn_request = ConnectionRequest {
-            client_nonce: self.client_nonce.clone(),
-            message: self.message.clone(),
+            client_nonce: self.data.client_nonce.clone(),
+            message: self.data.message.clone(),
         };
 
         let mut buffer = Vec::with_capacity(conn_request.encoded_len());
@@ -170,60 +86,46 @@ impl Connecting {
         return buffer;
     }
 
-    fn step(mut self) -> Result<Step<Self, HandshakeState>> {
-        // make sure channel is ready for writing
-        if self.channel.poll_ready().unwrap().is_not_ready() {
-            return Ok(Step::NotReady(self));
-        }
-
-        let frame = try_ready_or!(
-            self,
-            self.channel
-                .poll_frame()
-                .chain_err(|| "failed to receive frame")
-        );
-
-
-        let challenge = match try!(decode_server_message(frame)) {
-            ServerMessage::Challenge(challenge) => challenge,
-            ServerMessage::ConnectionAccepted(accepted) => {
-                bail!("got unexpected connection accepted")
-            }
-            ServerMessage::ConnectionRefused(refused) => {
-                bail!("connection refused")
-            }
-        };
-
-        let keypair = crypto::KxKeypair::gen();
-
-        let response = ChallengeResponse {
-            server_nonce: challenge.server_nonce.clone(),
-            kx_client_pk: keypair.public_key[..].to_vec(),
-        };
-
-        let mut buffer = Vec::with_capacity(response.encoded_len());
-        response.encode(&mut buffer).unwrap();
-
-        let signed_message = crypto::sign_message(buffer, &self.secret_key);
-
-        self.channel.send_protobuf(signed_message)
-            .chain_err(|| "send failed")?;
-
+    fn encode_challenge_response(&self) -> Vec<u8> {
         unimplemented!()
     }
-}
 
-impl From<Connecting> for HandshakeState {
-    fn from(connecting: Connecting) -> Self {
-        HandshakeState::Connecting(connecting)
+    fn handle_message(&mut self, message: ServerMessage) -> Poll<(), ()> {
+        match message {
+            ServerMessage::Challenge(challenge) => {
+                return Ok(Async::NotReady);
+            }
+            _ => unimplemented!()
+        }
+    }
+
+    fn poll_message(&mut self) -> Poll<Vec<u8>, io::Error> {
+        let frame = try!(self.channel.poll_frame());
+        unimplemented!()
+    }
+
+    fn poll_send(&mut self) -> Poll<(), io::Error> {
+        if let Some(buf) = self.send_buf.take() {
+            match try!(self.channel.start_send(buf)) {
+                AsyncSink::Ready => {}
+                AsyncSink::NotReady(buf) => {
+                    self.send_buf = Some(buf);
+                    return Ok(Async::NotReady);
+                }
+            }
+        }
+        return self.channel.poll_complete();
     }
 }
 
+impl Future for Handshake {
+    type Item = ();
+    type Error = io::Error;
 
-
-struct AwaitingConfirm {
-    channel: Channel,
-    secret_key: SecretKey,
-    client_nonce: Vec<u8>,
-    server_nonce: Vec<u8>,
+    fn poll(&mut self) -> Poll<(), io::Error> {
+        // make sure the send buffer is empty
+        try_ready!(self.poll_send());
+        // TODO: receive a message
+        unimplemented!()
+    }
 }
