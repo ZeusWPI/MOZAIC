@@ -1,3 +1,5 @@
+use prost::Message;
+
 pub enum Step<State, Next> {
     NotReady(State),
     Ready(Next),
@@ -34,4 +36,15 @@ macro_rules! try_step {
             Ok(Step::NotReady(state)) => Ok(Step::NotReady(state.into())),
         }
     )
+}
+
+pub fn encode_protobuf<M>(message: &M) -> Vec<u8>
+    where M: Message
+{
+    let mut buffer = Vec::with_capacity(message.encoded_len());
+    // encode will only fail when insufficient space is allocated, but we
+    // just allocated the exact right amount of space.
+    message.encode(&mut buffer).unwrap();
+
+    return buffer;
 }

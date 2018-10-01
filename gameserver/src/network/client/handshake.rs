@@ -16,7 +16,7 @@ use protocol::handshake_server_message::Payload as ServerMessage;
 use network::lib::errors::*;
 use network::lib::channel::Channel;
 use network::lib::crypto;
-use network::utils::Step;
+use network::utils::encode_protobuf;
 
 fn decode_server_message(bytes: &[u8]) -> Result<ServerMessage> {
     let signed_msg = SignedMessage::decode(bytes)
@@ -34,6 +34,7 @@ fn decode_server_message(bytes: &[u8]) -> Result<ServerMessage> {
 struct HandshakeData {
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
+    kx_keypair: crypto::KxKeypair,
     message: Vec<u8>,
 }
 
@@ -59,10 +60,12 @@ impl Handshake {
         -> Self
     {
         let client_nonce = crypto::handshake_nonce();
+        let kx_keypair = crypto::KxKeypair::gen();
 
         let data = HandshakeData {
             secret_key,
             client_nonce,
+            kx_keypair,
             message,
         };
 
@@ -80,14 +83,16 @@ impl Handshake {
             message: self.data.message.clone(),
         };
 
-        let mut buffer = Vec::with_capacity(conn_request.encoded_len());
-        conn_request.encode(&mut buffer).unwrap();
-
-        return buffer;
+        return encode_protobuf(&conn_request);
     }
 
-    fn encode_challenge_response(&self) -> Vec<u8> {
-        unimplemented!()
+    fn encode_challenge_response(&self, server_data: &ServerData) -> Vec<u8> {
+        let challenge_response = ChallengeResponse {
+            server_nonce: server_data.server_nonce.clone(),
+            kx_client_pk: self.data.kx_keypair.public_key[..].to_vec(),
+        };
+
+        return encode_protobuf(&challenge_response);
     }
 
     fn handle_message(&mut self, message: ServerMessage) -> Poll<(), ()> {
