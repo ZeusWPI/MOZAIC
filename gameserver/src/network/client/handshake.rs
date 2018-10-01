@@ -8,7 +8,8 @@ use protocol::{
     HandshakeServerMessage,
     SignedMessage,
     ConnectionRequest,
-    ChallengeResponse
+    ChallengeResponse,
+    ServerChallenge,
 };
 use protocol::handshake_server_message::Payload as ServerMessage;
 
@@ -95,12 +96,27 @@ impl Handshake {
         return encode_protobuf(&challenge_response);
     }
 
-    fn handle_message(&mut self, message: ServerMessage) -> Poll<(), ()> {
+    fn handle_message(&mut self, message: ServerMessage) -> Poll<(), Error> {
         match message {
             ServerMessage::Challenge(challenge) => {
+                let kx_server_pk = kx::PublicKey::from_slice(&challenge.kx_server_pk)
+                    .chain_err(|| "invalid public key")?;
+                let server_data = ServerData {
+                    server_nonce: challenge.server_nonce,
+                    kx_server_pk,
+                };
+                self.state = HandshakeState::Authenticating(server_data);
+                // TODO: make sure response is sent
                 return Ok(Async::NotReady);
             }
-            _ => unimplemented!()
+            ServerMessage::ConnectionAccepted(_accepted) => {
+                // todo: maybe include some data?
+                return Ok(Async::Ready(()));
+            }
+            ServerMessage::ConnectionRefused(refused) => {
+                // TODO: produce nicer error or something
+                bail!(refused.message);
+            }
         }
     }
 
