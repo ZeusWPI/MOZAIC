@@ -1,6 +1,10 @@
 // TODO: fix proper error handling, and migrate to 'failure'.
 pub mod errors {
-    error_chain! { }
+    error_chain! {
+        foreign_links {
+            Io(::std::io::Error);
+        }
+    }
 }
 
 pub mod channel;

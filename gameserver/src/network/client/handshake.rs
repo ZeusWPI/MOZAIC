@@ -120,9 +120,15 @@ impl Handshake {
         }
     }
 
-    fn poll_message(&mut self) -> Poll<Vec<u8>, io::Error> {
-        let frame = try!(self.channel.poll_frame());
-        unimplemented!()
+    fn poll_message(&mut self) -> Poll<ServerMessage, io::Error> {
+        loop {
+            let frame = try_ready!(self.channel.poll_frame());
+            let signed_msg = try!(SignedMessage::decode(&frame));
+            let server_msg = try!(HandshakeServerMessage::decode(&signed_msg.data));
+            if let Some(payload) =  server_msg.payload {
+                return Ok(Async::Ready(payload));
+            }
+        }
     }
 
     fn poll_send(&mut self) -> Poll<(), io::Error> {
@@ -141,12 +147,22 @@ impl Handshake {
 
 impl Future for Handshake {
     type Item = ();
-    type Error = io::Error;
+    type Error = Error;
 
-    fn poll(&mut self) -> Poll<(), io::Error> {
-        // make sure the send buffer is empty
-        try_ready!(self.poll_send());
-        // TODO: receive a message
-        unimplemented!()
+    fn poll(&mut self) -> Poll<(), Error> {
+        loop {
+            // flush send buffer
+            try_ready!(self.poll_send());
+
+            let message = try_ready!(self.poll_message());
+
+            match self.handle_message(message) {
+                Err(err) => bail!(err),
+                Ok(Async::Ready(())) => return Ok(Async::Ready(())),
+                Ok(Async::NotReady) => {
+                    // TODO: send message
+                }
+            }
+        }
     }
 }
