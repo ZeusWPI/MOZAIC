@@ -23,6 +23,7 @@ use network::utils::encode_protobuf;
 
 // TODO: distinguish between fatal and non-fatal errors
 // (maybe a rogue message should be ignored rather than cause a failure)
+
 struct HandshakeData {
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
@@ -61,12 +62,15 @@ impl Handshake {
             message,
         };
 
-        return Handshake {
+        let mut h = Handshake {
             channel,
             send_buf: None,
             data,
             state: HandshakeState::Connecting,
         };
+        // queue initial connect message
+        h.send_handshake_message();
+        return h;
     }
 
     fn encode_connection_request(&self) -> Vec<u8> {
