@@ -19,19 +19,10 @@ use network::lib::channel::Channel;
 use network::lib::crypto;
 use network::utils::encode_protobuf;
 
-fn decode_server_message(bytes: &[u8]) -> Result<ServerMessage> {
-    let signed_msg = SignedMessage::decode(bytes)
-        .chain_err(|| "failed to decode SignedMessage")?;
+// TODO: actually check server credentials
 
-    let msg = HandshakeServerMessage::decode(&signed_msg.data)
-        .chain_err(|| "failed to decode ServerMessage")?;
-    
-    match msg.payload {
-        Some(server_message) => Ok(server_message),
-        None => bail!("empty server message"),
-    }
-}
-
+// TODO: distinguish between fatal and non-fatal errors
+// (maybe a rogue message should be ignored rather than cause a failure)
 struct HandshakeData {
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
@@ -96,7 +87,9 @@ impl Handshake {
         return encode_protobuf(&challenge_response);
     }
 
-    fn handle_message(&mut self, message: ServerMessage) -> Poll<(), Error> {
+    fn handle_message(&mut self, message: ServerMessage)
+        -> Poll<crypto::SessionKeys, Error>
+    {
         match message {
             ServerMessage::Challenge(challenge) => {
                 let kx_server_pk = kx::PublicKey::from_slice(&challenge.kx_server_pk)
@@ -110,8 +103,17 @@ impl Handshake {
                 return Ok(Async::NotReady);
             }
             ServerMessage::ConnectionAccepted(_accepted) => {
-                // todo: maybe include some data?
-                return Ok(Async::Ready(()));
+                // TODO: maybe un-nest this
+                match self.state {
+                    HandshakeState::Connecting => {
+                        bail!("server accepted before handshake was completed");
+                    }
+                    HandshakeState::Authenticating(ref data) => {
+                        let session_keys = self.data.kx_keypair
+                            .client_session_keys(&data.kx_server_pk)?;
+                        return Ok(Async::Ready(session_keys));
+                    }
+                }                
             }
             ServerMessage::ConnectionRefused(refused) => {
                 // TODO: produce nicer error or something
@@ -143,13 +145,30 @@ impl Handshake {
         }
         return self.channel.poll_complete();
     }
+
+    fn send_handshake_message(&mut self) {
+        let message = match self.state {
+            HandshakeState::Connecting => {
+                self.encode_connection_request()
+            }
+            HandshakeState::Authenticating(ref data) => {
+                self.encode_challenge_response(data)
+            }
+        };
+        self.queue_send(message);
+    }
+
+    fn queue_send(&mut self, data: Vec<u8>) {
+        let signed_message = crypto::sign_message(data, &self.data.secret_key);
+        self.send_buf = Some(encode_protobuf(&signed_message));
+    }
 }
 
 impl Future for Handshake {
-    type Item = ();
+    type Item = crypto::SessionKeys;
     type Error = Error;
 
-    fn poll(&mut self) -> Poll<(), Error> {
+    fn poll(&mut self) -> Poll<crypto::SessionKeys, Error> {
         loop {
             // flush send buffer
             try_ready!(self.poll_send());
@@ -158,9 +177,11 @@ impl Future for Handshake {
 
             match self.handle_message(message) {
                 Err(err) => bail!(err),
-                Ok(Async::Ready(())) => return Ok(Async::Ready(())),
+                Ok(Async::Ready(session_keys)) => {
+                    return Ok(Async::Ready(session_keys));
+                }
                 Ok(Async::NotReady) => {
-                    // TODO: send message
+                    self.send_handshake_message();
                 }
             }
         }

@@ -54,6 +54,21 @@ impl KxKeypair {
         }
     }
 
+    pub fn client_session_keys(&self, server_pk: &kx::PublicKey)
+        -> Result<SessionKeys>
+    {
+        let res = kx::client_session_keys(
+            &self.public_key,
+            &self.secret_key,
+            server_pk,
+        );
+
+        match res {
+            Ok((rx, tx)) => Ok(SessionKeys { rx, tx }),
+            Err(()) => bail!("bad public key"),
+        }
+    }
+
     pub fn server_session_keys(&self, client_pk: &kx::PublicKey) 
         -> Result<SessionKeys>
     {
