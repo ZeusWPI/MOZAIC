@@ -24,25 +24,28 @@ use network::utils::encode_protobuf;
 // TODO: distinguish between fatal and non-fatal errors
 // (maybe a rogue message should be ignored rather than cause a failure)
 
-struct Handshake {
-    channel: Channel,
-    send_buf: Option<Vec<u8>>,
-    state: HandshakeState,
-
+struct HandshakeData {
     secret_key: SecretKey,
     client_nonce: Vec<u8>,
     kx_keypair: crypto::KxKeypair,
     message: Vec<u8>,
 }
 
-enum HandshakeState {
-    Connecting,
-    Authenticating(ServerData),
-}
-
 struct ServerData {
     server_nonce: Vec<u8>,
     kx_server_pk: kx::PublicKey,
+}
+
+struct Handshake {
+    channel: Channel,
+    send_buf: Option<Vec<u8>>,
+    data: HandshakeData,
+    state: HandshakeState,
+}
+
+enum HandshakeState {
+    Connecting,
+    Authenticating(ServerData),
 }
 
 impl Handshake {
@@ -52,15 +55,18 @@ impl Handshake {
         let client_nonce = crypto::handshake_nonce();
         let kx_keypair = crypto::KxKeypair::gen();
 
-        let mut h = Handshake {
-            channel,
-            send_buf: None,
-            state: HandshakeState::Connecting,
-
+        let data = HandshakeData {
             secret_key,
             client_nonce,
             kx_keypair,
             message,
+        };
+
+        let mut h = Handshake {
+            channel,
+            send_buf: None,
+            data,
+            state: HandshakeState::Connecting,
         };
         // queue initial connect message
         h.send_handshake_message();
@@ -69,8 +75,8 @@ impl Handshake {
 
     fn encode_connection_request(&self) -> Vec<u8> {
         let conn_request = ConnectionRequest {
-            client_nonce: self.client_nonce.clone(),
-            message: self.message.clone(),
+            client_nonce: self.data.client_nonce.clone(),
+            message: self.data.message.clone(),
         };
 
         return encode_protobuf(&conn_request);
@@ -79,7 +85,7 @@ impl Handshake {
     fn encode_challenge_response(&self, server_data: &ServerData) -> Vec<u8> {
         let challenge_response = ChallengeResponse {
             server_nonce: server_data.server_nonce.clone(),
-            kx_client_pk: self.kx_keypair.public_key[..].to_vec(),
+            kx_client_pk: self.data.kx_keypair.public_key[..].to_vec(),
         };
 
         return encode_protobuf(&challenge_response);
@@ -107,7 +113,7 @@ impl Handshake {
                         bail!("server accepted before handshake was completed");
                     }
                     HandshakeState::Authenticating(ref data) => {
-                        let session_keys = self.kx_keypair
+                        let session_keys = self.data.kx_keypair
                             .client_session_keys(&data.kx_server_pk)?;
                         return Ok(Async::Ready(session_keys));
                     }
@@ -157,7 +163,7 @@ impl Handshake {
     }
 
     fn queue_send(&mut self, data: Vec<u8>) {
-        let signed_message = crypto::sign_message(data, &self.secret_key);
+        let signed_message = crypto::sign_message(data, &self.data.secret_key);
         self.send_buf = Some(encode_protobuf(&signed_message));
     }
 }
