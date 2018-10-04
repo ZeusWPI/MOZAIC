@@ -37,7 +37,7 @@ struct ServerData {
 }
 
 struct Handshake {
-    channel: Channel,
+    channel: Option<Channel>,
     send_buf: Option<Vec<u8>>,
     data: HandshakeData,
     state: HandshakeState,
@@ -63,7 +63,7 @@ impl Handshake {
         };
 
         let mut h = Handshake {
-            channel,
+            channel: Some(channel),
             send_buf: None,
             data,
             state: HandshakeState::Connecting,
@@ -127,8 +127,13 @@ impl Handshake {
     }
 
     fn poll_message(&mut self) -> Poll<ServerMessage, io::Error> {
+        let channel = match self.channel {
+            None => panic!("[poll_message] channel moved"),
+            Some(ref mut channel) => channel,
+        };
+
         loop {
-            let frame = try_ready!(self.channel.poll_frame());
+            let frame = try_ready!(channel.poll_frame());
             let signed_msg = try!(SignedMessage::decode(&frame));
             let server_msg = try!(HandshakeServerMessage::decode(&signed_msg.data));
             if let Some(payload) =  server_msg.payload {
@@ -138,8 +143,13 @@ impl Handshake {
     }
 
     fn poll_send(&mut self) -> Poll<(), io::Error> {
+        let channel = match self.channel {
+            None => panic!("[poll_send] channel moved"),
+            Some(ref mut channel) => channel,
+        };
+
         if let Some(buf) = self.send_buf.take() {
-            match try!(self.channel.start_send(buf)) {
+            match try!(channel.start_send(buf)) {
                 AsyncSink::Ready => {}
                 AsyncSink::NotReady(buf) => {
                     self.send_buf = Some(buf);
@@ -147,7 +157,7 @@ impl Handshake {
                 }
             }
         }
-        return self.channel.poll_complete();
+        return channel.poll_complete();
     }
 
     fn send_handshake_message(&mut self) {
@@ -169,10 +179,10 @@ impl Handshake {
 }
 
 impl Future for Handshake {
-    type Item = crypto::SessionKeys;
+    type Item = (Channel, crypto::SessionKeys);
     type Error = Error;
 
-    fn poll(&mut self) -> Poll<crypto::SessionKeys, Error> {
+    fn poll(&mut self) -> Poll<Self::Item, Error> {
         loop {
             // flush send buffer
             try_ready!(self.poll_send());
@@ -182,7 +192,8 @@ impl Future for Handshake {
             match self.handle_message(message) {
                 Err(err) => bail!(err),
                 Ok(Async::Ready(session_keys)) => {
-                    return Ok(Async::Ready(session_keys));
+                    let channel = self.channel.take().unwrap();
+                    return Ok(Async::Ready((channel, session_keys)));
                 }
                 Ok(Async::NotReady) => {
                     self.send_handshake_message();
