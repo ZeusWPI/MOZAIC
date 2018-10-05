@@ -10,22 +10,44 @@ use network::lib::channel::{TransportInstruction, Channel};
 
 use protocol as proto;
 
+struct TransportControl {
+    sender: mpsc::UnboundedSender<TransportControlMessage>,
+}
+
+enum TransportControlMessage {
+    Connect // TODO: find a payload
+}
+
 struct TcpStreamTransport {
     stream: MessageStream<TcpStream, proto::Frame>,
-    recv: mpsc::Receiver<TransportInstruction>,
+
+    // we need two different mpsc channels to provide the same interface
+    // between client- and server side transports.
     snd: mpsc::Sender<TransportInstruction>,
+    recv: mpsc::Receiver<TransportInstruction>,
+
+    ctrl_chan: mpsc::UnboundedReceiver<TransportControlMessage>,
+
     channels: HashMap<u32, mpsc::Sender<Vec<u8>>>,
 }
 
 impl TcpStreamTransport {
-    pub fn new(stream: TcpStream) -> Self {
+    pub fn new(stream: TcpStream) -> (TransportControl, Self) {
+        let (ctrl_snd, ctrl_recv) = mpsc::unbounded();
         let (snd, recv) = mpsc::channel(32);
-        TcpStreamTransport {
+        let transport = TcpStreamTransport {
             stream: MessageStream::new(ProtobufTransport::new(stream)),
             channels: HashMap::new(),
-            recv,
+            ctrl_chan: ctrl_recv,
             snd,
-        }
+            recv,
+        };
+
+        let ctrl = TransportControl {
+            sender: ctrl_snd,
+        };
+
+        return (ctrl, transport);
     }
 
     pub fn poll_stream(&mut self) -> Poll<(), io::Error> {
@@ -69,6 +91,16 @@ impl TcpStreamTransport {
                     self.channels.remove(&channel_num);
                 }
             }
+        }
+    }
+
+    fn poll_commands(&mut self) {
+        loop {
+            let _item = match self.ctrl_chan.poll() {
+                Err(err) => panic!(err),
+                Ok(Async::NotReady) => return,
+                Ok(Async::Ready(item)) => item,
+            };
         }
     }
 
