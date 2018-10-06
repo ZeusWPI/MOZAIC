@@ -179,6 +179,7 @@ impl Handshake {
 }
 
 impl Future for Handshake {
+    // TODO: make this into a proper datatype
     type Item = (Channel, crypto::SessionKeys);
     type Error = Error;
 

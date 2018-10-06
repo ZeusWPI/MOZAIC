@@ -26,28 +26,19 @@ struct TcpStreamTransport {
     snd: mpsc::Sender<TransportInstruction>,
     recv: mpsc::Receiver<TransportInstruction>,
 
-    ctrl_chan: mpsc::UnboundedReceiver<TransportControlMessage>,
-
     channels: HashMap<u32, mpsc::Sender<Vec<u8>>>,
 }
 
 impl TcpStreamTransport {
-    pub fn new(stream: TcpStream) -> (TransportControl, Self) {
-        let (ctrl_snd, ctrl_recv) = mpsc::unbounded();
+    pub fn new(stream: TcpStream) -> Self {
         let (snd, recv) = mpsc::channel(32);
-        let transport = TcpStreamTransport {
+       
+       TcpStreamTransport {
             stream: MessageStream::new(ProtobufTransport::new(stream)),
             channels: HashMap::new(),
-            ctrl_chan: ctrl_recv,
             snd,
             recv,
-        };
-
-        let ctrl = TransportControl {
-            sender: ctrl_snd,
-        };
-
-        return (ctrl, transport);
+        }
     }
 
     pub fn poll_stream(&mut self) -> Poll<(), io::Error> {
@@ -93,7 +84,25 @@ impl TcpStreamTransport {
             }
         }
     }
+}
 
+impl Future for TcpStreamTransport {
+    type Item = ();
+    type Error = io::Error;
+    
+    fn poll(&mut self) -> Poll<(), io::Error> {
+        try!(self.poll_instructions());
+        return self.poll_stream();
+    }
+}
+
+pub struct TransportDriver {
+    transport: TcpStreamTransport,
+
+    ctrl_chan: mpsc::UnboundedReceiver<TransportControlMessage>,
+}
+
+impl TransportDriver {
     fn poll_commands(&mut self) {
         loop {
             let _item = match self.ctrl_chan.poll() {
@@ -103,22 +112,17 @@ impl TcpStreamTransport {
             };
         }
     }
-
-    pub fn poll_(&mut self) -> Poll<(), io::Error> {
-        try!(self.poll_instructions());
-        return self.poll_stream();
-    }
-
 }
 
-impl Future for TcpStreamTransport {
+impl Future for TransportDriver {
     type Item = ();
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        match self.poll_() {
-            Ok(async) => Ok(async),
-            Err(err) => panic!(err),
+        self.poll_commands();
+        match self.transport.poll() {
+            Ok(status) => Ok(status),
+            Err(err) => panic!(err), // TODO
         }
     }
 }
