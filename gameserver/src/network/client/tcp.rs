@@ -41,7 +41,13 @@ impl TcpStreamTransport {
         }
     }
 
-    pub fn poll_stream(&mut self) -> Poll<(), io::Error> {
+    pub fn open_channel(&mut self, channel_num: u32) -> Channel {
+        let (sender, channel) = Channel::create(channel_num, self.snd.clone());
+        self.channels.insert(channel_num, sender);
+        return channel;
+    }
+
+    fn poll_stream(&mut self) -> Poll<(), io::Error> {
         loop {
             let frame = match try_ready!(self.stream.poll()) {
                 Some(frame) => frame,
@@ -60,7 +66,7 @@ impl TcpStreamTransport {
         }
     }
 
-    pub fn poll_instructions(&mut self) -> Poll<(), io::Error> {
+    fn poll_instructions(&mut self) -> Poll<(), io::Error> {
         loop {
             // make sure stream is ready to write to before handling an
             // instruction
@@ -100,16 +106,37 @@ pub struct TransportDriver {
     transport: TcpStreamTransport,
 
     ctrl_chan: mpsc::UnboundedReceiver<TransportControlMessage>,
+
+    chan_counter: u32,
 }
 
 impl TransportDriver {
+    fn handle_ctrl_msg(&mut self, msg: TransportControlMessage) {
+        match msg {
+            TransportControlMessage::Connect => {
+                let channel_num = self.get_channel_num();
+                let channel = self.transport.open_channel(channel_num);
+                // TODO: start handshake
+            }
+        }
+    }
+
+    fn get_channel_num(&mut self) -> u32 {
+        let num = self.chan_counter;
+        self.chan_counter += 1;
+        return num;
+    }
+
     fn poll_commands(&mut self) {
         loop {
-            let _item = match self.ctrl_chan.poll() {
+            let msg = match self.ctrl_chan.poll() {
                 Err(err) => panic!(err),
                 Ok(Async::NotReady) => return,
-                Ok(Async::Ready(item)) => item,
+                Ok(Async::Ready(None)) => panic!("ctrl channel closed"),
+                Ok(Async::Ready(Some(item))) => item,
             };
+
+            self.handle_ctrl_msg(msg);
         }
     }
 }
