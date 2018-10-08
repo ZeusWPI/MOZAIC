@@ -4,6 +4,7 @@ use sodiumoxide::crypto::kx;
 use futures::{Future, Poll, Async, Sink, AsyncSink};
 use std::io;
 
+use network::lib::ConnectionHandle;
 use protocol::{
     HandshakeServerMessage,
     SignedMessage,
@@ -49,8 +50,11 @@ enum HandshakeState {
 }
 
 impl Handshake {
-    pub fn new(channel: Channel, secret_key: SecretKey, message: Vec<u8>)
-        -> Self
+    pub fn new(
+        channel: Channel,
+        secret_key: SecretKey,
+        message: Vec<u8>,
+    ) -> Self
     {
         let client_nonce = crypto::handshake_nonce();
         let kx_keypair = crypto::KxKeypair::gen();
@@ -199,6 +203,47 @@ impl Future for Handshake {
                 Ok(Async::NotReady) => {
                     self.send_handshake_message();
                 }
+            }
+        }
+    }
+}
+
+struct Handshaker {
+    handshake: Handshake,
+    conn_handle: ConnectionHandle,
+}
+
+impl Handshaker {
+    pub fn new(
+        channel: Channel,
+        secret_key: SecretKey,
+        message: Vec<u8>,
+        conn_handle: ConnectionHandle,
+    ) -> Self
+    {
+        Handshaker {
+            conn_handle,
+            handshake: Handshake::new(channel, secret_key, message),
+        }
+    }
+}
+
+impl Future for Handshaker {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        match self.handshake.poll() {
+            Ok(Async::Ready((chan, keys))) => {
+                self.conn_handle.connect(chan, keys);
+                return Ok(Async::Ready(()));
+            }
+            Ok(Async::NotReady) => {
+                return Ok(Async::NotReady);
+            }
+            Err(err) => {
+                eprintln!("handshake errored: {}", err);
+                return Ok(Async::Ready(()));
             }
         }
     }
