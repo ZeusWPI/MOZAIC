@@ -1,12 +1,17 @@
 use std::collections::HashMap;
+use std::io;
+use tokio;
 
 use futures::{Future, Poll, Async, Stream, Sink};
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
-use std::io;
+use sodiumoxide::crypto::sign::SecretKey;
+
 
 use network::lib::protobuf_codec::{MessageStream, ProtobufTransport};
 use network::lib::channel::{TransportInstruction, Channel};
+use network::lib::ConnectionHandle;
+use super::handshake::Handshaker;
 
 use protocol as proto;
 
@@ -15,7 +20,13 @@ struct TransportControl {
 }
 
 enum TransportControlMessage {
-    Connect // TODO: find a payload
+    Connect(ConnectParams),
+}
+
+struct ConnectParams {
+    secret_key: SecretKey,
+    message: Vec<u8>,
+    conn_handle: ConnectionHandle,
 }
 
 struct TcpStreamTransport {
@@ -113,10 +124,16 @@ pub struct TransportDriver {
 impl TransportDriver {
     fn handle_ctrl_msg(&mut self, msg: TransportControlMessage) {
         match msg {
-            TransportControlMessage::Connect => {
+            TransportControlMessage::Connect(params) => {
                 let channel_num = self.get_channel_num();
                 let channel = self.transport.open_channel(channel_num);
-                // TODO: start handshake
+                let handshaker = Handshaker::new(
+                    channel,
+                    params.secret_key,
+                    params.message,
+                    params.conn_handle,
+                );
+                tokio::spawn(handshaker);
             }
         }
     }

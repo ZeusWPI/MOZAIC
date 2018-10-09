@@ -208,7 +208,7 @@ impl Future for Handshake {
     }
 }
 
-struct Handshaker {
+pub struct Handshaker {
     handshake: Handshake,
     conn_handle: ConnectionHandle,
 }
