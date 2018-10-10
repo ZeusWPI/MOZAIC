@@ -19,15 +19,6 @@ struct TransportControl {
     sender: mpsc::UnboundedSender<TransportControlMessage>,
 }
 
-enum TransportControlMessage {
-    Connect(ConnectParams),
-}
-
-struct ConnectParams {
-    secret_key: SecretKey,
-    message: Vec<u8>,
-    conn_handle: ConnectionHandle,
-}
 
 struct TcpStreamTransport {
     stream: MessageStream<TcpStream, proto::Frame>,
@@ -113,6 +104,17 @@ impl Future for TcpStreamTransport {
     }
 }
 
+
+pub enum TransportControlMessage {
+    Connect(ConnectParams),
+}
+
+pub struct ConnectParams {
+    secret_key: SecretKey,
+    message: Vec<u8>,
+    conn_handle: ConnectionHandle,
+}
+
 pub struct TransportDriver {
     transport: TcpStreamTransport,
 
@@ -122,6 +124,21 @@ pub struct TransportDriver {
 }
 
 impl TransportDriver {
+    pub fn new(stream: TcpStream)
+        -> (mpsc::UnboundedSender<TransportControlMessage>, Self)
+    {
+        let (snd, recv) = mpsc::unbounded();
+
+        let driver = TransportDriver {
+            chan_counter: 0,
+            ctrl_chan: recv,
+
+            transport: TcpStreamTransport::new(stream),
+        };
+
+        return (snd, driver);
+    }
+
     fn handle_ctrl_msg(&mut self, msg: TransportControlMessage) {
         match msg {
             TransportControlMessage::Connect(params) => {
