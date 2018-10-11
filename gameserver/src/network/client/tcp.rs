@@ -15,11 +15,6 @@ use super::handshake::Handshaker;
 
 use protocol as proto;
 
-struct TransportControl {
-    sender: mpsc::UnboundedSender<TransportControlMessage>,
-}
-
-
 struct TcpStreamTransport {
     stream: MessageStream<TcpStream, proto::Frame>,
 
@@ -105,14 +100,16 @@ impl Future for TcpStreamTransport {
 }
 
 
-pub enum TransportControlMessage {
-    Connect(ConnectParams),
-}
+
 
 pub struct ConnectParams {
-    secret_key: SecretKey,
-    message: Vec<u8>,
-    conn_handle: ConnectionHandle,
+    pub secret_key: SecretKey,
+    pub message: Vec<u8>,
+    pub conn_handle: ConnectionHandle,
+}
+
+enum TransportControlMessage {
+    Connect(ConnectParams),
 }
 
 pub struct TransportDriver {
@@ -125,7 +122,7 @@ pub struct TransportDriver {
 
 impl TransportDriver {
     pub fn new(stream: TcpStream)
-        -> (mpsc::UnboundedSender<TransportControlMessage>, Self)
+        -> (TransportControl, Self)
     {
         let (snd, recv) = mpsc::unbounded();
 
@@ -136,7 +133,9 @@ impl TransportDriver {
             transport: TcpStreamTransport::new(stream),
         };
 
-        return (snd, driver);
+        let control = TransportControl { sender: snd };
+
+        return (control, driver);
     }
 
     fn handle_ctrl_msg(&mut self, msg: TransportControlMessage) {
@@ -166,7 +165,7 @@ impl TransportDriver {
             let msg = match self.ctrl_chan.poll() {
                 Err(err) => panic!(err),
                 Ok(Async::NotReady) => return,
-                Ok(Async::Ready(None)) => panic!("ctrl channel closed"),
+                Ok(Async::Ready(None)) => return, // TODO: handle this
                 Ok(Async::Ready(Some(item))) => item,
             };
 
@@ -185,5 +184,17 @@ impl Future for TransportDriver {
             Ok(status) => Ok(status),
             Err(err) => panic!(err), // TODO
         }
+    }
+}
+
+pub struct TransportControl {
+    sender: mpsc::UnboundedSender<TransportControlMessage>,
+}
+
+impl TransportControl {
+    pub fn connect(&mut self, params: ConnectParams) {
+        self.sender
+            .unbounded_send(TransportControlMessage::Connect(params))
+            .unwrap();
     }
 }
