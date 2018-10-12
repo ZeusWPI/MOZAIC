@@ -35,11 +35,11 @@ fn main() {
     let task = TcpStream::connect(&addr)
         .map_err(|err| panic!(err))
         .and_then(|stream| {
-            let (conn_handle, handler) = ConnectionHandler::create(0, |_| {
+            let (conn_handle, handler) = ConnectionHandler::create(0, |handle| {
                 println!("succesfully connected");
 
-                let mut core = RequestHandler::new(());
-                core.add_handler(|_state, e: &events::Connected| {
+                let mut core = RequestHandler::new(Some(handle));
+                core.add_handler(|_state, _e: &events::Connected| {
                     println!("got connected event");
                     return Ok(WireEvent::null());
                 });
@@ -48,7 +48,7 @@ fn main() {
             tokio::spawn(handler);
             let (mut handle, driver) = client::tcp::TransportDriver::new(stream);
 
-            let uuid = vec![0u8; 64];
+            let uuid = sodiumoxide::randombytes::randombytes(64);
 
             let connect = proto::GameserverConnect {
                 connect: Some(proto::gameserver_connect::Connect::Control(
