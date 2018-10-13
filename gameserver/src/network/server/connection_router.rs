@@ -4,7 +4,7 @@ use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
 use reactors::{WireEvent, EventHandler};
 use std::marker::PhantomData;
 
-use network::lib::ConnectionHandle;
+use network::lib::{ConnectionHandler, ConnectionHandle, RegisteredConnectionHandle};
 use network::lib::channel::Channel;
 use network::lib::crypto::SessionKeys;
 use super::connection_table::ConnectionTable;
@@ -47,7 +47,7 @@ impl<R> ConnectionCreator<R>
 {
     pub fn new<H, F>(func: F) -> Self
         where H: EventHandler<Output = io::Result<WireEvent>>,
-              F: FnMut(ConnectionHandle, &mut R) -> H + Send + 'static,
+              F: FnMut(RegisteredConnectionHandle, &mut R) -> H + Send + 'static,
               H: Send + 'static,
 
     {
@@ -67,7 +67,6 @@ impl<R> ConnectionCreator<R>
     {
         self.spawner.create_connection(public_key, conn_table, router)
     }
-
 }
 
 trait ConnectionSpawner<R>
@@ -83,7 +82,7 @@ trait ConnectionSpawner<R>
 
 pub struct CreateConnectionWrapper<R: ?Sized, H, F>
     where H: EventHandler<Output = io::Result<WireEvent>>,
-          F: FnMut(ConnectionHandle, &mut R) -> H
+          F: FnMut(RegisteredConnectionHandle, &mut R) -> H
 {
     creator: F,
     phantom_r: PhantomData<R>,
@@ -92,7 +91,7 @@ pub struct CreateConnectionWrapper<R: ?Sized, H, F>
 
 impl<R, H, F> CreateConnectionWrapper<R, H, F>
     where H: EventHandler<Output = io::Result<WireEvent>>,
-          F: FnMut(ConnectionHandle, &mut R) -> H + 'static,
+          F: FnMut(RegisteredConnectionHandle, &mut R) -> H + 'static,
           H: Send + 'static
 {
     pub fn new(func: F) -> Self {
@@ -107,7 +106,7 @@ impl<R, H, F> CreateConnectionWrapper<R, H, F>
 
 impl<R, H, F> ConnectionSpawner<R> for CreateConnectionWrapper<R, H, F>
     where H: EventHandler<Output = io::Result<WireEvent>>,
-          F: FnMut(ConnectionHandle, &mut R) -> H,
+          F: FnMut(RegisteredConnectionHandle, &mut R) -> H,
           R: Send + 'static,
           H: Send + 'static
 {
@@ -118,9 +117,14 @@ impl<R, H, F> ConnectionSpawner<R> for CreateConnectionWrapper<R, H, F>
         router: &mut R
     ) -> ConnectionHandle
     {
-        conn_table.create(public_key, |handle| {
-            (self.creator)(handle, router)
-        })
+        ConnectionHandler::create(|handle| {
+            // TODO: register connection
+            let registered_handle = unimplemented!();
+
+            (self.creator)(registered_handle, router)
+        });
+
+        unimplemented!()
     }
 }
 
@@ -128,33 +132,41 @@ impl<R, H, F> ConnectionSpawner<R> for CreateConnectionWrapper<R, H, F>
 
 
 
-pub struct ConnectionRouter<R: Router> {
-    pub router: Arc<Mutex<R>>,
-    pub connection_table: Arc<Mutex<ConnectionTable>>,
-    pub secret_key: SecretKey,
+pub struct RoutingTable<R> {
+    connections: ConnectionTable,
+    router: R,
+    secret_key: SecretKey,
 }
 
-impl<R: Router> Clone for ConnectionRouter<R> {
+pub struct RoutingTableHandle<R> {
+    routing_table: Arc<Mutex<RoutingTable<R>>>,
+}
+
+impl<R> Clone for RoutingTableHandle<R> {
     fn clone(&self) -> Self {
-        ConnectionRouter {
-            router: self.router.clone(),
-            connection_table: self.connection_table.clone(),
-            secret_key: self.secret_key.clone(),
+        RoutingTableHandle {
+            routing_table: self.routing_table.clone(),
         }
     }
 }
 
-impl<R: Router> ConnectionRouter<R> {
+
+impl<R> RoutingTableHandle<R>
+    where R: Router
+{
     pub fn route(&mut self, msg: &[u8])
         -> Result<ConnectionRouting<R>, io::Error>
     {
-        let router = self.router.lock().unwrap();
-        let routing = try!(router.route(msg));
+        let table = self.routing_table.lock().unwrap();
+        let routing = try!(table.router.route(msg));
         let conn_routing = match routing {
             Routing::Connect(conn_id) => {
-                let mut table = self.connection_table.lock().unwrap();
+                let public_key = table.connections.get(conn_id)
+                    .unwrap()
+                    .public_key
+                    .clone();
                 ConnectionRouting {
-                    public_key: table.get(conn_id).unwrap().public_key.clone(),
+                    public_key,
                     router: self.clone(),
                     target: RoutingTarget::Connection(conn_id),
                 }
@@ -169,13 +181,15 @@ impl<R: Router> ConnectionRouter<R> {
         };
         return Ok(conn_routing);
     }
+
 }
+
 
 pub struct ConnectionRouting<R>
     where R: Router
 {
     public_key: PublicKey,
-    router: ConnectionRouter<R>,
+    router: RoutingTableHandle<R>,
     target: RoutingTarget<R>,
 }
 
@@ -197,21 +211,20 @@ impl<R> ConnectionRouting<R>
     where R: Router + 'static + Send
 {
     pub fn connect(self, channel: Channel, keys: SessionKeys) {
-        let mut conn_table = self.router.connection_table.lock().unwrap();
+        let mut table = self.router.routing_table.lock().unwrap();
 
         match self.target {
             RoutingTarget::Connection(conn_id) => {
-                conn_table.get_mut(conn_id)
+                table.connections.get_mut(conn_id)
                     .unwrap()
                     .handle
                     .connect(channel, keys);
             }
             RoutingTarget::NewConnection(mut creator) => {
-                let mut router = self.router.router.lock().unwrap();
                 creator.create_connection(
                     self.public_key,
-                    &mut conn_table,
-                    &mut router,
+                    &mut table.connections,
+                    &mut table.router,
                 ).connect(channel, keys);
             }
         }
