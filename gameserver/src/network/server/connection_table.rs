@@ -40,25 +40,19 @@ impl ConnectionTable {
         }
     }
 
-    pub fn create<H, F>(&mut self, public_key: PublicKey, creator: F)
-        -> ConnectionHandle
-        where F: FnOnce(ConnectionHandle) -> H,
-              H: EventHandler<Output = io::Result<WireEvent>>,
-              H: Send + 'static
+    pub fn register(&mut self, public_key: PublicKey, handle: ConnectionHandle)
+        -> usize
     {
         let connection_id = self.id_counter;
         self.id_counter += 1;
-
-        let (handle, handler) = ConnectionHandler::create(connection_id, creator);
-        tokio::spawn(handler);
-
 
         self.connections.insert(connection_id, ConnectionData {
             connection_id,
             handle: handle.clone(),
             public_key,
         });
-        return handle;
+
+        return connection_id;
     }
 
     pub fn get<'a>(&'a mut self, connection_id: usize)
