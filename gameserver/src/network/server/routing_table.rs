@@ -9,7 +9,7 @@ use network::lib::channel::Channel;
 use network::lib::crypto::SessionKeys;
 use super::connection_table::ConnectionTable;
 
-use super::router::{Router, Routing, RouterRegistration};
+use super::router::{Router, Routing, CreateConnection};
 
 
 // TODO: this is all really ugly and unhygienic
@@ -43,6 +43,7 @@ impl<R> RoutingTableHandle<R>
     {
         let table = self.routing_table.lock().unwrap();
         let routing = try!(table.router.route(msg));
+
         let conn_routing = match routing {
             Routing::Connect(conn_id) => {
                 let public_key = table.connections.get(conn_id)
@@ -66,19 +67,22 @@ impl<R> RoutingTableHandle<R>
         return Ok(conn_routing);
     }
 
-    pub fn register<T>(&mut self, registration: Registration<T>)
-        -> RegisteredHandle
-        where T: RouterRegistration<Router = R>
+    pub fn register(
+        &mut self,
+        handle: ConnectionHandle,
+        public_key: PublicKey,
+        router_registration: R::Registration
+    ) -> RegisteredHandle
     {
         let table = self.routing_table.lock().unwrap();
 
-        let conn_id = table.connections
-            .register(registration.public_key, registration.handle.clone());
-        registration.router_registration.register(&mut table.router, conn_id);
+        let connection_id = table.connections
+            .register(public_key, handle.clone());
+        router_registration.register(&mut table.router, connection_id);
     
         return RegisteredHandle {
-            handle: registration.handle,
-            connection_id: conn_id,
+            handle,
+            connection_id,
         };
     }
 
@@ -88,12 +92,6 @@ impl<R> RoutingTableHandle<R>
         table.connections.remove(conn_id);
         table.router.unregister(conn_id);
     }
-}
-
-struct Registration<R: RouterRegistration> {
-    pub handle: ConnectionHandle,
-    pub public_key: PublicKey,
-    pub router_registration: R,
 }
 
 pub struct RegisteredHandle {
@@ -107,10 +105,6 @@ impl RegisteredHandle {
     {
         self.connection_handle.dispatch(event);
     }
-
-    pub fn id(&self) -> usize {
-        self.connection_id
-    }
 }
 
 
@@ -123,8 +117,10 @@ pub struct ConnectionRouting<R>
 }
 
 enum RoutingTarget<R> {
-    Connection(usize),
-    NewConnection(ConnectionCreator<R>),
+    Connection {
+        connection_id: usize,
+    }
+    NewConnection(CreateConnection<R>),
 }
 
 impl<R> ConnectionRouting<R>
