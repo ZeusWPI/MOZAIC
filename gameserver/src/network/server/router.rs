@@ -6,18 +6,15 @@ use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
 
 use reactors::{WireEvent, EventHandler};
 
-use network::lib::{ConnectionHandler, ConnectionHandle, RegisteredConnectionHandle};
+use network::lib::{ConnectionHandler, ConnectionHandle};
 use super::routing_table::{
     RoutingTableHandle,
+    RegisteredHandle,
 };
 
 
-
 pub trait Router {
-    type Registration;
-    
-    fn route(&self, &[u8]) -> Result<Self::Routing, io::Error>;
-    fn register(&mut self, usize, Self::Registration);
+    fn route(&self, &[u8]) -> io::Result<Routing<Self>>;
     fn unregister(&mut self, usize);
 }
 
@@ -33,98 +30,91 @@ pub trait Router {
 pub enum Routing<R>
     where R: Router + ?Sized
 {
-    Connect { connection_id: usize }
+    Connect {
+        connection_id: usize
+    },
     CreateConnection {
-        creator: CreateConnection<R>,
+        spawner: BoxedSpawner<R>,
         public_key: PublicKey,
     },
 }
 
-pub struct CreateConnection<R>
-    where R: Router
-{
-    pub registration: R::Registration,
-    pub creator: Box<ConnectionCreator<R>>,
+pub struct BoxedSpawner<R: ?Sized> {
+    spawner: Box<ConnectionSpawner<R>>,
 }
 
-impl<R> CreateConnection<R> {
-    pub fn new<H, C>(
-        registration: R::Registration,
-        creator: C
-    ) -> Self
-        where C: FnMut(RegisteredConnectionHandle, &mut R) -> H,
-              H: EventHandler<Output = io::Result<WireEvent>>,
+impl<R> BoxedSpawner<R> {
+    pub fn spawn(
+        self,
+        routing_table: &mut RoutingTableHandle<R>,
+        public_key: PublicKey,
+    ) -> ConnectionHandle
     {
-        CreateConnection {
-            registration,
-            creator: ConnectionSpawner::new(creator),
-        }
+        self.spawner.spawn_boxed(routing_table, public_key)
     }
+}
 
-    pub fn create(self,
+trait ConnectionSpawner<R> {
+    fn spawn_connection(self, &mut RoutingTableHandle<R>, public_key: PublicKey)
+        -> ConnectionHandle;
+
+    fn spawn_boxed(
+        self: Box<Self>,
         routing_table: &mut RoutingTableHandle<R>,
         public_key: PublicKey
     ) -> ConnectionHandle
     {
-        self.spawner.spawn_connection(
-            routing_table,
-            public_key,
-            self.registration
-        )
+        self.spawn_connection(routing_table, public_key)
     }
 }
 
-trait ConnectionCreator<R> {
-    fn spawn_connection(
-        &mut self,
-        routing_table: &mut RoutingTableHandle<R>,
-        public_key: PublicKey,
-        router_registration: R::Registration,
-    ) -> ConnectionHandle;
-}
-
-pub struct ConnectionSpawner<R, H, C> {
+struct ConnectionCreator<R, F, C, H> {
     phantom_r: PhantomData<R>,
     phantom_h: PhantomData<H>,
-    handle_creator: C,
+    register_fn: F,
+    create_fn: C,
 }
 
-impl<R, H, C> ConnectionSpawner<R, H, C>
-    where R: Router,
-          C: FnMut(RegisteredConnectionHandle, &mut R) -> H,
+impl<R, F, C, H> ConnectionCreator<R, F, C, H>
+    where F: FnOnce(&mut R, usize),
+          C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
           H: EventHandler<Output = io::Result<WireEvent>>,
+          R: Router,
 {
-    pub fn new(creator: C) -> Self {
-        ConnectionSpawner {
-            phantom_r: PhantomData,
-            phantom_h: PhantomData,
-            handle_creator: creator,
-        }
-    }
-}
-
-impl<R, H, C> ConnectionCreator<R> for ConnectionSpawner<R, H, C>
-    where R: Router,
-          C: FnMut(RegisteredConnectionHandle, &mut R) -> H,
-          H: EventHandler<Output = io::Result<WireEvent>>,
-{
-    fn spawn_connection(
-        &mut self,
+    fn create_connection(
+        self,
         routing_table: &mut RoutingTableHandle<R>,
         public_key: PublicKey,
-        router_registration: R::Registration
-    ) -> ConnectionHandle
+    ) -> (ConnectionHandle, ConnectionHandler<H>)
     {
-        let (handle, handler) = ConnectionHandler::create(|handle| {
+        ConnectionHandler::create(|handle| {
             let registered_handle = routing_table.register(
                 handle,
                 public_key,
-                router_registration,
+                self.register_fn,
             );
 
-            return self.handle_creator(registered_handle, routing_table);
-        });
+            return (self.create_fn)(registered_handle, routing_table);
+        })
+    }
+}
 
+impl<R, F, C, H> ConnectionSpawner<R> for ConnectionCreator<R, F, C, H>
+    where F: FnOnce(&mut R, usize),
+          C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
+          H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
+          R: Router,
+{
+    fn spawn_connection(
+        self,
+        routing_table: &mut RoutingTableHandle<R>,
+        public_key: PublicKey,
+    ) -> ConnectionHandle
+    {
+        let (handle, handler) = self.create_connection(
+            routing_table,
+            public_key
+        );
         tokio::spawn(handler);
         return handle;
     }

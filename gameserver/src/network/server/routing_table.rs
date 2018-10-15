@@ -9,7 +9,7 @@ use network::lib::channel::Channel;
 use network::lib::crypto::SessionKeys;
 use super::connection_table::ConnectionTable;
 
-use super::router::{Router, Routing, CreateConnection};
+use super::router::{Router, Routing, BoxedSpawner};
 
 
 // TODO: this is all really ugly and unhygienic
@@ -45,43 +45,51 @@ impl<R> RoutingTableHandle<R>
         let routing = try!(table.router.route(msg));
 
         let conn_routing = match routing {
-            Routing::Connect(conn_id) => {
-                let public_key = table.connections.get(conn_id)
+            Routing::Connect { connection_id } => {
+                let public_key = table.connections.get(connection_id)
                     .unwrap()
                     .public_key
                     .clone();
                 ConnectionRouting {
                     public_key,
-                    router: self.clone(),
-                    target: RoutingTarget::Connection(conn_id),
+                    routing_table: self.clone(),
+                    target: RoutingTarget::Connection(connection_id),
                 }
             }
-            Routing::CreateConnection { public_key, creator } => {
+            Routing::CreateConnection { public_key, spawner } => {
                 ConnectionRouting {
                     public_key,
-                    router: self.clone(),
-                    target: RoutingTarget::NewConnection(creator),
+                    routing_table: self.clone(),
+                    target: RoutingTarget::CreateConnection(spawner),
                 }
             }
         };
         return Ok(conn_routing);
     }
+    
+    pub fn connection_handle<'a>(&'a mut self, connection_id: usize)
+        -> &'a mut ConnectionHandle
+    {
+        let table = self.routing_table.lock().unwrap();
+        return &mut table.connections.get_mut(connection_id).unwrap().handle;
+    }
 
-    pub fn register(
+    pub fn register<F>(
         &mut self,
-        handle: ConnectionHandle,
+        connection_handle: ConnectionHandle,
         public_key: PublicKey,
-        router_registration: R::Registration
+        register_fn: F,
     ) -> RegisteredHandle
+        where F: FnOnce(&mut R, usize)
     {
         let table = self.routing_table.lock().unwrap();
 
         let connection_id = table.connections
-            .register(public_key, handle.clone());
-        router_registration.register(&mut table.router, connection_id);
+            .register(public_key, connection_handle.clone());
+        register_fn(&mut table.router, connection_id);
     
         return RegisteredHandle {
-            handle,
+            connection_handle,
             connection_id,
         };
     }
@@ -112,15 +120,13 @@ pub struct ConnectionRouting<R>
     where R: Router
 {
     public_key: PublicKey,
-    router: RoutingTableHandle<R>,
+    routing_table: RoutingTableHandle<R>,
     target: RoutingTarget<R>,
 }
 
 enum RoutingTarget<R> {
-    Connection {
-        connection_id: usize,
-    }
-    NewConnection(CreateConnection<R>),
+    Connection(usize),
+    CreateConnection(BoxedSpawner<R>),
 }
 
 impl<R> ConnectionRouting<R>
@@ -136,20 +142,15 @@ impl<R> ConnectionRouting<R>
     where R: Router + 'static + Send
 {
     pub fn connect(self, channel: Channel, keys: SessionKeys) {
-        let mut table = self.router.routing_table.lock().unwrap();
-
         match self.target {
-            RoutingTarget::Connection(conn_id) => {
-                table.connections.get_mut(conn_id)
-                    .unwrap()
-                    .handle
+            RoutingTarget::Connection(connection_id) => {
+                self.routing_table.connection_handle(connection_id)
                     .connect(channel, keys);
             }
-            RoutingTarget::NewConnection(mut creator) => {
-                creator.create_connection(
+            RoutingTarget::CreateConnection(spawner) => {
+                spawner.spawn(
+                    &mut self.routing_table,
                     self.public_key,
-                    &mut table.connections,
-                    &mut table.router,
                 ).connect(channel, keys);
             }
         }
