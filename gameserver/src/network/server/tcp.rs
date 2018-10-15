@@ -8,7 +8,8 @@ use std::collections::HashMap;
 
 use network::lib::protobuf_codec::{ProtobufTransport, MessageStream};
 use network::lib::channel::{TransportInstruction, Channel};
-use super::connection_router::{Router, ConnectionRouter};
+use super::router::Router;
+use super::routing_table::RoutingTableHandle;
 use super::handshake::Handshaker;
 
 use protocol as proto;
@@ -18,18 +19,18 @@ pub struct Listener<R>
     where R: Router
 {
     incoming: Incoming,
-    router: ConnectionRouter<R>,
+    routing_table: RoutingTableHandle<R>,
 }
 
 impl<R> Listener<R>
     where R: Router + Send + 'static
 {
-    pub fn new(addr: &SocketAddr, router: ConnectionRouter<R>)
+    pub fn new(addr: &SocketAddr, routing_table: RoutingTableHandle<R>)
         -> io::Result<Self>
     {
         TcpListener::bind(addr).map(|tcp_listener| {
             Listener {
-                router,
+                routing_table,
                 incoming: tcp_listener.incoming(),
             }
         })
@@ -41,7 +42,7 @@ impl<R> Listener<R>
 
         while let Some(raw_stream) = try_ready!(self.incoming.poll()) {
             let handler = TcpStreamHandler::new(
-                self.router.clone(),
+                self.routing_table.clone(),
                 raw_stream
             );
             tokio::spawn(handler);
@@ -72,19 +73,19 @@ struct TcpStreamHandler<R>
     recv: mpsc::Receiver<TransportInstruction>,
     snd: mpsc::Sender<TransportInstruction>,
     connections: HashMap<u32, mpsc::Sender<Vec<u8>>>,
-    router: ConnectionRouter<R>,
+    routing_table: RoutingTableHandle<R>,
 }
 
 impl<R> TcpStreamHandler<R>
     where R: Router + Send + 'static
 {
-    pub fn new(router: ConnectionRouter<R>, stream: TcpStream) -> Self {
+    pub fn new(routing_table: RoutingTableHandle<R>, stream: TcpStream) -> Self {
         // TODO: what channel size should we use?
         let (snd, recv) = mpsc::channel(32);
         TcpStreamHandler {
             stream: MessageStream::new(ProtobufTransport::new(stream)),
             connections: HashMap::new(),
-            router,
+            routing_table,
             recv,
             snd,
         }
@@ -97,9 +98,9 @@ impl<R> TcpStreamHandler<R>
                 None => return Ok(Async::Ready(())),
             };
 
-            // take references to satisfy the borrow checker
+            // take reference to satisfy the borrow checker
             let snd = &self.snd;
-            let router = &self.router;
+            let routing_table = self.routing_table.clone();
 
             let sender = self.connections.entry(frame.channel_num)
                 .or_insert_with(|| {
@@ -108,7 +109,7 @@ impl<R> TcpStreamHandler<R>
                         snd.clone(),
                     );
                     let handshake = Handshaker::new(
-                        router.clone(),
+                        routing_table,
                         channel,
                     );
                     tokio::spawn(handshake);

@@ -43,7 +43,7 @@ pub struct BoxedSpawner<R: ?Sized> {
     spawner: Box<ConnectionSpawner<R>>,
 }
 
-impl<R> BoxedSpawner<R> {
+impl<R: 'static> BoxedSpawner<R> {
     pub fn spawn(
         self,
         routing_table: &mut RoutingTableHandle<R>,
@@ -54,7 +54,7 @@ impl<R> BoxedSpawner<R> {
     }
 }
 
-trait ConnectionSpawner<R> {
+trait ConnectionSpawner<R> : Send + 'static {
     fn spawn_connection(self, &mut RoutingTableHandle<R>, public_key: PublicKey)
         -> ConnectionHandle;
 
@@ -101,7 +101,9 @@ impl<R, F, C, H> ConnectionCreator<R, F, C, H>
 
 impl<R, F, C, H> ConnectionSpawner<R> for ConnectionCreator<R, F, C, H>
     where F: FnOnce(&mut R, usize),
+          F: Send + 'static,
           C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
+          C: Send + 'static,
           H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
           R: Router,
 {
