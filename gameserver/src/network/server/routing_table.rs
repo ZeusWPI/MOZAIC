@@ -1,10 +1,9 @@
 use std::io;
 use std::sync::{Arc, Mutex};
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
-use reactors::{Event, EventBox, WireEvent, EventHandler};
-use std::marker::PhantomData;
+use reactors::{Event};
 
-use network::lib::{ConnectionHandler, ConnectionHandle};
+use network::lib::ConnectionHandle;
 use network::lib::channel::Channel;
 use network::lib::crypto::SessionKeys;
 use super::connection_table::ConnectionTable;
@@ -72,6 +71,12 @@ impl<R> RoutingTableHandle<R>
     {
         let table = self.routing_table.lock().unwrap();
         return &mut table.connections.get_mut(connection_id).unwrap().handle;
+    }
+
+    pub fn get_secret_key(&self) -> SecretKey {
+        let table = self.routing_table.lock().unwrap();
+        // clone to avoid keeping connection table locked
+        return table.secret_key.clone();
     }
 
     pub fn register<F>(

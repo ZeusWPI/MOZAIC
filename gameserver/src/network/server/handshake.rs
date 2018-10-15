@@ -3,7 +3,8 @@ use prost::Message;
 use std::io;
 use std::mem;
 
-use super::connection_router::{Router, ConnectionRouter, ConnectionRouting};
+use super::router::Router;
+use super::routing_table::{RoutingTableHandle, ConnectionRouting};
 use network::lib::channel::Channel;
 use network::lib::crypto;
 use network::lib::crypto::{KxKeypair, SessionKeys};
@@ -62,13 +63,15 @@ pub struct Handshaker<R: Router> {
 }
 
 impl<R: Router> Handshaker<R> {
-    pub fn new(router: ConnectionRouter<R>,
-               channel: Channel) -> Self
+    pub fn new(
+        routing_table: RoutingTableHandle<R>,
+        channel: Channel,
+    ) -> Self
     {
         Handshaker {
             state: HandshakeState::Identifying(Identifying {
                 channel,
-                router,
+                routing_table,
             }),
         }
     }
@@ -128,7 +131,7 @@ enum HandshakeState<R: Router> {
 }
 
 struct Identifying<R: Router> {
-    router: ConnectionRouter<R>,
+    routing_table: RoutingTableHandle<R>,
     channel: Channel,
 }
 
@@ -151,7 +154,7 @@ impl<R: Router> Identifying<R> {
         let request = ConnectionRequest::decode(&signed_msg.data)
             .chain_err(|| "failed to decode ConnectionRequest")?;
 
-        let routing = self.router.route(&request.message)
+        let routing = self.routing_table.route(&request.message)
             .chain_err(|| "routing failed")?;
 
         if !crypto::verify_signed_message(&signed_msg, routing.public_key()) {
@@ -168,7 +171,7 @@ impl<R: Router> Identifying<R> {
             }
         );
 
-        let secret_key = self.router.secret_key.clone();
+        let secret_key = self.routing_table.get_secret_key();
 
         let challenge_msg = encode_server_message(
             challenge,
