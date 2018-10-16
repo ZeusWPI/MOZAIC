@@ -105,7 +105,7 @@ impl<R, F, C, H> ConnectionSpawner<R> for ConnectionCreator<R, F, C, H>
           C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
           C: Send + 'static,
           H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
-          R: Router,
+          R: Router + Send + 'static,
 {
     fn spawn_connection(
         self,
