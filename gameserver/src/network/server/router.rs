@@ -30,9 +30,7 @@ pub trait Router {
 pub enum Routing<R>
     where R: Router + ?Sized
 {
-    Connect {
-        connection_id: usize
-    },
+    Connect(usize),
     CreateConnection {
         spawner: BoxedSpawner<R>,
         public_key: PublicKey,

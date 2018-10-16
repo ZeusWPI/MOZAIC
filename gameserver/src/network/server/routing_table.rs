@@ -44,7 +44,7 @@ impl<R> RoutingTableHandle<R>
         let routing = try!(table.router.route(msg));
 
         let conn_routing = match routing {
-            Routing::Connect { connection_id } => {
+            Routing::Connect(connection_id) => {
                 let public_key = table.connections.get(connection_id)
                     .unwrap()
                     .public_key
