@@ -1,8 +1,12 @@
 use std::sync::{Arc, Mutex};
 use std::io;
 
-use network::server::{ConnectionTable, Router};
-use network::lib::ConnectionHandle;
+use tokio;
+
+use network::server::{ConnectionTable};
+use network::server::{RoutingTableHandle};
+use network::server::RegisteredHandle;
+use network::lib::ConnectionHandler;
 use reactors::{WireEvent, EventHandler};
 use sodiumoxide::crypto::sign::PublicKey;
 
@@ -10,44 +14,37 @@ use super::GameServerRouter;
 
 #[derive(Clone)]
 pub struct ConnectionManager {
-    router: Arc<Mutex<GameServerRouter>>,
-    connection_table: Arc<Mutex<ConnectionTable>>,
+    routing_table: RoutingTableHandle<GameServerRouter>,
 }
 
 impl ConnectionManager {
-    pub fn new(connection_table: Arc<Mutex<ConnectionTable>>,
-               router: Arc<Mutex<GameServerRouter>>)
-               -> Self
+    pub fn new(routing_table: RoutingTableHandle<GameServerRouter>) -> Self
     {
         ConnectionManager {
-            connection_table,
-            router,
+            routing_table,
         }
     }
 
     // TODO: less params please :(  
-    pub fn create_connection<H, F>(
+    pub fn create_client<H>(
         &mut self,
         match_uuid: Vec<u8>,
         client_id: u32,
         public_key: PublicKey,
-        creator: F
-    ) -> ConnectionHandle
-        where F: FnOnce(ConnectionHandle) -> H,
-              H: EventHandler<Output = io::Result<WireEvent>>,
+        handler: H,
+    ) -> RegisteredHandle
+        where H: EventHandler<Output = io::Result<WireEvent>>,
               H: Send + 'static
     {
-        let mut table = self.connection_table.lock().unwrap();
-        let mut router = self.router.lock().unwrap();
-        let handle = table.create(public_key.clone(), creator);
-        router.register_client(match_uuid, client_id, handle.id());
-        return handle;
-    }
+        let (conn_handle, conn_handler) = ConnectionHandler::new(handler);
+        tokio::spawn(conn_handler);
 
-    pub fn unregister(&mut self, connection_id: usize) {
-        let mut router = self.router.lock().unwrap();
-        router.unregister(connection_id);
-        let mut table = self.connection_table.lock().unwrap();
-        table.remove(connection_id);
+        return self.routing_table.register(
+            conn_handle,
+            public_key,
+            |router, conn_id| {
+                router.register_client(match_uuid, client_id, conn_id);
+            }
+        );
     }
 }
