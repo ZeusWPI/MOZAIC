@@ -26,7 +26,6 @@ pub enum TransportState {
 pub struct ConnectionHandler<H>
     where H: EventHandler<Output = io::Result<WireEvent>>
 {
-    connection_id: usize,
     state: ConnectionState,
     request_handler: H,
     transport_state: TransportState,
@@ -36,24 +35,23 @@ pub struct ConnectionHandler<H>
 impl<H> ConnectionHandler<H>
     where H: EventHandler<Output = io::Result<WireEvent>>
 {
-    pub fn new(connection_id: usize, event_handler: H)
+    pub fn new(event_handler: H)
         -> (ConnectionHandle, Self)
     {
-        Self::create(connection_id, |_| event_handler)
+        Self::create(|_| event_handler)
     }
 
-    pub fn create<F>(connection_id: usize, creator: F)
+    pub fn create<F>(creator: F)
         -> (ConnectionHandle, Self)
         where F: FnOnce(ConnectionHandle) -> H
     {
         let (snd, rcv) = mpsc::unbounded();
 
-        let handle = ConnectionHandle { connection_id, sender: snd };
+        let handle = ConnectionHandle { sender: snd };
 
         let request_handler = creator(handle.clone());
 
         let handler = ConnectionHandler {
-            connection_id,
             request_handler,
             state: ConnectionState::new(),
             transport_state: TransportState::Disconnected,
@@ -223,7 +221,6 @@ pub enum ConnectionCommand {
 
 #[derive(Clone)]
 pub struct ConnectionHandle {
-    connection_id: usize,
     sender: mpsc::UnboundedSender<ConnectionCommand>,
 }
 
@@ -232,10 +229,6 @@ impl ConnectionHandle {
         self.sender
             .unbounded_send(cmd)
             .expect("control channel dropped");
-    }
-
-    pub fn id(&self) -> usize {
-        self.connection_id
     }
 
     pub fn connect(&mut self, channel: Channel, keys: SessionKeys) {
@@ -255,7 +248,7 @@ impl ConnectionHandle {
 
         self.send(WireEvent {
             type_id: E::TYPE_ID,
-            data:  buf,
+            data: buf,
         });
     }
 

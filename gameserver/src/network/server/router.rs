@@ -42,6 +42,18 @@ pub struct BoxedSpawner<R: ?Sized> {
 }
 
 impl<R: 'static> BoxedSpawner<R> {
+    pub fn new<F, C, H>(register_fn: F, create_fn: C) -> Self
+        where F: FnOnce(&mut R, usize) + Send + 'static,
+              C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
+              C: Send + 'static,
+              H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
+              R: Router + Send + 'static
+    {
+        BoxedSpawner {
+            spawner: Box::new(ConnectionCreator::new(register_fn, create_fn))
+        }
+    }
+
     pub fn spawn(
         self,
         routing_table: &mut RoutingTableHandle<R>,
@@ -79,6 +91,15 @@ impl<R, F, C, H> ConnectionCreator<R, F, C, H>
           H: EventHandler<Output = io::Result<WireEvent>>,
           R: Router,
 {
+    pub fn new(register_fn: F, create_fn: C) -> Self {
+        ConnectionCreator {
+            phantom_r: PhantomData,
+            phantom_h: PhantomData,
+            register_fn,
+            create_fn,
+        }
+    }
+
     fn create_connection(
         self,
         routing_table: &mut RoutingTableHandle<R>,
