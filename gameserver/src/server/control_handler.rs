@@ -2,7 +2,7 @@ use tokio;
 use futures::sync::mpsc;
 use std::io;
 
-use network::lib::ConnectionHandle;
+use network::server::RegisteredHandle;
 use reactors::{WireEvent, RequestHandler, ReactorCore, Reactor, ReactorHandle};
 use planetwars::PwMatch;
 use events;
@@ -16,12 +16,12 @@ use super::match_handler::MatchHandler;
 
 
 pub struct ControlHandler {
-    handle: Option<ConnectionHandle>,
+    handle: Option<RegisteredHandle>,
     connection_manager: ConnectionManager,
 }
 
 impl ControlHandler {
-    pub fn new(handle: ConnectionHandle,
+    pub fn new(handle: RegisteredHandle,
                connection_manager: ConnectionManager)
                -> Self
     {
@@ -50,11 +50,11 @@ impl ControlHandler {
         core.add_handler(MatchHandler::remove_client);
         core.add_handler(MatchHandler::start_game);
 
-        let match_owner = self.connection_manager.create_connection(
+        let match_owner = self.connection_manager.create_client(
             match_uuid.clone(),
             0, // owner is always client-id 0. Is this how we want it?
             owner_key,
-            |_| core
+            core,
         );
 
         let pw_match = PwMatch::new(
@@ -91,7 +91,6 @@ impl ControlHandler {
     {
         println!("CONTROL CONNECItON CLOSED");
         let handle = self.handle.take().unwrap();
-        self.connection_manager.unregister(handle.id());
         return Ok(WireEvent::null());
     }
 }

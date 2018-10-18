@@ -21,6 +21,19 @@ pub struct RoutingTable<R> {
     secret_key: SecretKey,
 }
 
+impl<R> RoutingTable<R> {
+    pub fn new(router: R, secret_key: SecretKey) -> RoutingTableHandle<R> {
+        let table = RoutingTable {
+            connections: ConnectionTable::new(),
+            router,
+            secret_key
+        };
+        return RoutingTableHandle {
+            routing_table: Arc::new(Mutex::new(table)),
+        };
+    }
+}
+
 pub struct RoutingTableHandle<R> {
     routing_table: Arc<Mutex<RoutingTable<R>>>,
 }

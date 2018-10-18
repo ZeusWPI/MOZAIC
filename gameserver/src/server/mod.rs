@@ -14,7 +14,7 @@ use tokio;
 
 use network;
 use network::server::connection_table::ConnectionTable;
-use network::server::connection_router::ConnectionRouter;
+use network::server::routing_table::{RoutingTable, RoutingTableHandle};
 use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
 
 
@@ -50,20 +50,14 @@ impl Future for Server {
         let secret_key = SecretKey::from_slice(&self.config.private_key)
             .expect("invalid secret key");
 
-        let connection_table = Arc::new(Mutex::new(ConnectionTable::new()));
-        let router = GameServerRouter::create(
-            connection_table.clone(),
+        let router = GameServerRouter::new(
             control_pubkey
         );
 
         let addr = self.config.address.parse().unwrap();
-        let connection_router = ConnectionRouter {
-            router,
-            connection_table,
-            secret_key,
-        };
+        let routing_table = RoutingTable::new(router, secret_key);
 
-        match network::server::tcp::Listener::new(&addr, connection_router) {
+        match network::server::tcp::Listener::new(&addr, routing_table) {
             Ok(listener) => {
                 tokio::spawn(listener);
                 return Ok(Async::Ready(()));
