@@ -6,7 +6,7 @@ use std::sync::{Arc, Weak, Mutex};
 
 use reactors::RequestHandler;
 use network::server::ConnectionTable;
-use network::server::connection_router::{Router, Routing, ConnectionCreator};
+use network::server::router::{Router, Routing, BoxedSpawner};
 
 use sodiumoxide::crypto::sign::PublicKey;
 
@@ -28,9 +28,6 @@ enum ConnectionData {
 
 pub struct GameServerRouter {
     connection_table: Arc<Mutex<ConnectionTable>>,
-    // TODO: How do we do this in a cleaner fashion?
-    self_reference: Weak<Mutex<GameServerRouter>>,
-
     owner_public_key: PublicKey,
 
     /// maps control connection uuid to connection id
@@ -43,23 +40,13 @@ pub struct GameServerRouter {
 }
 
 impl GameServerRouter {
-    pub fn create(
-        connection_table: Arc<Mutex<ConnectionTable>>,
-        owner_public_key: PublicKey,
-    ) -> Arc<Mutex<Self>>
-    {
-        let router = GameServerRouter {
+    pub fn new(owner_public_key: PublicKey) -> Self {
+        GameServerRouter {
             owner_public_key,
-            connection_table,
-            self_reference: Weak::new(),
             control_connections: HashMap::new(),
             matches: HashMap::new(),
             connections: HashMap::new(),
-        };
-        // bootstrap self-reference
-        let mutex = Arc::new(Mutex::new(router));
-        mutex.lock().unwrap().self_reference = Arc::downgrade(&mutex);
-        return mutex;
+        }
     }
 
     pub fn register_client(
@@ -114,36 +101,24 @@ impl Router for GameServerRouter {
                 if let Some(&conn_id) = self.control_connections.get(&c.uuid) {
                     return Ok(Routing::Connect(conn_id));
                 } else {
-                    // TODO: THIS IS AN ACTUAL SPAWN OF SATAN
-
-                    let creator = ConnectionCreator::new(move |handle, router: &mut GameServerRouter| {
-                        router.control_connections.insert(
-                            c.uuid.clone(),
-                            handle.id()
-                        );
-                        router.connections.insert(
-                            handle.id(),
-                            ConnectionData::Control { uuid: c.uuid.clone() },
-                        );           
-                        let conn_manager = ConnectionManager::new(
-                            router.connection_table.clone(),
-                            router.self_reference.upgrade().unwrap(),
-                        );
-
-                        let handler = ControlHandler::new(
-                            handle,
-                            conn_manager,
-                        );
-                        let mut core = RequestHandler::new(handler);
-                        core.add_handler(ControlHandler::create_match);
-                        core.add_handler(ControlHandler::quit);
-                        return core;
-                    });
-
                     return Ok(Routing::CreateConnection {
                         public_key: self.owner_public_key.clone(),
-                        creator,
-                    })
+                        spawner: BoxedSpawner::new(
+                            |router: &mut GameServerRouter, conn_id| {
+                                router.register_control(c.uuid.clone(), conn_id);
+                            },
+                            |handle, router| {
+                                let handler = ControlHandler::new(
+                                    handle,
+                                    ConnectionManager::new(router.clone()),
+                                );
+                                let mut core = RequestHandler::new(handler);
+                                core.add_handler(ControlHandler::create_match);
+                                core.add_handler(ControlHandler::quit);
+                                return core;
+                            },
+                        ),
+                    });
                 }
             }
         }
