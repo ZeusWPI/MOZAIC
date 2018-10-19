@@ -99,7 +99,8 @@ impl<R> RoutingTableHandle<R>
         public_key: PublicKey,
         register_fn: F,
     ) -> RegisteredHandle
-        where F: FnOnce(&mut R, usize)
+        where F: FnOnce(&mut R, usize),
+              R: Send + 'static
     {
         let mut table = self.routing_table.lock().unwrap();
 
@@ -110,20 +111,21 @@ impl<R> RoutingTableHandle<R>
         return RegisteredHandle {
             connection_handle,
             connection_id,
+
+            registrar: Box::new(self.clone()),
         };
     }
+}
 
-    fn unregister(&mut self, conn_id: usize) {
-        let mut table = self.routing_table.lock().unwrap();
-        
-        table.connections.remove(conn_id);
-        table.router.unregister(conn_id);
-    }
+trait ConnectionRegistrar : Send + 'static {
+    fn unregister(&mut self, conn_id: usize);
 }
 
 pub struct RegisteredHandle {
     connection_handle: ConnectionHandle,
     connection_id: usize,
+
+    registrar: Box<ConnectionRegistrar>,
 }
 
 impl RegisteredHandle {
@@ -131,6 +133,23 @@ impl RegisteredHandle {
         where E: Event
     {
         self.connection_handle.dispatch(event);
+    }
+}
+
+impl Drop for RegisteredHandle {
+    fn drop(&mut self) {
+        self.registrar.unregister(self.connection_id);
+    }
+}
+
+impl<R> ConnectionRegistrar for RoutingTableHandle<R>
+    where R: Router + Send + 'static
+{
+    fn unregister(&mut self, conn_id: usize) {
+        self.apply(|routing_table| {
+            routing_table.connections.remove(conn_id);
+            routing_table.router.unregister(conn_id);
+        })
     }
 }
 

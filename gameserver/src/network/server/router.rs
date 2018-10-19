@@ -80,7 +80,7 @@ impl<R, F, C, H> ConnectionCreator<R, F, C, H>
     where F: FnOnce(&mut R, usize),
           C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
           H: EventHandler<Output = io::Result<WireEvent>>,
-          R: Router,
+          R: Router + Send + 'static,
 {
     pub fn new(register_fn: F, create_fn: C) -> Self {
         ConnectionCreator {
