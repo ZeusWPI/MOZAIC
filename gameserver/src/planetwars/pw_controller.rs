@@ -5,7 +5,7 @@ use std::io;
 
 use events;
 use network::server::connection_table::{ClientId};
-use network::lib::connection_handler::ConnectionHandle;
+use network::server::RegisteredHandle;
 use reactors::reactor::ReactorHandle;
 use reactors::{WireEvent, RequestHandler};
 use server::ConnectionManager;
@@ -26,7 +26,7 @@ use serde_json;
 pub struct Player {
     id: ClientId,
     num: usize,
-    handle: ConnectionHandle,
+    handle: RegisteredHandle,
 }
 
 pub struct ClientHandler {
@@ -168,7 +168,7 @@ pub struct Lobby {
     connection_manager: ConnectionManager,
     reactor_handle: ReactorHandle,
 
-    players: HashMap<ClientId, ConnectionHandle>,
+    players: HashMap<ClientId, RegisteredHandle>,
 }
 
 impl Lobby {
@@ -199,11 +199,11 @@ impl Lobby {
         core.add_handler(ClientHandler::on_disconnect);
         core.add_handler(ClientHandler::on_message);
 
-        let handle = self.connection_manager.create_connection(
+        let handle = self.connection_manager.create_client(
             self.match_uuid.clone(),
             client_id.as_u32(),
             public_key,
-            |_| core
+            core
         );
 
         self.players.insert(client_id, handle);
@@ -231,7 +231,7 @@ impl PwController {
     pub fn new(config: Config,
                reactor_handle: ReactorHandle,
                connection_manager: ConnectionManager,
-               clients: HashMap<ClientId, ConnectionHandle>)
+               clients: HashMap<ClientId, RegisteredHandle>)
         -> Self
     {
         // TODO: we probably want a way to fixate player order
@@ -316,7 +316,8 @@ impl PwController {
                 });
                 // this player is dead, kick him!
                 // TODO: shutdown the reactor
-                connection_manager.unregister(player.handle.id());
+                // TODO: todo
+                // connection_manager.unregister(player.handle.id());
                 return false;
             }
         });
@@ -344,7 +345,6 @@ impl PwController {
                 turn_num: event.turn_num,
                 state: event.state.clone(),
             });
-            connection_manager.unregister(player.handle.id());
             // game is over, kick everyone.
             false
         });

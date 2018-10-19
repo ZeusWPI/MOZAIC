@@ -2,7 +2,7 @@ use futures::sync::mpsc;
 use futures::{Future, Poll, Async, Stream};
 use std::time::Instant;
 
-use network::lib::ConnectionHandle;
+use network::server::RegisteredHandle;
 use utils::delay_heap::DelayHeap;
 use server::ConnectionManager;
 
@@ -25,14 +25,12 @@ pub struct Reactor<S> {
     core: ReactorCore<S, ()>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     delayed_events: DelayHeap<Box<AnyEvent>>,
-    // TODO: this manager and connection should not be here ...
-    connection_manager: ConnectionManager,
-    match_owner: ConnectionHandle,
+    match_owner: RegisteredHandle,
 }
 
 impl<S> Reactor<S> {
     pub fn new(core: ReactorCore<S, ()>,
-               match_owner: ConnectionHandle,
+               match_owner: RegisteredHandle,
                connection_manager: ConnectionManager,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>) -> Self
     {
@@ -40,7 +38,6 @@ impl<S> Reactor<S> {
             ctrl_chan,
             core,
             match_owner,
-            connection_manager,
             delayed_events: DelayHeap::new(),
         }
     }
@@ -86,13 +83,11 @@ impl<S> Reactor<S> {
     }
 
     fn send_to_owner(&mut self, event: WireEvent) {
-        let e = EventBox::new(
-            MatchEvent {
-                type_id: event.type_id,
-                data: event.data,
-            }
-        );
-        self.match_owner.send(e.as_wire_event());
+        let e = MatchEvent {
+            type_id: event.type_id,
+            data: event.data,
+        };
+        self.match_owner.dispatch(e);
     }
 }
 
@@ -106,7 +101,6 @@ impl<S> Future for Reactor<S> {
         // TODO: this could be done better
         match try!(self.poll_ctrl_chan()) {
             Async::Ready(()) => {
-                self.connection_manager.unregister(self.match_owner.id());
                 return Ok(Async::Ready(()));
             }
             Async::NotReady => {},

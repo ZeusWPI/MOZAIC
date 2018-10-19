@@ -35,7 +35,7 @@ fn main() {
     let task = TcpStream::connect(&addr)
         .map_err(|err| panic!(err))
         .and_then(|stream| {
-            let (conn_handle, handler) = ConnectionHandler::create(0, |handle| {
+            let (conn_handle, handler) = ConnectionHandler::create(|handle| {
                 println!("succesfully connected");
 
                 let mut core = RequestHandler::new(Some(handle));
