@@ -27,7 +27,6 @@ enum ConnectionData {
 }
 
 pub struct GameServerRouter {
-    connection_table: Arc<Mutex<ConnectionTable>>,
     owner_public_key: PublicKey,
 
     /// maps control connection uuid to connection id
@@ -104,7 +103,7 @@ impl Router for GameServerRouter {
                     return Ok(Routing::CreateConnection {
                         public_key: self.owner_public_key.clone(),
                         spawner: BoxedSpawner::new(
-                            |router: &mut GameServerRouter, conn_id| {
+                            move |router: &mut GameServerRouter, conn_id| {
                                 router.register_control(c.uuid.clone(), conn_id);
                             },
                             |handle, router| {

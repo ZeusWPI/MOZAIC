@@ -50,10 +50,18 @@ impl<R> Clone for RoutingTableHandle<R> {
 impl<R> RoutingTableHandle<R>
     where R: Router
 {
+
+    pub fn apply<F, T>(&mut self, fun: F) -> T
+        where F: FnOnce(&mut RoutingTable<R>) -> T
+    {
+        let mut table = self.routing_table.lock().unwrap();
+        return fun(&mut table);
+    }
+
     pub fn route(&mut self, msg: &[u8])
         -> Result<ConnectionRouting<R>, io::Error>
     {
-        let table = self.routing_table.lock().unwrap();
+        let mut table = self.routing_table.lock().unwrap();
         let routing = try!(table.router.route(msg));
 
         let conn_routing = match routing {
@@ -79,13 +87,6 @@ impl<R> RoutingTableHandle<R>
         return Ok(conn_routing);
     }
     
-    pub fn connection_handle<'a>(&'a mut self, connection_id: usize)
-        -> &'a mut ConnectionHandle
-    {
-        let table = self.routing_table.lock().unwrap();
-        return &mut table.connections.get_mut(connection_id).unwrap().handle;
-    }
-
     pub fn get_secret_key(&self) -> SecretKey {
         let table = self.routing_table.lock().unwrap();
         // clone to avoid keeping connection table locked
@@ -100,7 +101,7 @@ impl<R> RoutingTableHandle<R>
     ) -> RegisteredHandle
         where F: FnOnce(&mut R, usize)
     {
-        let table = self.routing_table.lock().unwrap();
+        let mut table = self.routing_table.lock().unwrap();
 
         let connection_id = table.connections
             .register(public_key, connection_handle.clone());
@@ -113,7 +114,7 @@ impl<R> RoutingTableHandle<R>
     }
 
     fn unregister(&mut self, conn_id: usize) {
-        let table = self.routing_table.lock().unwrap();
+        let mut table = self.routing_table.lock().unwrap();
         
         table.connections.remove(conn_id);
         table.router.unregister(conn_id);
@@ -159,11 +160,16 @@ impl<R> ConnectionRouting<R>
 impl<R> ConnectionRouting<R>
     where R: Router + 'static + Send
 {
-    pub fn connect(self, channel: Channel, keys: SessionKeys) {
+    pub fn connect(mut self, channel: Channel, keys: SessionKeys) {
         match self.target {
             RoutingTarget::Connection(connection_id) => {
-                self.routing_table.connection_handle(connection_id)
-                    .connect(channel, keys);
+                self.routing_table.apply(|table| {
+                    table.connections
+                        .get_mut(connection_id)
+                        .unwrap()
+                        .handle
+                        .connect(channel, keys);
+                });
             }
             RoutingTarget::CreateConnection(spawner) => {
                 spawner.spawn(
