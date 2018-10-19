@@ -60,22 +60,13 @@ impl<R: 'static> BoxedSpawner<R> {
         public_key: PublicKey,
     ) -> ConnectionHandle
     {
-        self.spawner.spawn_boxed(routing_table, public_key)
+        self.spawner.spawn_connection(routing_table, public_key)
     }
 }
 
 trait ConnectionSpawner<R> : Send + 'static {
-    fn spawn_connection(self, &mut RoutingTableHandle<R>, public_key: PublicKey)
+    fn spawn_connection(self: Box<Self>, &mut RoutingTableHandle<R>, public_key: PublicKey)
         -> ConnectionHandle;
-
-    fn spawn_boxed(
-        self: Box<Self>,
-        routing_table: &mut RoutingTableHandle<R>,
-        public_key: PublicKey
-    ) -> ConnectionHandle
-    {
-        self.spawn_connection(routing_table, public_key)
-    }
 }
 
 struct ConnectionCreator<R, F, C, H> {
@@ -127,7 +118,7 @@ impl<R, F, C, H> ConnectionSpawner<R> for ConnectionCreator<R, F, C, H>
           R: Router + Send + 'static,
 {
     fn spawn_connection(
-        self,
+        self: Box<Self>,
         routing_table: &mut RoutingTableHandle<R>,
         public_key: PublicKey,
     ) -> ConnectionHandle
