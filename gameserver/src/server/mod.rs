@@ -9,12 +9,10 @@ pub use self::connection_manager::ConnectionManager;
 use utils::hex_serializer;
 
 use futures::{Future, Poll, Async};
-use std::sync::{Arc, Mutex};
 use tokio;
 
 use network;
-use network::server::connection_table::ConnectionTable;
-use network::server::routing_table::{RoutingTable, RoutingTableHandle};
+use network::server::routing_table::RoutingTable;
 use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
 
 

@@ -298,7 +298,6 @@ impl PwController {
     fn on_step(&mut self, step: &events::GameStep) {
         let state = &self.state;
         let waiting_for = &mut self.waiting_for;
-        let connection_manager = &mut self.connection_manager;
 
         self.players.retain(|_, player| {
             if state.players[player.num].alive {
@@ -317,7 +316,6 @@ impl PwController {
                 // this player is dead, kick him!
                 // TODO: shutdown the reactor
                 // TODO: todo
-                // connection_manager.unregister(player.handle.id());
                 return false;
             }
         });
@@ -339,7 +337,6 @@ impl PwController {
     }
 
     fn on_finished(&mut self, event: &events::GameFinished) {
-        let connection_manager = &mut self.connection_manager;
         self.players.retain(|_player_id, player| {
             player.handle.dispatch(events::GameFinished {
                 turn_num: event.turn_num,

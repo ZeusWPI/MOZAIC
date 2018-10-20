@@ -2,10 +2,8 @@ use std::collections::HashMap;
 use prost::Message;
 use protocol as proto;
 use std::io::{Error, ErrorKind};
-use std::sync::{Arc, Weak, Mutex};
 
 use reactors::RequestHandler;
-use network::server::ConnectionTable;
 use network::server::router::{Router, Routing, BoxedSpawner};
 
 use sodiumoxide::crypto::sign::PublicKey;

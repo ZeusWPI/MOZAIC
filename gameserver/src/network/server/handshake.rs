@@ -1,6 +1,5 @@
 use futures::{Future, Poll, Async, Sink};
 use prost::Message;
-use std::io;
 use std::mem;
 
 use super::router::Router;

@@ -1,9 +1,7 @@
-use std::sync::{Arc, Mutex};
 use std::io;
 
 use tokio;
 
-use network::server::{ConnectionTable};
 use network::server::{RoutingTableHandle};
 use network::server::RegisteredHandle;
 use network::lib::ConnectionHandler;

@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use network::lib::connection_handler::{ConnectionHandler, ConnectionHandle};
-use reactors::{WireEvent, EventHandler};
-use std::io;
-use tokio;
+use network::lib::connection_handler::ConnectionHandle;
 use sodiumoxide::crypto::sign::PublicKey;
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]

@@ -1,5 +1,5 @@
 use prost::Message;
-use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
+use sodiumoxide::crypto::sign::SecretKey;
 use sodiumoxide::crypto::kx;
 use futures::{Future, Poll, Async, Sink, AsyncSink};
 use std::io;
@@ -10,7 +10,6 @@ use protocol::{
     SignedMessage,
     ConnectionRequest,
     ChallengeResponse,
-    ServerChallenge,
 };
 use protocol::handshake_server_message::Payload as ServerMessage;
 

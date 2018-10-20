@@ -4,7 +4,6 @@ use std::time::Instant;
 
 use network::server::RegisteredHandle;
 use utils::delay_heap::DelayHeap;
-use server::ConnectionManager;
 
 use events::MatchEvent;
 
@@ -31,7 +30,6 @@ pub struct Reactor<S> {
 impl<S> Reactor<S> {
     pub fn new(core: ReactorCore<S, ()>,
                match_owner: RegisteredHandle,
-               connection_manager: ConnectionManager,
                ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>) -> Self
     {
         Reactor {

@@ -75,7 +75,6 @@ impl ControlHandler {
         tokio::spawn(Reactor::new(
             core,
             match_owner,
-            self.connection_manager.clone(),
             ctrl_chan,
         ));
 
@@ -90,7 +89,7 @@ impl ControlHandler {
         -> io::Result<WireEvent>
     {
         println!("CONTROL CONNECItON CLOSED");
-        let handle = self.handle.take().unwrap();
+        let _handle = self.handle.take().unwrap();
         return Ok(WireEvent::null());
     }
 }

@@ -2,7 +2,7 @@ use std::io;
 use std::marker::PhantomData;
 use tokio;
 
-use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
+use sodiumoxide::crypto::sign::PublicKey;
 
 use reactors::{WireEvent, EventHandler};
 
