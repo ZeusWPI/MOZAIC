@@ -6,9 +6,11 @@ use std::io;
 use sodiumoxide::randombytes::randombytes;
 use sodiumoxide::crypto::aead;
 use sodiumoxide::crypto::sign;
-use sodiumoxide::crypto::sign::{PublicKey, SecretKey, Signature};
+use sodiumoxide::crypto::sign::Signature;
 use protocol::{SignedMessage, EncryptedPacket};
 use prost::Message;
+
+pub use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
 
 /// How many bytes to use for the authentication nonces
 pub const NONCE_NUM_BYTES: usize = 32;
