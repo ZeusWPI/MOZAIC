@@ -12,7 +12,7 @@ use futures::{Future, Poll, Async};
 use tokio;
 
 use network;
-use network::server::routing_table::RoutingTable;
+use network::server::RoutingTable;
 use sodiumoxide::crypto::sign::{SecretKey, PublicKey};
 
 

@@ -1,15 +1,18 @@
-pub mod connection_table;
+// TODO
+
+mod connection_table;
 pub mod tcp;
-pub mod routing_table;
-pub mod handshake;
-pub mod router;
+mod routing_table;
+mod handshake;
+mod router;
 
 pub use self::connection_table::{
     // TODO: why is this in here?
     ClientId,
     ConnectionTable,
-
 };
+
+pub use self::router::{Router, Routing, BoxedSpawner};
 
 pub use self::routing_table::{
     RoutingTable,

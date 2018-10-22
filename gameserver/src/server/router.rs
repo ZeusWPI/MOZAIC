@@ -4,7 +4,7 @@ use protocol as proto;
 use std::io::{Error, ErrorKind};
 
 use reactors::RequestHandler;
-use network::server::router::{Router, Routing, BoxedSpawner};
+use network::server::{Router, Routing, BoxedSpawner};
 
 use sodiumoxide::crypto::sign::PublicKey;
 
