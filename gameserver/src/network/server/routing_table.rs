@@ -14,7 +14,6 @@ use super::router::{Router, Routing, BoxedSpawner};
 // TODO: this is all really ugly and unhygienic
 // please fix and wash hands
 
-
 pub struct RoutingTable<R> {
     connections: ConnectionTable,
     router: R,

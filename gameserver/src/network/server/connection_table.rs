@@ -3,20 +3,6 @@ use std::collections::HashMap;
 use network::lib::connection_handler::ConnectionHandle;
 use sodiumoxide::crypto::sign::PublicKey;
 
-#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
-pub struct ClientId(u32);
-
-impl ClientId {
-    pub fn new(num: u32) -> ClientId {
-        ClientId(num)
-    }
-
-    pub fn as_u32(&self) -> u32 {
-        let ClientId(num) = *self;
-        return num;
-    }
-}
-
 #[derive(Clone)]
 pub struct ConnectionData {
     pub connection_id: usize,

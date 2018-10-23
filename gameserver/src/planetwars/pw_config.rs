@@ -8,7 +8,7 @@ use super::pw_protocol as proto;
 use super::pw_rules::*;
 
 // TODO
-use network::server::ClientId;
+use server::ClientId;
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -14,6 +14,21 @@ use super::connection_manager::ConnectionManager;
 // length requirement for control tokens
 const CONTROL_TOKEN_NUM_BYTES: usize = 64;
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
+pub struct ClientId(u32);
+
+impl ClientId {
+    pub fn new(num: u32) -> ClientId {
+        ClientId(num)
+    }
+
+    pub fn as_u32(&self) -> u32 {
+        let ClientId(num) = *self;
+        return num;
+    }
+}
+
+
 enum ConnectionData {
     Client {
         match_uuid: Vec<u8>,

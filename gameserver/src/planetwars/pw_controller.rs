@@ -4,10 +4,10 @@ use std::mem;
 use std::io;
 
 use events;
-use network::server::{ClientId, RegisteredHandle};
+use network::server::RegisteredHandle;
 use reactors::reactor::ReactorHandle;
 use reactors::{WireEvent, RequestHandler};
-use server::ConnectionManager;
+use server::{ClientId, ConnectionManager};
 use sodiumoxide::crypto::sign::PublicKey;
 
 use super::Config;

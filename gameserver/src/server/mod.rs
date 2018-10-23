@@ -3,7 +3,7 @@ pub mod router;
 pub mod connection_manager;
 pub mod match_handler;
 
-pub use self::router::GameServerRouter;
+pub use self::router::{GameServerRouter, ClientId};
 pub use self::connection_manager::ConnectionManager;
 
 use utils::hex_serializer;
