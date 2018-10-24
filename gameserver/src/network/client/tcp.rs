@@ -65,8 +65,8 @@ impl TcpStreamTransport {
 
     fn poll_instructions(&mut self) -> Poll<(), io::Error> {
         loop {
-            // make sure stream is ready to write to before handling an
-            // instruction
+            // make sure we will be able to write to the stream
+            // before pulling an instruction from the control channel
             try_ready!(self.stream.poll_complete());
 
             let instruction = match self.recv.poll().unwrap() {
