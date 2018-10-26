@@ -78,10 +78,6 @@ impl GameServerRouter {
         client_id: u32,
         connection_id: usize
     ) {
-        let router_id = GameserverConnection::Client {
-            match_uuid,
-            client_id,
-        };
         self.insert(connection_id, GameserverConnection::Client {
             match_uuid,
             client_id,
@@ -115,16 +111,11 @@ impl Router for GameServerRouter {
 
         match connect.connect.unwrap() {
             proto::gameserver_connect::Connect::Client(c) => {
-                let conn_id = GameserverConnection::Client {
+                let client_conn = GameserverConnection::Client {
                     match_uuid: c.match_uuid,
                     client_id: c.client_id,
                 };
-                self.connections.get()
-                self.matches
-                    .get(&c.match_uuid)
-                    .and_then(|match_clients| {
-                        match_clients.get(&c.client_id)
-                    })
+                self.connections.get(&client_conn)
                     .map(|&conn_id| Routing::Connect(conn_id))
                     .ok_or_else(|| Error::new(
                         ErrorKind::Other, 
@@ -138,7 +129,11 @@ impl Router for GameServerRouter {
                         "invalid token",
                     ));
                 }
-                if let Some(&conn_id) = self.control_connections.get(&c.uuid) {
+                
+                let control_conn = GameserverConnection::ServerControl {
+                    conn_uuid: c.uuid.clone(),
+                };
+                if let Some(&conn_id) = self.connections.get(&control_conn) {
                     return Ok(Routing::Connect(conn_id));
                 } else {
                     return Ok(Routing::CreateConnection {
@@ -146,7 +141,7 @@ impl Router for GameServerRouter {
                         spawner: BoxedSpawner::new(
                             move |router: &mut GameServerRouter, conn_id| {
                                 router.register_server_control(
-                                    c.uuid.clone(),
+                                    c.uuid,
                                     conn_id
                                 );
                             },
