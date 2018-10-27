@@ -74,7 +74,7 @@ impl<H> ConnectionHandler<H>
                     // TODO: can we work around this box?
                     self.request_handler.handle_event(
                         &EventBox::new(events::Connected {} )
-                    );
+                    ).expect("failed to handle connect event");
                 }
                 Some(ConnectionCommand::Send(wire_event)) => {
                     self.state.send_request(wire_event);
@@ -90,7 +90,7 @@ impl<H> ConnectionHandler<H>
                 // TODO: can we work around this box?
                 self.request_handler.handle_event(
                     &EventBox::new(events::Disconnected {} )
-                );
+                ).expect("failed to handle disconnect event");
                 self.transport_state = TransportState::Disconnected;
                 Ok(Async::NotReady)
             },
@@ -138,7 +138,7 @@ impl<H> ConnectionHandler<H>
                             // TODO: can we work around this box?
                             self.request_handler.handle_event(
                                 &EventBox::new(events::ConnectionClosed {} )
-                            );
+                            ).expect("failed to handle closed event");
                             self.state.status = ConnectionStatus::RemoteRequestingClose;
                         }
                         ConnectionStatus::RequestingClose => {
