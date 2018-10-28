@@ -23,6 +23,7 @@ pub enum TransportState {
 }
 
 
+// TODO: find a better name for this
 pub struct ConnectionHandler<H>
     where H: EventHandler<Output = io::Result<WireEvent>>
 {
