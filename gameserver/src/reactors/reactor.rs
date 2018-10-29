@@ -21,6 +21,7 @@ use super::ReactorCore;
 /// this behaviour should be implemented in the event handler running on the
 /// reactor, so that the actual reactor code will be more reusable.
 pub struct Reactor<S> {
+    clock: u64,
     core: ReactorCore<S, ()>,
     ctrl_chan: mpsc::UnboundedReceiver<ReactorCommand>,
     delayed_events: DelayHeap<Box<AnyEvent>>,
@@ -36,6 +37,7 @@ impl<S> Reactor<S> {
             ctrl_chan,
             core,
             match_owner,
+            clock: 0,
             delayed_events: DelayHeap::new(),
         }
     }
@@ -67,17 +69,11 @@ impl<S> Reactor<S> {
     }
 
     fn handle_event(&mut self, event: &AnyEvent) {
+        self.clock += 1;
         self.core.handle_event(event);
         // Send the event after handling it, so that the receiver can be
         // certain that the reactor has already handled it.
         self.send_to_owner(event.as_wire_event());
-    }
-
-    fn handle_wire_event(&mut self, event: WireEvent) {
-        self.core.handle_wire_event(&event);
-        // Send the event back to the follower, so that it sees the entire
-        // intact event stream in the order this reactor processed it.
-        self.send_to_owner(event);
     }
 
     fn send_to_owner(&mut self, event: WireEvent) {
