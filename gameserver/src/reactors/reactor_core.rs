@@ -5,6 +5,7 @@ use super::types::*;
 
 /// The combination of a state and a set of handlers that act upon that state.
 /// The ReactorCore 'reduces' over the event stream.
+// TODO: provide this with a better name. What about 'reducer'?
 pub struct ReactorCore<S, R> {
     state: S,
     handlers: HashMap<u32, Box<SomeHandler<S, R>>>,
