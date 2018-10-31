@@ -54,8 +54,9 @@ message StartGame {
 }
 
 message MatchEvent {
-    uint32 type_id = 1;
-    bytes data = 2;
+    uint64 timestamp = 1;
+    uint32 type_id = 2;
+    bytes data = 3;
 }
 
 // --- CLIENT EVENTS ---
