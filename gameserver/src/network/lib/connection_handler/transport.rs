@@ -45,11 +45,12 @@ impl Transport {
 
         // at this point, all packets have been sent
 
-        // check whether we should send an ack message
+        // if required, send an ack message.
         if self.last_ack_sent < state.num_received {
             try_ready!(self.send_ack(state));
         }
 
+        // if required, send a close message.
         if state.should_close && !state.local_closed {
             try_ready!(self.send_close(state));
         }
@@ -98,17 +99,12 @@ impl Transport {
     }
 
     fn receive_message(&mut self, state: &mut ConnectionState)
-        -> Poll<Option<Vec<u8>>, io::Error>
+        -> Poll<Vec<u8>, io::Error>
     {
+        // TODO: this can probably be simplified
         loop {
             let packet = match self.channel.poll().unwrap() {
-                Async::NotReady => {
-                    if state.remote_closed {
-                        return Ok(Async::Ready(None))
-                    } else {
-                        return Ok(Async::NotReady);
-                    }
-                }
+                Async::NotReady => return Ok(Async::NotReady),
                 Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
                 Async::Ready(Some(bytes)) => try!(self.decode_packet(&bytes)),
             };
@@ -125,7 +121,7 @@ impl Transport {
                 state.receive(&packet);
 
                 if !packet.data.is_empty() {
-                    return Ok(Async::Ready(Some(packet.data)));
+                    return Ok(Async::Ready(packet.data));
                 }
 
             } else {
@@ -136,7 +132,7 @@ impl Transport {
     }
 
     pub fn poll(&mut self, state: &mut ConnectionState)
-        -> Poll<Option<Vec<u8>>, io::Error>
+        -> Poll<Vec<u8>, io::Error>
     {
         try!(self.send_messages(state));
         return self.receive_message(state);

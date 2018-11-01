@@ -4,16 +4,11 @@ use std::io;
 use futures::{Future, Stream, Poll, Async};
 use futures::sync::mpsc;
 
-use reactors::{Event, EventBox, WireEvent, EventHandler};
-
-use protocol::Response;
-use protocol::packet::Payload;
-use events;
 use network::lib::crypto::SessionKeys;
 use network::lib::channel::Channel;
 
 use super::transport::Transport;
-use super::connection_state::{ConnectionState, ConnectionStatus};
+use super::connection_state::ConnectionState;
 
 
 trait Handler {
@@ -81,8 +76,8 @@ impl<H> ConnectionHandler<H>
                     self.transport_state = TransportState::Connected(t);
                     self.handler.on_connect();
                 }
-                Some(ConnectionCommand::Send(wire_event)) => {
-                    self.state.send_request(wire_event);
+                Some(ConnectionCommand::Send(data)) => {
+                    self.state.buffer_message(data);
                 }
             }
         }
@@ -108,54 +103,13 @@ impl<H> ConnectionHandler<H>
         };
 
         loop {
-            let packet = try_ready!(transport.poll(&mut self.state));
-            match message.payload {
-
-                Payload::Request(request) => {
-
-                    let res = self.request_handler.handle_wire_event(
-                        WireEvent {
-                            type_id: request.type_id,
-                            data: request.data,
-                        }
-                    );
-                    match res {
-                        Ok(wire_event) => {
-                            self.state.send_response(Response {
-                                request_seq_num: message.seq_num,
-                                type_id: wire_event.type_id,
-                                data: wire_event.data,
-                            });
-                        }
-                        Err(err) => {
-                            panic!("handler error: {}", err);
-                        }
-                    }
+            match try!(transport.poll(&mut self.state)) {
+                Async::Ready(data) => {
+                    self.handler.on_message(data);
                 }
-                Payload::Response(_response) => {
-                    // discard responses for now
-                }
-                Payload::CloseRequest(_) => {
-                    // TODO: un-nest this
-                    match self.state.status {
-                        ConnectionStatus::Open => {
-                            self.handler.on_close();
-                            self.state.status = ConnectionStatus::RemoteRequestingClose;
-                        }
-                        ConnectionStatus::RequestingClose => {
-                            // TODO: should we emit an event here?
-                            self.state.status = ConnectionStatus::Closed;
-                        }
-                        _ => {
-                            // TODO: dont panic
-                            panic!("illegal close received");
-                        }
-                    }
-                    // return ready to trigger state changes
-                    // TODO: this is a bit of a hack, this should be implemented
-                    // better!
-
-                    return Ok(Async::Ready(()));
+                Async::NotReady => {
+                    // TODO: check for close
+                    return Ok(Async::NotReady);
                 }
             }
         }
@@ -194,19 +148,15 @@ impl<H> Future for ConnectionHandler<H>
 
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
-            match self.state.status {
-                ConnectionStatus::Open | ConnectionStatus::RemoteRequestingClose=> {
-                    if try!(self.poll_ctrl_chan()).is_ready() {
-                        self.state.request_close();
-                    }
-                    try_ready!(self.receive_packets());
-                }
-                ConnectionStatus::RequestingClose => {
-                    try_ready!(self.receive_packets());
-                }
-                ConnectionStatus::Closed => {
-                    return self.poll_complete();
-                }
+            if try!(self.poll_ctrl_chan()).is_ready() {
+                self.state.should_close = true;
+            }
+            
+            // TODO: this could probably be simplified even further
+            if self.state.is_closed() {
+                return self.poll_complete();
+            } else {
+                try_ready!(self.receive_packets());
             }
         }
     }
@@ -217,7 +167,7 @@ pub enum ConnectionCommand {
         channel: Channel,
         keys: SessionKeys,
     },
-    Send(WireEvent),
+    Send(Vec<u8>),
 }
 
 #[derive(Clone)]
@@ -236,24 +186,9 @@ impl ConnectionHandle {
         self.send_command(ConnectionCommand::Connect { channel, keys });
     }
 
-    pub fn dispatch<E>(&mut self, event: E)
-        where E: Event
-    {
+    pub fn send(&mut self, data: Vec<u8>) {
         // TODO: this converting should really be abstracted somewhere
 
-        let mut buf = Vec::with_capacity(event.encoded_len());
-        // encoding can only fail because the buffer does not have
-        // enough space allocated, but we just allocated the required
-        // space.
-        event.encode(&mut buf).unwrap();
-
-        self.send(WireEvent {
-            type_id: E::TYPE_ID,
-            data: buf,
-        });
-    }
-
-    pub fn send(&mut self, event: WireEvent) {
-        self.send_command(ConnectionCommand::Send(event));
+        self.send_command(ConnectionCommand::Send(data));
     }
 }

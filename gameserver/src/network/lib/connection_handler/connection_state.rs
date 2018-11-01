@@ -64,7 +64,7 @@ impl ConnectionState {
         }
     }
 
-    fn buffer_message(&mut self, message: Vec<u8>) {
+    pub fn buffer_message(&mut self, message: Vec<u8>) {
         // no new messages should be sent after we initiate closing
         debug_assert!(!self.should_close);
         self.buffer.push(message);
