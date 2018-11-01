@@ -1,7 +1,6 @@
 use std::io;
 use std::sync::{Arc, Mutex};
 use sodiumoxide::crypto::sign::{PublicKey, SecretKey};
-use reactors::{Event};
 
 use network::lib::ConnectionHandle;
 use network::lib::channel::Channel;
@@ -128,10 +127,8 @@ pub struct RegisteredHandle {
 }
 
 impl RegisteredHandle {
-    pub fn dispatch<E>(&mut self, event: E)
-        where E: Event
-    {
-        self.connection_handle.dispatch(event);
+    pub fn send(&mut self, data: Vec<u8>) {
+        self.connection_handle.send(data);
     }
 }
 

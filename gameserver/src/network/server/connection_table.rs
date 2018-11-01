@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use network::lib::connection_handler::ConnectionHandle;
+use network::lib::connection::ConnectionHandle;
 use sodiumoxide::crypto::sign::PublicKey;
 
 #[derive(Clone)]

@@ -4,9 +4,7 @@ use tokio;
 
 use sodiumoxide::crypto::sign::PublicKey;
 
-use reactors::{WireEvent, EventHandler};
-
-use network::lib::{ConnectionHandler, ConnectionHandle};
+use network::lib::{Connection, ConnectionHandle, ConnectionHandler};
 use super::routing_table::{
     RoutingTableHandle,
     RegisteredHandle,
@@ -46,7 +44,7 @@ impl<R: 'static> BoxedSpawner<R> {
         where F: FnOnce(&mut R, usize) + Send + 'static,
               C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
               C: Send + 'static,
-              H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
+              H: ConnectionHandler + Send + 'static,
               R: Router + Send + 'static
     {
         BoxedSpawner {
@@ -79,7 +77,7 @@ struct ConnectionCreator<R, F, C, H> {
 impl<R, F, C, H> ConnectionCreator<R, F, C, H>
     where F: FnOnce(&mut R, usize),
           C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
-          H: EventHandler<Output = io::Result<WireEvent>>,
+          H: ConnectionHandler,
           R: Router + Send + 'static,
 {
     pub fn new(register_fn: F, create_fn: C) -> Self {
@@ -95,9 +93,9 @@ impl<R, F, C, H> ConnectionCreator<R, F, C, H>
         self,
         routing_table: &mut RoutingTableHandle<R>,
         public_key: PublicKey,
-    ) -> (ConnectionHandle, ConnectionHandler<H>)
+    ) -> (ConnectionHandle, Connection<H>)
     {
-        ConnectionHandler::create(|handle| {
+        Connection::create(|handle| {
             let registered_handle = routing_table.register(
                 handle,
                 public_key,
@@ -114,7 +112,7 @@ impl<R, F, C, H> ConnectionSpawner<R> for ConnectionCreator<R, F, C, H>
           F: Send + 'static,
           C: FnOnce(RegisteredHandle, &mut RoutingTableHandle<R>) -> H,
           C: Send + 'static,
-          H: EventHandler<Output = io::Result<WireEvent>> + Send + 'static,
+          H: ConnectionHandler + Send + 'static,
           R: Router + Send + 'static,
 {
     fn spawn_connection(
