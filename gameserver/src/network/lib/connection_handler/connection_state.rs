@@ -1,15 +1,19 @@
 use reactors::WireEvent;
-use protocol::packet::Payload;
-use protocol::{Packet, Request, Response, CloseRequest};
+use protocol::Packet;
 
 #[derive(Debug)]
 pub enum ConnectionStatus {
     /// operating normally
     Open,
-    /// We are requesting to close the connection
+
+    /// We want to close the connection
     RequestingClose,
-    /// Remote party is requsting to close the connection,
+    /// We have requested to close the connection
+    CloseRequested,
+
+    /// Remote party has requested to close the connection,
     RemoteRequestingClose,
+
     /// The connection is considered closed
     Closed,
 }
@@ -23,7 +27,7 @@ pub struct ConnectionState {
     pub num_received: u32,
 
     /// Send buffer
-    pub buffer: Vec<Payload>,
+    pub buffer: Vec<Vec<u8>>,
 }
 
 impl ConnectionState {
@@ -40,38 +44,32 @@ impl ConnectionState {
         self.num_flushed + self.buffer.len()
     }
 
-    pub fn get_message(&self, seq_num: u32) -> Payload {
+    pub fn get_message(&self, seq_num: u32) -> Vec<u8> {
         // TODO: can this clone be avoided?
         self.buffer[seq_num as usize - self.num_flushed - 1].clone()
     }
 
-    pub fn send_request(&mut self, wire_event: WireEvent) -> u32 {
-        self.buffer_message(Payload::Request(
-            Request {
-                type_id: wire_event.type_id,
-                data: wire_event.data,
-            }
-        ));
-        return self.pos() as u32;
+    pub fn closing(&self) -> bool {
+        match self.status {
+            Open => false,
+            RequestingClose => self.buffer.is_empty(),
+        }
     }
 
-    pub fn send_response(&mut self, response: Response) {
-        self.buffer_message(Payload::Response(response))
+    pub fn remote_closed(&self) -> bool {
+        match self.status {
+            ConnectionStatus::RemoteRequestingClose => true,
+            _ => false,
+        }
     }
 
-    pub fn send_close_request(&mut self) {
-        self.buffer_message(Payload::CloseRequest(CloseRequest {}));
-    }
-
-    pub fn request_close(&mut self) {
+    pub fn _request_close(&mut self) {
         match self.status {
             ConnectionStatus::Open => {
                 self.status = ConnectionStatus::RequestingClose;
-                self.send_close_request();
             }
             ConnectionStatus::RemoteRequestingClose => {
                 self.status = ConnectionStatus::Closed;
-                self.send_close_request();
             }
             _ => {
                 panic!("Calling request_close in illegal state");
@@ -95,7 +93,7 @@ impl ConnectionState {
         }
     }
 
-    fn buffer_message(&mut self, payload: Payload) {
-        self.buffer.push(payload);
+    fn buffer_message(&mut self, message: Vec<u8>) {
+        self.buffer.push(message);
     }
 }

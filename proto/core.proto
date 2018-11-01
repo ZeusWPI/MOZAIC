@@ -19,25 +19,10 @@ message EncryptedPacket {
 message Packet {
     uint32 seq_num = 1;
     uint32 ack_num = 2;
-    oneof payload {
-        Request request = 3;
-        Response response = 4;
-        CloseRequest close_request = 5;
-    }
-}
-
-message Request {
-    uint32 type_id = 1; 
-    bytes data = 2;
-}
-
-message Response {
-    uint32 request_seq_num = 1;
-    uint32 type_id = 2;
     bytes data = 3;
+    bool closing = 4;
 }
 
-message CloseRequest {}
 
 
 // ******************************

@@ -16,6 +16,13 @@ use super::transport::Transport;
 use super::connection_state::{ConnectionState, ConnectionStatus};
 
 
+trait Handler {
+    fn on_connect(&mut self);
+    fn on_disconnect(&mut self);
+    fn on_close(&mut self);
+    fn on_message(&mut self, data: Vec<u8>);
+}
+
 
 pub enum TransportState {
     Disconnected,
@@ -25,21 +32,21 @@ pub enum TransportState {
 
 // TODO: find a better name for this
 pub struct ConnectionHandler<H>
-    where H: EventHandler<Output = io::Result<WireEvent>>
+    where H: Handler
 {
     state: ConnectionState,
-    request_handler: H,
+    handler: H,
     transport_state: TransportState,
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
 }
 
 impl<H> ConnectionHandler<H>
-    where H: EventHandler<Output = io::Result<WireEvent>>
+    where H: Handler
 {
-    pub fn new(event_handler: H)
+    pub fn new(handler: H)
         -> (ConnectionHandle, Self)
     {
-        Self::create(|_| event_handler)
+        Self::create(|_| handler)
     }
 
     pub fn create<F>(creator: F)
@@ -50,16 +57,16 @@ impl<H> ConnectionHandler<H>
 
         let handle = ConnectionHandle { sender: snd };
 
-        let request_handler = creator(handle.clone());
+        let handler = creator(handle.clone());
 
-        let handler = ConnectionHandler {
-            request_handler,
+        let conn_handler = ConnectionHandler {
+            handler,
             state: ConnectionState::new(),
             transport_state: TransportState::Disconnected,
             ctrl_chan: rcv,
         };
 
-        return (handle, handler);
+        return (handle, conn_handler);
     }
 
     fn poll_ctrl_chan(&mut self) -> Poll<(), ()> {
@@ -72,10 +79,7 @@ impl<H> ConnectionHandler<H>
                 Some(ConnectionCommand::Connect { channel, keys }) => {
                     let t = Transport::new(channel, keys, &self.state);
                     self.transport_state = TransportState::Connected(t);
-                    // TODO: can we work around this box?
-                    self.request_handler.handle_event(
-                        &EventBox::new(events::Connected {} )
-                    ).expect("failed to handle connect event");
+                    self.handler.on_connect();
                 }
                 Some(ConnectionCommand::Send(wire_event)) => {
                     self.state.send_request(wire_event);
@@ -87,11 +91,8 @@ impl<H> ConnectionHandler<H>
     fn receive_packets(&mut self) -> Poll<(), ()> {
         match self.poll_transport() {
             Err(_) => {
-                // TODO: include error in disconnected event
-                // TODO: can we work around this box?
-                self.request_handler.handle_event(
-                    &EventBox::new(events::Disconnected {} )
-                ).expect("failed to handle disconnect event");
+                // TODO: pass error
+                self.handler.on_disconnect();
                 self.transport_state = TransportState::Disconnected;
                 Ok(Async::NotReady)
             },
@@ -107,9 +108,11 @@ impl<H> ConnectionHandler<H>
         };
 
         loop {
-            let message = try_ready!(transport.poll(&mut self.state));
+            let packet = try_ready!(transport.poll(&mut self.state));
             match message.payload {
+
                 Payload::Request(request) => {
+
                     let res = self.request_handler.handle_wire_event(
                         WireEvent {
                             type_id: request.type_id,
@@ -136,10 +139,7 @@ impl<H> ConnectionHandler<H>
                     // TODO: un-nest this
                     match self.state.status {
                         ConnectionStatus::Open => {
-                            // TODO: can we work around this box?
-                            self.request_handler.handle_event(
-                                &EventBox::new(events::ConnectionClosed {} )
-                            ).expect("failed to handle closed event");
+                            self.handler.on_close();
                             self.state.status = ConnectionStatus::RemoteRequestingClose;
                         }
                         ConnectionStatus::RequestingClose => {
@@ -187,7 +187,7 @@ impl<H> ConnectionHandler<H>
 }
 
 impl<H> Future for ConnectionHandler<H>
-    where H: EventHandler<Output = io::Result<WireEvent>>
+    where H: Handler
 {
     type Item = ();
     type Error = ();

@@ -7,14 +7,7 @@ use network::lib::channel::Channel;
 use network::lib::crypto::{SessionKeys, Encryptor};
 
 use protocol::Packet;
-use protocol::packet::Payload;
 use super::connection_state::ConnectionState;
-
-
-pub struct NetworkMessage {
-    pub seq_num: u32,
-    pub payload: Payload,
-}
 
 pub struct Transport {
     channel: Channel,
@@ -40,15 +33,19 @@ impl Transport {
         -> Poll<(), io::Error> {
         while self.last_seq_sent < state.pos() as u32 {
             let next_seq = self.last_seq_sent + 1;
-            let payload = state.get_message(next_seq);
             let packet = Packet {
                 seq_num: next_seq,
                 ack_num: state.num_received,
-                payload: Some(payload),
+                data: state.get_message(next_seq),
+                // As long as there are still messages, we should not close.
+                closing: false,
             };
             try_ready!(self.send_packet(packet));
         }
 
+        // at this point, all packets have been sent
+
+        // check whether we should send an ack message
         if self.last_ack_sent < state.num_received {
             try_ready!(self.send_ack(state));
         }
@@ -67,7 +64,8 @@ impl Transport {
         let ack = Packet {
             seq_num: self.last_seq_sent,
             ack_num: state.num_received,
-            payload: None,
+            data: Vec::new(),
+            closing: false,
         };
         return self.send_packet(ack);
     }
@@ -89,11 +87,17 @@ impl Transport {
     }
 
     fn receive_message(&mut self, state: &mut ConnectionState)
-        -> Poll<NetworkMessage, io::Error>
+        -> Poll<Option<Vec<u8>>, io::Error>
     {
         loop {
             let packet = match self.channel.poll().unwrap() {
-                Async::NotReady => return Ok(Async::NotReady),
+                Async::NotReady => {
+                    if state.remote_closed() {
+                        return Ok(Async::Ready(None))
+                    } else {
+                        return Ok(Async::NotReady);
+                    }
+                }
                 Async::Ready(None) => bail!(io::ErrorKind::ConnectionAborted),
                 Async::Ready(Some(bytes)) => try!(self.decode_packet(&bytes)),
             };
@@ -108,15 +112,11 @@ impl Transport {
             } else if packet.seq_num == state.num_received + 1 {
                 // this is the next packet in the stream
                 state.receive(&packet);
-                match packet.payload {
-                    Some(payload) => return Ok(Async::Ready(NetworkMessage {
-                        seq_num: packet.seq_num,
-                        payload,
-                    })),
-                    None => {
-                        eprintln!("packet has no payload");
-                    },
+
+                if !packet.data.is_empty() {
+                    return Ok(Async::Ready(Some(packet.data)));
                 }
+
             } else {
                 eprintln!("got out-of-order packet");
             }
@@ -125,7 +125,7 @@ impl Transport {
     }
 
     pub fn poll(&mut self, state: &mut ConnectionState)
-        -> Poll<NetworkMessage, io::Error>
+        -> Poll<Option<Vec<u8>>, io::Error>
     {
         try!(self.send_messages(state));
         return self.receive_message(state);
