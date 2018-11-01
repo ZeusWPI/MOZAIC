@@ -11,7 +11,7 @@ use super::transport::Transport;
 use super::connection_state::ConnectionState;
 
 
-trait Handler {
+pub trait ConnectionHandler {
     fn on_connect(&mut self);
     fn on_disconnect(&mut self);
     fn on_close(&mut self);
@@ -25,9 +25,8 @@ pub enum TransportState {
 }
 
 
-// TODO: find a better name for this
-pub struct ConnectionHandler<H>
-    where H: Handler
+pub struct Connection<H>
+    where H: ConnectionHandler
 {
     state: ConnectionState,
     handler: H,
@@ -35,8 +34,8 @@ pub struct ConnectionHandler<H>
     ctrl_chan: mpsc::UnboundedReceiver<ConnectionCommand>,
 }
 
-impl<H> ConnectionHandler<H>
-    where H: Handler
+impl<H> Connection<H>
+    where H: ConnectionHandler
 {
     pub fn new(handler: H)
         -> (ConnectionHandle, Self)
@@ -54,7 +53,7 @@ impl<H> ConnectionHandler<H>
 
         let handler = creator(handle.clone());
 
-        let conn_handler = ConnectionHandler {
+        let conn_handler = Connection {
             handler,
             state: ConnectionState::new(),
             transport_state: TransportState::Disconnected,
@@ -140,8 +139,8 @@ impl<H> ConnectionHandler<H>
     }
 }
 
-impl<H> Future for ConnectionHandler<H>
-    where H: Handler
+impl<H> Future for Connection<H>
+    where H: ConnectionHandler
 {
     type Item = ();
     type Error = ();

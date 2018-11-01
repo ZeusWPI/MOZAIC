@@ -1,8 +1,9 @@
-mod connection_handler;
+mod connection;
 mod connection_state;
 mod transport;
 
-pub use self::connection_handler::{
+pub use self::connection::{
+    Connection,
     ConnectionHandler,
     ConnectionHandle,
 };
