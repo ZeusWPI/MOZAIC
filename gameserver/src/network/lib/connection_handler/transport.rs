@@ -50,14 +50,11 @@ impl Transport {
             try_ready!(self.send_ack(state));
         }
 
-        try_ready!(self.channel.poll_complete());
-
-        // TODO: does this check belong here?
-        if state.buffer.len() == 0 {
-            return Ok(Async::Ready(()))
-        } else {
-            return Ok(Async::NotReady);
+        if state.should_close && !state.local_closed {
+            try_ready!(self.send_close(state));
         }
+
+        return self.channel.poll_complete();
     }
 
     fn send_ack(&mut self, state: &mut ConnectionState) -> Poll<(), io::Error> {
@@ -68,6 +65,20 @@ impl Transport {
             closing: false,
         };
         return self.send_packet(ack);
+    }
+
+    fn send_close(&mut self, state: &mut ConnectionState)
+        -> Poll<(), io::Error>
+    {
+        let close = Packet {
+            seq_num: self.last_seq_sent,
+            ack_num: state.num_received,
+            data: Vec::new(),
+            closing: true,
+        };
+        try_ready!(self.send_packet(close));
+        state.local_closed = true;
+        return Ok(Async::Ready(()));
     }
 
     fn send_packet(&mut self, packet: Packet) -> Poll<(), io::Error> {
@@ -92,7 +103,7 @@ impl Transport {
         loop {
             let packet = match self.channel.poll().unwrap() {
                 Async::NotReady => {
-                    if state.remote_closed() {
+                    if state.remote_closed {
                         return Ok(Async::Ready(None))
                     } else {
                         return Ok(Async::NotReady);
@@ -137,4 +148,3 @@ impl Transport {
         return Ok(packet);
     }
 }
-
