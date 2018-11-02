@@ -14,9 +14,12 @@ environment:
 
 cache:
   - gameserver\target
+  - client\node_modules
   - planetwars\client\node_modules
+  - planetwars\match-log\node_modules
+  - planetwars\visualizer\node_modules
   - '%USERPROFILE%\.electron'
-  - '%USERPROFILE%\.cargo'
+  - '%USERPROFILE%\.cargo\registry'
   - '%LOCALAPPDATA%\Yarn'
 
 init:
@@ -37,7 +40,7 @@ build_script:
   - cargo build --release
   - cd %APPVEYOR_BUILD_FOLDER%
   # Copy binary to electron client
-  - copy gameserver\target\release\mozaic_bot_driver planetwars\client\bin\mozaic_bot_driver
+  - copy gameserver\target\release\mozaic_bot_driver.exe planetwars\client\bin\mozaic_bot_driver
   # Build js mozaic-client package (network interface)
   - cd client
   - yarn install

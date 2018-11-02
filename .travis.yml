@@ -24,15 +24,22 @@ matrix:
     env:
       - OS_TARGET="mac"
 
-
 cache:
+  cargo: true
   yarn: true
   directories:
-    - gameserver/target/
-    - client/planetwars/node_modules
+    - gameserver/target
+    - client/node_modules
+    - planetwars/client/node_modules
+    - planetwars/visualizer/node_modules
+    - planetwars/match-log/node_modules
     - $HOME/.cargo/
     - $HOME/.cache/electron
     - $HOME/.cache/electron-builder
+
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+- chmod -R a+r $HOME/.cargo
 
 before_install:
   # Repo for Yarn
