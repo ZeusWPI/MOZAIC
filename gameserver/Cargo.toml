@@ -29,6 +29,9 @@ tokio-codec = "0.1.0"
 mozaic-derive = { path = "../mozaic-derive" }
 sodiumoxide = "0.1.0"
 
+capnp = "0.9.1"
+
 [build-dependencies]
+capnpc = "0.9.0"
 prost-build = "0.3"
 mozaic-build = { path = "../mozaic-build" }
