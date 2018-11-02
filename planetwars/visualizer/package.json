@@ -1,6 +1,6 @@
 {
   "name": "planetwars-visualizer",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Visualizer for BottleBats Planetwars",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

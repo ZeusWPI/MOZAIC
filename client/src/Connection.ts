@@ -2,19 +2,15 @@ import * as protocol_root from './proto';
 import proto = protocol_root.mozaic.protocol;
 import Packet = proto.Packet;
 
-import * as net from 'net';
-import * as stream from 'stream';
-
 import {
     SimpleEventDispatcher,
     SignalDispatcher,
     ISignal,
-    ISimpleEvent,
+    ISimpleEvent
 } from 'strongly-typed-events';
 
-import { BufferWriter, BufferReader } from 'protobufjs/minimal';
-import { read } from 'fs';
-import { ProtobufReader, ProtobufStream } from './ProtobufStream';
+
+import { ProtobufStream } from './ProtobufStream';
 import { execFileSync } from 'child_process';
 
 export interface Address {
@@ -38,7 +34,7 @@ export class Connection {
     private _onMessage = new SimpleEventDispatcher<Uint8Array>();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
-    
+
     public constructor(token: Buffer) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
@@ -55,22 +51,22 @@ export class Connection {
         })
     }
 
-    public get onConnect() {
+    public get onConnect(): ISignal {
         return this._onConnect.asEvent();
     }
-    
-    public get onMessage() {
+
+    public get onMessage(): ISimpleEvent<Uint8Array> {
         return this._onMessage.asEvent();
     }
-    
-    public get onError() {
+
+    public get onError(): ISimpleEvent<Error> {
         return this._onError.asEvent();
     }
-    
-    public get onClose() {
+
+    public get onClose(): ISignal {
         return this._onClose.asEvent();
     }
-    
+
     public connect(host: string, port: number) {
         this.state = ConnectionState.CONNECTING;
         this.stream.connect(host, port);
@@ -82,7 +78,6 @@ export class Connection {
         // that he has been properly greeted when establishing a connection.
         const user = execFileSync('whoami');
         console.log(`hello ${user.toString('utf-8')}`);
-        
     }
 
     public send(data: Uint8Array) {
@@ -104,7 +99,7 @@ export class Connection {
             }
         }
     }
-    
+
     // initiate connection handshake
     private sendConnectionRequest() {
         let request = proto.ConnectionRequest.create({ token: this.token });
