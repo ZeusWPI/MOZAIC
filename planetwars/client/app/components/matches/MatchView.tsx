@@ -1,17 +1,18 @@
 import { remote } from 'electron';
+import * as path from 'path';
 const dialog = remote.dialog;
 import * as fs from 'fs';
 import * as React from 'react';
 
-import Visualizer from '../visualizer/Visualizer';
-import * as Comp from './types';
-import { emptyLog, parseLogFile, MatchLog } from '../../lib/match';
+import { Visualizer } from 'planetwars-visualizer';
+import { emptyLog, parseLog, MatchLog } from 'planetwars-match-log';
 import { LogView } from './LogView';
 import * as M from '../../database/models';
 import { Log } from '../../reducers/logs';
 import { GState } from '../../reducers/index';
 import { createSelector } from 'reselect';
 import { connect } from 'react-redux';
+import { appPath } from '../../utils/Config';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -93,7 +94,8 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
       this.logPos = log.size;
     } else {
       // no log is present in redux store; read from disk
-      this.matchLog = parseLogFile(nextMatch.logPath, nextMatch.type);
+      const content = fs.readFileSync(nextMatch.logPath, 'utf-8');
+      this.matchLog = parseLog(content, nextMatch.type);
     }
   }
 
@@ -211,7 +213,7 @@ export class MatchViewer extends React.Component<Props, State> {
       }
       case M.MatchType.hosted: {
         match.players.forEach((player, idx) => {
-          playerNames[idx + 1] = player.name; 
+          playerNames[idx + 1] = player.name;
         });
       }
     }
@@ -234,8 +236,8 @@ export class MatchViewer extends React.Component<Props, State> {
   }
 
   private exportLog() {
-    const {match: { logPath }} = this.props;
-    dialog.showSaveDialog({title: "Export log", defaultPath: `log.json`}, (copyDest) => {
+    const { match: { logPath } } = this.props;
+    dialog.showSaveDialog({ title: "Export log", defaultPath: `log.json` }, (copyDest) => {
       const log = fs.readFileSync(logPath);
       fs.writeFileSync(copyDest, log);
     });
@@ -252,7 +254,15 @@ const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
   const { viewState, matchLog, playerName } = props;
   switch (viewState) {
     case ViewState.VISUALIZER:
-      return <Visualizer playerName={playerName} matchLog={matchLog} />;
+      // TODO This cast seems to be some type error related to importing the
+      // MatchLog from a local package, and it having a protected method.
+      return (
+        <Visualizer
+          playerName={playerName}
+          matchLog={matchLog as any}
+          // TODO This is an ugly hack
+          assetPrefix={path.resolve(appPath, 'node_modules', 'planetwars-visualizer')}
+        />);
     case ViewState.LOG:
       return <LogView playerName={playerName} matchLog={matchLog} />;
   }

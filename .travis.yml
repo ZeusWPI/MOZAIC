@@ -51,17 +51,28 @@ before_script:
   - git lfs pull
 
 script:
-  # Build GameServer and move binary to client
+  # Build Rust gameserver crate
   - cd gameserver
   - cargo build --release
   - cd $TRAVIS_BUILD_DIR
-  - mv gameserver/target/release/mozaic_bot_driver planetwars/client/bin/mozaic_bot_driver
-  # Build client network code
+  # Copy binary to electron client
+  - cp gameserver/target/release/mozaic_bot_driver planetwars/client/bin/mozaic_bot_driver
+  # Build js mozaic-client package (network interface)
   - cd client
   - yarn install
   - yarn run build
   - cd $TRAVIS_BUILD_DIR
-  # Build client & package
+  # Build js planetwars-match-log package
+  - cd planetwars/match-log
+  - yarn install
+  - yarn build
+  - cd $TRAVIS_BUILD_DIR
+  # Build js planetwars-visualizer package
+  - cd planetwars/visualizer
+  - yarn install
+  - yarn build
+  - cd $TRAVIS_BUILD_DIR
+  # Build js electron client package and package binary
   - cd planetwars/client
   - yarn install
   - yarn run package-$OS_TARGET
