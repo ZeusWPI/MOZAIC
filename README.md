@@ -53,6 +53,7 @@ Before continuing, make sure you have the following applications installed:
 
 1. Install [Node v8][node] and [Yarn][yarn].
 
+**Note:** This project makes use of Yarn workspaces.
 
 ### Using Make
 
@@ -61,13 +62,9 @@ Before continuing, make sure you have the following applications installed:
 1. Go to the `planetwars/client` directory and run `yarn run dev`. 
 1. An electron client should be at your disposal!
 
-
-
 ### Manual Setup
 
 #### Gameserver
-
-
 
 1. Try to run the botrunner with `cargo run` in the `gameserver` directory. It should compile, but fail to play a match.
 1. Run the botrunner again (still in the `gameserver` directory) with: `cargo run stub_config.json`
@@ -81,13 +78,11 @@ Before continuing, make sure you have the following applications installed:
 
 1. Go to the `client` directory.
 1. Build the client with `yarn build`
-1. Run `yarn link`
 1. Go the `../planetwars/client` directory
 1. Install dependencies with `yarn install`.
 1. Go the `.\bin` dir and symlink the gameserver with:
     * Linux -  `ln -s ../../../gameserver/target/release/mozaic_bot_driver`
     * Windows -  `mklink bot_driver.exe ..\..\..\gameserver\target\release\mozaic_bot_driver.exe`
-1. Go back the `client` dir and run `yarn link mozaic-client`.
 1. Run `yarn run dev`
 1. An electron client should be at your disposal!
 
