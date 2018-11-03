@@ -25,20 +25,18 @@ extern crate serde_derive;
 extern crate prost;
 #[macro_use]
 extern crate prost_derive;
-#[macro_use]
-extern crate mozaic_derive;
 extern crate sodiumoxide;
+extern crate capnp;
 
 pub mod network;
-pub mod planetwars;
-pub mod utils;
-pub mod reactors;
-pub mod server;
+pub mod messaging;
+// pub mod utils;
+// pub mod reactors;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
 }
 
-pub mod events {
-    include!(concat!(env!("OUT_DIR"), "/mozaic.events.rs"));
+pub mod core_capnp {
+    include!(concat!(env!("OUT_DIR"), "/core_capnp.rs"));
 }
