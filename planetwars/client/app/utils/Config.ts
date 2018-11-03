@@ -1,13 +1,24 @@
 /* tslint:disable:member-ordering */
 import * as p from 'path';
 import { remote } from 'electron';
+import log from 'electron-log';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Match, MapId, MatchId } from '../database/models';
 
-export const appPath = (process.env.NODE_ENV === 'development') ?
-  p.resolve('.') :
-  p.resolve(remote.app.getAppPath());
+export const isDev = (process.env.NODE_ENV === 'development');
+export const appPath = isDev
+  ? p.resolve('.')
+  : p.resolve(remote.app.getAppPath());
+
+export const visualizerAssets = isDev
+  // Yarn workspaces cause this to be at the root during dev
+  ? p.resolve(appPath, '..', '..', 'node_modules', 'planetwars-visualizer')
+  : p.resolve(appPath, 'node_modules', 'planetwars-visualizer');
+
+log.debug(`[CONFIG] isDev: ${isDev}`);
+log.debug(`[CONFIG] appPath: ${appPath}`);
+log.debug(`[CONFIG] visualizerAssets: ${visualizerAssets}`);
 
 export class Config {
   private static _data = 'data';

@@ -1,5 +1,4 @@
 import { remote } from 'electron';
-import * as path from 'path';
 const dialog = remote.dialog;
 import * as fs from 'fs';
 import * as React from 'react';
@@ -12,7 +11,7 @@ import { Log } from '../../reducers/logs';
 import { GState } from '../../reducers/index';
 import { createSelector } from 'reselect';
 import { connect } from 'react-redux';
-import { appPath } from '../../utils/Config';
+import * as Config from '../../utils/Config';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -261,7 +260,7 @@ const MatchDisplay: React.SFC<MatchDisplayProps> = (props) => {
           playerName={playerName}
           matchLog={matchLog as any}
           // TODO This is an ugly hack
-          assetPrefix={path.resolve(appPath, 'node_modules', 'planetwars-visualizer')}
+          assetPrefix={Config.visualizerAssets}
         />);
     case ViewState.LOG:
       return <LogView playerName={playerName} matchLog={matchLog} />;
