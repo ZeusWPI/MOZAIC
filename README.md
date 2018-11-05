@@ -4,6 +4,7 @@
 
 [![AppVeyor](https://img.shields.io/appveyor/ci/wschella/MOZAIC.svg)](https://ci.appveyor.com/project/wschella/mozaic)
 [![Travis (.org)](https://img.shields.io/travis/ZeusWPI/MOZAIC.svg)](https://travis-ci.org/ZeusWPI/MOZAIC/)
+[![chat mattermost](https://img.shields.io/badge/chat-mattermost-blue.svg)](https://mattermost.zeus.gent/zeus/channels/mozaic)
 
 MOZAIC is the **M**assive **O**nline **Z**eus **A**rtificial **I**ntelligence **C**ompetition platform.
 It aims to provide a flexible platform to host your very own AI competition. Just plug your game, and off you go!
