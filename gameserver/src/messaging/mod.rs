@@ -7,12 +7,15 @@ use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;
 
-struct MessageHandler<S> {
+struct MessageHandler<S, R> {
     state: S,
-    handlers: HashMap<u64, Box<for <'a> Handler<'a, S, any_pointer::Owned>>>,
+    handlers: HashMap<
+        u64,
+        Box<for <'a> Handler<'a, S, any_pointer::Owned, Output=R>>
+    >,
 }
 
-impl<S> MessageHandler<S> {
+impl<S, R> MessageHandler<S, R> {
     fn new(state: S) -> Self {
         MessageHandler {
             state,
@@ -21,7 +24,7 @@ impl<S> MessageHandler<S> {
     }
 
     fn add_handler<M, H>(&mut self, handler: H)
-        where H: for <'a> Handler<'a, S, M> + Sized + 'static,
+        where H: for <'a> Handler<'a, S, M, Output=R> + Sized + 'static,
               M: for <'a> Owned<'a> + 'static,
               <M as Owned<'static>>::Reader: HasTypeId,
     {
@@ -57,16 +60,23 @@ impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
     where H: Handler<'a, S, M>,
           M: Owned<'a>
 {
-    fn handle(&self, state: &mut S, reader: any_pointer::Reader<'a>) {
+    type Output = H::Output;
+
+    fn handle(&self, state: &mut S, reader: any_pointer::Reader<'a>)
+        -> H::Output
+    {
         let m = reader.get_as().expect("downcast failed");
-        self.handler.handle(state, m);
+        return self.handler.handle(state, m);
     }
 }
 
 trait Handler<'a, S, M>
     where M: Owned<'a>
 {
-    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader);
+    type Output;
+
+    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader)
+        -> Self::Output;
 }
 
 struct FnHandler<M, F> {
@@ -83,11 +93,13 @@ impl<M, F> FnHandler<M, F> {
     }
 }
 
-impl<'a, S, M, F> Handler<'a, S, M> for FnHandler<M, F>
-    where F: Fn(&mut S, <M as Owned<'a>>::Reader),
+impl<'a, S, M, F, R> Handler<'a, S, M> for FnHandler<M, F>
+    where F: Fn(&mut S, <M as Owned<'a>>::Reader) -> R,
           M: Owned<'a>
 {
-    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader) {
+    type Output = R;
+
+    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader) -> R {
         (self.function)(state, reader)
     }
 }
