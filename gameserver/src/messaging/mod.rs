@@ -7,7 +7,7 @@ use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;
 
-struct MessageHandler<S, R> {
+pub struct MessageHandler<S, R> {
     state: S,
     handlers: HashMap<
         u64,
@@ -16,14 +16,14 @@ struct MessageHandler<S, R> {
 }
 
 impl<S, R> MessageHandler<S, R> {
-    fn new(state: S) -> Self {
+    pub fn new(state: S) -> Self {
         MessageHandler {
             state,
             handlers: HashMap::new(),
         }
     }
 
-    fn add_handler<M, H>(&mut self, handler: H)
+    pub fn add_handler<M, H>(&mut self, handler: H)
         where H: for <'a> Handler<'a, S, M, Output=R> + Sized + 'static,
               M: for <'a> Owned<'a> + 'static,
               <M as Owned<'static>>::Reader: HasTypeId,
@@ -34,16 +34,21 @@ impl<S, R> MessageHandler<S, R> {
         self.handlers.insert(type_id, Box::new(any_ptr_handler));
     }
 
-    fn handle_message<'a>(&mut self, message: message::Reader<'a>) {
+    pub fn handle_message<'a>(&mut self, message: message::Reader<'a>)
+        -> Option<R>
+    {
         let type_id = message.get_type_id();
-        if let Some(handler) = self.handlers.get(&type_id) {
-            handler.handle(&mut self.state, message.get_data());
-        }
+        let state = &mut self.state;
+        return self.handlers.get(&type_id).map(|handler| {
+            handler.handle(state, message.get_data())
+        });
     }
 }
 
-struct AnyPtrHandler<H, M> {
-    phantom_m: PhantomData<M>,
+/// Given a handler H for message type M, constructs a new handler that will
+/// interpret an AnyPointer as M, and then call H on it.
+pub struct AnyPtrHandler<H, M> {
+    message_type: PhantomData<M>,
     handler: H,
 }
 
@@ -65,12 +70,14 @@ impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
     fn handle(&self, state: &mut S, reader: any_pointer::Reader<'a>)
         -> H::Output
     {
+        // TODO: how can we propagate this error?
         let m = reader.get_as().expect("downcast failed");
         return self.handler.handle(state, m);
     }
 }
 
-trait Handler<'a, S, M>
+/// Handles messages of the given type and lifetime with the given state. 
+pub trait Handler<'a, S, M>
     where M: Owned<'a>
 {
     type Output;
@@ -79,16 +86,17 @@ trait Handler<'a, S, M>
         -> Self::Output;
 }
 
-struct FnHandler<M, F> {
-    phantom_m: PhantomData<M>,
+/// Ties a handler function to a message type
+pub struct FnHandler<M, F> {
+    message_type: M,
     function: F,
 }
 
 impl<M, F> FnHandler<M, F> {
-    fn new(_: M, function: F) -> Self {
+    pub fn new(message_type: M, function: F) -> Self {
         FnHandler {
             function,
-            phantom_m: PhantomData,
+            message_type,
         }
     }
 }
@@ -104,6 +112,8 @@ impl<'a, S, M, F, R> Handler<'a, S, M> for FnHandler<M, F>
     }
 }
 
+
+// ********** TEST **********
 
 struct GreeterState {}
 
