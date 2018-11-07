@@ -9,21 +9,12 @@ use std::marker::PhantomData;
 
 pub struct MessageHandler<S, T, E> {
     state: S,
-    handlers: HashMap<
-        u64,
-        // TODO: How does one even format this???
-        Box<
-            for <'a>
-                Handler<
-                    'a,
-                    S,
-                    any_pointer::Owned,
-                    Output=T,
-                    Error=E
-                >
-        >
-    >,
+    handlers: HashMap<u64, BoxedHandler<S, T, E>>,
 }
+
+type BoxedHandler<S, T, E> = Box<
+    for<'a> Handler<'a, S, any_pointer::Owned, Output=T, Error=E>
+>;
 
 impl<S, T, E> MessageHandler<S, T, E> {
     pub fn new(state: S) -> Self {
