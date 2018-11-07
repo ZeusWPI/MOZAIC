@@ -7,15 +7,25 @@ use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;
 
-pub struct MessageHandler<S, R> {
+pub struct MessageHandler<S, T, E> {
     state: S,
     handlers: HashMap<
         u64,
-        Box<for <'a> Handler<'a, S, any_pointer::Owned, Output=R>>
+        // TODO: How does one even format this???
+        Box<
+            for <'a>
+                Handler<
+                    'a,
+                    S,
+                    any_pointer::Owned,
+                    Output=T,
+                    Error=E
+                >
+        >
     >,
 }
 
-impl<S, R> MessageHandler<S, R> {
+impl<S, T, E> MessageHandler<S, T, E> {
     pub fn new(state: S) -> Self {
         MessageHandler {
             state,
@@ -24,9 +34,11 @@ impl<S, R> MessageHandler<S, R> {
     }
 
     pub fn add_handler<M, H>(&mut self, handler: H)
-        where H: for <'a> Handler<'a, S, M, Output=R> + Sized + 'static,
+        where H: for <'a> Handler<'a, S, M, Output=T, Error=E>,
+              H: Sized + 'static,
               M: for <'a> Owned<'a> + 'static,
               <M as Owned<'static>>::Reader: HasTypeId,
+              E: From<capnp::Error>,
     {
         let type_id = <M as Owned<'static>>::Reader::type_id();
 
@@ -35,7 +47,7 @@ impl<S, R> MessageHandler<S, R> {
     }
 
     pub fn handle_message<'a>(&mut self, message: message::Reader<'a>)
-        -> Option<R>
+        -> Option<Result<T, E>>
     {
         let type_id = message.get_type_id();
         let state = &mut self.state;
@@ -56,22 +68,24 @@ impl<H, M> AnyPtrHandler<H, M> {
     fn new(handler: H) -> Self {
         AnyPtrHandler {
             handler,
-            phantom_m: PhantomData,
+            message_type: PhantomData,
         }
     }
 }
 
 impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
     where H: Handler<'a, S, M>,
+          H::Error: From<capnp::Error>,
           M: Owned<'a>
 {
     type Output = H::Output;
+    type Error = H::Error;
 
     fn handle(&self, state: &mut S, reader: any_pointer::Reader<'a>)
-        -> H::Output
+        -> Result<H::Output, H::Error>
     {
         // TODO: how can we propagate this error?
-        let m = reader.get_as().expect("downcast failed");
+        let m = reader.get_as()?;
         return self.handler.handle(state, m);
     }
 }
@@ -81,9 +95,10 @@ pub trait Handler<'a, S, M>
     where M: Owned<'a>
 {
     type Output;
+    type Error;
 
     fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader)
-        -> Self::Output;
+        -> Result<Self::Output, Self::Error>;
 }
 
 /// Ties a handler function to a message type
@@ -101,13 +116,16 @@ impl<M, F> FnHandler<M, F> {
     }
 }
 
-impl<'a, S, M, F, R> Handler<'a, S, M> for FnHandler<M, F>
-    where F: Fn(&mut S, <M as Owned<'a>>::Reader) -> R,
+impl<'a, S, M, F, T, E> Handler<'a, S, M> for FnHandler<M, F>
+    where F: Fn(&mut S, <M as Owned<'a>>::Reader) -> Result<T, E>,
           M: Owned<'a>
 {
-    type Output = R;
+    type Output = T;
+    type Error = E;
 
-    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader) -> R {
+    fn handle(&self, state: &mut S, reader: <M as Owned<'a>>::Reader)
+        -> Result<T, E>
+    {
         (self.function)(state, reader)
     }
 }
@@ -118,8 +136,11 @@ impl<'a, S, M, F, R> Handler<'a, S, M> for FnHandler<M, F>
 struct GreeterState {}
 
 impl GreeterState {
-    fn greet<'a>(&mut self, reader: greet_person::Reader<'a>) {
-        println!("hello {}!", reader.get_person_name().unwrap());
+    fn greet<'a>(&mut self, reader: greet_person::Reader<'a>)
+        -> Result<(), capnp::Error>
+    {
+        println!("hello {}!", reader.get_person_name()?);
+        return Ok(());
     }
 }
 
