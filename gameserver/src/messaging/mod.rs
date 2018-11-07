@@ -27,9 +27,9 @@ impl<S, T, E> MessageHandler<S, T, E> {
     pub fn add_handler<M, H>(&mut self, handler: H)
         where H: for <'a> Handler<'a, S, M, Output=T, Error=E>,
               H: Sized + 'static,
+              E: From<capnp::Error>,
               M: for <'a> Owned<'a> + 'static,
               <M as Owned<'static>>::Reader: HasTypeId,
-              E: From<capnp::Error>,
     {
         let type_id = <M as Owned<'static>>::Reader::type_id();
 
@@ -49,7 +49,7 @@ impl<S, T, E> MessageHandler<S, T, E> {
 }
 
 /// Given a handler H for message type M, constructs a new handler that will
-/// interpret an AnyPointer as M, and then call H on it.
+/// interpret an AnyPointer as M, and then pass it to H.
 pub struct AnyPtrHandler<H, M> {
     message_type: PhantomData<M>,
     handler: H,
@@ -75,13 +75,12 @@ impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
     fn handle(&self, state: &mut S, reader: any_pointer::Reader<'a>)
         -> Result<H::Output, H::Error>
     {
-        // TODO: how can we propagate this error?
         let m = reader.get_as()?;
         return self.handler.handle(state, m);
     }
 }
 
-/// Handles messages of the given type and lifetime with the given state. 
+/// Handles messages of type M with lifetime 'a, using state S.
 pub trait Handler<'a, S, M>
     where M: Owned<'a>
 {
@@ -92,7 +91,13 @@ pub trait Handler<'a, S, M>
         -> Result<Self::Output, Self::Error>;
 }
 
-/// Ties a handler function to a message type
+/// Ties a handler function to a message type.
+/// This coupling is required because a capnp reader type has a lifetime
+/// parameter (for the buffer it refers to), and we want handlers to work
+/// for any such lifetime parameter. This is achieved through the capnp
+/// Owned<'a> trait, which M implements for all 'a. Through an associated
+/// type on that trait, Reader<'a> is coupled.
+/// Refer to the Handler implementation for FnHandler to see how this works.
 pub struct FnHandler<M, F> {
     message_type: M,
     function: F,
