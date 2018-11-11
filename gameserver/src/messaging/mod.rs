@@ -7,6 +7,40 @@ use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;
 
+pub mod broker;
+
+pub struct HandlerSet<S, T, E> {
+    handler_map: HashMap<u64, BoxedHandler<S, T, E>>,
+}
+
+impl<S, T, E> HandlerSet<S, T, E> {
+    pub fn new() -> Self {
+        HandlerSet {
+            handler_map: HashMap::new(),
+        }
+    }
+
+    pub fn insert<M, H>(&mut self, handler: H)
+        where H: for <'a> Handler<'a, S, M, Output=T, Error=E>,
+              H: Sized + 'static,
+              E: From<capnp::Error>,
+              M: for <'a> Owned<'a> + 'static,
+              <M as Owned<'static>>::Reader: HasTypeId,
+    {
+        let type_id = <M as Owned<'static>>::Reader::type_id();
+
+        let any_ptr_handler = AnyPtrHandler::new(handler);
+        self.handler_map.insert(type_id, Box::new(any_ptr_handler));
+    }
+
+    pub fn handler<'a>(&'a self, type_id: u64)
+        -> Option<&'a BoxedHandler<S, T, E>>
+    {
+        self.handler_map.get(&type_id)
+    }
+
+}
+
 pub struct MessageHandler<S, T, E> {
     state: S,
     handlers: HashMap<u64, BoxedHandler<S, T, E>>,
