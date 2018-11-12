@@ -8,6 +8,7 @@ use core_capnp::{message, greet_person};
 use std::marker::PhantomData;
 
 pub mod broker;
+pub mod reactor;
 
 pub struct HandlerSet<S, T, E> {
     handler_map: HashMap<u64, BoxedHandler<S, T, E>>,
@@ -38,7 +39,6 @@ impl<S, T, E> HandlerSet<S, T, E> {
     {
         self.handler_map.get(&type_id)
     }
-
 }
 
 pub struct MessageHandler<S, T, E> {
