@@ -2,6 +2,10 @@ use std::collections::{HashMap, VecDeque};
 use super::HandlerSet;
 use capnp;
 
+use capnp::message;
+
+use core_capnp::message as mozaic_message;
+
 #[derive(PartialEq, Eq, Hash)]
 struct Uuid {
     pub x0: u64,
@@ -9,10 +13,10 @@ struct Uuid {
 }
 
 // stub message type, this should be repalced
-struct Message<'a> {
+struct Message {
     sender_id: Uuid,
     type_id: u64,
-    data: capnp::any_pointer::Reader<'a>
+    data: capnp::serialize::OwnedSegments,
 }
 
 struct Reactor<S> {
@@ -23,7 +27,7 @@ struct Reactor<S> {
 impl<S> Reactor<S> {
     // receive a foreign message and send it to the appropriate
     // immigration bureau
-    fn handle_message<'a>(&mut self, message: Message<'a>) {
+    fn handle_message(&mut self, message: Message) {
         let link = self.links.get_mut(&message.sender_id)
             .expect("no link with message sender");
         link.handle_message(message)
@@ -60,16 +64,21 @@ struct Link<S> {
 type BoxedLink = Box<LinkTrait>;
 
 trait LinkTrait {
-    fn handle_message<'a>(&mut self, message: Message<'a>)
+    fn handle_message<'a>(&mut self, message: Message)
         -> Result<(), capnp::Error>;
 }
 
 impl<S> LinkTrait for Link<S> {
-    fn handle_message<'a>(&mut self, message: Message<'a>)
+    fn handle_message(&mut self, message: Message)
         -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.handler(message.type_id) {
-            handler.handle(&mut self.state, message.data)?
+            let message_reader = message::Reader::new(
+                message.data,
+                message::ReaderOptions::default(),
+            );
+            let msg: mozaic_message::Reader = message_reader.get_root()?;
+            handler.handle(&mut self.state, msg.get_data())?
         }
         return Ok(());
     }
