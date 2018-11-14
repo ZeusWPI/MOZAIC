@@ -6,7 +6,8 @@ use capnp::traits::{HasTypeId, FromPointerReader, Owned};
 
 use capnp::message;
 
-use core_capnp::message as mozaic_message;
+use core_capnp;
+use core_capnp::mozaic_message;
 
 #[derive(PartialEq, Eq, Hash)]
 struct Uuid {
@@ -14,17 +15,40 @@ struct Uuid {
     pub x1: u64,
 }
 
+impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
+    fn from(reader: core_capnp::uuid::Reader<'a>) -> Uuid {
+        Uuid {
+            x0: reader.get_x0(),
+            x1: reader.get_x1(),
+        }
+    }
+}
+
 // stub message type, this should be repalced
 struct Message {
-    sender_id: Uuid,
-    type_id: u64,
-    data: capnp::serialize::OwnedSegments,
+    raw_reader: message::Reader<capnp::serialize::OwnedSegments>,
+}
+
+impl Message {
+    fn from_segments(segments: capnp::serialize::OwnedSegments) -> Self {
+        Message {
+            raw_reader: message::Reader::new(
+                segments,
+                message::ReaderOptions::default(),
+            ),
+        }
+    }
+
+    fn reader<'a>(&'a self) -> Result<mozaic_message::Reader<'a>, capnp::Error> {
+        return self.raw_reader.get_root();
+    }
 }
 
 
 struct Reactor<S> {
     message_queue: VecDeque<Message>,
-    core: Core<S>,
+    internal_state: S,
+    internal_handlers: HandlerMap<S, (), capnp::Error>,
     links: HashMap<Uuid, BoxedLink>,
 }
 
@@ -42,15 +66,19 @@ impl<'a> ReactorHandle<'a> {
 impl<S> Reactor<S> {
     // receive a foreign message and send it to the appropriate
     // immigration bureau
-    fn handle_external_message(&mut self, message: Message) {
-        let link = self.links.get_mut(&message.sender_id)
+    fn handle_external_message(&mut self, message: Message)
+        -> Result<(), capnp::Error>
+    {
+        let msg = message.reader()?;
+        let sender_uuid = msg.get_sender()?.into();
+        let link = self.links.get_mut(&sender_uuid)
             .expect("no link with message sender");
 
         let reactor_handle = ReactorHandle {
             message_queue: &mut self.message_queue,
         };
-        link.handle_message(reactor_handle, message)
-            .expect("yo that message was not valid");
+        link.handle_message(reactor_handle, msg)?;
+    
         // the handling link may now emit a domestic message, which will
         // be received by the reactor core and all other links.
 
@@ -61,13 +89,8 @@ impl<S> Reactor<S> {
         // The core handler can then again emit a 'game state changed' event,
         // which the link handlers can pick up on, and forward to their remote
         // parties (the game clients).
+        return Ok(());
     }
-}
-
-// TODO
-struct Core<S> {
-    state: S,
-    handlers: HandlerMap<S, (), capnp::Error>,
 }
 
 
@@ -81,7 +104,6 @@ struct Link<S> {
 }
 
 struct HandlerCtx<'a, S> {
-    // TODO: wrap this queue into a neat api
     reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
@@ -95,26 +117,24 @@ type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
 type BoxedLink = Box<LinkTrait>;
 
 trait LinkTrait {
-    fn handle_message<'a>(&mut self, h: ReactorHandle<'a>, message: Message)
+    fn handle_message<'a>(&mut self, ReactorHandle<'a>, mozaic_message::Reader<'a>)
         -> Result<(), capnp::Error>;
 }
 
 impl<S> LinkTrait for Link<S> {
-    fn handle_message<'a> (&mut self, h: ReactorHandle<'a>, message: Message)
-        -> Result<(), capnp::Error>
+    fn handle_message<'a>(
+        &mut self,
+        handle: ReactorHandle<'a>,
+        msg: mozaic_message::Reader<'a>,
+    ) -> Result<(), capnp::Error>
     {
-        if let Some(handler) = self.external_handlers.get(&message.type_id) {
-            let message_reader = message::Reader::new(
-                message.data,
-                message::ReaderOptions::default(),
-            );
-            let msg: mozaic_message::Reader = message_reader.get_root()?;
+        if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
 
             let mut ctx = HandlerCtx {
-                reactor_handle: h,
+                reactor_handle: handle,
                 state: &mut self.state,
             };
-            handler.handle(&mut ctx, msg.get_data())?
+            handler.handle(&mut ctx, msg.get_payload())?
         }
         return Ok(());
     }
