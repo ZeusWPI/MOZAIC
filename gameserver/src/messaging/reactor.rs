@@ -28,13 +28,28 @@ struct Reactor<S> {
     links: HashMap<Uuid, BoxedLink>,
 }
 
+struct ReactorHandle<'a> {
+    message_queue: &'a mut VecDeque<Message>,
+}
+
+impl<'a> ReactorHandle<'a> {
+    fn send_message(&mut self, message: Message) {
+        self.message_queue.push_back(message);
+    }
+}
+
+
 impl<S> Reactor<S> {
     // receive a foreign message and send it to the appropriate
     // immigration bureau
-    fn handle_message(&mut self, message: Message) {
+    fn handle_external_message(&mut self, message: Message) {
         let link = self.links.get_mut(&message.sender_id)
             .expect("no link with message sender");
-        link.handle_message(&mut self.message_queue, message)
+
+        let reactor_handle = ReactorHandle {
+            message_queue: &mut self.message_queue,
+        };
+        link.handle_message(reactor_handle, message)
             .expect("yo that message was not valid");
         // the handling link may now emit a domestic message, which will
         // be received by the reactor core and all other links.
@@ -67,7 +82,7 @@ struct Link<S> {
 
 struct HandlerCtx<'a, S> {
     // TODO: wrap this queue into a neat api
-    message_queue: &'a mut VecDeque<Message>,
+    reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
 
@@ -80,12 +95,12 @@ type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
 type BoxedLink = Box<LinkTrait>;
 
 trait LinkTrait {
-    fn handle_message<'a>(&mut self, &'a mut VecDeque<Message>, message: Message)
+    fn handle_message<'a>(&mut self, h: ReactorHandle<'a>, message: Message)
         -> Result<(), capnp::Error>;
 }
 
 impl<S> LinkTrait for Link<S> {
-    fn handle_message<'a> (&mut self, q: &'a mut VecDeque<Message>, message: Message)
+    fn handle_message<'a> (&mut self, h: ReactorHandle<'a>, message: Message)
         -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&message.type_id) {
@@ -96,7 +111,7 @@ impl<S> LinkTrait for Link<S> {
             let msg: mozaic_message::Reader = message_reader.get_root()?;
 
             let mut ctx = HandlerCtx {
-                message_queue: q,
+                reactor_handle: h,
                 state: &mut self.state,
             };
             handler.handle(&mut ctx, msg.get_data())?
