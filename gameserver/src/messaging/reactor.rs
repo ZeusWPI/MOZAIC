@@ -71,13 +71,15 @@ impl<S> Reactor<S> {
     {
         let msg = message.reader()?;
         let sender_uuid = msg.get_sender()?.into();
-        let link = self.links.get_mut(&sender_uuid)
-            .expect("no link with message sender");
+        {
+            let link = self.links.get_mut(&sender_uuid)
+                .expect("no link with message sender");
 
-        let reactor_handle = ReactorHandle {
-            message_queue: &mut self.message_queue,
-        };
-        link.handle_message(reactor_handle, msg)?;
+            let reactor_handle = ReactorHandle {
+                message_queue: &mut self.message_queue,
+            };
+            link.handle_message(reactor_handle, msg)?;
+        }
     
         // the handling link may now emit a domestic message, which will
         // be received by the reactor core and all other links.
@@ -89,7 +91,26 @@ impl<S> Reactor<S> {
         // The core handler can then again emit a 'game state changed' event,
         // which the link handlers can pick up on, and forward to their remote
         // parties (the game clients).
+        self.handle_internal_queue();
         return Ok(());
+    }
+
+    fn handle_internal_queue(&mut self) {
+        while let Some(message) = self.message_queue.pop_front() {
+            let msg = message.reader().expect("invalid message");
+            if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
+                let mut ctx = HandlerCtx {
+                    reactor_handle: ReactorHandle {
+                        message_queue: &mut self.message_queue,
+                    },
+                    state: &mut self.internal_state,
+                };
+
+                handler.handle(&mut ctx, msg.get_payload())
+                    .expect("handler failed");
+                // todo: what should happen with this error?
+            }
+        }
     }
 }
 
