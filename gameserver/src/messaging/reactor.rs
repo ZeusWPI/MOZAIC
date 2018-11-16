@@ -4,7 +4,6 @@ use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, FromPointerReader, Owned};
 
-// WAAAH
 
 use capnp::message;
 
@@ -50,7 +49,7 @@ impl Message {
 struct Reactor<S> {
     message_queue: VecDeque<Message>,
     internal_state: S,
-    internal_handlers: HandlerMap<S, (), capnp::Error>,
+    internal_handlers: HashMap<u64, LinkHandler<S, (), capnp::Error>>;
     links: HashMap<Uuid, BoxedLink>,
 }
 
@@ -130,6 +129,15 @@ struct HandlerCtx<'a, S> {
     reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
+
+struct CoreCtx<'a, S> {
+    reactor_handle: ReactorHandle<'a>,
+    state: &'a mut S,
+}
+
+type CoreHandler<S, T, E> = Box<
+    for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
+>;
 
 type LinkHandler<S, T, E> = Box<
     for <'a> Handler<'a, HandlerCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
