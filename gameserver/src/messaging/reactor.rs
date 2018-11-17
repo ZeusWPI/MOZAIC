@@ -11,7 +11,7 @@ use core_capnp;
 use core_capnp::mozaic_message;
 
 #[derive(PartialEq, Eq, Hash)]
-struct Uuid {
+pub struct Uuid {
     pub x0: u64,
     pub x1: u64,
 }
@@ -49,7 +49,7 @@ impl Message {
 struct Reactor<S> {
     message_queue: VecDeque<Message>,
     internal_state: S,
-    internal_handlers: HashMap<u64, LinkHandler<S, (), capnp::Error>>;
+    internal_handlers: HashMap<u64, LinkHandler<S, (), capnp::Error>>,
     links: HashMap<Uuid, BoxedLink>,
 }
 
