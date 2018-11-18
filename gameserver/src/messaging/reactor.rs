@@ -49,7 +49,7 @@ impl Message {
 struct Reactor<S> {
     message_queue: VecDeque<Message>,
     internal_state: S,
-    internal_handlers: HashMap<u64, LinkHandler<S, (), capnp::Error>>,
+    internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
     links: HashMap<Uuid, BoxedLink>,
 }
 
@@ -100,7 +100,7 @@ impl<S> Reactor<S> {
         while let Some(message) = self.message_queue.pop_front() {
             let msg = message.reader().expect("invalid message");
             if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
-                let mut ctx = HandlerCtx {
+                let mut ctx = CoreCtx {
                     reactor_handle: ReactorHandle {
                         message_queue: &mut self.message_queue,
                     },
