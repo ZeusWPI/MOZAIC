@@ -45,6 +45,18 @@ impl Message {
     }
 }
 
+// TODO: How do we establish links?
+// In theory, knowing an UUID is enough to send messages to another actor. In
+// reality though, we need to establish some routing state, somewhere, to
+// actually make a connection. A reactor like this one should be in contact
+// with some router, that can map its uuid to an incoming message channel.
+// I guess the same router should receive messages sent by this reactors links,
+// and route them to the appropriate places. The question that remains is how
+// we lay initial contact: how do we allocate a link to recieve messages
+// from some client?
+// Maybe it would prove useful to implement a dummy service in this
+// architecture.
+
 
 struct Reactor<S> {
     message_queue: VecDeque<Message>,
