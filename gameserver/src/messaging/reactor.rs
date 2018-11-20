@@ -3,6 +3,8 @@ use super::Handler;
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, FromPointerReader, Owned};
+use futures::{Stream, Poll};
+use futures::sync::mpsc;
 
 
 use capnp::message;
@@ -26,7 +28,7 @@ impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
 }
 
 // stub message type, this should be repalced
-struct Message {
+pub struct Message {
     raw_reader: message::Reader<capnp::serialize::OwnedSegments>,
 }
 
@@ -40,7 +42,9 @@ impl Message {
         }
     }
 
-    fn reader<'a>(&'a self) -> Result<mozaic_message::Reader<'a>, capnp::Error> {
+    pub fn reader<'a>(&'a self)
+        -> Result<mozaic_message::Reader<'a>, capnp::Error>
+    {
         return self.raw_reader.get_root();
     }
 }
@@ -59,6 +63,7 @@ impl Message {
 
 
 struct Reactor<S> {
+    message_chan: mpsc::UnboundedReceiver<Message>,
     message_queue: VecDeque<Message>,
     internal_state: S,
     internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
@@ -77,6 +82,18 @@ impl<'a> ReactorHandle<'a> {
 
 
 impl<S> Reactor<S> {
+    fn receive(&mut self) -> Poll<(), ()> {
+        loop {
+            match  try_ready!(self.message_chan.poll()) {
+                None => panic!("message channel closed"),
+                Some(msg) => {
+                    self.handle_external_message(msg)
+                        .expect("invalid message");
+                }
+            }
+        }
+    }
+
     // receive a foreign message and send it to the appropriate
     // immigration bureau
     fn handle_external_message(&mut self, message: Message)
