@@ -63,7 +63,9 @@ impl Message {
 
 
 struct Reactor<S> {
+    uuid: Uuid,
     message_chan: mpsc::UnboundedReceiver<Message>,
+    broker_handle: mpsc::UnboundedSender<Message>,
     message_queue: VecDeque<Message>,
     internal_state: S,
     internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
@@ -108,7 +110,12 @@ impl<S> Reactor<S> {
             let reactor_handle = ReactorHandle {
                 message_queue: &mut self.message_queue,
             };
-            link.handle_message(reactor_handle, msg)?;
+            let reactor_ctx = ReactorCtx {
+                uuid: &self.uuid,
+                reactor_handle,
+                broker_handle: &mut self.broker_handle,
+            };
+            link.handle_message(reactor_ctx, msg)?;
         }
     
         // the handling link may now emit a domestic message, which will
@@ -146,6 +153,8 @@ impl<S> Reactor<S> {
 
 
 struct Link<S> {
+    /// Uuid of remote party
+    remote_uuid: Uuid,
     /// handler state
     state: S,
     /// handle internal messages (sent by core, or other link handlers)
@@ -154,7 +163,16 @@ struct Link<S> {
     external_handlers: HandlerMap<S, (), capnp::Error>,
 }
 
+struct ReactorCtx<'a> {
+    uuid: &'a Uuid,
+    reactor_handle: ReactorHandle<'a>,
+    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+}
+
 struct HandlerCtx<'a, S> {
+    uuid: &'a Uuid,
+    remote_uuid: &'a Uuid,
+    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
     reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
@@ -177,24 +195,27 @@ type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
 type BoxedLink = Box<LinkTrait>;
 
 trait LinkTrait {
-    fn handle_message<'a>(&mut self, ReactorHandle<'a>, mozaic_message::Reader<'a>)
+    fn handle_message<'a>(&mut self, ReactorCtx<'a>, mozaic_message::Reader<'a>)
         -> Result<(), capnp::Error>;
 }
 
 impl<S> LinkTrait for Link<S> {
     fn handle_message<'a>(
         &mut self,
-        handle: ReactorHandle<'a>,
+        ctx: ReactorCtx<'a>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
 
-            let mut ctx = HandlerCtx {
-                reactor_handle: handle,
+            let mut handler_ctx = HandlerCtx {
+                uuid: ctx.uuid,
+                remote_uuid: &self.remote_uuid,
+                broker_handle: ctx.broker_handle,
+                reactor_handle: ctx.reactor_handle,
                 state: &mut self.state,
             };
-            handler.handle(&mut ctx, msg.get_payload())?
+            handler.handle(&mut handler_ctx, msg.get_payload())?
         }
         return Ok(());
     }
