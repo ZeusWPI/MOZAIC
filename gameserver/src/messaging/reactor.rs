@@ -11,6 +11,7 @@ use capnp::message;
 
 use core_capnp;
 use core_capnp::mozaic_message;
+use core_capnp::greet_person;
 
 #[derive(PartialEq, Eq, Hash)]
 pub struct Uuid {
@@ -181,6 +182,36 @@ struct CoreCtx<'a, S> {
     reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
+
+struct Sender<'a> {
+    uuid: &'a Uuid,
+    remote_uuid: &'a Uuid,
+    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+}
+
+impl<'a> Sender<'a> {
+    fn send_message<M, F>(&mut self, _: M, initializer: F)
+        where F: for <'b> FnOnce(<M as Owned<'b>>::Builder),
+              M: for <'b> Owned<'b>,
+              <M as Owned<'static>>::Builder: HasTypeId, 
+    {
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+        msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+        {
+            let mut payload_builder = msg.reborrow().init_payload();
+            initializer(payload_builder.init_as());
+        }
+
+        // TODO: this message has to go somewhere =/
+    }
+}
+
+fn test_types<'a>(mut sender: Sender<'a>) {
+    sender.send_message(greet_person::Owned, |mut b| {
+        b.set_person_name("bob");
+    });
+} 
 
 type CoreHandler<S, T, E> = Box<
     for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
