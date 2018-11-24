@@ -30,14 +30,41 @@ impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
 
 // stub message type, this should be repalced
 pub struct Message {
-    raw_reader: message::Reader<capnp::serialize::OwnedSegments>,
+    raw_reader: message::Reader<VecSegment>,
+}
+
+pub struct VecSegment {
+    words: Vec<capnp::Word>,
+}
+
+impl VecSegment {
+    pub fn new(words: Vec<capnp::Word>) -> Self {
+        VecSegment {
+            words,
+        }
+    }
+ 
+}
+
+impl capnp::message::ReaderSegments for VecSegment {
+    fn get_segment<'a>(&'a self, idx: u32) -> Option<&'a [capnp::Word]> {
+        if idx == 0 {
+            return Some(&self.words);
+        } else {
+            return None;
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.words.len()
+    }
 }
 
 impl Message {
-    fn from_segments(segments: capnp::serialize::OwnedSegments) -> Self {
+    fn from_segment(segment: VecSegment) -> Self {
         Message {
             raw_reader: message::Reader::new(
-                segments,
+                segment,
                 message::ReaderOptions::default(),
             ),
         }
@@ -196,13 +223,25 @@ impl<'a> Sender<'a> {
               <M as Owned<'static>>::Builder: HasTypeId, 
     {
         let mut message_builder = ::capnp::message::Builder::new_default();
-        let mut msg = message_builder.init_root::<mozaic_message::Builder>();
-        msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
         {
-            let mut payload_builder = msg.reborrow().init_payload();
-            initializer(payload_builder.init_as());
+            // TODO: set values
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let mut payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder.init_as());
+            }
         }
 
+
+        let words = message_builder.into_reader().canonicalize().unwrap();
+        let segment = VecSegment::new(words);
+        let message = Message {
+            raw_reader: capnp::message::Reader::new(
+                segment,
+                capnp::message::ReaderOptions::default(),
+            )
+        };
         // TODO: this message has to go somewhere =/
     }
 }
