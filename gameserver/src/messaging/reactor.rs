@@ -6,7 +6,6 @@ use capnp::traits::{HasTypeId, FromPointerReader, Owned};
 use futures::{Stream, Poll};
 use futures::sync::mpsc;
 
-
 use capnp::message;
 
 use core_capnp;
@@ -17,6 +16,11 @@ use core_capnp::greet_person;
 pub struct Uuid {
     pub x0: u64,
     pub x1: u64,
+}
+
+fn set_uuid<'a>(mut builder: core_capnp::uuid::Builder<'a>, uuid: &Uuid) {
+    builder.set_x0(uuid.x0);
+    builder.set_x1(uuid.x1);
 }
 
 impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
@@ -224,8 +228,11 @@ impl<'a> Sender<'a> {
     {
         let mut message_builder = ::capnp::message::Builder::new_default();
         {
-            // TODO: set values
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), self.uuid);
+            set_uuid(msg.reborrow().init_receiver(), self.remote_uuid);
+
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
                 let mut payload_builder = msg.reborrow().init_payload();
