@@ -32,7 +32,10 @@ impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
     }
 }
 
-// stub message type, this should be repalced
+// TODO: it might be nice to make a message a reference-counted byte array,
+// analogous to the Bytes type. On construction, it could be canonicalized
+// and signed, then "frozen", just like Bytes. After that, it could easily be
+// passed around the system.
 pub struct Message {
     raw_reader: message::Reader<VecSegment>,
 }
@@ -202,9 +205,7 @@ struct ReactorCtx<'a> {
 }
 
 struct HandlerCtx<'a, S> {
-    uuid: &'a Uuid,
-    remote_uuid: &'a Uuid,
-    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+    sender: Sender<'a>,
     reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
@@ -240,7 +241,7 @@ impl<'a> Sender<'a> {
             }
         }
 
-
+        // TODO: try wrapping this in some package
         let words = message_builder.into_reader().canonicalize().unwrap();
         let segment = VecSegment::new(words);
         let message = Message {
@@ -285,10 +286,14 @@ impl<S> LinkTrait for Link<S> {
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
 
-            let mut handler_ctx = HandlerCtx {
+            let sender = Sender {
                 uuid: ctx.uuid,
                 remote_uuid: &self.remote_uuid,
                 broker_handle: ctx.broker_handle,
+            };
+
+            let mut handler_ctx = HandlerCtx {
+                sender,
                 reactor_handle: ctx.reactor_handle,
                 state: &mut self.state,
             };
