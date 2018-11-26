@@ -68,6 +68,19 @@ impl capnp::message::ReaderSegments for VecSegment {
 }
 
 impl Message {
+    fn from_capnp<S>(reader: message::Reader<S>) -> Self
+        where S: capnp::message::ReaderSegments
+    {
+        let words = reader.canonicalize().unwrap();
+        let segment = VecSegment::new(words);
+        return Message {
+            raw_reader: capnp::message::Reader::new(
+                segment,
+                capnp::message::ReaderOptions::default(),
+            )
+        };
+    }
+
     fn from_segment(segment: VecSegment) -> Self {
         Message {
             raw_reader: message::Reader::new(
@@ -107,17 +120,6 @@ struct Reactor<S> {
     links: HashMap<Uuid, BoxedLink>,
 }
 
-struct ReactorHandle<'a> {
-    message_queue: &'a mut VecDeque<Message>,
-}
-
-impl<'a> ReactorHandle<'a> {
-    fn send_message(&mut self, message: Message) {
-        self.message_queue.push_back(message);
-    }
-}
-
-
 impl<S> Reactor<S> {
     fn receive(&mut self) -> Poll<(), ()> {
         loop {
@@ -143,6 +145,7 @@ impl<S> Reactor<S> {
                 .expect("no link with message sender");
 
             let reactor_handle = ReactorHandle {
+                uuid: &self.uuid,
                 message_queue: &mut self.message_queue,
             };
             let reactor_ctx = ReactorCtx {
@@ -173,6 +176,7 @@ impl<S> Reactor<S> {
             if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
                 let mut ctx = CoreCtx {
                     reactor_handle: ReactorHandle {
+                        uuid: &self.uuid,
                         message_queue: &mut self.message_queue,
                     },
                     state: &mut self.internal_state,
@@ -215,6 +219,46 @@ struct CoreCtx<'a, S> {
     state: &'a mut S,
 }
 
+// TODO: is this the right name for this?
+/// for sending messages inside the reactor
+struct ReactorHandle<'a> {
+    uuid: &'a Uuid,
+    message_queue: &'a mut VecDeque<Message>,
+}
+
+impl<'a> ReactorHandle<'a> {
+    // TODO: should this be part of some trait?
+    fn send_message<M, F>(&mut self, _: M, initializer: F)
+        where F: for <'b> FnOnce(<M as Owned<'b>>::Builder),
+              M: for <'b> Owned<'b>,
+              <M as Owned<'static>>::Builder: HasTypeId, 
+
+    {
+        // TODO: oh help, dupe. Isn't this kind of incidental, though?
+        // the values that are set on the message do differ, only in uuids
+        // now, but they will differ more once timestamps and ids get added.
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        {
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), self.uuid);
+            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let mut payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder.init_as());
+            }
+        }
+
+        let message = Message::from_capnp(message_builder.into_reader());
+        self.message_queue.push_back(message);
+    }
+}
+
+
+
+/// for sending messages to other actors
 struct Sender<'a> {
     uuid: &'a Uuid,
     remote_uuid: &'a Uuid,
@@ -241,16 +285,8 @@ impl<'a> Sender<'a> {
             }
         }
 
-        // TODO: try wrapping this in some package
-        let words = message_builder.into_reader().canonicalize().unwrap();
-        let segment = VecSegment::new(words);
-        let message = Message {
-            raw_reader: capnp::message::Reader::new(
-                segment,
-                capnp::message::ReaderOptions::default(),
-            )
-        };
-        // TODO: this message has to go somewhere =/
+        let msg = Message::from_capnp(message_builder.into_reader());
+        self.broker_handle.unbounded_send(msg);
     }
 }
 
