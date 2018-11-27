@@ -4,20 +4,18 @@ use futures::{Future, Stream, Poll};
 
 use super::reactor::{Uuid, Message};
 
-struct Broker {
+pub struct Broker {
     recv: mpsc::UnboundedReceiver<Message>,
+    snd: mpsc::UnboundedSender<Message>,
     actors: HashMap<Uuid, mpsc::UnboundedSender<Message>>,
 }
 
 impl Broker {
     fn route_messages(&mut self) -> Poll<(), ()> {
         loop {
-            match try_ready!(self.recv.poll()) {
-                None => panic!("broker channel closed"),
-                Some(msg) => {
-                    self.route_message(msg).unwrap();
-                }
-            }
+            // unwrapping is fine because we hold a handle
+            let msg = try_ready!(self.recv.poll()).unwrap();
+            self.route_message(msg).unwrap();
         }
     }
 
