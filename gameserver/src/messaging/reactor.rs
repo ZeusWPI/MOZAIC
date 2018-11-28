@@ -110,6 +110,8 @@ impl Message {
 // architecture.
 
 
+// TODO: can we partition the state so that borrowing can be easier?
+// eg group uuid, broker_handle, message_queue
 struct Reactor<S> {
     uuid: Uuid,
     message_chan: mpsc::UnboundedReceiver<Message>,
@@ -179,6 +181,7 @@ impl<S> Reactor<S> {
                         uuid: &self.uuid,
                         message_queue: &mut self.message_queue,
                     },
+                    links: &mut self.links,
                     state: &mut self.internal_state,
                 };
 
@@ -216,6 +219,7 @@ struct HandlerCtx<'a, S> {
 
 struct CoreCtx<'a, S> {
     reactor_handle: ReactorHandle<'a>,
+    links: &'a mut HashMap<Uuid, BoxedLink>,
     state: &'a mut S,
 }
 
