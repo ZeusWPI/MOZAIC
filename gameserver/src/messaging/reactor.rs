@@ -112,14 +112,14 @@ impl Message {
 
 // TODO: can we partition the state so that borrowing can be easier?
 // eg group uuid, broker_handle, message_queue
-struct Reactor<S> {
-    uuid: Uuid,
-    message_chan: mpsc::UnboundedReceiver<Message>,
-    broker_handle: mpsc::UnboundedSender<Message>,
-    message_queue: VecDeque<Message>,
-    internal_state: S,
-    internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
-    links: HashMap<Uuid, BoxedLink>,
+pub struct Reactor<S> {
+    pub uuid: Uuid,
+    pub message_chan: mpsc::UnboundedReceiver<Message>,
+    pub broker_handle: mpsc::UnboundedSender<Message>,
+    pub message_queue: VecDeque<Message>,
+    pub internal_state: S,
+    pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
+    pub links: HashMap<Uuid, BoxedLink>,
 }
 
 impl<S> Reactor<S> {
