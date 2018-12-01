@@ -205,19 +205,19 @@ struct Link<S> {
     external_handlers: HandlerMap<S, (), capnp::Error>,
 }
 
-struct ReactorCtx<'a> {
+pub struct ReactorCtx<'a> {
     uuid: &'a Uuid,
     reactor_handle: ReactorHandle<'a>,
     broker_handle: &'a mut mpsc::UnboundedSender<Message>,
 }
 
-struct HandlerCtx<'a, S> {
-    sender: Sender<'a>,
-    reactor_handle: ReactorHandle<'a>,
-    state: &'a mut S,
+pub struct HandlerCtx<'a, S> {
+    pub sender: Sender<'a>,
+    pub reactor_handle: ReactorHandle<'a>,
+    pub state: &'a mut S,
 }
 
-struct CoreCtx<'a, S> {
+pub struct CoreCtx<'a, S> {
     reactor_handle: ReactorHandle<'a>,
     links: &'a mut HashMap<Uuid, BoxedLink>,
     state: &'a mut S,
@@ -225,14 +225,14 @@ struct CoreCtx<'a, S> {
 
 // TODO: is this the right name for this?
 /// for sending messages inside the reactor
-struct ReactorHandle<'a> {
+pub struct ReactorHandle<'a> {
     uuid: &'a Uuid,
     message_queue: &'a mut VecDeque<Message>,
 }
 
 impl<'a> ReactorHandle<'a> {
     // TODO: should this be part of some trait?
-    fn send_message<M, F>(&mut self, _: M, initializer: F)
+    pub fn send_message<M, F>(&mut self, _: M, initializer: F)
         where F: for <'b> FnOnce(<M as Owned<'b>>::Builder),
               M: for <'b> Owned<'b>,
               <M as Owned<'static>>::Builder: HasTypeId, 
@@ -263,7 +263,7 @@ impl<'a> ReactorHandle<'a> {
 
 
 /// for sending messages to other actors
-struct Sender<'a> {
+pub struct Sender<'a> {
     uuid: &'a Uuid,
     remote_uuid: &'a Uuid,
     broker_handle: &'a mut mpsc::UnboundedSender<Message>,
@@ -310,9 +310,9 @@ type LinkHandler<S, T, E> = Box<
 
 type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
 
-type BoxedLink = Box<LinkTrait>;
+pub type BoxedLink = Box<LinkTrait>;
 
-trait LinkTrait {
+pub trait LinkTrait {
     fn handle_message<'a>(&mut self, ReactorCtx<'a>, mozaic_message::Reader<'a>)
         -> Result<(), capnp::Error>;
 }
