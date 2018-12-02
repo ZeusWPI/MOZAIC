@@ -31,6 +31,24 @@ pub fn run() {
         greet_person::Reader::type_id(),
         Box::new(AnyPtrHandler::new(h)),
     );
+
+    let mut link = Link {
+        remote_uuid: Uuid {
+            x0: 8,
+            x1: 9,
+        },
+        state: LinkState {},
+        internal_handlers: HashMap::new(),
+        external_handlers: HashMap::new(),
+    };
+
+    let h2 = FnHandler::new(greet_person::Owned, receive_greet);
+    link.external_handlers.insert(
+        greet_person::Reader::type_id(),
+        Box::new(AnyPtrHandler::new(h2)),
+    );
+
+    reactor.links.insert(link.remote_uuid.clone(), Box::new(link));
 }
 
 

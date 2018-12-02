@@ -12,7 +12,7 @@ use core_capnp;
 use core_capnp::mozaic_message;
 use core_capnp::greet_person;
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash)]
 pub struct Uuid {
     pub x0: u64,
     pub x1: u64,
@@ -194,15 +194,15 @@ impl<S> Reactor<S> {
 }
 
 
-struct Link<S> {
+pub struct Link<S> {
     /// Uuid of remote party
-    remote_uuid: Uuid,
+    pub remote_uuid: Uuid,
     /// handler state
-    state: S,
+    pub state: S,
     /// handle internal messages (sent by core, or other link handlers)
-    internal_handlers: HandlerMap<S, (), capnp::Error>,
+    pub internal_handlers: HandlerMap<S, (), capnp::Error>,
     /// handle external messages (sent by remote party)
-    external_handlers: HandlerMap<S, (), capnp::Error>,
+    pub external_handlers: HandlerMap<S, (), capnp::Error>,
 }
 
 pub struct ReactorCtx<'a> {
@@ -218,7 +218,7 @@ pub struct HandlerCtx<'a, S> {
 }
 
 pub struct CoreCtx<'a, S> {
-    reactor_handle: ReactorHandle<'a>,
+    pub reactor_handle: ReactorHandle<'a>,
     links: &'a mut HashMap<Uuid, BoxedLink>,
     state: &'a mut S,
 }
@@ -226,8 +226,8 @@ pub struct CoreCtx<'a, S> {
 // TODO: is this the right name for this?
 /// for sending messages inside the reactor
 pub struct ReactorHandle<'a> {
-    uuid: &'a Uuid,
-    message_queue: &'a mut VecDeque<Message>,
+    pub uuid: &'a Uuid,
+    pub message_queue: &'a mut VecDeque<Message>,
 }
 
 impl<'a> ReactorHandle<'a> {
