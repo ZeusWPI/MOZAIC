@@ -2,7 +2,7 @@ use std::collections::{HashMap, VecDeque};
 use super::Handler;
 use capnp;
 use capnp::any_pointer;
-use capnp::traits::{HasTypeId, FromPointerReader, Owned};
+use capnp::traits::{HasTypeId, Owned};
 use futures::{Stream, Poll};
 use futures::sync::mpsc;
 
@@ -250,7 +250,7 @@ impl<'a> ReactorHandle<'a> {
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
-                let mut payload_builder = msg.reborrow().init_payload();
+                let payload_builder = msg.reborrow().init_payload();
                 initializer(payload_builder.init_as());
             }
         }
@@ -284,13 +284,13 @@ impl<'a> Sender<'a> {
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
-                let mut payload_builder = msg.reborrow().init_payload();
+                let payload_builder = msg.reborrow().init_payload();
                 initializer(payload_builder.init_as());
             }
         }
 
         let msg = Message::from_capnp(message_builder.into_reader());
-        self.broker_handle.unbounded_send(msg);
+        self.broker_handle.unbounded_send(msg).unwrap();
     }
 }
 
