@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as FA from 'react-fontawesome';
 import { Link } from 'react-router-dom';
-import { h, h1, h2, div, section, img, p, span } from 'react-hyperscript-helpers';
+import { h, h1, h2, div, section, img, p, span, hr, h3 } from 'react-hyperscript-helpers';
 import { Hero, HeroBody, HeroFooter, HeroHeader, Container, Button } from 'bloomer';
 
 import Navbar from './Navbar';
@@ -14,7 +14,7 @@ export default class Home extends React.Component<{}, {}> {
   render() {
     return [
       h(Navbar),
-      h(Hero, '.push', { isColor: 'primary' }, [
+      h(Hero, '.push', { isColor: 'primary'}, [
         h(HeroBody, [
           h(Container, '#home-hero-body', { hasTextAlign: 'centered' }, [
             h(Teaser),
@@ -22,6 +22,7 @@ export default class Home extends React.Component<{}, {}> {
             h(CodePlayWin),
             h(Intro),
             h(GetStartedButton),
+            h(UpcomingEvents),
           ])
         ])
       ]),
@@ -32,7 +33,7 @@ export default class Home extends React.Component<{}, {}> {
 
 const Logo: React.SFC<{}> = (props) => {
   return img({
-    src: './static/small_logo_trans.png',
+    src:'./static/small_logo_trans.png',
     alt: 'BottleBats 2018 AI Competition',
   });
 }
@@ -54,25 +55,54 @@ const Teaser: React.SFC<{}> = (props) => {
 
 const CodePlayWin: React.SFC<{}> = (props) => {
   return div('#code-play-win', [
-    h(CPWItem, { name: 'code', text: 'Code' }),
-    h(CPWItem, { name: 'rocket', text: 'Play' }),
-    h(CPWItem, { name: 'trophy', text: 'Win' })
+    h(LinkItem, {to: '/code', item: h(CPWItem, { name: 'code', text: 'Code'} )}),
+    h(LinkItem, {to: '/play', item: h(CPWItem, { name: 'rocket', text: 'Play'} )}),
+    h(LinkItem, {to: '/win', item: h(CPWItem, { name: 'trophy', text: 'Win'} )}),
   ]);
+}
+
+const UpcomingEvents: React.SFC<{}> = (props) => {
+  return div('#events', [
+    h2('.subtitle.is-size-4', ['Coming events']),
+    hr(),
+    h(LinkItem, {to: '/26-03', item: 
+      h(Event, {title: "introduction", date: "26 March", item: h2('.event-item', ['test'])})
+    }),
+  ]);
+}
+
+interface EventProps { date: string, item: React.ReactElement<any>, title: string }
+const Event: React.SFC<EventProps> = (props) => {
+  return div('.event', [
+    div('.event-header', [
+      h2('.subtitle.is-size-3 .event-title', [props.title]),
+      h2('.subtitle.is-size-5', [props.date]),
+    ]),
+    props.item,
+  ]);
+}
+
+interface LinkItemProps { to: string, item: React.ReactElement<any> }
+const LinkItem: React.SFC<LinkItemProps> = (props) => {
+  return h(Link, 
+    {to: props.to,},
+    [props.item],
+  );
 }
 
 interface ICPWItemProps { name: string, text: string }
 const CPWItem: React.SFC<ICPWItemProps> = (props) => {
   return div('.cpw-item.grow', [
     // TS complains about the size type while it shouldn't
-    h(FA, { name: props.name, fixedWidth: true } as any),
+    h(FA, <any> {name: props.name, fixedWidth: true }),
     p([props.text]),
   ]);
 }
 
 const GetStartedButton: React.SFC<{}> = (props) => {
-  return (<Link
-    to='/info'
-    className='button is-inverted is-large is-link is-outlined is-primary' >
-    Learn
-  </Link>)
+  return h(Link, 
+    '.button.is-inverted.is-large.is-link.is-outlined.is-primary', 
+    {to: '/info',},
+    ['Learn more!']
+  );
 }
