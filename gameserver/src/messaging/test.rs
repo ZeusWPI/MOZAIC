@@ -70,8 +70,9 @@ fn receive_greet<'a>(
     reader: greet_person::Reader<'a>,
 ) -> Result<(), capnp::Error>
 {
-    state.reactor_handle.send_message(greet_person::Owned, |mut b| {
-        b.set_person_name(reader.get_person_name().unwrap());
+    state.reactor_handle.send_message(greet_person::Owned, |b| {
+        let mut greeting: greet_person::Builder = b.init_as();
+        greeting.set_person_name(reader.get_person_name().unwrap());
     });
     return Ok(());
 }

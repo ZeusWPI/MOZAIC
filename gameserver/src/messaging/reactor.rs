@@ -232,10 +232,10 @@ pub struct ReactorHandle<'a> {
 
 impl<'a> ReactorHandle<'a> {
     // TODO: should this be part of some trait?
-    pub fn send_message<M, F>(&mut self, _: M, initializer: F)
-        where F: for <'b> FnOnce(<M as Owned<'b>>::Builder),
-              M: for <'b> Owned<'b>,
-              <M as Owned<'static>>::Builder: HasTypeId, 
+    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
 
     {
         // TODO: oh help, dupe. Isn't this kind of incidental, though?
@@ -251,7 +251,7 @@ impl<'a> ReactorHandle<'a> {
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
                 let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder.init_as());
+                initializer(payload_builder);
             }
         }
 
@@ -259,7 +259,6 @@ impl<'a> ReactorHandle<'a> {
         self.message_queue.push_back(message);
     }
 }
-
 
 
 /// for sending messages to other actors
@@ -270,10 +269,10 @@ pub struct Sender<'a> {
 }
 
 impl<'a> Sender<'a> {
-    fn send_message<M, F>(&mut self, _: M, initializer: F)
-        where F: for <'b> FnOnce(<M as Owned<'b>>::Builder),
-              M: for <'b> Owned<'b>,
-              <M as Owned<'static>>::Builder: HasTypeId, 
+    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
     {
         let mut message_builder = ::capnp::message::Builder::new_default();
         {
@@ -285,7 +284,7 @@ impl<'a> Sender<'a> {
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
                 let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder.init_as());
+                initializer(payload_builder);
             }
         }
 
@@ -295,8 +294,9 @@ impl<'a> Sender<'a> {
 }
 
 fn test_types<'a>(mut sender: Sender<'a>) {
-    sender.send_message(greet_person::Owned, |mut b| {
-        b.set_person_name("bob");
+    sender.send_message(greet_person::Owned, |b| {
+        let mut greeting: greet_person::Builder = b.init_as();
+        greeting.set_person_name("bob");
     });
 } 
 
