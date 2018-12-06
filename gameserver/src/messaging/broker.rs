@@ -11,6 +11,25 @@ pub struct Broker {
 }
 
 impl Broker {
+    pub fn new() -> Self {
+        let (snd, recv) = mpsc::unbounded();
+
+        Broker {
+            recv,
+            snd,
+            actors: HashMap::new(),
+        }
+    }
+
+    pub fn get_handle(&self) -> mpsc::UnboundedSender<Message> {
+        self.snd.clone()
+    }
+
+    pub fn add_actor(&mut self, uuid: Uuid, snd: mpsc::UnboundedSender<Message>)
+    {
+        self.actors.insert(uuid, snd);
+    }
+
     fn route_messages(&mut self) -> Poll<(), ()> {
         loop {
             // unwrapping is fine because we hold a handle
@@ -29,7 +48,7 @@ impl Broker {
                 .expect("unknown receiver");
             chan
         };
-        chan.unbounded_send(message);
+        chan.unbounded_send(message).unwrap();
         return Ok(());
     }
 }

@@ -3,7 +3,7 @@ use super::Handler;
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, Owned};
-use futures::{Stream, Poll};
+use futures::{Future, Stream, Poll};
 use futures::sync::mpsc;
 
 use capnp::message;
@@ -120,6 +120,15 @@ pub struct Reactor<S> {
     pub internal_state: S,
     pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
     pub links: HashMap<Uuid, BoxedLink>,
+}
+
+impl<S> Future for Reactor<S> {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        self.receive()
+    }
 }
 
 impl<S> Reactor<S> {
@@ -263,9 +272,9 @@ impl<'a> ReactorHandle<'a> {
 
 /// for sending messages to other actors
 pub struct Sender<'a> {
-    uuid: &'a Uuid,
-    remote_uuid: &'a Uuid,
-    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+    pub uuid: &'a Uuid,
+    pub remote_uuid: &'a Uuid,
+    pub broker_handle: &'a mut mpsc::UnboundedSender<Message>,
 }
 
 impl<'a> Sender<'a> {
@@ -312,12 +321,14 @@ type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
 
 pub type BoxedLink = Box<LinkTrait>;
 
-pub trait LinkTrait {
+pub trait LinkTrait: Send {
     fn handle_message<'a>(&mut self, ReactorCtx<'a>, mozaic_message::Reader<'a>)
         -> Result<(), capnp::Error>;
 }
 
-impl<S> LinkTrait for Link<S> {
+impl<S> LinkTrait for Link<S>
+    where S: Send
+{
     fn handle_message<'a>(
         &mut self,
         ctx: ReactorCtx<'a>,
