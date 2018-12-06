@@ -12,7 +12,7 @@ use core_capnp;
 use core_capnp::mozaic_message;
 use core_capnp::greet_person;
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Uuid {
     pub x0: u64,
     pub x1: u64,

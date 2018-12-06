@@ -26,7 +26,7 @@ impl<S, T, E> HandlerSet<S, T, E> {
         where H: for <'a> Handler<'a, S, M, Output=T, Error=E>,
               H: Sized + 'static,
               E: From<capnp::Error>,
-              M: for <'a> Owned<'a> + 'static,
+              M: for <'a> Owned<'a> + 'static + Send,
               <M as Owned<'static>>::Reader: HasTypeId,
     {
         let type_id = <M as Owned<'static>>::Reader::type_id();
@@ -63,7 +63,7 @@ impl<S, T, E> MessageHandler<S, T, E> {
         where H: for <'a> Handler<'a, S, M, Output=T, Error=E>,
               H: Sized + 'static,
               E: From<capnp::Error>,
-              M: for <'a> Owned<'a> + 'static,
+              M: for <'a> Owned<'a> + 'static + Send,
               <M as Owned<'static>>::Reader: HasTypeId,
     {
         let type_id = <M as Owned<'static>>::Reader::type_id();
@@ -102,7 +102,7 @@ impl<H, M> AnyPtrHandler<H, M> {
 impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
     where H: Handler<'a, S, M>,
           H::Error: From<capnp::Error>,
-          M: Owned<'a>
+          M: Send + Owned<'a>
 {
     type Output = H::Output;
     type Error = H::Error;
@@ -116,7 +116,7 @@ impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
 }
 
 /// Handles messages of type M with lifetime 'a, using state S.
-pub trait Handler<'a, S, M>
+pub trait Handler<'a, S, M>: Send
     where M: Owned<'a>
 {
     type Output;
@@ -149,7 +149,8 @@ impl<M, F> FnHandler<M, F> {
 
 impl<'a, S, M, F, T, E> Handler<'a, S, M> for FnHandler<M, F>
     where F: Fn(&mut S, <M as Owned<'a>>::Reader) -> Result<T, E>,
-          M: Owned<'a>
+          F: Send,
+          M: Owned<'a> + 'static + Send
 {
     type Output = T;
     type Error = E;

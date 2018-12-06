@@ -7,19 +7,33 @@ use capnp::traits::HasTypeId;
 use core_capnp::greet_person;
 use super::{AnyPtrHandler, FnHandler};
 
+use futures::Future;
 use futures::sync::mpsc;
 
+use tokio::runtime::Runtime;
+
 pub fn run() {
-    let (broker_snd, broker_recv) = mpsc::unbounded();
+    // Create the runtime
+    let mut rt = Runtime::new().unwrap();
+
     let (reactor_snd, reactor_recv) = mpsc::unbounded();
 
+    let reactor_uuid = Uuid {
+        x0: 8,
+        x1: 8,
+    };
+
+    let remote_uuid = Uuid {
+        x0: 8,
+        x1: 9,
+    };
+
+    let mut broker = Broker::new();
+
     let mut reactor = Reactor {
-        uuid: Uuid {
-            x0: 8,
-            x1: 8,
-        },
+        uuid: reactor_uuid.clone(),
         message_chan: reactor_recv,
-        broker_handle: broker_snd,
+        broker_handle: broker.get_handle(),
         message_queue: VecDeque::new(),
         internal_state: CoreState {},
         internal_handlers: HashMap::new(),
@@ -33,10 +47,7 @@ pub fn run() {
     );
 
     let mut link = Link {
-        remote_uuid: Uuid {
-            x0: 8,
-            x1: 9,
-        },
+        remote_uuid: remote_uuid.clone(),
         state: LinkState {},
         internal_handlers: HashMap::new(),
         external_handlers: HashMap::new(),
@@ -49,13 +60,33 @@ pub fn run() {
     );
 
     reactor.links.insert(link.remote_uuid.clone(), Box::new(link));
+    
+    broker.add_actor(reactor.uuid.clone(), reactor_snd);
+    rt.spawn(reactor);
+
+    let mut broker_handle = broker.get_handle();
+    rt.spawn(broker);
+
+    let mut test_sender = Sender {
+        uuid: &remote_uuid,
+        remote_uuid: &reactor_uuid,
+        broker_handle: &mut broker_handle,
+    };
+
+    test_sender.send_message(greet_person::Owned, |b| {
+        let mut greeting: greet_person::Builder = b.init_as();
+        greeting.set_person_name("bob");
+    });
+
+    // Wait until the runtime becomes idle and shut it down.
+    rt.shutdown_on_idle().wait().unwrap();
 }
 
 
 struct CoreState {}
 
 fn greet_person_handler<'a>(
-    state: &mut CoreCtx<'a, CoreState>,
+    _state: &mut CoreCtx<'a, CoreState>,
     reader: greet_person::Reader<'a>,
 ) -> Result<(), capnp::Error>
 {
