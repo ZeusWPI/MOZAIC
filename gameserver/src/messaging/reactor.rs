@@ -1,5 +1,6 @@
 use std::collections::{HashMap, VecDeque};
 use super::Handler;
+use super::broker::BrokerHandle;
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, Owned};
@@ -128,6 +129,33 @@ pub struct ReactorParams<S> {
     pub links: Vec<Box<LinkParamsTrait>>,
 }
 
+pub trait ReactorSpawner: 'static + Send {
+    fn reactor_uuid<'a>(&'a self) -> &'a Uuid;
+    fn spawn_reactor(
+        self: Box<Self>,
+        broker_handle: BrokerHandle,
+    ) -> mpsc::UnboundedSender<Message>;
+}
+
+impl<S> ReactorSpawner for ReactorParams<S>
+    where S: 'static + Send
+{
+    fn reactor_uuid<'a>(&'a self) -> &'a Uuid {
+        &self.uuid
+    }
+
+    fn spawn_reactor(
+        self: Box<Self>,
+        broker_handle: BrokerHandle,
+    ) -> mpsc::UnboundedSender<Message>
+    {
+        let params = *self;
+        let (handle, reactor) = Reactor::new(broker_handle, params);
+        tokio::spawn(reactor);
+        return handle;
+    }
+}
+
 pub struct CoreParams<S> {
     pub state: S,
     pub handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
@@ -140,7 +168,7 @@ pub struct LinkParams<S> {
     pub external_handlers: HandlerMap<S, (), capnp::Error>,
 }
 
-pub trait LinkParamsTrait {
+pub trait LinkParamsTrait: 'static + Send {
     fn remote_uuid<'a>(&'a self) -> &'a Uuid;
     fn into_link(self: Box<Self>) -> Box<LinkTrait>;
 }
@@ -170,7 +198,7 @@ impl<S> LinkParamsTrait for LinkParams<S>
 pub struct Reactor<S> {
     pub uuid: Uuid,
     pub message_chan: mpsc::UnboundedReceiver<Message>,
-    pub broker_handle: mpsc::UnboundedSender<Message>,
+    pub broker_handle: BrokerHandle,
     pub message_queue: VecDeque<Message>,
     pub internal_state: S,
     pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
@@ -188,7 +216,7 @@ impl<S> Future for Reactor<S> {
 
 impl<S> Reactor<S> {
     pub fn new(
-        broker_handle: mpsc::UnboundedSender<Message>,
+        broker_handle: BrokerHandle,
         params: ReactorParams<S>
     ) -> (mpsc::UnboundedSender<Message>, Self)
     {
@@ -298,7 +326,7 @@ pub struct Link<S> {
 pub struct ReactorCtx<'a> {
     uuid: &'a Uuid,
     reactor_handle: ReactorHandle<'a>,
-    broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+    broker_handle: &'a mut BrokerHandle,
 }
 
 pub struct HandlerCtx<'a, S> {
@@ -355,7 +383,7 @@ impl<'a> ReactorHandle<'a> {
 pub struct Sender<'a> {
     pub uuid: &'a Uuid,
     pub remote_uuid: &'a Uuid,
-    pub broker_handle: &'a mut mpsc::UnboundedSender<Message>,
+    pub broker_handle: &'a mut BrokerHandle,
 }
 
 impl<'a> Sender<'a> {
@@ -379,7 +407,7 @@ impl<'a> Sender<'a> {
         }
 
         let msg = Message::from_capnp(message_builder.into_reader());
-        self.broker_handle.unbounded_send(msg).unwrap();
+        self.broker_handle.send(msg);
     }
 }
 
