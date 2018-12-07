@@ -6,6 +6,9 @@ use capnp::traits::{HasTypeId, Owned};
 use futures::{Future, Stream, Poll};
 use futures::sync::mpsc;
 
+use rand;
+use rand::Rng;
+
 use capnp::message;
 
 use core_capnp;
@@ -17,6 +20,16 @@ pub struct Uuid {
     pub x0: u64,
     pub x1: u64,
 }
+
+impl rand::distributions::Distribution<Uuid> for rand::distributions::Standard {
+    fn sample<G: Rng + ?Sized>(&self, rng: &mut G) -> Uuid {
+        Uuid {
+            x0: rng.gen(),
+            x1: rng.gen(),
+        }
+    }
+}
+
 
 fn set_uuid<'a>(mut builder: core_capnp::uuid::Builder<'a>, uuid: &Uuid) {
     builder.set_x0(uuid.x0);
@@ -109,6 +122,48 @@ impl Message {
 // Maybe it would prove useful to implement a dummy service in this
 // architecture.
 
+pub struct ReactorParams<S> {
+    pub uuid: Uuid,
+    pub core_params: CoreParams<S>,
+    pub links: Vec<Box<LinkParamsTrait>>,
+}
+
+pub struct CoreParams<S> {
+    pub state: S,
+    pub handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
+}
+
+pub struct LinkParams<S> {
+    pub remote_uuid: Uuid,
+    pub state: S,
+    pub internal_handlers: HandlerMap<S, (), capnp::Error>,
+    pub external_handlers: HandlerMap<S, (), capnp::Error>,
+}
+
+pub trait LinkParamsTrait {
+    fn remote_uuid<'a>(&'a self) -> &'a Uuid;
+    fn into_link(self: Box<Self>) -> Box<LinkTrait>;
+}
+
+impl<S> LinkParamsTrait for LinkParams<S>
+    where S: 'static + Send
+{
+    fn remote_uuid<'a>(&'a self) -> &'a Uuid {
+        &self.remote_uuid
+    }
+
+    fn into_link(self: Box<Self>) -> Box<LinkTrait> {
+        let unboxed = *self;
+        let link = Link {
+            remote_uuid: unboxed.remote_uuid,
+            state: unboxed.state,
+            internal_handlers: unboxed.internal_handlers,
+            external_handlers: unboxed.external_handlers,
+        };
+        return Box::new(link);
+    }
+}
+
 
 // TODO: can we partition the state so that borrowing can be easier?
 // eg group uuid, broker_handle, message_queue
@@ -132,6 +187,32 @@ impl<S> Future for Reactor<S> {
 }
 
 impl<S> Reactor<S> {
+    pub fn new(
+        broker_handle: mpsc::UnboundedSender<Message>,
+        params: ReactorParams<S>
+    ) -> (mpsc::UnboundedSender<Message>, Self)
+    {
+        let (snd, recv) = mpsc::unbounded();
+
+        let links = params.links.into_iter().map(|link_params| {
+            let uuid = link_params.remote_uuid().clone();
+            let link = link_params.into_link();
+            return (uuid, link);
+        }).collect();
+
+        let reactor = Reactor {
+            uuid: params.uuid,
+            message_chan: recv,
+            broker_handle,
+            message_queue: VecDeque::new(),
+            internal_state: params.core_params.state,
+            internal_handlers: params.core_params.handlers,
+            links,
+        };
+
+        return (snd, reactor);
+    }
+
     fn receive(&mut self) -> Poll<(), ()> {
         loop {
             match  try_ready!(self.message_chan.poll()) {

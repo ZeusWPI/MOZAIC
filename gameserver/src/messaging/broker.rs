@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use futures::sync::mpsc;
 use futures::{Future, Stream, Poll};
 
-use super::reactor::{Uuid, Message};
+use super::reactor::{Uuid, Message, ReactorParams, Reactor};
 
 pub struct Broker {
     recv: mpsc::UnboundedReceiver<Message>,
@@ -28,6 +28,16 @@ impl Broker {
     pub fn add_actor(&mut self, uuid: Uuid, snd: mpsc::UnboundedSender<Message>)
     {
         self.actors.insert(uuid, snd);
+    }
+
+    pub fn spawn<S>(&mut self, params: ReactorParams<S>)
+        where S: 'static + Send
+    {
+        let handle = self.get_handle();
+        let uuid = params.uuid.clone();
+        let (reactor_handle, reactor) = Reactor::new(handle, params);
+        self.actors.insert(uuid, reactor_handle);
+        tokio::spawn(reactor);
     }
 
     fn route_messages(&mut self) -> Poll<(), ()> {

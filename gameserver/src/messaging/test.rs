@@ -8,15 +8,12 @@ use core_capnp::greet_person;
 use super::{AnyPtrHandler, FnHandler};
 
 use futures::Future;
-use futures::sync::mpsc;
 
 use tokio::runtime::Runtime;
 
 pub fn run() {
     // Create the runtime
     let mut rt = Runtime::new().unwrap();
-
-    let (reactor_snd, reactor_recv) = mpsc::unbounded();
 
     let reactor_uuid = Uuid {
         x0: 8,
@@ -30,23 +27,18 @@ pub fn run() {
 
     let mut broker = Broker::new();
 
-    let mut reactor = Reactor {
-        uuid: reactor_uuid.clone(),
-        message_chan: reactor_recv,
-        broker_handle: broker.get_handle(),
-        message_queue: VecDeque::new(),
-        internal_state: CoreState {},
-        internal_handlers: HashMap::new(),
-        links: HashMap::new(),
+    let mut core_params = CoreParams {
+        state: CoreState {},
+        handlers: HashMap::new(),
     };
 
     let h = FnHandler::new(greet_person::Owned, greet_person_handler);
-    reactor.internal_handlers.insert(
+    core_params.handlers.insert(
         greet_person::Reader::type_id(),
         Box::new(AnyPtrHandler::new(h)),
     );
 
-    let mut link = Link {
+    let mut link_params = LinkParams {
         remote_uuid: remote_uuid.clone(),
         state: LinkState {},
         internal_handlers: HashMap::new(),
@@ -54,14 +46,20 @@ pub fn run() {
     };
 
     let h2 = FnHandler::new(greet_person::Owned, receive_greet);
-    link.external_handlers.insert(
+    link_params.external_handlers.insert(
         greet_person::Reader::type_id(),
         Box::new(AnyPtrHandler::new(h2)),
     );
 
-    reactor.links.insert(link.remote_uuid.clone(), Box::new(link));
-    
-    broker.add_actor(reactor.uuid.clone(), reactor_snd);
+    let reactor_params = ReactorParams {
+        uuid: reactor_uuid.clone(),
+        core_params,
+        links: vec![Box::new(link_params)],
+    };
+
+    let (handle, reactor) = Reactor::new(broker.get_handle(), reactor_params);
+    broker.add_actor(reactor_uuid.clone(), handle);
+
     rt.spawn(reactor);
 
     let mut broker_handle = broker.get_handle();
