@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use capnp;
 use capnp::any_pointer;
-use capnp::traits::{HasTypeId, FromPointerReader, Owned};
+use capnp::traits::{HasTypeId, Owned};
 use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;

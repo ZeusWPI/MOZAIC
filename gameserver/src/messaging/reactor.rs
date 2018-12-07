@@ -4,7 +4,7 @@ use super::broker::BrokerHandle;
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, Owned};
-use futures::{Future, Stream, Poll};
+use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc;
 
 use rand;
@@ -13,8 +13,7 @@ use rand::Rng;
 use capnp::message;
 
 use core_capnp;
-use core_capnp::mozaic_message;
-use core_capnp::greet_person;
+use core_capnp::{mozaic_message, terminate_stream};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Uuid {
@@ -64,7 +63,6 @@ impl VecSegment {
             words,
         }
     }
- 
 }
 
 impl capnp::message::ReaderSegments for VecSegment {
@@ -170,7 +168,7 @@ pub struct LinkParams<S> {
 
 pub trait LinkParamsTrait: 'static + Send {
     fn remote_uuid<'a>(&'a self) -> &'a Uuid;
-    fn into_link(self: Box<Self>) -> Box<LinkTrait>;
+    fn into_link(self: Box<Self>) -> Link;
 }
 
 impl<S> LinkParamsTrait for LinkParams<S>
@@ -180,15 +178,25 @@ impl<S> LinkParamsTrait for LinkParams<S>
         &self.remote_uuid
     }
 
-    fn into_link(self: Box<Self>) -> Box<LinkTrait> {
+    fn into_link(self: Box<Self>) -> Link {
         let unboxed = *self;
-        let link = Link {
-            remote_uuid: unboxed.remote_uuid,
+
+        let link_state = LinkState {
+            local_closed: false,
+            remote_closed: false,
+        };
+
+        let reducer = LinkReducer {
             state: unboxed.state,
             internal_handlers: unboxed.internal_handlers,
             external_handlers: unboxed.external_handlers,
         };
-        return Box::new(link);
+
+        return Link {
+            remote_uuid: unboxed.remote_uuid,
+            reducer: Box::new(reducer),
+            link_state,
+        };
     }
 }
 
@@ -202,7 +210,7 @@ pub struct Reactor<S> {
     pub message_queue: VecDeque<Message>,
     pub internal_state: S,
     pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
-    pub links: HashMap<Uuid, BoxedLink>,
+    pub links: HashMap<Uuid, Link>,
 }
 
 impl<S> Future for Reactor<S> {
@@ -210,7 +218,12 @@ impl<S> Future for Reactor<S> {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        self.receive()
+        let res = self.receive();
+        if self.links.is_empty() {
+            Ok(Async::Ready(()))
+        } else {
+            res
+        }
     }
 }
 
@@ -260,7 +273,7 @@ impl<S> Reactor<S> {
     {
         let msg = message.reader()?;
         let sender_uuid = msg.get_sender()?.into();
-        {
+        let closed = {
             let link = self.links.get_mut(&sender_uuid)
                 .expect("no link with message sender");
 
@@ -273,9 +286,15 @@ impl<S> Reactor<S> {
                 reactor_handle,
                 broker_handle: &mut self.broker_handle,
             };
-            link.handle_message(reactor_ctx, msg)?;
+            link.handle_external(reactor_ctx, msg)?;
+
+            link.link_state.local_closed && link.link_state.remote_closed
+        };
+
+        if closed {
+            self.links.remove(&sender_uuid);
         }
-    
+
         // the handling link may now emit a domestic message, which will
         // be received by the reactor core and all other links.
 
@@ -312,9 +331,55 @@ impl<S> Reactor<S> {
 }
 
 
-pub struct Link<S> {
+pub struct Link {
     /// Uuid of remote party
     pub remote_uuid: Uuid,
+
+    pub reducer: Box<LinkReducerTrait>,
+
+    pub link_state: LinkState,
+}
+
+impl Link {
+    fn handle_external<'a>(
+        &mut self,
+        ctx: ReactorCtx<'a>,
+        msg: mozaic_message::Reader<'a>
+    ) -> Result<(), capnp::Error>
+    {
+        if msg.get_type_id() == terminate_stream::Reader::type_id() {
+            self.link_state.remote_closed = true;
+        }
+
+        let sender = Sender {
+            uuid: ctx.uuid,
+            remote_uuid: &self.remote_uuid,
+            broker_handle: ctx.broker_handle,
+            link_state: &mut self.link_state,
+        };
+
+        return self.reducer.handle_external(ctx.reactor_handle, sender, msg);
+    }
+
+    fn handle_internal<'a>(
+        &mut self,
+        ctx: ReactorCtx<'a>,
+        msg: mozaic_message::Reader<'a>
+    ) -> Result<(), capnp::Error>
+    {
+        let sender = Sender {
+            uuid: ctx.uuid,
+            remote_uuid: &self.remote_uuid,
+            broker_handle: ctx.broker_handle,
+            link_state: &mut self.link_state,
+        };
+
+        return self.reducer.handle_internal(ctx.reactor_handle, sender, msg);
+    }
+
+}
+
+pub struct LinkReducer<S> {
     /// handler state
     pub state: S,
     /// handle internal messages (sent by core, or other link handlers)
@@ -322,6 +387,69 @@ pub struct Link<S> {
     /// handle external messages (sent by remote party)
     pub external_handlers: HandlerMap<S, (), capnp::Error>,
 }
+
+pub trait LinkReducerTrait: 'static + Send {
+    fn handle_external<'a>(
+        &mut self,
+        reactor_handle: ReactorHandle<'a>,
+        sender: Sender<'a>,
+        msg: mozaic_message::Reader<'a>,
+    ) -> Result<(), capnp::Error>;
+
+    fn handle_internal<'a>(
+        &mut self,
+        reactor_handle: ReactorHandle<'a>,
+        sender: Sender<'a>,
+        msg: mozaic_message::Reader<'a>,
+    ) -> Result<(), capnp::Error>;
+
+}
+
+impl<S> LinkReducerTrait for LinkReducer<S>
+    where S: 'static + Send
+{
+    fn handle_external<'a>(
+        &mut self,
+        reactor_handle: ReactorHandle<'a>,
+        sender: Sender<'a>,
+        msg: mozaic_message::Reader<'a>,
+    ) -> Result<(), capnp::Error>
+    {
+        if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
+            let mut ctx = HandlerCtx {
+                sender,
+                reactor_handle,
+                state: &mut self.state,
+            };
+            handler.handle(&mut ctx, msg.get_payload())?
+        }
+        return Ok(());
+    }
+
+    fn handle_internal<'a>(
+        &mut self,
+        reactor_handle: ReactorHandle<'a>,
+        sender: Sender<'a>,
+        msg: mozaic_message::Reader<'a>,
+    ) -> Result<(), capnp::Error>
+    {
+        if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
+            let mut ctx = HandlerCtx {
+                sender,
+                reactor_handle,
+                state: &mut self.state,
+            };
+            handler.handle(&mut ctx, msg.get_payload())?
+        }
+        return Ok(());
+    }
+}
+
+pub struct LinkState {
+    pub local_closed: bool,
+    pub remote_closed: bool,
+}
+
 
 pub struct ReactorCtx<'a> {
     uuid: &'a Uuid,
@@ -337,7 +465,7 @@ pub struct HandlerCtx<'a, S> {
 
 pub struct CoreCtx<'a, S> {
     pub reactor_handle: ReactorHandle<'a>,
-    links: &'a mut HashMap<Uuid, BoxedLink>,
+    links: &'a mut HashMap<Uuid, Link>,
     state: &'a mut S,
 }
 
@@ -383,6 +511,7 @@ impl<'a> ReactorHandle<'a> {
 pub struct Sender<'a> {
     pub uuid: &'a Uuid,
     pub remote_uuid: &'a Uuid,
+    pub link_state: &'a mut LinkState,
     pub broker_handle: &'a mut BrokerHandle,
 }
 
@@ -409,14 +538,19 @@ impl<'a> Sender<'a> {
         let msg = Message::from_capnp(message_builder.into_reader());
         self.broker_handle.send(msg);
     }
-}
 
-fn test_types<'a>(mut sender: Sender<'a>) {
-    sender.send_message(greet_person::Owned, |b| {
-        let mut greeting: greet_person::Builder = b.init_as();
-        greeting.set_person_name("bob");
-    });
-} 
+    pub fn close(&mut self) {
+        if self.link_state.local_closed {
+            return;
+        }
+
+        self.send_message(terminate_stream::Owned, |b| {
+            b.init_as::<terminate_stream::Builder>();
+        });
+
+        self.link_state.local_closed = true;
+    }
+}
 
 type CoreHandler<S, T, E> = Box<
     for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
@@ -427,38 +561,3 @@ type LinkHandler<S, T, E> = Box<
 >;
 
 type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
-
-pub type BoxedLink = Box<LinkTrait>;
-
-pub trait LinkTrait: Send {
-    fn handle_message<'a>(&mut self, ReactorCtx<'a>, mozaic_message::Reader<'a>)
-        -> Result<(), capnp::Error>;
-}
-
-impl<S> LinkTrait for Link<S>
-    where S: Send
-{
-    fn handle_message<'a>(
-        &mut self,
-        ctx: ReactorCtx<'a>,
-        msg: mozaic_message::Reader<'a>,
-    ) -> Result<(), capnp::Error>
-    {
-        if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
-
-            let sender = Sender {
-                uuid: ctx.uuid,
-                remote_uuid: &self.remote_uuid,
-                broker_handle: ctx.broker_handle,
-            };
-
-            let mut handler_ctx = HandlerCtx {
-                sender,
-                reactor_handle: ctx.reactor_handle,
-                state: &mut self.state,
-            };
-            handler.handle(&mut handler_ctx, msg.get_payload())?
-        }
-        return Ok(());
-    }
-}
