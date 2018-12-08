@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use futures::sync::mpsc;
-use futures::{Future, Stream, Poll};
+use futures::{Future, Stream, Async, Poll};
 
 use super::reactor::{Uuid, Message, ReactorSpawner, Reactor};
 
 enum BrokerCmd {
     Send(Message),
     Spawn(Box<ReactorSpawner>),
+    Unregister(Uuid),
 }
 
 pub struct BrokerHandle {
@@ -25,6 +26,10 @@ impl BrokerHandle {
 
     pub fn spawn(&mut self, spawner: Box<ReactorSpawner>) {
         self.send_cmd(BrokerCmd::Spawn(spawner));
+    }
+
+    pub fn unregister(&mut self, uuid: Uuid) {
+        self.send_cmd(BrokerCmd::Unregister(uuid));
     }
 }
 
@@ -62,6 +67,10 @@ impl Broker {
         self.actors.insert(uuid, reactor_handle);
     }
 
+    pub fn unregister(&mut self, uuid: &Uuid) {
+        self.actors.remove(uuid);
+    }
+
     fn route_messages(&mut self) -> Poll<(), ()> {
         loop {
             // unwrapping is fine because we hold a handle
@@ -71,6 +80,9 @@ impl Broker {
                 }
                 BrokerCmd::Spawn(spawner) => {
                     self.spawn(spawner);
+                }
+                BrokerCmd::Unregister(uuid) => {
+                    self.unregister(&uuid);
                 }
             }
         }
@@ -82,9 +94,13 @@ impl Broker {
         let chan = {
             let msg = message.reader()?;
             let receiver_uuid = msg.get_receiver()?.into();
-            let chan = self.actors.get_mut(&receiver_uuid)
-                .expect("unknown receiver");
-            chan
+            match self.actors.get_mut(&receiver_uuid) {
+                Some(chan) => chan,
+                None => {
+                    eprintln!("unknown reciever: {:?}", receiver_uuid);
+                    return Ok(());
+                }
+            }
         };
         chan.unbounded_send(message).unwrap();
         return Ok(());
@@ -96,6 +112,12 @@ impl Future for Broker {
     type Error = ();
 
     fn poll(&mut self) -> Poll<(), ()> {
-        self.route_messages()
+        try!(self.route_messages());
+
+        if self.actors.is_empty() {
+            Ok(Async::Ready(()))
+        } else {
+            Ok(Async::NotReady)
+        }
     }
 }

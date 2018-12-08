@@ -220,6 +220,7 @@ impl<S> Future for Reactor<S> {
     fn poll(&mut self) -> Poll<(), ()> {
         let res = self.receive();
         if self.links.is_empty() {
+            self.broker_handle.unregister(self.uuid.clone());
             Ok(Async::Ready(()))
         } else {
             res
