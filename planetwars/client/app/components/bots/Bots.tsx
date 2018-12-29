@@ -115,11 +115,15 @@ export interface ShowBotProps {
 export class ShowBot extends Component<ShowBotProps> {
   public render() {
     return (
-      <div>
-        <p>{this.props.bot.name}</p>
-        <p>{this.props.bot.command}</p>
-        <button onClick={this.props.onEdit}>Edit</button>
-        <button onClick={this.props.onDelete}>Delete</button>
+      <div className={styles.showBotView}>
+        <div className={styles.showContent}>
+          <h1 className="is-size-1">{this.props.bot.name}</h1>
+          <p className={styles.command}>{this.props.bot.command}</p>
+          <div className={styles.controls}>
+            <button className="button is-primary" onClick={this.props.onEdit}>Edit</button>
+            <button className="button is-danger" onClick={this.props.onDelete}>Delete</button>
+          </div>
+        </div>
       </div>
     );
   }
@@ -154,48 +158,53 @@ export class EditBot extends Component<EditBotProps, EditBotState> {
 
   public render() {
     return (
-      <form onSubmit={this.onSubmit}>
-        {/* Name */}
-        <div className='field'>
-          <label className='label'> Name </label>
-          <div className='control'>
-            <input
-              className='input'
-              type='text'
-              placeholder='AwesomeBot3000'
-              value={this.state.name}
-              onChange={this.onChangeName}
-            />
+      <div className={styles.editBotView}>
+        <form onSubmit={this.onSubmit}>
+          {/* Name */}
+          <div className='field'>
+            <label className='label'> Name </label>
+            <div className='control'>
+              <input
+                className='input'
+                type='text'
+                placeholder='AwesomeBot3000'
+                value={this.state.name}
+                onChange={this.onChangeName}
+              />
+            </div>
           </div>
-        </div>
 
-        {/* Command */}
-        <div className='field'>
-          <label className='label'> Command </label>
-          <div className='control'>
-            <input
-              className='input'
-              type='text'
-              placeholder='The command to execute your bot'
-              value={this.state.command}
-              onChange={this.onChangeCommand}
-            />
-            <p className='help'>
-              {JSON.stringify(stringArgv(this.state.command))}
-            </p>
+          {/* Command */}
+          <div className='field'>
+            <label className='label'> Command </label>
+            <div className='control'>
+              <input
+                className='input'
+                type='text'
+                placeholder='The command to execute your bot'
+                value={this.state.command}
+                onChange={this.onChangeCommand}
+              />
+              <p className='help'>
+                {JSON.stringify(stringArgv(this.state.command))}
+              </p>
+            </div>
+            <label className='label'>
+              Ex: python3 "/home/iK_BEN_DE_BESTE/bots/coolbot.py"
+          </label>
+            <label className='label'>
+              USE ABSOLUTE PATHS
+          </label>
           </div>
-          <label className='label'>
-            Ex: python3 "/home/iK_BEN_DE_BESTE/bots/coolbot.py
-          </label>
-          <label className='label'>
-            USE ABSOLUTE PATHS
-          </label>
-        </div>
 
-        <button onClick={this.onSave}>Save</button>
-        <button onClick={this.onReset}>Reset</button>
-        <button onClick={this.onDelete}>Delete</button>
-      </form>
+          {/* Controls */}
+          <div className={styles.controls}>
+            <button className='button is-success' onClick={this.onSave}>Save</button>
+            <button className='button is-warning' onClick={this.onReset}>Reset</button>
+            <button className='button is-danger' onClick={this.onDelete}>Delete</button>
+          </div>
+        </form>
+      </div>
     );
   }
 
@@ -273,7 +282,7 @@ export class AddBot extends Component<AddBotProps> {
       <div className={styles.bot}>
         {
           (!this.state.isBeingAdded)
-            ? <button onClick={this.onAdd}>Add</button>
+            ? <div className={styles.add}><button onClick={this.onAdd}>+</button></div>
             : <EditBot
               bot={this.emptyBot()}
               onSave={this.onSave}
