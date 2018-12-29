@@ -94,6 +94,7 @@
   },
   "dependencies": {
     "@types/chance": "^1.0.0",
+    "autobind-decorator": "^2.4.0",
     "bluebird": "^3.5.1",
     "bulma": "^0.6.2",
     "chance": "^1.0.16",
