@@ -57,7 +57,9 @@ app.on('ready', () => {
 
       mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.show();
-        mainWindow.focus();
+        if (process.env.NODE_ENV === 'production') {
+          mainWindow.focus();
+        }
       });
 
       mainWindow.on('closed', () => {
