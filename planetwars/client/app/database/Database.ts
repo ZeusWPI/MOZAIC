@@ -2,7 +2,6 @@ import * as Promise from 'bluebird';
 import * as path from 'path';
 import * as low from 'lowdb';
 import * as FileAsync from 'lowdb/adapters/FileAsync';
-import log from 'electron-log';
 
 import * as A from '../actions';
 import * as M from './models';
@@ -113,7 +112,7 @@ type Selector<T> = (state: GState) => T;
 type Mutator<T> = (newValue: T) => void;
 
 class TableListener<T> {
-  public oldValue: T;
+  public oldValue: T | undefined = undefined;
 
   constructor(private selector: Selector<T>, private accessor: string) { }
 

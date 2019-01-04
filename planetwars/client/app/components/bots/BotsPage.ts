@@ -41,5 +41,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<BotOverviewStateProps, BotOverviewDispatchProps>
-  (mapStateToProps, mapDispatchToProps)(BotOverview);
+export default connect(mapStateToProps, mapDispatchToProps)(BotOverview);

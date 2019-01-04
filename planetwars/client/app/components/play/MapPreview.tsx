@@ -41,10 +41,10 @@ export interface MapViewProps {
 }
 
 export abstract class MapView extends React.Component<MapViewProps> {
-  protected node: SVGSVGElement;
+  protected node!: SVGSVGElement;
 
-  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
-  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private svg!: d3.Selection<SVGSVGElement, {}, null, undefined>;
+  private root!: d3.Selection<d3.BaseType, {}, null, undefined>;
 
   constructor(props: MapViewProps) {
     super(props);

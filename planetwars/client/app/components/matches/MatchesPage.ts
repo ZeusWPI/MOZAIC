@@ -1,17 +1,11 @@
-import * as fs from 'mz/fs';
-import * as p from 'path';
-import * as Promise from 'bluebird';
-import { connect, Dispatch } from 'react-redux';
-import { push } from 'react-router-redux';
-import { PathLike } from 'mz/fs';
+import { connect } from 'react-redux';
+import { push } from 'connected-react-router';
 import { createSelector } from 'reselect';
 
-import { GState } from '../../reducers/index';
-import { Config } from '../../utils/Config';
-import * as A from '../../actions';
 import * as M from '../../database/models';
-
 import * as Comp from './types';
+
+import { GState } from '../../reducers/index';
 import Matches, {
   MatchViewerStateProps,
   MatchViewerDispatchProps,

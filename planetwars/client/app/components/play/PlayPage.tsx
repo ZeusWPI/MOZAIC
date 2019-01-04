@@ -40,7 +40,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
       console.log('player disconnected', id);
     },
     sendNotification(title: string, body: string, type: M.NotificationType) {
-      dispatch(A.addNotification({title, body, type}));
+      dispatch(A.addNotification({ title, body, type }));
     },
   };
   const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
@@ -69,7 +69,7 @@ export interface PlayPageState {
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = { localBots: [] };
 
-  private lobby: Lobby;
+  private lobby!: Lobby;
 
   public render() {
     const { maps, bots } = this.props;
@@ -114,6 +114,4 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
 
 }
 
-export default connect<PlayPageStateProps, PlayPageDispatchProps>(
-  mapStateToProps, mapDispatchToProps,
-)(PlayPage);
+export default connect(mapStateToProps, mapDispatchToProps)(PlayPage);

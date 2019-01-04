@@ -45,4 +45,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<HostStateProps, HostDispatchProps>(mapStateToProps, mapDispatchToProps)(Host);
+export default connect(mapStateToProps, mapDispatchToProps)(Host);

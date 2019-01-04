@@ -1,7 +1,7 @@
 // TODO: do we still need this?
 // If so, find a proper location for it.
 import * as React from 'react';
-import { div, h, li, span, ul, p, button, input, form, label } from 'react-hyperscript-helpers';
+import h from 'react-hyperscript';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');
@@ -10,20 +10,20 @@ type LogLoader = (files: FileList) => void;
 
 // TODO: Support loading multiple files
 export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
-  private fileInput: FileList;
+  private fileInput!: FileList;
 
   public render() {
-    return form(`.${styles.matchImporter}`,
+    return h(`form.${styles.matchImporter}`,
       { onSubmit: (evt: any) => this.handleSubmit(evt) },
       [
-        label(['Import Match(es)']),
-        input({
+        h('label', ['Import Match(es)']),
+        h('input', {
           type: 'file',
           multiple: true,
           onChange: (evt: any) => this.handleChange(evt),
         }),
-        button({ type: 'submit' }, ['Import']),
-      ]
+        h('button', { type: 'submit' }, ['Import']),
+      ],
     );
   }
 

@@ -21,4 +21,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<JoinStateProps, JoinDispatchProps>(mapStateToProps, mapDispatchToProps)(Join);
+export default connect(mapStateToProps, mapDispatchToProps)(Join);
