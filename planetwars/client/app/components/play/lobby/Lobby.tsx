@@ -115,7 +115,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private syncSlots = (slotManager: SlotManager) => {
     this.setState({ slots: slotManager.getSlots() });
-  };
+  }
 
   private updateSlots(props: LobbyProps) {
     const { config, maps } = props;
@@ -200,7 +200,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const params = { ctrl_token: ctrlToken, address: config.address, logFile };
     console.log('launching server with', params);
 
-
     // callbacks should be set on the current slotmanager,
     // not the one belonging to 'this'. (It changes when a match is launched).
     const slotManager = this.slotManager;
@@ -225,7 +224,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           this.props.sendNotification(
             "Match ended",
             `A match on map '${
-              this.state.type === "configuring" ?
+            this.state.type === "configuring" ?
               "unknown" :
               this.props.maps[this.state.config.mapId]
             }' has ended`,
@@ -236,7 +235,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           this.props.sendNotification(
             "Match errored",
             `A match on map '${
-              this.state.type === "configuring" ?
+            this.state.type === "configuring" ?
               "unknown" :
               this.props.maps[this.state.config.mapId]
             }' has errored`,
@@ -286,7 +285,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       this.props.onMatchComplete(matchId);
     });
     this.server.onError.subscribe((err) => {
-      this.props.onMatchErrored(matchId, err)
+      this.props.onMatchErrored(matchId, err);
     });
 
     // Bind connection listeners

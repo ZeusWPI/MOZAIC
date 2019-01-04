@@ -116,7 +116,6 @@ export class SlotElement extends React.Component<SlotElementProps> {
 
     const connectLocal = () => this.props.connectLocalBot(slot, index);
 
-
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>
         Kick player
@@ -156,7 +155,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
       return [kick];
     }
     if (slot.clientId) {
-      return [copy, copyFull]
+      return [copy, copyFull];
     }
     return [];
   }

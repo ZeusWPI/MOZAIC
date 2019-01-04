@@ -48,7 +48,6 @@ app.on('ready', () => {
     .then(() => log.info('[STARTUP] Extensions installed'))
     .then(() => {
       mainWindow = new BrowserWindow({
-        show: false,
         width: 1024,
         height: 728,
       });

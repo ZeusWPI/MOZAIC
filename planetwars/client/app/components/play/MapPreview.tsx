@@ -155,13 +155,13 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
 
   public render() {
     const planets: StaticPlanet[] = M.isGameMap(this.state.map) ?
-                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
-                      return {
-                        ...planet,
-                        index,
-                      };
-                    }) :
-                    [];
+      this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+        return {
+          ...planet,
+          index,
+        };
+      }) :
+      [];
     let [minX, maxX] = d3.extent(planets, (planet: StaticPlanet) => planet.x);
     let [minY, maxY] = d3.extent(planets, (planet: StaticPlanet) => planet.y);
     [minX, maxX] = [minX || 0, maxX || 0];
@@ -169,8 +169,8 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     const data: MapViewData = {
       planets,
       selected: this.props.selected,
-      min: {x: minX, y: minY},
-      max: {x: maxX, y: maxY},
+      min: { x: minX, y: minY },
+      max: { x: maxX, y: maxY },
     };
 
     return (
