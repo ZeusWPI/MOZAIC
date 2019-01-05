@@ -24,7 +24,11 @@
 
     "sourceMap": true,
 
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"]
+    }
   },
   "files": [
     "app/render_process.tsx"

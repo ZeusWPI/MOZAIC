@@ -103,7 +103,7 @@ module.exports = {
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.json'],
     alias: {
-      'Styles': path.resolve(__dirname, '..', 'app', 'styles')
+      '@': path.resolve(__dirname, '..', 'app')
     },
     modules: [
       path.join(__dirname, 'app'),

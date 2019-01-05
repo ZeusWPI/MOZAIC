@@ -1,5 +1,4 @@
 import { createHashHistory } from 'history';
-
 import { routerMiddleware, push } from 'connected-react-router';
 import {
   createStore,
@@ -9,7 +8,7 @@ import {
 import { createLogger } from 'redux-logger';
 import thunk from 'redux-thunk';
 
-import { createRootReducer, GState } from '../reducers';
+import { createRootReducer, GState } from '@/reducers';
 
 declare const window: Window & {
   __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?(a: any): void;

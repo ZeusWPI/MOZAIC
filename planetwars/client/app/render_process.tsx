@@ -11,13 +11,13 @@ import * as Promise from 'bluebird';
 import * as h from 'react-hyperscript';
 
 import Root from './Root';
-import { FatalErrorView } from './components';
+import { FatalErrorView } from './components/FatalError';
 import { initialState } from './reducers';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 
-import 'Styles/app.global.scss';
-import 'Styles/lib.global.scss';
+import './styles/app.global.scss';
+import './styles/lib.global.scss';
 
 log.info('[STARTUP] Renderer modules loaded');
 

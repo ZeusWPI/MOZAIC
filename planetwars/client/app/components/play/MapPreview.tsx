@@ -1,8 +1,9 @@
 import * as React from 'react';
 import * as d3 from 'd3';
-import * as M from '../../database/models';
-import { JsonPlanet } from '../../database/migrationV3';
 import * as fs from 'fs';
+
+import * as M from '@/database/models';
+import { JsonPlanet } from '@/database/migrationV3';
 
 const _colors = [
   '#DE8D47', // (orange) Main Primary color
