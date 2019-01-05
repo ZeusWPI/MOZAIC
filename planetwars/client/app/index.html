@@ -24,13 +24,26 @@
   <div id="app"></div>
   <script>
     {
-      const script = document.createElement('script');
+      function addScriptToBody(src) {
+        const script = document.createElement('script');
+        script.src = src;
+        document.body.appendChild(script);
+      }
+
       const port = process.env.PORT || 3000;
-      script.src = (process.env.HOT) ?
-        'http://localhost:' + port + '/dist/bundle.js' :
-        './dist/bundle.js';
-      // HACK: Writing the script path should be done with webpack
-      document.body.appendChild(script);
+      const prefix = (process.env.HOT)
+        ? 'http://localhost:' + port + '/dist/'
+        : './dist/';
+
+      const src = prefix + "bundle.js";
+      addScriptToBody(src);
+
+      if (process.env.HOT) {
+        const vendor = prefix + "vendors.bundle.js";
+        const main = prefix + "main.bundle.js";
+        addScriptToBody(vendor);
+        addScriptToBody(main);
+      }
     }
   </script>
 </body>

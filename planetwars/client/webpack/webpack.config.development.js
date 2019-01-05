@@ -7,6 +7,7 @@
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 const baseConfig = require('./webpack.config.base');
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
 
 const port = process.env.PORT || 3000;
 
@@ -25,6 +26,9 @@ module.exports = merge(baseConfig, {
   plugins: [
     // https://webpack.github.io/docs/hot-module-replacement-with-webpack.html
     new webpack.HotModuleReplacementPlugin(),
+
+    // https://github.com/mzgoddard/hard-source-webpack-plugin
+    new HardSourceWebpackPlugin(),
 
     new webpack.NoEmitOnErrorsPlugin(),
 

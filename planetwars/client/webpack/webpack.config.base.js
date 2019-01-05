@@ -6,6 +6,7 @@ const path = require('path');
 const child_process = require('child_process');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 const {
   dependencies: externals
 } = require('../package.json');
@@ -101,6 +102,20 @@ module.exports = {
     libraryTarget: 'commonjs2'
   },
 
+  // https://webpack.js.org/guides/caching/
+  optimization: {
+    runtimeChunk: 'single',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        }
+      }
+    }
+  },
+
   // https://webpack.github.io/docs/configuration.html#resolve
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.json'],
@@ -121,6 +136,7 @@ module.exports = {
     new webpack.WatchIgnorePlugin([
       /css\.d\.ts$/
     ]),
+    new SpeedMeasurePlugin(),
     new webpack.DefinePlugin({
       __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD') || 'unknown_commit',
       __BRANCH_NAME__: cmdOutput('git rev-parse --abbrev-ref HEAD') || 'unknown_branch',
