@@ -3,8 +3,7 @@ import { shell } from 'electron';
 
 import { Link, NavLink } from "react-router-dom";
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Info.scss');
+import * as styles from './Info.scss';
 
 declare const __COMMIT_HASH__: string;
 declare const __BRANCH_NAME__: string;

@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as styles from './Lobby.scss';
 
 export interface ServerControlProps {
   serverRunning: boolean;

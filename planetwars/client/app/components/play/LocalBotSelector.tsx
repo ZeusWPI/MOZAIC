@@ -3,8 +3,7 @@ import * as React from 'react';
 import * as M from '../../database/models';
 import Section from './Section';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as styles from './PlayPage.scss';
 
 export interface LocalBotSelectorProps {
   bots: M.BotList;

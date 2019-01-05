@@ -7,8 +7,7 @@ import { MapPreview, ImportMap } from './MapPreview';
 import { remote } from 'electron';
 import { Importer } from '../../utils/Importer';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as styles from './PlayPage.scss';
 
 export interface ConfigProps {
   importMap: (mapMeta: M.MapMeta) => void;
@@ -34,7 +33,7 @@ export class Config extends React.Component<ConfigProps> {
 
     return (
       <Section header={"Config"}>
-        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={mapId} importMap={this.props.importMap}/>
+        <MapSelector maps={maps} selectMap={this.selectMap} selectedMap={mapId} importMap={this.props.importMap} />
         <MaxTurnsField value={maxTurns} setMax={this.setMax} />
         <ServerAddressField value={host} setServer={this.setServer} />
         <PortField value={port} setPort={this.setPort} />
@@ -116,7 +115,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
 
     const options = maps.map((map, i) => {
       select = () => selectMap(map.uuid);
-      return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i}/>;
+      return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i} />;
     });
     return (
       <div className={styles.mapSelector}>
@@ -129,7 +128,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
   private importMap = () => {
     remote.dialog.showOpenDialog({ properties: ["openFile", "showHiddenFiles"] }, (paths: string[]) => {
       Importer.importMapFromFile(paths[0])
-              .then((mapMeta: M.MapMeta) => { this.props.importMap(mapMeta); });
+        .then((mapMeta: M.MapMeta) => { this.props.importMap(mapMeta); });
     });
   }
 

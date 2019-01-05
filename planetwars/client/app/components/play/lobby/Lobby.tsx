@@ -14,8 +14,7 @@ import { ServerControls } from './ServerControls';
 import { SlotManager, Slot } from './SlotManager';
 import { PwTypes } from 'mozaic-client';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as styles from './Lobby.scss';
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;

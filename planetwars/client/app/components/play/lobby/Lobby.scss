@@ -40,6 +40,10 @@
                     border-left: 4px solid $green;
                 }
 
+                &.connectedInternal {
+                    border-left: 4px solid $purple;
+                }
+
                 &.typo {
                     background-color: $red;
                 }

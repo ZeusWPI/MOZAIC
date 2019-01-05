@@ -14,7 +14,7 @@ import {
   PlayPage,
 } from './components';
 
-export default class Routes extends React.Component<any, any> {
+export default class Routes extends React.Component {
   public render() {
     return (
       h(App, [

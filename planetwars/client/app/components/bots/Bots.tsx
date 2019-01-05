@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Component } from 'react';
-import { Link } from 'react-router-dom';
 import { boundMethod } from 'autobind-decorator';
 
 import * as M from '../../database/models';
@@ -8,8 +7,8 @@ import * as M from '../../database/models';
 // TODO import decently
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
-// tslint:disable-next-line:no-var-requires
-const styles = require("./Bots.scss");
+
+import * as styles from './Bots.scss';
 
 export interface BotOverviewStateProps {
   bots: M.BotList;

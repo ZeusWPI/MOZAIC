@@ -17,8 +17,7 @@ const _colors = [
 
 export const color = d3.scaleOrdinal(_colors);
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as styles from './PlayPage.scss';
 
 export interface StaticPlanet {
   x: number;

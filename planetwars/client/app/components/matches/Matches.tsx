@@ -9,8 +9,7 @@ import MatchView from './MatchView';
 import { FatalErrorView } from '../FatalError';
 import { MatchType } from '../../database/models';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Matches.scss');
+import * as styles from './Matches.scss';
 
 export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
 
@@ -229,7 +228,7 @@ export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
     }
     case M.MatchStatus.playing: {
       return (
-        <div className={styles.matchStatus}>
+        <div>
           <div className={styles.iconSpan}>
             <FaIcon icon='play' />
           </div>
@@ -238,7 +237,7 @@ export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
     }
     case M.MatchStatus.error: {
       return (
-        <div className={styles.matchStatus}>
+        <div>
           <div className={styles.iconSpan}>
             <FaIcon icon='exclamation-triangle' />
           </div>

@@ -11,8 +11,7 @@ import {
 
 import * as classNames from 'classnames';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require("./LogView.scss");
+import * as styles from "./LogView.scss";
 
 export interface LogViewProps {
   playerName: (playerNum: number) => string;

@@ -6,8 +6,7 @@ import Section from '../play/Section';
 import { HorizontalInput } from "../play/Config";
 import { clipboard } from 'electron';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require("./Join.scss");
+import * as styles from "./Join.scss";
 
 export interface JoinStateProps {
   allBots: M.BotList;

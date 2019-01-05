@@ -37,7 +37,7 @@
     "app/**/*.ts",
     "app/**/*.tsx",
     "test/**/*.ts",
-    "types/**/*.ts",
+    "typings/**/*.ts",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [

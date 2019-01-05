@@ -11,8 +11,7 @@ import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { PwTypes } from 'mozaic-client';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as styles from './PlayPage.scss';
 
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots } = state;

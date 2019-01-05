@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { clipboard } from 'electron';
 
-import * as M from '../../../database/models';
 import { Slot } from './SlotManager';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as styles from './Lobby.scss';
 
 export interface SlotListProps {
   slots: Slot[];

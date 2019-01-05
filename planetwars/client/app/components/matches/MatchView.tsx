@@ -13,8 +13,7 @@ import { createSelector } from 'reselect';
 import { connect } from 'react-redux';
 import * as Config from '../../utils/Config';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Matches.scss');
+import * as styles from './Matches.scss';
 
 export interface ContainerProps {
   matchId?: string;

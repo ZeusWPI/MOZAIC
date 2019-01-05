@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as styles from './PlayPage.scss';
 
 export default class Section extends React.Component<{ header: string, onMouseMove?: () => void; }> {
   public render() {

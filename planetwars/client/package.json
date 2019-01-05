@@ -155,7 +155,7 @@
     "asar": "^0.13.1",
     "concurrently": "^3.1.0",
     "cross-env": "^5.1.4",
-    "css-loader": "^2.1.0",
+    "css-loader": "^1.0.0",
     "devtron": "^1.4.0",
     "electron": "^3.0.7",
     "electron-builder": "^20.31.2",
@@ -181,6 +181,7 @@
     "tslint-loader": "^3.5.4",
     "tslint-react": "^3.5.1",
     "typescript": "^3.2.2",
+    "typings-for-css-modules-loader": "^1.7.0",
     "url-loader": "^1.1.2",
     "webpack": "^4.28.3"
   },

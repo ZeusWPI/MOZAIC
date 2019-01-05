@@ -3,9 +3,6 @@
 import * as React from 'react';
 import * as h from 'react-hyperscript';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Matches.scss');
-
 type LogLoader = (files: FileList) => void;
 
 // TODO: Support loading multiple files
@@ -13,7 +10,7 @@ export class MatchImporter extends React.Component<{ loadLogs: LogLoader }> {
   private fileInput!: FileList;
 
   public render() {
-    return h(`form.${styles.matchImporter}`,
+    return h(`form`,
       { onSubmit: (evt: any) => this.handleSubmit(evt) },
       [
         h('label', ['Import Match(es)']),

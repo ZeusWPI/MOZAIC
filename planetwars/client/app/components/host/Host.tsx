@@ -7,7 +7,7 @@ import { AddressForm } from "./AddressForm";
 import * as classnames from 'classnames';
 
 // tslint:disable-next-line:no-var-requires
-const styles = require("./Host.scss");
+import * as styles from "./Host.scss";
 
 export interface HostStateProps {
   bots: M.BotList;

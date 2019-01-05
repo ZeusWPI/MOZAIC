@@ -2,107 +2,104 @@
 
 $red: #DE474C;
 
-:local {
-    .logRootNode {
-        width: 100%;
+.logRootNode {
+    width: 100%;
+    height: 100%;
+
+    .turns {
         height: 100%;
+        overflow-y: auto;
 
-        .turns {
-            height: 100%;
-            overflow-y: auto;
+        .turn {
+            display: flex;
+            flex-direction: row; // border-bottom: 1px solid $tertiary;
+            border-left: 4px solid transparent;
+            margin: 10px 0;
 
-            .turn {
+            &.error {
+                border-left: 4px solid $red;
+            }
+
+            &.warning {
+                border-left: 4px solid $secondary;
+            }
+
+            .turnNumber {
+                color: $secondary;
+                min-width: 50px;
+                margin-top: -2px;
                 display: flex;
-                flex-direction: row; // border-bottom: 1px solid $tertiary;
-                border-left: 4px solid transparent;
-                margin: 10px 0;
+                font-size: 1.3rem;
+                font-weight: bold;
+                justify-content: center;
+                align-items: flex-start;
+            }
 
-                &.error {
-                    border-left: 4px solid $red;
-                }
+            .turnOutput {
+                display: flex;
+                width: 100%;
+                flex-direction: column;
 
-                &.warning {
-                    border-left: 4px solid $secondary;
-                }
+                .player {
+                    padding-bottom: 10px;
+                    padding-left: 5px;
 
-                .turnNumber {
-                    color: $secondary;
-                    min-width: 50px;
-                    margin-top: -2px;
-                    display: flex;
-                    font-size: 1.3rem;
-                    font-weight: bold;
-                    justify-content: center;
-                    align-items: flex-start;
-                }
+                    &.error {
+                        border-left: 2px solid $red;
+                    }
 
-                .turnOutput {
-                    display: flex;
-                    width: 100%;
-                    flex-direction: column;
+                    .playerName {
+                        padding-left: 6px;
+                        color: $text;
+                    }
 
-                    .player {
-                        padding-bottom: 10px;
-                        padding-left: 5px;
+                    .playerOutput {
+                        padding-left: 4px;
+                        border-left: 2px solid transparent;
+                        color: $tertiary;
 
-                        &.error {
-                            border-left: 2px solid $red;
+                        &.warning {
+                            border-left: 2px solid $secondary;
                         }
 
-                        .playerName {
-                            padding-left: 6px;
-                            color: $text;
+                        .fat {
+                            font-weight: bold;
                         }
 
-                        .playerOutput {
-                            padding-left: 4px;
-                            border-left: 2px solid transparent;
+                        .dispatch {
                             color: $tertiary;
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: space-evenly;
 
-                            &.warning {
-                                border-left: 2px solid $secondary;
+                            p:first-child {
+                                width: 40%;
+                                max-width: 150px;
                             }
 
-                            .fat {
-                                font-weight: bold;
-                            }
-
-                            .dispatch {
-                                color: $tertiary;
-                                display: flex;
-                                flex-direction: row;
-                                justify-content: space-evenly;
-
-                                p:first-child {
-                                    width: 40%;
-                                    max-width: 150px;
-                                }
-
-                                p:nth-child(2) {
-                                    // text-align: right;
-                                    max-width: 150px;
-                                    width: 40%;
-                                }
+                            p:nth-child(2) {
+                                // text-align: right;
+                                max-width: 150px;
+                                width: 40%;
                             }
                         }
                     }
-
-                    .error {
-                        color: $red;
-                    }
-
-                    .warning {
-                        color: $secondary;
-                    }
-
                 }
 
-                .gameEnd {
-                    font-size: 1.3rem;
-                    font-weight: bold;
+                .error {
+                    color: $red;
                 }
+
+                .warning {
+                    color: $secondary;
+                }
+
+            }
+
+            .gameEnd {
+                font-size: 1.3rem;
+                font-weight: bold;
             }
         }
     }
-
 }
