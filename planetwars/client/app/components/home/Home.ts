@@ -1,5 +1,5 @@
 import * as React from 'react';
-import h from 'react-hyperscript';
+import * as h from 'react-hyperscript';
 
 export default class Home extends React.Component<{}, {}> {
   public render() {

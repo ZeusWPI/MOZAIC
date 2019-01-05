@@ -1,5 +1,4 @@
 {
-  "extends": "../../node_modules/electron-webpack/tsconfig-base.json",
   "compilerOptions": {
     "target": "es2017",
     "moduleResolution": "node",
@@ -28,7 +27,7 @@
     "outDir": "dist"
   },
   "files": [
-    "app/index.ts"
+    "app/render_process.tsx"
   ],
   "include": [
     "app/**/*.ts",

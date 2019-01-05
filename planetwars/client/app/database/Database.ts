@@ -5,7 +5,7 @@ import * as FileAsync from 'lowdb/adapters/FileAsync';
 
 import * as A from '../actions';
 import * as M from './models';
-import { store as globalStore } from '../index';
+import { store as globalStore } from '../render_process';
 import { GState } from '../reducers';
 import { Config } from '../utils/Config';
 import { migrate } from './migrate';

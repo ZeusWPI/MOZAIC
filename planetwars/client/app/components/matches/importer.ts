@@ -1,7 +1,7 @@
 // TODO: do we still need this?
 // If so, find a proper location for it.
 import * as React from 'react';
-import h from 'react-hyperscript';
+import * as h from 'react-hyperscript';
 
 // tslint:disable-next-line:no-var-requires
 const styles = require('./Matches.scss');

@@ -12,73 +12,14 @@ const port = process.env.PORT || 3000;
 
 module.exports = merge(baseConfig, {
   devtool: 'inline-source-map',
-
+  mode: 'development',
   entry: [
     'react-hot-loader/patch',
-    `webpack-hot-middleware/client?path=http://localhost:${port}/__webpack_hmr&reload=true`,
-    './app/index'
+    './app/render_process'
   ],
 
   output: {
     publicPath: `http://localhost:${port}/dist/`
-  },
-
-  module: {
-    loaders: [
-      // Compile all .global.scss files and pipe it to style.css as is
-      {
-        test: /\.global\.scss$/,
-        use: ['style-loader', 'css-loader?sourceMap', 'sass-loader']
-      },
-      // Compile all other .scss files and pipe it to style.css
-      {
-        test: /^((?!\.global).)*\.scss$/,
-        use: [
-          'style-loader',
-          {
-            loader: 'css-loader',
-            options: {
-              modules: true,
-              sourceMap: true,
-              importLoaders: 1,
-              localIdentName: '[name]__[local]__[hash:base64:5]',
-            }
-          },
-          'sass-loader',
-        ]
-      },
-
-      // WOFF Font
-      {
-        test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
-      },
-      // WOFF2 Font
-      {
-        test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
-      },
-      // TTF Font
-      {
-        test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url-loader?limit=10000&mimetype=application/octet-stream'],
-      },
-      // EOT Font
-      {
-        test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
-        use: 'file-loader',
-      },
-      // SVG Font
-      {
-        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
-        use: ['url-loader?limit=10000&mimetype=image/svg+xml'],
-      },
-      // Common Image Formats
-      {
-        test: /\.(?:ico|gif|png|jpg|jpeg|webp)$/,
-        use: 'url-loader',
-      }
-    ]
   },
 
   plugins: [
@@ -86,11 +27,6 @@ module.exports = merge(baseConfig, {
     new webpack.HotModuleReplacementPlugin(),
 
     new webpack.NoEmitOnErrorsPlugin(),
-
-    // NODE_ENV should be production so that modules do not perform certain development checks
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('development')
-    }),
 
     new webpack.LoaderOptionsPlugin({
       debug: true

@@ -5,7 +5,7 @@ import * as p from 'path';
 
 import { Importer } from './Importer';
 import { Config } from './Config';
-import { store } from '../index';
+import { store } from '../render_process';
 import * as A from '../actions';
 import { GState } from '../reducers';
 

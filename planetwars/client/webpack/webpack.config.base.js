@@ -5,6 +5,7 @@
 const path = require('path');
 const child_process = require('child_process');
 const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 const {
   dependencies: externals
 } = require('../package.json');
@@ -19,7 +20,8 @@ function cmdOutput(cmdString) {
 
 module.exports = {
   module: {
-    loaders: [{
+    rules: [
+      {
         test: /\.tsx?$/,
         loaders: ['react-hot-loader/webpack', 'ts-loader'],
         exclude: /node_modules/
@@ -32,8 +34,61 @@ module.exports = {
       {
         test: /\.json$/,
         loader: 'json-loader'
-      }
-    ]
+      },
+
+      // Compile all .global.scss files and pipe it to style.css as is
+      {
+        test: /\.global\.scss$/,
+        use: ['style-loader', 'css-loader?sourceMap', 'sass-loader']
+      },
+      // Compile all other .scss files and pipe it to style.css
+      {
+        test: /^((?!\.global).)*\.scss$/,
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              modules: true,
+              sourceMap: true,
+              importLoaders: 1,
+              localIdentName: '[name]__[local]__[hash:base64:5]',
+            }
+          },
+          'sass-loader',
+        ]
+      },
+
+      // WOFF Font
+      {
+        test: /\.woff(\?v=\d+\.\d+\.\d+)?$/,
+        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
+      },
+      // WOFF2 Font
+      {
+        test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/,
+        use: ['url-loader?limit=10000&mimetype=application/font-woff'],
+      },
+      // TTF Font
+      {
+        test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/,
+        use: ['url-loader?limit=10000&mimetype=application/octet-stream'],
+      },
+      // EOT Font
+      {
+        test: /\.eot(\?v=\d+\.\d+\.\d+)?$/,
+        use: 'file-loader',
+      },
+      // SVG Font
+      {
+        test: /\.svg(\?v=\d+\.\d+\.\d+)?$/,
+        use: ['url-loader?limit=10000&mimetype=image/svg+xml'],
+      },
+      // Common Image Formats
+      {
+        test: /\.(?:ico|gif|png|jpg|jpeg|webp)$/,
+        use: 'url-loader',
+      }]
   },
 
   output: {
@@ -57,6 +112,10 @@ module.exports = {
   },
 
   plugins: [
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, '..', 'app', 'index.html'),
+      inject: true,
+    }),
     new webpack.DefinePlugin({
       __COMMIT_HASH__: cmdOutput('git rev-parse --short HEAD') || 'unknown_commit',
       __BRANCH_NAME__: cmdOutput('git rev-parse --abbrev-ref HEAD') || 'unknown_branch',
