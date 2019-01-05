@@ -11,7 +11,7 @@ import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { PwTypes } from 'mozaic-client';
 
-import * as styles from './PlayPage.scss';
+import * as css from './PlayPage.scss';
 
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots } = state;
@@ -74,12 +74,12 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
     const { maps, bots } = this.props;
     const { config, localBots } = this.state;
     return (
-      <div className={styles.playPageContainer}>
-        <div className={styles.playPage}>
+      <div className={css.playPageContainer}>
+        <div className={css.playPage}>
 
           {/* Left side*/}
-          <div className={styles.leftColumn}>
-            <div className={styles.lobbyContainer}>
+          <div className={css.leftColumn}>
+            <div className={css.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
                 config={config}
@@ -91,11 +91,11 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           </div>
 
           {/* Right side*/}
-          <div className={styles.rightColumn}>
-            <div className={styles.configContainer}>
+          <div className={css.rightColumn}>
+            <div className={css.configContainer}>
               <Config maps={maps} setConfig={this.setConfig} importMap={this.props.importMap} />
             </div>
-            <div className={styles.localBotSelectorContainer}>
+            <div className={css.localBotSelectorContainer}>
               <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
             </div>
           </div>

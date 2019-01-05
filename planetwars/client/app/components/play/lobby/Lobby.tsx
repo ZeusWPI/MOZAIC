@@ -14,7 +14,7 @@ import { ServerControls } from './ServerControls';
 import { SlotManager, Slot } from './SlotManager';
 import { PwTypes } from 'mozaic-client';
 
-import * as styles from './Lobby.scss';
+import * as css from './Lobby.scss';
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
@@ -78,7 +78,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const { port, host } = Lib.getWeakAddress(config);
     return (
       <Section header={"Lobby"}>
-        <div className={styles.lobby}>
+        <div className={css.lobby}>
           <SlotList
             slots={slots}
             port={port}

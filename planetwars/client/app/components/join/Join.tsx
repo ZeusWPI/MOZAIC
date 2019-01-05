@@ -6,7 +6,7 @@ import Section from '../play/Section';
 import { HorizontalInput } from "../play/Config";
 import { clipboard } from 'electron';
 
-import * as styles from "./Join.scss";
+import * as css from "./Join.scss";
 
 export interface JoinStateProps {
   allBots: M.BotList;

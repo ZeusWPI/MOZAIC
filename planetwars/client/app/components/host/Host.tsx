@@ -7,7 +7,7 @@ import { AddressForm } from "./AddressForm";
 import * as classnames from 'classnames';
 
 // tslint:disable-next-line:no-var-requires
-import * as styles from "./Host.scss";
+import * as css from "./Host.scss";
 
 export interface HostStateProps {
   bots: M.BotList;
@@ -59,14 +59,14 @@ export class Host extends React.Component<HostProps, HostState> {
     const toggle = (evt: any) => this.setState({ mapToggled: true });
     const setMaxTurns = (evt: any) => this.setMaxTurns(evt.target.value);
     return (
-      <div id={styles.host}>
-        <div className={styles.header}>
+      <div id={css.host}>
+        <div className={css.header}>
           <h1 className="title is-1">> Set up Host Game_ </h1>
         </div>
-        <div className={this.props.selectedBots.length > 0 ? styles.hidden : styles.mapSelection}>
+        <div className={this.props.selectedBots.length > 0 ? css.hidden : css.mapSelection}>
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">1</span>
-            <span className={styles.tagInfoText}> Pick a Map</span>
+            <span className={css.tagInfoText}> Pick a Map</span>
           </h2>
 
           <MapSelector
@@ -74,7 +74,7 @@ export class Host extends React.Component<HostProps, HostState> {
             selectMap={this.selectMap}
             selectedMap={this.state.selectedMap}
           />
-          <div className={styles.mapPreview}>
+          <div className={css.mapPreview}>
             <figure className="image is-128x128">
               <img src="https://bulma.io/images/placeholders/128x128.png" />
             </figure>
@@ -82,34 +82,34 @@ export class Host extends React.Component<HostProps, HostState> {
 
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">3</span>
-            <span className={styles.tagInfoText}> Set turn limit</span>
+            <span className={css.tagInfoText}> Set turn limit</span>
           </h2>
 
-          <div className={styles.maxTurns}>
-            <span className={styles.header}>Max Turns</span>
+          <div className={css.maxTurns}>
+            <span className={css.header}>Max Turns</span>
             <input type="text" defaultValue={this.state.maxTurns.toString()} onBlur={setMaxTurns} />
           </div>
 
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">4</span>
-            <span className={styles.tagInfoText}> Check ip and port </span>
+            <span className={css.tagInfoText}> Check ip and port </span>
           </h2>
 
           <AddressForm address={this.state.address} onChange={this.setAddress} />
 
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">5</span>
-            <span className={styles.tagInfoText}> Start server</span>
+            <span className={css.tagInfoText}> Start server</span>
           </h2>
 
           <button className="button" onClick={this.setupServer}>
             Go!
           </button>
         </div>
-        <div id={styles.botList} className={this.props.selectedBots.length ? "" : styles.hidden}>
+        <div id={css.botList} className={this.props.selectedBots.length ? "" : css.hidden}>
           <h2 className="title is-5">
             <span className="tag is-info is-small is-rounded">6</span>
-            <span className={styles.tagInfoText}> Wait for people to join...</span>
+            <span className={css.tagInfoText}> Wait for people to join...</span>
           </h2>
 
           <BotSlots
@@ -245,7 +245,7 @@ export class Slot extends React.Component<SlotProps> {
         >
           <FaIcon
             icon={this.props.bot.connected ? "check" : "spinner"}
-            className={this.props.bot.connected ? "" : styles.rotate}
+            className={this.props.bot.connected ? "" : css.rotate}
           />
         </span>
         Name:{" "}
@@ -371,7 +371,7 @@ export const MapSelector: React.SFC<MapSelectorProps> = (props) => {
   mapElements.unshift(<option value="" key={'None'}>Select Map</option>);
   return (
     <select
-      id={styles.mapSelector}
+      id={css.mapSelector}
       value={props.selectedMap}
       onChange={handleChange}
     >

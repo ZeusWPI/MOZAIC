@@ -3,7 +3,7 @@ import * as M from '../../database/models';
 import { HorizontalInput } from '../play/Config';
 
 // tslint:disable-next-line:no-var-requires
-import * as styles from "./AddressForm.scss";
+import * as css from "./AddressForm.scss";
 
 export interface AddressFormProps {
   address: M.Address;

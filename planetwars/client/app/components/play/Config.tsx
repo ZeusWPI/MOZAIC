@@ -7,7 +7,7 @@ import { MapPreview, ImportMap } from './MapPreview';
 import { remote } from 'electron';
 import { Importer } from '../../utils/Importer';
 
-import * as styles from './PlayPage.scss';
+import * as css from './PlayPage.scss';
 
 export interface ConfigProps {
   importMap: (mapMeta: M.MapMeta) => void;
@@ -118,7 +118,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
       return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i} />;
     });
     return (
-      <div className={styles.mapSelector}>
+      <div className={css.mapSelector}>
         {options}
         <ImportMap importMap={this.importMap} />
       </div>

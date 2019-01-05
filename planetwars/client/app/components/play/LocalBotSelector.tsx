@@ -3,7 +3,7 @@ import * as React from 'react';
 import * as M from '../../database/models';
 import Section from './Section';
 
-import * as styles from './PlayPage.scss';
+import * as css from './PlayPage.scss';
 
 export interface LocalBotSelectorProps {
   bots: M.BotList;
@@ -17,12 +17,12 @@ export class LocalBotSelector extends React.Component<LocalBotSelectorProps> {
     const botElements = Object.keys(bots).map((id, i) => {
       const { name, command, uuid } = bots[id];
       return (
-        <li key={i} className={styles.localBot}>
-          <div className={styles.botInfo}>
+        <li key={i} className={css.localBot}>
+          <div className={css.botInfo}>
             <p>{name}</p>
-            <p className={styles.botCommand}>{command}</p>
+            <p className={css.botCommand}>{command}</p>
           </div>
-          <div className={styles.botAdder}>
+          <div className={css.botAdder}>
             <button
               className={'button is-success is-outlined is-rounded'}
               // tslint:disable-next-line:jsx-no-lambda
@@ -37,7 +37,7 @@ export class LocalBotSelector extends React.Component<LocalBotSelectorProps> {
 
     return (
       <Section header={"Local Bots"} >
-        <ul className={styles.localBotSelector}>
+        <ul className={css.localBotSelector}>
           {botElements}
         </ul>
       </Section>

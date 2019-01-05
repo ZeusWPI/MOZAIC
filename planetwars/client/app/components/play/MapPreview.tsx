@@ -17,7 +17,7 @@ const _colors = [
 
 export const color = d3.scaleOrdinal(_colors);
 
-import * as styles from './PlayPage.scss';
+import * as css from './PlayPage.scss';
 
 export interface StaticPlanet {
   x: number;
@@ -104,14 +104,14 @@ export abstract class MapView extends React.Component<MapViewProps> {
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => Math.min(Math.max(radius(this.props.data.planets.length), minRadius), maxRadius))
       .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff")
-      .classed(styles.emptyPlanet, (p) => !p.owner);
+      .classed(css.emptyPlanet, (p) => !p.owner);
 
     if (this.props.data.selected) {
       this.root.append('g')
         .append('text')
         .attr('x', '0')
         .attr('y', '99')
-        .classed(styles.selectedText, true)
+        .classed(css.selectedText, true)
         .text("\uf00c");
     }
   }
@@ -175,10 +175,10 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
 
     return (
       <div
-        className={styles.mapPreview + " " + (this.props.selected ? styles.selectedMap : styles.notSelectedMap)}
+        className={css.mapPreview + " " + (this.props.selected ? css.selectedMap : css.notSelectedMap)}
         onClick={this.props.selectMap}
       >
-        <div className={styles.map}>
+        <div className={css.map}>
           <MapView data={data} width={100} height={100} />
         </div>
       </div>
@@ -210,11 +210,11 @@ export class ImportMap extends React.Component<ImportMapProps, {}> {
   public render() {
     return (
       <div
-        className={styles.mapPreview + " " + styles.notSelectedMap}
+        className={css.mapPreview + " " + css.notSelectedMap}
         onClick={this.props.importMap}
       >
-        <div className={styles.map}>
-          <i className={"fa fa-plus-circle " + styles.importCircle} />
+        <div className={css.map}>
+          <i className={"fa fa-plus-circle " + css.importCircle} />
         </div>
       </div>
     );

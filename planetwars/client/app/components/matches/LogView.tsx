@@ -11,7 +11,7 @@ import {
 
 import * as classNames from 'classnames';
 
-import * as styles from "./LogView.scss";
+import * as css from "./LogView.scss";
 
 export interface LogViewProps {
   playerName: (playerNum: number) => string;
@@ -45,7 +45,7 @@ export class LogView extends Component<LogViewProps> {
     const entries = this.props.matchLog.gameStates.map((state, idx) => {
       const turns = playerLogs[idx];
       return (
-        <li className={classNames(styles.turn)} key={idx}>
+        <li className={classNames(css.turn)} key={idx}>
           <TurnNumView turn={idx} />
           <TurnView playerName={this.props.playerName} turns={turns} />
         </li>
@@ -53,8 +53,8 @@ export class LogView extends Component<LogViewProps> {
     });
 
     return (
-      <div className={styles.logRootNode}>
-        <ul className={styles.turns}>
+      <div className={css.logRootNode}>
+        <ul className={css.turns}>
           {entries}
         </ul>
       </div>);
@@ -83,7 +83,7 @@ export const TurnView: SFC<TurnProps> = (props) => {
   });
 
   return (
-    <ul className={styles.turnOutput}>
+    <ul className={css.turnOutput}>
       {players}
     </ul>);
 };
@@ -92,9 +92,9 @@ interface PlayerViewProps { playerName: string; turn: PlayerTurn; }
 export const PlayerView: SFC<PlayerViewProps> = ({ playerName, turn }) => {
   const isError = turn.action && turn.action.type !== 'commands';
   return (
-    <li className={classNames(styles.player, { [styles.error]: isError })}>
+    <li className={classNames(css.player, { [css.error]: isError })}>
       <div>
-        <p className={styles.playerName}>{playerName}</p>
+        <p className={css.playerName}>{playerName}</p>
       </div>
       <PlayerTurnView turn={turn} />
     </li>
@@ -123,8 +123,8 @@ export const PlayerTurnView: SFC<{ turn: PlayerTurn }> = ({ turn }) => {
 
 export const Timeout: SFC = () => {
   return (
-    <div className={styles.playerOutput}>
-      <span className={styles.error}> [TIMEOUT] </span>
+    <div className={css.playerOutput}>
+      <span className={css.error}> [TIMEOUT] </span>
     </div>
   );
 };
@@ -132,9 +132,9 @@ export const Timeout: SFC = () => {
 export interface ParseErrorViewProps { command?: string; error: string; }
 export const ParseErrorView: SFC<ParseErrorViewProps> = (props) => {
   return (
-    <div className={styles.playerOutput}>
+    <div className={css.playerOutput}>
       <p>
-        <span className={styles.error}> [ERROR] </span> {props.error}
+        <span className={css.error}> [ERROR] </span> {props.error}
       </p>
       <p>
         [OUTPUT] {props.command}
@@ -146,9 +146,9 @@ export const ParseErrorView: SFC<ParseErrorViewProps> = (props) => {
 export interface CommandsViewProps { commands: PwTypes.PlayerCommand[]; }
 export const CommandsView: SFC<CommandsViewProps> = (props) => {
   const dispatches = props.commands.map((cmd, idx) => {
-    const isWarning = { [styles.warning]: !!cmd.error };
+    const isWarning = { [css.warning]: !!cmd.error };
     return (
-      <li className={classNames(styles.playerOutput, isWarning)} key={idx}>
+      <li className={classNames(css.playerOutput, isWarning)} key={idx}>
         <DispatchError error={cmd.error} />
         <DispatchView cmd={cmd.command} />
       </li>
@@ -163,7 +163,7 @@ export const DispatchError: SFC<{ error?: string }> = ({ error }) => {
   if (error) {
     return (
       <p>
-        <span className={styles.warning}> [WARNING] </span> {error}
+        <span className={css.warning}> [WARNING] </span> {error}
       </p>
     );
   } else {
@@ -174,7 +174,7 @@ export const DispatchError: SFC<{ error?: string }> = ({ error }) => {
 export const DispatchView: SFC<{ cmd: PwTypes.Command }> = ({ cmd }) => {
   const { ship_count, origin, destination } = cmd;
   return (
-    <div className={styles.dispatch}>
+    <div className={css.dispatch}>
       <p>
         <FaIcon icon='globe' /> {origin}
       </p>
@@ -193,7 +193,7 @@ export const FaIcon: SFC<{ icon: string }> = ({ icon }) =>
 
 export const TurnNumView: SFC<{ turn: number }> = ({ turn }) => {
   return (
-    <div className={styles.turnNumber}>
+    <div className={css.turnNumber}>
       <p>
         {turn}
       </p>
@@ -203,7 +203,7 @@ export const TurnNumView: SFC<{ turn: number }> = ({ turn }) => {
 
 export const GameEnd: SFC = () => {
   return (
-    <div className={styles.gameEnd}>
+    <div className={css.gameEnd}>
       <p> Game end. </p>
     </div>
   );

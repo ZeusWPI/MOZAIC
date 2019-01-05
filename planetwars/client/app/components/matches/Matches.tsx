@@ -9,7 +9,7 @@ import MatchView from './MatchView';
 import { FatalErrorView } from '../FatalError';
 import { MatchType } from '../../database/models';
 
-import * as styles from './Matches.scss';
+import * as css from './Matches.scss';
 
 export type MatchViewerProps = MatchViewerStateProps & MatchViewerDispatchProps;
 
@@ -46,7 +46,7 @@ export default class MatchViewer extends Component<MatchViewerProps, MatchViewer
     if (matches.length === 0) { return <NoMatches />; }
 
     return (
-      <div className={styles.matchViewer}>
+      <div className={css.matchViewer}>
         <MatchList
           matches={matches}
           selected={selectedId}
@@ -85,7 +85,7 @@ export const MatchList: SFC<MatchListProps> = (props) => {
       </li>);
   });
 
-  return <ul className={styles.matchList}> {listEntries} </ul>;
+  return <ul className={css.matchList}> {listEntries} </ul>;
 };
 
 function calcPlayerData(match: Comp.Match): PlayerProps[] {
@@ -121,16 +121,16 @@ interface MatchEntryProps {
 }
 
 export const MatchListEntry: SFC<MatchEntryProps> = (props) => {
-  let className = styles.matchListEntry;
+  let className = css.matchListEntry;
   const { selected, match } = props;
   if (selected) {
-    className = classnames(styles.selected, className);
+    className = classnames(css.selected, className);
   }
 
   const playerData = calcPlayerData(match);
   return (
     <div className={className} onClick={props.onClick}>
-      <div className={styles.matchListEntryContent}>
+      <div className={css.matchListEntryContent}>
         <PlayerList players={playerData} />
         <TimeLocation match={match} />
         <MatchStatus match={match} />
@@ -153,7 +153,7 @@ export const PlayerList: SFC<{ players: PlayerProps[] }> = ({ players }) => {
   const entries = players.map((player) => (
     <PlayerEntry key={player.number} player={player} />
   ));
-  return <ul className={styles.playerList}> {entries} </ul>;
+  return <ul className={css.playerList}> {entries} </ul>;
 };
 
 export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
@@ -162,9 +162,9 @@ export const PlayerEntry: SFC<{ player: PlayerProps }> = ({ player }) => {
     icon = <FaIcon icon='trophy' />;
   }
   return (
-    <li className={styles.playerEntry}>
-      <div className={styles.iconSpan}> {icon} </div>
-      <div className={styles.playerName}> {player.name} </div>
+    <li className={css.playerEntry}>
+      <div className={css.iconSpan}> {icon} </div>
+      <div className={css.playerName}> {player.name} </div>
       <PlayerScore player={player} />
     </li>
   );
@@ -175,7 +175,7 @@ export const PlayerScore: SFC<{ player: PlayerProps }> = ({ player }) => {
     return null;
   }
   return (
-    <div className={styles.playerScore} title='score'>
+    <div className={css.playerScore} title='score'>
       <FaIcon icon='rocket' />
       {player.score}
     </div>
@@ -198,13 +198,13 @@ export const TimeLocation: SFC<{ match: Comp.Match }> = ({ match }) => {
   }
 
   const time = (
-    <div className={styles.matchTime} title='date'>
+    <div className={css.matchTime} title='date'>
       {dateOrHour(match.timestamp)}
     </div>
   );
 
   return (
-    <div className={styles.timeLocation}>
+    <div className={css.timeLocation}>
       {location}
       {time}
     </div>
@@ -212,8 +212,8 @@ export const TimeLocation: SFC<{ match: Comp.Match }> = ({ match }) => {
 };
 
 export const MapField: SFC<{ mapName: string }> = ({ mapName }) => (
-  <div className={styles.mapName} title='map'>
-    <div className={styles.iconSpan}>
+  <div className={css.mapName} title='map'>
+    <div className={css.iconSpan}>
       <FaIcon icon='globe' />
     </div>
 
@@ -229,7 +229,7 @@ export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
     case M.MatchStatus.playing: {
       return (
         <div>
-          <div className={styles.iconSpan}>
+          <div className={css.iconSpan}>
             <FaIcon icon='play' />
           </div>
           in progress
@@ -238,7 +238,7 @@ export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
     case M.MatchStatus.error: {
       return (
         <div>
-          <div className={styles.iconSpan}>
+          <div className={css.iconSpan}>
             <FaIcon icon='exclamation-triangle' />
           </div>
           failed
@@ -249,7 +249,7 @@ export const MatchStatus: SFC<{ match: Comp.Match }> = ({ match }) => {
 
 export const NoMatches: React.SFC<{}> = (props) => {
   return (
-    <div className={styles.noMatches}>
+    <div className={css.noMatches}>
       <p>
         No matches played yet!
       </p>
