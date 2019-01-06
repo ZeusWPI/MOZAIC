@@ -4,11 +4,11 @@ import * as React from 'react';
 import { MatchLog } from 'planetwars-match-log';
 import Game from './game';
 import Scoreboard from './scoreboard';
+import Controls from './controls';
 
-const Controls = require('./controls');
 import { Renderer } from './renderer';
 
-const styles = require('./visualizer.scss');
+import * as styles from './visualizer.scss';
 
 
 interface VisualizerProps {
@@ -75,7 +75,7 @@ export class Visualizer extends React.Component<VisualizerProps, VisualizerState
 
     if (!this.game) {
       return (
-        <div className={styles.visualizerRootNode}>
+        <div>
           {controls}
         </div>
       );
