@@ -24,6 +24,7 @@ module.exports = merge(baseConfig, {
   ],
   module: {
     rules: [{
+      // TODO: Actually compile global scss without fontawesome (this isn't working)
       test: /(?!fontawesome)\.global\.scss$/,
       use: [MiniCssExtractPlugin.loader, 'css-loader?sourceMap', 'sass-loader']
     },

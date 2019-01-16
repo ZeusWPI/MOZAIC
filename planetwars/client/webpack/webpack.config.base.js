@@ -20,6 +20,8 @@ function cmdOutput(cmdString) {
 }
 
 module.exports = {
+  // https://webpack.js.org/configuration/externals/
+  externals: Object.keys(externals || {}),
   module: {
     rules: [
       {
@@ -143,6 +145,4 @@ module.exports = {
       __TAG__: cmdOutput('git tag --points-at HEAD')
     })
   ],
-
-  externals: Object.keys(externals || {})
 };
