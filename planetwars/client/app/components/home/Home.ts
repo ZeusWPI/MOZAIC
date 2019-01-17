@@ -1,8 +1,8 @@
 import * as React from 'react';
-import { h, div } from 'react-hyperscript-helpers';
+import * as h from 'react-hyperscript';
 
 export default class Home extends React.Component<{}, {}> {
   public render() {
-    return div(["Here be Home page"]);
+    return h('div', ["Here be Home page"]);
   }
 }

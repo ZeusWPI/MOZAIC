@@ -4,7 +4,7 @@ import * as M from "../../database/models";
 import { GState } from '../../reducers/index';
 import { addBot, removeBot, editBot } from '../../actions';
 
-import { Bots, BotsStateProps, BotsDispatchProps, ConfigErrors } from "./Bots";
+import { BotOverview, BotOverviewStateProps, BotOverviewDispatchProps, ConfigErrors } from "./Bots";
 
 interface Props {
   match: any;
@@ -12,11 +12,6 @@ interface Props {
 
 const mapStateToProps = (state: GState, ownProps: Props) => {
   const bots = state.bots;
-  const uuid: M.BotId | undefined = ownProps.match.params.bot;
-  if (uuid) {
-    const selectedBot: M.Bot = bots[uuid];
-    return { bots, selectedBot };
-  }
   return { bots };
 };
 
@@ -46,4 +41,4 @@ const mapDispatchToProps = (dispatch: any) => {
   };
 };
 
-export default connect<BotsStateProps, BotsDispatchProps>(mapStateToProps, mapDispatchToProps)(Bots);
+export default connect(mapStateToProps, mapDispatchToProps)(BotOverview);

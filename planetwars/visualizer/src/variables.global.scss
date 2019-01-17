@@ -1,0 +1,47 @@
+// Custom Variables
+// $background: #201f1d;
+// $altBackground: lighten($background, 5);
+// $primary: #de8d47;
+// $secondary: #de8d47;
+// $tertiary: #868685;
+// $text: #ffffff;
+// $altBackground: lighten($background, 5);
+
+// General --------------------------------------------------------------------
+$background: #201f1d;
+$text: #ffffff;
+
+// Battlefield ----------------------------------------------------------------
+$battleFieldBackground: black;
+
+// Controls -------------------------------------------------------------------
+
+// Buttons
+$ctrl-button-color: black;
+$ctrl-button-text-color: white;
+$ctrl-button-color-hover: white;
+$ctrl-button-text-color-hover: black;
+$ctrl-info-color: black;
+$ctrl-info-text-color: white;
+
+// The draghandle
+$turn-thumb-color: #1f77b4 !default;
+$turn-thumb-radius: 100% !default;
+$turn-thumb-height: 20px !default;
+$turn-thumb-width: 20px !default;
+$turn-thumb-border-width: 0 !default;
+$turn-thumb-border-color: #000 !default;
+$turn-thumb-shadow-size: 0 !default;
+$turn-thumb-shadow-blur: 1px !default;
+$turn-thumb-shadow-color: rgba(0, 0, 0, 0) !default;
+
+// The range
+$turn-track-color: lighten($background, 15) !default;
+$turn-track-radius: 4px !default;
+$turn-track-width: 100% !default;
+$turn-track-height: 8px !default;
+$turn-track-border-width: 0px !default;
+$turn-track-border-color: #000 !default;
+$turn-track-shadow-size: 2px !default;
+$turn-track-shadow-blur: 2px !default;
+$turn-track-shadow-color: rgba(0, 0, 0, 0) !default;

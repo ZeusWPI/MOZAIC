@@ -1,8 +1,11 @@
 import { createStore, applyMiddleware } from 'redux';
 import thunk from 'redux-thunk';
 import { createBrowserHistory } from 'history';
-import { routerMiddleware } from 'react-router-redux';
-import { rootReducer } from '../reducers';
+import { routerMiddleware } from 'connected-react-router';
+
+import { createRootReducer } from '../reducers';
+import { GState } from './../reducers/root';
+
 import createSagaMiddleware from 'redux-saga';
 
 const history = createBrowserHistory();
@@ -12,11 +15,13 @@ const enhancer = applyMiddleware(thunk, sagaMiddleware, router);
 
 export = {
   history,
-  sagaMiddleware,
-  configureStore(initialState: object | void) {
-    return {
-      ...createStore(rootReducer, initialState, enhancer),
-      runSaga: sagaMiddleware.run,
+  configureStore(initialState: GState) {
+    return {...createStore(
+      createRootReducer(history),
+      initialState,
+      enhancer,
+    ),       runSaga: sagaMiddleware.run,}
+
     };
   },
 };

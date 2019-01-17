@@ -1,8 +1,9 @@
 import * as React from 'react';
 import * as d3 from 'd3';
-import * as M from '../../database/models';
-import { JsonPlanet } from '../../database/migrationV3';
 import * as fs from 'fs';
+
+import * as M from '@/database/models';
+import { JsonPlanet } from '@/database/migrationV3';
 
 const _colors = [
   '#DE8D47', // (orange) Main Primary color
@@ -16,8 +17,7 @@ const _colors = [
 
 export const color = d3.scaleOrdinal(_colors);
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as css from './PlayPage.scss';
 
 export interface StaticPlanet {
   x: number;
@@ -41,10 +41,10 @@ export interface MapViewProps {
 }
 
 export abstract class MapView extends React.Component<MapViewProps> {
-  protected node: SVGSVGElement;
+  protected node!: SVGSVGElement;
 
-  private svg: d3.Selection<SVGSVGElement, {}, null, undefined>;
-  private root: d3.Selection<d3.BaseType, {}, null, undefined>;
+  private svg!: d3.Selection<SVGSVGElement, {}, null, undefined>;
+  private root!: d3.Selection<d3.BaseType, {}, null, undefined>;
 
   constructor(props: MapViewProps) {
     super(props);
@@ -103,14 +103,14 @@ export abstract class MapView extends React.Component<MapViewProps> {
       .attr("cy", (p) => y(p.y))
       .attr("r", (p) => Math.min(Math.max(radius(this.props.data.planets.length), minRadius), maxRadius))
       .attr("fill", (p) => p.owner ? color(p.owner.toString()) : "#ffffff")
-      .classed(styles.emptyPlanet, (p) => !p.owner);
+      .classed(css.emptyPlanet, (p) => !p.owner);
 
     if (this.props.data.selected) {
       this.root.append('g')
         .append('text')
         .attr('x', '0')
         .attr('y', '99')
-        .classed(styles.selectedText, true)
+        .classed(css.selectedText, true)
         .text("\uf00c");
     }
   }
@@ -154,13 +154,13 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
 
   public render() {
     const planets: StaticPlanet[] = M.isGameMap(this.state.map) ?
-                    this.state.map.planets.map((planet: JsonPlanet, index: number) => {
-                      return {
-                        ...planet,
-                        index,
-                      };
-                    }) :
-                    [];
+      this.state.map.planets.map((planet: JsonPlanet, index: number) => {
+        return {
+          ...planet,
+          index,
+        };
+      }) :
+      [];
     let [minX, maxX] = d3.extent(planets, (planet: StaticPlanet) => planet.x);
     let [minY, maxY] = d3.extent(planets, (planet: StaticPlanet) => planet.y);
     [minX, maxX] = [minX || 0, maxX || 0];
@@ -168,16 +168,16 @@ export class MapPreview extends React.Component<MapPreviewProps, MapPreviewState
     const data: MapViewData = {
       planets,
       selected: this.props.selected,
-      min: {x: minX, y: minY},
-      max: {x: maxX, y: maxY},
+      min: { x: minX, y: minY },
+      max: { x: maxX, y: maxY },
     };
 
     return (
       <div
-        className={styles.mapPreview + " " + (this.props.selected ? styles.selectedMap : styles.notSelectedMap)}
+        className={css.mapPreview + " " + (this.props.selected ? css.selectedMap : css.notSelectedMap)}
         onClick={this.props.selectMap}
       >
-        <div className={styles.map}>
+        <div className={css.map}>
           <MapView data={data} width={100} height={100} />
         </div>
       </div>
@@ -209,11 +209,11 @@ export class ImportMap extends React.Component<ImportMapProps, {}> {
   public render() {
     return (
       <div
-        className={styles.mapPreview + " " + styles.notSelectedMap}
+        className={css.mapPreview + " " + css.notSelectedMap}
         onClick={this.props.importMap}
       >
-        <div className={styles.map}>
-          <i className={"fa fa-plus-circle " + styles.importCircle} />
+        <div className={css.map}>
+          <i className={"fa fa-plus-circle " + css.importCircle} />
         </div>
       </div>
     );

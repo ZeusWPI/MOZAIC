@@ -8,15 +8,15 @@ import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
 import { Config } from './Config';
-import { Lobby } from './lobby/Lobby';
+import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
+import { PwTypes } from 'mozaic-client';
 import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import * as _ from 'lodash';
 import { generateToken } from '../../utils/GameRunner';
 import { v4 as uuidv4 } from 'uuid';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as css from './PlayPage.scss';
 
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots, lobby } = state;
@@ -44,6 +44,29 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
+  const lobbyDispatchProps: LobbyDispatchProps = {
+    saveMatch(match: M.Match) {
+      dispatch(A.saveMatch(match));
+    },
+    onMatchComplete(matchId: M.MatchId) {
+      dispatch(A.completeMatch(matchId));
+    },
+    onMatchErrored(matchId: M.MatchId, err: Error) {
+      dispatch(A.handleMatchError(matchId, err));
+    },
+    addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
+      dispatch(A.addLogEntry({ matchId, entry }));
+    },
+    onPlayerReconnectedDuringMatch(id: number) {
+      console.log('player reconnected', id);
+    },
+    onPlayerDisconnectDuringMatch(id: number) {
+      console.log('player disconnected', id);
+    },
+    sendNotification(title: string, body: string, type: M.NotificationType) {
+      dispatch(A.addNotification({ title, body, type }));
+    },
+  };
   return {
     importMap(mapMeta: M.MapMeta) {
       dispatch(A.importMap(mapMeta))
@@ -54,6 +77,8 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     setAddress(address: Address) {
       dispatch(A.setAddress(address));
     },
+    addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
+      dispatch(A.addLogEntry({ matchId, entry }));
     createPlayer(player: PlayerData) {
       dispatch(A.createPlayer(player));
     },
@@ -70,6 +95,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
       dispatch(A.startMatch(config));
     }
   };
+
 }
 
 // ----------------------------------------------------------------------------
@@ -94,18 +120,29 @@ export interface PlayPageDispatchProps {
 
 export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
+export interface PlayPageState {
+  config?: WeakConfig;
+  localBots: M.Bot[];
+}
 const alertTODO = () => { alert("TODO"); };
 export class PlayPage extends React.Component<PlayPageProps> {
 
+export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
+  public state: PlayPageState = { localBots: [] };
+
+  private lobby: Lobby;
+
   public render() {
+
+    const { config, localBots } = this.state;
     const { maps, bots, lobby } = this.props;
     return (
-      <div className={styles.playPageContainer}>
-        <div className={styles.playPage}>
+      <div className={css.playPageContainer}>
+        <div className={css.playPage}>
 
           {/* Left side*/}
-          <div className={styles.leftColumn}>
-            <div className={styles.lobbyContainer}>
+          <div className={css.leftColumn}>
+            <div className={css.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
                 slots={this.props.slots}
@@ -121,8 +158,8 @@ export class PlayPage extends React.Component<PlayPageProps> {
           </div>
 
           {/* Right side*/}
-          <div className={styles.rightColumn}>
-            <div className={styles.configContainer}>
+          <div className={css.rightColumn}>
+            <div className={css.configContainer}>
               <Config
                 config={lobby.config}
                 address={lobby.address}
@@ -133,7 +170,7 @@ export class PlayPage extends React.Component<PlayPageProps> {
                 serverRunning={!!lobby.matchId}
               />
             </div>
-            <div className={styles.localBotSelectorContainer}>
+            <div className={css.localBotSelectorContainer}>
               <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
             </div>
           </div>
@@ -185,6 +222,4 @@ export class PlayPage extends React.Component<PlayPageProps> {
   }
 }
 
-export default connect<PlayPageStateProps, PlayPageDispatchProps>(
-  mapStateToProps, mapDispatchToProps,
-)(PlayPage);
+export default connect(mapStateToProps, mapDispatchToProps)(PlayPage);

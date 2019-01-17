@@ -1,9 +1,11 @@
 import * as stream from 'stream';
 import { LogEntry, LogRecord } from './PwTypes';
 import * as fs from 'fs';
+import { SimpleEventDispatcher, ISimpleEvent } from 'ste-simple-events';
 
 export class Logger {
     private sink: stream.Writable;
+    private _onEntry = new SimpleEventDispatcher<LogEntry>();
 
     constructor(logFile: string) {
         this.sink = fs.createWriteStream(logFile)
@@ -12,6 +14,11 @@ export class Logger {
     public log(entry: LogEntry) {
         let str = JSON.stringify(entry) + '\n';
         this.sink.write(str);
+        this._onEntry.dispatch(entry);
+    }
+
+    public get onEntry() {
+        return this._onEntry.asEvent();
     }
 }
 

@@ -1,0 +1,1 @@
+gem 'chunky_png'

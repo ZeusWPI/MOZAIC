@@ -1,0 +1,53 @@
+{
+  "name": "planetwars-visualizer",
+  "version": "0.0.1",
+  "description": "Visualizer for BottleBats Planetwars",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "repository": "git@github.com:ZeusWPI/MOZAIC.git",
+  "author": "Zeus WPI",
+  "license": "MIT",
+  "scripts": {
+    "dev": "webpack-dev-server --hot --config=webpack/webpack.config.dev.js",
+    "build": "webpack --config=webpack/webpack.config.prod.js",
+    "prepare": "yarn run build"
+  },
+  "peerDependencies": {
+    "d3": "^5.7.0",
+    "font-awesome": "^4.7.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0"
+  },
+  "dependencies": {
+    "hyperscript-helpers": "^3.0.3",
+    "planetwars-match-log": "file:../match-log",
+    "react-hyperscript": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/d3": "^5.5.0",
+    "@types/node": "^10.12.18",
+    "@types/react": "^16.7.18",
+    "@types/react-dom": "^16.0.11",
+    "@types/react-hyperscript": "^3.0.3",
+    "clean-webpack-plugin": "^1.0.0",
+    "copy-webpack-plugin": "^4.6.0",
+    "css-loader": "^1.0.0",
+    "d3": "^5.7.0",
+    "file-loader": "^3.0.1",
+    "font-awesome": "^4.7.0",
+    "mini-css-extract-plugin": "^0.5.0",
+    "node-sass": "^4.11.0",
+    "react": "^16.7.0",
+    "react-dom": "^16.7.0",
+    "sass-loader": "^7.1.0",
+    "style-loader": "^0.23.1",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.2.2",
+    "typings-for-css-modules-loader": "^1.7.0",
+    "url-loader": "^1.1.2",
+    "webpack": "^4.28.3",
+    "webpack-cli": "^3.2.0",
+    "webpack-dev-server": "^3.1.14",
+    "webpack-merge": "^4.2.1"
+  }
+}

@@ -8,8 +8,7 @@ import { remote } from 'electron';
 import { Importer } from '../../utils/Importer';
 import { PwConfig, Address } from '../../reducers/lobby';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as css from './PlayPage.scss';
 
 export interface ConfigProps {
   maps: M.MapList;
@@ -24,6 +23,7 @@ export interface ConfigProps {
 export class Config extends React.Component<ConfigProps> {
 
   public render() {
+    const { mapId, maxTurns, host, port } = this.state;
     const { address, config } = this.props;
     const maps = Object.keys(this.props.maps).map((id) => this.props.maps[id]);
     const map = (config.mapId) ? this.props.maps[config.mapId] : undefined;
@@ -121,6 +121,7 @@ export const PortField: React.SFC<PortProps> = (props) => {
       <input
         className="input"
         type="number"
+        placeholder="9142"
         disabled={props.disabled}
         value={props.value}
         // tslint:disable-next-line:jsx-no-lambda
@@ -150,10 +151,10 @@ export class MapSelector extends React.Component<MapSelectorProps> {
 
     const options = maps.map((map, i) => {
       select = () => selectMap(map.uuid);
-      return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i}/>;
+      return <MapPreview selectedMap={map} selectMap={select} selected={map.uuid === selectedMap} key={i} />;
     });
     return (
-      <div className={styles.mapSelector}>
+      <div className={css.mapSelector}>
         {options}
         <ImportMap importMap={this.importMap} />
       </div>
@@ -163,7 +164,7 @@ export class MapSelector extends React.Component<MapSelectorProps> {
   private importMap = () => {
     remote.dialog.showOpenDialog({ properties: ["openFile", "showHiddenFiles"] }, (paths: string[]) => {
       Importer.importMapFromFile(paths[0])
-              .then((mapMeta: M.MapMeta) => { this.props.importMap(mapMeta); });
+        .then((mapMeta: M.MapMeta) => { this.props.importMap(mapMeta); });
     });
   }
 

@@ -1,6 +1,6 @@
 {
   "name": "mozaic-client",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Client code for MOZAIC framework",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -18,10 +18,10 @@
     "gulp-protobufjs": "^1.3.0",
     "gulp-typescript": "^4.0.1",
     "plugin-error": "^1.0.1",
-    "protobufjs": "^6.8.5",
     "typescript": "^2.7.2"
   },
   "dependencies": {
+    "protobufjs": "^6.8.5",
     "bluebird": "^3.5.1",
     "split2": "^2.2.0",
     "strongly-typed-events": "^1.4.3",

@@ -2,11 +2,10 @@ import * as Promise from 'bluebird';
 import { createReadStream, createWriteStream, readdir } from 'mz/fs';
 import * as mkdirp from 'mkdirp';
 import * as p from 'path';
-import { remote } from 'electron';
 
 import { Importer } from './Importer';
 import { Config } from './Config';
-import { store } from '../index';
+import { store } from '../render_process';
 import * as A from '../actions';
 import { GState } from '../reducers';
 

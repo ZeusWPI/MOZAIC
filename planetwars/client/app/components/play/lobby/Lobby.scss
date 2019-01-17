@@ -1,63 +1,77 @@
-@import '../../../app.global.scss';
+@import '~@/styles/lib.global';
 
 .lobby {
-  width: 100%;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  .lobbySlots {
-    flex: 1 1 auto;
-    height: 80%;
     width: 100%;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
-    overflow-y: scroll;
-    padding: 10px 5px;
-    .slotElementWrapper {
-      .slotElement {
+    justify-content: space-between;
+
+    .lobbySlots {
+        flex: 1 1 auto;
+        height: 80%;
         width: 100%;
-        height: 100%;
-        margin: 10px 5px;
-        padding: 8px;
-        border-left: 3px solid transparent;
-        &.unbound {
-          border-left: 4px solid $primary;
+        display: flex;
+        flex-direction: column;
+        overflow-y: scroll;
+        padding: 10px 5px;
+
+        .slotElementWrapper {
+            .slotElement {
+                width: 100%;
+                height: 100%;
+                margin: 10px 5px;
+                padding: 8px;
+                border-left: 3px solid transparent;
+
+                &.unbound {
+                    border-left: 4px solid $primary;
+                }
+
+                &.filled {
+                    border-left: 4px solid darken($primary, 25);
+                }
+
+                &.kicked {
+                    border-left: 4px solid $red;
+                }
+
+                &.connected {
+                    border-left: 4px solid $green;
+                }
+
+                &.connectedInternal {
+                    border-left: 4px solid $purple;
+                }
+
+                &.typo {
+                    background-color: $red;
+                }
+            }
+
+            &:hover {
+                background-color: $altBackground;
+            }
         }
-        &.filled {
-          border-left: 4px solid darken($primary, 25);
-        }
-        &.kicked {
-          border-left: 4px solid $red;
-        }
-        &.connected {
-          border-left: 4px solid $green;
-        }
-        &.typo {
-          background-color: $red;
-        }
-      }
-      &:hover {
-        background-color: $altBackground;
-      }
     }
-  }
-  .serverControls {
-    flex: 1 1 20%;
-    min-height: 70px;
-    max-height: 20%;
-    height: 20%;
-  }
+
+    .serverControls {
+        flex: 1 1 20%;
+        min-height: 70px;
+        max-height: 20%;
+        height: 20%;
+    }
 }
 
 .serverControls {
-  width: 100%;
-  height: 100%;
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  .controlButton {
-    color: $text;
-  }
+    width: 100%;
+    height: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    .controlButton {
+        color: $text;
+    }
 }

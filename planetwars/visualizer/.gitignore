@@ -1,0 +1,6 @@
+node_modules/
+yarn.lock
+dist/
+
+# Automatically generated SCSS TS declarations
+*.scss.d.ts

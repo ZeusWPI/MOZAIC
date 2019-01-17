@@ -1,0 +1,35 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "moduleResolution": "node",
+    "module": "commonjs",
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "dist",
+    "jsx": "react",
+    "lib": [
+      "dom",
+      "es6",
+      "dom.iterable",
+      "scripthost"
+    ],
+    "alwaysStrict": true,
+    // "strictNullChecks": true,
+    // "noImplicitAny": true, // Yo voronoi
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+  },
+  "include": [
+    "./src/**/*.tsx",
+    "./src/**/*.ts", 
+    "./bin/**/*.ts",
+    "./typings/**/*.d.ts",
+    "./node_modules/@types/**/.*d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+  ]
+}

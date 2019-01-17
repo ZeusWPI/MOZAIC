@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { clipboard } from 'electron';
 
-import * as M from '../../../database/models';
 import { Slot } from '../types';
 import { PwConfig, Address } from '../../../reducers/lobby';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as css from './Lobby.scss';
 
 export interface SlotListProps {
   slots: Slot[];
+  port?: number;
+  host?: string;
+  isServerRunning: boolean;
+  willBeKicked(idx: number): boolean;
+  connectLocalBot(slot: Slot, playerNum: number): void;
   address: Address;
-  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 
@@ -19,25 +21,32 @@ export class SlotList extends React.Component<SlotListProps> {
   public render() {
     const { slots, address } = this.props;
     const slotItems = slots.map((slot, index) => (
-      <li key={index} className={styles.slotElementWrapper}>
+      <li key={index} className={css.slotElementWrapper}>
         <SlotElement
           slot={slot}
           index={index}
+          host={this.props.host}
+          port={this.props.port}
+          willBeKicked={this.props.willBeKicked(index)}
           address={address}
           connectLocalBot={this.props.connectLocalBot}
           removeBot={this.props.removeBot}
         />
       </li>),
     );
-    return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
+    return (<ul className={css.lobbySlots}>{slotItems}</ul>);
   }
 }
 
 export interface SlotElementProps {
   slot: Slot;
   index: number;
+  willBeKicked: boolean;
+  host?: string;
+  port?: number;
+  isServerRunning: boolean;
+  connectLocalBot(slot: Slot, playerNum: number): void;
   address: Address;
-  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
@@ -48,10 +57,9 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const token = slot.client ? slot.client.token : null;
     const name = slot.player ? slot.player.name : `Player ${index + 1}`;
 
-    // TODO
-    const kicked = (false) ? (styles.kicked) : '';
+    const kicked = (this.props.willBeKicked) ? (css.kicked) : '';
     return (
-      <div className={`${styles.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
+      <div className={`${css.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
         <h1>{name}</h1>
         <p>{token}</p>
         <p>Status: {this.statusToFriendly(slot)}</p>
@@ -78,15 +86,16 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private statusToClass(slot: Slot): string {
-    if (!slot.player || !slot.client) {
-      return styles.unbound;
+    if (slot.bot && slot.connected) {
+      return css.connectedInternal;
     }
-
-    if (slot.client.connected) {
-      return styles.connected;
+    if (slot.bot) {
+      return css.filled;
     }
-
-    return styles.filled;
+    if (slot.connected) {
+      return css.connected;
+    }
+    return css.unbound;
   }
 
   private statusToFriendly(slot: Slot): string {
@@ -158,7 +167,12 @@ export class SlotElement extends React.Component<SlotElementProps> {
     if (slot.bot) {
       return [kick, conn];
     }
-
-    return [copy, copyFull];
+    if (slot.connected) {
+      return [kick];
+    }
+    if (slot.clientId) {
+      return [copy, copyFull];
+    }
+    return [];
   }
 }
