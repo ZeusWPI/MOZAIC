@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { Component } from 'react';
-import { Link } from 'react-router-dom';
 import { boundMethod } from 'autobind-decorator';
 
 import * as M from '../../database/models';
@@ -8,8 +7,8 @@ import * as M from '../../database/models';
 // TODO import decently
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
-// tslint:disable-next-line:no-var-requires
-const styles = require("./Bots.scss");
+
+import * as css from './Bots.scss';
 
 export interface BotOverviewStateProps {
   bots: M.BotList;
@@ -32,18 +31,18 @@ export class BotOverview extends Component<BotOverviewProps> {
     const { bots } = this.props;
     const { removeBot, addBot, editBot, validate } = this.props;
     return (
-      <div className={styles.botPage}>
-        <ul className={styles.botOverview}>
+      <div className={css.botPage}>
+        <ul className={css.botOverview}>
 
           {/* All bot tiles */}
           {Object.values(bots).map((bot, index) =>
-            <li key={index} className={styles.botContainer}>
+            <li key={index} className={css.botContainer}>
               <Bot {...{ bot, removeBot, editBot, validate }} />
             </li>,
           )}
 
           {/* Tile for adding a bot */}
-          <li key="add" className={styles.botContainer}>
+          <li key="add" className={css.botContainer}>
             <AddBot {... { addBot, validate }} />
           </li>
         </ul>
@@ -74,7 +73,7 @@ export class Bot extends Component<BotProps, BotState> {
     const { bot } = this.props;
 
     return (
-      <div className={styles.bot}>
+      <div className={css.bot}>
         {
           (!this.state.isBeingEdited)
             ? <ShowBot bot={bot} onEdit={this.onEdit} onDelete={this.onDelete} />
@@ -115,11 +114,11 @@ export interface ShowBotProps {
 export class ShowBot extends Component<ShowBotProps> {
   public render() {
     return (
-      <div className={styles.showBotView}>
-        <div className={styles.showContent}>
+      <div className={css.showBotView}>
+        <div className={css.showContent}>
           <h1 className="is-size-1">{this.props.bot.name}</h1>
-          <p className={styles.command}>{this.props.bot.command}</p>
-          <div className={styles.controls}>
+          <p className={css.command}>{this.props.bot.command}</p>
+          <div className={css.controls}>
             <button className="button is-primary" onClick={this.props.onEdit}>Edit</button>
             <button className="button is-danger" onClick={this.props.onDelete}>Delete</button>
           </div>
@@ -158,7 +157,7 @@ export class EditBot extends Component<EditBotProps, EditBotState> {
 
   public render() {
     return (
-      <div className={styles.editBotView}>
+      <div className={css.editBotView}>
         <form onSubmit={this.onSubmit}>
           {/* Name */}
           <div className='field'>
@@ -198,7 +197,7 @@ export class EditBot extends Component<EditBotProps, EditBotState> {
           </div>
 
           {/* Controls */}
-          <div className={styles.controls}>
+          <div className={css.controls}>
             <button className='button is-success' onClick={this.onSave}>Save</button>
             <button className='button is-warning' onClick={this.onReset}>Reset</button>
             <button className='button is-danger' onClick={this.onDelete}>Delete</button>
@@ -279,10 +278,10 @@ export class AddBot extends Component<AddBotProps> {
 
   public render() {
     return (
-      <div className={styles.bot}>
+      <div className={css.bot}>
         {
           (!this.state.isBeingAdded)
-            ? <div className={styles.add}><button onClick={this.onAdd}>+</button></div>
+            ? <div className={css.add}><button onClick={this.onAdd}>+</button></div>
             : <EditBot
               bot={this.emptyBot()}
               onSave={this.onSave}

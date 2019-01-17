@@ -13,8 +13,7 @@ import { createSelector } from 'reselect';
 import { connect } from 'react-redux';
 import * as Config from '../../utils/Config';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Matches.scss');
+import * as css from './Matches.scss';
 
 export interface ContainerProps {
   matchId?: string;
@@ -119,8 +118,8 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
 
     if (match.status === M.MatchStatus.error) {
       return (
-        <div className={styles.matchViewContainer}>
-          <div className={styles.matchError}>
+        <div className={css.matchViewContainer}>
+          <div className={css.matchError}>
             {match.error}
           </div>
         </div>
@@ -131,8 +130,8 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
 
     if (!matchLog || matchLog.gameStates.length === 0) {
       return (
-        <div className={styles.matchViewContainer}>
-          <div className={styles.matchInProgress}>
+        <div className={css.matchViewContainer}>
+          <div className={css.matchInProgress}>
             match in progress
           </div>
         </div>
@@ -141,7 +140,7 @@ export class MatchView extends React.Component<MatchViewProps, MatchViewState> {
 
     // render the match log
     return (
-      <div className={styles.matchViewContainer}>
+      <div className={css.matchViewContainer}>
         <MatchViewer match={match} matchLog={matchLog} />
       </div>
     );
@@ -184,13 +183,13 @@ export class MatchViewer extends React.Component<Props, State> {
     const exportLog = () => this.exportLog();
 
     return (
-      <div className={styles.matchView}>
-        <div className={styles.matchTitleBar}>
-          <div onClick={showVis} className={styles.matchTitleBarElement}> Visualizer </div>
-          <div onClick={showLog} className={styles.matchTitleBarElement}> Log </div>
-          <div onClick={exportLog} className={styles.matchTitleBarElement}> Export </div>
+      <div className={css.matchView}>
+        <div className={css.matchTitleBar}>
+          <div onClick={showVis} className={css.matchTitleBarElement}> Visualizer </div>
+          <div onClick={showLog} className={css.matchTitleBarElement}> Log </div>
+          <div onClick={exportLog} className={css.matchTitleBarElement}> Export </div>
         </div>
-        <div className={styles.displayBox}>
+        <div className={css.displayBox}>
           <MatchDisplay
             viewState={viewState}
             matchLog={matchLog}

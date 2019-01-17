@@ -16,7 +16,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    // "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "allowJs": true,
     
     "experimentalDecorators": true,
@@ -24,16 +24,20 @@
 
     "sourceMap": true,
 
-    "outDir": "dist"
+    "outDir": "dist",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./app/*"]
+    }
   },
   "files": [
-    "app/index.ts"
+    "app/render_process.tsx"
   ],
   "include": [
     "app/**/*.ts",
     "app/**/*.tsx",
     "test/**/*.ts",
-    "types/**/*.ts",
+    "typings/**/*.d.ts",
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [

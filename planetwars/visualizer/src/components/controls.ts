@@ -1,13 +1,9 @@
-const React = require('react');
-const h = require('react-hyperscript');
-const {
-  div,
-  button,
-  i,
-  input,
-  p
-} = require('hyperscript-helpers')(h);
-let styles = require('./controls.scss');
+import * as React from 'react';
+import * as h from 'react-hyperscript';
+import * as hh from 'hyperscript-helpers';
+const { div, button, i, input, p } = (hh as any)(h);
+
+import * as styles from './controls.scss';
 
 function fa_icon(name) {
   return h('i.fa.fa-' + name, {
@@ -16,7 +12,7 @@ function fa_icon(name) {
 }
 
 // TODO: maybe extract button functionality in helper functions
-class Controls extends React.Component {
+class Controls extends React.Component<any> {
 
   playButton() {
     if (this.props.playing) {
@@ -94,4 +90,4 @@ class Controls extends React.Component {
   }
 }
 
-module.exports = Controls;
+export default Controls

@@ -1,11 +1,9 @@
 import * as React from 'react';
 import { clipboard } from 'electron';
 
-import * as M from '../../../database/models';
 import { Slot } from './SlotManager';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as css from './Lobby.scss';
 
 export interface SlotListProps {
   slots: Slot[];
@@ -21,7 +19,7 @@ export class SlotList extends React.Component<SlotListProps> {
   public render() {
     const { slots } = this.props;
     const slotItems = slots.map((slot, index) => (
-      <li key={index} className={styles.slotElementWrapper}>
+      <li key={index} className={css.slotElementWrapper}>
         <SlotElement
           slot={slot}
           index={index}
@@ -34,7 +32,7 @@ export class SlotList extends React.Component<SlotListProps> {
         />
       </li>),
     );
-    return (<ul className={styles.lobbySlots}>{slotItems}</ul>);
+    return (<ul className={css.lobbySlots}>{slotItems}</ul>);
   }
 }
 
@@ -54,9 +52,9 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const { slot, index } = this.props;
     const { token, name } = slot;
 
-    const kicked = (this.props.willBeKicked) ? (styles.kicked) : '';
+    const kicked = (this.props.willBeKicked) ? (css.kicked) : '';
     return (
-      <div className={`${styles.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
+      <div className={`${css.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
         <h1>Player {index + 1}</h1>
         <p>{token}</p>
         <p>Status: {this.statusToFriendly(slot)}</p>
@@ -79,15 +77,15 @@ export class SlotElement extends React.Component<SlotElementProps> {
 
   private statusToClass(slot: Slot): string {
     if (slot.bot && slot.connected) {
-      return styles.connectedInternal;
+      return css.connectedInternal;
     }
     if (slot.bot) {
-      return styles.filled;
+      return css.filled;
     }
     if (slot.connected) {
-      return styles.connected;
+      return css.connected;
     }
-    return styles.unbound;
+    return css.unbound;
   }
 
   private statusToFriendly(slot: Slot): string {
@@ -115,7 +113,6 @@ export class SlotElement extends React.Component<SlotElementProps> {
     const clss = (color: string) => `button is-outlined ${color}`;
 
     const connectLocal = () => this.props.connectLocalBot(slot, index);
-
 
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>
@@ -156,7 +153,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
       return [kick];
     }
     if (slot.clientId) {
-      return [copy, copyFull]
+      return [copy, copyFull];
     }
     return [];
   }

@@ -3,7 +3,7 @@ import * as M from '../../database/models';
 import { HorizontalInput } from '../play/Config';
 
 // tslint:disable-next-line:no-var-requires
-const styles = require("./AddressForm.scss");
+import * as css from "./AddressForm.scss";
 
 export interface AddressFormProps {
   address: M.Address;
@@ -22,18 +22,18 @@ export class AddressForm extends React.Component<AddressFormProps> {
     return (
       <div>
         <HorizontalInput label="Host" id="host">
-        <input
-          type="text"
-          value={host}
-          onChange={this.setHost}
-        />
+          <input
+            type="text"
+            value={host}
+            onChange={this.setHost}
+          />
         </HorizontalInput>
         <HorizontalInput label="Port" id="port">
           <input
             type="number"
             value={port}
             onChange={this.setPort}
-         />
+          />
         </HorizontalInput>
       </div>
     );

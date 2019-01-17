@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Switch, Route } from 'react-router';
-import { Link } from 'react-router-dom';
-import { h, ul, li, nav, div, span } from 'react-hyperscript-helpers';
+import * as h from 'react-hyperscript';
 
 import App from './App';
 import {
@@ -15,11 +14,11 @@ import {
   PlayPage,
 } from './components';
 
-export default class Routes extends React.Component<any, any> {
+export default class Routes extends React.Component {
   public render() {
     return (
       h(App, [
-        h(Switch, `.container`, [
+        h(Switch, [
           h(Route, {
             path: '/home',
             component: HomePage,

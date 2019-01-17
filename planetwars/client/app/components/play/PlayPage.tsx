@@ -11,8 +11,7 @@ import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 import { PwTypes } from 'mozaic-client';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./PlayPage.scss');
+import * as css from './PlayPage.scss';
 
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots } = state;
@@ -40,7 +39,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
       console.log('player disconnected', id);
     },
     sendNotification(title: string, body: string, type: M.NotificationType) {
-      dispatch(A.addNotification({title, body, type}));
+      dispatch(A.addNotification({ title, body, type }));
     },
   };
   const importMap = (mapMeta: M.MapMeta) => { dispatch(A.importMap(mapMeta)); };
@@ -69,18 +68,18 @@ export interface PlayPageState {
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = { localBots: [] };
 
-  private lobby: Lobby;
+  private lobby!: Lobby;
 
   public render() {
     const { maps, bots } = this.props;
     const { config, localBots } = this.state;
     return (
-      <div className={styles.playPageContainer}>
-        <div className={styles.playPage}>
+      <div className={css.playPageContainer}>
+        <div className={css.playPage}>
 
           {/* Left side*/}
-          <div className={styles.leftColumn}>
-            <div className={styles.lobbyContainer}>
+          <div className={css.leftColumn}>
+            <div className={css.lobbyContainer}>
               {/* TODO add 'disableAddress' callback */}
               <Lobby
                 config={config}
@@ -92,11 +91,11 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
           </div>
 
           {/* Right side*/}
-          <div className={styles.rightColumn}>
-            <div className={styles.configContainer}>
+          <div className={css.rightColumn}>
+            <div className={css.configContainer}>
               <Config maps={maps} setConfig={this.setConfig} importMap={this.props.importMap} />
             </div>
-            <div className={styles.localBotSelectorContainer}>
+            <div className={css.localBotSelectorContainer}>
               <LocalBotSelector bots={bots} onClick={this.addLocalBot} />
             </div>
           </div>
@@ -114,6 +113,4 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
 
 }
 
-export default connect<PlayPageStateProps, PlayPageDispatchProps>(
-  mapStateToProps, mapDispatchToProps,
-)(PlayPage);
+export default connect(mapStateToProps, mapDispatchToProps)(PlayPage);

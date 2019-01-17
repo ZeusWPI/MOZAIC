@@ -6,8 +6,7 @@ import Section from '../play/Section';
 import { HorizontalInput } from "../play/Config";
 import { clipboard } from 'electron';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require("./Join.scss");
+import * as css from "./Join.scss";
 
 export interface JoinStateProps {
   allBots: M.BotList;
@@ -60,7 +59,7 @@ export class Join extends React.Component<JoinProps, JoinState> {
           <AddressForm address={address} onChange={this.setAddress} />
 
           <HorizontalInput id="token" label="Token">
-            <input type="text" onChange={this.setToken} value={this.state.token}/>
+            <input type="text" onChange={this.setToken} value={this.state.token} />
           </HorizontalInput>
 
           <BotSelector
@@ -76,17 +75,17 @@ export class Join extends React.Component<JoinProps, JoinState> {
                 onClick={this.joinGame}
                 disabled={!this.isValid()}
               >
-              Join
+                Join
               </button>
             </div>
-              { this.state.import ? (
-                <div className="control">
-                  <a className={"button is-link"} onClick={this.importConfig}>
-                    Import "{this.state.import.name}" from clipboard
+            {this.state.import ? (
+              <div className="control">
+                <a className={"button is-link"} onClick={this.importConfig}>
+                  Import "{this.state.import.name}" from clipboard
                   </a>
-                </div> ):
-                undefined
-              }
+              </div>) :
+              undefined
+            }
           </div>
         </div>
       </Section>
@@ -95,15 +94,15 @@ export class Join extends React.Component<JoinProps, JoinState> {
 
   private importConfig = () => {
     if (!this.state.import) { return; }
-    const {host, port, name, token} = this.state.import;
-    this.setState({ address: {host, port}, token });
+    const { host, port, name, token } = this.state.import;
+    this.setState({ address: { host, port }, token });
   }
 
   private checkClipboard = () => {
     const clipBoardtext = clipboard.readText();
     if (this.state.lastClipboard !== clipBoardtext) {
       try {
-        const {host, port, name, token} = JSON.parse(clipBoardtext);
+        const { host, port, name, token } = JSON.parse(clipBoardtext);
         if (host && port && name && token) {
           this.setState({ import: { host, port, name, token } });
         } else {

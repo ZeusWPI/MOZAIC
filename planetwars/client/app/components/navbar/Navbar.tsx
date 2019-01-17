@@ -1,8 +1,7 @@
-import {
-  h, nav, div, span, i, header, p, button, a, section, footer,
-} from 'react-hyperscript-helpers';
-import { Link } from 'react-router-dom';
 import * as React from 'react';
+import * as h from 'react-hyperscript';
+
+import { Link } from 'react-router-dom';
 
 import { Notification } from '../../database/models';
 
@@ -31,25 +30,25 @@ export class Navbar extends React.Component<NavProps, NavState> {
 
   public render() {
     const active = this.state.toggled ? '.is-active' : '';
-    return nav(`.navbar`, [
-      div(`.navbar-burger${active}`, {
+    return h(`nav.navbar`, [
+      h(`div.navbar-burger${active}`, {
         onClick: () => this.setState({ toggled: !this.state.toggled }),
-      }, [span(), span(), span()]),
-      div(`.navbar-menu${this.state.toggled ? '.is-active' : ''}`, [
-        div(`.navbar-start`, [
-          h(Link, `.navbar-item`, { to: "/bots" }, ["Bots"]),
-          h(Link, `.navbar-item`, { to: "/play" }, ["Play"]),
-          h(Link, `.navbar-item`, { to: "/join" }, ["Join"]),
-          h(Link, `.navbar-item`, { to: "/matches" }, ["Matches"]),
+      }, [h('span'), h('span'), h('span')]),
+      h(`div.navbar-menu${this.state.toggled ? '.is-active' : ''}`, [
+        h(`div.navbar-start`, [
+          h(Link, { className: 'navbar-item', to: "/bots" }, ["Bots"]),
+          h(Link, { className: 'navbar-item', to: "/play" }, ["Play"]),
+          h(Link, { className: 'navbar-item', to: "/join" }, ["Join"]),
+          h(Link, { className: 'navbar-item', to: "/matches" }, ["Matches"]),
         ]),
-        div(`.navbar-end`, [
-          h(Link, `.navbar-item`, { to: "/info" }, ["Info"]),
-          a(`.navbar-item.modal-button`,
+        h(`div.navbar-end`, [
+          h(Link, { className: 'navbar-item', to: "/info" }, ["Info"]),
+          h(`a.navbar-item.modal-button`,
             {
               'onClick': () => this.showModal(),
               'data-target': 'modal-notification',
             }, [
-              i('.fa.fa-lg.fa-bell.notificationBell', {
+              h('i.fa.fa-lg.fa-bell.notificationBell', {
                 'notification-count': this.props.notifications.length,
                 'aria-hidden': true,
               }),
@@ -100,21 +99,21 @@ export class NotificationModal extends React.Component<NotificationModalProps> {
       ? notificationElements
       : h(NoNotifications);
 
-    return div(`.modal#modal-notification${this.props.visible ? ".is-active" : ""}`, [
-      div('.modal-background', {
+    return h(`div.modal#modal-notification${this.props.visible ? ".is-active" : ""}`, [
+      h('div.modal-background', {
         onClick: this.props.hideModal,
       }),
-      div('.modal-card', [
-        header('.modal-card-head', [
-          p('.modal-card-title', ["Notifications"]),
-          button('.delete.is-primary', {
+      h('div.modal-card', [
+        h('header.modal-card-head', [
+          h('p.modal-card-title', ["Notifications"]),
+          h('button.delete.is-primary', {
             'aria-label': close,
             'onClick': this.props.hideModal,
           }),
         ]),
-        section(".modal-card-body", [content]),
-        footer(".modal-card-foot", [
-          button(".button.is-primary", {
+        h("section.modal-card-body", [content]),
+        h("footer.modal-card-foot", [
+          h("button.button.is-primary", {
             onClick: () => this.props.clearNotifications(),
           }, ["Mark all as read & close"])]),
       ]),
@@ -122,14 +121,13 @@ export class NotificationModal extends React.Component<NotificationModalProps> {
   }
 }
 
-// tslint:disable-next-line:variable-name
-export const NoNotifications: React.SFC<void> = (props) => {
-  return div(".card", [
-    header(".card-header", [
-      p(".card-header-title", ['No notifications!']),
+export const NoNotifications: React.SFC = (props) => {
+  return h("div.card", [
+    h("header.card-header", [
+      h("p.card-header-title", ['No notifications!']),
     ]),
-    div(".card-content#notification-body", [
-      div(".content", ['Try playing some games.']),
+    h("div.card-content#notification-body", [
+      h("div.content", ['Try playing some games.']),
     ]),
   ]);
 };
@@ -140,7 +138,6 @@ interface NotificationElementProps {
   remove: () => void;
 }
 
-// tslint:disable-next-line:variable-name
 export const NotificationElement: React.SFC<NotificationElementProps> = (props) => {
   let icon = "";
   let spanClass = "";
@@ -158,22 +155,22 @@ export const NotificationElement: React.SFC<NotificationElementProps> = (props) 
     }
   }
 
-  return div(".card", [
-    header(".card-header", [
-      p(".card-header-title", [
-        span(spanClass, [
-          i(icon),
+  return h("div.card", [
+    h("header.card-header", [
+      h("p.card-header-title", [
+        h(`span${spanClass}`, [
+          h(`i${icon}`),
         ]),
         props.notification.title,
       ]),
-      span(".card-header-icon", [
-        button(".delete", {
+      h(".card-header-icon", [
+        h("button.delete", {
           onClick: () => props.remove(),
         }),
       ]),
     ]),
-    div(".card-content#notification-body", [
-      div(".content", [props.notification.body]),
+    h("div.card-content#notification-body", [
+      h("div.content", [props.notification.body]),
     ]),
   ]);
 };

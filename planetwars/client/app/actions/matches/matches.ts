@@ -188,7 +188,6 @@ export function runMatch() {
       }));
     });
 
-
     runner.run();
     dispatch(Host.serverStarted(runner));
   };

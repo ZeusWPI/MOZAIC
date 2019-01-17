@@ -72,21 +72,23 @@ function upgradeV3(db: V3.DbSchema): V4.DbSchema {
   const newMatches: V4.MatchList = {};
 
   Object.keys(oldBots).forEach((id: V3.BotId) => {
-    const {uuid, config: {name, command}, lastUpdatedAt, createdAt}: V3.BotData = db.bots[id];
+    const { uuid, config: { name, command }, lastUpdatedAt, createdAt }: V3.BotData = db.bots[id];
     newBots[id] = { uuid, name, command, lastUpdatedAt, createdAt };
   });
 
   Object.keys(oldMatches).forEach((id: V3.MatchId) => {
     const oldMatch: V3.Match = db.matches[id];
     const { status, uuid, timestamp, logPath, players, map } = oldMatch;
-    const botSlots: V4.InternalBotSlot[] = players.map((player: string) => {return {
-      // WTF typescript...
-      type: V4.BotSlotType.internal as V4.BotSlotType.internal,
-      token: '',
-      connected: true,
-      botId: player,
-      name: newBots[player].name,
-    }});
+    const botSlots: V4.InternalBotSlot[] = players.map((player: string) => {
+      return {
+        // WTF typescript...
+        type: V4.BotSlotType.internal as V4.BotSlotType.internal,
+        token: '',
+        connected: true,
+        botId: player,
+        name: newBots[player].name,
+      };
+    });
     const matchParams: V4.HostedMatchProps = {
       type: V4.MatchType.hosted,
       status: V4.MatchStatus[status],

@@ -3,8 +3,7 @@ import { shell } from 'electron';
 
 import { Link, NavLink } from "react-router-dom";
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Info.scss');
+import * as css from './Info.scss';
 
 declare const __COMMIT_HASH__: string;
 declare const __BRANCH_NAME__: string;
@@ -24,7 +23,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
       </a>);
     const toggle = (evt: any) => this.setState({ mapToggled: !this.state.mapToggled });
     return (
-      <div className={styles.infoPage}>
+      <div className={css.infoPage}>
         <MapPanel toggled={this.state.mapToggled} toggle={toggle} />
         <div className='container'>
           <div>
@@ -32,7 +31,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
           </div>
           <section className='section content'>
             <h2 className='title is-3 has-text-primary'>Getting started</h2>
-            <p className={styles.wallOfText}>
+            <p className={css.wallOfText}>
               In order to start a game, you will need at least 2 bots.
               Feel free to use the example bots provided.
               Unfortunately, selecting a single bot multiple times is currently not supported.
@@ -41,7 +40,7 @@ export default class Info extends React.Component<{}, { mapToggled: boolean }> {
               For more details on the the rules of PlanetWars and the scripting API,
             please refer to the <Readme />.
           </p>
-            <p className={styles.wallOfText}>
+            <p className={css.wallOfText}>
               Once you have created your planet-conquering script, you will need to configure it in the client.
             In order to do that, go to the <Link to='/bots' > Bots</Link> page and enter the required details.
           </p>
@@ -102,7 +101,7 @@ export const Version: React.SFC<{}> = (props) => {
   return (
     <div className='footer'>
       <div className='container'>
-        <div className={styles.version}>
+        <div className={css.version}>
           Build: {version}
         </div>
       </div>

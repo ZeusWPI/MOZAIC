@@ -1,18 +1,11 @@
-let log = require('electron-log');
+const log = require('electron-log');
 log.transports.file.level = 'info';
 log.info('[STARTUP] Main process started');
 
-const {
-  app,
-  BrowserWindow,
-  Menu,
-  shell,
-} = require('electron');
-let Promise = require('bluebird');
+const { app, BrowserWindow, Menu } = require('electron');
+const Promise = require('bluebird');
+const windowStateKeeper = require('electron-window-state');
 
-let menu;
-let template;
-let mainWindow = null;
 
 if (process.env.NODE_ENV === 'production') {
   require('electron-debug')();
@@ -47,13 +40,21 @@ app.on('ready', () => {
     .then()
     .then(() => log.info('[STARTUP] Extensions installed'))
     .then(() => {
-      mainWindow = new BrowserWindow({
-        show: false,
-        width: 1024,
-        height: 728,
+      const mainWindowState = windowStateKeeper({
+        defaultWidth: 1024,
+        defaultHeight: 720
       });
 
-      mainWindow.loadURL(`file://${__dirname}/app.html`);
+
+      let mainWindow = new BrowserWindow({
+        'x': mainWindowState.x,
+        'y': mainWindowState.y,
+        'width': mainWindowState.width,
+        'height': mainWindowState.height
+      });
+      mainWindowState.manage(mainWindow);
+
+      mainWindow.loadURL(`file://${__dirname}/index.html`);
 
       mainWindow.webContents.on('did-finish-load', () => {
         mainWindow.show();
@@ -66,7 +67,7 @@ app.on('ready', () => {
         mainWindow = null;
       });
 
-      // mainWindow.openDevTools();
+      mainWindow.openDevTools();
 
       mainWindow.webContents.on('context-menu', (e, props) => {
         const {
@@ -124,7 +125,7 @@ app.on('ready', () => {
         }
       }];
 
-      menu = Menu.buildFromTemplate(template);
+      const menu = Menu.buildFromTemplate(template);
       mainWindow.setMenu(menu);
       mainWindow.setMenuBarVisibility(false);
     })
@@ -138,7 +139,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('error', (err) => {
-  log.error(`Unexpected error occured: ${err.toString()} ${err.stack}`);
+  log.error(`Unexpected error occurred: ${err.toString()} ${err.stack}`);
 });
 
 app.on('certificate-error', (ev, wc, url) => {

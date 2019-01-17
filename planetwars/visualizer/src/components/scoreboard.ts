@@ -3,17 +3,10 @@ import { Component } from "react";
 import { GameState } from 'planetwars-match-log';
 
 import * as h from 'react-hyperscript';
+import * as hh from 'hyperscript-helpers';
+const { table, tbody, tr, td } = (hh as any)(h);
 
-const {
-  table,
-  tr,
-  td,
-  tbody,
-  // tslint:disable-next-line:no-var-requires
-} = require('hyperscript-helpers')(h);
-
-// tslint:disable-next-line:no-var-requires
-const styles = require('./scoreboard.scss');
+import * as styles from './scoreboard.scss';
 
 interface ScoreboardProps {
   game: Game;

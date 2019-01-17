@@ -9,6 +9,9 @@ logs/
 db*.json
 *.log
 
+# Automatically generated SCSS TS declarations
+*.scss.d.ts
+
 
 package-lock.json
 

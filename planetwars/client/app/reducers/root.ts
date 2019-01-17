@@ -1,3 +1,4 @@
+import { History } from 'history';
 /**
  * The global state is the root and source of all data in the app.
  * All components are essentially functions of this state to HTML + JS.
@@ -12,7 +13,7 @@
  * logic above it. Same goes for matches.
  */
 
-import { routerReducer, RouterState } from 'react-router-redux';
+import { connectRouter, RouterState } from 'connected-react-router';
 import { combineReducers } from 'redux';
 
 import { BotsState, botsReducer } from './bots';
@@ -25,7 +26,7 @@ import { NavbarState, navbarReducer } from './navbar';
 import { LogsState, logsReducer } from './logs';
 
 export interface GState {
-  readonly routing: RouterState;
+  readonly router: RouterState;
 
   readonly bots: BotsState;
   readonly matches: MatchesState;
@@ -38,7 +39,7 @@ export interface GState {
 }
 
 export const initialState: GState = {
-  routing: { location: null },
+  router: undefined as any,
 
   navbar: { notificationsVisible: false },
   bots: {},
@@ -52,8 +53,8 @@ export const initialState: GState = {
   },
 };
 
-export const rootReducer = combineReducers<GState>({
-  routing: routerReducer,
+export const createRootReducer = (history: History) => combineReducers<GState>({
+  router: connectRouter(history),
 
   bots: botsReducer,
   matches: matchesReducer,

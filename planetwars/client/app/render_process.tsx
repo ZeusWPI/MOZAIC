@@ -1,19 +1,23 @@
 import log from 'electron-log';
 log.info('[STARTUP] Renderer process started');
 
+// https://github.com/electron-userland/electron-webpack/issues/59#issuecomment-347070990
+import 'react-hot-loader/patch';
+
 import { render } from 'react-dom';
-import * as Promise from 'bluebird';
 import { AppContainer } from 'react-hot-loader';
-import { h } from 'react-hyperscript-helpers';
+import * as React from 'react';
+import * as Promise from 'bluebird';
+import * as h from 'react-hyperscript';
 
 import Root from './Root';
-import { FatalErrorView } from './components';
-import { initialState } from './reducers/index';
+import { FatalErrorView } from './components/FatalError';
+import { initialState } from './reducers';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 
-import 'Styles/app.global.scss';
-import 'Styles/lib.global.scss';
+import './styles/app.global.scss';
+import './styles/lib.global.scss';
 
 log.info('[STARTUP] Renderer modules loaded');
 
@@ -67,20 +71,22 @@ initializeDirs()
   });
 
 function renderApp() {
-  const app = h(AppContainer, [
-    h(Root, { store, history }),
-  ]);
+  const app = (
+    <AppContainer>
+      <Root store={store} history={history} />
+    </AppContainer>
+  );
   renderCustom(app);
 }
 
 function renderCustom(element: any) {
-  render(element, document.getElementById('root'));
+  render(element, document.getElementById('app'));
 
   if ((module as any).hot) {
     (module as any).hot.accept('./Root', () => {
       render(
         element,
-        document.getElementById('root'),
+        document.getElementById('app'),
       );
     });
   }

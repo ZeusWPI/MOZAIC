@@ -1,4 +1,4 @@
-@import '~Styles/lib.global';
+@import '~@/styles/lib.global';
 
 .lobby {
     width: 100%;
@@ -38,6 +38,10 @@
 
                 &.connected {
                     border-left: 4px solid $green;
+                }
+
+                &.connectedInternal {
+                    border-left: 4px solid $purple;
                 }
 
                 &.typo {

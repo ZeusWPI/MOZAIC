@@ -1,20 +1,17 @@
 /* tslint:disable:member-ordering */
-import * as p from 'path';
-import { remote } from 'electron';
+import {remote} from 'electron';
 import log from 'electron-log';
-import { v4 as uuidv4 } from 'uuid';
+import * as p from 'path';
+import {v4 as uuidv4} from 'uuid';
 
-import { Match, MapId, MatchId } from '../database/models';
+import {MapId, Match, MatchId} from '../database/models';
 
 export const isDev = (process.env.NODE_ENV === 'development');
-export const appPath = isDev
-  ? p.resolve('.')
-  : p.resolve(remote.app.getAppPath());
+export const appPath =
+    isDev ? p.resolve('.') : p.resolve(remote.app.getAppPath());
 
-export const visualizerAssets = isDev
-  // Yarn workspaces cause this to be at the root during dev
-  ? p.resolve(appPath, '..', '..', 'node_modules', 'planetwars-visualizer')
-  : p.resolve(appPath, 'node_modules', 'planetwars-visualizer');
+export const visualizerAssets =
+    p.resolve(appPath, 'node_modules', 'planetwars-visualizer');
 
 log.debug(`[CONFIG] isDev: ${isDev}`);
 log.debug(`[CONFIG] appPath: ${appPath}`);
@@ -58,7 +55,7 @@ export class Config {
 
   // Yes this sucks, but it's the simplest thing right now
   private static _staticBots = p.resolve(Config._resources, 'bots');
-  public static staticBots: { [key: string]: string } = {
+  public static staticBots: {[key: string]: string} = {
     [p.resolve(Config._staticBots, 'simple1.py')]: 'SimpleBot 1',
     [p.resolve(Config._staticBots, 'simple2.py')]: 'SimpleBot 2',
   };

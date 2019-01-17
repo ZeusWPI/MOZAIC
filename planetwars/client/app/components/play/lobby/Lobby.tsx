@@ -14,8 +14,7 @@ import { ServerControls } from './ServerControls';
 import { SlotManager, Slot } from './SlotManager';
 import { PwTypes } from 'mozaic-client';
 
-// tslint:disable-next-line:no-var-requires
-const styles = require('./Lobby.scss');
+import * as css from './Lobby.scss';
 
 export type LobbyProps = LobbyDispatchProps & {
   maps: M.MapList;
@@ -79,7 +78,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const { port, host } = Lib.getWeakAddress(config);
     return (
       <Section header={"Lobby"}>
-        <div className={styles.lobby}>
+        <div className={css.lobby}>
           <SlotList
             slots={slots}
             port={port}
@@ -115,7 +114,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
 
   private syncSlots = (slotManager: SlotManager) => {
     this.setState({ slots: slotManager.getSlots() });
-  };
+  }
 
   private updateSlots(props: LobbyProps) {
     const { config, maps } = props;
@@ -200,7 +199,6 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
     const params = { ctrl_token: ctrlToken, address: config.address, logFile };
     console.log('launching server with', params);
 
-
     // callbacks should be set on the current slotmanager,
     // not the one belonging to 'this'. (It changes when a match is launched).
     const slotManager = this.slotManager;
@@ -225,7 +223,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           this.props.sendNotification(
             "Match ended",
             `A match on map '${
-              this.state.type === "configuring" ?
+            this.state.type === "configuring" ?
               "unknown" :
               this.props.maps[this.state.config.mapId]
             }' has ended`,
@@ -236,7 +234,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
           this.props.sendNotification(
             "Match errored",
             `A match on map '${
-              this.state.type === "configuring" ?
+            this.state.type === "configuring" ?
               "unknown" :
               this.props.maps[this.state.config.mapId]
             }' has errored`,
@@ -286,7 +284,7 @@ export class Lobby extends React.Component<LobbyProps, LobbyState> {
       this.props.onMatchComplete(matchId);
     });
     this.server.onError.subscribe((err) => {
-      this.props.onMatchErrored(matchId, err)
+      this.props.onMatchErrored(matchId, err);
     });
 
     // Bind connection listeners

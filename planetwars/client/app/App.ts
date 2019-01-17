@@ -1,9 +1,7 @@
 import * as React from 'react';
-import { h, div } from 'react-hyperscript-helpers';
+import * as h from 'react-hyperscript';
 import { connect } from 'react-redux';
-import log from 'electron-log';
 
-import { GState } from './reducers';
 import { Navbar, FatalErrorView } from './components';
 
 interface State { fatalError?: Error; }
@@ -20,12 +18,12 @@ export class App extends React.Component<{}, State> {
 
   public render() {
     if (this.state.fatalError) {
-      return div(`.app`, [
+      return h(`div.app`, [
         h(FatalErrorView, { error: this.state.fatalError }),
       ]);
     }
     return (
-      div(`.app`, [h(Navbar), this.props.children])
+      h(`div.app`, [h(Navbar), this.props.children])
     );
   }
 }

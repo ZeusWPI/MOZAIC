@@ -1,5 +1,5 @@
 export {
   GState,
-  rootReducer,
+  createRootReducer,
   initialState,
 } from './root';
