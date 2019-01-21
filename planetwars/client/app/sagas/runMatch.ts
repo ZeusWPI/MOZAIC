@@ -1,7 +1,7 @@
 import { eventChannel, Channel } from 'redux-saga';
 import * as A from '../actions';
 import { Address, PlayerData, ClientData, PwConfig, LobbyState } from '../reducers/lobby';
-import { MatchRunner, MatchControl, Logger, Client, PwClient } from 'mozaic-client';
+import { MatchRunner, Logger, Client } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { generateToken } from '../utils/GameRunner';
 import { ServerParams, BotParams } from '../actions/lobby';
@@ -9,7 +9,7 @@ import { ActionWithPayload } from '../actions/helpers';
 import { ISimpleEvent } from 'ste-simple-events';
 import * as M from '../database/models';
 import { GState } from '../reducers';
-import { parseLogFile, calcStats } from '../lib/match';
+import { MatchLog } from 'planetwars-match-log'
 
 import {
   call,
@@ -78,25 +78,26 @@ function* startServer(params: ServerParams) {
 }
 
 function* runLobby(runner: MatchRunner) {
-  yield fork(watchConnectEvents, runner.matchControl);
-  yield fork(watchDisconnectEvents, runner.matchControl);
-  yield fork(watchCreatePlayer, runner.matchControl);
+  
+  yield fork(watchConnectEvents, runner);
+  yield fork(watchDisconnectEvents, runner);
+  yield fork(watchCreatePlayer, runner);
   yield fork(watchRunLocalBot, runner.logger);
 }
 
-function* watchCreatePlayer(match: MatchControl) {
-  yield takeEvery(A.createPlayer.type, registerPlayer, match);
+function* watchCreatePlayer(runner: MatchRunner) {
+  yield takeEvery(A.createPlayer.type, registerPlayer, runner);
 }
 
-function* watchConnectEvents(match: MatchControl) {
-  const channel = simpleEventChannel(match.onPlayerConnected);
+function* watchConnectEvents(runner: MatchRunner) {
+  const channel = simpleEventChannel(runner.onPlayerConnected);
   yield takeEvery(channel, function*(clientId: number) {
     yield put(A.clientConnected({ clientId }));
   });
 }
 
-function* watchDisconnectEvents(match: MatchControl) {
-  const channel = simpleEventChannel(match.onPlayerDisconnected);
+function* watchDisconnectEvents(runner: MatchRunner) {
+  const channel = simpleEventChannel(runner.onPlayerDisconnected);
   yield takeEvery(channel, function*(clientId: number) {
     yield put(A.clientDisconnected({ clientId }));
   });
@@ -115,12 +116,12 @@ function* watchRunLocalBot(logger: Logger) {
   yield takeEvery(A.runLocalBot.type, runLocalBot);
 }
 
-function* registerPlayer(match: MatchControl, action: ActionWithPayload<PlayerData>) {
+function* registerPlayer(runner: MatchRunner, action: ActionWithPayload<PlayerData>) {
   const player = action.payload;
   const token = generateToken();
 
   const tokenBuf = Buffer.from(token, 'hex');
-  const clientId = yield call([match, match.addPlayer], tokenBuf);
+  const clientId = yield call([runner, runner.addPlayer], tokenBuf);
 
   yield put(A.clientRegistered({
     playerId: player.id,
@@ -158,7 +159,7 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
   const mapPath = yield select((state: GState) => state.maps[match.map].mapPath);
   const matchChan = matchEventChannel(runner);
 
-  yield call([runner.matchControl, runner.matchControl.startGame], {
+  yield call([runner, runner.startGame], {
     map_file: mapPath,
     max_turns: match.maxTurns,
   });
@@ -167,7 +168,7 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
   const event = yield take(matchChan);
   if (event === 'complete') {
     const log = parseLogFile(match.logPath, match.type);
-    const stats = calcStats(log);
+    const stats = calcStats(log) ;
     yield put(A.matchFinished({
       matchId: match.uuid,
       stats,
