@@ -9,7 +9,7 @@ import { ActionWithPayload } from '../actions/helpers';
 import { ISimpleEvent } from 'ste-simple-events';
 import * as M from '../database/models';
 import { GState } from '../reducers';
-import { MatchLog } from 'planetwars-match-log'
+import { parseLog, calcStats } from 'planetwars-match-log'
 
 import {
   call,
@@ -24,6 +24,7 @@ import {
   spawn,
 } from 'redux-saga/effects';
 import { runPwClient } from './clients';
+import { fs } from 'mz';
 
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
@@ -167,7 +168,8 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
 
   const event = yield take(matchChan);
   if (event === 'complete') {
-    const log = parseLogFile(match.logPath, match.type);
+    const logContents = fs.readFileSync(match.logPath).toString();
+    const log = parseLog(logContents, match.type);
     const stats = calcStats(log) ;
     yield put(A.matchFinished({
       matchId: match.uuid,

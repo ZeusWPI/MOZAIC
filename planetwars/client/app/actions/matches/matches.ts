@@ -10,7 +10,7 @@ import { GState } from '../../reducers/index';
 import { Config } from '../../utils/Config';
 
 import * as Notify from '../notifications';
-import * as Host from './hosting';
+import * as Host from '../../components/host/Host';
 import { actionCreator } from '../helpers';
 import { createLog, addLogEntry } from '..';
 
@@ -100,6 +100,7 @@ export function joinMatch(host: M.Address, bot: M.InternalBotSlot) {
 export function sendGo() {
   return (dispatch: any, getState: any) => {
     const state: GState = getState();
+    
     const { runner, matchParams } = state.host;
     if (!matchParams) { throw Error('Under construction'); }
 
