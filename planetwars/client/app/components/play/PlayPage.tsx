@@ -18,6 +18,26 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as css from './PlayPage.scss';
 
+export interface PlayPageStateProps {
+  maps: M.MapList;
+  bots: M.BotList;
+  lobby: LobbyState;
+  slots: Slot[];
+}
+
+export interface PlayPageDispatchProps {
+  importMap: (mapMeta: M.MapMeta) => void;
+  setConfig: (config: PwConfig) => void;
+  setAddress: (address: Address) => void;
+  createPlayer: (player: PlayerParams) => void;
+  startServer: (params: ServerParams) => void;
+  stopServer: () => void;
+  runLocalBot: (params: BotParams) => void;
+  startMatch: (config: PwConfig) => void;
+}
+
+export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
+
 function mapStateToProps(state: GState): PlayPageStateProps {
   const { maps, bots, lobby } = state;
   const map = maps[lobby.config.mapId];
@@ -79,6 +99,7 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
       dispatch(A.addLogEntry({ matchId, entry }));
+    },
     createPlayer(player: PlayerData) {
       dispatch(A.createPlayer(player));
     },
@@ -100,32 +121,13 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
 
 // ----------------------------------------------------------------------------
 
-export interface PlayPageStateProps {
-  maps: M.MapList;
-  bots: M.BotList;
-  lobby: LobbyState;
-  slots: Slot[];
-}
 
-export interface PlayPageDispatchProps {
-  importMap: (mapMeta: M.MapMeta) => void;
-  setConfig: (config: PwConfig) => void;
-  setAddress: (address: Address) => void;
-  createPlayer: (player: PlayerParams) => void;
-  startServer: (params: ServerParams) => void;
-  stopServer: () => void;
-  runLocalBot: (params: BotParams) => void;
-  startMatch: (config: PwConfig) => void;
-}
-
-export type PlayPageProps = PlayPageStateProps & PlayPageDispatchProps;
 
 export interface PlayPageState {
   config?: WeakConfig;
   localBots: M.Bot[];
 }
 const alertTODO = () => { alert("TODO"); };
-export class PlayPage extends React.Component<PlayPageProps> {
 
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = { localBots: [] };

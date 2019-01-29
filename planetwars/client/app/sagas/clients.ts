@@ -3,7 +3,7 @@ import * as M from '../database/models';
 import { Client, PwClient, Logger, Address } from 'mozaic-client';
 import { Config } from '../utils/Config';
 import { eventChannel } from 'redux-saga';
-import { parseLogFile, calcStats } from '../lib/match';
+import { parseLog, calcStats } from 'planetwars-match-log';
 import {
   call,
   apply,
@@ -67,7 +67,7 @@ function* joinMatch(params: A.JoinMatchParams) {
   const eventChan = clientEventChannel(client);
   const event = yield take(eventChan);
   if (event === 'exit') {
-    const log = parseLogFile(match.logPath, match.type);
+    const log = parseLog(match.logPath, match.type);
     const stats = calcStats(log);
     yield put(A.matchFinished({
       matchId: match.uuid,

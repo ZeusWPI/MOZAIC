@@ -122,7 +122,7 @@ function* registerPlayer(runner: MatchRunner, action: ActionWithPayload<PlayerDa
   const token = generateToken();
 
   const tokenBuf = Buffer.from(token, 'hex');
-  const clientId = yield call([runner, runner.addPlayer], tokenBuf);
+  const clientId = yield call([runner, runner.matchControl.addPlayer], tokenBuf);
 
   yield put(A.clientRegistered({
     playerId: player.id,
@@ -160,7 +160,7 @@ function* runMatch(runner: MatchRunner, match: M.PlayingHostedMatch) {
   const mapPath = yield select((state: GState) => state.maps[match.map].mapPath);
   const matchChan = matchEventChannel(runner);
 
-  yield call([runner, runner.startGame], {
+  yield call([runner, runner.matchControl.startGame], {
     map_file: mapPath,
     max_turns: match.maxTurns,
   });

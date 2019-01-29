@@ -47,7 +47,6 @@ export class Lobby extends React.Component<LobbyProps> {
 
   public render() {
     const config = this.props.config;
-    const slots = this.state.slots;
     const { port, host } = Lib.getWeakAddress(config);
     const { state, slots } = this.props;
     return (
