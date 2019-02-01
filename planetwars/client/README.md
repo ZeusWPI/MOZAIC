@@ -43,8 +43,8 @@ This section will still be updated.
 
 We use [typedoc][docs] for in-code documentation. It understands typescript, so stick to semantic documentation, things like types and structure are generated automatically.
 
-Generate the docs by running `yarn typedoc --out docs/`
-Once generated you can open the index.html file in your browser to view them.
+The docs are generated when running `yarn run dev`.
+They can be found in `docs/book`.
 
 [setup]: https://github.com/iRath96/electron-react-typescript-boilerplate
 [electronbuild]: https://www.electron.build/multi-platform-build
