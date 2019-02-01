@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use super::Handler;
+use super::{AnyPtrHandler, Handler};
 use super::broker::BrokerHandle;
 use capnp;
 use capnp::any_pointer;
@@ -161,10 +161,9 @@ pub struct CoreParams<S> {
 
 impl<S> CoreParams<S> {
     pub fn handler<M, H>(&mut self, m: M, h: H)
-        where for<'a> M: Owned<'a>,
-            <M as Owned<'static>>::Reader: HasTypeId,
-            M: Send + 'static,
-            H: 'static + for <'a> Handler<'a, CoreCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+        where M: for<'a> Owned<'a> + Send + 'static,
+             <M as Owned<'static>>::Reader: HasTypeId,
+              H: 'static + for <'a> Handler<'a, CoreCtx<'a, S>, M, Output=(), Error=capnp::Error>,
 
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
@@ -182,9 +181,6 @@ pub struct LinkParams<S> {
     pub external_handlers: HandlerMap<S, (), capnp::Error>,
 }
 
-use super::{AnyPtrHandler};
-
-
 impl<S> LinkParams<S> {
     pub fn new(remote_uuid: Uuid, state: S) -> Self {
         LinkParams {
@@ -195,11 +191,10 @@ impl<S> LinkParams<S> {
         }
     }
 
-    pub fn internal_handler<M, H>(&mut self, m: M, h: H)
-        where for<'a> M: Owned<'a>,
-            <M as Owned<'static>>::Reader: HasTypeId,
-            M: Send + 'static,
-            H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+    pub fn internal_handler<M, H>(&mut self, _m: M, h: H)
+        where M: for<'a> Owned<'a> + Send + 'static,
+             <M as Owned<'static>>::Reader: HasTypeId,
+              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.internal_handlers.insert(
@@ -209,11 +204,10 @@ impl<S> LinkParams<S> {
 
     }
 
-    pub fn external_handler<M, H>(&mut self, m: M, h: H)
-        where for<'a> M: Owned<'a>,
-            <M as Owned<'static>>::Reader: HasTypeId,
-            M: Send + 'static,
-            H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+    pub fn external_handler<M, H>(&mut self, _m: M, h: H)
+        where M: for<'a> Owned<'a> + Send + 'static,
+             <M as Owned<'static>>::Reader: HasTypeId,
+              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.external_handlers.insert(
