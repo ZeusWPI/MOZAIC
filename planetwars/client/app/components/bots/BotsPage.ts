@@ -1,3 +1,9 @@
+/**
+ * asdflaskdfj
+ * 
+ * asdflksdafj
+ * @module ADFKJADF
+ */
 import { connect } from 'react-redux';
 
 import * as M from "../../database/models";

@@ -1,3 +1,7 @@
+/**
+ * Houses a player lobby, map settings, and bot assignment (to players).
+ * The gameserver is started from here, after which a game can be launched.
+ */
 import * as React from 'react';
 import { connect } from 'react-redux';
 

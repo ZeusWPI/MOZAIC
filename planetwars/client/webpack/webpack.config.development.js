@@ -8,6 +8,8 @@ const webpack = require('webpack');
 const merge = require('webpack-merge');
 const baseConfig = require('./webpack.config.base');
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+const TypeDocPlugin = require('typedoc-webpack-plugin');
+
 
 const port = process.env.PORT || 3000;
 
@@ -35,6 +37,17 @@ module.exports = merge(baseConfig, {
     new webpack.LoaderOptionsPlugin({
       debug: true
     }),
+    new TypeDocPlugin({
+      out: '../../docs/book/',
+      jsx: true,
+      mode: 'file',
+      tsconfig: '../tsconfig.json',
+      ignoreCompilerErrors: true,
+      verbose:true,
+      plugin:[
+        'typedoc-plugin-external-module-name'
+      ]
+    })
   ],
 
   // https://github.com/chentsulin/webpack-target-electron-renderer#how-this-module-works
