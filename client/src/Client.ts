@@ -16,6 +16,9 @@ export interface ClientProps {
     logger: Logger;
 }
 
+/**
+ * Testdoc
+ */
 export class Client {
     clientId: number;
     connection: Connection;

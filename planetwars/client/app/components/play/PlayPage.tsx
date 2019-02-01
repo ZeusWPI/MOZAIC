@@ -13,7 +13,6 @@ import { LocalBotSelector } from './LocalBotSelector';
 import { PwTypes } from 'mozaic-client';
 import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import * as _ from 'lodash';
-import { generateToken } from '../../utils/GameRunner';
 import { v4 as uuidv4 } from 'uuid';
 
 import * as css from './PlayPage.scss';
