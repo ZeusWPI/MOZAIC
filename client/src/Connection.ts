@@ -52,7 +52,7 @@ export class Connection {
         })
     }
 
-    public get onConnect(): ISignal {
+    public get onConnect(): ISimpleEvent<number> {
         return this._onConnect.asEvent();
     }
 
