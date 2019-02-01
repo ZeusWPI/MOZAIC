@@ -134,16 +134,20 @@ pub trait Handler<'a, S, M>: Send
 /// type on that trait, Reader<'a> is coupled.
 /// Refer to the Handler implementation for FnHandler to see how this works.
 pub struct FnHandler<M, F> {
-    message_type: M,
+    message_type: PhantomData<M>,
     function: F,
 }
 
 impl<M, F> FnHandler<M, F> {
-    pub fn new(message_type: M, function: F) -> Self {
+    pub fn new(function: F) -> Self {
         FnHandler {
             function,
-            message_type,
+            message_type: PhantomData,
         }
+    }
+
+    pub fn typed(_m: M, function: F) -> Self {
+        Self::new(function)
     }
 }
 
@@ -180,7 +184,7 @@ impl GreeterState {
 pub fn test() {
     let mut msg_handler = MessageHandler::new(GreeterState {});
 
-    let handler = FnHandler::new(greet_person::Owned, GreeterState::greet);
+    let handler = FnHandler::typed(greet_person::Owned, GreeterState::greet);
     msg_handler.add_handler(handler);
 
     // construct a message

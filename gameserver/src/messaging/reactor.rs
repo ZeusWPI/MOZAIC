@@ -159,11 +159,68 @@ pub struct CoreParams<S> {
     pub handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
 }
 
+impl<S> CoreParams<S> {
+    pub fn handler<M, H>(&mut self, m: M, h: H)
+        where for<'a> M: Owned<'a>,
+            <M as Owned<'static>>::Reader: HasTypeId,
+            M: Send + 'static,
+            H: 'static + for <'a> Handler<'a, CoreCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+
+    {
+        let boxed = Box::new(AnyPtrHandler::new(h));
+        self.handlers.insert(
+            <M as Owned<'static>>::Reader::type_id(),
+            boxed,
+        );
+    }
+}
+
 pub struct LinkParams<S> {
     pub remote_uuid: Uuid,
     pub state: S,
     pub internal_handlers: HandlerMap<S, (), capnp::Error>,
     pub external_handlers: HandlerMap<S, (), capnp::Error>,
+}
+
+use super::{AnyPtrHandler};
+
+
+impl<S> LinkParams<S> {
+    pub fn new(remote_uuid: Uuid, state: S) -> Self {
+        LinkParams {
+            remote_uuid,
+            state,
+            internal_handlers: HashMap::new(),
+            external_handlers: HashMap::new(),
+        }
+    }
+
+    pub fn internal_handler<M, H>(&mut self, m: M, h: H)
+        where for<'a> M: Owned<'a>,
+            <M as Owned<'static>>::Reader: HasTypeId,
+            M: Send + 'static,
+            H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+    {
+        let boxed = Box::new(AnyPtrHandler::new(h));
+        self.internal_handlers.insert(
+            <M as Owned<'static>>::Reader::type_id(),
+            boxed,
+        );
+
+    }
+
+    pub fn external_handler<M, H>(&mut self, m: M, h: H)
+        where for<'a> M: Owned<'a>,
+            <M as Owned<'static>>::Reader: HasTypeId,
+            M: Send + 'static,
+            H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+    {
+        let boxed = Box::new(AnyPtrHandler::new(h));
+        self.external_handlers.insert(
+            <M as Owned<'static>>::Reader::type_id(),
+            boxed,
+        );
+    }
 }
 
 pub trait LinkParamsTrait: 'static + Send {
