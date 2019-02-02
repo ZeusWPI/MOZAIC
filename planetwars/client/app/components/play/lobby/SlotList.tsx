@@ -2,7 +2,7 @@ import * as React from 'react';
 import { clipboard } from 'electron';
 
 import { Slot } from '../types';
-import { PwConfig, Address } from '../../../reducers/lobby';
+import { Address } from '../../../reducers/lobby';
 
 import * as css from './Lobby.scss';
 
@@ -11,9 +11,9 @@ export interface SlotListProps {
   port?: number;
   host?: string;
   isServerRunning: boolean;
-  willBeKicked(idx: number): boolean;
-  connectLocalBot(slot: Slot, playerNum: number): void;
   address: Address;
+  willBeKicked(idx: number): boolean;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 
@@ -27,6 +27,7 @@ export class SlotList extends React.Component<SlotListProps> {
           index={index}
           host={this.props.host}
           port={this.props.port}
+          isServerRunning={this.props.isServerRunning}
           willBeKicked={this.props.willBeKicked(index)}
           address={address}
           connectLocalBot={this.props.connectLocalBot}
@@ -45,8 +46,8 @@ export interface SlotElementProps {
   host?: string;
   port?: number;
   isServerRunning: boolean;
-  connectLocalBot(slot: Slot, playerNum: number): void;
   address: Address;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
@@ -76,7 +77,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private copyFull = (): void => {
-    const { slot, address: { host, port }} = this.props;
+    const { slot, address: { host, port } } = this.props;
     if (slot.player && slot.client) {
       const name = slot.player.name;
       const token = slot.client.token;
@@ -170,7 +171,7 @@ export class SlotElement extends React.Component<SlotElementProps> {
     if (slot.connected) {
       return [kick];
     }
-    if (slot.clientId) {
+    if (slot.client.clientId) {
       return [copy, copyFull];
     }
     return [];

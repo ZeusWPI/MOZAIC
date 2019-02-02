@@ -85,41 +85,49 @@ app.on('ready', () => {
 
       const template = [{
         accelerator: 'CmdOrCtrl+Q',
+        type: 'normal',
         click() {
           app.quit()
         }
       }, {
         accelerator: 'CmdOrCtrl+R',
+        type: 'normal',
         click() {
           mainWindow.webContents.reload()
         }
       }, {
         accelerator: 'Ctrl+CmdOrCtrl+F',
+        type: 'normal',
         click() {
           mainWindow.setFullScreen(!mainWindow.isFullScreen())
         }
       }, {
         accelerator: 'Alt+CmdOrCtrl+I',
+        type: 'normal',
         click() {
           mainWindow.toggleDevTools()
         }
       }, {
         accelerator: 'Ctrl+W',
+        type: 'normal',
         click() {
           mainWindow.close()
         }
       }, {
         accelerator: 'F5',
+        type: 'normal',
         click() {
           mainWindow.webContents.reload()
         }
       }, {
         accelerator: 'F12',
+        type: 'normal',
         click() {
           mainWindow.toggleDevTools()
         }
       }, {
         accelerator: 'F11',
+        type: 'normal',
         click() {
           mainWindow.setFullScreen(!mainWindow.isFullScreen())
         }

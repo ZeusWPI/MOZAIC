@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as M from '../../database/models';
-import AddressForm from '../host/AddressForm';
-import { BotSelector } from "../host/BotSelector";
+import AddressForm from './AddressForm';
+import { BotSelector } from "./BotSelector";
 import Section from '../play/Section';
 import { HorizontalInput } from "../play/Config";
 import { clipboard } from 'electron';

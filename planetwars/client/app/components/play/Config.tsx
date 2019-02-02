@@ -23,7 +23,6 @@ export interface ConfigProps {
 export class Config extends React.Component<ConfigProps> {
 
   public render() {
-    const { mapId, maxTurns, host, port } = this.state;
     const { address, config } = this.props;
     const maps = Object.keys(this.props.maps).map((id) => this.props.maps[id]);
     const map = (config.mapId) ? this.props.maps[config.mapId] : undefined;
@@ -52,12 +51,12 @@ export class Config extends React.Component<ConfigProps> {
   }
 
   private selectMap = (mapId: M.MapId) => {
-    const newConfig = {... this.props.config, mapId };
+    const newConfig = { ... this.props.config, mapId };
     this.props.setConfig(newConfig);
   }
 
   private setMax = (maxTurns: number) => {
-    const newConfig = {...this.props.config, maxTurns };
+    const newConfig = { ...this.props.config, maxTurns };
     this.props.setConfig(newConfig);
   }
 
