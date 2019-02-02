@@ -121,10 +121,10 @@ impl Message {
 // Maybe it would prove useful to implement a dummy service in this
 // architecture.
 
-pub struct ReactorParams<S> {
+pub struct ReactorParams<S, C> {
     pub uuid: Uuid,
     pub core_params: CoreParams<S>,
-    pub links: Vec<Box<LinkParamsTrait>>,
+    pub links: Vec<Box<LinkParamsTrait<C>>>,
 }
 
 pub trait ReactorSpawner: 'static + Send {
@@ -135,8 +135,9 @@ pub trait ReactorSpawner: 'static + Send {
     ) -> mpsc::UnboundedSender<Message>;
 }
 
-impl<S> ReactorSpawner for ReactorParams<S>
-    where S: 'static + Send
+impl<S, C> ReactorSpawner for ReactorParams<S, C>
+    where S: 'static + Send,
+          C: Context
 {
     fn reactor_uuid<'a>(&'a self) -> &'a Uuid {
         &self.uuid
@@ -148,9 +149,11 @@ impl<S> ReactorSpawner for ReactorParams<S>
     ) -> mpsc::UnboundedSender<Message>
     {
         let params = *self;
-        let (handle, reactor) = Reactor::new(broker_handle, params);
-        tokio::spawn(reactor);
-        return handle;
+        unimplemented!()
+
+        // let (handle, reactor) = Reactor::new(broker_handle, params);
+        // tokio::spawn(reactor);
+        // return handle;
     }
 }
 
@@ -174,14 +177,14 @@ impl<S> CoreParams<S> {
     }
 }
 
-pub struct LinkParams<S> {
+pub struct LinkParams<S, C> {
     pub remote_uuid: Uuid,
     pub state: S,
-    pub internal_handlers: HandlerMap<S, (), capnp::Error>,
-    pub external_handlers: HandlerMap<S, (), capnp::Error>,
+    pub internal_handlers: HandlerMap<S, C, (), capnp::Error>,
+    pub external_handlers: HandlerMap<S, C, (), capnp::Error>,
 }
 
-impl<S> LinkParams<S> {
+impl<S, C> LinkParams<S, C> {
     pub fn new(remote_uuid: Uuid, state: S) -> Self {
         LinkParams {
             remote_uuid,
@@ -194,7 +197,7 @@ impl<S> LinkParams<S> {
     pub fn internal_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S, C>, M, Output=(), Error=capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.internal_handlers.insert(
@@ -207,7 +210,7 @@ impl<S> LinkParams<S> {
     pub fn external_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+              H: 'static + for <'a> Handler<'a, HandlerCtx<'a, S, C>, M, Output=(), Error=capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.external_handlers.insert(
@@ -217,19 +220,20 @@ impl<S> LinkParams<S> {
     }
 }
 
-pub trait LinkParamsTrait: 'static + Send {
+pub trait LinkParamsTrait<C: Context>: 'static + Send {
     fn remote_uuid<'a>(&'a self) -> &'a Uuid;
-    fn into_link(self: Box<Self>) -> Link;
+    fn into_link(self: Box<Self>) -> Link<C>;
 }
 
-impl<S> LinkParamsTrait for LinkParams<S>
-    where S: 'static + Send
+impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
+    where S: 'static + Send,
+          C: Context + 'static
 {
     fn remote_uuid<'a>(&'a self) -> &'a Uuid {
         &self.remote_uuid
     }
 
-    fn into_link(self: Box<Self>) -> Link {
+    fn into_link(self: Box<Self>) -> Link<C> {
         let unboxed = *self;
 
         let link_state = LinkState {
@@ -251,20 +255,28 @@ impl<S> LinkParamsTrait for LinkParams<S>
     }
 }
 
+trait Context {
+    fn spawn_link<S>(&mut self, params: LinkParams<S, Self>);
+    fn dispatch_internal(&mut self, message: Message);
+    fn dispatch_external(&mut self, message: Message);
+}
+
 
 // TODO: can we partition the state so that borrowing can be easier?
 // eg group uuid, broker_handle, message_queue
-pub struct Reactor<S> {
+pub struct Reactor<S, C> {
     pub uuid: Uuid,
     pub message_chan: mpsc::UnboundedReceiver<Message>,
     pub broker_handle: BrokerHandle,
     pub message_queue: VecDeque<Message>,
     pub internal_state: S,
     pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
-    pub links: HashMap<Uuid, Link>,
+    pub links: HashMap<Uuid, Link<C>>,
 }
 
-impl<S> Future for Reactor<S> {
+impl<S, C> Future for Reactor<S, C>
+    where C: Context + 'static
+{
     type Item = ();
     type Error = ();
 
@@ -279,10 +291,12 @@ impl<S> Future for Reactor<S> {
     }
 }
 
-impl<S> Reactor<S> {
+impl<S, C> Reactor<S, C>
+    where C: Context + 'static
+{
     pub fn new(
         broker_handle: BrokerHandle,
-        params: ReactorParams<S>
+        params: ReactorParams<S, C>
     ) -> (mpsc::UnboundedSender<Message>, Self)
     {
         let (snd, recv) = mpsc::unbounded();
@@ -336,7 +350,7 @@ impl<S> Reactor<S> {
             let reactor_ctx = ReactorCtx {
                 uuid: &self.uuid,
                 reactor_handle,
-                broker_handle: &mut self.broker_handle,
+                context_handle: unimplemented!(),
             };
             link.handle_external(reactor_ctx, msg)?;
 
@@ -370,7 +384,6 @@ impl<S> Reactor<S> {
                         uuid: &self.uuid,
                         message_queue: &mut self.message_queue,
                     },
-                    links: &mut self.links,
                     state: &mut self.internal_state,
                 };
 
@@ -383,19 +396,21 @@ impl<S> Reactor<S> {
 }
 
 
-pub struct Link {
+pub struct Link<C> {
     /// Uuid of remote party
     pub remote_uuid: Uuid,
 
-    pub reducer: Box<LinkReducerTrait>,
+    pub reducer: Box<LinkReducerTrait<C>>,
 
     pub link_state: LinkState,
 }
 
-impl Link {
+impl<C> Link<C>
+    where C: Context + 'static
+{
     fn handle_external<'a>(
         &mut self,
-        ctx: ReactorCtx<'a>,
+        ctx: ReactorCtx<'a, C>,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
@@ -406,7 +421,7 @@ impl Link {
         let sender = Sender {
             uuid: ctx.uuid,
             remote_uuid: &self.remote_uuid,
-            broker_handle: ctx.broker_handle,
+            context_handle: ctx.context_handle,
             link_state: &mut self.link_state,
         };
 
@@ -415,14 +430,14 @@ impl Link {
 
     fn handle_internal<'a>(
         &mut self,
-        ctx: ReactorCtx<'a>,
+        ctx: ReactorCtx<'a, C>,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
         let sender = Sender {
             uuid: ctx.uuid,
             remote_uuid: &self.remote_uuid,
-            broker_handle: ctx.broker_handle,
+            context_handle: ctx.context_handle,
             link_state: &mut self.link_state,
         };
 
@@ -431,39 +446,40 @@ impl Link {
 
 }
 
-pub struct LinkReducer<S> {
+pub struct LinkReducer<S, C> {
     /// handler state
     pub state: S,
     /// handle internal messages (sent by core, or other link handlers)
-    pub internal_handlers: HandlerMap<S, (), capnp::Error>,
+    pub internal_handlers: HandlerMap<S, C, (), capnp::Error>,
     /// handle external messages (sent by remote party)
-    pub external_handlers: HandlerMap<S, (), capnp::Error>,
+    pub external_handlers: HandlerMap<S, C, (), capnp::Error>,
 }
 
-pub trait LinkReducerTrait: 'static + Send {
+pub trait LinkReducerTrait<C: Context>: 'static + Send {
     fn handle_external<'a>(
         &mut self,
         reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a>,
+        sender: Sender<'a, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
     fn handle_internal<'a>(
         &mut self,
         reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a>,
+        sender: Sender<'a, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
 }
 
-impl<S> LinkReducerTrait for LinkReducer<S>
-    where S: 'static + Send
+impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
+    where S: 'static + Send,
+          C: Context,
 {
     fn handle_external<'a>(
         &mut self,
         reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a>,
+        sender: Sender<'a, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
@@ -481,7 +497,7 @@ impl<S> LinkReducerTrait for LinkReducer<S>
     fn handle_internal<'a>(
         &mut self,
         reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a>,
+        sender: Sender<'a, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
@@ -503,21 +519,20 @@ pub struct LinkState {
 }
 
 
-pub struct ReactorCtx<'a> {
+pub struct ReactorCtx<'a, C> {
     uuid: &'a Uuid,
     reactor_handle: ReactorHandle<'a>,
-    broker_handle: &'a mut BrokerHandle,
+    context_handle: &'a mut C,
 }
 
-pub struct HandlerCtx<'a, S> {
-    pub sender: Sender<'a>,
+pub struct HandlerCtx<'a, S, C> {
+    pub sender: Sender<'a, C>,
     pub reactor_handle: ReactorHandle<'a>,
     pub state: &'a mut S,
 }
 
 pub struct CoreCtx<'a, S> {
     pub reactor_handle: ReactorHandle<'a>,
-    links: &'a mut HashMap<Uuid, Link>,
     state: &'a mut S,
 }
 
@@ -560,14 +575,16 @@ impl<'a> ReactorHandle<'a> {
 
 
 /// for sending messages to other actors
-pub struct Sender<'a> {
+pub struct Sender<'a, C> {
     pub uuid: &'a Uuid,
     pub remote_uuid: &'a Uuid,
     pub link_state: &'a mut LinkState,
-    pub broker_handle: &'a mut BrokerHandle,
+    pub context_handle: &'a mut C,
 }
 
-impl<'a> Sender<'a> {
+impl<'a, C> Sender<'a, C>
+    where C: Context
+{
     pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
               M: Owned<'static>,
@@ -588,7 +605,7 @@ impl<'a> Sender<'a> {
         }
 
         let msg = Message::from_capnp(message_builder.into_reader());
-        self.broker_handle.send(msg);
+        self.context_handle.dispatch_external(msg);
     }
 
     pub fn close(&mut self) {
@@ -608,8 +625,8 @@ type CoreHandler<S, T, E> = Box<
     for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
 >;
 
-type LinkHandler<S, T, E> = Box<
-    for <'a> Handler<'a, HandlerCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
+type LinkHandler<S, C, T, E> = Box<
+    for <'a> Handler<'a, HandlerCtx<'a, S, C>, any_pointer::Owned, Output=T, Error=E>
 >;
 
-type HandlerMap<S, T, E> = HashMap<u64, LinkHandler<S, T, E>>;
+type HandlerMap<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
