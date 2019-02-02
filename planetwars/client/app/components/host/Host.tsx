@@ -6,7 +6,6 @@ import BotSelector from './BotSelector';
 import { AddressForm } from "./AddressForm";
 import * as classnames from 'classnames';
 
-// tslint:disable-next-line:no-var-requires
 import * as css from "./Host.scss";
 
 export interface HostStateProps {

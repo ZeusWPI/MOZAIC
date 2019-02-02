@@ -1,19 +1,21 @@
 import * as React from 'react';
+import * as _ from 'lodash';
 import { connect } from 'react-redux';
+import { v4 as uuidv4 } from 'uuid';
+
+import { PwTypes } from 'mozaic-client';
 
 import * as M from '../../database/models';
 import * as A from '../../actions';
+
 import { ServerParams, PlayerParams, BotParams } from '../../actions/lobby';
+import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import { GState } from '../../reducers';
 
 import { WeakConfig, StrongConfig, Slot } from './types';
 import { Config } from './Config';
 import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
-import { PwTypes } from 'mozaic-client';
-import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
-import * as _ from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
 
 import * as css from './PlayPage.scss';
 
@@ -63,29 +65,29 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
-  const lobbyDispatchProps: LobbyDispatchProps = {
-    saveMatch(match: M.Match) {
-      dispatch(A.saveMatch(match));
-    },
-    onMatchComplete(matchId: M.MatchId) {
-      dispatch(A.completeMatch(matchId));
-    },
-    onMatchErrored(matchId: M.MatchId, err: Error) {
-      dispatch(A.handleMatchError(matchId, err));
-    },
-    addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
-      dispatch(A.addLogEntry({ matchId, entry }));
-    },
-    onPlayerReconnectedDuringMatch(id: number) {
-      console.log('player reconnected', id);
-    },
-    onPlayerDisconnectDuringMatch(id: number) {
-      console.log('player disconnected', id);
-    },
-    sendNotification(title: string, body: string, type: M.NotificationType) {
-      dispatch(A.addNotification({ title, body, type }));
-    },
-  };
+  // const lobbyDispatchProps: LobbyDispatchProps = {
+  //   saveMatch(match: M.Match) {
+  //     dispatch(A.saveMatch(match));
+  //   },
+  //   onMatchComplete(matchId: M.MatchId) {
+  //     dispatch(A.completeMatch(matchId));
+  //   },
+  //   onMatchErrored(matchId: M.MatchId, err: Error) {
+  //     dispatch(A.handleMatchError(matchId, err));
+  //   },
+  //   addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
+  //     dispatch(A.addLogEntry({ matchId, entry }));
+  //   },
+  //   onPlayerReconnectedDuringMatch(id: number) {
+  //     console.log('player reconnected', id);
+  //   },
+  //   onPlayerDisconnectDuringMatch(id: number) {
+  //     console.log('player disconnected', id);
+  //   },
+  //   sendNotification(title: string, body: string, type: M.NotificationType) {
+  //     dispatch(A.addNotification({ title, body, type }));
+  //   },
+  // };
   return {
     importMap(mapMeta: M.MapMeta) {
       dispatch(A.importMap(mapMeta))
@@ -96,9 +98,9 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     setAddress(address: Address) {
       dispatch(A.setAddress(address));
     },
-    addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
-      dispatch(A.addLogEntry({ matchId, entry }));
-    },
+    // addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
+    //   dispatch(A.addLogEntry({ matchId, entry }));
+    // },
     createPlayer(player: PlayerData) {
       dispatch(A.createPlayer(player));
     },
@@ -119,7 +121,6 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
 }
 
 // ----------------------------------------------------------------------------
-
 
 
 export interface PlayPageState {
@@ -182,7 +183,7 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
 
   private startServer = () => {
     const matchId = uuidv4();
-    const {lobby: { address } } = this.props;
+    const { lobby: { address } } = this.props;
     this.props.startServer({ matchId, address });
   }
 

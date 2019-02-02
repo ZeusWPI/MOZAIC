@@ -62,4 +62,5 @@ export interface Slot {
   player?: PlayerData;
   client?: ClientData;
   bot?: M.Bot;
+  connected?: boolean;
 }
