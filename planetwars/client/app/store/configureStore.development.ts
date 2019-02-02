@@ -12,7 +12,6 @@ import thunk from 'redux-thunk';
 
 import { createRootReducer, GState } from '@/reducers';
 
-
 declare const window: Window & {
   __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?(a: any): void;
 };

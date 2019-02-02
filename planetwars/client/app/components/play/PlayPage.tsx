@@ -3,8 +3,6 @@ import * as _ from 'lodash';
 import { connect } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
 
-import { PwTypes } from 'mozaic-client';
-
 import * as M from '../../database/models';
 import * as A from '../../actions';
 
@@ -12,9 +10,9 @@ import { ServerParams, PlayerParams, BotParams } from '../../actions/lobby';
 import { LobbyState, PwConfig, Address, PlayerData } from '../../reducers/lobby';
 import { GState } from '../../reducers';
 
-import { WeakConfig, StrongConfig, Slot } from './types';
+import { WeakConfig, Slot } from './types';
 import { Config } from './Config';
-import { Lobby, LobbyDispatchProps } from './lobby/Lobby';
+import { Lobby } from './lobby/Lobby';
 import { LocalBotSelector } from './LocalBotSelector';
 
 import * as css from './PlayPage.scss';
@@ -65,32 +63,9 @@ function mapStateToProps(state: GState): PlayPageStateProps {
 }
 
 function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
-  // const lobbyDispatchProps: LobbyDispatchProps = {
-  //   saveMatch(match: M.Match) {
-  //     dispatch(A.saveMatch(match));
-  //   },
-  //   onMatchComplete(matchId: M.MatchId) {
-  //     dispatch(A.completeMatch(matchId));
-  //   },
-  //   onMatchErrored(matchId: M.MatchId, err: Error) {
-  //     dispatch(A.handleMatchError(matchId, err));
-  //   },
-  //   addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
-  //     dispatch(A.addLogEntry({ matchId, entry }));
-  //   },
-  //   onPlayerReconnectedDuringMatch(id: number) {
-  //     console.log('player reconnected', id);
-  //   },
-  //   onPlayerDisconnectDuringMatch(id: number) {
-  //     console.log('player disconnected', id);
-  //   },
-  //   sendNotification(title: string, body: string, type: M.NotificationType) {
-  //     dispatch(A.addNotification({ title, body, type }));
-  //   },
-  // };
   return {
     importMap(mapMeta: M.MapMeta) {
-      dispatch(A.importMap(mapMeta))
+      dispatch(A.importMap(mapMeta));
     },
     setConfig(config: PwConfig) {
       dispatch(A.setConfig(config));
@@ -98,9 +73,6 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     setAddress(address: Address) {
       dispatch(A.setAddress(address));
     },
-    // addLogEntry(matchId: M.MatchId, entry: PwTypes.LogEntry) {
-    //   dispatch(A.addLogEntry({ matchId, entry }));
-    // },
     createPlayer(player: PlayerData) {
       dispatch(A.createPlayer(player));
     },
@@ -115,13 +87,12 @@ function mapDispatchToProps(dispatch: any): PlayPageDispatchProps {
     },
     startMatch(config: PwConfig) {
       dispatch(A.startMatch(config));
-    }
+    },
   };
 
 }
 
 // ----------------------------------------------------------------------------
-
 
 export interface PlayPageState {
   config?: WeakConfig;
