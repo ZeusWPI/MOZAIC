@@ -16,12 +16,13 @@ const enhancer = applyMiddleware(thunk, sagaMiddleware, router);
 export = {
   history,
   configureStore(initialState: GState) {
-    return {...createStore(
-      createRootReducer(history),
-      initialState,
-      enhancer,
-    ),       runSaga: sagaMiddleware.run,}
-
+    return {
+      ...createStore(
+        createRootReducer(history),
+        initialState,
+        enhancer,
+      ),
+      runSaga: sagaMiddleware.run,
     };
   },
 };
