@@ -10,13 +10,16 @@ const { DIST_FOLDER } = require('./path_config');
 
 module.exports = merge(baseConfig, {
   devtool: 'source-map',
-
+  mode: 'development',
   entry: ['./app/main_process'],
 
   // 'main.js' in dist
   output: {
     path: DIST_FOLDER,
-    filename: 'main.js'
+    filename: 'main.js',
+
+    // https://github.com/webpack/webpack/issues/1114
+    libraryTarget: 'commonjs2',
   },
 
   plugins: [

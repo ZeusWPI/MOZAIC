@@ -21,6 +21,9 @@ const PORT = process.env.PORT || 3000;
 
 const wdm = webpackDevMiddleware(compiler, {
   publicPath: config.output.publicPath,
+  writeToDisk: (filePath) => {
+    return /\.html/.test(filePath)
+  },
   stats: {
     colors: true
   }
@@ -36,7 +39,7 @@ const server = app.listen(PORT, 'localhost', serverError => {
   }
 
   if (argv['start-hot']) {
-    spawn('yarn', ['run', 'start-hot'], {
+    spawn('yarn', ['run', 'dev-hot-electron'], {
       shell: true,
       env: process.env,
       stdio: 'inherit'

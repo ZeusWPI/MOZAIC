@@ -32,13 +32,20 @@
     "url": "git+https://github.com/ZeusWPI/MOZAIC.git"
   },
   "scripts": {
-    "build-main": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.electron.js --progress --profile --colors",
-    "build-renderer": "cross-env NODE_ENV=production node ./node_modules/webpack/bin/webpack --config webpack/webpack.config.production.js --progress --profile --colors",
     "build": "yarn run build-main && yarn run build-renderer",
+    "build-main": "cross-env NODE_ENV=production webpack --config webpack/webpack.config.electron.js --progress --profile --colors",
+    "build-renderer": "cross-env NODE_ENV=production webpack --config webpack/webpack.config.production.js --progress --profile --colors",
     "start": "cross-env NODE_ENV=production electron .",
-    "start-hot": "cross-env HOT=1 NODE_ENV=development electron ./app/main_process.js",
-    "hot-server": "cross-env NODE_ENV=development node ./webpack/devServer.js",
-    "dev": "yarn run hot-server --start-hot",
+
+    "dev": "yarn run dev-build-main && yarn run dev-hot-server --start-hot",
+    "dev-hot-server": "cross-env NODE_ENV=development node ./webpack/devServer.js",
+    "dev-hot-electron": "cross-env NODE_ENV=development HOT=1 electron .",
+    "dev-build-main": "cross-env NODE_ENV=development webpack --config webpack/webpack.config.electron.js",
+
+    "clean-cache": "rm -r node_modules/.cache/",
+    "clean-build": "rm -r app/dist/",
+    "clean": "rm -r app/dist/ node_modules/",
+  
     "package": "yarn run build && build --publish never",
     "package-win": "yarn run build && build --win --x64",
     "package-linux": "yarn run build && build --linux",

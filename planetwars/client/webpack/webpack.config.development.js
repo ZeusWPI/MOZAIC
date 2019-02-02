@@ -6,10 +6,18 @@
 
 const webpack = require('webpack');
 const merge = require('webpack-merge');
-const baseConfig = require('./webpack.config.base');
+const path = require('path');
+
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+<<<<<<< HEAD
 const TypeDocPlugin = require('typedoc-webpack-plugin');
 
+=======
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+const baseConfig = require('./webpack.config.base');
+const { APP_FOLDER, DIST_FOLDER } = require('./path_config');
+>>>>>>> Use a cleaner build process
 
 const port = process.env.PORT || 3000;
 
@@ -22,6 +30,7 @@ module.exports = merge(baseConfig, {
   ],
   output: {
     filename: 'bundle.js',
+    path: DIST_FOLDER,
     publicPath: `http://localhost:${port}/dist/`,
 
     // https://github.com/webpack/webpack/issues/1114
@@ -62,12 +71,31 @@ module.exports = merge(baseConfig, {
     ]
   },
 
+  // https://webpack.js.org/guides/caching/
+  optimization: {
+    runtimeChunk: 'single',
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        }
+      }
+    }
+  },
+
   plugins: [
     // https://webpack.github.io/docs/hot-module-replacement-with-webpack.html
     new webpack.HotModuleReplacementPlugin(),
 
     // https://github.com/mzgoddard/hard-source-webpack-plugin
     new HardSourceWebpackPlugin(),
+
+    new HtmlWebpackPlugin({
+      template: path.resolve(APP_FOLDER, 'index.development.html'),
+      inject: true,
+    }),
 
     new webpack.NoEmitOnErrorsPlugin(),
 

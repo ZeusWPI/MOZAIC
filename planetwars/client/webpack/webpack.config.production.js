@@ -3,19 +3,24 @@
  */
 
 const webpack = require('webpack');
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const merge = require('webpack-merge');
+const path = require('path');
+
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const baseConfig = require('./webpack.config.base');
-const { DIST_FOLDER } = require('./path_config');
+const { DIST_FOLDER, APP_FOLDER } = require('./path_config');
 
 module.exports = merge(baseConfig, {
   devtool: 'cheap-module-source-map',
 
+  mode: 'production',
+
   output: {
     path: DIST_FOLDER,
     filename: 'bundle.js',
-    publicPath: './dist/',
+    publicPath: '.',
 
     // https://github.com/webpack/webpack/issues/1114
     libraryTarget: 'commonjs2',
@@ -67,6 +72,17 @@ module.exports = merge(baseConfig, {
     // https://webpack.github.io/docs/list-of-plugins.html#occurrenceorderplugin
     // https://github.com/webpack/webpack/issues/864
     new webpack.optimize.OccurrenceOrderPlugin(),
+
+    new HtmlWebpackPlugin({
+      template: path.resolve(APP_FOLDER, 'index.production.html'),
+      inject: true,
+    }),
+
+
+    new HtmlWebpackPlugin({
+      template: path.resolve(APP_FOLDER, 'index.production.html'),
+      inject: true,
+    }),
 
     new MiniCssExtractPlugin({
       // Options similar to the same options in webpackOptions.output

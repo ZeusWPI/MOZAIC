@@ -2,15 +2,13 @@
  * Base webpack config used across other specific configs
  */
 
-const path = require('path');
 const child_process = require('child_process');
 
 const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 const CleanWebpackPlugin = require('clean-webpack-plugin');
 
-const { APP_FOLDER } = require('./path_config');
+const { APP_FOLDER, ROOT_FOLDER } = require('./path_config');
 
 const {
   dependencies: externals
@@ -74,20 +72,6 @@ module.exports = {
       }]
   },
 
-  // https://webpack.js.org/guides/caching/
-  optimization: {
-    runtimeChunk: 'single',
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: 'vendors',
-          chunks: 'all'
-        }
-      }
-    }
-  },
-
   // https://webpack.js.org/configuration/resolve/
   resolve: {
     extensions: ['.js', '.ts', '.tsx', '.json'],
@@ -101,11 +85,7 @@ module.exports = {
   },
 
   plugins: [
-    // new CleanWebpackPlugin(['dist'], { root: ROOT_FOLDER, beforeEmit: true }),
-    new HtmlWebpackPlugin({
-      template: path.resolve(APP_FOLDER, 'index.html'),
-      inject: true,
-    }),
+    new CleanWebpackPlugin(['dist'], { root: ROOT_FOLDER, beforeEmit: true }),
     new webpack.WatchIgnorePlugin([
       /css\.d\.ts$/
     ]),

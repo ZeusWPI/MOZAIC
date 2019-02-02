@@ -6,7 +6,6 @@ const { app, BrowserWindow, Menu } = require('electron');
 const Promise = require('bluebird');
 const windowStateKeeper = require('electron-window-state');
 
-
 if (process.env.NODE_ENV === 'production') {
   require('electron-debug')();
   const sourceMapSupport = require('source-map-support'); // eslint-disable-line
@@ -68,7 +67,7 @@ app.on('ready', () => {
         mainWindow = null;
       });
 
-      mainWindow.openDevTools();
+      mainWindow.openDevTools({ mode: 'right' });
 
       mainWindow.webContents.on('context-menu', (e, props) => {
         const {
@@ -76,65 +75,68 @@ app.on('ready', () => {
           y
         } = props;
 
-        Menu.buildFromTemplate([{
-          label: 'Inspect element',
-          click() {
-            mainWindow.inspectElement(x, y);
-          },
-        }]).popup(mainWindow);
+        // Menu.buildFromTemplate([
+        //   //   {
+        //   //   label: 'Inspect element',
+        //   //   type: 'normal',
+        //   //   click() {
+        //   //     mainWindow.inspectElement(x, y);
+        //   //   },
+        //   // }
+        // ]).popup(mainWindow);
       });
 
       const template = [{
-        accelerator: 'CmdOrCtrl+Q',
-        type: 'normal',
-        click() {
-          app.quit()
-        }
-      }, {
-        accelerator: 'CmdOrCtrl+R',
-        type: 'normal',
-        click() {
-          mainWindow.webContents.reload()
-        }
-      }, {
-        accelerator: 'Ctrl+CmdOrCtrl+F',
-        type: 'normal',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        }
-      }, {
-        accelerator: 'Alt+CmdOrCtrl+I',
-        type: 'normal',
-        click() {
-          mainWindow.toggleDevTools()
-        }
-      }, {
-        accelerator: 'Ctrl+W',
-        type: 'normal',
-        click() {
-          mainWindow.close()
-        }
-      }, {
-        accelerator: 'F5',
-        type: 'normal',
-        click() {
-          mainWindow.webContents.reload()
-        }
-      }, {
-        accelerator: 'F12',
-        type: 'normal',
-        click() {
-          mainWindow.toggleDevTools()
-        }
-      }, {
-        accelerator: 'F11',
-        type: 'normal',
-        click() {
-          mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        }
+        //   accelerator: 'CmdOrCtrl+Q',
+        //   type: 'normal',
+        //   click() {
+        //     app.quit()
+        //   }
+        // }, {
+        //   accelerator: 'CmdOrCtrl+R',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.webContents.reload()
+        //   }
+        // }, {
+        //   accelerator: 'Ctrl+CmdOrCtrl+F',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        //   }
+        // }, {
+        //   accelerator: 'Alt+CmdOrCtrl+I',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.toggleDevTools()
+        //   }
+        // }, {
+        //   accelerator: 'Ctrl+W',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.close()
+        //   }
+        // }, {
+        //   accelerator: 'F5',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.webContents.reload()
+        //   }
+        // }, {
+        //   accelerator: 'F12',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.toggleDevTools()
+        //   }
+        // }, {
+        //   accelerator: 'F11',
+        //   type: 'normal',
+        //   click() {
+        //     mainWindow.setFullScreen(!mainWindow.isFullScreen())
+        //   }
       }];
 
-      const menu = Menu.buildFromTemplate(template);
+      const menu = Menu.buildFromTemplate([]);
       mainWindow.setMenu(menu);
       mainWindow.setMenuBarVisibility(false);
     })
@@ -158,7 +160,6 @@ app.on('certificate-error', (ev, wc, url) => {
 app.on('quit', () => {
   log.info('[SHUTDOWN] App is quitting');
 });
-
 
 app.on('will-quit', () => {
   log.info('[SHUTDOWN] App will quit');
