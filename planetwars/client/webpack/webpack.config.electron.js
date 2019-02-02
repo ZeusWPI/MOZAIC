@@ -4,17 +4,19 @@
 
 const webpack = require('webpack');
 const merge = require('webpack-merge');
+
 const baseConfig = require('./webpack.config.base');
+const { DIST_FOLDER } = require('./path_config');
 
 module.exports = merge(baseConfig, {
   devtool: 'source-map',
 
-  entry: ['./app/main.development'],
+  entry: ['./app/main_process'],
 
-  // 'main.js' in root
+  // 'main.js' in dist
   output: {
-    path: __dirname,
-    filename: '../app/main.js'
+    path: DIST_FOLDER,
+    filename: 'main.js'
   },
 
   plugins: [
