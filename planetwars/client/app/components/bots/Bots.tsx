@@ -1,3 +1,8 @@
+/**
+ * Components on the bot page
+ * @module bots
+ */
+
 import * as React from 'react';
 import { Component } from 'react';
 import { boundMethod } from 'autobind-decorator';
@@ -24,7 +29,9 @@ export interface BotOverviewDispatchProps {
 }
 
 type BotOverviewProps = BotOverviewStateProps & BotOverviewDispatchProps;
-
+/**
+ * List of available bots
+ */
 export class BotOverview extends Component<BotOverviewProps> {
 
   public render() {
@@ -65,7 +72,9 @@ export interface BotProps {
 export interface BotState {
   isBeingEdited: boolean;
 }
-
+/**
+ * Represents a single bot in [[BotOverview]]
+ */
 export class Bot extends Component<BotProps, BotState> {
   public state = { isBeingEdited: false };
 
@@ -104,13 +113,16 @@ export class Bot extends Component<BotProps, BotState> {
 // ----------------------------------------------------------------------------
 // Just showing the bot
 // ----------------------------------------------------------------------------
-
 export interface ShowBotProps {
   bot: M.Bot;
   onEdit: () => void;
   onDelete: () => void;
 }
 
+/**
+ * Static version of [[Bot]]
+ * This is what is shown while the bot is not being edited
+ */
 export class ShowBot extends Component<ShowBotProps> {
   public render() {
     return (
@@ -144,7 +156,9 @@ export interface EditBotProps {
   onDelete: () => void;
   validate: (name: string, command: string) => ConfigErrors;
 }
-
+/**
+ * [[Bot]] renders this instead of [[ShowBot]] when it is being edited
+ */
 export class EditBot extends Component<EditBotProps, EditBotState> {
   constructor(props: EditBotProps) {
     super(props);
@@ -217,14 +231,19 @@ export class EditBot extends Component<EditBotProps, EditBotState> {
     this.setState({ command: evt.target.value });
   }
 
-  // This is triggered by default web form submit actions (like pressing enter)
+  /**
+  * This is triggered by default web form submit actions (like pressing enter)
+  * @param evt React FormEvent object
+  */
   @boundMethod
   private onSubmit(evt: React.FormEvent) {
     evt.preventDefault();
     this.handleSubmit();
   }
-
-  // While this is triggered by actually pressing the save button
+  /**
+   * This is triggered by actually pressing the save button
+   * @param evt React FormEvent object
+   */
   @boundMethod
   private onSave(evt: React.FormEvent) {
     evt.preventDefault();
@@ -272,7 +291,10 @@ export interface AddBotProps {
 export interface AddBotState {
   isBeingAdded: boolean;
 }
-
+/**
+ * Component for adding a bot. Shows a plus button normally.
+ * When clicked, state changes to isBeingAdded and an [[EditBot]] is rendered.
+ */
 export class AddBot extends Component<AddBotProps> {
   public state = { isBeingAdded: false };
 

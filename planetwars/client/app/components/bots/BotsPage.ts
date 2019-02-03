@@ -1,8 +1,6 @@
 /**
- * asdflaskdfj
- * 
- * asdflksdafj
- * @module ADFKJADF
+ * Connected export of [[BotOverview]]
+ * @module bots
  */
 import { connect } from 'react-redux';
 

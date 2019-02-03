@@ -1,5 +1,9 @@
+/**
+ * Houses the map settings and match configs
+ * 
+ * @module play
+ */
 import * as React from 'react';
-
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
 import Section from './Section';
@@ -19,7 +23,10 @@ export interface ConfigProps {
   setAddress: (address: Address) => void;
   importMap: (mapMeta: M.MapMeta) => void;
 }
-
+/**
+ * Container component containing the relevant settings
+ * Handles map selection and config change dispatches
+ */
 export class Config extends React.Component<ConfigProps> {
 
   public render() {
@@ -49,22 +56,38 @@ export class Config extends React.Component<ConfigProps> {
       </Section>
     );
   }
-
+  /**
+   * Dispatches setConfig with a new config containing the new mapId
+   * @param mapId The MapId of the desired map
+   * caught in [[lobbyReducer]]
+   */
   private selectMap = (mapId: M.MapId) => {
     const newConfig = { ... this.props.config, mapId };
     this.props.setConfig(newConfig);
   }
-
+  /**
+   * Dispatches setConfig with a new config containing the new maxTurns
+   * @param maxTurns The new max number of turns
+   * caught in [[lobbyReducer]]
+   */
   private setMax = (maxTurns: number) => {
     const newConfig = { ...this.props.config, maxTurns };
     this.props.setConfig(newConfig);
   }
-
+  /**
+   * Dispatches setAddress with a new config containing the new IP address
+   * @param host The new IP address
+   * caught in [[lobbyReducer]]
+   */
   private setServer = (host: string) => {
     const newAddress = { ...this.props.address, host };
     this.props.setAddress(newAddress);
   }
-
+  /**
+   * Dispatches setAddress with a new config containing the new tcp port
+   * @param port The new port
+   * caught in [[lobbyReducer]]
+   */
   private setPort = (port: number) => {
     const newAddress = { ...this.props.address, port };
     this.props.setAddress(newAddress);
@@ -72,6 +95,10 @@ export class Config extends React.Component<ConfigProps> {
 }
 
 export interface MaxTurnProps { value: number; setMax(val: number): void; }
+/**
+ * Simple component encapsulating the field for entering the maxTurns
+ * @param props 
+ */
 export const MaxTurnsField: React.SFC<MaxTurnProps> = (props) => {
   return (
     <HorizontalInput label="Max turns" id="maxTurns">
@@ -92,7 +119,10 @@ export interface ServerAddressProps {
   setServer: (val: string) => void;
   disabled: boolean;
 }
-
+/**
+ * Simple component encapsulating the field for entering the IP adress
+ * @param props 
+ */
 export const ServerAddressField: React.SFC<ServerAddressProps> = (props) => {
   return (
     <HorizontalInput label="Address" id="address">
@@ -113,7 +143,10 @@ export interface PortProps {
   setPort: (val: number) => void;
   disabled: boolean;
 }
-
+/**
+ * Simple component encapsulating the field for entering the tcp port
+ * @param props 
+ */
 export const PortField: React.SFC<PortProps> = (props) => {
   return (
     <HorizontalInput label="Port" id="port">
@@ -136,7 +169,9 @@ export interface MapSelectorProps {
   selectedMap?: M.MapId;
   selectMap(id: M.MapId): void;
 }
-
+/**
+ * Map selection component
+ */
 export class MapSelector extends React.Component<MapSelectorProps> {
   constructor(props: MapSelectorProps) {
     super(props);
@@ -171,6 +206,10 @@ export class MapSelector extends React.Component<MapSelectorProps> {
 }
 
 export interface InputProps { id: string; label: string; }
+/**
+ * Simple inputfield used in the [[Config]] section
+ * @param props 
+ */
 export const HorizontalInput: React.SFC<InputProps> = (props) => {
   return (
     <div className="field is-horizontal">

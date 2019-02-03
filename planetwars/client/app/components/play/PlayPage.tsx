@@ -1,6 +1,8 @@
 /**
  * Houses a player lobby, map settings, and bot assignment (to players).
  * The gameserver is started from here, after which a game can be launched.
+ * 
+ * @module play
  */
 import * as React from 'react';
 import * as _ from 'lodash';
@@ -103,7 +105,11 @@ export interface PlayPageState {
   localBots: M.Bot[];
 }
 const alertTODO = () => { alert("TODO"); };
-
+/**
+ * The container component for the page.
+ * Handles all the dispatches needed to start and stop a server and match,
+ * assign bots to players and start running the bots.
+ */
 export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
   public state: PlayPageState = { localBots: [] };
 
@@ -155,17 +161,27 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
       </div>
     );
   }
-
+  /**
+   * Dispatch the startServer action.
+   * Caught in [[lobbyFlowSaga]].
+   */
   private startServer = () => {
     const matchId = uuidv4();
     const { lobby: { address } } = this.props;
     this.props.startServer({ matchId, address });
   }
-
+  /**
+   * Dispatch the stopServer action.
+   * Caught in [[lobbyFlowSaga]].
+   * Races against [[startMatch]].
+   */
   private stopServer = () => {
     this.props.stopServer();
   }
-
+  /**
+   * Dispatch the runLocalBot action.
+   * Caught in [[watchRunLocalBot]] saga.
+   */
   private runLocalBot = (slot: Slot) => {
     if (!slot.client || !slot.bot) {
       throw new Error('we suck at programming');
@@ -176,11 +192,18 @@ export class PlayPage extends React.Component<PlayPageProps, PlayPageState> {
       bot: slot.bot,
     });
   }
-
+  /**
+   * Dispatch the startMatch action.
+   * Caught in [[lobbyFlowSaga]].
+   * Races against [[stopServer]].
+   */
   private startMatch = () => {
     this.props.startMatch(this.props.lobby.config);
   }
-
+  /**
+   * Dispatch the createPlayer action with a certain bot as payload.
+   * Caught in [[watchCreatePlayer]] saga.
+   */
   private addLocalBot = (botId: M.BotId) => {
     const bot = this.props.bots[botId];
 

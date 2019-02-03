@@ -1,3 +1,9 @@
+/**
+ * Houses the player lobby and the server/match controls.
+ * 
+ * @module play.lobby
+ */
+
 // tslint:disable-next-line:no-var-requires
 const stringArgv = require('string-argv');
 import * as React from 'react';
@@ -39,7 +45,9 @@ export interface LobbyDispatchProps {
   onPlayerDisconnectDuringMatch(id: number): void;
 }
 const alertTODO = () => { alert('TODO'); };
-
+/**
+ * Lobby container
+ */
 export class Lobby extends React.Component<LobbyProps> {
   constructor(props: LobbyProps) {
     super(props);
