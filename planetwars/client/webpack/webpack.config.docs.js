@@ -10,10 +10,11 @@ module.exports = {
     new TypeDocPlugin({
       out: DOCS_FOLDER,
       jsx: true,
-      mode: 'file',
+      mode: 'modules',
       tsconfig: 'tsconfig.json',
       ignoreCompilerErrors: true,
       verbose: true,
+      target:'ES6',
       plugin: [
         'typedoc-plugin-external-module-name'
       ]
