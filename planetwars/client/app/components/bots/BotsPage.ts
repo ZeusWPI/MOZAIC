@@ -1,7 +1,7 @@
 /**
  * Connected export of [[BotOverview]]
- * @module bots
  */
+/** */
 import { connect } from 'react-redux';
 
 import * as M from "../../database/models";

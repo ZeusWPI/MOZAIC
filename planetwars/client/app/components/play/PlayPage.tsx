@@ -2,8 +2,8 @@
  * Houses a player lobby, map settings, and bot assignment (to players).
  * The gameserver is started from here, after which a game can be launched.
  * 
- * @module play
  */
+/** */
 import * as React from 'react';
 import * as _ from 'lodash';
 import { connect } from 'react-redux';

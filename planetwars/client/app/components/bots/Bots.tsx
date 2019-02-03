@@ -1,8 +1,7 @@
 /**
- * @module bots
+ * Page for managing your bot scripts.
  */
-
- 
+/** */
 import * as React from 'react';
 import { Component } from 'react';
 import { boundMethod } from 'autobind-decorator';
@@ -11,9 +10,6 @@ import * as M from '../../database/models';
 
 // TODO import decently
 // tslint:disable-next-line:no-var-requires
-/**
-* test
-*/
 const stringArgv = require('string-argv');
 
 import * as css from './Bots.scss';

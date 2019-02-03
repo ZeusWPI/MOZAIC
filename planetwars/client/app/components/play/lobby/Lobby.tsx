@@ -1,10 +1,9 @@
 /**
  * Houses the player lobby and the server/match controls.
- * 
  */
+/** */
 
 // tslint:disable-next-line:no-var-requires
-/** */
 const stringArgv = require('string-argv');
 import * as React from 'react';
 import * as PwClient from 'mozaic-client';

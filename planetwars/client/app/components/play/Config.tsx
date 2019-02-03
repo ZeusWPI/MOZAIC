@@ -1,8 +1,7 @@
 /**
  * Houses the map settings and match configs
- * 
- * @module play
  */
+/** */
 import * as React from 'react';
 import * as M from '../../database/models';
 import { WeakConfig } from './types';
