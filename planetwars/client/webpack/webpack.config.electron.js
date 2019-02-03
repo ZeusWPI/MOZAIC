@@ -41,11 +41,6 @@ module.exports = merge(baseConfig, {
     //   'require("source-map-support").install();',
     //   { raw: true, entryOnly: false }
     // ),
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify('production')
-      }
-    }),
     new HardSourceWebpackPlugin(),
   ],
 
