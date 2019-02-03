@@ -19,6 +19,7 @@ const app = express();
 const compiler = webpack(config);
 const PORT = process.env.PORT || 3000;
 
+const whm = webpackHotMiddleware(compiler);
 const wdm = webpackDevMiddleware(compiler, {
   publicPath: config.output.publicPath,
   writeToDisk: (filePath) => {
@@ -30,23 +31,24 @@ const wdm = webpackDevMiddleware(compiler, {
 });
 
 app.use(wdm);
-
-app.use(webpackHotMiddleware(compiler));
+app.use(whm);
 
 const server = app.listen(PORT, 'localhost', serverError => {
   if (serverError) {
     return console.error(serverError);
   }
 
-  if (argv['start-hot']) {
-    spawn('yarn', ['run', 'dev-hot-electron'], {
-      shell: true,
-      env: process.env,
-      stdio: 'inherit'
-    })
-      .on('close', code => process.exit(code))
-      .on('error', spawnError => console.error(spawnError));
-  }
+  wdm.waitUntilValid(() => {
+    if (argv['start-hot']) {
+      spawn('yarn', ['run', 'dev-hot-electron'], {
+        shell: true,
+        env: process.env,
+        stdio: 'inherit'
+      })
+        .on('close', code => process.exit(code))
+        .on('error', spawnError => console.error(spawnError));
+    }
+  });
 
   console.log(`Listening at http://localhost:${PORT}`);
 });
