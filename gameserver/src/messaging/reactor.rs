@@ -484,10 +484,11 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
-            let mut ctx = HandlerCtx {
-                sender,
-                reactor_handle,
+            let handle = unimplemented!();
+
+            let mut ctx = LinkCtx {,
                 state: &mut self.state,
+                link_handle: handle,
             };
             handler.handle(&mut ctx, msg.get_payload())?
         }
@@ -502,10 +503,10 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
-            let mut ctx = HandlerCtx {
-                sender,
-                reactor_handle,
+            let handle = unimplemented!();
+            let mut ctx = LinkCtx {
                 state: &mut self.state,
+                link_handle: handle,
             };
             handler.handle(&mut ctx, msg.get_payload())?
         }
@@ -525,11 +526,6 @@ pub struct ReactorCtx<'a, C> {
     context_handle: &'a mut C,
 }
 
-pub struct HandlerCtx<'a, S, C> {
-    pub sender: Sender<'a, C>,
-    pub reactor_handle: ReactorHandle<'a>,
-    pub state: &'a mut S,
-}
 
 pub struct CoreCtx<'a, S> {
     pub reactor_handle: ReactorHandle<'a>,
@@ -621,12 +617,24 @@ impl<'a, C> Sender<'a, C>
     }
 }
 
+trait LinkHandle {
+    fn send_remote(&mut self, msg: Message);
+    fn send_core(&mut self, msg: Message);
+    fn close(&mut self);
+}
+
+pub struct LinkCtx<'a, S, H> {
+    state: &'a mut S,
+    link_handle: &'a mut H,
+}
+
+
 type CoreHandler<S, T, E> = Box<
     for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
 >;
 
-type LinkHandler<S, C, T, E> = Box<
-    for <'a> Handler<'a, HandlerCtx<'a, S, C>, any_pointer::Owned, Output=T, Error=E>
+type LinkHandler<S, H, T, E> = Box<
+    for <'a> Handler<'a, LinkCtx<'a, S, H>, any_pointer::Owned, Output=T, Error=E>
 >;
 
 type HandlerMap<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
