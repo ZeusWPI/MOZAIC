@@ -43,8 +43,24 @@ This section will still be updated.
 
 We use [typedoc][docs] for in-code documentation. It understands typescript, so stick to semantic documentation, things like types and structure are generated automatically.
 
-The docs are generated when running `yarn run dev`.
-They can be found in `docs/book`.
+The docs are generated when running `yarn run gen-docs`.
+They can be found in `dist/docs`. Open the `index.html` file with a browser to view.
+
+NOTE: When adding a doc-comment describing an entire file (= module in typedoc terminology, for our purposes) you need to add an empty doc-comment right after, like so:
+```js
+/**
+* This module contains classes for handling user input.
+*/
+/** */
+
+
+/**
+* This is a very cool class
+*/
+class MyClass extends React.Component<MyClassProps>... etc
+```
+
+(Technically, all it needs is the first declaration after the module comment to also have a doc-comment. However, this way is less ambiguous.)
 
 [setup]: https://github.com/iRath96/electron-react-typescript-boilerplate
 [electronbuild]: https://www.electron.build/multi-platform-build
