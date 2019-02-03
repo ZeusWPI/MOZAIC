@@ -36,16 +36,13 @@
     "build-main": "cross-env NODE_ENV=production webpack --config webpack/webpack.config.electron.js --progress --profile --colors",
     "build-renderer": "cross-env NODE_ENV=production webpack --config webpack/webpack.config.production.js --progress --profile --colors",
     "start": "cross-env NODE_ENV=production electron .",
-
     "dev": "yarn run dev-build-main && yarn run dev-hot-server --start-hot",
     "dev-hot-server": "cross-env NODE_ENV=development node ./webpack/devServer.js",
     "dev-hot-electron": "cross-env NODE_ENV=development HOT=1 electron .",
     "dev-build-main": "cross-env NODE_ENV=development webpack --config webpack/webpack.config.electron.js",
-
     "clean-cache": "rm -r node_modules/.cache/",
     "clean-build": "rm -r app/dist/",
     "clean": "rm -r app/dist/ node_modules/",
-  
     "package": "yarn run build && build --publish never",
     "package-win": "yarn run build && build --win --x64",
     "package-linux": "yarn run build && build --linux",
@@ -145,6 +142,7 @@
     "@types/chance": "^1.0.1",
     "@types/classnames": "^2.2.7",
     "@types/d3": "^5.5.0",
+    "@types/electron-devtools-installer": "^2.2.0",
     "@types/enzyme": "^3.1.15",
     "@types/history": "^4.7.2",
     "@types/lowdb": "^1.0.6",
@@ -159,6 +157,7 @@
     "@types/react-router": "^4.4.3",
     "@types/react-router-dom": "^4.3.1",
     "@types/redux-logger": "^3.0.6",
+    "@types/source-map-support": "^0.4.1",
     "@types/tmp": "0.0.33",
     "@types/uuid": "^3.4.4",
     "asar": "^0.14.6",

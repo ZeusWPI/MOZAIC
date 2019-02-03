@@ -5,6 +5,8 @@
 const webpack = require('webpack');
 const merge = require('webpack-merge');
 
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+
 const baseConfig = require('./webpack.config.base');
 const { DIST_FOLDER } = require('./path_config');
 
@@ -22,6 +24,16 @@ module.exports = merge(baseConfig, {
     libraryTarget: 'commonjs2',
   },
 
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loaders: ['ts-loader'],
+        exclude: /node_modules/
+      },
+    ]
+  },
+
   plugins: [
     // Add source map support for stack traces in node
     // https://github.com/evanw/node-source-map-support
@@ -33,7 +45,8 @@ module.exports = merge(baseConfig, {
       'process.env': {
         NODE_ENV: JSON.stringify('production')
       }
-    })
+    }),
+    new HardSourceWebpackPlugin(),
   ],
 
   /**

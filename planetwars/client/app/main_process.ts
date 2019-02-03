@@ -1,34 +1,40 @@
-const log = require('electron-log');
+import * as log from 'electron-log';
 log.transports.file.level = 'info';
 log.info('[STARTUP] Main process started');
 
-const { app, BrowserWindow, Menu } = require('electron');
-const Promise = require('bluebird');
-const windowStateKeeper = require('electron-window-state');
+import { app, BrowserWindow, Menu } from 'electron';
+import electronDebug from 'electron-debug';
+
+import installExtension, {
+  REACT_DEVELOPER_TOOLS,
+  REDUX_DEVTOOLS,
+} from 'electron-devtools-installer';
+
+import * as windowStateKeeper from 'electron-window-state';
+import * as sourceMapSupport from 'source-map-support';
+import * as path from 'path';
+
+electronDebug();
+
+// TODO Remove bluebird from app (check render process)
+// const Promise = require('bluebird');
 
 if (process.env.NODE_ENV === 'production') {
-  require('electron-debug')();
-  const sourceMapSupport = require('source-map-support'); // eslint-disable-line
   sourceMapSupport.install();
 }
 
 if (process.env.NODE_ENV === 'development') {
-  require('electron-debug')(); // eslint-disable-line global-require
-  const path = require('path'); // eslint-disable-line
-  const p = path.join(__dirname, '..', 'app', 'node_modules'); // eslint-disable-line
-  require('module').globalPaths.push(p); // eslint-disable-line
+  const p = path.join(__dirname, '..', 'app', 'node_modules');
+  // tslint:disable-next-line:no-var-requires
+  require('module').globalPaths.push(p);
 }
 
 const installExtensions = () => {
-  // const installer = require('electron-devtools-installer'); // eslint-disable-line global-require
-
-  // const extensions = [
-  //   'REACT_DEVELOPER_TOOLS',
-  //   'REDUX_DEVTOOLS'
-  // ];
-  // const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
-  // return Promise.all(extensions.map(name => installer.default(installer[name], forceDownload)));
-  return Promise.resolve();
+  const forceDownload = !!process.env.UPGRADE_EXTENSIONS;
+  return Promise.all([
+    installExtension(REACT_DEVELOPER_TOOLS, forceDownload),
+    installExtension(REDUX_DEVTOOLS, forceDownload),
+  ]);
 };
 
 log.info('[STARTUP] Modules loaded');
@@ -42,15 +48,14 @@ app.on('ready', () => {
     .then(() => {
       const mainWindowState = windowStateKeeper({
         defaultWidth: 1024,
-        defaultHeight: 720
+        defaultHeight: 720,
       });
 
-
       let mainWindow = new BrowserWindow({
-        'x': mainWindowState.x,
-        'y': mainWindowState.y,
-        'width': mainWindowState.width,
-        'height': mainWindowState.height
+        x: mainWindowState.x,
+        y: mainWindowState.y,
+        width: mainWindowState.width,
+        height: mainWindowState.height,
       });
       mainWindowState.manage(mainWindow);
 
@@ -63,93 +68,93 @@ app.on('ready', () => {
         }
       });
 
-      mainWindow.on('closed', () => {
-        mainWindow = null;
-      });
+      mainWindow.on('closed', () => { mainWindow = null as any; });
 
-      mainWindow.openDevTools({ mode: 'right' });
+      mainWindow.webContents.openDevTools();
 
       mainWindow.webContents.on('context-menu', (e, props) => {
         const {
           x,
-          y
+          y,
         } = props;
 
-        // Menu.buildFromTemplate([
-        //   //   {
-        //   //   label: 'Inspect element',
-        //   //   type: 'normal',
-        //   //   click() {
-        //   //     mainWindow.inspectElement(x, y);
-        //   //   },
-        //   // }
-        // ]).popup(mainWindow);
+        // TODO: Add cut/copy/paste
+        Menu.buildFromTemplate([{
+          label: 'Inspect element',
+          type: 'normal',
+          click() {
+            mainWindow.webContents.inspectElement(x, y);
+          },
+        }]).popup();
       });
 
-      const template = [{
+      const template: Electron.MenuItemConstructorOptions[] = [
+        // {
         //   accelerator: 'CmdOrCtrl+Q',
         //   type: 'normal',
         //   click() {
-        //     app.quit()
-        //   }
+        //     app.quit();
+        //   },
         // }, {
         //   accelerator: 'CmdOrCtrl+R',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.webContents.reload()
-        //   }
+        //     mainWindow.webContents.reload();
+        //   },
         // }, {
         //   accelerator: 'Ctrl+CmdOrCtrl+F',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        //   }
+        //     mainWindow.setFullScreen(!mainWindow.isFullScreen());
+        //   },
         // }, {
         //   accelerator: 'Alt+CmdOrCtrl+I',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.toggleDevTools()
-        //   }
+        //     mainWindow.webContents.toggleDevTools();
+        //   },
         // }, {
         //   accelerator: 'Ctrl+W',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.close()
-        //   }
+        //     mainWindow.close();
+        //   },
         // }, {
         //   accelerator: 'F5',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.webContents.reload()
-        //   }
+        //     mainWindow.webContents.reload();
+        //   },
         // }, {
         //   accelerator: 'F12',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.toggleDevTools()
-        //   }
+        //     mainWindow.webContents.toggleDevTools();
+        //   },
         // }, {
         //   accelerator: 'F11',
         //   type: 'normal',
         //   click() {
-        //     mainWindow.setFullScreen(!mainWindow.isFullScreen())
-        //   }
-      }];
+        //     mainWindow.setFullScreen(!mainWindow.isFullScreen());
+        //   },
+        // }
+      ];
 
-      const menu = Menu.buildFromTemplate([]);
+      const menu = Menu.buildFromTemplate(template);
       mainWindow.setMenu(menu);
       mainWindow.setMenuBarVisibility(false);
     })
     .then(() => log.info('[STARTUP] Browser window created'))
-    .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`))
+    .catch((err) => log.error(`[STARTUP] Error starting app: ${err.toString()} ${err.stack}`));
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') { app.quit(); }
   log.info('[SHUTDOWN] Window all closed');
 });
 
-app.on('error', (err) => {
+// TODO weird typecheck
+app.on('error' as any, (err: Error) => {
   log.error(`Unexpected error occurred: ${err.toString()} ${err.stack}`);
 });
 

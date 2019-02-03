@@ -35,10 +35,6 @@ module.exports = {
         enforce: 'pre',
         loader: 'tslint-loader',
       },
-      {
-        test: /\.json$/,
-        loader: 'json-loader'
-      },
 
       // WOFF Font
       {

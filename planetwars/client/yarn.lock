@@ -308,6 +308,11 @@
     "@types/d3-voronoi" "*"
     "@types/d3-zoom" "*"
 
+"@types/electron-devtools-installer@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@types/electron-devtools-installer/-/electron-devtools-installer-2.2.0.tgz#32ee4ebbe99b3daf9847a6d2097dc00b5de94f10"
+  integrity sha512-HJNxpaOXuykCK4rQ6FOMxAA0NLFYsf7FiPFGmab0iQmtVBHSAfxzy3MRFpLTTDDWbV0yD2YsHOQvdu8yCqtCfw==
+
 "@types/enzyme@^3.1.15":
   version "3.1.16"
   resolved "https://registry.yarnpkg.com/@types/enzyme/-/enzyme-3.1.16.tgz#b29e1d7148e4e15a773a9b9f2149ea4c42d3a91d"
@@ -481,6 +486,13 @@
   integrity sha512-vVp7BCQn0yUQgpiohrdxAhHdm/bTlXshB4HG3LEBq1PgvjKiyeYHohIPIv0QBt/jipb140iMS5Xy1iR6qKovKw==
   dependencies:
     "@types/glob" "*"
+    "@types/node" "*"
+
+"@types/source-map-support@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@types/source-map-support/-/source-map-support-0.4.1.tgz#ad77158e8c6695a16629ef82b9fb9dfe7c610ac0"
+  integrity sha512-eoyZxYGwaeHq5zCVeoNgY1dQy6dVdm1b7K9k1FRnWkf997Tji3NLBoLAjK5WCobeh1Qs6Q5KUV1rZCmHvzaDBw==
+  dependencies:
     "@types/node" "*"
 
 "@types/tmp@0.0.33":
@@ -5117,10 +5129,14 @@ pkg-dir@^3.0.0:
   dependencies:
     hyperscript-helpers "^3.0.3"
 <<<<<<< HEAD
+<<<<<<< HEAD
     planetwars-match-log "file:../../../../../.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-6d1499aa-af3d-4f7c-8485-196115e60e0f-1549032372476/node_modules/match-log"
 =======
     planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-f1397889-5fe9-4be5-9e40-3a5ee9c3322d-1549137498503/node_modules/match-log"
 >>>>>>> Fix build
+=======
+    planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-027a0087-0d0a-47c4-9b70-2dc6d3d35c9c-1549153943875/node_modules/match-log"
+>>>>>>> Port main process to typescript
     react-hyperscript "^3.2.0"
 
 plist@^3.0.1:

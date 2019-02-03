@@ -9,15 +9,11 @@ const merge = require('webpack-merge');
 const path = require('path');
 
 const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
-<<<<<<< HEAD
 const TypeDocPlugin = require('typedoc-webpack-plugin');
-
-=======
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const baseConfig = require('./webpack.config.base');
 const { APP_FOLDER, DIST_FOLDER } = require('./path_config');
->>>>>>> Use a cleaner build process
 
 const port = process.env.PORT || 3000;
 
@@ -108,8 +104,8 @@ module.exports = merge(baseConfig, {
       mode: 'file',
       tsconfig: '../tsconfig.json',
       ignoreCompilerErrors: true,
-      verbose:true,
-      plugin:[
+      verbose: true,
+      plugin: [
         'typedoc-plugin-external-module-name'
       ]
     })
