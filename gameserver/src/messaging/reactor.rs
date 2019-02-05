@@ -137,7 +137,7 @@ pub trait ReactorSpawner: 'static + Send {
 
 impl<S, C> ReactorSpawner for ReactorParams<S, C>
     where S: 'static + Send,
-          C: Context
+          C: Context + 'static
 {
     fn reactor_uuid<'a>(&'a self) -> &'a Uuid {
         &self.uuid
@@ -177,14 +177,14 @@ impl<S> CoreParams<S> {
     }
 }
 
-pub struct LinkParams<S, C> {
+pub struct LinkParams<S, C: Context> {
     pub remote_uuid: Uuid,
     pub state: S,
     pub internal_handlers: LinkHandlers<S, C, (), capnp::Error>,
     pub external_handlers: LinkHandlers<S, C, (), capnp::Error>,
 }
 
-impl<S, C> LinkParams<S, C> {
+impl<S, C: Context> LinkParams<S, C> {
     pub fn new(remote_uuid: Uuid, state: S) -> Self {
         LinkParams {
             remote_uuid,
@@ -237,6 +237,7 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
         let unboxed = *self;
 
         let link_state = LinkState {
+            remote_uuid: unboxed.remote_uuid,
             local_closed: false,
             remote_closed: false,
         };
@@ -248,7 +249,6 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
         };
 
         return Link {
-            remote_uuid: unboxed.remote_uuid,
             reducer: Box::new(reducer),
             link_state,
         };
@@ -519,14 +519,15 @@ type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
 
 pub struct LinkState {
+    /// Uuid of remote party
+    // this is not really state, but putting it in here is awfully convenient
+    pub remote_uuid: Uuid,
+
     pub local_closed: bool,
     pub remote_closed: bool,
 }
 
 pub struct Link<C> {
-    /// Uuid of remote party
-    pub remote_uuid: Uuid,
-
     pub reducer: Box<LinkReducerTrait<C>>,
 
     pub link_state: LinkState,
