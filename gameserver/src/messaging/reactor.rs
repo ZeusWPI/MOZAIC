@@ -255,11 +255,54 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     }
 }
 
-trait Context {
+pub trait Context {
+    type ReactorHandle: for<'a> ReaktorHandle<'a, LinkHandle=Self::LinkHandle>;
     type LinkHandle: LinkHandle;
 
     fn dispatch_internal(&mut self, message: Message);
     fn dispatch_external(&mut self, message: Message);
+}
+
+pub trait ReaktorHandle<'a> {
+    type LinkHandle: LinkHandle;
+
+    fn link_handle(&'a mut self, &'a mut LinkState) -> Self::LinkHandle;
+}
+
+struct SimpleReactorHandle<'a> {
+    msg_queue: &'a mut VecDeque<Message>,
+}
+
+impl<'a> ReaktorHandle<'a> for SimpleReactorHandle<'a> {
+    type LinkHandle = SimpleLinkHandle<'a>;
+
+    fn link_handle(&'a mut self, link_state: &'a mut LinkState)
+        -> Self::LinkHandle
+    {
+        SimpleLinkHandle {
+            link_state,
+            msg_queue: self.msg_queue,
+        }
+    }
+}
+
+struct SimpleLinkHandle<'a> {
+    link_state: &'a mut LinkState,
+    msg_queue: &'a mut VecDeque<Message>,
+}
+
+impl<'a> LinkHandle for SimpleLinkHandle<'a> {
+    fn send_remote(&mut self, msg: Message) {
+        unimplemented!()
+    }
+
+    fn send_core(&mut self, msg: Message) {
+        unimplemented!()
+    }
+
+    fn close(&mut self) {
+        unimplemented!()
+    }
 }
 
 
@@ -348,14 +391,15 @@ impl<S, C> Reactor<S, C>
                 uuid: &self.uuid,
                 message_queue: &mut self.message_queue,
             };
-            let reactor_ctx = ReactorCtx {
-                uuid: &self.uuid,
-                reactor_handle,
-                context_handle: unimplemented!(),
-            };
-            link.handle_external(reactor_ctx, msg)?;
+            // let reactor_ctx = ReactorCtx {
+            //     uuid: &self.uuid,
+            //     reactor_handle,
+            //     context_handle: unimplemented!(),
+            // };
+            // link.handle_external(reactor_ctx, msg)?;
+            unimplemented!()
 
-            link.link_state.local_closed && link.link_state.remote_closed
+            // link.link_state.local_closed && link.link_state.remote_closed
         };
 
         if closed {
@@ -454,6 +498,7 @@ pub struct Sender<'a, C> {
     pub context_handle: &'a mut C,
 }
 
+
 impl<'a, C> Sender<'a, C>
     where C: Context
 {
@@ -500,13 +545,13 @@ type CoreHandler<S, T, E> = Box<
 
 // ********** LINKS **********
 
-trait LinkHandle {
+pub trait LinkHandle {
     fn send_remote(&mut self, msg: Message);
     fn send_core(&mut self, msg: Message);
     fn close(&mut self);
 }
 
-struct LinkCtx<'a, S, C: Context> {
+pub struct LinkCtx<'a, S, C: Context> {
     state: &'a mut S,
     handle: &'a mut C::LinkHandle,
 }
@@ -538,7 +583,7 @@ impl<C> Link<C>
 {
     fn handle_external<'a>(
         &mut self,
-        ctx: ReactorCtx<'a, C>,
+        handle: &'a mut C::ReactorHandle,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
@@ -546,14 +591,8 @@ impl<C> Link<C>
             self.link_state.remote_closed = true;
         }
 
-        let sender = Sender {
-            uuid: ctx.uuid,
-            remote_uuid: &self.remote_uuid,
-            context_handle: ctx.context_handle,
-            link_state: &mut self.link_state,
-        };
-
-        return self.reducer.handle_external(ctx.reactor_handle, sender, msg);
+        let mut link_handle = handle.link_handle(&mut self.link_state);
+        return self.reducer.handle_external(&mut link_handle, msg);
     }
 
     fn handle_internal<'a>(
@@ -562,14 +601,14 @@ impl<C> Link<C>
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
-        let sender = Sender {
-            uuid: ctx.uuid,
-            remote_uuid: &self.remote_uuid,
-            context_handle: ctx.context_handle,
-            link_state: &mut self.link_state,
-        };
-
-        return self.reducer.handle_internal(ctx.reactor_handle, sender, msg);
+        // let sender = Sender {
+        //     uuid: ctx.uuid,
+        //     remote_uuid: &self.remote_uuid,
+        //     context_handle: ctx.context_handle,
+        //     link_state: &mut self.link_state,
+        // };
+        unimplemented!()
+        // return self.reducer.handle_internal(ctx.reactor_handle, sender, msg);
     }
 
 }
@@ -588,15 +627,13 @@ pub struct LinkReducer<S, C>
 pub trait LinkReducerTrait<C: Context>: 'static + Send {
     fn handle_external<'a>(
         &mut self,
-        reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a, C>,
+        link_handle: &'a mut C::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
     fn handle_internal<'a>(
         &mut self,
-        reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a, C>,
+        link_handle: &'a mut C::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
@@ -608,17 +645,14 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
 {
     fn handle_external<'a>(
         &mut self,
-        reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a, C>,
+        link_handle: &'a mut C::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
-            let handle = unimplemented!();
-
             let mut ctx = LinkCtx {
                 state: &mut self.state,
-                handle,
+                handle: link_handle,
             };
             handler.handle(&mut ctx, msg.get_payload())?
         }
@@ -627,8 +661,7 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
 
     fn handle_internal<'a>(
         &mut self,
-        reactor_handle: ReactorHandle<'a>,
-        sender: Sender<'a, C>,
+        link_handle: &'a mut C::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
