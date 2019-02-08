@@ -256,6 +256,7 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
 }
 
 pub trait Ctx: for<'a> Context<'a> {}
+impl<C> Ctx for C where C: for<'a> Context<'a> {}
 
 pub trait Context<'a> {
     type ReactorHandle: for<'b> ReaktorHandle<'b>;
@@ -318,8 +319,6 @@ impl<'a, S> Context<'a> for SimpleReactorDriver<S> {
     type ReactorHandle = SimpleReactorHandle<'a>;
     type LinkHandle = SimpleLinkHandle<'a>;
 }
-
-impl<S> Ctx for SimpleReactorDriver<S> {}
 
 impl<S: 'static> SimpleReactorDriver<S> {
     fn handle_message(&mut self, msg: Message) {
@@ -570,7 +569,7 @@ pub struct Link<C> {
 impl<C> Link<C>
     where C: Ctx + 'static
 {
-    fn handle_external<'a, 'b: 'a>(
+    fn handle_external<'a>(
         &'a mut self,
         handle: &'a mut <C as Context<'a>>::ReactorHandle,
         msg: mozaic_message::Reader<'a>
@@ -616,7 +615,7 @@ pub struct LinkReducer<S, C>
 pub trait LinkReducerTrait<C: Ctx>: 'static + Send {
     fn handle_external<'a>(
         &mut self,
-        link_handle: &'a mut <C as Context<'a>>::LinkHandle,
+        link_handle: &mut <<C as Context<'a>>::ReactorHandle as ReaktorHandle<'a>>::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
@@ -634,7 +633,7 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
 {
     fn handle_external<'a>(
         &mut self,
-        link_handle: &'a mut <C as Context<'a>>::LinkHandle,
+        link_handle: &mut <<C as Context<'a>>::ReactorHandle as ReaktorHandle<'a>>::LinkHandle,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
