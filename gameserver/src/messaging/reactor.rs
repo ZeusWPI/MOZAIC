@@ -258,21 +258,21 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
 pub trait Ctx: for<'a> Context<'a> {}
 
 pub trait Context<'a> {
-    type ReactorHandle: ReaktorHandle<'a, LinkHandle=Self::LinkHandle>;
+    type ReactorHandle: for<'b> ReaktorHandle<'b>;
     type LinkHandle: LinkHandle;
 }
 
-pub trait ReaktorHandle<'a> {
+pub trait ReaktorHandle<'b> {
     type LinkHandle: LinkHandle;
 
-    fn link_handle(&'a mut self, &'a mut LinkState) -> Self::LinkHandle;
+    fn link_handle(&'b mut self, &'b mut LinkState) -> Self::LinkHandle;
 }
 
 pub struct SimpleReactorHandle<'a> {
     msg_queue: &'a mut VecDeque<Message>,
 }
 
-impl<'a: 'b, 'b> ReaktorHandle<'b> for SimpleReactorHandle<'a> {
+impl<'a, 'b> ReaktorHandle<'b> for SimpleReactorHandle<'a> {
     type LinkHandle = SimpleLinkHandle<'b>;
 
     fn link_handle(&'b mut self, link_state: &'b mut LinkState)
@@ -572,7 +572,7 @@ impl<C> Link<C>
 {
     fn handle_external<'a, 'b: 'a>(
         &'a mut self,
-        handle: <C as Context<'a>>::ReactorHandle,
+        handle: &'a mut <C as Context<'a>>::ReactorHandle,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
@@ -581,8 +581,7 @@ impl<C> Link<C>
         }
 
         let mut link_handle = handle.link_handle(&mut self.link_state);
-        // return self.reducer.handle_external(&mut link_handle, msg);
-        unimplemented!()
+        return self.reducer.handle_external(&mut link_handle, msg);
     }
 
     fn handle_internal<'a>(
