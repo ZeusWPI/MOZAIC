@@ -166,7 +166,7 @@ impl<S, C: Ctx> CoreParams<S, C> {
     pub fn handler<M, H>(&mut self, m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + CorehandlerFn<S, C, (), capnp::Error>,
+              H: 'static + CorehandlerFn<S, C, M, (), capnp::Error>,
 
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
@@ -197,7 +197,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn internal_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + LinkHandlerFn<S, C, (), capnp::Error>,
+              H: 'static + LinkHandlerFn<S, C, M, (), capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.internal_handlers.insert(
@@ -210,7 +210,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn external_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + LinkHandlerFn<S, C, (), capnp::Error>,
+              H: 'static + LinkHandlerFn<S, C, M, (), capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.external_handlers.insert(
@@ -255,70 +255,8 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     }
 }
 
-pub trait ReactorHandleTrait { }
-
-pub trait ReactorCtx<S>: ReactorHandleTrait {
-    type Handle: ReactorHandleTrait;
-
-    fn handle<'a>(&'a mut self) -> &'a mut Self::Handle;
-    fn state<'a>(&'a mut self) -> &'a mut S;
-    fn split<'a>(&'a mut self) -> (&'a mut S, &'a mut Self::Handle);
-}
-
-impl<'a, S, H> ReactorHandleTrait for HandlerCtx<'a, S, H>
-    where H: ReactorHandleTrait
-{}
-
-impl<'a, S, H> ReactorCtx<S> for HandlerCtx<'a, S, H>
-    where H: ReactorHandleTrait
-{
-    type Handle = H;
-
-    fn handle<'b>(&'b mut self) -> &'b mut H {
-        &mut self.handle
-    }
-
-    fn state<'b>(&'b mut self) -> &'b mut S {
-        &mut self.state
-    }
-
-    fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
-        (&mut self.state, &mut self.handle)
-    }
-}
-
-
-pub trait LinkHandleTrait { }
-
-pub trait LinkCtx<S>: LinkHandleTrait {
-    type Handle: LinkHandleTrait;
-
-    fn handle<'a>(&'a mut self) -> &'a mut Self::Handle;
-    fn state<'a>(&'a mut self) -> &'a mut S;
-    fn split<'a>(&'a mut self) -> (&'a mut S, &'a mut Self::Handle);
-}
-
-impl<'a, S, H> LinkHandleTrait for HandlerCtx<'a, S, H>
-    where H: LinkHandleTrait
-{}
-
-impl<'a, S, H> LinkCtx<S> for HandlerCtx<'a, S, H>
-    where H: LinkHandleTrait
-{
-    type Handle = H;
-
-    fn handle<'b>(&'b mut self) -> &'b mut H {
-        &mut self.handle
-    }
-
-    fn state<'b>(&'b mut self) -> &'b mut S {
-        &mut self.state
-    }
-
-    fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
-        (&mut self.state, &mut self.handle)
-    }
-}
+pub type ReactorCtx<'a, S, C> = HandlerCtx<'a, S, ReactorHandle<'a, C>>;
+pub type LinkCtx<'a, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'a, C>>;
 
 
 pub struct SimpleReactorDriver<S> {
@@ -573,17 +511,17 @@ impl<'a, C> Sender<'a, C>
     }
 }
 
-trait CorehandlerFn<S, C, T, E> = for <'a>
+pub trait CorehandlerFn<S, C, M, T, E> = for <'a>
     Handler<
         'a,
         HandlerCtx<'a, S, ReactorHandle<'a, C>>,
-        any_pointer::Owned,
+        M,
         Output=T,
         Error=E
     >;
 
 
-type CoreHandler<S, C, T, E> = Box<CorehandlerFn<S, C, T, E>>;
+type CoreHandler<S, C, T, E> = Box<CorehandlerFn<S, C, any_pointer::Owned, T, E>>;
 
 // ********** LINKS **********
 
@@ -595,15 +533,15 @@ type CoreHandler<S, C, T, E> = Box<CorehandlerFn<S, C, T, E>>;
 
 
 
-trait LinkHandlerFn<S, C, T, E> = for<'a, 'b>
+pub trait LinkHandlerFn<S, C, M, T, E> = for<'a, 'b>
     Handler<'a,
         HandlerCtx<'a, S, LinkHandle<'a, 'b, C>>,
-        any_pointer::Owned,
+        M,
         Output=T,
         Error=E
     >;
 
-type LinkHandler<S, C, T, E> = Box<LinkHandlerFn<S, C, T, E>>;
+type LinkHandler<S, C, T, E> = Box<LinkHandlerFn<S, C, any_pointer::Owned, T, E>>;
 
 type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
