@@ -300,15 +300,18 @@ impl<'a, C: Ctx> ReactorHandle<'a, C> {
     }
 }
 
+impl<'a, S> Context<'a> for SimpleReactorDriver<S> {
+    type Handle = SimpleReactorHandle<'a>;
+}
 
 
 impl<S: 'static> SimpleReactorDriver<S> {
     fn handle_message(&mut self, msg: Message) {
-        let mut reactor_handle = SimpleReactorHandle {
+        let mut ctx_handle = SimpleReactorHandle {
             msg_queue: &mut self.message_queue,
         };
 
-        self.reactor.handle_external_message(&mut reactor_handle, msg)
+        self.reactor.handle_external_message(&mut ctx_handle, msg)
             .expect("invalid message");
     }
 }
@@ -353,20 +356,25 @@ impl<S, C> Reactor<S, C>
     // immigration bureau
     fn handle_external_message<'a>(
         &'a mut self,
-        reactor_handle: &'a mut <C as Context<'a>>::ReactorHandle,
-        message: Message
+        ctx_handle: &'a mut <C as Context<'a>>::Handle,
+        message: Message,
     ) -> Result<(), capnp::Error>
     {
         let msg = message.reader()?;
         let sender_uuid = msg.get_sender()?.into();
+
+        let mut reactor_handle = ReactorHandle {
+            uuid: &self.uuid,
+            ctx: ctx_handle,
+        };
+
         let closed = {
             let link = self.links.get_mut(&sender_uuid)
                 .expect("no link with message sender");
 
-            // link.handle_external(reactor_handle, msg)?;
+            link.handle_external(&mut reactor_handle, msg)?;
 
-            // link.link_state.local_closed && link.link_state.remote_closed
-            false
+            link.link_state.local_closed && link.link_state.remote_closed
         };
 
         if closed {
