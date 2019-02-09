@@ -166,8 +166,7 @@ impl<S, C: Ctx> CoreParams<S, C> {
     pub fn handler<M, H>(&mut self, m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + CorehandlerFn<S, C, M, (), capnp::Error>,
-
+              H: 'static + for <'a, 'c> Handler<'a, HandlerCtx<'a, S, ReactorHandle<'a, 'c, C>>, M, Output=(), Error=capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.handlers.insert(
@@ -197,7 +196,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn internal_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + LinkHandlerFn<S, C, M, (), capnp::Error>,
+              H: 'static + for <'a, 'c> Handler<'a, HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>, M, Output=(), Error=capnp::Error>
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.internal_handlers.insert(
@@ -210,7 +209,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn external_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + LinkHandlerFn<S, C, M, (), capnp::Error>,
+              H: 'static + for <'a, 'c> Handler<'a, HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>, M, Output=(), Error=capnp::Error>
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.external_handlers.insert(
@@ -255,8 +254,8 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     }
 }
 
-pub type ReactorCtx<'a, S, C> = HandlerCtx<'a, S, ReactorHandle<'a, C>>;
-pub type LinkCtx<'a, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'a, C>>;
+pub type ReactorCtx<'a, 'c, S, C> = HandlerCtx<'a, S, ReactorHandle<'a, 'c, C>>;
+pub type LinkCtx<'a, 'c, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>;
 
 
 pub struct SimpleReactorDriver<S> {
@@ -277,21 +276,21 @@ pub trait Context<'a> {
     type Handle;
 }
 
-pub struct ReactorHandle<'a, C: Ctx> {
+pub struct ReactorHandle<'a, 'c, C: Ctx> {
     uuid: &'a Uuid,
-    ctx: &'a mut <C as Context<'a>>::Handle,
+    ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
-pub struct LinkHandle<'a, 'b, C: Ctx> {
+pub struct LinkHandle<'a, 'c, C: Ctx> {
     uuid: &'a Uuid,
     remote_uuid: &'a Uuid,
     link_state: &'a mut LinkState,
-    ctx: &'a mut <C as Context<'b>>::Handle,
+    ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
-impl<'a, C: Ctx> ReactorHandle<'a, C> {
+impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
     fn link_handle<'b>(&'b mut self, link_state: &'b mut LinkState)
-        -> LinkHandle<'b, 'a, C>
+        -> LinkHandle<'b, 'c, C>
     {
         LinkHandle {
             uuid: self.uuid,
@@ -356,9 +355,9 @@ impl<S, C> Reactor<S, C>
 
     // receive a foreign message and send it to the appropriate
     // immigration bureau
-    fn handle_external_message<'a>(
+    fn handle_external_message<'a, 'c: 'a>(
         &'a mut self,
-        ctx_handle: &'a mut <C as Context<'a>>::Handle,
+        ctx_handle: &mut <C as Context<'c>>::Handle,
         message: Message,
     ) -> Result<(), capnp::Error>
     {
@@ -511,37 +510,28 @@ impl<'a, C> Sender<'a, C>
     }
 }
 
-pub trait CorehandlerFn<S, C, M, T, E> = for <'a>
-    Handler<
-        'a,
-        HandlerCtx<'a, S, ReactorHandle<'a, C>>,
-        M,
-        Output=T,
-        Error=E
-    >;
-
-
-type CoreHandler<S, C, T, E> = Box<CorehandlerFn<S, C, any_pointer::Owned, T, E>>;
+type CoreHandler<S, C, T, E> = Box<
+    for <'a, 'c>
+        Handler<
+            'a,
+            HandlerCtx<'a, S, ReactorHandle<'a, 'c, C>>,
+            any_pointer::Owned,
+            Output=T,
+            Error=E
+        >
+>;
 
 // ********** LINKS **********
 
-// pub trait LinkHandle {
-//     fn send_remote(&mut self, msg: Message);
-//     fn send_core(&mut self, msg: Message);
-//     fn close(&mut self);
-// }
-
-
-
-pub trait LinkHandlerFn<S, C, M, T, E> = for<'a, 'b>
-    Handler<'a,
-        HandlerCtx<'a, S, LinkHandle<'a, 'b, C>>,
-        M,
-        Output=T,
-        Error=E
-    >;
-
-type LinkHandler<S, C, T, E> = Box<LinkHandlerFn<S, C, any_pointer::Owned, T, E>>;
+type LinkHandler<S, C, T, E> = Box<
+    for<'a, 'c>
+        Handler<'a,
+            HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>,
+            any_pointer::Owned,
+            Output=T,
+            Error=E
+        >
+>;
 
 type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
@@ -565,8 +555,8 @@ impl<C> Link<C>
     where C: Ctx + 'static
 {
     fn handle_external<'a>(
-        &'a mut self,
-        handle: &'a mut ReactorHandle<'a, C>,
+        &mut self,
+        handle: &'a mut ReactorHandle<'a, '_, C>,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
@@ -579,9 +569,9 @@ impl<C> Link<C>
     }
 
     fn handle_internal<'a>(
-        &mut self,
-        handle: &'a mut ReactorHandle<'a, C>,
-        msg: mozaic_message::Reader<'a>
+        &'a mut self,
+        handle: &'a mut ReactorHandle<'a, '_, C>,
+        msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
         let mut link_handle = handle.link_handle(&mut self.link_state);
