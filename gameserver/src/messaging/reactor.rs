@@ -255,70 +255,52 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     }
 }
 
-pub trait Ctx: for<'a> Context<'a> {}
-impl<C> Ctx for C where C: for<'a> Context<'a> {}
 
-pub trait Context<'a> {
-    type ReactorHandle: for<'b> ReaktorHandle<'b>;
-    type LinkHandle: LinkHandle;
-}
 
-pub trait ReaktorHandle<'b> {
-    type LinkHandle: LinkHandle;
+pub struct SimpleReactorDriver<S> {
+    pub message_chan: mpsc::UnboundedReceiver<Message>,
+    pub message_queue: VecDeque<Message>,
 
-    fn link_handle(&'b mut self, &'b mut LinkState) -> Self::LinkHandle;
+    pub reactor: Reactor<S, SimpleReactorDriver<S>>,
 }
 
 pub struct SimpleReactorHandle<'a> {
     msg_queue: &'a mut VecDeque<Message>,
 }
 
-impl<'a, 'b> ReaktorHandle<'b> for SimpleReactorHandle<'a> {
-    type LinkHandle = SimpleLinkHandle<'b>;
+pub trait Ctx : for<'a> Context<'a> {}
+impl<C> Ctx for C where C: for<'a> Context<'a> {}
 
-    fn link_handle(&'b mut self, link_state: &'b mut LinkState)
-        -> Self::LinkHandle
+pub trait Context<'a> {
+    type Handle;
+}
+
+pub struct ReactorHandle<'a, C: Ctx> {
+    uuid: &'a Uuid,
+    ctx: &'a mut <C as Context<'a>>::Handle,
+}
+
+pub struct LinkHandle<'a, 'b, C: Ctx> {
+    uuid: &'a Uuid,
+    remote_uuid: &'a Uuid,
+    link_state: &'a mut LinkState,
+    ctx: &'a mut <C as Context<'b>>::Handle,
+}
+
+impl<'a, C: Ctx> ReactorHandle<'a, C> {
+    fn link_handle<'b>(&'b mut self, link_state: &'b mut LinkState)
+        -> LinkHandle<'b, 'a, C>
     {
-        SimpleLinkHandle {
+        LinkHandle {
+            uuid: self.uuid,
+            ctx: self.ctx,
             link_state,
-            msg_queue: self.msg_queue,
+            remote_uuid: self.uuid,
         }
     }
 }
 
-pub struct SimpleLinkHandle<'a> {
-    link_state: &'a mut LinkState,
-    msg_queue: &'a mut VecDeque<Message>,
-}
 
-impl<'a> LinkHandle for SimpleLinkHandle<'a> {
-    fn send_remote(&mut self, msg: Message) {
-        unimplemented!()
-    }
-
-    fn send_core(&mut self, msg: Message) {
-        unimplemented!()
-    }
-
-    fn close(&mut self) {
-        unimplemented!()
-    }
-}
-
-pub struct RouterHandle {}
-
-pub struct SimpleReactorDriver<S> {
-    pub message_chan: mpsc::UnboundedReceiver<Message>,
-    pub message_queue: VecDeque<Message>,
-    pub router_handle: RouterHandle,
-
-    pub reactor: Reactor<S, SimpleReactorDriver<S>>,
-}
-
-impl<'a, S> Context<'a> for SimpleReactorDriver<S> {
-    type ReactorHandle = SimpleReactorHandle<'a>;
-    type LinkHandle = SimpleLinkHandle<'a>;
-}
 
 impl<S: 'static> SimpleReactorDriver<S> {
     fn handle_message(&mut self, msg: Message) {
@@ -429,52 +411,52 @@ impl<S, C> Reactor<S, C>
 
 pub struct ReactorCtx<'a, C> {
     uuid: &'a Uuid,
-    reactor_handle: ReactorHandle<'a>,
+    // reactor_handle: ReactorHandle<'a>,
     context_handle: &'a mut C,
 }
 
 
 pub struct CoreCtx<'a, S> {
-    pub reactor_handle: ReactorHandle<'a>,
+    // pub reactor_handle: ReactorHandle<'a>,
     state: &'a mut S,
 }
 
 // TODO: is this the right name for this?
 /// for sending messages inside the reactor
-pub struct ReactorHandle<'a> {
-    pub uuid: &'a Uuid,
-    pub message_queue: &'a mut VecDeque<Message>,
-}
+// pub struct ReactorHandle<'a> {
+//     pub uuid: &'a Uuid,
+//     pub message_queue: &'a mut VecDeque<Message>,
+// }
 
-impl<'a> ReactorHandle<'a> {
-    // TODO: should this be part of some trait?
-    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
-        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-              M: Owned<'static>,
-              <M as Owned<'static>>::Builder: HasTypeId,
+// impl<'a> ReactorHandle<'a> {
+//     // TODO: should this be part of some trait?
+//     pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
+//         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+//               M: Owned<'static>,
+//               <M as Owned<'static>>::Builder: HasTypeId,
 
-    {
-        // TODO: oh help, dupe. Isn't this kind of incidental, though?
-        // the values that are set on the message do differ, only in uuids
-        // now, but they will differ more once timestamps and ids get added.
-        let mut message_builder = ::capnp::message::Builder::new_default();
-        {
-            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+//     {
+//         // TODO: oh help, dupe. Isn't this kind of incidental, though?
+//         // the values that are set on the message do differ, only in uuids
+//         // now, but they will differ more once timestamps and ids get added.
+//         let mut message_builder = ::capnp::message::Builder::new_default();
+//         {
+//             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            set_uuid(msg.reborrow().init_sender(), self.uuid);
-            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+//             set_uuid(msg.reborrow().init_sender(), self.uuid);
+//             set_uuid(msg.reborrow().init_receiver(), self.uuid);
 
-            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-            {
-                let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder);
-            }
-        }
+//             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+//             {
+//                 let payload_builder = msg.reborrow().init_payload();
+//                 initializer(payload_builder);
+//             }
+//         }
 
-        let message = Message::from_capnp(message_builder.into_reader());
-        self.message_queue.push_back(message);
-    }
-}
+//         let message = Message::from_capnp(message_builder.into_reader());
+//         self.message_queue.push_back(message);
+//     }
+// }
 
 
 /// for sending messages to other actors
@@ -533,19 +515,26 @@ type CoreHandler<S, T, E> = Box<
 
 // ********** LINKS **********
 
-pub trait LinkHandle {
-    fn send_remote(&mut self, msg: Message);
-    fn send_core(&mut self, msg: Message);
-    fn close(&mut self);
-}
+// pub trait LinkHandle {
+//     fn send_remote(&mut self, msg: Message);
+//     fn send_core(&mut self, msg: Message);
+//     fn close(&mut self);
+// }
 
-pub struct LinkCtx<'a, S, C: Ctx> {
+pub struct LinkCtx<'a, S, H> {
     state: &'a mut S,
-    handle: &'a mut <C as Context<'a>>::LinkHandle,
+    handle: &'a mut H,
 }
 
 type LinkHandler<S, C, T, E> = Box<
-    for <'a> Handler<'a, LinkCtx<'a, S, C>, any_pointer::Owned, Output=T, Error=E>
+    for <'a, 'b>
+        Handler<
+            'a,
+            LinkCtx<'a, S, LinkHandle<'a, 'b, C>>,
+            any_pointer::Owned,
+            Output=T,
+            Error=E
+        >
 >;
 
 type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
@@ -571,7 +560,7 @@ impl<C> Link<C>
 {
     fn handle_external<'a>(
         &'a mut self,
-        handle: &'a mut <C as Context<'a>>::ReactorHandle,
+        handle: &'a mut ReactorHandle<'a, C>,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
@@ -613,15 +602,15 @@ pub struct LinkReducer<S, C>
 }
 
 pub trait LinkReducerTrait<C: Ctx>: 'static + Send {
-    fn handle_external<'a>(
-        &mut self,
-        link_handle: &mut <<C as Context<'a>>::ReactorHandle as ReaktorHandle<'a>>::LinkHandle,
+    fn handle_external<'a, 'b, >(
+        &'a mut self,
+        link_handle: &'a mut LinkHandle<'a, '_, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
     fn handle_internal<'a>(
-        &mut self,
-        link_handle: &'a mut <C as Context<'a>>::LinkHandle,
+        &'a mut self,
+        link_handle: &'a mut LinkHandle<'a, '_, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>;
 
@@ -632,15 +621,15 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
           C: 'static + Ctx,
 {
     fn handle_external<'a>(
-        &mut self,
-        link_handle: &mut <<C as Context<'a>>::ReactorHandle as ReaktorHandle<'a>>::LinkHandle,
+        &'a mut self,
+        link_handle: &'a mut LinkHandle<'a, '_, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
             let mut ctx = LinkCtx {
                 state: &mut self.state,
-                handle: unimplemented!(),
+                handle: link_handle,
             };
             handler.handle(&mut ctx, msg.get_payload())?
         }
@@ -648,15 +637,15 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
     }
 
     fn handle_internal<'a>(
-        &mut self,
-        link_handle: &'a mut <C as Context<'a>>::LinkHandle,
+        &'a mut self,
+        link_handle: &'a mut LinkHandle<'a, '_, C>,
         msg: mozaic_message::Reader<'a>,
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
             let mut ctx = LinkCtx {
                 state: &mut self.state,
-                handle: unimplemented!(),
+                handle: link_handle,
             };
             handler.handle(&mut ctx, msg.get_payload())?
         }
