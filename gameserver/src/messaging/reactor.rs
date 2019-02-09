@@ -255,6 +255,70 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     }
 }
 
+pub trait ReactorHandleTrait { }
+
+pub trait ReactorCtx<S>: ReactorHandleTrait {
+    type Handle: ReactorHandleTrait;
+
+    fn handle<'a>(&'a mut self) -> &'a mut Self::Handle;
+    fn state<'a>(&'a mut self) -> &'a mut S;
+    fn split<'a>(&'a mut self) -> (&'a mut S, &'a mut Self::Handle);
+}
+
+impl<'a, S, H> ReactorHandleTrait for HandlerCtx<'a, S, H>
+    where H: ReactorHandleTrait
+{}
+
+impl<'a, S, H> ReactorCtx<S> for HandlerCtx<'a, S, H>
+    where H: ReactorHandleTrait
+{
+    type Handle = H;
+
+    fn handle<'b>(&'b mut self) -> &'b mut H {
+        &mut self.handle
+    }
+
+    fn state<'b>(&'b mut self) -> &'b mut S {
+        &mut self.state
+    }
+
+    fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
+        (&mut self.state, &mut self.handle)
+    }
+}
+
+
+pub trait LinkHandleTrait { }
+
+pub trait LinkCtx<S>: LinkHandleTrait {
+    type Handle: LinkHandleTrait;
+
+    fn handle<'a>(&'a mut self) -> &'a mut Self::Handle;
+    fn state<'a>(&'a mut self) -> &'a mut S;
+    fn split<'a>(&'a mut self) -> (&'a mut S, &'a mut Self::Handle);
+}
+
+impl<'a, S, H> LinkHandleTrait for HandlerCtx<'a, S, H>
+    where H: LinkHandleTrait
+{}
+
+impl<'a, S, H> LinkCtx<S> for HandlerCtx<'a, S, H>
+    where H: LinkHandleTrait
+{
+    type Handle = H;
+
+    fn handle<'b>(&'b mut self) -> &'b mut H {
+        &mut self.handle
+    }
+
+    fn state<'b>(&'b mut self) -> &'b mut S {
+        &mut self.state
+    }
+
+    fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
+        (&mut self.state, &mut self.handle)
+    }
+}
 
 
 pub struct SimpleReactorDriver<S> {
