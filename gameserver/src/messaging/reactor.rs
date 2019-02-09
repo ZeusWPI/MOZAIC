@@ -121,9 +121,9 @@ impl Message {
 // Maybe it would prove useful to implement a dummy service in this
 // architecture.
 
-pub struct ReactorParams<S, C> {
+pub struct ReactorParams<S, C: Ctx> {
     pub uuid: Uuid,
-    pub core_params: CoreParams<S>,
+    pub core_params: CoreParams<S, C>,
     pub links: Vec<Box<LinkParamsTrait<C>>>,
 }
 
@@ -157,16 +157,16 @@ impl<S, C> ReactorSpawner for ReactorParams<S, C>
     }
 }
 
-pub struct CoreParams<S> {
+pub struct CoreParams<S, C: Ctx> {
     pub state: S,
-    pub handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
+    pub handlers: HashMap<u64, CoreHandler<S, C, (), capnp::Error>>,
 }
 
-impl<S> CoreParams<S> {
+impl<S, C: Ctx> CoreParams<S, C> {
     pub fn handler<M, H>(&mut self, m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, CoreCtx<'a, S>, M, Output=(), Error=capnp::Error>,
+              H: 'static + CorehandlerFn<S, C, (), capnp::Error>,
 
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
@@ -197,7 +197,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn internal_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, LinkCtx<'a, S, C>, M, Output=(), Error=capnp::Error>,
+              H: 'static + LinkHandlerFn<S, C, (), capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.internal_handlers.insert(
@@ -210,7 +210,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
     pub fn external_handler<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, LinkCtx<'a, S, C>, M, Output=(), Error=capnp::Error>,
+              H: 'static + LinkHandlerFn<S, C, (), capnp::Error>,
     {
         let boxed = Box::new(AnyPtrHandler::new(h));
         self.external_handlers.insert(
@@ -319,10 +319,10 @@ impl<S: 'static> SimpleReactorDriver<S> {
 
 // TODO: can we partition the state so that borrowing can be easier?
 // eg group uuid, broker_handle, message_queue
-pub struct Reactor<S, C> {
+pub struct Reactor<S, C: Ctx> {
     pub uuid: Uuid,
     pub internal_state: S,
-    pub internal_handlers: HashMap<u64, CoreHandler<S, (), capnp::Error>>,
+    pub internal_handlers: HashMap<u64, CoreHandler<S, C, (), capnp::Error>>,
     pub links: HashMap<Uuid, Link<C>>,
 }
 
@@ -417,16 +417,9 @@ impl<S, C> Reactor<S, C>
     // }
 }
 
-pub struct ReactorCtx<'a, C> {
-    uuid: &'a Uuid,
-    // reactor_handle: ReactorHandle<'a>,
-    context_handle: &'a mut C,
-}
-
-
-pub struct CoreCtx<'a, S> {
-    // pub reactor_handle: ReactorHandle<'a>,
+pub struct HandlerCtx<'a, S, H> {
     state: &'a mut S,
+    handle: &'a mut H,
 }
 
 // TODO: is this the right name for this?
@@ -516,10 +509,17 @@ impl<'a, C> Sender<'a, C>
     }
 }
 
-type CoreHandler<S, T, E> = Box<
-    for <'a> Handler<'a, CoreCtx<'a, S>, any_pointer::Owned, Output=T, Error=E>
->;
+trait CorehandlerFn<S, C, T, E> = for <'a>
+    Handler<
+        'a,
+        HandlerCtx<'a, S, ReactorHandle<'a, C>>,
+        any_pointer::Owned,
+        Output=T,
+        Error=E
+    >;
 
+
+type CoreHandler<S, C, T, E> = Box<CorehandlerFn<S, C, T, E>>;
 
 // ********** LINKS **********
 
@@ -529,21 +529,17 @@ type CoreHandler<S, T, E> = Box<
 //     fn close(&mut self);
 // }
 
-pub struct LinkCtx<'a, S, H> {
-    state: &'a mut S,
-    handle: &'a mut H,
-}
 
-type LinkHandler<S, C, T, E> = Box<
-    for <'a, 'b>
-        Handler<
-            'a,
-            LinkCtx<'a, S, LinkHandle<'a, 'b, C>>,
-            any_pointer::Owned,
-            Output=T,
-            Error=E
-        >
->;
+
+trait LinkHandlerFn<S, C, T, E> = for<'a, 'b>
+    Handler<'a,
+        HandlerCtx<'a, S, LinkHandle<'a, 'b, C>>,
+        any_pointer::Owned,
+        Output=T,
+        Error=E
+    >;
+
+type LinkHandler<S, C, T, E> = Box<LinkHandlerFn<S, C, T, E>>;
 
 type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
@@ -582,18 +578,12 @@ impl<C> Link<C>
 
     fn handle_internal<'a>(
         &mut self,
-        ctx: ReactorCtx<'a, C>,
+        handle: &'a mut ReactorHandle<'a, C>,
         msg: mozaic_message::Reader<'a>
     ) -> Result<(), capnp::Error>
     {
-        // let sender = Sender {
-        //     uuid: ctx.uuid,
-        //     remote_uuid: &self.remote_uuid,
-        //     context_handle: ctx.context_handle,
-        //     link_state: &mut self.link_state,
-        // };
-        unimplemented!()
-        // return self.reducer.handle_internal(ctx.reactor_handle, sender, msg);
+        let mut link_handle = handle.link_handle(&mut self.link_state);
+        return self.reducer.handle_internal(&mut link_handle, msg);
     }
 
 }
@@ -635,7 +625,7 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.external_handlers.get(&msg.get_type_id()) {
-            let mut ctx = LinkCtx {
+            let mut ctx = HandlerCtx {
                 state: &mut self.state,
                 handle: link_handle,
             };
@@ -651,7 +641,7 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
     ) -> Result<(), capnp::Error>
     {
         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
-            let mut ctx = LinkCtx {
+            let mut ctx = HandlerCtx {
                 state: &mut self.state,
                 handle: link_handle,
             };
