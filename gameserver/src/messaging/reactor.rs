@@ -135,27 +135,6 @@ pub trait ReactorSpawner: 'static + Send {
     ) -> mpsc::UnboundedSender<Message>;
 }
 
-impl<S, C> ReactorSpawner for ReactorParams<S, C>
-    where S: 'static + Send,
-          C: Ctx + 'static
-{
-    fn reactor_uuid<'a>(&'a self) -> &'a Uuid {
-        &self.uuid
-    }
-
-    fn spawn_reactor(
-        self: Box<Self>,
-        broker_handle: BrokerHandle,
-    ) -> mpsc::UnboundedSender<Message>
-    {
-        let params = *self;
-        unimplemented!()
-
-        // let (handle, reactor) = Reactor::new(broker_handle, params);
-        // tokio::spawn(reactor);
-        // return handle;
-    }
-}
 
 pub struct CoreParams<S, C: Ctx> {
     pub state: S,
@@ -257,30 +236,8 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
 pub type ReactorCtx<'a, 'c, S, C> = HandlerCtx<'a, S, ReactorHandle<'a, 'c, C>>;
 pub type LinkCtx<'a, 'c, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>;
 
-
-pub struct SimpleReactorDriver<S> {
-    pub message_chan: mpsc::UnboundedReceiver<Message>,
-    pub message_queue: VecDeque<Message>,
-
-    pub reactor: Reactor<S, SimpleReactorDriver<S>>,
-}
-
-pub struct SimpleReactorHandle<'a> {
-    msg_queue: &'a mut VecDeque<Message>,
-}
-
-impl<'a> CtxHandle for SimpleReactorHandle<'a> {
-    fn dispatch_internal(&mut self, msg: Message) {
-        self.msg_queue.push_back(msg);
-    }
-
-    fn dispatch_external(&mut self, msg: Message) {
-        println!("dispatching message");
-    }
-}
-
-pub trait Ctx : for<'a> Context<'a> {}
-impl<C> Ctx for C where C: for<'a> Context<'a> {}
+pub trait Ctx : 'static + for<'a> Context<'a> {}
+impl<C> Ctx for C where C: 'static + for<'a> Context<'a> {}
 
 pub trait Context<'a> {
     type Handle: 'a + CtxHandle;
@@ -310,10 +267,6 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
     }
 }
 
-impl<'a, S> Context<'a> for SimpleReactorDriver<S> {
-    type Handle = SimpleReactorHandle<'a>;
-}
-
 pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
     uuid: &'a Uuid,
     remote_uuid: &'a Uuid,
@@ -322,6 +275,29 @@ pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
 }
 
 impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
+    pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
+    {
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        {
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), self.uuid);
+            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder);
+            }
+        }
+
+        let msg = Message::from_capnp(message_builder.into_reader());
+        self.ctx.dispatch_internal(msg);
+    }
+
     pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
               M: Owned<'static>,
@@ -358,19 +334,6 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
     }
 }
 
-
-impl<S: 'static> SimpleReactorDriver<S> {
-    fn handle_message(&mut self, msg: Message) {
-        let mut ctx_handle = SimpleReactorHandle {
-            msg_queue: &mut self.message_queue,
-        };
-
-        self.reactor.handle_external_message(&mut ctx_handle, msg)
-            .expect("invalid message");
-    }
-}
-
-
 // TODO: can we partition the state so that borrowing can be easier?
 // eg group uuid, broker_handle, message_queue
 pub struct Reactor<S, C: Ctx> {
@@ -380,37 +343,12 @@ pub struct Reactor<S, C: Ctx> {
     pub links: HashMap<Uuid, Link<C>>,
 }
 
-impl<S, C> Reactor<S, C>
-    where C: Ctx + 'static
-{
-    pub fn new(
-        broker_handle: BrokerHandle,
-        params: ReactorParams<S, C>
-    ) -> (mpsc::UnboundedSender<Message>, Self)
-    {
-        let (snd, recv) = mpsc::unbounded();
-
-        let links = params.links.into_iter().map(|link_params| {
-            let uuid = link_params.remote_uuid().clone();
-            let link = link_params.into_link();
-            return (uuid, link);
-        }).collect();
-
-        let reactor = Reactor {
-            uuid: params.uuid,
-            internal_state: params.core_params.state,
-            internal_handlers: params.core_params.handlers,
-            links,
-        };
-
-        return (snd, reactor);
-    }
-
+impl<S, C: Ctx> Reactor<S, C> {
     // receive a foreign message and send it to the appropriate
     // immigration bureau
-    fn handle_external_message<'a, 'c: 'a>(
+    pub fn handle_external_message<'a, 'c: 'a>(
         &'a mut self,
-        ctx_handle: &mut <C as Context<'c>>::Handle,
+        ctx_handle: &'a mut <C as Context<'c>>::Handle,
         message: Message,
     ) -> Result<(), capnp::Error>
     {
@@ -445,30 +383,33 @@ impl<S, C> Reactor<S, C>
         // The core handler can then again emit a 'game state changed' event,
         // which the link handlers can pick up on, and forward to their remote
         // parties (the game clients).
-        // self.handle_internal_queue();
         return Ok(());
     }
 
-    // TODO
+    pub fn handle_internal_message<'a, 'c: 'a>(
+        &'a mut self,
+        ctx_handle: &'a mut <C as Context<'c>>::Handle,
+        message: Message,
+    ) -> Result<(), capnp::Error>
+    {
+        let msg = message.reader()?;
 
-    // fn handle_internal_queue(&mut self) {
-    //     while let Some(message) = self.message_queue.pop_front() {
-    //         let msg = message.reader().expect("invalid message");
-    //         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
-    //             let mut ctx = CoreCtx {
-    //                 reactor_handle: ReactorHandle {
-    //                     uuid: &self.uuid,
-    //                     message_queue: &mut self.message_queue,
-    //                 },
-    //                 state: &mut self.internal_state,
-    //             };
+        if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
+            let mut reactor_handle = ReactorHandle {
+                uuid: &self.uuid,
+                ctx: ctx_handle,
+            };
 
-    //             handler.handle(&mut ctx, msg.get_payload())
-    //                 .expect("handler failed");
-    //             // todo: what should happen with this error?
-    //         }
-    //     }
-    // }
+            let mut handler_ctx = HandlerCtx {
+                state: &mut self.internal_state,
+                handle: &mut reactor_handle,
+            };
+
+            handler.handle(&mut handler_ctx, msg.get_payload())?;
+        }
+
+        return Ok(());
+    }
 }
 
 pub struct HandlerCtx<'a, S, H> {
@@ -488,59 +429,6 @@ impl<'a, S, H> HandlerCtx<'a, S, H> {
     pub fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
         (&mut self.state, &mut self.handle)
     }
-}
-
-// TODO: is this the right name for this?
-/// for sending messages inside the reactor
-// pub struct ReactorHandle<'a> {
-//     pub uuid: &'a Uuid,
-//     pub message_queue: &'a mut VecDeque<Message>,
-// }
-
-// impl<'a> ReactorHandle<'a> {
-//     // TODO: should this be part of some trait?
-//     pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
-//         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-//               M: Owned<'static>,
-//               <M as Owned<'static>>::Builder: HasTypeId,
-
-//     {
-//         // TODO: oh help, dupe. Isn't this kind of incidental, though?
-//         // the values that are set on the message do differ, only in uuids
-//         // now, but they will differ more once timestamps and ids get added.
-//         let mut message_builder = ::capnp::message::Builder::new_default();
-//         {
-//             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
-
-//             set_uuid(msg.reborrow().init_sender(), self.uuid);
-//             set_uuid(msg.reborrow().init_receiver(), self.uuid);
-
-//             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-//             {
-//                 let payload_builder = msg.reborrow().init_payload();
-//                 initializer(payload_builder);
-//             }
-//         }
-
-//         let message = Message::from_capnp(message_builder.into_reader());
-//         self.message_queue.push_back(message);
-//     }
-// }
-
-
-/// for sending messages to other actors
-pub struct Sender<'a, C> {
-    pub uuid: &'a Uuid,
-    pub remote_uuid: &'a Uuid,
-    pub link_state: &'a mut LinkState,
-    pub context_handle: &'a mut C,
-}
-
-
-impl<'a, C> Sender<'a, C>
-    where C: Ctx
-{
-
 }
 
 type CoreHandler<S, C, T, E> = Box<
