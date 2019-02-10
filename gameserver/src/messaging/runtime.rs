@@ -13,6 +13,8 @@ use rand::Rng;
 use super::*;
 use super::reactor::*;
 
+pub struct Runtime;
+
 pub struct Broker {
     actors: HashMap<Uuid, ActorData>,
 }
@@ -43,7 +45,8 @@ impl BrokerHandle {
             .into();
 
         if let Some(receiver) = broker.actors.get_mut(&receiver_uuid) {
-            receiver.tx.unbounded_send(message);
+            receiver.tx.unbounded_send(message)
+                .expect("send failed");
         } else {
             panic!("no such actor: {:?}", receiver_uuid);
         }
@@ -54,7 +57,8 @@ impl BrokerHandle {
         broker.actors.insert(uuid, ActorData { tx });
     }
 
-    pub fn spawn<S>(&mut self, core_params: CoreParams<S, ReactorDriver<S>>)
+    pub fn spawn<S>(&mut self, core_params: CoreParams<S, Runtime>)
+        -> Uuid
         where S: 'static + Send
     {
         let mut broker = self.broker.lock().unwrap();
@@ -71,7 +75,7 @@ impl BrokerHandle {
 
         let (tx, rx) = mpsc::unbounded();
 
-        broker.actors.insert(uuid, ActorData { tx });
+        broker.actors.insert(uuid.clone(), ActorData { tx });
 
         let mut driver = ReactorDriver {
             broker: self.clone(),
@@ -85,7 +89,7 @@ impl BrokerHandle {
                 internal_queue: &mut driver.internal_queue,
             };
 
-            let mut reactor_handle: ReactorHandle<ReactorDriver<S>> = ReactorHandle {
+            let mut reactor_handle: ReactorHandle<Runtime> = ReactorHandle {
                 uuid: &driver.reactor.uuid,
                 ctx: &mut ctx_handle,
             };
@@ -96,6 +100,7 @@ impl BrokerHandle {
         }
 
         tokio::spawn(driver);
+        return uuid;
     }
 }
 
@@ -105,7 +110,7 @@ pub struct ReactorDriver<S: 'static> {
     internal_queue: VecDeque<Message>,
     broker: BrokerHandle,
 
-    reactor: Reactor<S, ReactorDriver<S>>,
+    reactor: Reactor<S, Runtime>,
 }
 
 impl<S: 'static> ReactorDriver<S> {
@@ -147,7 +152,7 @@ impl<S: 'static> Future for ReactorDriver<S> {
     }
 }
 
-impl<'a, S> Context<'a> for ReactorDriver<S> {
+impl<'a> Context<'a> for Runtime {
     type Handle = DriverHandle<'a>;
 }
 
@@ -156,12 +161,19 @@ pub struct DriverHandle<'a> {
     broker: &'a mut BrokerHandle,
 }
 
-impl<'a> CtxHandle for DriverHandle<'a> {
+impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
+
     fn dispatch_internal(&mut self, msg: Message) {
         self.internal_queue.push_back(msg);
     }
 
     fn dispatch_external(&mut self, msg: Message) {
         self.broker.dispatch_message(msg);
+    }
+
+    fn spawn<T>(&mut self, params: CoreParams<T, Runtime>) -> Uuid
+        where T: 'static + Send
+    {
+        self.broker.spawn(params)
     }
 }

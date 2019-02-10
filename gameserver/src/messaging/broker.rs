@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use futures::sync::mpsc;
 use futures::{Future, Stream, Async, Poll};
 
-use super::reactor::{Uuid, Message, ReactorSpawner, Reactor};
+use super::reactor::{Uuid, Message, Reactor};
 
 enum BrokerCmd {
     Send(Message),

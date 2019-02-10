@@ -7,7 +7,6 @@ use core_capnp::{message, greet_person};
 
 use std::marker::PhantomData;
 
-pub mod broker;
 pub mod reactor;
 pub mod test;
 pub mod runtime;

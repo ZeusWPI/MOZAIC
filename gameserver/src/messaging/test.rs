@@ -21,7 +21,7 @@ pub fn run() {
     let mut broker = Broker::new();
     rt.spawn(poll_fn(move || {
         let mut params = CoreParams::new(CoreState {});
-        params.handler(initialize::Owned, FnHandler::new(init));
+        params.handler(initialize::Owned, FnHandler::new(init_1));
         broker.spawn(params);
         return Ok(Async::Ready(()));
     }));
@@ -44,12 +44,24 @@ fn greet_person_handler<C: Ctx>(
 
 struct LinkState {}
 
-fn init<C: Ctx>(
+fn init_1<C: Ctx>(
     ctx: &mut HandlerCtx<CoreState, ReactorHandle<C>>,
     reader: initialize::Reader,
 ) -> Result<(), capnp::Error>
 {
-    println!("Initialized!");
+    println!("Initialized {:?}!", ctx.handle().uuid);
+    let mut params = CoreParams::new(CoreState {});
+    params.handler(initialize::Owned, FnHandler::new(init_2));
+    ctx.handle().spawn(params);
+    return Ok(());
+}
+
+fn init_2<C: Ctx>(
+    ctx: &mut HandlerCtx<CoreState, ReactorHandle<C>>,
+    reader: initialize::Reader,
+) -> Result<(), capnp::Error>
+{
+    println!("Initialized {:?}!", ctx.handle().uuid);
     return Ok(());
 }
 

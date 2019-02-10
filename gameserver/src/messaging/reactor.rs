@@ -1,6 +1,5 @@
 use std::collections::{HashMap, VecDeque};
 use super::{AnyPtrHandler, Handler};
-use super::broker::BrokerHandle;
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, Owned};
@@ -121,20 +120,6 @@ impl Message {
 // Maybe it would prove useful to implement a dummy service in this
 // architecture.
 
-pub struct ReactorParams<S, C: Ctx> {
-    pub uuid: Uuid,
-    pub core_params: CoreParams<S, C>,
-    pub links: Vec<Box<LinkParamsTrait<C>>>,
-}
-
-pub trait ReactorSpawner: 'static + Send {
-    fn reactor_uuid<'a>(&'a self) -> &'a Uuid;
-    fn spawn_reactor(
-        self: Box<Self>,
-        broker_handle: BrokerHandle,
-    ) -> mpsc::UnboundedSender<Message>;
-}
-
 
 pub struct CoreParams<S, C: Ctx> {
     pub state: S,
@@ -246,17 +231,21 @@ pub type LinkCtx<'a, 'c, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>;
 pub trait Ctx : 'static + for<'a> Context<'a> {}
 impl<C> Ctx for C where C: 'static + for<'a> Context<'a> {}
 
-pub trait Context<'a> {
-    type Handle: 'a + CtxHandle;
+pub trait Context<'a> : Sized {
+    type Handle: 'a + CtxHandle<Self>;
 }
 
-pub trait CtxHandle {
+pub trait CtxHandle<C> {
     fn dispatch_internal(&mut self, message: Message);
     fn dispatch_external(&mut self, message: Message);
+
+    fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
+        where S: 'static + Send,
+              C: Ctx;
 }
 
 // TODO: make fields private
-pub struct ReactorHandle<'a, 'c, C: Ctx> {
+pub struct ReactorHandle<'a, 'c: 'a, C: Ctx> {
     pub uuid: &'a Uuid,
     pub ctx: &'a mut <C as Context<'c>>::Handle,
 }
@@ -295,6 +284,12 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
 
         let msg = Message::from_capnp(message_builder.into_reader());
         self.ctx.dispatch_internal(msg);
+    }
+
+    pub fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
+        where S: 'static + Send
+    {
+        self.ctx.spawn(params)
     }
 }
 
