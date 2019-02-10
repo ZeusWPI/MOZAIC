@@ -207,7 +207,6 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
         let unboxed = *self;
 
         let link_state = LinkState {
-            remote_uuid: unboxed.remote_uuid,
             local_closed: false,
             remote_closed: false,
         };
@@ -219,6 +218,7 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
         };
 
         return Link {
+            remote_uuid: unboxed.remote_uuid,
             reducer: Box::new(reducer),
             link_state,
         };
@@ -257,14 +257,17 @@ pub struct ReactorHandle<'a, 'c: 'a, C: Ctx> {
 
 
 impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
-    fn link_handle<'b>(&'b mut self, link_state: &'b mut LinkState)
-        -> LinkHandle<'b, 'c, C>
+    fn link_handle<'b>(
+        &'b mut self,
+        remote_uuid: &'b Uuid,
+        link_state: &'b mut LinkState
+    ) -> LinkHandle<'b, 'c, C>
     {
         LinkHandle {
             uuid: self.uuid,
             ctx: self.ctx,
             link_state,
-            remote_uuid: self.uuid,
+            remote_uuid,
         }
     }
 
@@ -305,8 +308,8 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
 }
 
 pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
-    uuid: &'a Uuid,
-    remote_uuid: &'a Uuid,
+    pub uuid: &'a Uuid,
+    pub remote_uuid: &'a Uuid,
     link_state: &'a mut LinkState,
     ctx: &'a mut <C as Context<'c>>::Handle,
 }
@@ -423,9 +426,9 @@ impl<S, C: Ctx> Reactor<S, C> {
         return Ok(());
     }
 
-    pub fn handle_internal_message<'a, 'c: 'a>(
-        &'a mut self,
-        ctx_handle: &'a mut <C as Context<'c>>::Handle,
+    pub fn handle_internal_message<'c>(
+        &mut self,
+        ctx_handle: &mut <C as Context<'c>>::Handle,
         message: Message,
     ) -> Result<(), capnp::Error>
     {
@@ -437,12 +440,22 @@ impl<S, C: Ctx> Reactor<S, C> {
                 ctx: ctx_handle,
             };
 
+
             let mut handler_ctx = HandlerCtx {
                 state: &mut self.internal_state,
                 handle: &mut reactor_handle,
             };
 
             handler.handle(&mut handler_ctx, msg.get_payload())?;
+        }
+
+        for link in self.links.values_mut() {
+            let mut reactor_handle = ReactorHandle {
+                uuid: &self.uuid,
+                ctx: ctx_handle,
+            };
+
+            link.handle_internal(&mut reactor_handle, msg)?;
         }
 
         return Ok(());
@@ -453,6 +466,17 @@ pub struct HandlerCtx<'a, S, H> {
     state: &'a mut S,
     handle: &'a mut H,
 }
+
+use std::ops::Deref;
+
+impl<'a, S, H> Deref for HandlerCtx<'a, S, H> {
+    type Target = S;
+
+    fn deref(&self) -> &S {
+        &self.state
+    }
+}
+
 
 impl<'a, S, H> HandlerCtx<'a, S, H> {
     pub fn state<'b>(&'b mut self) -> &'b mut S {
@@ -495,15 +519,13 @@ type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
 
 pub struct LinkState {
-    /// Uuid of remote party
-    // this is not really state, but putting it in here is awfully convenient
-    pub remote_uuid: Uuid,
-
     pub local_closed: bool,
     pub remote_closed: bool,
 }
 
 pub struct Link<C> {
+    pub remote_uuid: Uuid,
+
     pub reducer: Box<LinkReducerTrait<C>>,
 
     pub link_state: LinkState,
@@ -512,27 +534,29 @@ pub struct Link<C> {
 impl<C> Link<C>
     where C: Ctx + 'static
 {
-    fn handle_external<'a>(
+    fn handle_external(
         &mut self,
-        handle: &'a mut ReactorHandle<'a, '_, C>,
-        msg: mozaic_message::Reader<'a>
+        handle: &mut ReactorHandle<C>,
+        msg: mozaic_message::Reader,
     ) -> Result<(), capnp::Error>
     {
         if msg.get_type_id() == terminate_stream::Reader::type_id() {
             self.link_state.remote_closed = true;
         }
 
-        let mut link_handle = handle.link_handle(&mut self.link_state);
+        let mut link_handle = handle
+            .link_handle(&self.remote_uuid, &mut self.link_state);
         return self.reducer.handle_external(&mut link_handle, msg);
     }
 
-    fn handle_internal<'a>(
-        &'a mut self,
-        handle: &'a mut ReactorHandle<'a, '_, C>,
-        msg: mozaic_message::Reader<'a>,
+    fn handle_internal(
+        &mut self,
+        handle: &mut ReactorHandle<C>,
+        msg: mozaic_message::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let mut link_handle = handle.link_handle(&mut self.link_state);
+        let mut link_handle = handle
+            .link_handle(&self.remote_uuid, &mut self.link_state);
         return self.reducer.handle_internal(&mut link_handle, msg);
     }
 

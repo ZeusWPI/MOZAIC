@@ -5,7 +5,7 @@ use super::reactor;
 use super::reactor::*;
 use capnp;
 use capnp::traits::HasTypeId;
-use core_capnp::{terminate_stream, initialize, greet_person};
+use core_capnp::{terminate_stream, initialize, send_greeting, greeting};
 use super::{AnyPtrHandler, FnHandler};
 
 use futures::{Future, Async};
@@ -20,9 +20,8 @@ pub fn run() {
     
     let mut broker = Broker::new();
     rt.spawn(poll_fn(move || {
-        let mut params = CoreParams::new(CoreState {});
-        params.handler(initialize::Owned, FnHandler::new(init_1));
-        broker.spawn(params);
+        let main = Main {};
+        broker.spawn(main.params());
         return Ok(Async::Ready(()));
     }));
 
@@ -31,57 +30,100 @@ pub fn run() {
 }
 
 
-struct CoreState {}
+struct Main {}
 
-fn greet_person_handler<C: Ctx>(
-    _state: &mut ReactorCtx<CoreState, C>,
-    reader: greet_person::Reader,
-) -> Result<(), capnp::Error>
-{
-    println!("hello {}!", reader.get_person_name()?);
-    return Ok(());
+impl Main {
+    fn params<C: Ctx>(self) -> CoreParams<Self, C> {
+        let mut params = CoreParams::new(self);
+        params.handler(initialize::Owned, FnHandler::new(Self::initialize));
+        return params;
+    }
+
+    fn initialize<C: Ctx>(
+        self: &mut ReactorCtx<Self, C>,
+        _: initialize::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let greeter = Greeter { to_greet: self.handle().uuid.clone() };
+        let greeter_uuid = self.handle().spawn(greeter.params());
+        let link = GreeterLink {};
+        self.handle().open_link(link.params(greeter_uuid));
+        println!("opened link");
+        return Ok(());
+    }
 }
 
-struct LinkState {}
 
-fn init_1<C: Ctx>(
-    ctx: &mut HandlerCtx<CoreState, ReactorHandle<C>>,
-    reader: initialize::Reader,
-) -> Result<(), capnp::Error>
-{
-    println!("Initialized {:?}!", ctx.handle().uuid);
-    let mut params = CoreParams::new(CoreState {});
-    params.handler(initialize::Owned, FnHandler::new(init_2));
-    ctx.handle().spawn(params);
-    return Ok(());
+struct Greeter {
+    to_greet: Uuid,
 }
 
-fn init_2<C: Ctx>(
-    ctx: &mut HandlerCtx<CoreState, ReactorHandle<C>>,
-    reader: initialize::Reader,
-) -> Result<(), capnp::Error>
-{
-    println!("Initialized {:?}!", ctx.handle().uuid);
-    return Ok(());
+impl Greeter {
+    fn params<C: Ctx>(self) -> CoreParams<Self, C> {
+        let mut params = CoreParams::new(self);
+        params.handler(initialize::Owned, FnHandler::new(Self::initialize));
+        return params;
+    }
+
+    fn initialize<C: Ctx>(
+        self: &mut ReactorCtx<Self, C>,
+        _: initialize::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let link = (GreeterLink {}).params(self.to_greet.clone());
+        self.handle().open_link(link);
+
+        self.send_greeting("Hey friend!");
+        return Ok(());
+    }
+
+    fn send_greeting<C: Ctx>(self: &mut ReactorCtx<Self, C>, msg: &str) {
+        self.handle().send_internal(send_greeting::Owned, |b| {
+            let mut greeting: send_greeting::Builder = b.init_as();
+            greeting.set_message(msg);
+        });
+    }
+
 }
 
-fn receive_greet<C: Ctx>(
-    ctx: &mut HandlerCtx<LinkState, LinkHandle<C>>,
-    reader: greet_person::Reader,
-) -> Result<(), capnp::Error>
-{
-    ctx.handle().send_message(greet_person::Owned, |b| {
-        let mut greeting: greet_person::Builder = b.init_as();
-        greeting.set_person_name(reader.get_person_name().unwrap());
-    });
-    return Ok(());
-}
+struct GreeterLink { }
 
-fn close<S, C: Ctx>(
-    ctx: &mut HandlerCtx<S, LinkHandle<C>>,
-    _: terminate_stream::Reader,
-) -> Result<(), capnp::Error>
-{
-    ctx.handle().close_link();
-    return Ok(());
+impl GreeterLink {
+    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_uuid, self);
+        params.internal_handler(
+            send_greeting::Owned,
+            FnHandler::new(Self::send_greeting)
+        );
+        params.external_handler(
+            greeting::Owned,
+            FnHandler::new(Self::recv_greeting),
+        );
+        return params;
+    }
+
+    fn send_greeting<C: Ctx>(
+        self: &mut LinkCtx<Self, C>,
+        send_greeting: send_greeting::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = send_greeting.get_message()?;
+
+        self.handle().send_message(greeting::Owned, |b| {
+            let mut greeting: greeting::Builder = b.init_as();
+            greeting.set_message(message);
+        });
+
+        return Ok(());
+    }
+
+    fn recv_greeting<C: Ctx>(
+        self: &mut LinkCtx<Self, C>,
+        greeting: greeting::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = greeting.get_message()?;
+        println!("got greeting: {:?}", message);
+        return Ok(());
+    }
 }
