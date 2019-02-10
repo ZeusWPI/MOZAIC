@@ -242,6 +242,8 @@ pub trait CtxHandle<C> {
     fn open_link<S>(&mut self, params: LinkParams<S, C>)
         where S: 'static + Send,
               C: Ctx;
+    
+    fn close_link(&mut self, uuid: &Uuid);
 
 
     fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
@@ -395,14 +397,14 @@ impl<S, C: Ctx> Reactor<S, C> {
         let msg = message.reader()?;
         let sender_uuid = msg.get_sender()?.into();
 
-        let mut reactor_handle = ReactorHandle {
-            uuid: &self.uuid,
-            ctx: ctx_handle,
-        };
-
         let closed = {
             let link = self.links.get_mut(&sender_uuid)
                 .expect("no link with message sender");
+
+            let mut reactor_handle = ReactorHandle {
+                uuid: &self.uuid,
+                ctx: ctx_handle,
+            };
 
             link.handle_external(&mut reactor_handle, msg)?;
 
@@ -410,7 +412,7 @@ impl<S, C: Ctx> Reactor<S, C> {
         };
 
         if closed {
-            self.links.remove(&sender_uuid);
+            ctx_handle.close_link(&sender_uuid);
         }
 
         // the handling link may now emit a domestic message, which will

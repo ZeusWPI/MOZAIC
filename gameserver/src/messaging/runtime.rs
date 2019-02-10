@@ -57,6 +57,11 @@ impl BrokerHandle {
         broker.actors.insert(uuid, ActorData { tx });
     }
 
+    pub fn unregister(&mut self, uuid: &Uuid) {
+        let mut broker = self.broker.lock().unwrap();
+        broker.actors.remove(uuid);
+    }
+
     pub fn spawn<S>(&mut self, core_params: CoreParams<S, Runtime>)
         -> Uuid
         where S: 'static + Send
@@ -146,15 +151,11 @@ impl<S: 'static> ReactorDriver<S> {
                     let link = params.into_link();
                     self.reactor.links.insert(uuid, link);
                 }
-                InternalOp::CloseLink(_uuid) => {
-                    // TODO
+                InternalOp::CloseLink(uuid) => {
+                    self.reactor.links.remove(&uuid);
                 }
             }
         }
-    }
-
-    fn handle_links(&mut self) {
-
     }
 }
 
@@ -165,6 +166,14 @@ impl<S: 'static> Future for ReactorDriver<S> {
     fn poll(&mut self) -> Poll<(), ()> {
         loop {
             self.handle_internal_queue();
+
+            if self.reactor.links.is_empty() {
+                // all internal ops have been handled and no new messages can
+                // arrive, so the reactor can be terminated.
+                self.broker.unregister(&self.reactor.uuid);
+                return Ok(Async::Ready(()));
+            }
+
             match try_ready!(self.message_chan.poll()) {
                 None => return Ok(Async::Ready(())),
                 Some(message) => {
@@ -204,5 +213,9 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
         where T: 'static + Send
     {
         self.internal_queue.push_back(InternalOp::OpenLink(Box::new(params)));
+    }
+
+    fn close_link(&mut self, uuid: &Uuid) {
+        self.internal_queue.push_back(InternalOp::CloseLink(uuid.clone()));
     }
 }

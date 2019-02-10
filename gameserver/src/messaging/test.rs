@@ -48,7 +48,6 @@ impl Main {
         let greeter_uuid = self.handle().spawn(greeter.params());
         let link = GreeterLink {};
         self.handle().open_link(link.params(greeter_uuid));
-        println!("opened link");
         return Ok(());
     }
 }
@@ -99,6 +98,10 @@ impl GreeterLink {
             greeting::Owned,
             FnHandler::new(Self::recv_greeting),
         );
+        params.external_handler(
+            terminate_stream::Owned,
+            FnHandler::new(Self::close_handler),
+        );
         return params;
     }
 
@@ -124,6 +127,17 @@ impl GreeterLink {
     {
         let message = greeting.get_message()?;
         println!("got greeting: {:?}", message);
+        self.handle().close_link();
+        return Ok(());
+    }
+
+    fn close_handler<C: Ctx>(
+        self: &mut LinkCtx<Self, C>,
+        _: terminate_stream::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        // also close our end of the stream
+        self.handle().close_link();
         return Ok(());
     }
 }
