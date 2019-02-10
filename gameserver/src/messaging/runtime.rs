@@ -105,9 +105,16 @@ impl BrokerHandle {
 }
 
 
+enum InternalOp {
+    Message(Message),
+    OpenLink(Box<LinkParamsTrait<Runtime>>),
+    CloseLink(Uuid),
+}
+
+
 pub struct ReactorDriver<S: 'static> {
     message_chan: mpsc::UnboundedReceiver<Message>,
-    internal_queue: VecDeque<Message>,
+    internal_queue: VecDeque<InternalOp>,
     broker: BrokerHandle,
 
     reactor: Reactor<S, Runtime>,
@@ -124,14 +131,30 @@ impl<S: 'static> ReactorDriver<S> {
     }
 
     fn handle_internal_queue(&mut self) {
-        while let Some(message) = self.internal_queue.pop_front() {
-            let mut handle = DriverHandle {
-                internal_queue: &mut self.internal_queue,
-                broker: &mut self.broker,
-            };
-            self.reactor.handle_internal_message(&mut handle, message)
-                .expect("handling failed");
+        while let Some(op) = self.internal_queue.pop_front() {
+            match op {
+                InternalOp::Message(msg) => {
+                    let mut handle = DriverHandle {
+                        internal_queue: &mut self.internal_queue,
+                        broker: &mut self.broker,
+                    };
+                    self.reactor.handle_internal_message(&mut handle, msg)
+                        .expect("handling failed");
+                }
+                InternalOp::OpenLink(params) => {
+                    let uuid = params.remote_uuid().clone();
+                    let link = params.into_link();
+                    self.reactor.links.insert(uuid, link);
+                }
+                InternalOp::CloseLink(_uuid) => {
+                    // TODO
+                }
+            }
         }
+    }
+
+    fn handle_links(&mut self) {
+
     }
 }
 
@@ -157,14 +180,14 @@ impl<'a> Context<'a> for Runtime {
 }
 
 pub struct DriverHandle<'a> {
-    internal_queue: &'a mut VecDeque<Message>,
+    internal_queue: &'a mut VecDeque<InternalOp>,
     broker: &'a mut BrokerHandle,
 }
 
 impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
 
     fn dispatch_internal(&mut self, msg: Message) {
-        self.internal_queue.push_back(msg);
+        self.internal_queue.push_back(InternalOp::Message(msg));
     }
 
     fn dispatch_external(&mut self, msg: Message) {
@@ -175,5 +198,11 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
         where T: 'static + Send
     {
         self.broker.spawn(params)
+    }
+
+    fn open_link<T>(&mut self, params: LinkParams<T, Runtime>)
+        where T: 'static + Send
+    {
+        self.internal_queue.push_back(InternalOp::OpenLink(Box::new(params)));
     }
 }

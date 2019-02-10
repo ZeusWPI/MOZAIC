@@ -239,6 +239,11 @@ pub trait CtxHandle<C> {
     fn dispatch_internal(&mut self, message: Message);
     fn dispatch_external(&mut self, message: Message);
 
+    fn open_link<S>(&mut self, params: LinkParams<S, C>)
+        where S: 'static + Send,
+              C: Ctx;
+
+
     fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
         where S: 'static + Send,
               C: Ctx;
@@ -290,6 +295,12 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
         where S: 'static + Send
     {
         self.ctx.spawn(params)
+    }
+
+    pub fn open_link<S>(&mut self, params: LinkParams<S, C>)
+        where S: 'static + Send
+    {
+        self.ctx.open_link(params);
     }
 }
 
