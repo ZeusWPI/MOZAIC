@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(arbitrary_self_types)]
 
 extern crate bytes;
 extern crate hex;
