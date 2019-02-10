@@ -269,11 +269,26 @@ pub struct SimpleReactorHandle<'a> {
     msg_queue: &'a mut VecDeque<Message>,
 }
 
+impl<'a> CtxHandle for SimpleReactorHandle<'a> {
+    fn dispatch_internal(&mut self, msg: Message) {
+        self.msg_queue.push_back(msg);
+    }
+
+    fn dispatch_external(&mut self, msg: Message) {
+        println!("dispatching message");
+    }
+}
+
 pub trait Ctx : for<'a> Context<'a> {}
 impl<C> Ctx for C where C: for<'a> Context<'a> {}
 
 pub trait Context<'a> {
-    type Handle;
+    type Handle: 'a + CtxHandle;
+}
+
+pub trait CtxHandle {
+    fn dispatch_internal(&mut self, message: Message);
+    fn dispatch_external(&mut self, message: Message);
 }
 
 pub struct ReactorHandle<'a, 'c, C: Ctx> {
@@ -281,12 +296,6 @@ pub struct ReactorHandle<'a, 'c, C: Ctx> {
     ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
-pub struct LinkHandle<'a, 'c, C: Ctx> {
-    uuid: &'a Uuid,
-    remote_uuid: &'a Uuid,
-    link_state: &'a mut LinkState,
-    ctx: &'a mut <C as Context<'c>>::Handle,
-}
 
 impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
     fn link_handle<'b>(&'b mut self, link_state: &'b mut LinkState)
@@ -303,6 +312,50 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
 
 impl<'a, S> Context<'a> for SimpleReactorDriver<S> {
     type Handle = SimpleReactorHandle<'a>;
+}
+
+pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
+    uuid: &'a Uuid,
+    remote_uuid: &'a Uuid,
+    link_state: &'a mut LinkState,
+    ctx: &'a mut <C as Context<'c>>::Handle,
+}
+
+impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
+    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
+    {
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        {
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), self.uuid);
+            set_uuid(msg.reborrow().init_receiver(), self.remote_uuid);
+
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder);
+            }
+        }
+
+        let msg = Message::from_capnp(message_builder.into_reader());
+        self.ctx.dispatch_external(msg);
+    }
+
+    pub fn close_link(&mut self) {
+        if self.link_state.local_closed {
+            return;
+        }
+
+        self.send_message(terminate_stream::Owned, |b| {
+            b.init_as::<terminate_stream::Builder>();
+        });
+
+        self.link_state.local_closed = true;
+    }
 }
 
 
@@ -423,6 +476,20 @@ pub struct HandlerCtx<'a, S, H> {
     handle: &'a mut H,
 }
 
+impl<'a, S, H> HandlerCtx<'a, S, H> {
+    pub fn state<'b>(&'b mut self) -> &'b mut S {
+        &mut self.state
+    }
+
+    pub fn handle<'b>(&'b mut self) -> &'b mut H {
+        &mut self.handle
+    }
+
+    pub fn split<'b>(&'b mut self) -> (&'b mut S, &'b mut H) {
+        (&mut self.state, &mut self.handle)
+    }
+}
+
 // TODO: is this the right name for this?
 /// for sending messages inside the reactor
 // pub struct ReactorHandle<'a> {
@@ -473,41 +540,7 @@ pub struct Sender<'a, C> {
 impl<'a, C> Sender<'a, C>
     where C: Ctx
 {
-    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
-        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-              M: Owned<'static>,
-              <M as Owned<'static>>::Builder: HasTypeId,
-    {
-        let mut message_builder = ::capnp::message::Builder::new_default();
-        {
-            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            set_uuid(msg.reborrow().init_sender(), self.uuid);
-            set_uuid(msg.reborrow().init_receiver(), self.remote_uuid);
-
-            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-            {
-                let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder);
-            }
-        }
-
-        let msg = Message::from_capnp(message_builder.into_reader());
-        unimplemented!()
-        // self.context_handle.dispatch_external(msg);
-    }
-
-    pub fn close(&mut self) {
-        if self.link_state.local_closed {
-            return;
-        }
-
-        self.send_message(terminate_stream::Owned, |b| {
-            b.init_as::<terminate_stream::Builder>();
-        });
-
-        self.link_state.local_closed = true;
-    }
 }
 
 type CoreHandler<S, C, T, E> = Box<
