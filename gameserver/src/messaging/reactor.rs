@@ -142,6 +142,13 @@ pub struct CoreParams<S, C: Ctx> {
 }
 
 impl<S, C: Ctx> CoreParams<S, C> {
+    pub fn new(state: S) -> Self {
+        CoreParams {
+            state,
+            handlers: HashMap::new(),
+        }
+    }
+
     pub fn handler<M, H>(&mut self, m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
@@ -248,9 +255,10 @@ pub trait CtxHandle {
     fn dispatch_external(&mut self, message: Message);
 }
 
+// TODO: make fields private
 pub struct ReactorHandle<'a, 'c, C: Ctx> {
-    uuid: &'a Uuid,
-    ctx: &'a mut <C as Context<'c>>::Handle,
+    pub uuid: &'a Uuid,
+    pub ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
 
@@ -264,6 +272,29 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
             link_state,
             remote_uuid: self.uuid,
         }
+    }
+
+    pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
+    {
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        {
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), self.uuid);
+            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder);
+            }
+        }
+
+        let msg = Message::from_capnp(message_builder.into_reader());
+        self.ctx.dispatch_internal(msg);
     }
 }
 

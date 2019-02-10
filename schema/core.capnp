@@ -12,6 +12,10 @@ struct MozaicMessage {
     payload @3: AnyPointer; 
 }
 
+struct TerminateStream {}
+
+struct Initialize {}
+
 struct Message {
     typeId @0: UInt64;
     data @1: AnyPointer;

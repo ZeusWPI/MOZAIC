@@ -10,6 +10,7 @@ use std::marker::PhantomData;
 pub mod broker;
 pub mod reactor;
 pub mod test;
+pub mod runtime;
 
 pub struct HandlerSet<S, T, E> {
     handler_map: HashMap<u64, BoxedHandler<S, T, E>>,

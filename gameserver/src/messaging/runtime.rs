@@ -1,35 +1,40 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 
+use core_capnp::initialize;
+
 use tokio;
 use futures::{Future, Async, Poll, Stream};
 use futures::sync::mpsc;
 
+use rand;
+use rand::Rng;
+
 use super::*;
 use super::reactor::*;
 
-struct Broker {
+pub struct Broker {
     actors: HashMap<Uuid, ActorData>,
 }
 
 impl Broker {
-    fn new() -> BrokerHandle {
+    pub fn new() -> BrokerHandle {
         let broker = Broker { actors: HashMap::new() };
         return BrokerHandle { broker: Arc::new(Mutex::new(broker)) };
     }
 }
 
-struct ActorData {
+pub struct ActorData {
     tx: mpsc::UnboundedSender<Message>,
 }
 
 #[derive(Clone)]
-struct BrokerHandle {
+pub struct BrokerHandle {
     broker: Arc<Mutex<Broker>>,
 }
 
 impl BrokerHandle {
-    fn dispatch_message(&mut self, message: Message) {
+    pub fn dispatch_message(&mut self, message: Message) {
         let mut broker = self.broker.lock().unwrap();
         let receiver_uuid = message.reader()
             .unwrap()
@@ -44,14 +49,58 @@ impl BrokerHandle {
         }
     }
 
-    fn register(&mut self, uuid: Uuid, tx: mpsc::UnboundedSender<Message>) {
+    pub fn register(&mut self, uuid: Uuid, tx: mpsc::UnboundedSender<Message>) {
         let mut broker = self.broker.lock().unwrap();
         broker.actors.insert(uuid, ActorData { tx });
+    }
+
+    pub fn spawn<S>(&mut self, core_params: CoreParams<S, ReactorDriver<S>>)
+        where S: 'static + Send
+    {
+        let mut broker = self.broker.lock().unwrap();
+
+        let mut rng = rand::thread_rng();
+        let uuid: Uuid = rng.gen();
+
+        let reactor = Reactor {
+            uuid: uuid.clone(),
+            internal_state: core_params.state,
+            internal_handlers: core_params.handlers,
+            links: HashMap::new(),
+        };
+
+        let (tx, rx) = mpsc::unbounded();
+
+        broker.actors.insert(uuid, ActorData { tx });
+
+        let mut driver = ReactorDriver {
+            broker: self.clone(),
+            internal_queue: VecDeque::new(),
+            message_chan: rx,
+            reactor,
+        };
+        {
+            let mut ctx_handle = DriverHandle {
+                broker: &mut driver.broker,
+                internal_queue: &mut driver.internal_queue,
+            };
+
+            let mut reactor_handle: ReactorHandle<ReactorDriver<S>> = ReactorHandle {
+                uuid: &driver.reactor.uuid,
+                ctx: &mut ctx_handle,
+            };
+
+            reactor_handle.send_internal(initialize::Owned, |b| {
+                b.init_as::<initialize::Builder>();
+            });
+        }
+
+        tokio::spawn(driver);
     }
 }
 
 
-struct ReactorDriver<S: 'static> {
+pub struct ReactorDriver<S: 'static> {
     message_chan: mpsc::UnboundedReceiver<Message>,
     internal_queue: VecDeque<Message>,
     broker: BrokerHandle,
@@ -102,7 +151,7 @@ impl<'a, S> Context<'a> for ReactorDriver<S> {
     type Handle = DriverHandle<'a>;
 }
 
-struct DriverHandle<'a> {
+pub struct DriverHandle<'a> {
     internal_queue: &'a mut VecDeque<Message>,
     broker: &'a mut BrokerHandle,
 }
