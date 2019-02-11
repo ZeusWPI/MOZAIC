@@ -1,5 +1,5 @@
 use std::collections::{HashMap, VecDeque};
-use super::{AnyPtrHandler, Handler};
+use super::types::{AnyPtrHandler, Handler};
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{HasTypeId, Owned};

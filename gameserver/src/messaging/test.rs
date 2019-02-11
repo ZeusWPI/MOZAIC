@@ -1,12 +1,10 @@
 use std::collections::{VecDeque, HashMap};
 
 use super::runtime::Broker;
-use super::reactor;
 use super::reactor::*;
 use capnp;
-use capnp::traits::HasTypeId;
 use core_capnp::{terminate_stream, initialize, send_greeting, greeting};
-use super::{AnyPtrHandler, FnHandler};
+use super::types::{AnyPtrHandler, FnHandler};
 
 use futures::{Future, Async};
 use futures::future::poll_fn;
