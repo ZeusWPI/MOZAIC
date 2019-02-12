@@ -6,6 +6,15 @@ use capnp::traits::{HasTypeId, Owned};
 
 use core_capnp::{mozaic_message, terminate_stream};
 
+/// A reactor is an "actor" in the MOZAIC system. It is defined by an identity
+/// (an UUID), a state, and a set of message ('event') handlers.
+/// Reactors can communicate by opening links between them. These links
+/// are 'tiny reactors', that can set handlers on both internal messages and
+/// messages received from the remote party. They can also emit messages towards
+/// both parties, acting as a 'proxy' between the reactor states.
+/// Note how this is similar to the model/controller type architecture prevalent
+/// in web frameworks, where a controller is created for each request (= a link)
+/// which then manipulates the model (the core reactor state).
 pub struct Reactor<S, C: Ctx> {
     pub uuid: Uuid,
     pub internal_state: S,
@@ -147,6 +156,8 @@ pub struct LinkReducer<S, C>
     pub external_handlers: LinkHandlers<S, C, (), capnp::Error>,
 }
 
+/// A trait for all LinkReducers to implement.
+/// We need this to make boxed LinkReducers (with the state type erased).
 pub trait LinkReducerTrait<C: Ctx>: 'static + Send {
     fn handle_external<'a, 'b, >(
         &'a mut self,
@@ -222,7 +233,7 @@ pub trait CtxHandle<C> {
               C: Ctx;
 }
 
-// TODO: make fields private
+/// Handle for manipulating a reactor.
 pub struct ReactorHandle<'a, 'c: 'a, C: Ctx> {
     pub uuid: &'a Uuid,
     pub ctx: &'a mut <C as Context<'c>>::Handle,
@@ -279,6 +290,7 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
     }
 }
 
+/// Handle for manipulating a link.
 pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
     pub uuid: &'a Uuid,
     pub remote_uuid: &'a Uuid,
@@ -347,6 +359,7 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
 }
 
 
+/// A simple struct for bundling a borrowed state and handle.
 pub struct HandlerCtx<'a, S, H> {
     state: &'a mut S,
     handle: &'a mut H,
