@@ -40,7 +40,7 @@ impl Main {
         _: initialize::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let greeter = Greeter { to_greet: self.handle().uuid.clone() };
+        let greeter = Greeter { to_greet: self.handle().uuid().clone() };
         let greeter_uuid = self.handle().spawn(greeter.params());
         let link = GreeterLink {};
         self.handle().open_link(link.params(greeter_uuid));

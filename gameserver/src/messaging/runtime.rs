@@ -94,11 +94,7 @@ impl BrokerHandle {
                 internal_queue: &mut driver.internal_queue,
             };
 
-            let mut reactor_handle: ReactorHandle<Runtime> = ReactorHandle {
-                uuid: &driver.reactor.uuid,
-                ctx: &mut ctx_handle,
-            };
-
+            let mut reactor_handle = driver.reactor.handle(&mut ctx_handle);
             reactor_handle.send_internal(initialize::Owned, |b| {
                 b.init_as::<initialize::Builder>();
             });

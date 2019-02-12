@@ -99,6 +99,16 @@ impl<S, C: Ctx> Reactor<S, C> {
 
         return Ok(());
     }
+
+    // helper function for implementing runtimes, should go sometime soon
+    pub fn handle<'a, 'c>(&'a self, ctx: &'a mut <C as Context<'c>>::Handle)
+        -> ReactorHandle<'a, 'c, C>
+    {
+        ReactorHandle {
+            uuid: &self.uuid,
+            ctx,
+        }
+    }
 }
 
 pub struct LinkState {
@@ -235,8 +245,8 @@ pub trait CtxHandle<C> {
 
 /// Handle for manipulating a reactor.
 pub struct ReactorHandle<'a, 'c: 'a, C: Ctx> {
-    pub uuid: &'a Uuid,
-    pub ctx: &'a mut <C as Context<'c>>::Handle,
+    uuid: &'a Uuid,
+    ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
 impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
@@ -252,6 +262,10 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
             link_state,
             remote_uuid,
         }
+    }
+
+    pub fn uuid(&self) -> &'a Uuid {
+        self.uuid
     }
 
     pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
@@ -292,13 +306,21 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
 
 /// Handle for manipulating a link.
 pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
-    pub uuid: &'a Uuid,
-    pub remote_uuid: &'a Uuid,
+    uuid: &'a Uuid,
+    remote_uuid: &'a Uuid,
     link_state: &'a mut LinkState,
     ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
 impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
+    pub fn uuid(&self) -> &'a Uuid {
+        self.uuid
+    }
+
+    pub fn remote_uuid(&self) -> &'a Uuid {
+        self.remote_uuid
+    }
+
     pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
               M: Owned<'static>,
