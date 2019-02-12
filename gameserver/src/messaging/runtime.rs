@@ -10,7 +10,7 @@ use futures::sync::mpsc;
 use rand;
 use rand::Rng;
 
-use super::*;
+use super::types::*;
 use super::reactor::*;
 
 pub struct Runtime;
