@@ -401,6 +401,39 @@ impl<'a, S, H> HandlerCtx<'a, S, H> {
     }
 }
 
+use std::marker::PhantomData;
+
+pub struct CtxHandler<M, F> {
+    message_type: PhantomData<M>,
+    function: F,
+}
+
+impl<M, F> CtxHandler<M, F> {
+    pub fn new(function: F) -> Self {
+        CtxHandler {
+            message_type: PhantomData,
+            function,
+        }
+    }
+}
+
+impl<'a, S, H, M, F, T, E> Handler<'a, HandlerCtx<'a, S, H>, M> for CtxHandler<M, F>
+    where F: Fn(&mut S, &mut H, <M as Owned<'a>>::Reader) -> Result<T, E>,
+          F: Send,
+          M: Owned<'a> + 'static + Send
+{
+    type Output = T;
+    type Error = E;
+
+    fn handle(&self, ctx: &mut HandlerCtx<'a, S, H>, reader: <M as Owned<'a>>::Reader)
+        -> Result<T, E>
+    {
+        let (state, handle) = ctx.split();
+        (self.function)(state, handle, reader)
+    }
+}
+
+
 
 pub type ReactorCtx<'a, 'c, S, C> = HandlerCtx<'a, S, ReactorHandle<'a, 'c, C>>;
 pub type LinkCtx<'a, 'c, S, C> = HandlerCtx<'a, S, LinkHandle<'a, 'c, C>>;

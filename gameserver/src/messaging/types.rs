@@ -61,7 +61,6 @@ impl<'a, S, M, F, T, E> Handler<'a, S, M> for FnHandler<M, F>
     }
 }
 
-
 /// Given a handler H for message type M, constructs a new handler that will
 /// interpret an AnyPointer as M, and then pass it to H.
 pub struct AnyPtrHandler<H, M> {

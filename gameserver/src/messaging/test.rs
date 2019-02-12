@@ -49,6 +49,7 @@ impl Main {
 }
 
 
+
 struct Greeter {
     to_greet: Uuid,
 }
@@ -56,29 +57,26 @@ struct Greeter {
 impl Greeter {
     fn params<C: Ctx>(self) -> CoreParams<Self, C> {
         let mut params = CoreParams::new(self);
-        params.handler(initialize::Owned, FnHandler::new(Self::initialize));
+        params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
         return params;
     }
 
     fn initialize<C: Ctx>(
-        self: &mut ReactorCtx<Self, C>,
+        &mut self,
+        handle: &mut ReactorHandle<C>,
         _: initialize::Reader,
     ) -> Result<(), capnp::Error>
     {
         let link = (GreeterLink {}).params(self.to_greet.clone());
-        self.handle().open_link(link);
+        handle.open_link(link);
 
-        self.send_greeting("Hey friend!");
+        handle.send_internal(send_greeting::Owned, |b| {
+            let mut greeting: send_greeting::Builder = b.init_as();
+            greeting.set_message("Hey friend!");
+        });
+
         return Ok(());
     }
-
-    fn send_greeting<C: Ctx>(self: &mut ReactorCtx<Self, C>, msg: &str) {
-        self.handle().send_internal(send_greeting::Owned, |b| {
-            let mut greeting: send_greeting::Builder = b.init_as();
-            greeting.set_message(msg);
-        });
-    }
-
 }
 
 struct GreeterLink { }
@@ -88,27 +86,28 @@ impl GreeterLink {
         let mut params = LinkParams::new(foreign_uuid, self);
         params.internal_handler(
             send_greeting::Owned,
-            FnHandler::new(Self::send_greeting)
+            CtxHandler::new(Self::send_greeting)
         );
         params.external_handler(
             greeting::Owned,
-            FnHandler::new(Self::recv_greeting),
+            CtxHandler::new(Self::recv_greeting),
         );
         params.external_handler(
             terminate_stream::Owned,
-            FnHandler::new(Self::close_handler),
+            CtxHandler::new(Self::close_handler),
         );
         return params;
     }
 
     fn send_greeting<C: Ctx>(
-        self: &mut LinkCtx<Self, C>,
+        &mut self,
+        handle: &mut LinkHandle<C>,
         send_greeting: send_greeting::Reader,
     ) -> Result<(), capnp::Error>
     {
         let message = send_greeting.get_message()?;
 
-        self.handle().send_message(greeting::Owned, |b| {
+        handle.send_message(greeting::Owned, |b| {
             let mut greeting: greeting::Builder = b.init_as();
             greeting.set_message(message);
         });
@@ -117,23 +116,26 @@ impl GreeterLink {
     }
 
     fn recv_greeting<C: Ctx>(
-        self: &mut LinkCtx<Self, C>,
+        &mut self,
+        handle: &mut LinkHandle<C>,
+
         greeting: greeting::Reader,
     ) -> Result<(), capnp::Error>
     {
         let message = greeting.get_message()?;
         println!("got greeting: {:?}", message);
-        self.handle().close_link();
+        handle.close_link();
         return Ok(());
     }
 
     fn close_handler<C: Ctx>(
-        self: &mut LinkCtx<Self, C>,
+        &mut self,
+        handle: &mut LinkHandle<C>,
         _: terminate_stream::Reader,
     ) -> Result<(), capnp::Error>
     {
         // also close our end of the stream
-        self.handle().close_link();
+        handle.close_link();
         return Ok(());
     }
 }
