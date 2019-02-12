@@ -24,3 +24,11 @@ struct Message {
 struct GreetPerson {
     personName @0: Text;
 }
+
+struct SendGreeting {
+    message @0: Text;
+}
+
+struct Greeting {
+    message @0: Text;
+}
