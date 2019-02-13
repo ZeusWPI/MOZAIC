@@ -79,6 +79,15 @@ impl Greeter {
     }
 }
 
+struct Link<'a, H> {
+    state: &'a mut GreeterLinkState,
+    core_state: &'a Greeter,
+    handle: &'a mut H,
+}
+
+
+struct GreeterLinkState {}
+
 struct GreeterLink { }
 
 impl GreeterLink {
@@ -118,7 +127,6 @@ impl GreeterLink {
     fn recv_greeting<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
-
         greeting: greeting::Reader,
     ) -> Result<(), capnp::Error>
     {
