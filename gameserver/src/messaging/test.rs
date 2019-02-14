@@ -12,7 +12,6 @@ use tokio::runtime::Runtime;
 pub fn run() {
     // Create the runtime
     let mut rt = Runtime::new().unwrap();
-
     
     let mut broker = Broker::new();
     rt.spawn(poll_fn(move || {
@@ -47,7 +46,6 @@ impl Main {
         return Ok(());
     }
 }
-
 
 
 struct Greeter {
