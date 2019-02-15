@@ -41,3 +41,7 @@ pub mod protocol {
 pub mod core_capnp {
     include!(concat!(env!("OUT_DIR"), "/core_capnp.rs"));
 }
+
+pub mod network_capnp {
+    include!(concat!(env!("OUT_DIR"), "/network_capnp.rs"));
+}

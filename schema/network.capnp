@@ -1,6 +1,6 @@
 @0xd61dd42467f93e49;
 
-using core = import "core.capnp";
+using Core = import "core.capnp";
 
 struct NetworkMessage {
     typeId @0: UInt64;
@@ -12,9 +12,9 @@ struct Publish {
 }
 
 struct Connect {
-    id @0: core.Uuid;
+    id @0: Core.Uuid;
 }
 
 struct Connected {
-    id @0: core.Uuid;
+    id @0: Core.Uuid;
 }
