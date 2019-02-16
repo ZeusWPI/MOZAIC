@@ -28,11 +28,11 @@ extern crate prost;
 extern crate prost_derive;
 extern crate sodiumoxide;
 extern crate capnp;
+extern crate capnp_futures;
 
 pub mod network;
 pub mod messaging;
-// pub mod utils;
-// pub mod reactors;
+pub mod net;
 
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
