@@ -79,7 +79,7 @@ impl<'a, S,  M, F, T, E> Handler<'a, MsgHandlerCtx<'a, S>, M> for MsgHandler<M, 
     }
 }
 
-struct StreamHandler<S> {
+pub struct StreamHandler<S> {
     transport: Transport<TcpStream, Builder<HeapAllocator>>,
     state: S,
     handlers: HashMap<u64, MessageHandler<S>>,
@@ -102,7 +102,7 @@ impl<S> StreamHandler<S> {
         }
     }
 
-    pub fn handler<M, H>(&mut self, _m: M, h: H)
+    pub fn on<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
               H: 'static + for <'a> Handler<'a, MsgHandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>
@@ -122,11 +122,11 @@ impl<S> StreamHandler<S> {
                 AsyncSink::NotReady(builder) => {
                     self.write_queue.push_front(builder);
                     return Ok(Async::NotReady);
-                }
-            }
+                },
+            };
         }
 
-        return Ok(Async::Ready(()));
+        return self.transport.poll_complete();
     }
 
     fn poll_transport(&mut self) -> Poll<(), capnp::Error> {
