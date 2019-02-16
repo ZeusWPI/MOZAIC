@@ -1,4 +1,5 @@
 use std::collections::{VecDeque, HashMap};
+use std::marker::PhantomData;
 
 use capnp_futures::serialize::Transport;
 use tokio::net::TcpStream;
@@ -7,15 +8,76 @@ use futures::{Future, Async, Poll, Stream, Sink, AsyncSink};
 
 use capnp;
 use capnp::any_pointer;
-use capnp::message::{Builder, HeapAllocator};
+use capnp::traits::{Owned, HasTypeId};
+use capnp::message::{ReaderOptions, Builder, HeapAllocator};
 
 use network_capnp::network_message;
-use messaging::types::Handler;
+use messaging::types::{Handler, AnyPtrHandler};
+
+pub struct Writer<'a> {
+    write_queue: &'a mut VecDeque<Builder<HeapAllocator>>,
+}
+
+impl<'a> Writer<'a> {
+    pub fn write<M, F>(&mut self, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
+    {
+        let mut builder = Builder::new_default();
+        {
+            let mut msg = builder.init_root::<network_message::Builder>();
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let payload_builder = msg.reborrow().init_data();
+                initializer(payload_builder);
+            }
+        }
+        self.write_queue.push_back(builder);
+    }
+}
 
 type MessageHandler<S> = Box<
     for<'a>
-        Handler<'a, S, any_pointer::Owned, Output=(), Error=capnp::Error>
+        Handler<'a,
+            MsgHandlerCtx<'a, S>,
+            any_pointer::Owned, Output=(), Error=capnp::Error>
 >;
+
+pub struct MsgHandlerCtx<'a, S> {
+    pub state: &'a mut S,
+    pub writer: &'a mut Writer<'a>,
+}
+
+pub struct MsgHandler<M, F> {
+    message_type: PhantomData<M>,
+    function: F,
+}
+
+impl<M, F> MsgHandler<M, F> {
+    pub fn new(function: F) -> Self {
+        MsgHandler {
+            message_type: PhantomData,
+            function,
+        }
+    }
+}
+
+impl<'a, S,  M, F, T, E> Handler<'a, MsgHandlerCtx<'a, S>, M> for MsgHandler<M, F>
+    where F: Fn(&mut S, &mut Writer, <M as Owned<'a>>::Reader) -> Result<T, E>,
+          F: Send,
+          M: Owned<'a> + 'static + Send
+{
+    type Output = T;
+    type Error = E;
+
+    fn handle(&self, ctx: &mut MsgHandlerCtx<'a, S>, reader: <M as Owned<'a>>::Reader)
+        -> Result<T, E>
+    {
+        let MsgHandlerCtx { state, writer } = ctx;
+        (self.function)(state, writer, reader)
+    }
+}
 
 struct StreamHandler<S> {
     transport: Transport<TcpStream, Builder<HeapAllocator>>,
@@ -25,14 +87,42 @@ struct StreamHandler<S> {
 }
 
 impl<S> StreamHandler<S> {
+    pub fn new(state: S, stream: TcpStream) -> Self {
+        StreamHandler {
+            transport: Transport::new(stream, ReaderOptions::default()),
+            state,
+            handlers: HashMap::new(),
+            write_queue: VecDeque::new(),
+        }
+    }
+
+    pub fn writer<'a>(&'a mut self) -> Writer<'a> {
+        Writer {
+            write_queue: &mut self.write_queue,
+        }
+    }
+
+    pub fn handler<M, H>(&mut self, _m: M, h: H)
+        where M: for<'a> Owned<'a> + Send + 'static,
+             <M as Owned<'static>>::Reader: HasTypeId,
+              H: 'static + for <'a> Handler<'a, MsgHandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>
+    {
+        let boxed = Box::new(AnyPtrHandler::new(h));
+        self.handlers.insert(
+            <M as Owned<'static>>::Reader::type_id(),
+            boxed,
+        );
+    }
+
+
     fn flush_writes(&mut self) -> Poll<(), capnp::Error> {
         while let Some(builder) = self.write_queue.pop_front() {
             match self.transport.start_send(builder)? {
+                AsyncSink::Ready => { }, // continue
                 AsyncSink::NotReady(builder) => {
                     self.write_queue.push_front(builder);
                     return Ok(Async::NotReady);
                 }
-                AsyncSink::Ready => {},
             }
         }
 
@@ -46,7 +136,14 @@ impl<S> StreamHandler<S> {
             match self.handlers.get(&type_id) {
                 None => eprintln!("received unknown message type"),
                 Some(handler) => {
-                    handler.handle(&mut self.state, reader.get_data())?;
+                    let mut writer = Writer {
+                        write_queue: &mut self.write_queue,
+                    };
+                    let mut ctx = MsgHandlerCtx {
+                        state: &mut self.state,
+                        writer: &mut writer,
+                    };
+                    handler.handle(&mut ctx, reader.get_data())?;
                 }
             }
             try_ready!(self.flush_writes());
