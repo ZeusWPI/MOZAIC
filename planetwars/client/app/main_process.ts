@@ -13,7 +13,7 @@ import * as main from './main';
  * Main process main function.
  * Sets up the environment and spawns a browser window;
  */
-function main_process() {
+async function main_process() {
   // First thing to do is setting up logging
   main.setupLogging();
 
@@ -25,21 +25,20 @@ function main_process() {
     mainContentURL: `file://${__dirname}/index.html`,
   });
 
-  // When app is ready, spawn the (main window) browser window
-  app.on('ready', () => {
-    try {
-      windowManager.spawnMainWindow();
-      main.installExtensions()
-        .catch((_err) => log.error('[STARTUP] Failed to install all extensions'));
-    } catch (err) {
-      log.error(err);
-      log.error("[STARTUP] [FATAL] Failed to create browser window!");
-      app.quit();
-    }
-  });
-
-  // Bind remaining listeners (close, certificate-errors, etc...)
+  // Bind listeners (close, certificate-errors, etc...)
   main.configureAppListeners(app, windowManager);
+
+  // When app is ready, spawn the (main window) browser window
+  await app.whenReady();
+  try {
+    windowManager.spawnMainWindow();
+    main.installExtensions()
+      .catch((_err) => log.error('[STARTUP] Failed to install all extensions'));
+  } catch (err) {
+    log.error(err);
+    log.error("[STARTUP] [FATAL] Failed to create browser window!");
+    app.quit();
+  }
 }
 
 main_process();

@@ -35,6 +35,12 @@ export class WindowManager {
         log.error('[STARTUP] Failed to build menu');
       });
 
+    menu.attachContextMenu(window)
+      .catch((err) => {
+        log.error(err);
+        log.error('[STARTUP] Failed to attach context menu');
+      });
+
     bindWindowListeners(window)
       .catch((err) => {
         log.error(err);
