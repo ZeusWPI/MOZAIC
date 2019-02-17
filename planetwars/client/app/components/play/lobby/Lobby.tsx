@@ -56,14 +56,17 @@ export class Lobby extends React.Component<LobbyProps> {
     // const config = this.props.config;
     // const { port, host } = Lib.getWeakAddress(config);
     const { state, slots } = this.props;
+
+    // TODO TODO
+    const willBeKicked = (num: number) => true;
+
     return (
       <Section header={"Lobby"}>
         <div className={css.lobby}>
           <SlotList
             slots={slots}
             address={state.address}
-            // TODO TODO
-            willBeKicked={(num: number) => true}
+            willBeKicked={willBeKicked}
             isServerRunning={this.props.serverRunning}
             connectLocalBot={this.props.runLocalBot}
             removeBot={alertTODO}

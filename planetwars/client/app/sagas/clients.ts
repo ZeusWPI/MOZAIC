@@ -25,11 +25,11 @@ const stringArgv = require('string-argv');
 // TODO: handle errors
 
 export function* runClientSaga() {
-  yield takeEvery(A.joinMatch.type, function*(action: any) {
+  yield takeEvery(A.joinMatch.type, function* (action: any) {
     try {
       yield call(joinMatch, action.payload);
     } catch (error) {
-      alert(`An error occured:\n${error}`);
+      alert(`An error occurred:\n${error}`);
     }
   });
 }

@@ -231,9 +231,9 @@ export class EditBot extends Component<EditBotProps, EditBotState> {
   }
 
   /**
-  * This is triggered by default web form submit actions (like pressing enter)
-  * @param evt React FormEvent object
-  */
+   * This is triggered by default web form submit actions (like pressing enter)
+   * @param evt React FormEvent object
+   */
   @boundMethod
   private onSubmit(evt: React.FormEvent) {
     evt.preventDefault();
