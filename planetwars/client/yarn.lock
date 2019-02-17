@@ -5128,7 +5128,7 @@ pkg-dir@^3.0.0:
   version "0.0.1"
   dependencies:
     hyperscript-helpers "^3.0.3"
-    planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-0597ce47-a6e8-4e97-9244-b980c291654e-1549209694709/node_modules/match-log"
+    planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-6348896e-3b09-4bec-9199-5a6c78a3a818-1550426578295/node_modules/match-log"
     react-hyperscript "^3.2.0"
 
 plist@^3.0.1:
