@@ -20,7 +20,7 @@ export function configureAppListeners(app: App, windowManager: WindowManager) {
 
   // TODO weird typecheck
   app.on('error' as any, (err: Error) => {
-    log.error(`Unexpected error occurred: ${err.toString()} ${err.stack}`);
+    log.error('Unexpected error occurred', err, err.stack);
   });
 
   app.on('certificate-error', (ev, wc, url) => {

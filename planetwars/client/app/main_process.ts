@@ -35,8 +35,7 @@ async function main_process() {
     main.installExtensions()
       .catch((_err) => log.error('[STARTUP] Failed to install all extensions'));
   } catch (err) {
-    log.error(err);
-    log.error("[STARTUP] [FATAL] Failed to create browser window!");
+    log.error("[STARTUP] [FATAL] Failed to create browser window!", err, err.stack);
     app.quit();
   }
 }

@@ -31,26 +31,22 @@ export class WindowManager {
 
     menu.buildMenuAndShortcuts(window)
       .catch((err) => {
-        log.error(err);
-        log.error('[STARTUP] Failed to build menu');
+        log.error('[STARTUP] Failed to build menu', err, err.stack);
       });
 
     menu.attachContextMenu(window)
       .catch((err) => {
-        log.error(err);
-        log.error('[STARTUP] Failed to attach context menu');
+        log.error('[STARTUP] Failed to attach context menu', err, err.stack);
       });
 
     bindWindowListeners(window)
       .catch((err) => {
-        log.error(err);
-        log.error('[STARTUP] Failed to bind all window listeners');
+        log.error('[STARTUP] Failed to bind all window listeners', err, err.stack);
       });
 
     bindWebContentListeners(window)
       .catch((err) => {
-        log.error(err);
-        log.error('[STARTUP] Failed to bind all web content listeners');
+        log.error('[STARTUP] Failed to bind all web content listeners', err, err.stack);
       });
 
     window.on('closed', () => {

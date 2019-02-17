@@ -1,6 +1,6 @@
 import { writeFile, readFile } from 'mz/fs';
-import { v4 as uuidv4 } from 'uuid';
 import * as Promise from 'bluebird';
+import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 
 import { Config } from './Config';

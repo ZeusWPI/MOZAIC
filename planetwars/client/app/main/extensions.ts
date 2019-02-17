@@ -33,16 +33,14 @@ export function installExtensions(): Promise<any> {
   const react = installExtension(REACT_DEVELOPER_TOOLS, forceDownload)
     .then((name) => log.debug(`[STARTUP] ${name} installed`))
     .catch((err) => {
-      log.error(err);
-      log.error('[STARTUP] Failed to install React Dev Tools');
+      log.error('[STARTUP] Failed to install React Dev Tools', err, err.stack);
       throw err;
     });
 
   const redux = installExtension(REDUX_DEVTOOLS, forceDownload)
     .then((name) => log.debug(`[STARTUP] ${name} installed`))
     .catch((err) => {
-      log.error(err);
-      log.error('[STARTUP] Failed to install Redux Dev Tools');
+      log.error('[STARTUP] Failed to install Redux Dev Tools', err, err.stack);
       throw err;
     });
 
