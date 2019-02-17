@@ -1,4 +1,4 @@
-import log from 'electron-log';
+import * as log from 'electron-log';
 
 // https://github.com/electron-userland/electron-webpack/issues/59#issuecomment-347070990
 import 'react-hot-loader/patch';
@@ -15,12 +15,18 @@ import { rootSaga } from './sagas';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
 
+import * as process from './process';
+
 import './styles/app.global.scss';
 import './styles/lib.global.scss';
 
 export let store: any;
 
 async function render_process() {
+  // First thing we do is setup logging
+  process.shared.setupLogging('render');
+
+  // Log this only after log is setup to respect log policy
   log.verbose('[STARTUP] Renderer process started');
 
   // tslint:disable-next-line:no-var-requires

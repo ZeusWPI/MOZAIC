@@ -43,5 +43,5 @@ export function configureAppListeners(app: App, windowManager: WindowManager) {
     }
   });
 
-  log.info('[STARTUP] App listeners bound');
+  log.debug('[STARTUP] App listeners bound');
 }

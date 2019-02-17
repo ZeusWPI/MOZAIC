@@ -2472,10 +2472,10 @@ electron-localshortcut@^3.0.0:
     keyboardevent-from-electron-accelerator "^1.1.0"
     keyboardevents-areequal "^0.2.1"
 
-electron-log@^2.2.17:
-  version "2.2.17"
-  resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-2.2.17.tgz#e71e2ebb949fc96ded7cdb99eeee7202e48981d2"
-  integrity sha512-v+Af5W5z99ehhaLOfE9eTSXUwjzh2wFlQjz51dvkZ6ZIrET6OB/zAZPvsuwT6tm3t5x+M1r+Ed3U3xtPZYAyuQ==
+electron-log@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/electron-log/-/electron-log-3.0.1.tgz#5c60913e8ae1a8645560eea8b3c47c60d101e797"
+  integrity sha512-bomFcrYvkEXj0H00T5GjBee50TBA/VwdoDFpPQ2jz3LDGi+4wKF3xrB+N1qXiZYoqDeaK5lNRAkNsHKmXeCPfg==
 
 electron-osx-sign@0.4.11:
   version "0.4.11"
@@ -5175,7 +5175,7 @@ pkg-dir@^3.0.0:
   version "0.0.1"
   dependencies:
     hyperscript-helpers "^3.0.3"
-    planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-f88cf828-5292-4a7f-a080-f588fc7f9073-1550433915040/node_modules/match-log"
+    planetwars-match-log "file:../../../../../../../../home/wout/.cache/yarn/v4/npm-planetwars-visualizer-0.0.1-68fb02b6-97ba-451b-b0aa-151e8e462421-1550439613076/node_modules/match-log"
     react-hyperscript "^3.2.0"
 
 plist@^3.0.1:

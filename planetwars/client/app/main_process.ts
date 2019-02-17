@@ -1,7 +1,7 @@
 import * as log from 'electron-log';
 import { app } from 'electron';
 
-import * as main from './main';
+import * as process from './process';
 
 // TODO: Check all libraries mentioned here below
 // https://github.com/sindresorhus/electron-util
@@ -15,24 +15,24 @@ import * as main from './main';
  */
 async function main_process() {
   // First thing to do is setting up logging
-  main.setupLogging();
+  process.shared.setupLogging('main');
 
   // Log this only after log is setup to respect log policy
   log.verbose("[STARTUP] Main process started.");
 
   // Dirty global main window var, it seems to be the way to go for electron
-  const windowManager = new main.WindowManager({
+  const windowManager = new process.main.WindowManager({
     mainContentURL: `file://${__dirname}/index.html`,
   });
 
   // Bind listeners (close, certificate-errors, etc...)
-  main.configureAppListeners(app, windowManager);
+  process.main.configureAppListeners(app, windowManager);
 
   // When app is ready, spawn the (main window) browser window
   await app.whenReady();
   try {
     windowManager.spawnMainWindow();
-    main.installExtensions()
+    process.main.installExtensions()
       .catch((_err) => log.error('[STARTUP] Failed to install all extensions'));
   } catch (err) {
     log.error("[STARTUP] [FATAL] Failed to create browser window!", err, err.stack);
