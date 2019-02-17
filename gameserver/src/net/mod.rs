@@ -5,14 +5,15 @@ use capnp_futures::serialize::Transport;
 use tokio::net::TcpStream;
 
 use futures::{Future, Async, Poll, Stream, Sink, AsyncSink};
+use futures::sync::mpsc;
 
 use capnp;
 use capnp::any_pointer;
 use capnp::traits::{Owned, HasTypeId};
 use capnp::message::{ReaderOptions, Builder, HeapAllocator};
 
-use network_capnp::network_message;
-use messaging::types::{Handler, AnyPtrHandler};
+use network_capnp::{network_message, publish};
+use messaging::types::{Message, Handler, AnyPtrHandler};
 
 pub struct Writer<'a> {
     write_queue: &'a mut VecDeque<Builder<HeapAllocator>>,
@@ -163,5 +164,35 @@ impl<S> Future for StreamHandler<S> {
 
     fn poll(&mut self) -> Poll<(), ()> {
         Ok(self.try_poll().unwrap())
+    }
+}
+
+pub struct Forwarder<S> {
+    pub handler: StreamHandler<S>,
+    pub rx: mpsc::UnboundedReceiver<Message>,
+}
+
+impl<S> Forwarder<S> {
+    fn forward_messages(&mut self) -> Poll<(), ()> {
+        while let Some(msg) = try_ready!(self.rx.poll()) {
+            self.handler.writer().write(publish::Owned, |b| {
+                let mut publish: publish::Builder = b.init_as();
+                publish.set_message(msg.bytes());
+            });
+        }
+        return Ok(Async::Ready(()))
+    }
+}
+
+impl<S> Future for Forwarder<S> {
+    type Item = ();
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<(), ()> {
+        match self.forward_messages()? {
+            Async::Ready(()) => return Ok(Async::Ready(())),
+            Async::NotReady => {},
+        };
+        return self.handler.poll();
     }
 }

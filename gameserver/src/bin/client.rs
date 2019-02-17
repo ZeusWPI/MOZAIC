@@ -13,22 +13,22 @@ use futures::Future;
 use std::net::SocketAddr;
 use tokio::prelude::Stream;
 use tokio::net::TcpStream;
-use mozaic::net::{StreamHandler, Writer, MsgHandler};
+use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
 use mozaic::network_capnp::{connect};
+use futures::sync::mpsc;
 
 
 fn main() {
-
     let addr = "127.0.0.1:9142".parse().unwrap();
     let task = TcpStream::connect(&addr)
         .map_err(|err| panic!(err))
         .and_then(|stream| {
-            let mut h = mozaic::net::StreamHandler::new((), stream);
-            h.writer().write(connect::Owned, |b| {
+            let mut handler = mozaic::net::StreamHandler::new((), stream);
+            handler.writer().write(connect::Owned, |b| {
                 let mut m: connect::Builder = b.init_as();
-                m.
             });
-            h
+            let (tx, rx) = mpsc::unbounded();
+            Forwarder { handler, rx }
     });
 
     tokio::run(task);

@@ -7,24 +7,30 @@ use std::fs::File;
 extern crate sodiumoxide;
 extern crate serde_json;
 extern crate tokio;
+extern crate futures;
 extern crate mozaic;
 
 // use mozaic::server::{Config as ServerConfig, Server};
 
 use std::net::SocketAddr;
 use tokio::prelude::Stream;
-use mozaic::net::{StreamHandler, Writer, MsgHandler};
+use futures::sync::mpsc;
+use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
 use mozaic::network_capnp::{connect};
+use mozaic::messaging::types::Message;
+use mozaic::messaging::runtime::{Broker, BrokerHandle};
 
 // Load the config and start the game.
 fn main() {
     run(env::args().collect());
 }
 
-struct ConnHandler {
+struct ConnectionHandler {
+    broker: BrokerHandle,
+    tx: mpsc::UnboundedSender<Message>,
 }
 
-impl ConnHandler {
+impl ConnectionHandler {
     fn handle_connect(&mut self, w: &mut Writer, r: connect::Reader)
         -> Result<(), capnp::Error>
     {
@@ -33,18 +39,25 @@ impl ConnHandler {
     }
 }
 
-pub fn run(args : Vec<String>) {
+pub fn run(_args : Vec<String>) {
     let addr = "127.0.0.1:9142".parse::<SocketAddr>().unwrap();
     let listener = tokio::net::TcpListener::bind(&addr).unwrap();
+    let broker = Broker::new();
 
     tokio::run(listener.incoming()
         .map_err(|e| eprintln!("failed to accept socket; error = {:?}", e))
-        .for_each(|stream| {
+        .for_each(move |stream| {
             println!("got connection");
-            let state = ConnHandler {};
-            let mut h = mozaic::net::StreamHandler::new(state, stream);
-            h.on(connect::Owned, MsgHandler::new(ConnHandler::handle_connect));
-            h
+            let (tx, rx) = mpsc::unbounded();
+
+            let state = ConnectionHandler {
+                broker: broker.clone(),
+                tx,
+            };
+            let mut handler = mozaic::net::StreamHandler::new(state, stream);
+            handler.on(connect::Owned,
+                MsgHandler::new(ConnectionHandler::handle_connect));
+            Forwarder { handler, rx }
         })
     );
 
