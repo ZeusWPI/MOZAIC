@@ -9,6 +9,7 @@ extern crate serde_json;
 extern crate tokio;
 extern crate futures;
 extern crate mozaic;
+extern crate rand;
 
 // use mozaic::server::{Config as ServerConfig, Server};
 
@@ -16,9 +17,11 @@ use std::net::SocketAddr;
 use tokio::prelude::Stream;
 use futures::sync::mpsc;
 use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
-use mozaic::network_capnp::{connect};
-use mozaic::messaging::types::Message;
+use mozaic::network_capnp::{connect, connected};
+use mozaic::messaging::types::{Uuid, Message, set_uuid};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
+
+use rand::Rng;
 
 // Load the config and start the game.
 fn main() {
@@ -28,6 +31,7 @@ fn main() {
 struct ConnectionHandler {
     broker: BrokerHandle,
     tx: mpsc::UnboundedSender<Message>,
+    welcomer_id: Uuid,
 }
 
 impl ConnectionHandler {
@@ -35,6 +39,11 @@ impl ConnectionHandler {
         -> Result<(), capnp::Error>
     {
         println!("got connect");
+        self.broker.register(r.get_id()?.into(), self.tx.clone());
+        w.write(connected::Owned, |b| {
+            let mut connected: connected::Builder = b.init_as();
+            set_uuid(connected.reborrow().init_id(), &self.welcomer_id);
+        });
         return Ok(());
     }
 }
@@ -52,6 +61,7 @@ pub fn run(_args : Vec<String>) {
 
             let state = ConnectionHandler {
                 broker: broker.clone(),
+                welcomer_id: rand::thread_rng().gen(),
                 tx,
             };
             let mut handler = mozaic::net::StreamHandler::new(state, stream);
