@@ -187,4 +187,9 @@ impl Message {
     {
         return self.raw_reader.get_root();
     }
+
+    pub fn bytes<'a>(&'a self) -> &'a [u8] {
+        // todo: errors or something
+        self.raw_reader.get_root().unwrap()
+    }
 }

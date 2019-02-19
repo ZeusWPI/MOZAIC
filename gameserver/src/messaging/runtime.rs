@@ -62,15 +62,11 @@ impl BrokerHandle {
         broker.actors.remove(uuid);
     }
 
-    pub fn spawn<S>(&mut self, core_params: CoreParams<S, Runtime>)
-        -> Uuid
+    pub fn spawn<S>(&mut self, uuid: Uuid, core_params: CoreParams<S, Runtime>)
         where S: 'static + Send
     {
         let mut broker = self.broker.lock().unwrap();
-
-        let mut rng = rand::thread_rng();
-        let uuid: Uuid = rng.gen();
-
+    
         let reactor = Reactor {
             uuid: uuid.clone(),
             internal_state: core_params.state,
@@ -101,7 +97,6 @@ impl BrokerHandle {
         }
 
         tokio::spawn(driver);
-        return uuid;
     }
 }
 
@@ -202,7 +197,9 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
     fn spawn<T>(&mut self, params: CoreParams<T, Runtime>) -> Uuid
         where T: 'static + Send
     {
-        self.broker.spawn(params)
+        let uuid: Uuid = rand::thread_rng().gen();
+        self.broker.spawn(uuid.clone(), params);
+        return uuid;
     }
 
     fn open_link<T>(&mut self, params: LinkParams<T, Runtime>)

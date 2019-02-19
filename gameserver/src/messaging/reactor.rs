@@ -521,6 +521,7 @@ impl<S, C: Ctx> CoreParams<S, C> {
     }
 }
 
+
 pub struct LinkParams<S, C: Ctx> {
     pub remote_uuid: Uuid,
     pub state: S,

@@ -9,6 +9,8 @@ use futures::future::poll_fn;
 
 use tokio::runtime::Runtime;
 
+use rand::Rng;
+
 pub fn run() {
     // Create the runtime
     let mut rt = Runtime::new().unwrap();
@@ -16,7 +18,8 @@ pub fn run() {
     let mut broker = Broker::new();
     rt.spawn(poll_fn(move || {
         let main = Main {};
-        broker.spawn(main.params());
+        let uuid = rand::thread_rng().gen();
+        broker.spawn(uuid, main.params());
         return Ok(Async::Ready(()));
     }));
 
