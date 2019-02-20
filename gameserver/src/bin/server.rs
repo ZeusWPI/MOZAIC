@@ -19,7 +19,7 @@ use tokio::runtime::Runtime;
 use futures::sync::mpsc;
 use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
 use mozaic::network_capnp::{connect, connected};
-use mozaic::core_capnp::{initialize, actor_joined};
+use mozaic::core_capnp::{initialize, actor_joined, greeting};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use mozaic::messaging::types::*;
 use mozaic::messaging::reactor::*;
@@ -65,6 +65,7 @@ impl Welcomer {
     fn params<C: Ctx>(self) -> CoreParams<Self, C> {
         let mut params = CoreParams::new(self);
         params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
+        params.handler(actor_joined::Owned, CtxHandler::new(Self::welcome));
         return params;
     }
 
@@ -78,6 +79,20 @@ impl Welcomer {
         handle.open_link(link.params(self.runtime_id.clone()));
         return Ok(());
     }
+
+    fn welcome<C: Ctx>(
+        &mut self,
+        handle: &mut ReactorHandle<C>,
+        r: actor_joined::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let id: Uuid = r.get_id()?.into();
+        println!("welcoming {:?}", id);
+        let link = WelcomerGreeterLink {};
+        handle.open_link(link.params(id));
+        return Ok(());
+    }
+
 }
 
 struct WelcomerRuntimeLink {}
@@ -100,7 +115,36 @@ impl WelcomerRuntimeLink {
     ) -> Result<(), capnp::Error>
     {
         let id: Uuid = r.get_id()?.into();
-        println!("welcoming {:?}", id);
+        handle.send_internal(actor_joined::Owned, |b| {
+            let joined: actor_joined::Builder = b.init_as();
+            set_uuid(joined.init_id(), &id);
+        });
+        return Ok(());
+    }
+}
+
+struct WelcomerGreeterLink {}
+
+impl WelcomerGreeterLink {
+    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_uuid, self);
+        params.external_handler(
+            greeting::Owned,
+            CtxHandler::new(Self::recv_greeting),
+        );
+
+        return params;
+    }
+
+    fn recv_greeting<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        greeting: greeting::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = greeting.get_message()?;
+        println!("got greeting: {:?}", message);
+        handle.close_link();
         return Ok(());
     }
 }
@@ -136,41 +180,4 @@ pub fn run(_args : Vec<String>) {
             Forwarder { handler, rx }
         })
     }));
-
-    // if args.len() != 2 {
-    //     println!("Expected 1 argument (config file). {} given.", args.len() - 1);
-    //     std::process::exit(1)
-    // }
-
-    // let config = match parse_config(Path::new(&args[1])) {
-    //     Ok(config) => config,
-    //     Err(e) => {
-    //         println!("{}", e);
-    //         std::process::exit(1)
-    //     }
-    // };
-
-    // let server = Server::new(config);
-    // tokio::run(server);
 }
-
-
-// Parse a config passed to the program as an command-line argument.
-// Return the parsed config.
-
-// fn parse_config(path: &Path)
-//     -> Result<ServerConfig, Box<Error>>
-// {
-//     println!("Opening config {}", path.to_str().unwrap());
-//     let mut file = File::open(path)?;
-
-//     println!("Reading contents");
-//     let mut contents = String::new();
-//     file.read_to_string(&mut contents)?;
-
-//     println!("Parsing config");
-//     let config: ServerConfig = serde_json::from_str(&contents)?;
-
-//     println!("Config parsed succesfully");
-//     Ok(config)
-// }

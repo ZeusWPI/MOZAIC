@@ -32,3 +32,7 @@ struct SendGreeting {
 struct Greeting {
     message @0: Text;
 }
+
+struct ActorJoined {
+    id @0: Uuid;
+}
