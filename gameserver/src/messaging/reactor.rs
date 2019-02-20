@@ -31,12 +31,15 @@ impl<S, C: Ctx> Reactor<S, C> {
         message: Message,
     ) -> Result<(), capnp::Error>
     {
-        let msg = message.reader()?;
+        let reader = message.reader();
+        let msg = reader.get()?;
         let sender_uuid = msg.get_sender()?.into();
 
         let closed = {
-            let link = self.links.get_mut(&sender_uuid)
-                .expect("no link with message sender");
+            let link = match self.links.get_mut(&sender_uuid) {
+                Some(link) => link,
+                None => panic!("no link with sender {:?}", sender_uuid),
+            };
 
             let mut reactor_handle = ReactorHandle {
                 uuid: &self.uuid,
@@ -71,7 +74,8 @@ impl<S, C: Ctx> Reactor<S, C> {
         message: Message,
     ) -> Result<(), capnp::Error>
     {
-        let msg = message.reader()?;
+        let reader = message.reader();
+        let msg = reader.get()?;
 
         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
             let mut reactor_handle = ReactorHandle {

@@ -14,7 +14,7 @@ use tokio::prelude::Stream;
 use tokio::net::TcpStream;
 use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
 use mozaic::network_capnp::{connect, connected};
-use mozaic::core_capnp::{initialize, terminate_stream, send_greeting};
+use mozaic::core_capnp::{initialize, terminate_stream, send_greeting, greeting};
 use mozaic::messaging::reactor::*;
 use mozaic::messaging::types::{Uuid, Message, set_uuid};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
@@ -56,7 +56,7 @@ fn main() {
             let (tx, rx) = mpsc::unbounded();
             let state = ConnectionHandler {
                 broker: broker.clone(),
-                client_uuid,
+                client_uuid: client_uuid.clone(),
                 tx,
             };
 
@@ -66,8 +66,7 @@ fn main() {
 
             handler.writer().write(connect::Owned, |b| {
                 let mut m: connect::Builder = b.init_as();
-                let uuid: Uuid = rand::thread_rng().gen();
-                set_uuid(m.reborrow().init_id(), &uuid);
+                set_uuid(m.reborrow().init_id(), &client_uuid);
             });
             Forwarder { handler, rx }
     });
@@ -116,8 +115,32 @@ impl ServerLink {
             terminate_stream::Owned,
             CtxHandler::new(Self::close_handler),
         );
+
+        params.internal_handler(
+            send_greeting::Owned,
+            CtxHandler::new(Self::send_greeting),
+        );
         return params;
     }
+
+    fn send_greeting<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        send_greeting: send_greeting::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = send_greeting.get_message()?;
+
+        handle.send_message(greeting::Owned, |b| {
+            let mut greeting: greeting::Builder = b.init_as();
+            greeting.set_message(message);
+        });
+
+        return Ok(());
+    }
+
+
+
 
     fn close_handler<C: Ctx>(
         &mut self,

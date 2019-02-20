@@ -1,8 +1,4 @@
-use std::error::Error;
-use std::io::{Read};
 use std::env;
-use std::path::Path;
-use std::fs::File;
 
 extern crate sodiumoxide;
 extern crate serde_json;
@@ -15,10 +11,9 @@ extern crate rand;
 
 use std::net::SocketAddr;
 use tokio::prelude::Stream;
-use tokio::runtime::Runtime;
 use futures::sync::mpsc;
-use mozaic::net::{StreamHandler, Writer, MsgHandler, Forwarder};
-use mozaic::network_capnp::{connect, connected};
+use mozaic::net::{Writer, MsgHandler, Forwarder};
+use mozaic::network_capnp::{connect, connected, publish};
 use mozaic::core_capnp::{initialize, actor_joined, greeting};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use mozaic::messaging::types::*;
@@ -53,6 +48,15 @@ impl ConnectionHandler {
             let mut connected: connected::Builder = b.init_as();
             set_uuid(connected.reborrow().init_id(), &self.welcomer_id);
         });
+        return Ok(());
+    }
+
+    fn publish(&mut self, w: &mut Writer, r: publish::Reader)
+        -> Result<(), capnp::Error>
+    {
+        let vec_segment = VecSegment::from_bytes(r.get_message()?);
+        let message = Message::from_segment(vec_segment);
+        self.broker.dispatch_message(message);
         return Ok(());
     }
 }
@@ -177,6 +181,8 @@ pub fn run(_args : Vec<String>) {
             let mut handler = mozaic::net::StreamHandler::new(state, stream);
             handler.on(connect::Owned,
                 MsgHandler::new(ConnectionHandler::handle_connect));
+            handler.on(publish::Owned,
+                MsgHandler::new(ConnectionHandler::publish));
             Forwarder { handler, rx }
         })
     }));

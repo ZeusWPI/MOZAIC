@@ -34,6 +34,7 @@ impl Broker {
 
     fn dispatch_message(&mut self, message: Message) {
         let receiver_uuid = message.reader()
+            .get()
             .unwrap()
             .get_receiver()
             .unwrap()
@@ -58,6 +59,10 @@ pub struct BrokerHandle {
 }
 
 impl BrokerHandle {
+    pub fn get_runtime_id(&self) -> Uuid {
+        self.broker.lock().unwrap().runtime_uuid.clone()
+    }
+
     pub fn dispatch_message(&mut self, message: Message) {
         let mut broker = self.broker.lock().unwrap();
         broker.dispatch_message(message);
