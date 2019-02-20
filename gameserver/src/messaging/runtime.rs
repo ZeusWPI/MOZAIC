@@ -1,7 +1,8 @@
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 
-use core_capnp::initialize;
+use core_capnp::{mozaic_message, initialize};
+use capnp::traits::{Owned, HasTypeId};
 
 use tokio;
 use futures::{Future, Async, Poll, Stream};
@@ -16,13 +17,34 @@ use super::reactor::*;
 pub struct Runtime;
 
 pub struct Broker {
+    runtime_uuid: Uuid,
     actors: HashMap<Uuid, ActorData>,
 }
 
 impl Broker {
     pub fn new() -> BrokerHandle {
-        let broker = Broker { actors: HashMap::new() };
+        let uuid: Uuid = rand::thread_rng().gen();
+
+        let broker = Broker {
+            runtime_uuid: uuid,
+            actors: HashMap::new(),
+        };
         return BrokerHandle { broker: Arc::new(Mutex::new(broker)) };
+    }
+
+    fn dispatch_message(&mut self, message: Message) {
+        let receiver_uuid = message.reader()
+            .unwrap()
+            .get_receiver()
+            .unwrap()
+            .into();
+
+        if let Some(receiver) = self.actors.get_mut(&receiver_uuid) {
+            receiver.tx.unbounded_send(message)
+                .expect("send failed");
+        } else {
+            panic!("no such actor: {:?}", receiver_uuid);
+        }
     }
 }
 
@@ -38,18 +60,7 @@ pub struct BrokerHandle {
 impl BrokerHandle {
     pub fn dispatch_message(&mut self, message: Message) {
         let mut broker = self.broker.lock().unwrap();
-        let receiver_uuid = message.reader()
-            .unwrap()
-            .get_receiver()
-            .unwrap()
-            .into();
-
-        if let Some(receiver) = broker.actors.get_mut(&receiver_uuid) {
-            receiver.tx.unbounded_send(message)
-                .expect("send failed");
-        } else {
-            panic!("no such actor: {:?}", receiver_uuid);
-        }
+        broker.dispatch_message(message);
     }
 
     pub fn register(&mut self, uuid: Uuid, tx: mpsc::UnboundedSender<Message>) {
@@ -60,6 +71,31 @@ impl BrokerHandle {
     pub fn unregister(&mut self, uuid: &Uuid) {
         let mut broker = self.broker.lock().unwrap();
         broker.actors.remove(uuid);
+    }
+
+    pub fn send_message<M, F>(&mut self, target: &Uuid, _m: M, initializer: F)
+        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
+              M: Owned<'static>,
+              <M as Owned<'static>>::Builder: HasTypeId,
+
+    {
+        let mut broker = self.broker.lock().unwrap();
+        let mut message_builder = ::capnp::message::Builder::new_default();
+        {
+            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+
+            set_uuid(msg.reborrow().init_sender(), &broker.runtime_uuid);
+            set_uuid(msg.reborrow().init_receiver(), target);
+
+            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
+            {
+                let payload_builder = msg.reborrow().init_payload();
+                initializer(payload_builder);
+            }
+        }
+
+        let msg = Message::from_capnp(message_builder.into_reader());
+        broker.dispatch_message(msg);
     }
 
     pub fn spawn<S>(&mut self, uuid: Uuid, core_params: CoreParams<S, Runtime>)
@@ -99,7 +135,6 @@ impl BrokerHandle {
         tokio::spawn(driver);
     }
 }
-
 
 enum InternalOp {
     Message(Message),
