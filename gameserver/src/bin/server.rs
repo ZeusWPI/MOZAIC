@@ -12,7 +12,6 @@ extern crate rand;
 use std::net::SocketAddr;
 use tokio::prelude::Stream;
 use futures::sync::mpsc;
-use mozaic::net::{Writer, MsgHandler, Forwarder};
 use mozaic::network_capnp::{connect, connected, publish};
 use mozaic::core_capnp::{initialize, actor_joined, greeting};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
@@ -26,40 +25,6 @@ fn main() {
     run(env::args().collect());
 }
 
-struct ConnectionHandler {
-    broker: BrokerHandle,
-    tx: mpsc::UnboundedSender<Message>,
-    welcomer_id: Uuid,
-}
-
-impl ConnectionHandler {
-    fn handle_connect(&mut self, w: &mut Writer, r: connect::Reader)
-        -> Result<(), capnp::Error>
-    {
-        let connecting_id: Uuid = r.get_id()?.into();
-        self.broker.register(connecting_id.clone(), self.tx.clone());
-
-        self.broker.send_message(&self.welcomer_id, actor_joined::Owned, |b| {
-            let mut joined: actor_joined::Builder = b.init_as();
-            set_uuid(joined.reborrow().init_id(), &connecting_id);
-        });
-
-        w.write(connected::Owned, |b| {
-            let mut connected: connected::Builder = b.init_as();
-            set_uuid(connected.reborrow().init_id(), &self.welcomer_id);
-        });
-        return Ok(());
-    }
-
-    fn publish(&mut self, w: &mut Writer, r: publish::Reader)
-        -> Result<(), capnp::Error>
-    {
-        let vec_segment = VecSegment::from_bytes(r.get_message()?);
-        let message = Message::from_segment(vec_segment);
-        self.broker.dispatch_message(message);
-        return Ok(());
-    }
-}
 
 struct Welcomer {
     runtime_id: Uuid,
@@ -170,20 +135,11 @@ pub fn run(_args : Vec<String>) {
         listener.incoming()
         .map_err(|e| eprintln!("failed to accept socket; error = {:?}", e))
         .for_each(move |stream| {
-            println!("got connection");
-            let (tx, rx) = mpsc::unbounded();
-
-            let state = ConnectionHandler {
-                broker: broker.clone(),
-                welcomer_id: welcomer_id.clone(),
-                tx,
-            };
-            let mut handler = mozaic::net::StreamHandler::new(state, stream);
-            handler.on(connect::Owned,
-                MsgHandler::new(ConnectionHandler::handle_connect));
-            handler.on(publish::Owned,
-                MsgHandler::new(ConnectionHandler::publish));
-            Forwarder { handler, rx }
+            mozaic::net::server::ServerHandler::new(
+                stream,
+                broker.clone(),
+                welcomer_id.clone(),
+            )
         })
     }));
 }
