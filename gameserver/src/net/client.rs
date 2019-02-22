@@ -1,10 +1,12 @@
 use super::*;
 
-use messaging::runtime::{Broker, BrokerHandle};
+use messaging::runtime::{Runtime, Broker, BrokerHandle};
+use messaging::reactor::CoreParams;
 use messaging::types::{Message, VecSegment, Uuid, set_uuid};
 
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
+use rand::Rng;
 
 use super::connection_handler::*;
 
@@ -13,44 +15,53 @@ use core_capnp::{actor_joined};
 
 
 
-pub struct ClientHandler {
+pub struct ClientHandler<S> {
     broker: BrokerHandle,
     tx: mpsc::UnboundedSender<Message>,
+
+    client_id: Uuid,
+    spawner: Option<Box<FnOnce(Uuid) -> CoreParams<S, Runtime>>>, 
 }
 
-impl ServerHandler {
-    pub fn new(stream: TcpStream, broker: BrokerHandle, welcomer_id: Uuid)
+impl<S> ClientHandler<S>
+    where S: Send + 'static
+{
+    pub fn new<F>(stream: TcpStream, broker: BrokerHandle, spawner: F)
         -> ConnectionHandler<Self>
+        where F: 'static + FnOnce(Uuid) -> CoreParams<S, Runtime>
     {
+        let client_id: Uuid = rand::thread_rng().gen();
         ConnectionHandler::new(stream, |tx| {
-            let mut handler = HandlerCore::new(ServerHandler {
+            let mut handler = HandlerCore::new(ClientHandler {
                 broker,
                 tx,
-                welcomer_id,
+                client_id,
+                spawner: Some(Box::new(spawner)),
             });
             handler.on(publish::Owned, MsgHandler::new(Self::publish_message));
-            handler.on(connect::Owned, MsgHandler::new(Self::handle_connect));
+            handler.on(connected::Owned, MsgHandler::new(Self::handle_connected));
             return handler;
         })
     }
 
-    fn handle_connect(&mut self, w: &mut Writer, r: connect::Reader)
+    fn handle_connected(&mut self, w: &mut Writer, r: connected::Reader)
         -> Result<(), capnp::Error>
     {
-        let connecting_id: Uuid = r.get_id()?.into();
-        self.broker.register(connecting_id.clone(), self.tx.clone());
+        let spawner = match self.spawner {
+            None => return Ok(()),
+            Some(spawner) => spawner,
+        };
 
-        self.broker.send_message(&self.welcomer_id, actor_joined::Owned, |b| {
-            let mut joined: actor_joined::Builder = b.init_as();
-            set_uuid(joined.reborrow().init_id(), &connecting_id);
-        });
+        let remote_uuid: Uuid = r.get_id()?.into();
+        self.broker.register(remote_uuid.clone(), self.tx.clone());
 
-        w.write(connected::Owned, |b| {
-            let mut connected: connected::Builder = b.init_as();
-            set_uuid(connected.reborrow().init_id(), &self.welcomer_id);
-        });
+        println!("connected to {:?}!", remote_uuid);
+
+        let r = spawner(remote_uuid);
+        self.broker.spawn(self.client_id.clone(), r);
         return Ok(());
     }
+
 
     fn publish_message(&mut self, w: &mut Writer, r: publish::Reader)
         -> Result<(), capnp::Error>
