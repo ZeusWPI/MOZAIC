@@ -44,6 +44,10 @@ impl<S> ConnectionHandler<S> {
         }
         return Ok(Async::Ready(()))
     }
+
+    pub fn writer<'a>(&'a mut self) -> Writer<'a> {
+        self.handler.writer()
+    }
 }
 
 impl<S> Future for ConnectionHandler<S> {

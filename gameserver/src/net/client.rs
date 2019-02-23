@@ -20,7 +20,7 @@ pub struct ClientHandler<S> {
     tx: mpsc::UnboundedSender<Message>,
 
     client_id: Uuid,
-    spawner: Option<Box<FnOnce(Uuid) -> CoreParams<S, Runtime>>>, 
+    spawner: Option<Box<Fn(Uuid) -> CoreParams<S, Runtime> + Send>>, 
 }
 
 impl<S> ClientHandler<S>
@@ -28,26 +28,33 @@ impl<S> ClientHandler<S>
 {
     pub fn new<F>(stream: TcpStream, broker: BrokerHandle, spawner: F)
         -> ConnectionHandler<Self>
-        where F: 'static + FnOnce(Uuid) -> CoreParams<S, Runtime>
+        where F: 'static + Send + Fn(Uuid) -> CoreParams<S, Runtime>
     {
         let client_id: Uuid = rand::thread_rng().gen();
-        ConnectionHandler::new(stream, |tx| {
+        let mut h = ConnectionHandler::new(stream, |tx| {
             let mut handler = HandlerCore::new(ClientHandler {
                 broker,
                 tx,
-                client_id,
+                client_id: client_id.clone(),
                 spawner: Some(Box::new(spawner)),
             });
             handler.on(publish::Owned, MsgHandler::new(Self::publish_message));
             handler.on(connected::Owned, MsgHandler::new(Self::handle_connected));
             return handler;
-        })
+        });
+
+        h.writer().write(connect::Owned, |b| {
+            let b: connect::Builder = b.init_as();
+            set_uuid(b.init_id(), &client_id)
+        });
+
+        return h;
     }
 
     fn handle_connected(&mut self, w: &mut Writer, r: connected::Reader)
         -> Result<(), capnp::Error>
     {
-        let spawner = match self.spawner {
+        let spawner = match self.spawner.take() {
             None => return Ok(()),
             Some(spawner) => spawner,
         };
