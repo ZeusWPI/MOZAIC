@@ -1,11 +1,8 @@
-use std::io;
-
 use tokio;
 
 use network::server::{RoutingTableHandle};
 use network::server::RegisteredHandle;
-use network::lib::ConnectionHandler;
-use reactors::{WireEvent, EventHandler};
+use network::lib::{Connection, ConnectionHandler};
 use sodiumoxide::crypto::sign::PublicKey;
 
 use super::GameServerRouter;
@@ -31,10 +28,10 @@ impl ConnectionManager {
         public_key: PublicKey,
         handler: H,
     ) -> RegisteredHandle
-        where H: EventHandler<Output = io::Result<WireEvent>>,
+        where H: ConnectionHandler,
               H: Send + 'static
     {
-        let (conn_handle, conn_handler) = ConnectionHandler::new(handler);
+        let (conn_handle, conn_handler) = Connection::new(handler);
         tokio::spawn(conn_handler);
 
         return self.routing_table.register(

@@ -11,7 +11,6 @@ use rand::Rng;
 use super::connection_handler::*;
 
 use network_capnp::{connect, connected, publish};
-use core_capnp::{actor_joined};
 
 
 
