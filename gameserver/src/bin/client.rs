@@ -19,31 +19,22 @@ use mozaic::messaging::types::{Uuid, Message, set_uuid};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use futures::sync::mpsc;
 use rand::Rng;
+use mozaic::client::run_client;
 
 
 fn main() {
     let addr = "127.0.0.1:9142".parse().unwrap();
-    let broker = Broker::new();
-
-    let task = TcpStream::connect(&addr)
-        .map_err(|err| panic!(err))
-        .and_then(move |stream| {
-            println!("connected");
-            mozaic::net::client::ClientHandler::new(
-                stream, 
-                broker.clone(),
-                |remote_uuid| {
-                    let r = ClientReactor { remote_uuid };
-                    return r.params();
-                }
-            )
+    
+    run_client(addr, |params| {
+        let r = ClientReactor {
+            greeter_id: params.greeter_id,
+        };
+        return r.params();
     });
-
-    tokio::run(task);
 }
 
 struct ClientReactor {
-    remote_uuid: Uuid,
+    greeter_id: Uuid,
 }
 
 impl ClientReactor {
@@ -59,7 +50,7 @@ impl ClientReactor {
         _: initialize::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let link = (ServerLink {}).params(self.remote_uuid.clone());
+        let link = (ServerLink {}).params(self.greeter_id.clone());
         handle.open_link(link);
 
         handle.send_internal(send_greeting::Owned, |b| {

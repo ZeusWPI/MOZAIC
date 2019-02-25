@@ -34,6 +34,9 @@ pub mod network;
 pub mod messaging;
 pub mod net;
 
+pub mod server;
+pub mod client;
+
 pub mod protocol {
     include!(concat!(env!("OUT_DIR"), "/mozaic.protocol.rs"));
 }
