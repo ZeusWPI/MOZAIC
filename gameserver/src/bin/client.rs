@@ -30,7 +30,7 @@ fn main() {
         .and_then(move |stream| {
             println!("connected");
             mozaic::net::client::ClientHandler::new(
-                stream,
+                stream, 
                 broker.clone(),
                 |remote_uuid| {
                     let r = ClientReactor { remote_uuid };

@@ -1,6 +1,6 @@
 use super::*;
 
-use messaging::runtime::{Runtime, Broker, BrokerHandle};
+use messaging::runtime::{Runtime, BrokerHandle};
 use messaging::reactor::CoreParams;
 use messaging::types::{Message, VecSegment, Uuid, set_uuid};
 

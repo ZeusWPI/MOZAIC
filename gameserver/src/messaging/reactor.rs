@@ -83,7 +83,6 @@ impl<S, C: Ctx> Reactor<S, C> {
                 ctx: ctx_handle,
             };
 
-
             let mut handler_ctx = HandlerCtx {
                 state: &mut self.internal_state,
                 handle: &mut reactor_handle,

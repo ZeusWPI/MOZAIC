@@ -7,9 +7,24 @@ use rand::Rng;
 
 use messaging::types::*;
 use messaging::reactor::CoreParams;
-use messaging::runtime::{BrokerHandle, Runtime};
+use messaging::runtime::{Broker, BrokerHandle, Runtime};
 
 use net::server::ServerHandler;
+
+pub fn run_server<F, S>(addr: SocketAddr, initialize_greeter: F)
+    where F: FnOnce(Uuid) -> CoreParams<S, Runtime>,
+          S: Send + 'static
+{
+    let mut broker = Broker::new();
+    let greeter_id: Uuid = rand::thread_rng().gen();
+    let greeter_params = initialize_greeter(broker.get_runtime_id());
+
+    tokio::run(futures::lazy(move || {
+        broker.spawn(greeter_id.clone(), greeter_params);
+        tokio::spawn(TcpServer::new(broker, greeter_id, &addr));
+        return Ok(());
+    }));
+}
 
 pub struct TcpServer {
     listener: TcpListener,
@@ -20,10 +35,10 @@ pub struct TcpServer {
 
 
 impl TcpServer {
-    pub fn new(broker: BrokerHandle, addr: &SocketAddr) -> Self {
+    pub fn new(broker: BrokerHandle, greeter_id: Uuid, addr: &SocketAddr)
+        -> Self
+    {
         let listener = TcpListener::bind(addr).unwrap();
-
-        let greeter_id: Uuid = rand::thread_rng().gen();
 
         return TcpServer {
             listener,

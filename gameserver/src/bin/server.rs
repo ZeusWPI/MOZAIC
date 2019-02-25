@@ -11,12 +11,14 @@ extern crate rand;
 
 use std::net::SocketAddr;
 use tokio::prelude::Stream;
+use futures::Async;
 use futures::sync::mpsc;
 use mozaic::network_capnp::{connect, connected, publish};
 use mozaic::core_capnp::{initialize, actor_joined, greeting};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use mozaic::messaging::types::*;
 use mozaic::messaging::reactor::*;
+use mozaic::server::run_server;
 
 use rand::Rng;
 
@@ -121,25 +123,9 @@ impl WelcomerGreeterLink {
 pub fn run(_args : Vec<String>) {
 
     let addr = "127.0.0.1:9142".parse::<SocketAddr>().unwrap();
-    let listener = tokio::net::TcpListener::bind(&addr).unwrap();
-    let mut broker = Broker::new();
 
-    tokio::run(futures::lazy(move || {
-        let welcomer_id: Uuid = rand::thread_rng().gen();
-        let welcomer = Welcomer {
-            runtime_id: broker.get_runtime_id(),
-        };
-
-        broker.spawn(welcomer_id.clone(), welcomer.params());
-
-        listener.incoming()
-        .map_err(|e| eprintln!("failed to accept socket; error = {:?}", e))
-        .for_each(move |stream| {
-            mozaic::net::server::ServerHandler::new(
-                stream,
-                broker.clone(),
-                welcomer_id.clone(),
-            )
-        })
-    }));
+    run_server(addr, |runtime_id| {
+        let w = Welcomer { runtime_id };
+        return w.params();
+    });
 }
