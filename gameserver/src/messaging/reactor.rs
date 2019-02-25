@@ -16,10 +16,10 @@ use core_capnp::{mozaic_message, terminate_stream};
 /// in web frameworks, where a controller is created for each request (= a link)
 /// which then manipulates the model (the core reactor state).
 pub struct Reactor<S, C: Ctx> {
-    pub uuid: Uuid,
+    pub id: ReactorId,
     pub internal_state: S,
     pub internal_handlers: HashMap<u64, CoreHandler<S, C, (), capnp::Error>>,
-    pub links: HashMap<Uuid, Link<C>>,
+    pub links: HashMap<ReactorId, Link<C>>,
 }
 
 impl<S, C: Ctx> Reactor<S, C> {
@@ -42,7 +42,7 @@ impl<S, C: Ctx> Reactor<S, C> {
             };
 
             let mut reactor_handle = ReactorHandle {
-                uuid: &self.uuid,
+                id: &self.id,
                 ctx: ctx_handle,
             };
 
@@ -79,7 +79,7 @@ impl<S, C: Ctx> Reactor<S, C> {
 
         if let Some(handler) = self.internal_handlers.get(&msg.get_type_id()) {
             let mut reactor_handle = ReactorHandle {
-                uuid: &self.uuid,
+                id: &self.id,
                 ctx: ctx_handle,
             };
 
@@ -93,7 +93,7 @@ impl<S, C: Ctx> Reactor<S, C> {
 
         for link in self.links.values_mut() {
             let mut reactor_handle = ReactorHandle {
-                uuid: &self.uuid,
+                id: &self.id,
                 ctx: ctx_handle,
             };
 
@@ -108,7 +108,7 @@ impl<S, C: Ctx> Reactor<S, C> {
         -> ReactorHandle<'a, 'c, C>
     {
         ReactorHandle {
-            uuid: &self.uuid,
+            id: &self.id,
             ctx,
         }
     }
@@ -120,7 +120,7 @@ pub struct LinkState {
 }
 
 pub struct Link<C> {
-    pub remote_uuid: Uuid,
+    pub remote_id: ReactorId,
 
     pub reducer: Box<LinkReducerTrait<C>>,
 
@@ -141,7 +141,7 @@ impl<C> Link<C>
         }
 
         let mut link_handle = handle
-            .link_handle(&self.remote_uuid, &mut self.link_state);
+            .link_handle(&self.remote_id, &mut self.link_state);
         return self.reducer.handle_external(&mut link_handle, msg);
     }
 
@@ -152,7 +152,7 @@ impl<C> Link<C>
     ) -> Result<(), capnp::Error>
     {
         let mut link_handle = handle
-            .link_handle(&self.remote_uuid, &mut self.link_state);
+            .link_handle(&self.remote_id, &mut self.link_state);
         return self.reducer.handle_internal(&mut link_handle, msg);
     }
 
@@ -238,37 +238,37 @@ pub trait CtxHandle<C> {
         where S: 'static + Send,
               C: Ctx;
     
-    fn close_link(&mut self, uuid: &Uuid);
+    fn close_link(&mut self, id: &ReactorId);
 
 
-    fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
+    fn spawn<S>(&mut self, params: CoreParams<S, C>) -> ReactorId
         where S: 'static + Send,
               C: Ctx;
 }
 
 /// Handle for manipulating a reactor.
 pub struct ReactorHandle<'a, 'c: 'a, C: Ctx> {
-    uuid: &'a Uuid,
+    id: &'a ReactorId,
     ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
 impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
     fn link_handle<'b>(
         &'b mut self,
-        remote_uuid: &'b Uuid,
+        remote_id: &'b ReactorId,
         link_state: &'b mut LinkState
     ) -> LinkHandle<'b, 'c, C>
     {
         LinkHandle {
-            uuid: self.uuid,
+            id: self.id,
             ctx: self.ctx,
             link_state,
-            remote_uuid,
+            remote_id,
         }
     }
 
-    pub fn uuid(&self) -> &'a Uuid {
-        self.uuid
+    pub fn id(&self) -> &'a ReactorId {
+        self.id
     }
 
     pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
@@ -280,8 +280,8 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
         {
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            set_uuid(msg.reborrow().init_sender(), self.uuid);
-            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+            msg.set_sender(self.id.bytes());
+            msg.set_receiver(self.id.bytes());
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
@@ -294,7 +294,7 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
         self.ctx.dispatch_internal(msg);
     }
 
-    pub fn spawn<S>(&mut self, params: CoreParams<S, C>) -> Uuid
+    pub fn spawn<S>(&mut self, params: CoreParams<S, C>) -> ReactorId
         where S: 'static + Send
     {
         self.ctx.spawn(params)
@@ -309,19 +309,19 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
 
 /// Handle for manipulating a link.
 pub struct LinkHandle<'a, 'c: 'a, C: Ctx> {
-    uuid: &'a Uuid,
-    remote_uuid: &'a Uuid,
+    id: &'a ReactorId,
+    remote_id: &'a ReactorId,
     link_state: &'a mut LinkState,
     ctx: &'a mut <C as Context<'c>>::Handle,
 }
 
 impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
-    pub fn uuid(&self) -> &'a Uuid {
-        self.uuid
+    pub fn id(&self) -> &'a ReactorId {
+        self.id
     }
 
-    pub fn remote_uuid(&self) -> &'a Uuid {
-        self.remote_uuid
+    pub fn remote_uuid(&self) -> &'a ReactorId {
+        self.remote_id
     }
 
     pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
@@ -332,9 +332,9 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
         let mut message_builder = ::capnp::message::Builder::new_default();
         {
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
-
-            set_uuid(msg.reborrow().init_sender(), self.uuid);
-            set_uuid(msg.reborrow().init_receiver(), self.uuid);
+            
+            msg.set_sender(self.id.bytes());
+            msg.set_receiver(self.id.bytes());
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
@@ -356,8 +356,8 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
         {
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            set_uuid(msg.reborrow().init_sender(), self.uuid);
-            set_uuid(msg.reborrow().init_receiver(), self.remote_uuid);
+            msg.set_sender(self.id.bytes());
+            msg.set_receiver(self.remote_id.bytes());
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
@@ -526,16 +526,16 @@ impl<S, C: Ctx> CoreParams<S, C> {
 
 
 pub struct LinkParams<S, C: Ctx> {
-    pub remote_uuid: Uuid,
+    pub remote_id: ReactorId,
     pub state: S,
     pub internal_handlers: LinkHandlers<S, C, (), capnp::Error>,
     pub external_handlers: LinkHandlers<S, C, (), capnp::Error>,
 }
 
 impl<S, C: Ctx> LinkParams<S, C> {
-    pub fn new(remote_uuid: Uuid, state: S) -> Self {
+    pub fn new(remote_id: ReactorId, state: S) -> Self {
         LinkParams {
-            remote_uuid,
+            remote_id,
             state,
             internal_handlers: HashMap::new(),
             external_handlers: HashMap::new(),
@@ -569,7 +569,7 @@ impl<S, C: Ctx> LinkParams<S, C> {
 }
 
 pub trait LinkParamsTrait<C: Ctx>: 'static + Send {
-    fn remote_uuid<'a>(&'a self) -> &'a Uuid;
+    fn remote_id<'a>(&'a self) -> &'a ReactorId;
     fn into_link(self: Box<Self>) -> Link<C>;
 }
 
@@ -577,8 +577,8 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
     where S: 'static + Send,
           C: Ctx + 'static
 {
-    fn remote_uuid<'a>(&'a self) -> &'a Uuid {
-        &self.remote_uuid
+    fn remote_id<'a>(&'a self) -> &'a ReactorId {
+        &self.remote_id
     }
 
     fn into_link(self: Box<Self>) -> Link<C> {
@@ -596,7 +596,7 @@ impl<S, C> LinkParamsTrait<C> for LinkParams<S, C>
         };
 
         return Link {
-            remote_uuid: unboxed.remote_uuid,
+            remote_id: unboxed.remote_id,
             reducer: Box::new(reducer),
             link_state,
         };

@@ -12,11 +12,11 @@ use messaging::runtime::{Broker, BrokerHandle, Runtime};
 use net::server::ServerHandler;
 
 pub fn run_server<F, S>(addr: SocketAddr, initialize_greeter: F)
-    where F: FnOnce(Uuid) -> CoreParams<S, Runtime>,
+    where F: FnOnce(ReactorId) -> CoreParams<S, Runtime>,
           S: Send + 'static
 {
     let mut broker = Broker::new();
-    let greeter_id: Uuid = rand::thread_rng().gen();
+    let greeter_id: ReactorId = rand::thread_rng().gen();
     let greeter_params = initialize_greeter(broker.get_runtime_id());
 
     tokio::run(futures::lazy(move || {
@@ -29,13 +29,13 @@ pub fn run_server<F, S>(addr: SocketAddr, initialize_greeter: F)
 pub struct TcpServer {
     listener: TcpListener,
     broker: BrokerHandle,
-    runtime_id: Uuid,
-    greeter_id: Uuid,
+    runtime_id: ReactorId,
+    greeter_id: ReactorId,
 }
 
 
 impl TcpServer {
-    pub fn new(broker: BrokerHandle, greeter_id: Uuid, addr: &SocketAddr)
+    pub fn new(broker: BrokerHandle, greeter_id: ReactorId, addr: &SocketAddr)
         -> Self
     {
         let listener = TcpListener::bind(addr).unwrap();

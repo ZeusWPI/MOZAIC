@@ -29,7 +29,7 @@ fn main() {
 
 
 struct Welcomer {
-    runtime_id: Uuid,
+    runtime_id: ReactorId,
 }
 
 impl Welcomer {
@@ -57,7 +57,7 @@ impl Welcomer {
         r: actor_joined::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let id: Uuid = r.get_id()?.into();
+        let id: ReactorId = r.get_id()?.into();
         println!("welcoming {:?}", id);
         let link = WelcomerGreeterLink {};
         handle.open_link(link.params(id));
@@ -69,8 +69,8 @@ impl Welcomer {
 struct WelcomerRuntimeLink {}
 
 impl WelcomerRuntimeLink {
-    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
-        let mut params = LinkParams::new(foreign_uuid, self);
+    fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_id, self);
         params.external_handler(
             actor_joined::Owned,
             CtxHandler::new(Self::welcome),
@@ -85,10 +85,10 @@ impl WelcomerRuntimeLink {
         r: actor_joined::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let id: Uuid = r.get_id()?.into();
+        let id: ReactorId = r.get_id()?.into();
         handle.send_internal(actor_joined::Owned, |b| {
-            let joined: actor_joined::Builder = b.init_as();
-            set_uuid(joined.init_id(), &id);
+            let mut joined: actor_joined::Builder = b.init_as();
+            joined.set_id(id.bytes())
         });
         return Ok(());
     }
@@ -97,8 +97,8 @@ impl WelcomerRuntimeLink {
 struct WelcomerGreeterLink {}
 
 impl WelcomerGreeterLink {
-    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
-        let mut params = LinkParams::new(foreign_uuid, self);
+    fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_id, self);
         params.external_handler(
             greeting::Owned,
             CtxHandler::new(Self::recv_greeting),

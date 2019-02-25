@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+use std::fmt;
 
 use rand;
 use rand::Rng;
@@ -94,34 +95,50 @@ impl<'a, S, M, H> Handler<'a, S, any_pointer::Owned> for AnyPtrHandler<H, M>
 }
 
 
+pub type Ed25519Key = [u8; 32];
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct Uuid {
-    pub x0: u64,
-    pub x1: u64,
+#[derive(Hash, PartialEq, Eq, Clone)]
+pub struct ReactorId {
+    public_key: Ed25519Key,
 }
 
-impl rand::distributions::Distribution<Uuid> for rand::distributions::Standard {
-    fn sample<G: Rng + ?Sized>(&self, rng: &mut G) -> Uuid {
-        Uuid {
-            x0: rng.gen(),
-            x1: rng.gen(),
+impl fmt::Display for ReactorId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:x?}", self.public_key)
+    }
+}
+
+impl fmt::Debug for ReactorId {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:x?}", self.public_key)
+    }
+}
+
+// TODO: this should be made secure
+impl rand::distributions::Distribution<ReactorId> for rand::distributions::Standard {
+    fn sample<G: Rng + ?Sized>(&self, rng: &mut G) -> ReactorId {
+        ReactorId {
+            public_key: rng.gen(),
         }
     }
 }
 
-
-pub fn set_uuid<'a>(mut builder: core_capnp::uuid::Builder<'a>, uuid: &Uuid) {
-    builder.set_x0(uuid.x0);
-    builder.set_x1(uuid.x1);
+impl ReactorId {
+    pub fn bytes<'a>(&'a self) -> &'a [u8] {
+        &self.public_key
+    }
 }
 
-impl <'a> From<core_capnp::uuid::Reader<'a>> for Uuid {
-    fn from(reader: core_capnp::uuid::Reader<'a>) -> Uuid {
-        Uuid {
-            x0: reader.get_x0(),
-            x1: reader.get_x1(),
-        }
+impl <'a> From<&'a [u8]> for ReactorId {
+    fn from(src: &'a [u8]) -> ReactorId {
+        assert!(src.len() == 32);
+
+        let mut bytes = [0; 32];
+        bytes.copy_from_slice(src);
+
+        return ReactorId {
+            public_key: bytes,
+        };
     }
 }
 

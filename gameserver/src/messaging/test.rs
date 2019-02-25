@@ -42,7 +42,7 @@ impl Main {
         _: initialize::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let greeter = Greeter { to_greet: self.handle().uuid().clone() };
+        let greeter = Greeter { to_greet: self.handle().id().clone() };
         let greeter_uuid = self.handle().spawn(greeter.params());
         let link = GreeterLink {};
         self.handle().open_link(link.params(greeter_uuid));
@@ -52,7 +52,7 @@ impl Main {
 
 
 struct Greeter {
-    to_greet: Uuid,
+    to_greet: ReactorId,
 }
 
 impl Greeter {
@@ -92,8 +92,8 @@ struct GreeterLinkState {}
 struct GreeterLink { }
 
 impl GreeterLink {
-    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
-        let mut params = LinkParams::new(foreign_uuid, self);
+    fn params<C: Ctx>(self, remote_id: ReactorId) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(remote_id, self);
         params.internal_handler(
             send_greeting::Owned,
             CtxHandler::new(Self::send_greeting)

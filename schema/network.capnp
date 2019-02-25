@@ -12,9 +12,9 @@ struct Publish {
 }
 
 struct Connect {
-    id @0: Core.Uuid;
+    id @0: Data;
 }
 
 struct Connected {
-    id @0: Core.Uuid;
+    id @0: Data;
 }

@@ -2,7 +2,7 @@ use super::*;
 
 use messaging::runtime::{Runtime, BrokerHandle};
 use messaging::reactor::CoreParams;
-use messaging::types::{Message, VecSegment, Uuid, set_uuid};
+use messaging::types::{Message, VecSegment, ReactorId};
 
 use futures::sync::mpsc;
 use tokio::net::TcpStream;
@@ -18,8 +18,8 @@ pub struct ClientHandler<S> {
     broker: BrokerHandle,
     tx: mpsc::UnboundedSender<Message>,
 
-    client_id: Uuid,
-    spawner: Option<Box<Fn(Uuid) -> CoreParams<S, Runtime> + Send>>, 
+    client_id: ReactorId,
+    spawner: Option<Box<Fn(ReactorId) -> CoreParams<S, Runtime> + Send>>, 
 }
 
 impl<S> ClientHandler<S>
@@ -27,9 +27,9 @@ impl<S> ClientHandler<S>
 {
     pub fn new<F>(stream: TcpStream, broker: BrokerHandle, spawner: F)
         -> ConnectionHandler<Self>
-        where F: 'static + Send + Fn(Uuid) -> CoreParams<S, Runtime>
+        where F: 'static + Send + Fn(ReactorId) -> CoreParams<S, Runtime>
     {
-        let client_id: Uuid = rand::thread_rng().gen();
+        let client_id: ReactorId = rand::thread_rng().gen();
         let mut h = ConnectionHandler::new(stream, |tx| {
             let mut handler = HandlerCore::new(ClientHandler {
                 broker,
@@ -43,8 +43,8 @@ impl<S> ClientHandler<S>
         });
 
         h.writer().write(connect::Owned, |b| {
-            let b: connect::Builder = b.init_as();
-            set_uuid(b.init_id(), &client_id)
+            let mut b: connect::Builder = b.init_as();
+            b.set_id(client_id.bytes());
         });
 
         return h;
@@ -58,12 +58,12 @@ impl<S> ClientHandler<S>
             Some(spawner) => spawner,
         };
 
-        let remote_uuid: Uuid = r.get_id()?.into();
-        self.broker.register(remote_uuid.clone(), self.tx.clone());
+        let remote_id: ReactorId = r.get_id()?.into();
+        self.broker.register(remote_id.clone(), self.tx.clone());
 
-        println!("connected to {:?}!", remote_uuid);
+        println!("connected to {:?}!", remote_id);
 
-        let r = spawner(remote_uuid);
+        let r = spawner(remote_id);
         self.broker.spawn(self.client_id.clone(), r);
         return Ok(());
     }

@@ -17,34 +17,34 @@ use super::reactor::*;
 pub struct Runtime;
 
 pub struct Broker {
-    runtime_uuid: Uuid,
-    actors: HashMap<Uuid, ActorData>,
+    runtime_id: ReactorId,
+    actors: HashMap<ReactorId, ActorData>,
 }
 
 impl Broker {
     pub fn new() -> BrokerHandle {
-        let uuid: Uuid = rand::thread_rng().gen();
+        let id: ReactorId = rand::thread_rng().gen();
 
         let broker = Broker {
-            runtime_uuid: uuid,
+            runtime_id: id,
             actors: HashMap::new(),
         };
         return BrokerHandle { broker: Arc::new(Mutex::new(broker)) };
     }
 
     fn dispatch_message(&mut self, message: Message) {
-        let receiver_uuid = message.reader()
+        let receiver_id = message.reader()
             .get()
             .unwrap()
             .get_receiver()
             .unwrap()
             .into();
 
-        if let Some(receiver) = self.actors.get_mut(&receiver_uuid) {
+        if let Some(receiver) = self.actors.get_mut(&receiver_id) {
             receiver.tx.unbounded_send(message)
                 .expect("send failed");
         } else {
-            panic!("no such actor: {:?}", receiver_uuid);
+            panic!("no such actor: {:?}", receiver_id);
         }
     }
 }
@@ -59,8 +59,8 @@ pub struct BrokerHandle {
 }
 
 impl BrokerHandle {
-    pub fn get_runtime_id(&self) -> Uuid {
-        self.broker.lock().unwrap().runtime_uuid.clone()
+    pub fn get_runtime_id(&self) -> ReactorId {
+        self.broker.lock().unwrap().runtime_id.clone()
     }
 
     pub fn dispatch_message(&mut self, message: Message) {
@@ -68,17 +68,17 @@ impl BrokerHandle {
         broker.dispatch_message(message);
     }
 
-    pub fn register(&mut self, uuid: Uuid, tx: mpsc::UnboundedSender<Message>) {
+    pub fn register(&mut self, id: ReactorId, tx: mpsc::UnboundedSender<Message>) {
         let mut broker = self.broker.lock().unwrap();
-        broker.actors.insert(uuid, ActorData { tx });
+        broker.actors.insert(id, ActorData { tx });
     }
 
-    pub fn unregister(&mut self, uuid: &Uuid) {
+    pub fn unregister(&mut self, id: &ReactorId) {
         let mut broker = self.broker.lock().unwrap();
-        broker.actors.remove(uuid);
+        broker.actors.remove(&id);
     }
 
-    pub fn send_message<M, F>(&mut self, target: &Uuid, _m: M, initializer: F)
+    pub fn send_message<M, F>(&mut self, target: &ReactorId, _m: M, initializer: F)
         where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
               M: Owned<'static>,
               <M as Owned<'static>>::Builder: HasTypeId,
@@ -89,8 +89,8 @@ impl BrokerHandle {
         {
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            set_uuid(msg.reborrow().init_sender(), &broker.runtime_uuid);
-            set_uuid(msg.reborrow().init_receiver(), target);
+            msg.set_sender(broker.runtime_id.bytes());
+            msg.set_receiver(target.bytes());
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
             {
@@ -103,13 +103,13 @@ impl BrokerHandle {
         broker.dispatch_message(msg);
     }
 
-    pub fn spawn<S>(&mut self, uuid: Uuid, core_params: CoreParams<S, Runtime>)
+    pub fn spawn<S>(&mut self, id: ReactorId, core_params: CoreParams<S, Runtime>)
         where S: 'static + Send
     {
         let mut broker = self.broker.lock().unwrap();
     
         let reactor = Reactor {
-            uuid: uuid.clone(),
+            id: id.clone(),
             internal_state: core_params.state,
             internal_handlers: core_params.handlers,
             links: HashMap::new(),
@@ -117,7 +117,7 @@ impl BrokerHandle {
 
         let (tx, rx) = mpsc::unbounded();
 
-        broker.actors.insert(uuid.clone(), ActorData { tx });
+        broker.actors.insert(id.clone(), ActorData { tx });
 
         let mut driver = ReactorDriver {
             broker: self.clone(),
@@ -144,7 +144,7 @@ impl BrokerHandle {
 enum InternalOp {
     Message(Message),
     OpenLink(Box<LinkParamsTrait<Runtime>>),
-    CloseLink(Uuid),
+    CloseLink(ReactorId),
 }
 
 
@@ -178,7 +178,7 @@ impl<S: 'static> ReactorDriver<S> {
                         .expect("handling failed");
                 }
                 InternalOp::OpenLink(params) => {
-                    let uuid = params.remote_uuid().clone();
+                    let uuid = params.remote_id().clone();
                     let link = params.into_link();
                     self.reactor.links.insert(uuid, link);
                 }
@@ -201,7 +201,7 @@ impl<S: 'static> Future for ReactorDriver<S> {
             if self.reactor.links.is_empty() {
                 // all internal ops have been handled and no new messages can
                 // arrive, so the reactor can be terminated.
-                self.broker.unregister(&self.reactor.uuid);
+                self.broker.unregister(&self.reactor.id);
                 return Ok(Async::Ready(()));
             }
 
@@ -234,12 +234,12 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
         self.broker.dispatch_message(msg);
     }
 
-    fn spawn<T>(&mut self, params: CoreParams<T, Runtime>) -> Uuid
+    fn spawn<T>(&mut self, params: CoreParams<T, Runtime>) -> ReactorId
         where T: 'static + Send
     {
-        let uuid: Uuid = rand::thread_rng().gen();
-        self.broker.spawn(uuid.clone(), params);
-        return uuid;
+        let id: ReactorId = rand::thread_rng().gen();
+        self.broker.spawn(id.clone(), params);
+        return id;
     }
 
     fn open_link<T>(&mut self, params: LinkParams<T, Runtime>)
@@ -248,7 +248,7 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
         self.internal_queue.push_back(InternalOp::OpenLink(Box::new(params)));
     }
 
-    fn close_link(&mut self, uuid: &Uuid) {
-        self.internal_queue.push_back(InternalOp::CloseLink(uuid.clone()));
+    fn close_link(&mut self, id: &ReactorId) {
+        self.internal_queue.push_back(InternalOp::CloseLink(id.clone()));
     }
 }

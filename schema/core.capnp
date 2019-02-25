@@ -1,13 +1,8 @@
 @0xad560d3d7666face;
 
-struct Uuid {
-    x0 @0: UInt64;
-    x1 @1: UInt64;
-}
-
 struct MozaicMessage {
-    sender @0: Uuid;
-    receiver @1: Uuid;
+    sender @0: Data;
+    receiver @1: Data;
     typeId @2: UInt64;
     payload @3: AnyPointer; 
 }
@@ -34,5 +29,5 @@ struct Greeting {
 }
 
 struct ActorJoined {
-    id @0: Uuid;
+    id @0: Data;
 }

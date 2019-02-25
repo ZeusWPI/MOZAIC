@@ -12,8 +12,8 @@ use net::client::ClientHandler;
 
 
 pub struct ClientParams {
-    pub runtime_id: Uuid,
-    pub greeter_id: Uuid,
+    pub runtime_id: ReactorId,
+    pub greeter_id: ReactorId,
 }
 
 pub fn run_client<F, S>(addr: SocketAddr, init: F)

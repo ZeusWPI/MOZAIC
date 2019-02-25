@@ -15,7 +15,7 @@ use tokio::net::TcpStream;
 use mozaic::network_capnp::{connect, connected};
 use mozaic::core_capnp::{initialize, terminate_stream, send_greeting, greeting};
 use mozaic::messaging::reactor::*;
-use mozaic::messaging::types::{Uuid, Message, set_uuid};
+use mozaic::messaging::types::{ReactorId, Message};
 use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use futures::sync::mpsc;
 use rand::Rng;
@@ -34,7 +34,7 @@ fn main() {
 }
 
 struct ClientReactor {
-    greeter_id: Uuid,
+    greeter_id: ReactorId,
 }
 
 impl ClientReactor {
@@ -67,8 +67,8 @@ struct ServerLink {
 }
 
 impl ServerLink {
-    fn params<C: Ctx>(self, foreign_uuid: Uuid) -> LinkParams<Self, C> {
-        let mut params = LinkParams::new(foreign_uuid, self);
+    fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_id, self);
 
         params.external_handler(
             terminate_stream::Owned,
