@@ -6,19 +6,9 @@ extern crate futures;
 extern crate prost;
 extern crate rand;
 
-use futures::Future;
-
-
-use std::net::SocketAddr;
-use tokio::prelude::Stream;
-use tokio::net::TcpStream;
-use mozaic::network_capnp::{connect, connected};
 use mozaic::core_capnp::{initialize, terminate_stream, send_greeting, greeting};
 use mozaic::messaging::reactor::*;
-use mozaic::messaging::types::{ReactorId, Message};
-use mozaic::messaging::runtime::{Broker, BrokerHandle};
-use futures::sync::mpsc;
-use rand::Rng;
+use mozaic::messaging::types::{ReactorId};
 use mozaic::client::run_client;
 
 
@@ -59,7 +49,6 @@ impl ClientReactor {
         });
 
         return Ok(());
-
     }
 }
 

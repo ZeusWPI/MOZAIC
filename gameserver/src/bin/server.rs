@@ -7,20 +7,11 @@ extern crate futures;
 extern crate mozaic;
 extern crate rand;
 
-// use mozaic::server::{Config as ServerConfig, Server};
-
 use std::net::SocketAddr;
-use tokio::prelude::Stream;
-use futures::Async;
-use futures::sync::mpsc;
-use mozaic::network_capnp::{connect, connected, publish};
 use mozaic::core_capnp::{initialize, actor_joined, greeting};
-use mozaic::messaging::runtime::{Broker, BrokerHandle};
 use mozaic::messaging::types::*;
 use mozaic::messaging::reactor::*;
 use mozaic::server::run_server;
-
-use rand::Rng;
 
 // Load the config and start the game.
 fn main() {
