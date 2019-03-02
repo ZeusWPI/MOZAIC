@@ -1,3 +1,5 @@
+pub mod runtime;
+
 use std::net::SocketAddr;
 use std::io;
 
@@ -7,7 +9,8 @@ use rand::Rng;
 
 use messaging::types::*;
 use messaging::reactor::CoreParams;
-use messaging::runtime::{Broker, BrokerHandle, Runtime};
+
+use self::runtime::{Broker, BrokerHandle, Runtime};
 
 use net::server::ServerHandler;
 

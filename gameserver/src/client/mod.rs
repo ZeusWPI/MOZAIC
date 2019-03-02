@@ -8,8 +8,9 @@ use futures::Future;
 
 use messaging::types::*;
 use messaging::reactor::CoreParams;
-use messaging::runtime::{Broker, BrokerHandle, Runtime};
 use net::client::ClientHandler;
+
+use self::runtime::{Broker, BrokerHandle, Runtime};
 
 
 pub struct ClientParams {

@@ -11,8 +11,8 @@ use futures::sync::mpsc;
 use rand;
 use rand::Rng;
 
-use super::types::*;
-use super::reactor::*;
+use messaging::types::*;
+use messaging::reactor::*;
 
 
 pub struct Runtime;
