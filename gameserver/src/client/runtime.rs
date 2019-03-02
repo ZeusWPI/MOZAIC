@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::sync::{Arc, Mutex};
 
 use core_capnp::{mozaic_message, initialize};
@@ -17,23 +17,32 @@ use messaging::reactor::*;
 
 pub struct Runtime;
 
-pub struct Broker {
+pub struct RuntimeState {
     runtime_id: ReactorId,
     actors: HashMap<ReactorId, ActorData>,
+    server_link: mpsc::UnboundedSender<Message>,
 }
 
-impl Broker {
-    pub fn new() -> BrokerHandle {
-        let id: ReactorId = rand::thread_rng().gen();
+impl RuntimeState {
+    pub fn new(server_link: mpsc::UnboundedSender<Message>) -> Self {
+        let runtime_id: ReactorId = rand::thread_rng().gen();
 
-        let broker = Broker {
-            runtime_id: id,
+        return RuntimeState {
+            runtime_id,
             actors: HashMap::new(),
+            server_link,
         };
-        return BrokerHandle { broker: Arc::new(Mutex::new(broker)) };
     }
 
-    fn dispatch_message(&mut self, message: Message) {
+    pub fn register(&mut self, id: ReactorId, tx: mpsc::UnboundedSender<Message>) {
+        self.actors.insert(id, ActorData { tx });
+    }
+
+    pub fn unregister(&mut self, id: &ReactorId) {
+        self.actors.remove(&id);
+    }
+
+    pub fn dispatch_message(&mut self, message: Message) {
         let receiver_id = message.reader()
             .get()
             .unwrap()
@@ -45,38 +54,9 @@ impl Broker {
             receiver.tx.unbounded_send(message)
                 .expect("send failed");
         } else {
-            panic!("no such actor: {:?}", receiver_id);
+            self.server_link.unbounded_send(message)
+                .expect("send failed");
         }
-    }
-}
-
-pub struct ActorData {
-    tx: mpsc::UnboundedSender<Message>,
-}
-
-#[derive(Clone)]
-pub struct BrokerHandle {
-    broker: Arc<Mutex<Broker>>,
-}
-
-impl BrokerHandle {
-    pub fn get_runtime_id(&self) -> ReactorId {
-        self.broker.lock().unwrap().runtime_id.clone()
-    }
-
-    pub fn dispatch_message(&mut self, message: Message) {
-        let mut broker = self.broker.lock().unwrap();
-        broker.dispatch_message(message);
-    }
-
-    pub fn register(&mut self, id: ReactorId, tx: mpsc::UnboundedSender<Message>) {
-        let mut broker = self.broker.lock().unwrap();
-        broker.actors.insert(id, ActorData { tx });
-    }
-
-    pub fn unregister(&mut self, id: &ReactorId) {
-        let mut broker = self.broker.lock().unwrap();
-        broker.actors.remove(&id);
     }
 
     pub fn send_message<M, F>(&mut self, target: &ReactorId, _m: M, initializer: F)
@@ -85,12 +65,11 @@ impl BrokerHandle {
               <M as Owned<'static>>::Builder: HasTypeId,
 
     {
-        let mut broker = self.broker.lock().unwrap();
         let mut message_builder = ::capnp::message::Builder::new_default();
         {
             let mut msg = message_builder.init_root::<mozaic_message::Builder>();
 
-            msg.set_sender(broker.runtime_id.bytes());
+            msg.set_sender(self.runtime_id.bytes());
             msg.set_receiver(target.bytes());
 
             msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
@@ -101,45 +80,54 @@ impl BrokerHandle {
         }
 
         let msg = Message::from_capnp(message_builder.into_reader());
-        broker.dispatch_message(msg);
+        self.dispatch_message(msg);
     }
 
-    pub fn spawn<S>(&mut self, id: ReactorId, core_params: CoreParams<S, Runtime>)
-        where S: 'static + Send
+}
+
+
+pub struct ActorData {
+    tx: mpsc::UnboundedSender<Message>,
+}
+
+pub fn spawn_reactor<S>(
+    runtime_state: Arc<Mutex<RuntimeState>>,
+    id: ReactorId,
+    core_params: CoreParams<S, Runtime>,
+) where S: 'static + Send
+{
+    let mut runtime = runtime_state.lock().unwrap();
+
+    let reactor = Reactor {
+        id: id.clone(),
+        internal_state: core_params.state,
+        internal_handlers: core_params.handlers,
+        links: HashMap::new(),
+    };
+
+    let (tx, rx) = mpsc::unbounded();
+
+    runtime.actors.insert(id.clone(), ActorData { tx });
+
+    let mut driver = ReactorDriver {
+        runtime: runtime_state,
+        internal_queue: VecDeque::new(),
+        message_chan: rx,
+        reactor,
+    };
     {
-        let mut broker = self.broker.lock().unwrap();
-    
-        let reactor = Reactor {
-            id: id.clone(),
-            internal_state: core_params.state,
-            internal_handlers: core_params.handlers,
-            links: HashMap::new(),
+        let mut ctx_handle = DriverHandle {
+            runtime: &mut driver.runtime,
+            internal_queue: &mut driver.internal_queue,
         };
 
-        let (tx, rx) = mpsc::unbounded();
-
-        broker.actors.insert(id.clone(), ActorData { tx });
-
-        let mut driver = ReactorDriver {
-            broker: self.clone(),
-            internal_queue: VecDeque::new(),
-            message_chan: rx,
-            reactor,
-        };
-        {
-            let mut ctx_handle = DriverHandle {
-                broker: &mut driver.broker,
-                internal_queue: &mut driver.internal_queue,
-            };
-
-            let mut reactor_handle = driver.reactor.handle(&mut ctx_handle);
-            reactor_handle.send_internal(initialize::Owned, |b| {
-                b.init_as::<initialize::Builder>();
-            });
-        }
-
-        tokio::spawn(driver);
+        let mut reactor_handle = driver.reactor.handle(&mut ctx_handle);
+        reactor_handle.send_internal(initialize::Owned, |b| {
+            b.init_as::<initialize::Builder>();
+        });
     }
+
+    tokio::spawn(driver);
 }
 
 enum InternalOp {
@@ -152,7 +140,7 @@ enum InternalOp {
 pub struct ReactorDriver<S: 'static> {
     message_chan: mpsc::UnboundedReceiver<Message>,
     internal_queue: VecDeque<InternalOp>,
-    broker: BrokerHandle,
+    runtime: Arc<Mutex<RuntimeState>>,
 
     reactor: Reactor<S, Runtime>,
 }
@@ -161,7 +149,7 @@ impl<S: 'static> ReactorDriver<S> {
     fn handle_external_message(&mut self, message: Message) {
         let mut handle = DriverHandle {
             internal_queue: &mut self.internal_queue,
-            broker: &mut self.broker,
+            runtime: &mut self.runtime,
         };
         self.reactor.handle_external_message(&mut handle, message)
             .expect("handling failed");
@@ -173,7 +161,7 @@ impl<S: 'static> ReactorDriver<S> {
                 InternalOp::Message(msg) => {
                     let mut handle = DriverHandle {
                         internal_queue: &mut self.internal_queue,
-                        broker: &mut self.broker,
+                        runtime: &mut self.runtime,
                     };
                     self.reactor.handle_internal_message(&mut handle, msg)
                         .expect("handling failed");
@@ -202,7 +190,8 @@ impl<S: 'static> Future for ReactorDriver<S> {
             if self.reactor.links.is_empty() {
                 // all internal ops have been handled and no new messages can
                 // arrive, so the reactor can be terminated.
-                self.broker.unregister(&self.reactor.id);
+                self.runtime.lock().unwrap()
+                    .unregister(&self.reactor.id);
                 return Ok(Async::Ready(()));
             }
 
@@ -222,7 +211,7 @@ impl<'a> Context<'a> for Runtime {
 
 pub struct DriverHandle<'a> {
     internal_queue: &'a mut VecDeque<InternalOp>,
-    broker: &'a mut BrokerHandle,
+    runtime: &'a mut Arc<Mutex<RuntimeState>>,
 }
 
 impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
@@ -232,14 +221,14 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
     }
 
     fn dispatch_external(&mut self, msg: Message) {
-        self.broker.dispatch_message(msg);
+        self.runtime.lock().unwrap().dispatch_message(msg);
     }
 
     fn spawn<T>(&mut self, params: CoreParams<T, Runtime>) -> ReactorId
         where T: 'static + Send
     {
         let id: ReactorId = rand::thread_rng().gen();
-        self.broker.spawn(id.clone(), params);
+        spawn_reactor(self.runtime.clone(), id.clone(), params);
         return id;
     }
 
