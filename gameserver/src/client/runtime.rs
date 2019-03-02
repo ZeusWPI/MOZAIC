@@ -20,7 +20,7 @@ pub struct Runtime;
 pub struct RuntimeState {
     runtime_id: ReactorId,
     actors: HashMap<ReactorId, ActorData>,
-    server_link: mpsc::UnboundedSender<Message>,
+    server_link: Option<mpsc::UnboundedSender<Message>>,
 }
 
 impl RuntimeState {
@@ -30,7 +30,7 @@ impl RuntimeState {
         return RuntimeState {
             runtime_id,
             actors: HashMap::new(),
-            server_link,
+            server_link: Some(server_link),
         };
     }
 
@@ -44,6 +44,9 @@ impl RuntimeState {
 
     pub fn unregister(&mut self, id: &ReactorId) {
         self.actors.remove(&id);
+        if self.actors.is_empty() {
+            self.server_link = None;
+        }
     }
 
     pub fn dispatch_message(&mut self, message: Message) {
@@ -57,9 +60,11 @@ impl RuntimeState {
         if let Some(receiver) = self.actors.get_mut(&receiver_id) {
             receiver.tx.unbounded_send(message)
                 .expect("send failed");
-        } else {
-            self.server_link.unbounded_send(message)
+        } else if let Some(ref mut server_link) = self.server_link {
+            server_link.unbounded_send(message)
                 .expect("send failed");
+        } else {
+            panic!("server link closed");
         }
     }
 
