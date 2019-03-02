@@ -34,6 +34,10 @@ impl RuntimeState {
         };
     }
 
+    pub fn runtime_id<'a>(&'a self) -> &'a ReactorId {
+        &self.runtime_id
+    }
+
     pub fn register(&mut self, id: ReactorId, tx: mpsc::UnboundedSender<Message>) {
         self.actors.insert(id, ActorData { tx });
     }
@@ -91,7 +95,7 @@ pub struct ActorData {
 }
 
 pub fn spawn_reactor<S>(
-    runtime_state: Arc<Mutex<RuntimeState>>,
+    runtime_state: &Arc<Mutex<RuntimeState>>,
     id: ReactorId,
     core_params: CoreParams<S, Runtime>,
 ) where S: 'static + Send
@@ -110,7 +114,7 @@ pub fn spawn_reactor<S>(
     runtime.actors.insert(id.clone(), ActorData { tx });
 
     let mut driver = ReactorDriver {
-        runtime: runtime_state,
+        runtime: runtime_state.clone(),
         internal_queue: VecDeque::new(),
         message_chan: rx,
         reactor,
@@ -228,7 +232,7 @@ impl<'a> CtxHandle<Runtime> for DriverHandle<'a> {
         where T: 'static + Send
     {
         let id: ReactorId = rand::thread_rng().gen();
-        spawn_reactor(self.runtime.clone(), id.clone(), params);
+        spawn_reactor(self.runtime, id.clone(), params);
         return id;
     }
 

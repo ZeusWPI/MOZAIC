@@ -1,6 +1,7 @@
 use super::*;
+use std::sync::{Arc, Mutex};
 
-use client::runtime::{Runtime, BrokerHandle};
+use client::runtime::{Runtime, RuntimeState, spawn_reactor};
 use messaging::reactor::CoreParams;
 use messaging::types::{Message, VecSegment, ReactorId};
 
@@ -8,32 +9,40 @@ use futures::sync::mpsc;
 use tokio::net::TcpStream;
 use rand::Rng;
 
-use super::connection_handler::*;
+use net::connection_handler::*;
 
 use network_capnp::{connect, connected, publish};
 
-
-
-pub struct ClientHandler<S> {
-    broker: BrokerHandle,
-    tx: mpsc::UnboundedSender<Message>,
-
-    client_id: ReactorId,
-    spawner: Option<Box<Fn(ReactorId) -> CoreParams<S, Runtime> + Send>>, 
+pub struct ClientParams {
+    pub runtime_id: ReactorId,
+    pub greeter_id: ReactorId,
 }
 
-impl<S> ClientHandler<S>
+// TODO: get rid of this type parameter
+pub struct LinkHandler<S> {
+    runtime: Arc<Mutex<RuntimeState>>,
+
+    // TODO: UGH clean up this mess wtf
+    client_id: ReactorId,
+    spawner: Option<Box<Fn(ClientParams) -> CoreParams<S, Runtime> + Send>>, 
+}
+
+impl<S> LinkHandler<S>
     where S: Send + 'static
 {
-    pub fn new<F>(stream: TcpStream, broker: BrokerHandle, spawner: F)
+    pub fn new<F>(stream: TcpStream, spawner: F)
         -> ConnectionHandler<Self>
-        where F: 'static + Send + Fn(ReactorId) -> CoreParams<S, Runtime>
+        where F: 'static + Send + Fn(ClientParams) -> CoreParams<S, Runtime>
     {
+
         let client_id: ReactorId = rand::thread_rng().gen();
+
         let mut h = ConnectionHandler::new(stream, |tx| {
-            let mut handler = HandlerCore::new(ClientHandler {
-                broker,
-                tx,
+            // TODO: this way of bootstrapping is not ideal
+            let runtime = Arc::new(Mutex::new(RuntimeState::new(tx)));
+
+            let mut handler = HandlerCore::new(LinkHandler {
+                runtime,
                 client_id: client_id.clone(),
                 spawner: Some(Box::new(spawner)),
             });
@@ -58,13 +67,15 @@ impl<S> ClientHandler<S>
             Some(spawner) => spawner,
         };
 
-        let remote_id: ReactorId = r.get_id()?.into();
-        self.broker.register(remote_id.clone(), self.tx.clone());
+        let greeter_id: ReactorId = r.get_id()?.into();
 
-        println!("connected to {:?}!", remote_id);
+        println!("connected to {:?}!", greeter_id);
 
-        let r = spawner(remote_id);
-        self.broker.spawn(self.client_id.clone(), r);
+        let r = spawner(ClientParams {
+            runtime_id: self.runtime.lock().unwrap().runtime_id().clone(),
+            greeter_id,
+        });
+        spawn_reactor(&self.runtime, self.client_id.clone(), r);
         return Ok(());
     }
 
@@ -74,7 +85,7 @@ impl<S> ClientHandler<S>
     {
         let vec_segment = VecSegment::from_bytes(r.get_message()?);
         let message = Message::from_segment(vec_segment);
-        self.broker.dispatch_message(message);
+        self.runtime.lock().unwrap().dispatch_message(message);
         return Ok(());
     }
 }
