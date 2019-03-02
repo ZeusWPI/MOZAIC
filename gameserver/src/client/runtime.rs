@@ -21,17 +21,31 @@ pub struct RuntimeState {
     runtime_id: ReactorId,
     actors: HashMap<ReactorId, ActorData>,
     server_link: Option<mpsc::UnboundedSender<Message>>,
+    runtime_worker: Option<mpsc::UnboundedSender<Message>>,
 }
 
 impl RuntimeState {
-    pub fn new(server_link: mpsc::UnboundedSender<Message>) -> Self {
+    pub fn bootstrap<F>(init_worker: F) -> Arc<Mutex<Self>>
+        where F: FnOnce(Arc<Mutex<RuntimeState>>) -> mpsc::UnboundedSender<Message> 
+    {
         let runtime_id: ReactorId = rand::thread_rng().gen();
 
-        return RuntimeState {
-            runtime_id,
-            actors: HashMap::new(),
-            server_link: Some(server_link),
-        };
+        let state = Arc::new(Mutex::new(
+            RuntimeState {
+                runtime_id,
+                actors: HashMap::new(),
+                server_link: None,
+                runtime_worker: None,
+            }
+        ));
+
+        let worker_handle = init_worker(state.clone());
+        state.lock().unwrap().runtime_worker = Some(worker_handle);
+        return state;
+    }
+
+    pub fn set_server_link(&mut self, server_link: mpsc::UnboundedSender<Message>) {
+        self.server_link = Some(server_link);
     }
 
     pub fn runtime_id<'a>(&'a self) -> &'a ReactorId {
@@ -57,7 +71,14 @@ impl RuntimeState {
             .unwrap()
             .into();
 
-        if let Some(receiver) = self.actors.get_mut(&receiver_id) {
+        if receiver_id == self.runtime_id {
+            if let Some(ref mut worker) = self.runtime_worker {
+                worker.unbounded_send(message)
+                    .expect("failed to send");
+            } else {
+                eprintln!("worker not running");
+            }
+        } else if let Some(receiver) = self.actors.get_mut(&receiver_id) {
             receiver.tx.unbounded_send(message)
                 .expect("send failed");
         } else if let Some(ref mut server_link) = self.server_link {

@@ -1,12 +1,11 @@
-use super::*;
 use std::sync::{Arc, Mutex};
 
 use client::runtime::{Runtime, RuntimeState, spawn_reactor};
 use messaging::reactor::CoreParams;
 use messaging::types::{Message, VecSegment, ReactorId};
 
-use futures::sync::mpsc;
 use tokio::net::TcpStream;
+use futures::sync::mpsc;
 use rand::Rng;
 
 use net::connection_handler::*;
@@ -30,8 +29,11 @@ pub struct LinkHandler<S> {
 impl<S> LinkHandler<S>
     where S: Send + 'static
 {
-    pub fn new<F>(stream: TcpStream, spawner: F)
-        -> ConnectionHandler<Self>
+    pub fn new<F>(
+        stream: TcpStream,
+        runtime: Arc<Mutex<RuntimeState>>,
+        spawner: F
+    ) -> ConnectionHandler<Self>
         where F: 'static + Send + Fn(ClientParams) -> CoreParams<S, Runtime>
     {
 
@@ -39,7 +41,7 @@ impl<S> LinkHandler<S>
 
         let mut h = ConnectionHandler::new(stream, |tx| {
             // TODO: this way of bootstrapping is not ideal
-            let runtime = Arc::new(Mutex::new(RuntimeState::new(tx)));
+            runtime.lock().unwrap().set_server_link(tx);
 
             let mut handler = HandlerCore::new(LinkHandler {
                 runtime,
