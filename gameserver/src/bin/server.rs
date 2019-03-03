@@ -57,6 +57,10 @@ impl Welcomer {
         println!("welcoming {:?}", id);
         let link = WelcomerGreeterLink {};
         handle.open_link(link.params(id));
+        handle.send_internal(chat::send_message::Owned, |b| {
+            let mut send: chat::send_message::Builder = b.init_as();
+            send.set_message("hoi!");
+        });
         return Ok(());
     }
 
@@ -99,8 +103,27 @@ impl WelcomerGreeterLink {
             greeting::Owned,
             CtxHandler::new(Self::recv_greeting),
         );
+        params.internal_handler(
+            chat::send_message::Owned,
+            CtxHandler::new(Self::send_message)
+        );
 
         return params;
+    }
+
+    fn send_message<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        send_message: chat::send_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = send_message.get_message()?;
+
+        handle.send_message(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+        return Ok(());
     }
 
     fn recv_greeting<C: Ctx>(
@@ -110,7 +133,6 @@ impl WelcomerGreeterLink {
     ) -> Result<(), capnp::Error>
     {
         let message = greeting.get_message()?;
-        println!("got greeting: {:?}", message);
         handle.close_link();
         return Ok(());
     }

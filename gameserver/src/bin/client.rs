@@ -88,6 +88,7 @@ fn main() {
                     LinkHandler::new(stream, rt, |params| {
                         let r = ClientReactor {
                             greeter_id: params.greeter_id,
+                            runtime_id: params.runtime_id,
                         };
                         return r.params();
                     })
@@ -116,7 +117,7 @@ impl RuntimeWorker {
         cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
         runtime: Arc<Mutex<RuntimeState>>
     ) {
-            let worker = RuntimeWorker {
+            let mut worker = RuntimeWorker {
                 msg_chan: rx,
                 handler_core: HandlerCore::new(
                     HandlerState {
@@ -125,6 +126,12 @@ impl RuntimeWorker {
                     }
                 )
             };
+
+            worker.handler_core.on(
+                chat::chat_message::Owned,
+                FnHandler::new(rt_display_chat_message),
+            );
+
             tokio::spawn(worker);
 
     }
@@ -148,10 +155,26 @@ impl Future for RuntimeWorker {
     }
 }
 
+fn rt_display_chat_message(
+    ctx: &mut RtHandlerCtx<HandlerState>,
+    msg: chat::chat_message::Reader
+) -> Result<(), capnp::Error>
+{
+    let message = msg.get_message()?.to_string();
+    ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
+        cursive.call_on_id("messages", |view: &mut TextView| {
+            view.append(message);
+            view.append("\n");
+        });
+    })).unwrap();
+    return Ok(());
+}
+
 struct RtHandlerCtx<'a, S> {
     pub sender_id: &'a ReactorId,
     pub state: &'a mut S,
 }
+
 
 type RtMsgHandler<S> = Box<
     for<'a>
@@ -205,6 +228,7 @@ impl<S> HandlerCore<S> {
 
 struct ClientReactor {
     greeter_id: ReactorId,
+    runtime_id: ReactorId,
 }
 
 impl ClientReactor {
@@ -228,6 +252,9 @@ impl ClientReactor {
             greeting.set_message("Hey friend!");
         });
 
+        let runtime_link = (RuntimeLink {}).params(self.runtime_id.clone());
+        handle.open_link(runtime_link);
+
         return Ok(());
     }
 }
@@ -248,7 +275,29 @@ impl ServerLink {
             send_greeting::Owned,
             CtxHandler::new(Self::send_greeting),
         );
+
+        params.external_handler(
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::receive_chat_message),
+        );
+
         return params;
+    }
+
+    fn receive_chat_message<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        chat_message: chat::chat_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = chat_message.get_message()?;
+    
+        handle.send_internal(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+
+        return Ok(());
     }
 
     fn send_greeting<C: Ctx>(
@@ -275,6 +324,37 @@ impl ServerLink {
     {
         // also close our end of the stream
         handle.close_link();
+        return Ok(());
+    }
+
+}
+
+struct RuntimeLink {}
+
+impl RuntimeLink {
+    fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
+        let mut params = LinkParams::new(foreign_id, self);
+        params.internal_handler(
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::handle_chat_message),
+        );
+
+        return params;
+    }
+
+    fn handle_chat_message<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        chat_message: chat::chat_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = chat_message.get_message()?;
+    
+        handle.send_message(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+
         return Ok(());
     }
 
