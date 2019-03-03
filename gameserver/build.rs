@@ -10,5 +10,6 @@ fn main() {
         .src_prefix("../schema")
         .file("../schema/core.capnp")
         .file("../schema/network.capnp")
+        .file("../schema/chat.capnp")
         .run().expect("schema compiler command");
 }

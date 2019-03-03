@@ -35,6 +35,10 @@ use cursive::theme::Theme;
 use cursive::traits::{Boxable, Identifiable};
 use cursive::views::{TextView, EditView, LinearLayout};
 
+pub mod chat {
+    include!(concat!(env!("OUT_DIR"), "/chat_capnp.rs"));
+}
+
 fn main() {
     // Creates the cursive root - required for every application.
     let mut siv = Cursive::default();
