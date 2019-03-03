@@ -100,40 +100,45 @@ impl WelcomerGreeterLink {
     fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
         let mut params = LinkParams::new(foreign_id, self);
         params.external_handler(
-            greeting::Owned,
-            CtxHandler::new(Self::recv_greeting),
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::recv_chat_message),
         );
         params.internal_handler(
-            chat::send_message::Owned,
-            CtxHandler::new(Self::send_message)
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::send_chat_message),
         );
 
         return params;
     }
 
-    fn send_message<C: Ctx>(
+    fn send_chat_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
-        send_message: chat::send_message::Reader,
+        message: chat::chat_message::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let message = send_message.get_message()?;
+        let content = message.get_message()?;
 
         handle.send_message(chat::chat_message::Owned, |b| {
             let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
+            msg.set_message(content);
         });
         return Ok(());
     }
 
-    fn recv_greeting<C: Ctx>(
+    fn recv_chat_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
-        greeting: greeting::Reader,
+        message: chat::chat_message::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let message = greeting.get_message()?;
-        handle.close_link();
+        let message = message.get_message()?;
+
+        handle.send_internal(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+
         return Ok(());
     }
 }

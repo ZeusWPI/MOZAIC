@@ -259,7 +259,6 @@ impl ClientReactor {
     fn params<C: Ctx>(self) -> CoreParams<Self, C> {
         let mut params = CoreParams::new(self);
         params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
-        params.handler(chat::send_message::Owned, CtxHandler::new(Self::message_loopback));
         return params;
     }
 
@@ -279,25 +278,6 @@ impl ClientReactor {
 
         return Ok(());
     }
-
-    fn message_loopback<C: Ctx>(
-        &mut self,
-        handle: &mut ReactorHandle<C>,
-        send_message: chat::send_message::Reader,
-    ) -> Result<(), capnp::Error>
-    {
-        let message = send_message.get_message()?;
-
-        handle.send_internal(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
-        });
-
-        return Ok(());
-
-    }
-
-
 }
 
 struct ServerLink {
@@ -317,8 +297,31 @@ impl ServerLink {
             CtxHandler::new(Self::receive_chat_message),
         );
 
+        params.internal_handler(
+            chat::send_message::Owned,
+            CtxHandler::new(Self::send_chat_message),
+        );
+
         return params;
     }
+
+    fn send_chat_message<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        send_message: chat::send_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = send_message.get_message()?;
+
+        handle.send_message(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+
+        return Ok(());
+
+    }
+
 
     fn receive_chat_message<C: Ctx>(
         &mut self,
