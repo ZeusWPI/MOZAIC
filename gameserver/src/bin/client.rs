@@ -55,15 +55,6 @@ fn main() {
             .with_id("messages")
             .full_height())
         .child(EditView::new()
-            .on_submit(|cursive, s| {
-                cursive.call_on_id("messages", |view: &mut TextView| {
-                    view.append(s);
-                    view.append("\n");
-                });
-                cursive.call_on_id("input", |view: &mut EditView| {
-                    view.set_content("");
-                });
-            })
             .with_id("input")
             .full_width())
     );
@@ -128,6 +119,11 @@ impl RuntimeWorker {
             };
 
             worker.handler_core.on(
+                chat::connect_to_gui::Owned,
+                FnHandler::new(rt_connect_to_gui),
+            );
+
+            worker.handler_core.on(
                 chat::chat_message::Owned,
                 FnHandler::new(rt_display_chat_message),
             );
@@ -153,6 +149,34 @@ impl Future for RuntimeWorker {
             }
         }
     }
+}
+
+fn rt_connect_to_gui(
+    ctx: &mut RtHandlerCtx<HandlerState>,
+    _: chat::connect_to_gui::Reader
+) -> Result<(), capnp::Error>
+{
+    let reactor_id = ctx.sender_id.clone();
+    let runtime = ctx.state.runtime.clone();
+
+    ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
+        cursive.call_on_id("input", |view: &mut EditView| {
+            view.set_on_submit(move |cursive, input_text| {
+                runtime.lock().unwrap().send_message(
+                    &reactor_id,
+                    chat::user_input::Owned,
+                    |b| {
+                        let mut input: chat::user_input::Builder = b.init_as();
+                        input.set_text(input_text);
+                    });
+                cursive.call_on_id("input", |view: &mut EditView| {
+                    view.set_content("");
+                });
+            })
+        });
+    })).unwrap();
+
+    return Ok(());
 }
 
 fn rt_display_chat_message(
@@ -196,7 +220,7 @@ impl<S> HandlerCore<S> {
         }
     }
 
-    pub fn on<M, H>(&mut self, _m: M, h: H)
+    fn on<M, H>(&mut self, _m: M, h: H)
         where M: for<'a> Owned<'a> + Send + 'static,
              <M as Owned<'static>>::Reader: HasTypeId,
               H: 'static + for <'a> Handler<'a, RtHandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>
@@ -235,6 +259,7 @@ impl ClientReactor {
     fn params<C: Ctx>(self) -> CoreParams<Self, C> {
         let mut params = CoreParams::new(self);
         params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
+        params.handler(chat::send_message::Owned, CtxHandler::new(Self::message_loopback));
         return params;
     }
 
@@ -247,16 +272,32 @@ impl ClientReactor {
         let link = (ServerLink {}).params(self.greeter_id.clone());
         handle.open_link(link);
 
-        handle.send_internal(send_greeting::Owned, |b| {
-            let mut greeting: send_greeting::Builder = b.init_as();
-            greeting.set_message("Hey friend!");
-        });
-
         let runtime_link = (RuntimeLink {}).params(self.runtime_id.clone());
         handle.open_link(runtime_link);
 
+        handle.send_internal(chat::connect_to_gui::Owned, |_| {});
+
         return Ok(());
     }
+
+    fn message_loopback<C: Ctx>(
+        &mut self,
+        handle: &mut ReactorHandle<C>,
+        send_message: chat::send_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let message = send_message.get_message()?;
+
+        handle.send_internal(chat::chat_message::Owned, |b| {
+            let mut msg: chat::chat_message::Builder = b.init_as();
+            msg.set_message(message);
+        });
+
+        return Ok(());
+
+    }
+
+
 }
 
 struct ServerLink {
@@ -269,11 +310,6 @@ impl ServerLink {
         params.external_handler(
             terminate_stream::Owned,
             CtxHandler::new(Self::close_handler),
-        );
-
-        params.internal_handler(
-            send_greeting::Owned,
-            CtxHandler::new(Self::send_greeting),
         );
 
         params.external_handler(
@@ -300,22 +336,6 @@ impl ServerLink {
         return Ok(());
     }
 
-    fn send_greeting<C: Ctx>(
-        &mut self,
-        handle: &mut LinkHandle<C>,
-        send_greeting: send_greeting::Reader,
-    ) -> Result<(), capnp::Error>
-    {
-        let message = send_greeting.get_message()?;
-
-        handle.send_message(greeting::Owned, |b| {
-            let mut greeting: greeting::Builder = b.init_as();
-            greeting.set_message(message);
-        });
-
-        return Ok(());
-    }
-
     fn close_handler<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
@@ -335,11 +355,31 @@ impl RuntimeLink {
     fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
         let mut params = LinkParams::new(foreign_id, self);
         params.internal_handler(
+            chat::connect_to_gui::Owned,
+            CtxHandler::new(Self::connect_to_gui),
+        );
+
+        params.internal_handler(
             chat::chat_message::Owned,
             CtxHandler::new(Self::handle_chat_message),
         );
 
+        params.external_handler(
+            chat::user_input::Owned,
+            CtxHandler::new(Self::handle_user_input),
+        );
+
         return params;
+    }
+
+    fn connect_to_gui<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        _: chat::connect_to_gui::Reader,
+    ) -> Result<(), capnp::Error> 
+    {
+        handle.send_message(chat::connect_to_gui::Owned, |b| {});
+        return Ok(());
     }
 
     fn handle_chat_message<C: Ctx>(
@@ -358,4 +398,17 @@ impl RuntimeLink {
         return Ok(());
     }
 
+    fn handle_user_input<C: Ctx>(
+        &mut self,
+        handle: &mut LinkHandle<C>,
+        input: chat::user_input::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        let text = input.get_text()?;
+        handle.send_internal(chat::send_message::Owned, |b| {
+            let mut send: chat::send_message::Builder = b.init_as();
+            send.set_message(text);
+        });
+        return Ok(());
+    }
 }
