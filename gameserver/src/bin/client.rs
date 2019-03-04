@@ -68,7 +68,7 @@ fn main() {
             let rt = RuntimeState::bootstrap(|runtime| {
                 let (tx, rx) = mpsc::unbounded();
 
-                RuntimeWorker::spawn(rx, cb_sink, runtime);
+                runtime::RuntimeWorker::spawn(rx, cb_sink, runtime);
 
                 return tx;
             });
@@ -91,164 +91,6 @@ fn main() {
     // Starts the event loop.
     siv.run();
 }
-
-struct HandlerState {
-    cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
-    runtime: Arc<Mutex<RuntimeState>>,
-}
-
-struct RuntimeWorker {
-    msg_chan: mpsc::UnboundedReceiver<Message>,
-    handler_core: HandlerCore<HandlerState>,
-}
-
-impl RuntimeWorker {
-    fn spawn(
-        rx: mpsc::UnboundedReceiver<Message>,
-        cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
-        runtime: Arc<Mutex<RuntimeState>>
-    ) {
-            let mut worker = RuntimeWorker {
-                msg_chan: rx,
-                handler_core: HandlerCore::new(
-                    HandlerState {
-                        cb_sink,
-                        runtime,
-                    }
-                )
-            };
-
-            worker.handler_core.on(
-                chat::connect_to_gui::Owned,
-                FnHandler::new(rt_connect_to_gui),
-            );
-
-            worker.handler_core.on(
-                chat::chat_message::Owned,
-                FnHandler::new(rt_display_chat_message),
-            );
-
-            tokio::spawn(worker);
-
-    }
-    fn handle_message(&mut self, msg: Message) {
-        self.handler_core.handle(&msg)
-            .expect("message handling failed");
-    }
-}
-
-impl Future for RuntimeWorker {
-    type Item = ();
-    type Error = ();
-
-    fn poll(&mut self) -> Poll<(), ()> {
-        loop {
-            match try_ready!(self.msg_chan.poll()) {
-                None => return Ok(Async::Ready(())),
-                Some(msg) => self.handle_message(msg),
-            }
-        }
-    }
-}
-
-fn rt_connect_to_gui(
-    ctx: &mut RtHandlerCtx<HandlerState>,
-    _: chat::connect_to_gui::Reader
-) -> Result<(), capnp::Error>
-{
-    let reactor_id = ctx.sender_id.clone();
-    let runtime = ctx.state.runtime.clone();
-
-    ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
-        cursive.call_on_id("input", |view: &mut EditView| {
-            view.set_on_submit(move |cursive, input_text| {
-                runtime.lock().unwrap().send_message(
-                    &reactor_id,
-                    chat::user_input::Owned,
-                    |b| {
-                        let mut input: chat::user_input::Builder = b.init_as();
-                        input.set_text(input_text);
-                    });
-                cursive.call_on_id("input", |view: &mut EditView| {
-                    view.set_content("");
-                });
-            })
-        });
-    })).unwrap();
-
-    return Ok(());
-}
-
-fn rt_display_chat_message(
-    ctx: &mut RtHandlerCtx<HandlerState>,
-    msg: chat::chat_message::Reader
-) -> Result<(), capnp::Error>
-{
-    let message = msg.get_message()?.to_string();
-    ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
-        cursive.call_on_id("messages", |view: &mut TextView| {
-            view.append(message);
-            view.append("\n");
-        });
-    })).unwrap();
-    return Ok(());
-}
-
-struct RtHandlerCtx<'a, S> {
-    pub sender_id: &'a ReactorId,
-    pub state: &'a mut S,
-}
-
-
-type RtMsgHandler<S> = Box<
-    for<'a>
-        Handler<'a,
-            RtHandlerCtx<'a, S>,
-            any_pointer::Owned, Output=(), Error=capnp::Error>
->;
-
-pub struct HandlerCore<S> {
-    state: S,
-    handlers: HashMap<u64, RtMsgHandler<S>>,
-}
-
-impl<S> HandlerCore<S> {
-    pub fn new(state: S) -> Self {
-        HandlerCore {
-            state,
-            handlers: HashMap::new(),
-        }
-    }
-
-    fn on<M, H>(&mut self, _m: M, h: H)
-        where M: for<'a> Owned<'a> + Send + 'static,
-             <M as Owned<'static>>::Reader: HasTypeId,
-              H: 'static + for <'a> Handler<'a, RtHandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>
-    {
-        let boxed = Box::new(AnyPtrHandler::new(h));
-        self.handlers.insert(
-            <M as Owned<'static>>::Reader::type_id(),
-            boxed,
-        );
-    }
-
-    pub fn handle(&mut self, message: &Message)
-        -> Result<(), capnp::Error>
-    {
-        let reader = message.reader();
-        let type_id = reader.get()?.get_type_id();
-        if let Some(handler) = self.handlers.get(&type_id) {
-            let sender_id: ReactorId = reader.get()?.get_sender()?.into();
-            let mut ctx = RtHandlerCtx {
-                sender_id: &sender_id,
-                state: &mut self.state,
-            };
-            handler.handle(&mut ctx, reader.get()?.get_payload())?;
-        }
-        return Ok(());
-    }
-}
-
 
 struct ClientReactor {
     greeter_id: ReactorId,
@@ -365,7 +207,7 @@ impl RuntimeLink {
         params.internal_handler(
             chat::chat_message::Owned,
             CtxHandler::new(Self::handle_chat_message),
-        );
+        );  
 
         params.external_handler(
             chat::user_input::Owned,
@@ -414,4 +256,177 @@ impl RuntimeLink {
         });
         return Ok(());
     }
+}
+
+mod runtime {
+    use capnp::any_pointer;
+    use capnp::traits::{Owned, HasTypeId};
+    use chat;
+    use crossbeam_channel;
+    use cursive::{Cursive, CbFunc};
+    use cursive::views::{TextView, EditView};
+    use futures::{Future, Async, Poll, Stream};
+    use futures::sync::mpsc;
+    use mozaic::client::runtime::RuntimeState;
+    use mozaic::messaging::types::*;
+    use std::collections::HashMap;
+    use std::sync::{Arc, Mutex};
+
+    struct HandlerState {
+        cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
+        runtime: Arc<Mutex<RuntimeState>>,
+    }
+
+    pub struct RuntimeWorker {
+        msg_chan: mpsc::UnboundedReceiver<Message>,
+        handler_core: HandlerCore<HandlerState>,
+    }
+
+    impl RuntimeWorker {
+        pub fn spawn(
+            rx: mpsc::UnboundedReceiver<Message>,
+            cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
+            runtime: Arc<Mutex<RuntimeState>>
+        ) {
+                let mut worker = RuntimeWorker {
+                    msg_chan: rx,
+                    handler_core: HandlerCore::new(
+                        HandlerState {
+                            cb_sink,
+                            runtime,
+                        }
+                    )
+                };
+
+                worker.handler_core.on(
+                    chat::connect_to_gui::Owned,
+                    FnHandler::new(rt_connect_to_gui),
+                );
+
+                worker.handler_core.on(
+                    chat::chat_message::Owned,
+                    FnHandler::new(rt_display_chat_message),
+                );
+
+                tokio::spawn(worker);
+
+        }
+        fn handle_message(&mut self, msg: Message) {
+            self.handler_core.handle(&msg)
+                .expect("message handling failed");
+        }
+    }
+
+    impl Future for RuntimeWorker {
+        type Item = ();
+        type Error = ();
+
+        fn poll(&mut self) -> Poll<(), ()> {
+            loop {
+                match try_ready!(self.msg_chan.poll()) {
+                    None => return Ok(Async::Ready(())),
+                    Some(msg) => self.handle_message(msg),
+                }
+            }
+        }
+    }
+
+    fn rt_connect_to_gui(
+        ctx: &mut RtHandlerCtx<HandlerState>,
+        _: chat::connect_to_gui::Reader
+    ) -> Result<(), capnp::Error>
+    {
+        let reactor_id = ctx.sender_id.clone();
+        let runtime = ctx.state.runtime.clone();
+
+        ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
+            cursive.call_on_id("input", |view: &mut EditView| {
+                view.set_on_submit(move |cursive, input_text| {
+                    runtime.lock().unwrap().send_message(
+                        &reactor_id,
+                        chat::user_input::Owned,
+                        |b| {
+                            let mut input: chat::user_input::Builder = b.init_as();
+                            input.set_text(input_text);
+                        });
+                    cursive.call_on_id("input", |view: &mut EditView| {
+                        view.set_content("");
+                    });
+                })
+            });
+        })).unwrap();
+
+        return Ok(());
+    }
+
+    fn rt_display_chat_message(
+        ctx: &mut RtHandlerCtx<HandlerState>,
+        msg: chat::chat_message::Reader
+    ) -> Result<(), capnp::Error>
+    {
+        let message = msg.get_message()?.to_string();
+        ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
+            cursive.call_on_id("messages", |view: &mut TextView| {
+                view.append(message);
+                view.append("\n");
+            });
+        })).unwrap();
+        return Ok(());
+    }
+
+    struct RtHandlerCtx<'a, S> {
+        pub sender_id: &'a ReactorId,
+        pub state: &'a mut S,
+    }
+
+
+    type RtMsgHandler<S> = Box<
+        for<'a>
+            Handler<'a,
+                RtHandlerCtx<'a, S>,
+                any_pointer::Owned, Output=(), Error=capnp::Error>
+    >;
+
+    pub struct HandlerCore<S> {
+        state: S,
+        handlers: HashMap<u64, RtMsgHandler<S>>,
+    }
+
+    impl<S> HandlerCore<S> {
+        pub fn new(state: S) -> Self {
+            HandlerCore {
+                state,
+                handlers: HashMap::new(),
+            }
+        }
+
+        fn on<M, H>(&mut self, _m: M, h: H)
+            where M: for<'a> Owned<'a> + Send + 'static,
+                <M as Owned<'static>>::Reader: HasTypeId,
+                H: 'static + for <'a> Handler<'a, RtHandlerCtx<'a, S>, M, Output=(), Error=capnp::Error>
+        {
+            let boxed = Box::new(AnyPtrHandler::new(h));
+            self.handlers.insert(
+                <M as Owned<'static>>::Reader::type_id(),
+                boxed,
+            );
+        }
+
+        pub fn handle(&mut self, message: &Message)
+            -> Result<(), capnp::Error>
+        {
+            let reader = message.reader();
+            let type_id = reader.get()?.get_type_id();
+            if let Some(handler) = self.handlers.get(&type_id) {
+                let sender_id: ReactorId = reader.get()?.get_sender()?.into();
+                let mut ctx = RtHandlerCtx {
+                    sender_id: &sender_id,
+                    state: &mut self.state,
+                };
+                handler.handle(&mut ctx, reader.get()?.get_payload())?;
+            }
+            return Ok(());
+        }
+    }
+
 }
