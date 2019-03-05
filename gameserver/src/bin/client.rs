@@ -49,6 +49,7 @@ fn main() {
         t
     });
 
+    // ugly chat view
     siv.add_layer(LinearLayout::vertical()
         .child(TextView::empty()
             .v_align(VAlign::Bottom)
@@ -65,6 +66,7 @@ fn main() {
         let addr = "127.0.0.1:9142".parse().unwrap();
 
         tokio::run(futures::lazy(move || {
+            // This part is needlessly complex, please ignore =/
             let rt = RuntimeState::bootstrap(|runtime| {
                 let (tx, rx) = mpsc::unbounded();
 
@@ -92,6 +94,7 @@ fn main() {
     siv.run();
 }
 
+// Main client logic
 struct ClientReactor {
     greeter_id: ReactorId,
     runtime_id: ReactorId,
@@ -104,26 +107,32 @@ impl ClientReactor {
         return params;
     }
 
+    // reactor setup
     fn initialize<C: Ctx>(
         &mut self,
         handle: &mut ReactorHandle<C>,
         _: initialize::Reader,
     ) -> Result<(), capnp::Error>
     {
+        // open link with chat server
         let link = (ServerLink {}).params(self.greeter_id.clone());
         handle.open_link(link);
 
+        // open link with runtime, for communicating with chat GUI
         let runtime_link = (RuntimeLink {}).params(self.runtime_id.clone());
         handle.open_link(runtime_link);
 
+        // dispatch this additional message to instruct the runtime link
+        // to connect to the gui.
+        // TODO: this is kind of initalization code, could it be avoided?
         handle.send_internal(chat::connect_to_gui::Owned, |_| {});
 
         return Ok(());
     }
 }
 
-struct ServerLink {
-}
+// Handler for the connection with the chat server
+struct ServerLink {}
 
 impl ServerLink {
     fn params<C: Ctx>(self, foreign_id: ReactorId) -> LinkParams<Self, C> {
@@ -147,6 +156,8 @@ impl ServerLink {
         return params;
     }
 
+    // pick up a 'send_message' event from the reactor, and put it to effect
+    // by constructing the chat message and sending it to the chat server.
     fn send_chat_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
@@ -164,7 +175,8 @@ impl ServerLink {
 
     }
 
-
+    // receive a chat message from the chat server, and broadcast it on the
+    // reactor.
     fn receive_chat_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
