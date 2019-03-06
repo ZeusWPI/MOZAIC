@@ -67,6 +67,16 @@ export async function buildMenuAndShortcuts(window: BrowserWindow) {
           },
         },
         {
+          label: 'Reload',
+          visible: false,
+          accelerator: 'F5',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.reload();
+            }
+          },
+        },
+        {
           label: 'Toggle Full Screen',
           accelerator: (() => {
             if (process.platform === 'darwin') {
@@ -95,6 +105,16 @@ export async function buildMenuAndShortcuts(window: BrowserWindow) {
               focusedWindow.webContents.toggleDevTools();
             }
           },
+        },
+        {
+          label: 'Toggle Developer Tools',
+          accelerator: 'F12',
+          click: (item, focusedWindow) => {
+            if (focusedWindow) {
+              focusedWindow.webContents.toggleDevTools();
+            }
+          },
+          visible: false,
         },
       ],
     },
