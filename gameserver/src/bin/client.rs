@@ -206,6 +206,7 @@ impl ServerLink {
 
 }
 
+// 
 struct RuntimeLink {}
 
 impl RuntimeLink {
@@ -229,6 +230,7 @@ impl RuntimeLink {
         return params;
     }
 
+    // Send a message to the GUI controller to subscribe to input events.
     fn connect_to_gui<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
@@ -239,6 +241,7 @@ impl RuntimeLink {
         return Ok(());
     }
 
+    // Pick up chat messages on the reactor, and forward them to the chat GUI.
     fn handle_chat_message<C: Ctx>(
         &mut self,
         handle: &mut LinkHandle<C>,
@@ -270,6 +273,7 @@ impl RuntimeLink {
     }
 }
 
+// this code is hacked together, don't pay too much attention to it.
 mod runtime {
     use capnp::any_pointer;
     use capnp::traits::{Owned, HasTypeId};
