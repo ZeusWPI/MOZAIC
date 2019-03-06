@@ -75,6 +75,9 @@ function createBrowserWindow() {
     y: windowState.y,
     width: windowState.width,
     height: windowState.height,
+    webPreferences: {
+      nodeIntegration: true, // TODO: Should eventually be false, but it requires moving some code to the main process
+    },
   });
   windowState.manage(mainWindow);
   return mainWindow;
