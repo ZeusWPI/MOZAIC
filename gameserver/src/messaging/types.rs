@@ -10,7 +10,6 @@ use capnp::traits::Owned;
 use core_capnp;
 use core_capnp::mozaic_message;
 
-
 /// Handles messages of type M with lifetime 'a, using state S.
 pub trait Handler<'a, S, M>: Send
     where M: Owned<'a>

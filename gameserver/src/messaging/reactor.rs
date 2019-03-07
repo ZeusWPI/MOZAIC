@@ -6,6 +6,31 @@ use capnp::traits::{HasTypeId, Owned};
 
 use core_capnp::{mozaic_message, terminate_stream};
 
+/// Runtime trait
+pub trait Ctx : 'static + for<'a> Context<'a> {}
+impl<C> Ctx for C where C: 'static + for<'a> Context<'a> {}
+
+pub trait Context<'a> : Sized {
+    type Handle: 'a + CtxHandle<Self>;
+}
+
+pub trait CtxHandle<C> {
+    fn dispatch_internal(&mut self, message: Message);
+    fn dispatch_external(&mut self, message: Message);
+
+    fn open_link<S>(&mut self, params: LinkParams<S, C>)
+        where S: 'static + Send,
+              C: Ctx;
+    
+    fn close_link(&mut self, id: &ReactorId);
+
+
+    fn spawn<S>(&mut self, params: CoreParams<S, C>) -> ReactorId
+        where S: 'static + Send,
+              C: Ctx;
+}
+
+
 /// A reactor is an "actor" in the MOZAIC system. It is defined by an identity
 /// (an UUID), a state, and a set of message ('event') handlers.
 /// Reactors can communicate by opening links between them. These links
@@ -221,29 +246,6 @@ impl<S, C> LinkReducerTrait<C> for LinkReducer<S, C>
         }
         return Ok(());
     }
-}
-
-pub trait Ctx : 'static + for<'a> Context<'a> {}
-impl<C> Ctx for C where C: 'static + for<'a> Context<'a> {}
-
-pub trait Context<'a> : Sized {
-    type Handle: 'a + CtxHandle<Self>;
-}
-
-pub trait CtxHandle<C> {
-    fn dispatch_internal(&mut self, message: Message);
-    fn dispatch_external(&mut self, message: Message);
-
-    fn open_link<S>(&mut self, params: LinkParams<S, C>)
-        where S: 'static + Send,
-              C: Ctx;
-    
-    fn close_link(&mut self, id: &ReactorId);
-
-
-    fn spawn<S>(&mut self, params: CoreParams<S, C>) -> ReactorId
-        where S: 'static + Send,
-              C: Ctx;
 }
 
 /// Handle for manipulating a reactor.
@@ -487,17 +489,6 @@ type LinkHandlers<S, C, T, E> = HashMap<u64, LinkHandler<S, C, T, E>>;
 
 
 
-// TODO: How do we establish links?
-// In theory, knowing an UUID is enough to send messages to another actor. In
-// reality though, we need to establish some routing state, somewhere, to
-// actually make a connection. A reactor like this one should be in contact
-// with some router, that can map its uuid to an incoming message channel.
-// I guess the same router should receive messages sent by this reactors links,
-// and route them to the appropriate places. The question that remains is how
-// we lay initial contact: how do we allocate a link to recieve messages
-// from some client?
-// Maybe it would prove useful to implement a dummy service in this
-// architecture.
 pub struct CoreParams<S, C: Ctx> {
     pub state: S,
     pub handlers: HashMap<u64, CoreHandler<S, C, (), capnp::Error>>,
