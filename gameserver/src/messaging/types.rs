@@ -217,3 +217,41 @@ impl Message {
         self.segment.as_bytes()
     }
 }
+
+use capnp::message::HeapAllocator;
+
+pub struct MsgBuffer<T> {
+    phantom_t: PhantomData<T>,
+    builder: capnp::message::Builder<HeapAllocator>,
+}
+
+impl<T> MsgBuffer<T>
+    where T: for<'a> Owned<'a>,
+{
+    pub fn new() -> Self {
+        let mut b = MsgBuffer {
+            phantom_t: PhantomData,
+            builder: capnp::message::Builder::new_default(),
+        };
+
+        b.init_builder();
+        return b;
+    }
+
+    fn init_builder<'a>(&'a mut self) -> <T as Owned<'a>>::Builder {
+        let msg: mozaic_message::Builder = self.builder.init_root();
+        return msg.init_payload().init_as();
+    } 
+
+    fn get_builder<'a>(&'a mut self) -> <T as Owned<'a>>::Builder {
+        let msg = self.builder.get_root::<mozaic_message::Builder>().unwrap();
+        return msg.init_payload().get_as().unwrap();
+    }
+
+    pub fn build<'a, F>(&'a mut self, f: F)
+        where F: FnOnce(&mut <T as Owned<'a>>::Builder)
+    {
+        let mut builder = self.init_builder();
+        f(&mut builder);
+    }
+}
