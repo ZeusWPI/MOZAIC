@@ -6,7 +6,7 @@ use rand::Rng;
 
 use capnp;
 use capnp::any_pointer;
-use capnp::traits::Owned;
+use capnp::traits::{Owned, HasTypeId};
 use core_capnp;
 use core_capnp::mozaic_message;
 
@@ -227,6 +227,7 @@ pub struct MsgBuffer<T> {
 
 impl<T> MsgBuffer<T>
     where T: for<'a> Owned<'a>,
+          <T as Owned<'static>>::Builder: HasTypeId,
 {
     pub fn new() -> Self {
         let mut b = MsgBuffer {
@@ -239,9 +240,10 @@ impl<T> MsgBuffer<T>
     }
 
     fn init_builder<'a>(&'a mut self) -> <T as Owned<'a>>::Builder {
-        let msg: mozaic_message::Builder = self.builder.init_root();
+        let mut msg: mozaic_message::Builder = self.builder.init_root();
+        msg.set_type_id(<T as Owned<'static>>::Builder::type_id());
         return msg.init_payload().init_as();
-    } 
+    }
 
     fn get_builder<'a>(&'a mut self) -> <T as Owned<'a>>::Builder {
         let msg = self.builder.get_root::<mozaic_message::Builder>().unwrap();
@@ -251,7 +253,13 @@ impl<T> MsgBuffer<T>
     pub fn build<'a, F>(&'a mut self, f: F)
         where F: FnOnce(&mut <T as Owned<'a>>::Builder)
     {
-        let mut builder = self.init_builder();
+        let mut builder = self.get_builder();
         f(&mut builder);
+    }
+}
+
+impl<T> MsgBuffer<T> {
+    pub fn into_builder(self) -> capnp::message::Builder<HeapAllocator> {
+        self.builder
     }
 }

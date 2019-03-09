@@ -273,27 +273,17 @@ impl<'a, 'c, C: Ctx> ReactorHandle<'a, 'c, C> {
         self.id
     }
 
-    pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
-        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-              M: Owned<'static>,
-              <M as Owned<'static>>::Builder: HasTypeId,
-    {
-        let mut message_builder = ::capnp::message::Builder::new_default();
+    pub fn send_internal<T>(&mut self, msg_buffer: MsgBuffer<T>) {
+        let mut builder = msg_buffer.into_builder();
         {
-            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
-
+            let mut msg: mozaic_message::Builder = builder.get_root().unwrap();
+            
             msg.set_sender(self.id.bytes());
             msg.set_receiver(self.id.bytes());
-
-            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-            {
-                let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder);
-            }
         }
 
-        let msg = Message::from_capnp(message_builder.into_reader());
-        self.ctx.dispatch_internal(msg);
+        let message = Message::from_capnp(builder.into_reader());
+        self.ctx.dispatch_internal(message);
     }
 
     pub fn spawn<S>(&mut self, params: CoreParams<S, C>) -> ReactorId
@@ -326,50 +316,30 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
         self.remote_id
     }
 
-    pub fn send_internal<M, F>(&mut self, _m: M, initializer: F)
-        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-              M: Owned<'static>,
-              <M as Owned<'static>>::Builder: HasTypeId,
-    {
-        let mut message_builder = ::capnp::message::Builder::new_default();
+    pub fn send_internal<T>(&mut self, msg_buffer: MsgBuffer<T>) {
+        let mut builder = msg_buffer.into_builder();
         {
-            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+            let mut msg: mozaic_message::Builder = builder.get_root().unwrap();
             
             msg.set_sender(self.id.bytes());
             msg.set_receiver(self.id.bytes());
-
-            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-            {
-                let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder);
-            }
         }
 
-        let msg = Message::from_capnp(message_builder.into_reader());
-        self.ctx.dispatch_internal(msg);
+        let message = Message::from_capnp(builder.into_reader());
+        self.ctx.dispatch_internal(message);
     }
 
-    pub fn send_message<M, F>(&mut self, _m: M, initializer: F)
-        where F: for<'b> FnOnce(capnp::any_pointer::Builder<'b>),
-              M: Owned<'static>,
-              <M as Owned<'static>>::Builder: HasTypeId,
-    {
-        let mut message_builder = ::capnp::message::Builder::new_default();
+    pub fn send_message<T>(&mut self, msg_buffer: MsgBuffer<T>) {
+        let mut builder = msg_buffer.into_builder();
         {
-            let mut msg = message_builder.init_root::<mozaic_message::Builder>();
+            let mut msg: mozaic_message::Builder = builder.get_root().unwrap();
 
             msg.set_sender(self.id.bytes());
             msg.set_receiver(self.remote_id.bytes());
-
-            msg.set_type_id(<M as Owned<'static>>::Builder::type_id());
-            {
-                let payload_builder = msg.reborrow().init_payload();
-                initializer(payload_builder);
-            }
         }
 
-        let msg = Message::from_capnp(message_builder.into_reader());
-        self.ctx.dispatch_external(msg);
+        let message = Message::from_capnp(builder.into_reader());
+        self.ctx.dispatch_external(message);
     }
 
     pub fn close_link(&mut self) {
@@ -377,9 +347,8 @@ impl<'a, 'c, C: Ctx> LinkHandle<'a, 'c, C> {
             return;
         }
 
-        self.send_message(terminate_stream::Owned, |b| {
-            b.init_as::<terminate_stream::Builder>();
-        });
+        let msg = MsgBuffer::<terminate_stream::Owned>::new();
+        self.send_message(msg);
 
         self.link_state.local_closed = true;
     }
