@@ -125,7 +125,8 @@ impl ClientReactor {
         // dispatch this additional message to instruct the runtime link
         // to connect to the gui.
         // TODO: this is kind of initalization code, could it be avoided?
-        handle.send_internal(chat::connect_to_gui::Owned, |_| {});
+        let msg = MsgBuffer::<chat::connect_to_gui::Owned>::new();
+        handle.send_internal(msg);
 
         return Ok(());
     }
@@ -166,10 +167,11 @@ impl ServerLink {
     {
         let message = send_message.get_message()?;
 
-        handle.send_message(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
+        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+        chat_message.build(|b| {
+            b.set_message(message);
         });
+        handle.send_message(chat_message);
 
         return Ok(());
 
@@ -185,10 +187,12 @@ impl ServerLink {
     {
         let message = chat_message.get_message()?;
     
-        handle.send_internal(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
+        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+        chat_message.build(|b| {
+            b.set_message(message);
         });
+        handle.send_internal(chat_message);
+
 
         return Ok(());
     }
@@ -237,7 +241,8 @@ impl RuntimeLink {
         _: chat::connect_to_gui::Reader,
     ) -> Result<(), capnp::Error> 
     {
-        handle.send_message(chat::connect_to_gui::Owned, |b| {});
+        let connect = MsgBuffer::<chat::connect_to_gui::Owned>::new();
+        handle.send_message(connect);
         return Ok(());
     }
 
@@ -249,11 +254,12 @@ impl RuntimeLink {
     ) -> Result<(), capnp::Error>
     {
         let message = chat_message.get_message()?;
-    
-        handle.send_message(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
+
+        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+        chat_message.build(|b| {
+            b.set_message(message);
         });
+        handle.send_message(chat_message);
 
         return Ok(());
     }
@@ -264,11 +270,14 @@ impl RuntimeLink {
         input: chat::user_input::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let text = input.get_text()?;
-        handle.send_internal(chat::send_message::Owned, |b| {
-            let mut send: chat::send_message::Builder = b.init_as();
-            send.set_message(text);
+        let message = input.get_text()?;
+
+        let mut send_message = MsgBuffer::<chat::send_message::Owned>::new();
+        send_message.build(|b| {
+            b.set_message(message);
         });
+        handle.send_internal(send_message);
+
         return Ok(());
     }
 }

@@ -112,9 +112,7 @@ impl RuntimeState {
         let msg = Message::from_capnp(message_builder.into_reader());
         self.dispatch_message(msg);
     }
-
 }
-
 
 pub struct ActorData {
     tx: mpsc::UnboundedSender<Message>,
@@ -152,9 +150,8 @@ pub fn spawn_reactor<S>(
         };
 
         let mut reactor_handle = driver.reactor.handle(&mut ctx_handle);
-        reactor_handle.send_internal(initialize::Owned, |b| {
-            b.init_as::<initialize::Builder>();
-        });
+        let initialize = MsgBuffer::<initialize::Owned>::new();
+        reactor_handle.send_internal(initialize);
     }
 
     tokio::spawn(driver);

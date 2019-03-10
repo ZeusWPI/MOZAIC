@@ -9,7 +9,7 @@ extern crate rand;
 extern crate capnp;
 
 use std::net::SocketAddr;
-use mozaic::core_capnp::{initialize, actor_joined, greeting};
+use mozaic::core_capnp::{initialize, actor_joined};
 use mozaic::messaging::types::*;
 use mozaic::messaging::reactor::*;
 use mozaic::server::run_server;
@@ -33,6 +33,10 @@ impl Welcomer {
         let mut params = CoreParams::new(self);
         params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
         params.handler(actor_joined::Owned, CtxHandler::new(Self::welcome));
+        params.handler(
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::print_chat_message)
+        );
         return params;
     }
 
@@ -57,13 +61,18 @@ impl Welcomer {
         println!("welcoming {:?}", id);
         let link = WelcomerGreeterLink {};
         handle.open_link(link.params(id));
-        handle.send_internal(chat::send_message::Owned, |b| {
-            let mut send: chat::send_message::Builder = b.init_as();
-            send.set_message("hoi!");
-        });
         return Ok(());
     }
 
+    fn print_chat_message<C: Ctx>(
+        &mut self,
+        _: &mut ReactorHandle<C>,
+        msg: chat::chat_message::Reader,
+    ) -> Result<(), capnp::Error>
+    {
+        println!("{}", msg.get_message()?);
+        return Ok(());
+    }
 }
 
 struct WelcomerRuntimeLink {}
@@ -86,10 +95,10 @@ impl WelcomerRuntimeLink {
     ) -> Result<(), capnp::Error>
     {
         let id: ReactorId = r.get_id()?.into();
-        handle.send_internal(actor_joined::Owned, |b| {
-            let mut joined: actor_joined::Builder = b.init_as();
-            joined.set_id(id.bytes())
-        });
+        
+        let mut joined = MsgBuffer::<actor_joined::Owned>::new();
+        joined.build(|b| b.set_id(id.bytes()));
+        handle.send_internal(joined);
         return Ok(());
     }
 }
@@ -119,10 +128,10 @@ impl WelcomerGreeterLink {
     {
         let content = message.get_message()?;
 
-        handle.send_message(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(content);
-        });
+        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+        chat_message.build(|b| b.set_message(content));
+        handle.send_message(chat_message);
+
         return Ok(());
     }
 
@@ -132,12 +141,11 @@ impl WelcomerGreeterLink {
         message: chat::chat_message::Reader,
     ) -> Result<(), capnp::Error>
     {
-        let message = message.get_message()?;
+        let content = message.get_message()?;
 
-        handle.send_internal(chat::chat_message::Owned, |b| {
-            let mut msg: chat::chat_message::Builder = b.init_as();
-            msg.set_message(message);
-        });
+        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+        chat_message.build(|b| b.set_message(content));
+        handle.send_internal(chat_message);
 
         return Ok(());
     }
