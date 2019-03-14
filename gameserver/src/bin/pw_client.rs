@@ -28,13 +28,8 @@ use std::thread;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::env;
-
-use cursive::CbFunc;
-use cursive::align::VAlign;
-use cursive::Cursive;
-use cursive::theme::Theme;
-use cursive::traits::{Boxable, Identifiable};
-use cursive::views::{TextView, EditView, LinearLayout};
+use std::process::{Command, Stdio, ChildStdin};
+use std::io::{Write, BufReader, BufRead};
 
 pub mod chat {
     include!(concat!(env!("OUT_DIR"), "/chat_capnp.rs"));
@@ -42,60 +37,73 @@ pub mod chat {
 
 fn main() {
     let args: Vec<String> = env::args().collect();
+    if args.len() < 2 {
+        println!("please specify what bot to run");
+        return; // wtf how to exit rust program
+    }
+
     let user = args.get(1).unwrap_or(&"Ben".to_string()).clone();
     println!("current user {}", user);
 
-    // Creates the cursive root - required for every application.
-    let mut siv = Cursive::default();
+    let addr = "127.0.0.1:9142".parse().unwrap();
+    // Spawn program
+    let mut prog = Command::new(&args[1])
+        .args(args.iter().skip(2))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .spawn()
+        .expect("Process spawn failed");
 
-    siv.set_theme({
-        let mut t = Theme::default();
-        t.shadow = false;
-        t
-    });
+    let stdout = BufReader::new(prog.stdout.take().expect("No stdout"));
+    let mut stdin = Arc::new(Mutex::new(prog.stdin.take().expect("No stdin")));
+    // thread::spawn(move || {
+    //     let mut stdin = stdin;
+    //     for i in 0..10 {
+    //         println!("printing {}", i);
+    //         let input = format!("{}\n", i);
+    //         stdin.write_all(input.as_bytes());
+    //         thread::sleep_ms(100);
+    //     }
+    // });
+    
+    // let mut line = String::new();
 
-    // ugly chat view
-    siv.add_layer(LinearLayout::vertical()
-        .child(TextView::empty()
-            .v_align(VAlign::Bottom)
-            .with_id("messages")
-            .full_height())
-        .child(EditView::new()
-            .with_id("input")
-            .full_width())
-    );
+    // while let Ok(x) = stdout.read_line(&mut line) {
+    //     if x == 0 {
+    //         break;
+    //     }
 
-    let cb_sink = siv.cb_sink().clone();
-    thread::spawn(move || {
-        let addr = "127.0.0.1:9142".parse().unwrap();
-        tokio::run(futures::lazy(move || {
-            // This part is needlessly complex, please ignore =/
-            let rt = RuntimeState::bootstrap(|runtime| {
-                let (tx, rx) = mpsc::unbounded();
+    //     println!("{} bytes {}", line, x);
+    //     line = String::new();
+    // }
 
-                runtime::RuntimeWorker::spawn(rx, cb_sink, runtime);
+    tokio::run(futures::lazy(move || {
+        // This part is needlessly complex, please ignore =/
+        let rt = RuntimeState::bootstrap(|runtime| {
+            let (tx, rx) = mpsc::unbounded();
 
-                return tx;
-            });
+            // Spawn runtimeworker with program output
+            runtime::RuntimeWorker::spawn(rx, stdout, runtime);
 
-            TcpStream::connect(&addr)
-                .map_err(|err| panic!(err))
-                .and_then(move |stream| {
-                    LinkHandler::new(stream, rt, move |params| {
-                        let r = ClientReactor {
-                            greeter_id: params.greeter_id,
-                            runtime_id: params.runtime_id,
-                            user: user.clone(),
-                        };
-                        return r.params();
-                    })
+            return tx;
+        });
+
+        TcpStream::connect(&addr)
+            .map_err(|err| panic!(err))
+            .and_then(move |stream| {
+
+                LinkHandler::new(stream, rt, move |params| {
+                    // Create client reactor wich spawns program link to write to program
+                    let r = ClientReactor {
+                        greeter_id: params.greeter_id,
+                        runtime_id: params.runtime_id,
+                        user: user.clone(),
+                        stdin: stdin.clone(),
+                    };
+                    return r.params();
                 })
-            }));
-    });
-
-    siv.set_fps(10);
-    // Starts the event loop.
-    siv.run();
+            })
+    }));
 }
 
 // Main client logic
@@ -103,13 +111,37 @@ struct ClientReactor {
     greeter_id: ReactorId,
     runtime_id: ReactorId,
     user: String,
+    stdin: Arc<Mutex<ChildStdin>>,
 }
 
 impl ClientReactor {
     fn params<C: Ctx>(self) -> CoreParams<Self, C> {
         let mut params = CoreParams::new(self);
         params.handler(initialize::Owned, CtxHandler::new(Self::initialize));
+
+        params.handler(
+            chat::chat_message::Owned,
+            CtxHandler::new(Self::handle_chat_message),
+        );
+
         return params;
+    }
+
+    fn handle_chat_message<C: Ctx>(
+        &mut self,
+        _handle: &mut ReactorHandle<C>,
+        message: chat::chat_message::Reader,
+    ) -> Result<(), capnp::Error> {
+        let user = message.get_user()?;
+        if user == self.user {
+            return Ok(());
+        }
+
+        let text = message.get_message()?;
+        println!("handling message {}", text);
+        let text = format!("{}\n", text);
+        self.stdin.lock().map(move |mut s| s.write_all(text.as_bytes()).expect("Something else didn't work lol")).expect("Something failed lol");
+        Ok(())
     }
 
     // reactor setup
@@ -182,7 +214,6 @@ impl ServerLink {
         handle.send_message(chat_message);
 
         return Ok(());
-
     }
 
     // receive a chat message from the chat server, and broadcast it on the
@@ -195,6 +226,8 @@ impl ServerLink {
     {
         let message = chat_message.get_message()?;
         let user = chat_message.get_user()?;
+        
+        println!("{}: {}", user, message);
     
         let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
         chat_message.build(|b| {
@@ -202,7 +235,6 @@ impl ServerLink {
             b.set_user(user);
         });
         handle.send_internal(chat_message);
-
 
         return Ok(());
     }
@@ -233,10 +265,10 @@ impl RuntimeLink {
             CtxHandler::new(Self::connect_to_gui),
         );
 
-        params.internal_handler(
-            chat::chat_message::Owned,
-            CtxHandler::new(Self::handle_chat_message),
-        );
+        // params.internal_handler(
+        //     chat::chat_message::Owned,
+        //     CtxHandler::new(Self::handle_chat_message),
+        // );
 
         params.external_handler(
             chat::user_input::Owned,
@@ -258,25 +290,25 @@ impl RuntimeLink {
         return Ok(());
     }
 
-    // Pick up chat messages on the reactor, and forward them to the chat GUI.
-    fn handle_chat_message<C: Ctx>(
-        &mut self,
-        handle: &mut LinkHandle<C>,
-        chat_message: chat::chat_message::Reader,
-    ) -> Result<(), capnp::Error>
-    {
-        let message = chat_message.get_message()?;
-        let user = chat_message.get_user()?;
+    // // Pick up chat messages on the reactor, and forward them to the chat GUI.
+    // fn handle_chat_message<C: Ctx>(
+    //     &mut self,
+    //     handle: &mut LinkHandle<C>,
+    //     chat_message: chat::chat_message::Reader,
+    // ) -> Result<(), capnp::Error>
+    // {
+    //     let message = chat_message.get_message()?;
+    //     let user = chat_message.get_user()?;
 
-        let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
-        chat_message.build(|b| {
-            b.set_message(message);
-            b.set_user(user);
-        });
-        handle.send_message(chat_message);
+    //     let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
+    //     chat_message.build(|b| {
+    //         b.set_message(message);
+    //         b.set_user(user);
+    //     });
+    //     handle.send_message(chat_message);
 
-        return Ok(());
-    }
+    //     return Ok(());
+    // }
 
     fn handle_user_input<C: Ctx>(
         &mut self,
@@ -311,48 +343,50 @@ mod runtime {
     use mozaic::messaging::types::*;
     use std::collections::HashMap;
     use std::sync::{Arc, Mutex};
-
-    struct HandlerState {
-        cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
-        runtime: Arc<Mutex<RuntimeState>>,
-    }
+    use std::io::{BufRead, BufReader};
+    use std::process::ChildStdout;
+    use std::mem;
+    use std::thread;
 
     pub struct RuntimeWorker {
         msg_chan: mpsc::UnboundedReceiver<Message>,
         handler_core: HandlerCore<HandlerState>,
     }
 
+    struct HandlerState {
+        stdout: BufReader<ChildStdout>,
+        runtime: Arc<Mutex<RuntimeState>>,
+    }
+
     impl RuntimeWorker {
         pub fn spawn(
             rx: mpsc::UnboundedReceiver<Message>,
-            cb_sink: crossbeam_channel::Sender<Box<CbFunc>>,
+            stdout: BufReader<ChildStdout>,
             runtime: Arc<Mutex<RuntimeState>>
         ) {
                 let mut worker = RuntimeWorker {
                     msg_chan: rx,
                     handler_core: HandlerCore::new(
                         HandlerState {
-                            cb_sink,
-                            runtime,
+                            stdout: stdout, runtime,
                         }
                     )
                 };
 
-                let id = <chat::connect_to_gui::Owned as Owned>::Reader::type_id();
                 worker.handler_core.on(
+                    // This is initialize program ish ish
                     chat::connect_to_gui::Owned,
                     FnHandler::new(rt_connect_to_gui),
                 );
 
-                let id = <chat::chat_message::Owned as Owned>::Reader::type_id();
-                worker.handler_core.on(
-                    chat::chat_message::Owned,
-                    FnHandler::new(rt_display_chat_message),
-                );
+                // worker.handler_core.on(
+                //     chat::chat_message::Owned,
+                //     FnHandler::new(rt_display_chat_message),
+                // );
 
                 tokio::spawn(worker);
-
         }
+
         fn handle_message(&mut self, msg: Message) {
             self.handler_core.handle(&msg)
                 .expect("message handling failed");
@@ -378,44 +412,30 @@ mod runtime {
         _: chat::connect_to_gui::Reader
     ) -> Result<(), capnp::Error>
     {
+        println!("Connecting to 'gui'");
+
         let reactor_id = ctx.sender_id.clone();
         let runtime = ctx.state.runtime.clone();
 
-        ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
-            cursive.call_on_id("input", |view: &mut EditView| {
-                view.set_on_submit(move |cursive, input_text| {
-                    runtime.lock().unwrap().send_message(
-                        &reactor_id,
-                        chat::user_input::Owned,
-                        |b| {
-                            let mut input: chat::user_input::Builder = b.init_as();
-                            input.set_text(input_text);
-                        });
-                    cursive.call_on_id("input", |view: &mut EditView| {
-                        view.set_content("");
-                    });
-                })
-            });
-        })).unwrap();
+        let mut input_text = String::new();
 
-        return Ok(());
-    }
+        while let Ok(x) = ctx.state.stdout.read_line(&mut input_text) {
+            if x == 0 {
+                break;
+            }
 
-    fn rt_display_chat_message(
-        ctx: &mut RtHandlerCtx<HandlerState>,
-        msg: chat::chat_message::Reader
-    ) -> Result<(), capnp::Error>
-    {
-        let message = msg.get_message()?.to_string();
-        let user = msg.get_user()?.to_string();
-        ctx.state.cb_sink.send(Box::new(|cursive: &mut Cursive| {
-            cursive.call_on_id("messages", |view: &mut TextView| {
-                view.append(user);
-                view.append(": ");
-                view.append(message);
-                view.append("\n");
-            });
-        })).unwrap();
+            runtime.lock().unwrap().send_message(
+                &reactor_id,
+                chat::user_input::Owned,
+                |b| {
+                    let mut input: chat::user_input::Builder = b.init_as();
+                    input.set_text(input_text.trim_end());
+                });
+            input_text = String::new();
+        }
+
+        println!("Program finished somewhere");
+
         return Ok(());
     }
 
@@ -462,7 +482,6 @@ mod runtime {
         {
             let reader = message.reader();
             let type_id = reader.get()?.get_type_id();
-
             if let Some(handler) = self.handlers.get(&type_id) {
                 let sender_id: ReactorId = reader.get()?.get_sender()?.into();
                 let mut ctx = RtHandlerCtx {

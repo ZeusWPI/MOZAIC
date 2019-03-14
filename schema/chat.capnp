@@ -1,11 +1,13 @@
 @0xd39ef24540211376;
 
 struct SendMessage {
-    message @0: Text;
+    user @0: Text;
+    message @1: Text;
 }
 
 struct ChatMessage {
-    message @0: Text;
+    user @0: Text;
+    message @1: Text;
 }
 
 struct ConnectToGui {}

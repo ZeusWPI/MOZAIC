@@ -70,7 +70,7 @@ impl Welcomer {
         msg: chat::chat_message::Reader,
     ) -> Result<(), capnp::Error>
     {
-        println!("{}", msg.get_message()?);
+        println!("{}: {}",msg.get_user()? ,msg.get_message()?);
         return Ok(());
     }
 }
@@ -127,9 +127,13 @@ impl WelcomerGreeterLink {
     ) -> Result<(), capnp::Error>
     {
         let content = message.get_message()?;
+        let user = message.get_user()?;
 
         let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
-        chat_message.build(|b| b.set_message(content));
+        chat_message.build(|b| {
+            b.set_message(content);
+            b.set_user(user);
+        });
         handle.send_message(chat_message);
 
         return Ok(());
@@ -142,9 +146,14 @@ impl WelcomerGreeterLink {
     ) -> Result<(), capnp::Error>
     {
         let content = message.get_message()?;
+        let user = message.get_user()?;
 
         let mut chat_message = MsgBuffer::<chat::chat_message::Owned>::new();
-        chat_message.build(|b| b.set_message(content));
+        chat_message.build(|b| {
+            b.set_message(content);
+            b.set_user(user);
+        });
+        
         handle.send_internal(chat_message);
 
         return Ok(());
