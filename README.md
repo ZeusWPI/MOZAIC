@@ -13,11 +13,11 @@ Eventually MOZAIC should be very modular, so that you can provide a custom-tailo
 
 ## BottleBats 2.018
 
-BottleBats 2.018 is the second edition of the Zeus WPI AI competition. The simple concept remains the same, but this time it is build on top of the MOZAIC platform for reliable cross-platform en networked (Soon TM) play. 
+BottleBats 2.018 is the second edition of the Zeus WPI AI competition. The simple concept remains the same, but this time it is build on top of the MOZAIC platform for reliable cross-platform en networked (Soon TM) play.
 
 ### Concept & Game
 
-Write a bot and compete with your friends. Accept game-states trough stdin and write your actions through stdout, everything is handled by us. 
+Write a bot and compete with your friends. Accept game-states trough stdin and write your actions through stdout, everything is handled by us.
 
 See the [intro-slides](https://drive.google.com/open?id=1ZwFlXGm7WZ4urTFxXdyoEz7n19PjwkO4Z-iVYLWCDmg) for more info.
 
@@ -55,15 +55,22 @@ Before continuing, make sure you have the following applications installed:
     * Rust >= 1.18.0
     * Cargo >= 0.16.0
 
+
 1. Install [Node v8][node] and [Yarn][yarn].
 
 **Note:** This project makes use of Yarn workspaces.
+
+e.g. on Fedora:
+```
+curl --silent --location https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo
+sudo yum install cargo rust nodejs yarn
+```
 
 ### Using Make
 
 1. If this is not your first install, run `make clean`.
 1. Run `make`
-1. Go to the `planetwars/client` directory and run `yarn run dev`. 
+1. Go to the `planetwars/client` directory and run `yarn install` followed by `yarn run dev`.
 1. An electron client should be at your disposal!
 
 ### Manual Setup
