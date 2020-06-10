@@ -82,7 +82,7 @@ module.exports = merge(baseConfig, {
 
   plugins: [
     // https://webpack.github.io/docs/hot-module-replacement-with-webpack.html
-    new webpack.HotModuleReplacementPlugin(),
+    // new webpack.HotModuleReplacementPlugin(),
 
     // https://github.com/mzgoddard/hard-source-webpack-plugin
     new HardSourceWebpackPlugin(),
