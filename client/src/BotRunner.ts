@@ -34,10 +34,15 @@ export class BotRunner {
     /**
      * Run the bot
      */
-    public run() {
+    public run(meta: string) {
         const config = this.config;
         let process = execFile(config.command, config.args);
         this.setProcess(process);
+        this.sendMessage(meta);
+    }
+
+    public send(message: string) {
+        this.sendMessage(message);
     }
 
     public request(query: string, handler: OutputHandler) {

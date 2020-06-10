@@ -1,4 +1,5 @@
 import * as M from '../../database/models';
+import { PlayerData, ClientData } from '../../reducers/lobby';
 
 export function validateConfig(conf?: WeakConfig): StrongConfig | ValidationError {
   if (!conf) { return { msg: 'Please fill in config.', type: 'error' }; }
@@ -55,4 +56,11 @@ export interface StrongConfig {
 export interface ServerGameConfig {
   map_file: string;
   max_turns: number;
+}
+
+export interface Slot {
+  player?: PlayerData;
+  client?: ClientData;
+  bot?: M.Bot;
+  connected?: boolean;
 }

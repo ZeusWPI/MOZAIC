@@ -3,3 +3,4 @@ dist
 package-lock.json
 generated
 yarn-error.log
+docs

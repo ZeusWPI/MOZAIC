@@ -41,6 +41,7 @@
     "node_modules/@types/**/*.d.ts"
   ],
   "exclude": [
-    "dist"
+    "app/dist",
+    "node_modules",
   ]
 }

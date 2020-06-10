@@ -9,8 +9,9 @@ import {
     ISimpleEvent
 } from 'strongly-typed-events';
 
-
-import { ProtobufStream } from './ProtobufStream';
+import { BufferWriter, BufferReader } from 'protobufjs/minimal';
+import { read } from 'fs';
+import { ProtobufReader, ProtobufStream } from './ProtobufStream';
 import { execFileSync } from 'child_process';
 
 export interface Address {
@@ -27,15 +28,15 @@ enum ConnectionState {
 
 export class Connection {
     private state: ConnectionState;
-    private token: Buffer;
+    private token: Uint8Array;
     private stream: ProtobufStream;
 
-    private _onConnect = new SignalDispatcher();
+    private _onConnect = new SimpleEventDispatcher<number>();
     private _onMessage = new SimpleEventDispatcher<Uint8Array>();
     private _onError = new SimpleEventDispatcher<Error>();
     private _onClose = new SignalDispatcher();
 
-    public constructor(token: Buffer) {
+    public constructor(token: Uint8Array) {
         this.state = ConnectionState.DISCONNECTED;
         this.stream = new ProtobufStream();
         this.token = token;
@@ -51,7 +52,7 @@ export class Connection {
         })
     }
 
-    public get onConnect(): ISignal {
+    public get onConnect(): ISimpleEvent<number> {
         return this._onConnect.asEvent();
     }
 
@@ -108,21 +109,16 @@ export class Connection {
 
     private handleConnectionResponse(message: Uint8Array) {
         let response = proto.ConnectionResponse.decode(message);
-        switch (response.response) {
-            case 'success': {
-                this.state = ConnectionState.CONNECTED;
-                this._onConnect.dispatch();
-                break;
-            }
-            case 'error': {
-                const error = response.error!;
-                // TODO: should there be a special error state?
-                this.state = ConnectionState.CLOSED;;
-                // TODO this is not particulary nice
-                const err = new Error(error.message!);
-                this._onError.dispatch(err);
-                break;
-            }
+        if (response.success) {
+            this.state = ConnectionState.CONNECTED;
+            const clientId = Number(response.success.clientId)
+            this._onConnect.dispatch(clientId);
+        } else if (response.error) {
+            // TODO: should there be a special error state?
+            this.state = ConnectionState.CLOSED;;
+            // TODO this is not particulary nice
+            const err = new Error(response.error.message!);
+            this._onError.dispatch(err);
         }
     }
 

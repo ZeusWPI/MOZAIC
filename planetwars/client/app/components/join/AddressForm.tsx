@@ -2,9 +2,6 @@ import * as React from 'react';
 import * as M from '../../database/models';
 import { HorizontalInput } from '../play/Config';
 
-// tslint:disable-next-line:no-var-requires
-import * as css from "./AddressForm.scss";
-
 export interface AddressFormProps {
   address: M.Address;
   onChange: (address: M.Address) => void;

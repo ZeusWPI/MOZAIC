@@ -5,6 +5,8 @@ import {
   applyMiddleware,
   compose,
 } from 'redux';
+
+import createSagaMiddleware from 'redux-saga';
 import { createLogger } from 'redux-logger';
 import thunk from 'redux-thunk';
 
@@ -31,6 +33,7 @@ const logger = (createLogger as any)({
 
 const history = createHashHistory();
 const router = routerMiddleware(history);
+const sagaMiddleware = createSagaMiddleware();
 
 // If Redux DevTools Extension is installed use it, otherwise use Redux compose
 const composeEnhancers: typeof compose = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
@@ -41,7 +44,7 @@ const composeEnhancers: typeof compose = window.__REDUX_DEVTOOLS_EXTENSION_COMPO
   compose;
 
 const enhancer = composeEnhancers(
-  applyMiddleware(thunk, router, logger),
+  applyMiddleware(thunk, sagaMiddleware, router, logger),
 );
 
 export = {
@@ -60,6 +63,9 @@ export = {
       );
     }
 
-    return store;
+    return {
+      ...store,
+      runSaga: sagaMiddleware.run,
+    };
   },
 };

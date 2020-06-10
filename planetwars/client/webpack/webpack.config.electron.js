@@ -4,17 +4,34 @@
 
 const webpack = require('webpack');
 const merge = require('webpack-merge');
+
+const HardSourceWebpackPlugin = require('hard-source-webpack-plugin');
+
 const baseConfig = require('./webpack.config.base');
+const { DIST_FOLDER } = require('./path_config');
 
 module.exports = merge(baseConfig, {
   devtool: 'source-map',
+  mode: 'development',
+  entry: ['./app/main_process'],
 
-  entry: ['./app/main.development'],
-
-  // 'main.js' in root
+  // 'main.js' in dist
   output: {
-    path: __dirname,
-    filename: '../app/main.js'
+    path: DIST_FOLDER,
+    filename: 'main.js',
+
+    // https://github.com/webpack/webpack/issues/1114
+    libraryTarget: 'commonjs2',
+  },
+
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        loaders: ['ts-loader'],
+        exclude: /node_modules/
+      },
+    ]
   },
 
   plugins: [
@@ -24,11 +41,7 @@ module.exports = merge(baseConfig, {
     //   'require("source-map-support").install();',
     //   { raw: true, entryOnly: false }
     // ),
-    new webpack.DefinePlugin({
-      'process.env': {
-        NODE_ENV: JSON.stringify('production')
-      }
-    })
+    new HardSourceWebpackPlugin(),
   ],
 
   /**

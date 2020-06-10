@@ -5,7 +5,7 @@ use futures::sync::mpsc::{UnboundedReceiver};
 use tokio::net::TcpStream;
 
 
-use super::router::{RoutingTable, RoutingMessage};
+use super::router::{RoutingTable, RoutingMessage, ClientId};
 use protobuf_codec::MessageStream;
 use protocol::{Packet, packet};
 
@@ -120,10 +120,13 @@ pub struct Connection {
 }
 
 impl Connection {
-    pub fn new(token: Vec<u8>, routing_table: Arc<Mutex<RoutingTable>>) -> Self
+    pub fn new(token: Vec<u8>,
+               client_id: ClientId,
+               routing_table: Arc<Mutex<RoutingTable>>)
+               -> Self
     {
         let mut router = routing_table.lock().unwrap();
-        let routing_chan = router.register(&token);
+        let routing_chan = router.register(&token, client_id);
         Connection {
             token,
             stream_handler: StreamHandler::new(),

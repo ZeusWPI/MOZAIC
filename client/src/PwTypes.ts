@@ -113,7 +113,6 @@ export type LogRecord
     
 export interface StepRecord {
     "type": "step";
-    "turn_number": number;
     "state": GameState;
 }
     

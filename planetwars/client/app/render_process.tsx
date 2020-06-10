@@ -1,5 +1,4 @@
-import log from 'electron-log';
-log.info('[STARTUP] Renderer process started');
+import * as log from 'electron-log';
 
 // https://github.com/electron-userland/electron-webpack/issues/59#issuecomment-347070990
 import 'react-hot-loader/patch';
@@ -7,70 +6,64 @@ import 'react-hot-loader/patch';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
 import * as React from 'react';
-import * as Promise from 'bluebird';
 import * as h from 'react-hyperscript';
 
 import Root from './Root';
 import { FatalErrorView } from './components/FatalError';
 import { initialState } from './reducers';
+import { rootSaga } from './sagas';
 import { bindToStore } from './database/Database';
 import { initializeDirs, populateMaps, populateBots } from './utils/Setup';
+
+import * as process from './process';
 
 import './styles/app.global.scss';
 import './styles/lib.global.scss';
 
-log.info('[STARTUP] Renderer modules loaded');
+export let store: any;
 
-// tslint:disable-next-line:no-var-requires
-const { configureStore, history } = require('./store/configureStore');
-export const store = configureStore(initialState);
+async function render_process() {
+  // First thing we do is setup logging
+  process.shared.setupLogging('render');
 
-log.info('[STARTUP] Store configured');
+  // Log this only after log is setup to respect log policy
+  log.verbose('[STARTUP] Renderer process started');
 
-// Config the global Bluebird Promise
-// We should still 'import * as Promise from bluebird' everywhere to have it at
-// runtime tho.
-Promise.config({
-  longStackTraces: true,
-  warnings: true,
-  // cancellation: true,
-  // monitoring: true,
-});
+  // tslint:disable-next-line:no-var-requires
+  const { configureStore, history } = require('./store/configureStore');
+  store = configureStore(initialState);
+  log.debug('[STARTUP] Store configured');
 
-log.info('[STARTUP] Promise configured');
+  store.runSaga(rootSaga);
+  log.debug('[STARTUP] Root saga started');
 
-log.info('[STARTUP] Init app render');
-initializeDirs()
-  .then(() => log.info('[STARTUP] Initialized dirs'))
-  .then(() => bindToStore(store))
-  .then(() => log.info('[STARTUP] Bound to store'))
-  .then(() => Promise.try(() => {
-    renderApp();
-    log.info('[STARTUP] App rendered');
-    Promise
-      .try(populateMaps)
-      .catch((err) => {
-        log.error('[POPULATE] Loading some default maps failed.', err, err.stack);
-        alert(`[POPULATE] Loading some default maps failed with ${err}`);
-      });
+  try {
+    await initializeDirs();
+    await bindToStore(store);
 
-    Promise
-      .try(populateBots)
-      .catch((err) => {
-        log.error('[POPULATE] Loading some default bots failed.', err, err.stack);
-        alert(`[POPULATE] Loading some default bots failed with ${err.error}`);
-      });
-  }))
-  .catch((error) => {
-    log.error('[FATAL]', error, error.stack);
-    renderCustom(h(FatalErrorView, { error }));
-  })
-  .catch((err) => {
-    log.error('[FATAL]', err, err.stack);
+    populateMaps().catch((err) => {
+      log.error('[POPULATE] Loading some default maps failed.', err, err.stack);
+      alert(`[POPULATE] Loading some default maps failed with ${err}`);
+    });
+
+    populateBots().catch((err) => {
+      log.error('[POPULATE] Loading some default bots failed.', err, err.stack);
+      alert(`[POPULATE] Loading some default bots failed with ${err.error}`);
+    });
+
+    try {
+      renderApp(history);
+    } catch (error) {
+      log.error('[FATAL] Fatal error rendering app', error, error.stack);
+      renderCustom(h(FatalErrorView, { error }));
+    }
+  } catch (err) {
+    log.error('[FATAL] Unknown fatal error', err, err.stack);
     alert(`Unexpected error: ${err}`);
-  });
+  }
+}
 
-function renderApp() {
+function renderApp(history: any) {
   const app = (
     <AppContainer>
       <Root store={store} history={history} />
@@ -91,3 +84,5 @@ function renderCustom(element: any) {
     });
   }
 }
+
+render_process();

@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { clipboard } from 'electron';
 
-import { Slot } from './SlotManager';
+import { Slot } from '../types';
+import { Address } from '../../../reducers/lobby';
 
 import * as css from './Lobby.scss';
 
@@ -10,14 +11,15 @@ export interface SlotListProps {
   port?: number;
   host?: string;
   isServerRunning: boolean;
+  address: Address;
   willBeKicked(idx: number): boolean;
-  connectLocalBot(slot: Slot, playerNum: number): void;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 
 export class SlotList extends React.Component<SlotListProps> {
   public render() {
-    const { slots } = this.props;
+    const { slots, address } = this.props;
     const slotItems = slots.map((slot, index) => (
       <li key={index} className={css.slotElementWrapper}>
         <SlotElement
@@ -25,10 +27,11 @@ export class SlotList extends React.Component<SlotListProps> {
           index={index}
           host={this.props.host}
           port={this.props.port}
+          isServerRunning={this.props.isServerRunning}
           willBeKicked={this.props.willBeKicked(index)}
+          address={address}
           connectLocalBot={this.props.connectLocalBot}
           removeBot={this.props.removeBot}
-          isServerRunning={this.props.isServerRunning}
         />
       </li>),
     );
@@ -43,22 +46,24 @@ export interface SlotElementProps {
   host?: string;
   port?: number;
   isServerRunning: boolean;
-  connectLocalBot(slot: Slot, playerNum: number): void;
+  address: Address;
+  connectLocalBot(slot: Slot): void;
   removeBot(botNum: number): void;
 }
 export class SlotElement extends React.Component<SlotElementProps> {
 
   public render() {
     const { slot, index } = this.props;
-    const { token, name } = slot;
+
+    const token = slot.client ? slot.client.token : null;
+    const name = slot.player ? slot.player.name : `Player ${index + 1}`;
 
     const kicked = (this.props.willBeKicked) ? (css.kicked) : '';
     return (
       <div className={`${css.slotElement} ${this.statusToClass(slot)} ${kicked}`}>
-        <h1>Player {index + 1}</h1>
+        <h1>{name}</h1>
         <p>{token}</p>
         <p>Status: {this.statusToFriendly(slot)}</p>
-        <p>Name: {name}</p>
         <div>
           {this.getActions()}
         </div>
@@ -66,13 +71,19 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private copyToken = (): void => {
-    clipboard.writeText(JSON.stringify(this.props.slot.token));
+    if (this.props.slot.client) {
+      clipboard.writeText(JSON.stringify(this.props.slot.client.token));
+    }
   }
 
   private copyFull = (): void => {
-    const { slot: { token, name }, index, port, host } = this.props;
-    const data = { token, name, port, host };
-    clipboard.writeText(JSON.stringify(data));
+    const { slot, address: { host, port } } = this.props;
+    if (slot.player && slot.client) {
+      const name = slot.player.name;
+      const token = slot.client.token;
+      const data = { token, name, port, host };
+      clipboard.writeText(JSON.stringify(data));
+    }
   }
 
   private statusToClass(slot: Slot): string {
@@ -89,30 +100,33 @@ export class SlotElement extends React.Component<SlotElementProps> {
   }
 
   private statusToFriendly(slot: Slot): string {
-    if (slot.bot && slot.connected) {
-      return 'Connected Local Bot';
+    if (!slot.player) {
+      return 'Unassigned';
     }
-    if (slot.bot) {
-      return 'Local Bot';
+
+    if (!slot.client) {
+      return 'Unregistered';
     }
-    if (slot.connected) {
-      return 'Connected external bot';
-    }
-    if (slot.clientId) {
+
+    if (!slot.client.connected) {
       return 'Not connected';
     }
-    return 'Unassigned';
+
+    if (!slot.bot) {
+      return 'Connected external bot';
+    }
+
+    return 'Connected internal bot';
   }
 
   private getActions(): JSX.Element[] {
     const { slot, index } = this.props;
-    const { token, name } = slot;
 
     const kickBot = () => { this.props.removeBot(index); };
 
     const clss = (color: string) => `button is-outlined ${color}`;
 
-    const connectLocal = () => this.props.connectLocalBot(slot, index);
+    const connectLocal = () => this.props.connectLocalBot(slot);
 
     const kick = (
       <button key='kick' className={clss('is-danger')} onClick={kickBot}>
@@ -137,22 +151,27 @@ export class SlotElement extends React.Component<SlotElementProps> {
         key='conn'
         className={clss('is-success')}
         onClick={connectLocal}
-        disabled={!this.props.isServerRunning}
+        disabled={!slot.client}
       >
         Connect
       </button>
     );
 
-    if (slot.bot && slot.connected) {
+    if (!slot.player) {
+      return [];
+    }
+
+    if (!slot.client || slot.client.connected) {
       return [kick];
     }
+
     if (slot.bot) {
       return [kick, conn];
     }
     if (slot.connected) {
       return [kick];
     }
-    if (slot.clientId) {
+    if (slot.client.clientId) {
       return [copy, copyFull];
     }
     return [];
